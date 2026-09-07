@@ -22,6 +22,12 @@ import {
   addFormationSource,
   terrainValue,
 } from "@/lib/geometry";
+import {
+  isTextEntryTarget,
+  movingEntityPosition,
+  stepGameplay,
+  type PlayerState,
+} from "@/lib/gameplay";
 const reduced = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -200,16 +206,14 @@ function Formation({ entity }: { entity: Entity }) {
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
     if (!group.current) return;
-    const target = new THREE.Vector3(...entity.position);
-    if (entity.behavior?.type === "move" && entity.stage === "ready") {
-      const axis = entity.behavior.axis ?? "y";
-      target[axis] +=
-        Math.sin(clock.elapsedTime * (entity.behavior.speed ?? 1)) *
-        (entity.behavior.amplitude ?? 0.5);
-    }
+    const target = new THREE.Vector3(
+      ...movingEntityPosition(entity, clock.elapsedTime),
+    );
     if (entity.geometry?.kind === "crystal")
       target.y += Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
-    group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
+    if (entity.behavior?.type === "move" && entity.stage === "ready")
+      group.current.position.copy(target);
+    else group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
     const scale = new THREE.Vector3(...entity.scale).multiplyScalar(
       bloom ? 1.35 : 1,
     );
@@ -273,22 +277,19 @@ function Formation({ entity }: { entity: Entity }) {
 }
 function Player() {
   const ref = useRef<THREE.Group>(null);
-  const pos = useRef(new THREE.Vector3(0, 0.5, 5));
-  const velocity = useRef(0);
+  const state = useRef<PlayerState>({
+    position: [0, 0.5, 5],
+    velocityY: 0,
+  });
   const keys = useRef(new Set<string>());
   const playing = useOrb((s) => s.playing);
   const reset = useOrb((s) => s.reset);
   useEffect(() => {
-    pos.current.set(0, 0.5, 5);
-    velocity.current = 0;
+    state.current = { position: [0, 0.5, 5], velocityY: 0 };
   }, [reset]);
   useEffect(() => {
     const key = (e: KeyboardEvent, down: boolean) => {
-      if (
-        (e.target as HTMLElement)?.closest(
-          "input,textarea,button,select,[contenteditable]",
-        )
-      )
+      if (isTextEntryTarget(e.target) || (e.target as Element)?.closest("button"))
         return;
       if (
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
@@ -300,6 +301,9 @@ function Player() {
     const d = (e: KeyboardEvent) => key(e, true),
       u = (e: KeyboardEvent) => key(e, false);
     const blur = () => keys.current.clear();
+    const focus = (event: FocusEvent) => {
+      if (isTextEntryTarget(event.target)) keys.current.clear();
+    };
     const touch = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       detail.down
@@ -309,11 +313,13 @@ function Player() {
     window.addEventListener("keydown", d);
     window.addEventListener("keyup", u);
     window.addEventListener("blur", blur);
+    window.addEventListener("focusin", focus);
     window.addEventListener("orbsie-input", touch);
     return () => {
       window.removeEventListener("keydown", d);
       window.removeEventListener("keyup", u);
       window.removeEventListener("blur", blur);
+      window.removeEventListener("focusin", focus);
       window.removeEventListener("orbsie-input", touch);
     };
   }, []);
@@ -332,53 +338,20 @@ function Player() {
     );
     direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
     if (direction.length()) direction.normalize();
-    pos.current.addScaledVector(direction, dt * 4);
     const s = useOrb.getState();
-    let floor = 0.42;
-    for (const e of s.project.entities) {
-      if (e.stage !== "ready" || e.geometry?.kind !== "platform") continue;
-      const p = new THREE.Vector3(...e.position);
-      if (e.behavior?.type === "move")
-        p[e.behavior.axis ?? "y"] +=
-          Math.sin(clock.elapsedTime * (e.behavior.speed ?? 1)) *
-          (e.behavior.amplitude ?? 0.5);
-      const top = p.y + 0.52 * e.scale[1] + 0.42;
-      if (
-        Math.abs(pos.current.x - p.x) < e.scale[0] * 0.55 &&
-        Math.abs(pos.current.z - p.z) < e.scale[2] * 0.55 &&
-        pos.current.y >= top - 0.22
-      )
-        floor = Math.max(floor, top);
-    }
-    if (k.has(" ") && pos.current.y <= floor + 0.04) velocity.current = 6;
-    velocity.current -= dt * 15;
-    pos.current.y += velocity.current * dt;
-    if (pos.current.y < floor) {
-      pos.current.y = floor;
-      velocity.current = 0;
-    }
-    if (Math.hypot(pos.current.x, pos.current.z) > 8.4) {
-      pos.current.x *= 0.985;
-      pos.current.z *= 0.985;
-    }
-    for (const e of s.project.entities) {
-      if (e.stage !== "ready") continue;
-      const distance = Math.hypot(
-        pos.current.x - e.position[0],
-        pos.current.z - e.position[2],
-      );
-      if (e.behavior?.type === "collect" && distance < 0.85) s.collect(e.id);
-      if (
-        e.behavior?.type === "portal" &&
-        distance < 1.2 &&
-        s.score.length >=
-          s.project.entities.filter((x) => x.behavior?.type === "collect")
-            .length &&
-        !s.won
-      )
-        s.set({ won: true });
-    }
-    ref.current.position.copy(pos.current);
+    const result = stepGameplay(
+      state.current,
+      { x: direction.x, z: direction.z, jump: k.has(" ") },
+      s.project.entities,
+      s.score,
+      clock.elapsedTime,
+      dt,
+    );
+    state.current = result;
+    if (result.collected.length !== s.score.length)
+      s.set({ score: result.collected });
+    if (result.won && !s.won) s.set({ won: true });
+    ref.current.position.set(...result.position);
     if (direction.length())
       ref.current.rotation.y = Math.atan2(direction.x, direction.z);
     ref.current.position.y += direction.length()
