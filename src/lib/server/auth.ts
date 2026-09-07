@@ -40,7 +40,7 @@ export async function requireUser(request: Request) {
   if (!session)
     throw new HttpError(
       401,
-      "Sign in to use your AI connection or cloud saving.",
+      "Sign in to publish or save to your cloud library.",
     );
   return session.user;
 }

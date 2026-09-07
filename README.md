@@ -24,7 +24,7 @@ Open the local URL printed by Next.js. `npm run build` builds both the editor an
 - Play links containing a compressed immutable snapshot (without conversation history), usable by signed-out visitors.
 - Downloadable standalone game ZIP with player, project data, source, dependencies and build scripts. It runs without Orbsie APIs or AI credentials.
 - Quality / Balanced / Budget modes backed by live provider catalogs, with all compatible models under Advanced.
-- Authenticated OpenRouter / Vercel AI Gateway NDJSON relays, account/cloud-save recovery, and publication status with stable public sharing pages.
+- OpenRouter / Vercel AI Gateway generation with your own key, optional account/cloud-save recovery, and publication status with stable public sharing pages.
 - Trusted local ChatGPT test harness: actual Astra low scene creation and scoped edits verified.
 - Private Google Cloud Storage archives using keyless Vercel workload identity, with separate production/development buckets.
 
@@ -40,7 +40,7 @@ npm run db:migrate
 
 Better Auth owns its account tables; `scripts/schema.sql` adds Orbsie project/revision/publication tables. Email/password login is implemented; optional Google provider configuration is accepted by the auth server, but its UI is not yet exposed. Production and development Neon migrations passed, and real production authentication/save/recovery checks passed.
 
-AI keys are entered in connection settings, kept only in tab memory, and sent to the authenticated server relay for the chosen provider. No remembered-key storage is implemented. Disconnect clears the tab's key. Model IDs are obtained from the provider catalogs rather than invented. NDJSON generation depends on the selected model following the framing instructions and needs live testing per model.
+AI keys are entered in connection settings, kept only in tab memory, and sent to the server relay for the chosen provider. Generating with your own key does not require an Orbsie account; signing in is needed to publish. Signed-out work saves locally. No remembered-key storage is implemented. Disconnect clears the tab's key. Model IDs are obtained from the provider catalogs rather than invented. NDJSON generation depends on the selected model following the framing instructions and needs live testing per model.
 
 Dedicated publishing additionally requires `VERCEL_DEPLOY_TOKEN` and `VERCEL_TEAM_ID`; these are separate from an AI Gateway key. Save the current revision to the cloud first. Published Orbs get deterministic project names, owner-scoped database records, bounded account quotas, and independent static player files. The configured token currently receives HTTP 403 when creating a Vercel project; publication and republishing still need live verification after its permissions are corrected. Play links and ZIP export do not require it.
 

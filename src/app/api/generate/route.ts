@@ -2,7 +2,6 @@ import { z } from "zod";
 import { projectSchema } from "@/lib/protocol";
 import { generateCommands } from "@/lib/server/generation";
 import {
-  requireUser,
   checkOrigin,
   boundedJSON,
   apiError,
@@ -12,7 +11,6 @@ export const maxDuration = 180;
 export async function POST(request: Request) {
   try {
     checkOrigin(request);
-    await requireUser(request);
     const parsed = z
       .object({
         provider: z.enum(["openrouter", "gateway"]),

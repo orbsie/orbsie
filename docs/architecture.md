@@ -1,6 +1,6 @@
 # First implementation architecture
 
-The client owns rendering, input, formation, game session state and durable local drafts. Next.js routes own provider relaying, account checks, optional database storage and deployment credentials. Public exports contain only a standalone player and the committed project snapshot.
+The client owns rendering, input, formation, game session state and durable local drafts. Next.js routes own provider relaying, optional database storage and deployment credentials. Provider-key generation is available without an Orbsie session; cloud-library and publication routes retain owner authentication. Public exports contain only a standalone player and the committed project snapshot.
 
 `src/lib/protocol.ts` defines a versioned bounded project schema and operation envelope. Operations carry project/run identity, unique IDs, sequence and expected revision. Validation rejects malformed commands, unknown references, oversized entity counts and nonfinite transforms. Duplicate IDs are ignored within the current cursor; ordering and revision conflicts fail closed. The reducer preserves unchanged entity references, avoiding unrelated mesh reconstruction.
 
