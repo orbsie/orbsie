@@ -3,6 +3,9 @@
 ## Owner updates — 2026-09-07
 
 - Keep Apache 2.0.
+- Use Fast mode for agent work wherever the runtime exposes it. Keep live model tests on Astra low; speed tier is separate from reasoning effort.
+- Continue implementation with three parallel worker agents plus root integration and frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
+- Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. Put the full compatible model catalog under Advanced.
 - Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.
 - All live model-backed tests must use Astra with low reasoning effort. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
 - Initial delivery is approximately 30 minutes of implementation, with frequent GitHub pushes and deployment to the Orbsie Vercel app.

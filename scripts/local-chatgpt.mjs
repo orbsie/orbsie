@@ -147,6 +147,7 @@ export class LocalChatGPT {
     signal?.throwIfAborted();
     const { thread } = await this.request("thread/start", {
       model: this.model,
+      serviceTier: "fast",
       ephemeral: true,
       approvalPolicy: "never",
       sandbox: "read-only",
@@ -199,6 +200,7 @@ export class LocalChatGPT {
       this.request("turn/start", {
         threadId: thread.id,
         model: this.model,
+        serviceTier: "fast",
         effort: "low",
         input: [{ type: "text", text: JSON.stringify(input) }],
         sandboxPolicy: { type: "readOnly", networkAccess: false },

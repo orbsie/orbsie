@@ -33,7 +33,7 @@ for (const provider of ["openrouter", "gateway"] as const) {
     vi.stubGlobal("fetch", fetcher);
     const stream = await generateCommands({
       provider,
-      model: "catalog-model",
+      model: "openai/gpt-6-astra",
       key: "test-key-not-real",
       prompt: "Hello",
       project: blankProject(),
@@ -47,6 +47,9 @@ for (const provider of ["openrouter", "gateway"] as const) {
     expect(fetcher.mock.calls[0][0]).toContain(
       provider === "gateway" ? "ai-gateway.vercel.sh" : "openrouter.ai",
     );
+    const submitted = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    expect(submitted.model).toBe("openai/gpt-6-astra");
+    expect(submitted.reasoning).toEqual({ effort: "low" });
   });
 }
 it("invalid generated operations fail closed without executing code", async () => {
