@@ -97,3 +97,27 @@ test("cancellation after delayed thread start does not start a turn", async () =
   await expect(generation).rejects.toThrow();
   expect(calls).toEqual(["thread/start"]);
 });
+
+test("Orbsie generation explicitly uses standard processing and retains low reasoning", async () => {
+  const client = Object.create(LocalChatGPT.prototype);
+  client.listeners = new Set();
+  client.model = "gpt-6-astra";
+  const calls: { method: string; params: Record<string, unknown> }[] = [];
+  client.request = async (method: string, params: Record<string, unknown>) => {
+    calls.push({ method, params });
+    if (method === "thread/start") return { thread: { id: "thread" } };
+    throw Error("Stop before inference");
+  };
+  await expect(client.generate("instructions", {}, () => {})).rejects.toThrow(
+    "Stop before inference",
+  );
+  expect(calls.map(({ method }) => method)).toEqual([
+    "thread/start",
+    "turn/start",
+  ]);
+  for (const { params } of calls) {
+    expect(params.serviceTier).toBe("default");
+    expect(params.model).toBe("gpt-6-astra");
+  }
+  expect(calls[1].params.effort).toBe("low");
+});

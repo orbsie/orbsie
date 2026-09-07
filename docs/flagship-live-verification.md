@@ -14,6 +14,8 @@ The retry passed in 6.498 seconds with five valid operations. It changed the sel
 
 The initial two turns had already started when the owner requested Fast mode. The retry requested `serviceTier: "fast"` for thread and turn; this harness did not expose the returned accepted tier. All three attempts used Astra low. No other live attempts were made.
 
+The owner subsequently clarified that Fast is only for Codex development agents. The Orbsie harness now explicitly requests `serviceTier: "default"` at both thread and turn creation. The historical retry above predates that correction; it has not been rerun.
+
 Full local evidence (commands, before/after snapshots, per-operation timing, original failure): `/tmp/orbsie-flagship-live.json`. Renderable projects: `/tmp/orbsie-flagship-creation.json` and `/tmp/orbsie-flagship-edited.json`. These local artifacts contain generated scene data, not credentials. `npx tsc --noEmit` passed.
 
 This is protocol and scene-structure evidence. It does not prove visual quality, path reachability, jumping/bouncing, frame rate, browser playability, winning, persistence, or publication. Those require separate browser/runtime verification. The protocol stores one behavior per entity, so the platform assertions verify movement rather than a simultaneous bounce behavior.

@@ -3,7 +3,7 @@
 ## Owner updates — 2026-09-07
 
 - Keep Apache 2.0.
-- Use Fast mode for agent work wherever the runtime exposes it. Keep live model tests on Astra low; speed tier is separate from reasoning effort.
+- Use Fast mode only for Codex development agents, never for Orbsie generation agents or their live test calls. Orbsie calls use standard processing; live model tests remain Astra low. Speed tier is separate from reasoning effort.
 - Continue implementation with three parallel worker agents plus root integration and frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
 - Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. Put the full compatible model catalog under Advanced.
 - Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.

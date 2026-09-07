@@ -21,6 +21,8 @@ The small moon garden produced 13 validated operations/three entities; a two-ope
 
 The initial flagship edit tried to reserve an existing ID and was rejected. Correcting the system prompt to reserve only new IDs allowed one edit-only retry to pass: five operations in 6.498 seconds, a large pink mushroom, and all 18 unrelated entities/environment unchanged. The retry requested Fast; the accepted service tier was not exposed. Every live attempt used Astra low. See [flagship details](flagship-live-verification.md).
 
+After the owner's clarification, Fast is limited to Codex development agents. Orbsie's local model harness explicitly requests standard processing on every thread and turn, retaining Astra low. A deterministic regression verifies that separation; the historical Fast-requested retry has not been rerun.
+
 Actual flagship creation and edited snapshots were rendered and visually inspected. Keyboard play collected one crystal in each. This proves basic play interaction, not a complete winning traversal. Runtime unit tests verify current collectible IDs gate the portal and platform edits preserve riders.
 
 ## Measurements and limits

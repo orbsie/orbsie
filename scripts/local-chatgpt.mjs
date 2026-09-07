@@ -147,7 +147,8 @@ export class LocalChatGPT {
     signal?.throwIfAborted();
     const { thread } = await this.request("thread/start", {
       model: this.model,
-      serviceTier: "fast",
+      // Orbsie generation must not inherit the development agents' Fast tier.
+      serviceTier: "default",
       ephemeral: true,
       approvalPolicy: "never",
       sandbox: "read-only",
@@ -200,7 +201,7 @@ export class LocalChatGPT {
       this.request("turn/start", {
         threadId: thread.id,
         model: this.model,
-        serviceTier: "fast",
+        serviceTier: "default",
         effort: "low",
         input: [{ type: "text", text: JSON.stringify(input) }],
         sandboxPolicy: { type: "readOnly", networkAccess: false },
