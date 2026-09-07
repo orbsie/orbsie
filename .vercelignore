@@ -1,4 +1,6 @@
 docs/
+.env*
+.vercel/
 tests/
 .superpowers/
 .codex/

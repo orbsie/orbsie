@@ -6,7 +6,7 @@ Latest infrastructure-enabled production verification: source commit `ef00705` d
 
 ## Passing checks
 
-- 42 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.
+- 50 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.
 - Production build passes. The editor keeps the large cosmic globe and centered composer, exact placeholder “What experience to build?”, and microphone button.
 - Chromium desktop/mobile fixture flow passes: formation, island, selected mushroom edit, undo, keyboard/jump input, ZIP download, refresh recovery, signed-out snapshot playback, flower garden, and touch controls. Zero page exceptions and no mobile horizontal overflow.
 - Live provider catalogs populate Quality (Astra), Balanced (Sol), Budget (Luna), and Advanced. Both providers return the recommended IDs; changing provider clears the entered key. Desktop/mobile settings and actual Astra snapshots render without exceptions.
@@ -27,11 +27,11 @@ Actual flagship creation and edited snapshots were rendered and visually inspect
 
 ## Measurements and limits
 
-AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. A subsequent adaptive-resolution/instancing pass measured median50.0ms and p9583.4ms versus a separate baseline66.7/100.1ms, at lower backing resolution. These single development-server samples are indicative; native GPU results, geometry workers and full path reachability remain unverified. See [measurement conditions](render-performance.md).
+AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. A subsequent adaptive-resolution/instancing pass measured median 50.0 ms and p95 83.4 ms versus a separate baseline 66.7/100.1 ms, at lower backing resolution. These single development-server samples are indicative; native GPU results, geometry workers and full path reachability remain unverified. See [measurement conditions](render-performance.md).
 
 Separate production/development Neon Free databases are provisioned and migrated. Real production accounts/cloud saving passed acceptance. The supplied publishing token can read the main project but Vercel denies project creation (HTTP 403); per-Orb publication is not live certified. The main app deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md) and [cloud acceptance](cloud-verification.md).
 
-Hosted OpenRouter/Gateway inference has not been tested with API keys. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, reloaded undo history, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
+One authorized direct OpenRouter Luna request (512 output-token cap) returned HTTP402; no retry or model substitution occurred. Successful OpenRouter inference and hosted relay generation remain unverified. Gateway inference has not been tested with an API key. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, reloaded undo history, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
 
 Dictation tests simulate Web Speech API events: corrections, prefix preservation, stop, manual edits, stale results, permission denial and unsupported browsers. Real microphone audio/transcription remains untested. Orbsie stores no audio; browser speech services may process it remotely.
 
