@@ -1322,3 +1322,161 @@ kbd {
     scroll-behavior: auto !important;
   }
 }
+/* Immersive planet entrance. The world is the invitation. */
+.cosmic-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 4s ease;
+  background:
+    radial-gradient(ellipse at 32% 18%, #26304280, transparent 50%),
+    radial-gradient(ellipse at 80% 75%, #182b3650, transparent 45%),
+    radial-gradient(ellipse at 50% 45%, #111e2b, #070b15 80%);
+}
+.is-landing .cosmic-backdrop {
+  opacity: 1;
+  transition-duration: 1s;
+}
+.is-landing .scene {
+  inset: 0;
+}
+.is-landing .sky-texture {
+  opacity: 0;
+}
+.is-landing .wordmark {
+  display: none;
+}
+.is-landing .topbar {
+  justify-content: flex-end;
+  padding: 25px 30px;
+  pointer-events: none;
+}
+.is-landing .header-actions {
+  gap: 15px;
+  pointer-events: auto;
+  color: #d2e3e3a8;
+}
+.is-landing .icon-button:hover {
+  background: #ffffff0d;
+  color: #fff;
+}
+.is-landing .orbital-lines i {
+  width: 1100px;
+  height: 330px;
+  border-color: #829fa61a;
+  top: 50%;
+}
+.is-landing .orbital-lines i + i {
+  display: none;
+}
+.is-landing .landing-composer {
+  bottom: 45px;
+  width: 500px;
+  background: #10252ddd;
+  border: 1px solid #d4e6e526;
+  box-shadow: 0 12px 65px #0005;
+  border-radius: 20px;
+  color: #e5eee6;
+  padding: 5px;
+}
+.is-landing .prompt-form {
+  padding: 16px 17px 11px;
+}
+.is-landing .prompt-form textarea {
+  color: #f4faed;
+  font-size: 15px;
+  min-height: 40px;
+  height: 44px;
+}
+.is-landing .prompt-form textarea::placeholder {
+  color: #c8d9d7b0;
+}
+.is-landing .create-button {
+  background: #dbedb7;
+  color: #244c3e;
+  padding: 10px 17px;
+}
+.is-landing .create-button:disabled {
+  opacity: 0.55;
+}
+.is-landing .mode-button {
+  color: #afc5bd;
+  font-size: 10px;
+}
+.is-landing .example-prompts {
+  border-color: #fff1;
+  justify-content: center;
+  padding: 8px 8px 6px;
+  gap: 8px;
+}
+.is-landing .example-prompts button {
+  flex: none;
+  background: transparent;
+  border: 0;
+  color: #aec4bd;
+  font-size: 10px;
+  padding: 3px 10px;
+}
+.is-landing .example-prompts button:hover {
+  color: #efffe1;
+}
+.is-landing .example-prompts button > span {
+  font-size: 12px;
+  color: #a6c992;
+}
+.is-landing .example-prompts svg {
+  display: none;
+}
+.is-landing .resume-pill {
+  bottom: auto;
+  top: 25px;
+  left: 30px;
+  color: #c5d5cc;
+  background: #ffffff06;
+  border-color: #ffffff15;
+  padding: 9px 12px;
+  font-size: 10px;
+}
+.is-landing .world-loading {
+  color: #a8c2bc;
+}
+.is-workspace .scene-caption {
+  display: none;
+}
+.is-workspace .chat-header > div > span {
+  display: none;
+}
+.is-workspace .suggested-edits {
+  display: none;
+}
+.is-workspace .saved {
+  font-size: 0;
+}
+.is-workspace .saved > span {
+  width: 6px;
+  height: 6px;
+}
+@media (max-width: 650px) {
+  .is-landing .scene {
+    inset: 0;
+  }
+  .is-landing .landing-composer {
+    width: calc(100% - 32px);
+    bottom: 24px;
+  }
+  .is-landing .topbar {
+    padding: 20px;
+  }
+  .is-landing .resume-pill {
+    left: 18px;
+    top: 20px;
+  }
+  .is-landing .orbital-lines i {
+    width: 620px;
+    height: 220px;
+  }
+  .is-landing .prompt-form textarea {
+    font-size: 13px;
+  }
+}

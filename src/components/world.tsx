@@ -5,7 +5,7 @@ import {
   useThree,
   type ThreeEvent,
 } from "@react-three/fiber";
-import { ContactShadows, OrbitControls } from "@react-three/drei";
+import { ContactShadows, OrbitControls, Stars } from "@react-three/drei";
 import {
   useEffect,
   useMemo,
@@ -437,8 +437,8 @@ function Scene() {
     if (phase === "landing" || t < 0.995 || !initialized.current) {
       const landing =
         size.width < 700
-          ? new THREE.Vector3(0, 2.2, 16.5)
-          : new THREE.Vector3(0, 1.8, 14.4);
+          ? new THREE.Vector3(0, 1.8, 14.5)
+          : new THREE.Vector3(0, 1.8, 10.2);
       const end =
         size.width < 700
           ? new THREE.Vector3(13, 17, 22)
@@ -446,7 +446,7 @@ function Scene() {
       camera.position.copy(landing.lerp(end, t));
       const look = new THREE.Vector3(
         size.width < 700 ? 0 : -2.7,
-        THREE.MathUtils.lerp(0.65, 0, t),
+        THREE.MathUtils.lerp(0.35, 0, t),
         0,
       );
       look.x *= t;
@@ -464,11 +464,24 @@ function Scene() {
   });
   return (
     <>
-      <ambientLight intensity={1.6} />
-      <hemisphereLight args={["#fff9de", "#a3c8be", 1.5]} />
+      {phase !== "editing" && (
+        <Stars
+          radius={80}
+          depth={50}
+          count={1600}
+          factor={2.5}
+          saturation={0.2}
+          fade
+          speed={0.2}
+        />
+      )}
+      <ambientLight intensity={phase === "landing" ? 0.45 : 1.6} />
+      <hemisphereLight
+        args={["#daeaff", "#142a38", phase === "landing" ? 0.7 : 1.5]}
+      />
       <directionalLight
         position={[-8, 14, 7]}
-        intensity={2.5}
+        intensity={phase === "landing" ? 3.5 : 2.5}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-12}

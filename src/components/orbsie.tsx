@@ -35,7 +35,6 @@ const World = dynamic(() => import("./world"), {
   loading: () => (
     <div className="world-loading">
       <span className="loading-orb" />
-      Finding your little corner of the universe…
     </div>
   ),
 });
@@ -255,6 +254,7 @@ export default function Orbsie() {
       className={`app ${landing ? "is-landing" : "is-workspace"} ${publicView ? "is-public" : ""} ${sheet ? "sheet-open" : "sheet-closed"}`}
     >
       <div className="sky-texture" aria-hidden="true" />
+      <div className="cosmic-backdrop" aria-hidden="true" />
       <div className="scene">
         <World />
       </div>
@@ -276,7 +276,6 @@ export default function Orbsie() {
           }}
         >
           <span className="brand-orb" />
-          orbsie<span className="beta">early access</span>
         </button>
         <div className="header-actions">
           {!landing && !publicView && (
@@ -303,20 +302,19 @@ export default function Orbsie() {
           )}
           {landing && (
             <>
-              <a
-                className="subtle-link"
-                href="https://github.com/orbsie/orbsie"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open source <ArrowUpRight size={13} />
-              </a>
               <button
-                className="pill-button"
+                className="icon-button"
+                aria-label="Your worlds"
                 onClick={() => setModal("account")}
               >
-                {user ? user.name : "Your little worlds"}{" "}
-                <ArrowUpRight size={15} />
+                <Globe2 size={19} />
+              </button>
+              <button
+                className="icon-button"
+                aria-label="Connections"
+                onClick={() => setModal("settings")}
+              >
+                <Settings2 size={19} />
               </button>
             </>
           )}
@@ -327,22 +325,7 @@ export default function Orbsie() {
           )}
         </div>
       </header>
-      {landing && (
-        <section className="welcome">
-          <div className="eyebrow">
-            <span /> A UNIVERSE OF LITTLE POSSIBILITIES
-          </div>
-          <h1>
-            A little world,
-            <br />
-            <em>made by you.</em>
-          </h1>
-          <p>A thought becomes a place. What will yours be?</p>
-          <span className="planet-label">
-            <span /> YOUR NEXT ADVENTURE STARTS HERE
-          </span>
-        </section>
-      )}
+      <h1 className="sr-only">Create a world</h1>
       {!landing && !publicView && (
         <>
           <div className="workspace-heading">
@@ -414,7 +397,7 @@ export default function Orbsie() {
                   <Sparkles size={17} />
                 </span>
                 <div>
-                  <strong>Let’s bring it to life</strong>
+                  <strong>Your world</strong>
                   <span>
                     {demo ? "Interactive demo" : "Your creative companion"}
                   </span>
@@ -449,13 +432,13 @@ export default function Orbsie() {
                   <div className="building-message">
                     <span className="pulse-orb" />
                     <div>
-                      Growing your little world
+                      Creating…
                       <span>
                         {
                           s.project.entities.filter((e) => e.stage === "ready")
                             .length
                         }{" "}
-                        objects brought to life · You can play now
+                        objects
                       </span>
                     </div>
                   </div>
@@ -549,7 +532,7 @@ export default function Orbsie() {
               >
                 <span className="mode-dot" />
                 {demo
-                  ? "Try the demo"
+                  ? "Demo"
                   : connection.provider === "openrouter"
                     ? "OpenRouter"
                     : "AI Gateway"}
@@ -570,7 +553,7 @@ export default function Orbsie() {
                   type="submit"
                   disabled={!prompt.trim()}
                 >
-                  {landing ? "Create an Orb" : "Change this"}
+                  {landing ? "Create" : "Change this"}
                   <ArrowUp size={16} />
                 </button>
               )}
@@ -578,10 +561,14 @@ export default function Orbsie() {
           </form>
           {landing && (
             <div className="example-prompts">
-              {examples.map((e) => (
-                <button key={e.title} onClick={() => startExample(e.title)}>
+              {examples.slice(0, 2).map((e) => (
+                <button
+                  key={e.title}
+                  aria-label={e.label}
+                  onClick={() => startExample(e.title)}
+                >
                   <span>{e.icon}</span>
-                  {e.label}
+                  {e.title.includes("garden") ? "Garden" : "Island"}
                   <ArrowUpRight size={12} />
                 </button>
               ))}
@@ -590,33 +577,23 @@ export default function Orbsie() {
           {!landing && (
             <div className="panel-foot">
               <span className="mode-dot" />
-              {demo
-                ? "Scripted demo · No AI key needed"
-                : "Changes are generated with your connection"}
+              {demo ? "Scripted demo" : "AI connected"}
             </div>
           )}
         </section>
       )}
       {landing && (
         <>
-          <div className="landing-note">
-            <span>✦</span>No code. Just a little imagination.
-          </div>
           {s.recovered && (
             <button
               className="resume-pill"
+              aria-label="Continue your saved world"
               onClick={() => s.load(s.recovered!)}
             >
               <RotateCcw size={14} />
-              Continue your saved world <ArrowUpRight size={14} />
+              Resume <ArrowUpRight size={14} />
             </button>
           )}
-          <footer className="landing-footer">
-            <span>A PLACE FOR YOUR WHAT-IFS.</span>
-            <span>
-              Dream it. Grow it. Play it. <span className="footer-star">✧</span>
-            </span>
-          </footer>
         </>
       )}
       {!landing && (
