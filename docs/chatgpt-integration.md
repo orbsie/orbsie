@@ -1,25 +1,25 @@
 # ChatGPT subscription integration decision
 
-Checked official documentation on 2026-09-07.
+Checked official documentation and the installed Codex App Server protocol on 2026-09-07.
 
-Codex App Server documents managed account login through `account/login/start`, including ChatGPT browser/device-code flows, account status and logout. It describes an integration protocol, but does not establish that a public, multitenant Vercel application may relay arbitrary users' subscription credentials as a general model API.
+Orbsie now includes a **trusted local CLI test adapter**, `scripts/local-chatgpt.mjs`, using documented App Server JSON-RPC over child-process stdio. It checks `account/read` for managed ChatGPT authentication and queries all `model/list` pages for an Astra model supporting low reasoning. Every `turn/start` specifies the exact returned model identifier and `effort: "low"`; missing Astra/low fails without fallback. No cached credentials are read, copied, logged, or exported by Orbsie. Codex manages login and refresh.
 
-Codex authentication documentation specifically says not to expose Codex execution in public or untrusted environments. Subscription sign-in and ordinary API keys have different credential lifecycles and billing.
+Run from the repository with dependencies installed:
 
-**Decision:** no enabled ChatGPT connection in this build. No subscription cookies, cached tokens, local Codex credentials or undocumented endpoints are used. The `generateCommands` boundary accepts provider-specific transports; a future ChatGPT adapter requires a demonstrated supported architecture. A trusted local companion with per-user isolation is a candidate, not a verified or hidden dependency.
+```sh
+codex login status
+# If needed, complete the managed login yourself with codex login.
+ORBSIE_EVIDENCE_PATH=/tmp/orbsie-live-evidence.json node scripts/run-local-chatgpt.mjs
+```
 
-The current implementation contains OpenRouter and AI Gateway API-key relay paths. Neither has been live-tested with user credentials in this session. Model catalogs are queried and model IDs are not silently substituted. Astra availability is not established, so no Astra ID is hardcoded.
+This explicitly invokes two live subscription-backed turns: a three-object scene and an edit to one selected object. The harness validates each streamed JSON command using the application's schema and reducer, requires a concluding revision commit, and checks that the selected edit preserves unrelated entities. Optional evidence contains model ID, effort, commands, and resulting projects, never account details. Temporary bundled code and the empty working directory are removed afterward.
+
+The adapter opens **no HTTP or WebSocket listener**. It runs ephemeral threads with read-only sandbox, network access disabled at turn level, shell tools disabled, web search disabled, and rejects client-side tool/approval requests. Turns have a three-minute deadline and an interrupt path. Run only on the trusted user's workstation. This is not a public subscription relay, a browser connector, or an enabled production “Connect ChatGPT” button. A browser companion would additionally require loopback binding, capability authentication, explicit origin checks, and per-user isolation; none is silently deployed here.
+
+The installed account catalog returned `gpt-6-astra` with low support during the 2026-09-07 verification. This is an observed account-specific identifier, not a hardcoded selection or a promise of availability on other accounts. Live results and remaining verification limitations are recorded in the task report.
+
+Public Vercel generation continues to use the separate OpenRouter and AI Gateway API-key paths. This local test does not validate their billing/authentication paths or establish support for public multitenant use of subscription credentials.
 
 Sources:
-- https://learn.chatgpt.com/docs/app-server
-- https://learn.chatgpt.com/docs/auth
-- https://vercel.com/docs/ai-gateway/sdks-and-apis/openai-chat-completions
-- https://openrouter.ai/docs/api_reference/streaming
-
-## Owner-requested E2E setup
-
-Use a trusted local companion for live subscription-backed tests. The user signs in through `codex login` if `codex login status` does not show a valid login. Codex manages the cached credentials and their refresh; do not copy tokens into Orbsie, test fixtures, or Vercel. Connect the local test harness to App Server over stdio and check `account/read`.
-
-Query `model/list`, verify the actual Astra entry supports `low` in `supportedReasoningEfforts`, and use that exact returned identifier with `effort: "low"` on each `turn/start`. Fail clearly if Astra/low is unavailable; do not select a fallback. This account's model availability has not yet been checked. The local adapter is not yet implemented.
-
-The intended live test path is browser → local authenticated test adapter → Astra low → validated Orbsie operations → rendered result. Deterministic layout/protocol/microphone tests do not need model calls. This does not validate the public Vercel API-key relay or authorize public subscription-backed execution.
+- [Codex App Server](https://learn.chatgpt.com/docs/app-server): managed account APIs, model discovery, stdio protocol, turns and interrupts.
+- [Codex authentication](https://learn.chatgpt.com/docs/auth): credential lifecycle and trusted-environment restrictions.
