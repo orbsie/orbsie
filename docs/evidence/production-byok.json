@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-07T23:56:20.014Z",
+  "url": "https://orbsie.com",
+  "source": "4132ff8",
+  "anonymousMissingKeyStatus": 400,
+  "anonymousPublishStatus": 401,
+  "modelCount": 293,
+  "rankedFirst": "moonshotai/kimi-k3",
+  "ranking": {
+    "label": "Estimated 3D suitability",
+    "benchmark": "Design Arena — models / 3d",
+    "type": "external preference ranking; proxy for Orbsie suitability",
+    "snapshotDate": "2026-09-07",
+    "sourceUrl": "https://openrouter.ai/api/v1/models",
+    "documentationUrl": "https://openrouter.ai/docs/guides/overview/models",
+    "caveat": "No Orbsie-specific benchmark. Models without 3D evidence are unranked, not proven lower quality."
+  },
+  "inferenceCalls": 0
+}

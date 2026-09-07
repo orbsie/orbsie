@@ -9,3 +9,9 @@ Use case: logo-brand. Create one exceptional orb-style brand mark for Orbsie, an
 ## Upload status
 
 Prepared for https://github.com/organizations/orbsie/settings/profile. Organization avatar upload requires an authenticated browser session; no controllable browser was available in this session. Committing the asset to the repository does not change the organization avatar.
+
+## Favicon
+
+`public/icon.svg` is a native SVG adaptation of Orbsie’s existing icon: the cyan orb, two lime land shapes and violet orbit remain clear at browser-tab sizes. It is wired through Next.js metadata, uses no external resources, and was visually checked at16,32,64 and160px (`docs/evidence/favicon-sizes.png`).
+
+`orbsie-org-avatar-flat.png` is an intermediate built-in image edit that preserves the original identity while simplifying terrain texture. Both original and intermediate files are preserved. The organization avatar itself has not been changed.

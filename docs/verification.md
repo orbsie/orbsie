@@ -2,7 +2,7 @@
 
 This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and cloud saves are verified; dedicated publication still needs corrected Vercel token permissions.
 
-Latest infrastructure-enabled production verification: source commit `ef00705` deployed to https://orbsie.com (deployment `orbsie-6gb0ru4gf-grappeggias-projects.vercel.app`). Accounts and publishing configuration are enabled. Production authenticated save/list/reopen, cross-user isolation, stale revision rejection and GCS archive completion passed. Dedicated publication returned upstream Vercel 403 on project creation; configuration availability does not establish publication success.
+Latest application production verification: source `4132ff8` deployed to https://orbsie.com (`orbsie-8slyaftkl-grappeggias-projects.vercel.app`). The anonymous provider-connection browser flow passed with one synthetic generation, zero real provider/auth requests and zero page errors. Actual route checks returned400 for a missing provider key and401 for unsigned publication; the live model catalog returned293 selectable models with ranking metadata and estimated prices. No paid model calls occurred. Production accounts/cloud saves and private archives were verified earlier; individual Orb publication remains blocked by the token’s project-creation permission. See [route evidence](evidence/production-byok.json) and [provider UI](provider-ui-verification.md).
 
 ## Passing checks
 
