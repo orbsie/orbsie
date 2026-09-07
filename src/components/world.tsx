@@ -61,7 +61,7 @@ function Scene(){
  const pebbles=useMemo(()=>Array.from({length:45},(_,i)=>({x:Math.cos(i*2.4)*(7.2+(i%3)*.3),z:Math.sin(i*2.4)*(7.2+(i%3)*.3),s:.1+(i%4)*.08})),[]);
  useFrame((_,dt)=>{
   const target=phase==='landing'?0:1;progress.current=THREE.MathUtils.damp(progress.current,target,reduced()?100:1.05,dt);const t=progress.current;
-  if(phase==='landing'||t<.995||!initialized.current){const landing=size.width<700?new THREE.Vector3(0,2.2,12.6):new THREE.Vector3(0,1.8,10.4);const end=size.width<700?new THREE.Vector3(13,17,22):new THREE.Vector3(13,15,20);camera.position.copy(landing.lerp(end,t));const look=new THREE.Vector3(size.width<700?0:-2.7,THREE.MathUtils.lerp(.15,0,t),0);look.x*=t;camera.lookAt(look);if(controls.current)controls.current.target.copy(look);initialized.current=t>.99;}
+  if(phase==='landing'||t<.995||!initialized.current){const landing=size.width<700?new THREE.Vector3(0,2.2,16.5):new THREE.Vector3(0,1.8,14.4);const end=size.width<700?new THREE.Vector3(13,17,22):new THREE.Vector3(13,15,20);camera.position.copy(landing.lerp(end,t));const look=new THREE.Vector3(size.width<700?0:-2.7,THREE.MathUtils.lerp(.65,0,t),0);look.x*=t;camera.lookAt(look);if(controls.current)controls.current.target.copy(look);initialized.current=t>.99;}
   if(island.current){island.current.visible=t>.35;island.current.scale.setScalar(Math.max(.001,THREE.MathUtils.smoothstep(t,.35,.87)));island.current.position.y=-2*(1-t);}
  });
  return <>
@@ -79,4 +79,4 @@ function Scene(){
  </>;
 }
 class Boundary extends Component<{children:ReactNode},{error:boolean}>{state={error:false};static getDerivedStateFromError(){return {error:true};}render(){return this.state.error?<div className="webgl-fallback"><strong>Your world needs WebGL2</strong><p>Try a recent browser with hardware acceleration enabled. Your saved world is safe.</p></div>:this.props.children;}}
-export default function World(){return <Boundary><Canvas shadows dpr={[1,1.5]} camera={{position:[0,1.8,10.4],fov:43,near:.1,far:250}} gl={{antialias:true,alpha:true,powerPreference:'high-performance'}} fallback={<div className="webgl-fallback">Your browser needs WebGL2 to open a 3D world.</div>} onPointerMissed={()=>{if(!useOrb.getState().playing)useOrb.getState().set({selected:undefined});}}><Scene/></Canvas></Boundary>;}
+export default function World(){return <Boundary><Canvas shadows={{type:THREE.PCFShadowMap}} dpr={[1,1.5]} camera={{position:[0,1.8,10.4],fov:43,near:.1,far:250}} gl={{antialias:true,alpha:true,powerPreference:'high-performance'}} fallback={<div className="webgl-fallback">Your browser needs WebGL2 to open a 3D world.</div>} onPointerMissed={()=>{if(!useOrb.getState().playing)useOrb.getState().set({selected:undefined});}}><Scene/></Canvas></Boundary>;}

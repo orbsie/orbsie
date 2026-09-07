@@ -44,7 +44,8 @@ export function applyOperation(project:Project,input:unknown,cursor:Cursor):{pro
   if(c.type==='remove_entity')entities=entities.filter(e=>e.id!==c.id);
   else entities=entities.map(e=>e.id!==c.id?e:c.type==='set_geometry'?{...e,geometry:c.geometry,stage:c.geometry.detail==='coarse'?'coarse':'ready'}:c.type==='set_material'?{...e,color:c.color}:c.type==='set_behavior'?{...e,behavior:c.behavior}:{...e,position:c.position??e.position,scale:c.scale??e.scale});
  }
- const next=projectSchema.parse({...project,entities,environment,messages,revision:project.revision+1});
+ const next:Project={...project,entities,environment,messages,revision:project.revision+1};
+ projectSchema.parse(next);
  return {project:next,cursor:{runId:cursor.runId,sequence:op.sequence,seen:new Set([...cursor.seen,op.operationId])}};
 }
 export function committed(project:Project):Project{return {...project,entities:project.entities.filter(e=>e.stage==='ready')};}
