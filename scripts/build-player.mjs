@@ -1,0 +1,4 @@
+import {build} from 'esbuild';import {mkdir,readFile,writeFile} from 'node:fs/promises';
+await mkdir('public/player',{recursive:true});
+await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,format:'esm',outfile:'public/player/runtime.js',define:{'process.env.NODE_ENV':'"production"'},alias:{'@':'./src'}});
+const paths=['src/player/main.tsx','src/player/player.css','src/components/world.tsx','src/lib/store.ts','src/lib/protocol.ts','src/lib/fixtures.ts','src/lib/geometry.ts','LICENSE'];const sources={};for(const path of paths)sources[path]=await readFile(path,'utf8');sources['build-source.mjs']=`import {build} from 'esbuild';await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"'},alias:{'@':'./src'}});`;await writeFile('public/player/source.json',JSON.stringify(sources));
