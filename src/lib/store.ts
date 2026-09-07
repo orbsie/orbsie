@@ -41,6 +41,7 @@ interface State {
   save: () => Promise<void>;
   recover: () => Promise<void>;
   preserveLocalCopy: () => Promise<void>;
+  loadCloud: (project: Project) => Promise<void>;
   load: (p: Project, play?: boolean) => void;
   collect: (id: string) => void;
 }
@@ -212,6 +213,35 @@ export const useOrb = create<State>((setState, getState) => ({
           "This browser could not save your draft. Export it before closing.",
       });
     }
+  },
+  async loadCloud(project) {
+    if (!activateWriter(project.id))
+      throw Error("This cloud world is being edited in another tab.");
+    await getState().preserveLocalCopy();
+    // Explicit cloud-open replaces the local baseline only after preserving
+    // both the current draft and any divergent saved branch at the target ID.
+    let recovered: Project | undefined;
+    await withDraftWriteLock(project.id, async () => {
+      await update<Record<string, Project>>("orbsie-library", (library) => {
+        const existing = library?.[project.id];
+        if (existing && JSON.stringify(existing) !== JSON.stringify(project)) {
+          recovered = {
+            ...existing,
+            id: crypto.randomUUID(),
+            title: `${existing.title} (local recovery)`,
+          };
+        }
+        return {
+          ...library,
+          ...(recovered ? { [recovered.id]: recovered } : {}),
+          [project.id]: project,
+        };
+      });
+      return true;
+    });
+    if (recovered) setState({ drafts: [recovered, ...getState().drafts] });
+    getState().load(project);
+    await getState().save();
   },
   async preserveLocalCopy() {
     const copy = {

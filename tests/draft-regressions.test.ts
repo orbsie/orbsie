@@ -71,3 +71,32 @@ it("keeps a divergent local branch after loading and saving the same cloud ID", 
     revision: 3,
   });
 });
+it("opens a lower cloud revision and saves subsequent edits while retaining the higher local branch", async () => {
+  const local = { ...blankProject(), title: "Divergent local", revision: 20 };
+  useOrb.getState().load(local);
+  await useOrb.getState().save();
+  const cloud = { ...local, title: "Cloud choice", revision: 5 };
+  await useOrb.getState().loadCloud(cloud);
+  expect(db.values.get("orbsie-library")[local.id]).toMatchObject({
+    title: "Cloud choice",
+    revision: 5,
+  });
+  useOrb.setState({
+    project: { ...cloud, title: "Edited cloud", revision: 6 },
+  });
+  await useOrb.getState().save();
+  expect(useOrb.getState().readOnly).toBe(false);
+  const library = db.values.get("orbsie-library");
+  expect(library[local.id]).toMatchObject({
+    title: "Edited cloud",
+    revision: 6,
+  });
+  expect(
+    Object.values(library).some(
+      (p: any) =>
+        p.id !== local.id &&
+        p.title === "Divergent local (local recovery)" &&
+        p.revision === 20,
+    ),
+  ).toBe(true);
+});

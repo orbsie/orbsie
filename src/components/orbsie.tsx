@@ -1116,9 +1116,8 @@ export default function Orbsie() {
                       className="share-option"
                       onClick={() => {
                         void s
-                          .preserveLocalCopy()
+                          .loadCloud(cloud.snapshot)
                           .then(() => {
-                            s.load(cloud.snapshot);
                             setCloudRevision(cloud.revision);
                             setConflict(null);
                             setModal(null);
@@ -1162,9 +1161,8 @@ export default function Orbsie() {
                         className="text-button"
                         onClick={() => {
                           void s
-                            .preserveLocalCopy()
+                            .loadCloud(conflict.snapshot)
                             .then(() => {
-                              s.load(conflict.snapshot);
                               setCloudRevision(conflict.revision);
                               setConflict(null);
                               setModal(null);
