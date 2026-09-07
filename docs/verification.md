@@ -2,6 +2,8 @@
 
 This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and dedicated publication still need external setup.
 
+Latest production verification: source commit `0c087d7` deployed to https://orbsie.com (deployment `orbsie-5f32hhzp8-grappeggias-projects.vercel.app`). Production dictation/layout checks and live-catalog/Astra-snapshot browser checks passed with zero exceptions and no inference calls. Production reports accounts/publishing disabled, matching the outstanding setup.
+
 ## Passing checks
 
 - 42 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.

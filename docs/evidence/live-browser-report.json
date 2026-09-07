@@ -15,12 +15,12 @@
   ],
   "catalogs": [
     {
-      "url": "http://localhost:3001/api/models?provider=openrouter",
+      "url": "https://orbsie.com/api/models?provider=openrouter",
       "status": 200,
       "modelCount": 361
     },
     {
-      "url": "http://localhost:3001/api/models?provider=gateway",
+      "url": "https://orbsie.com/api/models?provider=gateway",
       "status": 200,
       "modelCount": 249
     }
