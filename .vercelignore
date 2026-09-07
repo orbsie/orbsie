@@ -1,5 +1,11 @@
 docs/
 tests/
+.superpowers/
+.codex/
+scripts/verify-*
+scripts/test-*
+scripts/run-*
+scripts/local-chatgpt.mjs
 prompt.md
 scripts/browser-check.mjs
 scripts/inspect-browser.mjs

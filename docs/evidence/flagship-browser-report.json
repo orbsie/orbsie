@@ -1,0 +1,26 @@
+{
+  "errors": [],
+  "inference": [],
+  "worlds": [
+    {
+      "kind": "creation",
+      "entities": 19,
+      "collectibles": 5,
+      "movingPlatforms": 3,
+      "portals": 1,
+      "before": "Make your own \nCreate a world\n◆\n0 / 5\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump",
+      "after": "Make your own \nCreate a world\n◆\n1 / 5\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump",
+      "keyboard": "W held 1.2s, Space jump; representative input only, not a winning run"
+    },
+    {
+      "kind": "edited",
+      "entities": 19,
+      "collectibles": 5,
+      "movingPlatforms": 3,
+      "portals": 1,
+      "before": "Make your own \nCreate a world\n◆\n0 / 5\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump",
+      "after": "Make your own \nCreate a world\n◆\n1 / 5\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump",
+      "keyboard": "W held 1.2s, Space jump; representative input only, not a winning run"
+    }
+  ]
+}

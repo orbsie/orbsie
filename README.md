@@ -23,9 +23,12 @@ Open the local URL printed by Next.js. `npm run build` builds both the editor an
 - Object selection, scripted scoped demo revisions, undo/redo, stop, local IndexedDB recovery.
 - Play links containing a compressed immutable snapshot (without conversation history), usable by signed-out visitors.
 - Downloadable standalone game ZIP with player, project data, source, dependencies and build scripts. It runs without Orbsie APIs or AI credentials.
-- Authenticated OpenRouter / Vercel AI Gateway NDJSON relay implementations and provider catalogs, plus optional Better Auth accounts, Postgres snapshots, and a dedicated-Vercel-project publishing adapter.
+- Quality / Balanced / Budget modes backed by live provider catalogs, with all compatible models under Advanced.
+- Authenticated OpenRouter / Vercel AI Gateway NDJSON relays, account/cloud-save recovery, and publication status with stable public sharing pages.
+- Trusted local ChatGPT test harness: actual Astra low scene creation and scoped edits verified.
+- Private Google Cloud Storage archives using keyless Vercel workload identity, with separate production/development buckets.
 
-**The hosted default is an interactive fixture demo, not live AI generation.** Cloud accounts, AI generation and dedicated project publishing remain unavailable until their external configuration is supplied and tested. The initial brief is the target product; this approximately 30-minute implementation is its first reviewable slice. Read [verification](docs/verification.md) for evidence and gaps.
+**The hosted default is an interactive fixture demo, not live AI generation.** Cloud accounts, AI generation and dedicated project publishing remain unavailable until their external configuration is supplied and tested. The initial brief remains the target product; this is a tested implementation in progress. Read [verification](docs/verification.md) for evidence and gaps.
 
 ## Cloud configuration
 
@@ -49,4 +52,6 @@ vercel --prod --scope grappeggias-projects
 
 The Vercel project is `orbsie`. Deployment currently uses the authenticated CLI. Automatic GitHub linkage was rejected because the Vercel account needs a GitHub Login Connection. Repository pushes work independently.
 
-See [architecture](docs/architecture.md), [ChatGPT decision](docs/chatgpt-integration.md), and [verification](docs/verification.md).
+See [architecture](docs/architecture.md), [infrastructure](docs/infrastructure.md), [model recommendations](docs/model-recommendations.md), [ChatGPT decision](docs/chatgpt-integration.md), and [verification](docs/verification.md).
+
+For authorized local live tests, run `node scripts/run-local-chatgpt.mjs` or `node scripts/run-flagship-chatgpt.mjs`. They use managed Codex login, discovered Astra low, and request Fast processing. These consume model usage; deterministic `npm test` does not. `.codex/config.toml` also selects Fast for compatible local Codex sessions. Running hosted subagent speed cannot be changed through this session’s agent controls.

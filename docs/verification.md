@@ -1,35 +1,35 @@
 # Verification — 2026-09-07
 
-This report covers the first approximately 30-minute implementation. It is an experience prototype with working local creation/edit/play/export flows, not completion of every requirement in prompt.md.
+This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and dedicated publication still need external setup.
 
-## Passing evidence
+## Passing checks
 
-- Production Next.js build and strict TypeScript checks.
-- 10 unit tests: sequence/run/revision rejection, idempotency, unknown references, invalid numeric input, checkpoint cleanup/restoration, stable unrelated entity identities, both deterministic fixtures, share encoding, two provider transport framing tests, invalid model-command rejection.
-- Browser flow against https://orbsie.com in Chromium 153: island creation, visible formation, object selection, tree-to-mushroom revision, undo, keyboard movement/jump input, ZIP download, refresh recovery, signed-out snapshot-link playback, mobile garden and visible touch controls. No page exceptions; no horizontal overflow at 390 × 844.
-- Latest design: roughly 80vh planet on desktop, dark starfield, branding/headline/footer removed and essential controls retained. Desktop and mobile screenshots are in `evidence/landing-space.png` and `evidence/mobile-space.png`.
-- Independent local projects: created an island, returned to the planet, created a garden, and verified both could be reopened from the local library.
-- Independent export: downloaded ZIP, installed its dependencies, rebuilt runtime from included source, ran its Vite production build, and opened the built game with a separate static HTTP server. `project.json` was fetched successfully; zero external service requests and zero page exceptions. See `evidence/export-report.json` and `evidence/standalone.png`.
-- orbsie.com was added as a verified project domain. An unauthenticated request returned HTTP 200 after its project-domain registration. The app also uses orbsie.vercel.app. Vercel deploys through the authenticated CLI; GitHub push milestones are in repository history.
+- 42 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.
+- Production build passes. The editor keeps the large cosmic globe and centered composer, exact placeholder “What experience to build?”, and microphone button.
+- Chromium desktop/mobile fixture flow passes: formation, island, selected mushroom edit, undo, keyboard/jump input, ZIP download, refresh recovery, signed-out snapshot playback, flower garden, and touch controls. Zero page exceptions and no mobile horizontal overflow.
+- Live provider catalogs populate Quality (Astra), Balanced (Sol), Budget (Luna), and Advanced. Both providers return the recommended IDs; changing provider clears the entered key. Desktop/mobile settings and actual Astra snapshots render without exceptions.
+- Private development Google Cloud Storage: Vercel OIDC → Google token exchange → archive upload → create-only retry passed. Production/development identities and buckets are separate. Production archive writes remain untested until authenticated saving is enabled.
+- Downloaded standalone ZIP installs and rebuilds from included source, then builds with Vite and plays through an independent static server. Gameplay source is included. No editor/API/model service requests and zero runtime exceptions. Vite reports a large ~1.53 MB JavaScript chunk (~402 KB gzip); code splitting remains a performance task.
 
-Screenshots and recordings are in `docs/evidence/`. The browser report contains the tested immutable demo share URL. Some early captures predate the dark-space design. The latest interaction video includes the dark-space design and the complete tested flow.
+## Real Astra low evidence
 
-## Measurements
+Managed local ChatGPT authentication and model/list resolved gpt-6-astra with low reasoning. No raw login tokens were inspected or copied. The trusted stdio harness opens no server listener and is separate from the hosted app.
 
-AMD EPYC 9124 (16 cores / 32 logical CPUs), Chromium 153 headless, Linux x86_64, 1440 × 1000, SwiftShader software WebGL with video recording. Island fixture contains 14 semantic entities. Its scripted generation completed in about 10.1 seconds. Over 120 animation frames during play: median 66.7 ms, p95 116.7 ms. This software-rendered run does not meet the 60 fps target; native GPU performance and adaptive quality need further work. These are measured values for this test environment, not model-latency claims. First-reservation/control/objective timing instrumentation is incomplete.
+The small moon garden produced 13 validated operations/three entities; a two-operation recolor preserved selected geometry and unrelated entities. A separate flagship run produced 59 operations/19 ready entities in 54.480 seconds, with first reservation at 9.320 seconds: five crystals, three moving platforms, portal, two trees and pond plus other structures.
 
-## Not verified or incomplete
+The initial flagship edit tried to reserve an existing ID and was rejected. Correcting the system prompt to reserve only new IDs allowed one edit-only retry to pass: five operations in 6.498 seconds, a large pink mushroom, and all 18 unrelated entities/environment unchanged. The retry requested Fast; the accepted service tier was not exposed. Every live attempt used Astra low. See [flagship details](flagship-live-verification.md).
 
-- Live OpenRouter / AI Gateway generation: adapter code and mocked framing tests pass, but no user API keys were supplied. Model behavior and real latency are unverified.
-- Accounts, cloud saving, database migrations and dedicated per-Orb Vercel publishing: implemented boundaries/adapters are disabled until database, auth secret and deployment configuration are supplied. Not live-tested. No claim that the published app has working cloud accounts.
-- Dedicated publication UI does not yet poll/recover deployment status automatically. The authenticated status endpoint exists. Rate limits, concurrent cloud publish retry recovery and public deployment protection need live tests.
-- Google sign-in server configuration exists; a Google sign-in UI flow is not implemented.
-- ChatGPT subscription integration is intentionally unavailable. See chatgpt-integration.md.
-- The bounded runtime supports a small behavior vocabulary, not arbitrary composable rules, custom scripting, remote assets or full physics. Moving-platform carry, bounce behavior, exact collision reconciliation and automated win-condition coverage remain.
-- Local drafts are recovered; cross-tab writer arbitration and history recovery across reload are incomplete. Use one editing tab per project. Durable server generation checkpoints and asset storage are not implemented.
-- The planet descent is an artistic scale/geometry transition, not yet a rigorous tangent-basis parcel representation. The form is repositioned rather than using a fully coordinated animation controller. Geometry preparation currently runs on the main thread.
-- Formation normal/shadow interpolation, arbitrary multipart correspondence, model-driven material animation and GPU performance need more refinement.
-- Production GitHub auto-deployment linkage needs the Vercel account's GitHub Login Connection. Manual CLI deployments succeeded.
+Actual flagship creation and edited snapshots were rendered and visually inspected. Keyboard play collected one crystal in each. This proves basic play interaction, not a complete winning traversal. Runtime unit tests verify current collectible IDs gate the portal and platform edits preserve riders.
+
+## Measurements and limits
+
+AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. Native GPU results, adaptive quality, geometry workers and full path reachability remain unverified.
+
+Neon provisioning is waiting for the owner's integration terms acceptance. DATABASE_URL and migrations are absent. Vercel refused API creation of a publishing token; the owner must set production VERCEL_DEPLOY_TOKEN. Accounts/cloud saving/per-Orb Vercel publication therefore remain gated and are not live certified. Their regression tests use deterministic database/transport substitutes. The main app itself deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md).
+
+Hosted OpenRouter/Gateway inference has not been tested with API keys. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, reloaded undo history, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
+
+Dictation tests simulate Web Speech API events: corrections, prefix preservation, stop, manual edits, stale results, permission denial and unsupported browsers. Real microphone audio/transcription remains untested. Orbsie stores no audio; browser speech services may process it remotely.
 
 ## Reproduce
 
@@ -38,17 +38,9 @@ npm ci
 npm test
 npm run typecheck
 npm run build
-npm run start
 npx playwright install chromium
-TEST_URL=http://localhost:3000 node scripts/verify-flow.mjs
+TEST_URL=http://localhost:3001 node scripts/verify-flow.mjs
+TEST_URL=http://localhost:3001 node scripts/verify-dictation.mjs
 ```
 
-The browser script's text selectors may require updates when copy changes. `scripts/capture-entrance.mjs` verifies the simplified entrance; standalone verification expects a separately served export on port 3010. All test provider keys are dummy strings. No production credentials are in these artifacts.
-
-## Centered composer and dictation update
-
-The entrance prompt is centered on both desktop and mobile. Island/Garden shortcuts are removed. The placeholder is exactly “What experience to build?”. Microphone input uses the browser's Web Speech API, with interim/final text, stop, manual-edit cancellation, unsupported-browser and permission/error handling. The microphone permissions policy is limited to the same origin. Orbsie does not capture or store audio; the browser's speech service may process it remotely.
-
-`scripts/verify-dictation.mjs` exercises the UI with mocked speech-recognition events. It checks centering, transcript corrections, preservation of existing text, stop, stale results, microphone denial, and unsupported browsers. This validates application behavior, not actual audio capture or a live transcription service. Real microphone/transcription availability remains browser-dependent. API reference: https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition
-
-Live model-backed tests are required to use Astra at low reasoning effort, without fallback. Current unit tests and browser fixtures do not make model calls. The requested local ChatGPT test integration was researched by an Astra/low subagent; no subscription credentials were inspected or used and no live generation test was performed.
+Start the app on the chosen test URL first. Stored-live-scene scripts require the evidence files written by the separate authorized live harness; they do not call a model themselves. Screenshots, JSON reports and recordings are in docs/evidence/. Earlier captures may represent previous UI iterations. Provider test keys are dummy values, and credentials are excluded from artifacts.

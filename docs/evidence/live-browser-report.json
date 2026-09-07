@@ -1,0 +1,45 @@
+{
+  "selections": [
+    {
+      "mode": "Quality",
+      "model": "openai/gpt-6-astra"
+    },
+    {
+      "mode": "Balanced",
+      "model": "openai/gpt-5.6-sol"
+    },
+    {
+      "mode": "Budget",
+      "model": "openai/gpt-5.6-luna"
+    }
+  ],
+  "catalogs": [
+    {
+      "url": "http://localhost:3001/api/models?provider=openrouter",
+      "status": 200,
+      "modelCount": 361
+    },
+    {
+      "url": "http://localhost:3001/api/models?provider=gateway",
+      "status": 200,
+      "modelCount": 249
+    }
+  ],
+  "desktopOverflow": false,
+  "mobileOverflow": false,
+  "errors": [],
+  "inference": [],
+  "snapshots": [
+    {
+      "kind": "creation",
+      "canvas": 1,
+      "text": "Make your own \nCreate a world\n◆\n0 / 1\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump"
+    },
+    {
+      "kind": "scoped-edit",
+      "canvas": 1,
+      "text": "Make your own \nCreate a world\n◆\n0 / 1\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump"
+    }
+  ],
+  "unrelatedEntitiesUnchanged": true
+}
