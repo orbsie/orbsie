@@ -1,5 +1,13 @@
 # Build Orbsie
 
+## Owner updates — 2026-09-07
+
+- Keep Apache 2.0.
+- Initial delivery is approximately 30 minutes of implementation, with frequent GitHub pushes and deployment to the Orbsie Vercel app.
+- The entrance planet should occupy roughly 80% of the viewport. Use a dark, space-like background.
+- Remove approximately 80% of visible text and interface clutter. Focus on the planet and essential creation controls; omit landing branding, early-access labels, marketing headings and taglines.
+
+
 You are the implementation agent for Orbsie. Act as a product-minded full-stack engineer and a skilled interactive 3D designer. Build the product described below, verify it in a real browser, and leave a working, reviewable implementation. Do not stop after producing another plan.
 
 This is the complete project brief. You do not need the originating conversation.

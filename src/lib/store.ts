@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { get, set } from "idb-keyval";
+import { get, set, update } from "idb-keyval";
 import {
   blankProject,
   committed,
@@ -26,6 +26,7 @@ interface State {
   error: string;
   saved: boolean;
   recovered?: Project;
+  drafts: Project[];
   readOnly: boolean;
   reset: number;
   set: (patch: Partial<State>) => void;
@@ -68,6 +69,7 @@ export const useOrb = create<State>((setState, getState) => ({
   notice: "",
   error: "",
   saved: false,
+  drafts: [],
   readOnly: false,
   reset: 0,
   set: setState,
@@ -79,7 +81,19 @@ export const useOrb = create<State>((setState, getState) => ({
         history: s.history.slice(-20),
         savedAt: Date.now(),
       });
-      setState({ saved: true });
+      const snapshot = committed(s.project, baseline);
+      await update<Record<string, Project>>("orbsie-library", (library) => ({
+        ...library,
+        [snapshot.id]: snapshot,
+      }));
+      setState({
+        saved: true,
+        recovered: snapshot,
+        drafts: [
+          snapshot,
+          ...getState().drafts.filter((p) => p.id !== snapshot.id),
+        ],
+      });
     } catch {
       setState({
         error:
@@ -90,7 +104,15 @@ export const useOrb = create<State>((setState, getState) => ({
   async recover() {
     try {
       const draft = await get("orbsie-draft");
-      if (draft) setState({ recovered: projectSchema.parse(draft.project) });
+      const library = await get<Record<string, Project>>("orbsie-library");
+      const drafts = Object.values(library ?? {}).map((p) =>
+        projectSchema.parse(p),
+      );
+      if (draft)
+        setState({
+          recovered: projectSchema.parse(draft.project),
+          drafts: drafts.length ? drafts : [projectSchema.parse(draft.project)],
+        });
     } catch {
       setState({
         error: "The saved draft could not be read. You can start a new world.",
@@ -99,6 +121,7 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   load(project, play = false) {
     active?.abort();
+    baseline = project;
     setState({
       project: projectSchema.parse(project),
       phase: "editing",
@@ -154,10 +177,13 @@ export const useOrb = create<State>((setState, getState) => ({
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
-    const before = committed(getState().project, baseline);
+    const before =
+      getState().phase === "landing"
+        ? blankProject()
+        : committed(getState().project, baseline);
     baseline = before;
     const initial = before.entities.length === 0;
-    const selected = getState().selected;
+    const selected = initial ? undefined : getState().selected;
     const project = {
       ...before,
       title: initial
@@ -177,11 +203,12 @@ export const useOrb = create<State>((setState, getState) => ({
     setState({
       project,
       phase: initial ? "descending" : "editing",
+      ...(initial ? { score: [], won: false, selected: undefined } : {}),
       building: true,
       error: "",
       notice: "",
       saved: false,
-      history: [...getState().history, before].slice(-30),
+      history: initial ? [before] : [...getState().history, before].slice(-30),
       future: [],
     });
     if (initial)

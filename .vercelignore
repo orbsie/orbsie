@@ -1,0 +1,9 @@
+docs/
+tests/
+prompt.md
+scripts/browser-check.mjs
+scripts/inspect-browser.mjs
+scripts/verify-flow.mjs
+scripts/verify-standalone.mjs
+scripts/check-export.mjs
+scripts/capture-entrance.mjs

@@ -911,25 +911,25 @@ export default function Orbsie() {
                 Your draft is saved on this device. An account adds cloud saving
                 and ownership.
               </p>
-              {s.recovered && (
+              {s.drafts.map((draft) => (
                 <button
+                  key={draft.id}
                   className="share-option"
                   onClick={() => {
-                    s.load(s.recovered!);
+                    s.load(draft);
                     setModal(null);
                   }}
                 >
                   <Sun />
                   <div>
-                    <strong>{s.recovered.title}</strong>
+                    <strong>{draft.title}</strong>
                     <span>
-                      Saved on this device · {s.recovered.entities.length}{" "}
-                      objects
+                      {draft.entities.length} objects · On this device
                     </span>
                   </div>
                   <ArrowUpRight size={18} />
                 </button>
-              )}
+              ))}
               {!capabilities.accounts ? (
                 <div className="setup-note">
                   Cloud accounts are not connected yet. You can create, play,
