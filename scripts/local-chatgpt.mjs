@@ -15,6 +15,48 @@ export function selectAstra(models) {
   return model.model;
 }
 
+function withoutColors(value) {
+  if (Array.isArray(value)) return value.map(withoutColors);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key !== "color" && key !== "environment")
+      .map(([key, entry]) => [key, withoutColors(entry)]),
+  );
+}
+
+export function assertPinkOnlyEdit(before, after, selectedId, expectedColor) {
+  const selectedBefore = before.entities.find(
+    (entity) => entity.id === selectedId,
+  );
+  const selectedAfter = after.entities.find(
+    (entity) => entity.id === selectedId,
+  );
+  if (!selectedBefore || !selectedAfter)
+    throw Error("Scoped edit removed the selected entity.");
+  if (
+    JSON.stringify(withoutColors(selectedBefore)) !==
+    JSON.stringify(withoutColors(selectedAfter))
+  )
+    throw Error("Scoped edit changed the selected entity beyond its color.");
+  if (selectedAfter.color.toLowerCase() !== expectedColor.toLowerCase())
+    throw Error("Selected edit was not applied.");
+  if (JSON.stringify(before.environment) !== JSON.stringify(after.environment))
+    throw Error("Scoped edit changed the environment.");
+  for (const entity of before.entities) {
+    if (
+      entity.id !== selectedId &&
+      JSON.stringify(entity) !==
+        JSON.stringify(
+          after.entities.find((candidate) => candidate.id === entity.id),
+        )
+    )
+      throw Error("Unrelated entity changed.");
+  }
+  if (after.entities.length !== before.entities.length)
+    throw Error("Scoped edit changed entity count.");
+}
+
 export class LocalChatGPT {
   pending = new Map();
   listeners = new Set();
@@ -113,6 +155,7 @@ export class LocalChatGPT {
         "\nReturn scene commands directly. Do not use any tools, inspect files, or access the network.",
       config: { web_search: "disabled", "features.shell_tool": false },
     });
+    signal?.throwIfAborted();
     let turnId;
     await new Promise((resolve, reject) => {
       const finish = (error) => {

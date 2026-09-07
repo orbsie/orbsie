@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { selectAstra } from "../scripts/local-chatgpt.mjs";
+import {
+  assertPinkOnlyEdit,
+  LocalChatGPT,
+  selectAstra,
+} from "../scripts/local-chatgpt.mjs";
 test("uses exact Astra catalog model identifier with low support", () => {
   expect(
     selectAstra([
@@ -31,4 +35,65 @@ test("never falls back to other models or unsupported reasoning", () => {
       },
     ]),
   ).toThrow("no fallback");
+});
+
+test("pink-only validation preserves selected geometry, transform, behavior, and environment", () => {
+  const before = {
+    entities: [
+      {
+        id: "selected",
+        color: "#111111",
+        position: [1, 2, 3],
+        geometry: { kind: "rock", detail: "refined", parts: [] },
+        behavior: { type: "bounce" },
+      },
+    ],
+    environment: { sky: "#000000" },
+  };
+  const after = structuredClone(before);
+  after.entities[0].color = "#ff44aa";
+  expect(() =>
+    assertPinkOnlyEdit(before, after, "selected", "#ff44aa"),
+  ).not.toThrow();
+  for (const mutation of [
+    { position: [9, 2, 3] },
+    { geometry: { kind: "flower", detail: "refined", parts: [] } },
+    { behavior: { type: "static" } },
+  ]) {
+    const changed = structuredClone(after);
+    Object.assign(changed.entities[0], mutation);
+    expect(() =>
+      assertPinkOnlyEdit(before, changed, "selected", "#ff44aa"),
+    ).toThrow("beyond its color");
+  }
+  const environmentChanged = structuredClone(after);
+  environmentChanged.environment.sky = "#ffffff";
+  expect(() =>
+    assertPinkOnlyEdit(before, environmentChanged, "selected", "#ff44aa"),
+  ).toThrow("environment");
+});
+
+test("cancellation after delayed thread start does not start a turn", async () => {
+  const client = Object.create(LocalChatGPT.prototype);
+  client.listeners = new Set();
+  client.model = "astra";
+  const calls: string[] = [];
+  client.request = async (method: string) => {
+    calls.push(method);
+    if (method === "thread/start") {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return { thread: { id: "thread" } };
+    }
+    throw Error(`unexpected request: ${method}`);
+  };
+  const controller = new AbortController();
+  const generation = client.generate(
+    "instructions",
+    {},
+    () => {},
+    controller.signal,
+  );
+  setTimeout(() => controller.abort(), 1);
+  await expect(generation).rejects.toThrow();
+  expect(calls).toEqual(["thread/start"]);
 });

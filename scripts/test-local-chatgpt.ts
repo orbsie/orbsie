@@ -1,7 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { LocalChatGPT } from "./local-chatgpt.mjs";
+import { LocalChatGPT, assertPinkOnlyEdit } from "./local-chatgpt.mjs";
 import { systemPrompt } from "../src/lib/server/generation";
 import {
   applyOperation,
@@ -76,26 +76,7 @@ try {
     )
       throw Error("Generation did not commit a valid revision.");
     if (edit) {
-      if (
-        project.entities
-          .find((entity) => entity.id === selected)!
-          .color.toLowerCase() !== "#ff44aa"
-      )
-        throw Error("Selected edit was not applied.");
-      for (const entity of before.entities)
-        if (
-          entity.id !== selected &&
-          JSON.stringify(entity) !==
-            JSON.stringify(
-              project.entities.find((after) => after.id === entity.id),
-            )
-        )
-          throw Error("Unrelated entity changed.");
-      if (
-        Object.keys(project.entities).length !==
-        Object.keys(before.entities).length
-      )
-        throw Error("Scoped edit changed entity count.");
+      assertPinkOnlyEdit(before, project, selected!, "#ff44aa");
     } else if (Object.keys(project.entities).length !== 3)
       throw Error("Expected three generated entities.");
     evidence.push({
