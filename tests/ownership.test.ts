@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { claimDraftLease } from "../src/lib/store";
+import { claimDraftLease, releaseDraftLease } from "../src/lib/store";
 
 function memoryStorage() {
   const values = new Map<string, string>();
   return {
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => void values.set(key, value),
+    removeItem: (key: string) => void values.delete(key),
   };
 }
 
@@ -27,5 +28,14 @@ describe("local draft ownership", () => {
     const storage = memoryStorage();
     expect(claimDraftLease(storage, "orb-a", "tab-a", 1_000)).toBe(true);
     expect(claimDraftLease(storage, "orb-b", "tab-b", 1_000)).toBe(true);
+  });
+
+  it("releases only the current tab's lease during navigation", () => {
+    const storage = memoryStorage();
+    claimDraftLease(storage, "orb", "tab-a", 1_000);
+    releaseDraftLease(storage, "orb", "tab-b");
+    expect(claimDraftLease(storage, "orb", "tab-b", 2_000)).toBe(false);
+    releaseDraftLease(storage, "orb", "tab-a");
+    expect(claimDraftLease(storage, "orb", "tab-b", 2_000)).toBe(true);
   });
 });

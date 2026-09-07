@@ -64,13 +64,54 @@ export function claimDraftLease(
   }
   if (lease && lease.owner !== owner && lease.expiresAt > now) return false;
   storage.setItem(key, JSON.stringify({ owner, expiresAt: now + LEASE_MS }));
-  return true;
+  try {
+    return (
+      (JSON.parse(storage.getItem(key) ?? "null") as DraftLease | null)
+        ?.owner === owner
+    );
+  } catch {
+    return false;
+  }
 }
+export function releaseDraftLease(
+  storage: LeaseStorage & Pick<Storage, "removeItem">,
+  projectId: string,
+  owner: string,
+) {
+  const key = `orbsie-writer:${projectId}`;
+  try {
+    const lease = JSON.parse(
+      storage.getItem(key) ?? "null",
+    ) as DraftLease | null;
+    if (lease?.owner === owner) storage.removeItem(key);
+  } catch {}
+}
+let leaseListeners = false;
 function activateWriter(projectId: string) {
   if (typeof window === "undefined") return true;
   if (!claimDraftLease(localStorage, projectId, tabId, Date.now()))
     return false;
   leasedProject = projectId;
+  if (!leaseListeners) {
+    leaseListeners = true;
+    window.addEventListener("pagehide", () => {
+      if (leasedProject) releaseDraftLease(localStorage, leasedProject, tabId);
+    });
+    window.addEventListener("storage", (event) => {
+      if (!leasedProject || event.key !== `orbsie-writer:${leasedProject}`)
+        return;
+      try {
+        const next = JSON.parse(event.newValue ?? "null") as DraftLease | null;
+        if (next && next.owner !== tabId) {
+          useOrb.setState({
+            readOnly: true,
+            error:
+              "Another tab took over this world. This tab is now read-only so your drafts cannot overwrite each other.",
+          });
+        }
+      } catch {}
+    });
+  }
   if (!leaseTimer)
     leaseTimer = setInterval(() => {
       if (leasedProject)

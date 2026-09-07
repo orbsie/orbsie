@@ -38,7 +38,7 @@ export default async function PublishedOrb({
         src={orb.public_url}
         title={`Play ${orb.title}`}
         allow="fullscreen; gamepad"
-        sandbox="allow-scripts allow-pointer-lock"
+        sandbox="allow-scripts allow-same-origin allow-pointer-lock"
       />
     </main>
   );
