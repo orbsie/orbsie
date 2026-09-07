@@ -74,7 +74,11 @@ export async function POST(request: Request) {
       if (!["ERROR", "CANCELED"].includes(deployment.readyState)) {
         await client.query("COMMIT");
         return Response.json({
-          state: deployment.readyState,
+          state:
+            deployment.readyState === "READY"
+              ? "VERIFYING"
+              : deployment.readyState,
+          servedRevision: orb.published_revision ?? null,
           url: publicPath(projectId),
           deploymentUrl: `https://${deployment.url}`,
           deploymentId: deployment.id,
@@ -163,7 +167,11 @@ export async function POST(request: Request) {
     );
     await client.query("COMMIT");
     return Response.json({
-      state: deployment.readyState ?? deployment.state,
+      state:
+        (deployment.readyState ?? deployment.state) === "READY"
+          ? "VERIFYING"
+          : (deployment.readyState ?? deployment.state),
+      servedRevision: orb.published_revision ?? null,
       url: publicPath(projectId),
       deploymentUrl: `https://${deployment.url}`,
       deploymentId: deployment.id ?? deployment.uid,
@@ -180,7 +188,7 @@ export async function GET(request: Request) {
     const user = await requireUser(request);
     const id = new URL(request.url).searchParams.get("projectId");
     const result = await database().query(
-      "SELECT deployment_id,public_url FROM orbs WHERE id=$1 AND owner_id=$2",
+      "SELECT deployment_id,public_url,publication_revision,published_revision FROM orbs WHERE id=$1 AND owner_id=$2",
       [id, user.id],
     );
     const orb = result.rows[0];
@@ -197,16 +205,22 @@ export async function GET(request: Request) {
       if (!accessible.ok)
         return Response.json({
           state: "PROTECTED",
+          servedRevision: orb.published_revision ?? null,
+          deploymentUrl: orb.public_url,
           error:
             "The game is deployed but not publicly accessible. Review Vercel deployment protection.",
         });
-      await database().query(
-        "UPDATE orbs SET public_url=$1 WHERE id=$2 AND owner_id=$3",
-        [url, id, user.id],
+      const promoted = await database().query(
+        "UPDATE orbs SET public_url=$1,published_revision=publication_revision WHERE id=$2 AND owner_id=$3 AND deployment_id=$4 AND publication_revision=$5 RETURNING published_revision",
+        [url, id, user.id, orb.deployment_id, orb.publication_revision],
       );
+      // A new POST may have replaced the attempt while Vercel/HEAD was in flight.
+      if (!promoted.rows.length) return Response.json({ state: "VERIFYING" });
+      orb.published_revision = promoted.rows[0].published_revision;
     }
     return Response.json({
       state: d.readyState,
+      servedRevision: orb.published_revision ?? null,
       url: d.readyState === "READY" ? publicPath(id!) : undefined,
       deploymentUrl:
         d.readyState === "READY" ? `https://${d.url}` : orb.public_url,

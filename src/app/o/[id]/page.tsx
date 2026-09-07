@@ -12,11 +12,11 @@ export default async function PublishedOrb({
   const { id } = await params;
   if (!process.env.DATABASE_URL) notFound();
   const result = await database().query(
-    "SELECT title, public_url, publication_revision FROM orbs WHERE id=$1 AND public_url IS NOT NULL",
+    "SELECT title, public_url, published_revision FROM orbs WHERE id=$1 AND public_url IS NOT NULL",
     [id],
   );
   const orb = result.rows[0] as
-    | { title: string; public_url: string; publication_revision: number }
+    | { title: string; public_url: string; published_revision: number | null }
     | undefined;
   if (!orb) notFound();
 
@@ -28,7 +28,11 @@ export default async function PublishedOrb({
         </Link>
         <div>
           <strong>{orb.title}</strong>
-          <span>Published revision {orb.publication_revision}</span>
+          <span>
+            {orb.published_revision == null
+              ? "Published world"
+              : `Published revision ${orb.published_revision}`}
+          </span>
         </div>
         <Link className="primary small" href="/">
           Make your own

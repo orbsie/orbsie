@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { get, set } from "idb-keyval";
+import { get, set, update } from "idb-keyval";
 import {
   blankProject,
   committed,
@@ -40,6 +40,7 @@ interface State {
   redo: () => void;
   save: () => Promise<void>;
   recover: () => Promise<void>;
+  preserveLocalCopy: () => Promise<void>;
   load: (p: Project, play?: boolean) => void;
   collect: (id: string) => void;
 }
@@ -126,8 +127,8 @@ async function withDraftWriteLock(
   if (typeof navigator === "undefined" || !navigator.locks) return write();
   return navigator.locks.request(
     `orbsie-write:${projectId}`,
-    { mode: "exclusive", ifAvailable: true },
-    (lock) => (lock ? write() : false),
+    { mode: "exclusive" },
+    write,
   );
 }
 let active: AbortController | undefined;
@@ -173,15 +174,20 @@ export const useOrb = create<State>((setState, getState) => ({
       }
       const snapshot = committed(s.project, baseline);
       const wrote = await withDraftWriteLock(snapshot.id, async () => {
-        const library = await get<Record<string, Project>>("orbsie-library");
-        const existing = library?.[snapshot.id];
-        if (existing && existing.revision > snapshot.revision) return false;
+        let accepted = false;
+        await update<Record<string, Project>>("orbsie-library", (library) => {
+          const existing = library?.[snapshot.id];
+          if (existing && existing.revision > snapshot.revision) return library;
+          accepted = true;
+          return { ...library, [snapshot.id]: snapshot };
+        });
+        if (!accepted) return false;
         await set("orbsie-draft", {
           project: snapshot,
           history: s.history.slice(-20),
           savedAt: Date.now(),
         });
-        await set("orbsie-library", { ...library, [snapshot.id]: snapshot });
+
         return true;
       });
       if (!wrote) {
@@ -206,6 +212,19 @@ export const useOrb = create<State>((setState, getState) => ({
           "This browser could not save your draft. Export it before closing.",
       });
     }
+  },
+  async preserveLocalCopy() {
+    const copy = {
+      ...committed(getState().project, baseline),
+      id: crypto.randomUUID(),
+      title: `${getState().project.title} (local recovery)`,
+    };
+    // A distinct identity preserves a divergent branch even after the cloud ID is saved.
+    await update<Record<string, Project>>("orbsie-library", (library) => ({
+      ...library,
+      [copy.id]: copy,
+    }));
+    setState({ drafts: [copy, ...getState().drafts] });
   },
   async recover() {
     try {
@@ -266,9 +285,9 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   undo() {
     const s = getState();
-    if (s.building || !s.history.length) return;
+    if (s.readOnly || s.building || !s.history.length) return;
     setState({
-      project: s.history.at(-1)!,
+      project: { ...s.history.at(-1)!, revision: s.project.revision + 1 },
       future: [s.project, ...s.future],
       history: s.history.slice(0, -1),
       selected: undefined,
@@ -278,9 +297,9 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   redo() {
     const s = getState();
-    if (s.building || !s.future.length) return;
+    if (s.readOnly || s.building || !s.future.length) return;
     setState({
-      project: s.future[0],
+      project: { ...s.future[0], revision: s.project.revision + 1 },
       history: [...s.history, s.project],
       future: s.future.slice(1),
     });

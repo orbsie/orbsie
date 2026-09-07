@@ -54,6 +54,7 @@ type CloudProject = {
   publication_revision?: number | null;
 };
 type Publication = {
+  servedRevision?: number | null;
   state: string;
   url?: string;
   deploymentUrl?: string;
@@ -1049,7 +1050,9 @@ export default function Orbsie() {
                       <a className="primary full" href={publication.url}>
                         Open published Orb
                       </a>
-                    ) : (
+                    ) : null}
+                    {publication?.state !== "READY" ||
+                    publication.servedRevision !== s.project.revision ? (
                       <button
                         className="primary full"
                         disabled={busy}
@@ -1061,11 +1064,13 @@ export default function Orbsie() {
                           ? "Publishing…"
                           : user
                             ? publication
-                              ? "Retry publication"
+                              ? publication.state === "READY"
+                                ? "Publish updated Orb"
+                                : "Retry publication"
                               : "Publish Orb"
                             : "Sign in to publish"}
                       </button>
-                    )}
+                    ) : null}
                   </>
                 )}
               </div>
@@ -1110,12 +1115,19 @@ export default function Orbsie() {
                       key={`cloud-${cloud.id}`}
                       className="share-option"
                       onClick={() => {
-                        void s.save().then(() => {
-                          s.load(cloud.snapshot);
-                          setCloudRevision(cloud.revision);
-                          setConflict(null);
-                          setModal(null);
-                        });
+                        void s
+                          .preserveLocalCopy()
+                          .then(() => {
+                            s.load(cloud.snapshot);
+                            setCloudRevision(cloud.revision);
+                            setConflict(null);
+                            setModal(null);
+                          })
+                          .catch(() =>
+                            setModalError(
+                              "Could not preserve the local draft. Export it before opening the cloud copy.",
+                            ),
+                          );
                       }}
                     >
                       <Globe2 />
@@ -1149,12 +1161,19 @@ export default function Orbsie() {
                       <button
                         className="text-button"
                         onClick={() => {
-                          void s.save().then(() => {
-                            s.load(conflict.snapshot);
-                            setCloudRevision(conflict.revision);
-                            setConflict(null);
-                            setModal(null);
-                          });
+                          void s
+                            .preserveLocalCopy()
+                            .then(() => {
+                              s.load(conflict.snapshot);
+                              setCloudRevision(conflict.revision);
+                              setConflict(null);
+                              setModal(null);
+                            })
+                            .catch(() =>
+                              setModalError(
+                                "Could not preserve the local draft. Export it before opening the cloud copy.",
+                              ),
+                            );
                         }}
                       >
                         Open cloud copy
