@@ -7,7 +7,7 @@ This is the complete project brief. You do not need the originating conversation
 ## 1. Product, ownership, and delivery scope
 
 - Product name: **Orbsie**. The owner has purchased **orbsie.com** and owns the GitHub organization **https://github.com/orbsie**. The intended platform production URL is **https://orbsie.com**; connect it to the platform's Vercel project using verified account/domain configuration when access is available.
-- Build an MIT-licensed, open-source web application hosted on Vercel. Inspect the supplied repository and its instructions first. If starting from an empty workspace, use `orbsie` as the application/repository name; the intended repository is `orbsie/orbsie`, but do not assume it already exists.
+- Build an Apache-2.0-licensed, open-source web application hosted on Vercel. Inspect the supplied repository and its instructions first. If starting from an empty workspace, use `orbsie` as the application/repository name; the intended repository is `orbsie/orbsie`, but do not assume it already exists.
 - Audience: nontechnical people. Think of the accessibility of Lovable applied to small 3D games and interactive scenes. Users create, revise, play, and share their **Orbs**.
 - The defining feature is an incremental, responsive creation experience: objects arrive as glowing spheres and visibly evolve into their final shapes while the scene remains usable.
 - Each Orb is an independent project. The planet and parcel metaphor gives each creator a place to make something. For the initial release, parcels are a visual metaphor for independent projects, not a shared multiplayer simulation or a land marketplace.
@@ -180,7 +180,7 @@ Interpret “each game is a subproject within Vercel” as **one Vercel Project 
 - Return the actual deployment URL and verify public playback. Handle deployment protection explicitly so a “public” shared game can be opened in a signed-out browser.
 - Use a stable Orbsie sharing page such as `/o/{slug}` for title, thumbnail, creator, and a link or isolated embed of the independent game. Add a lightweight “Make your own” action. A full discovery feed is outside the first delivery.
 - Keep deployment credentials in the server only. Apply project ownership checks, reasonable configurable publish quotas, and clear handling of Vercel limits or rate limits.
-- Keep the platform repository public/MIT. Do not automatically publish users' private drafts or credentials into that repository or create a public GitHub repository for every user project.
+- Keep the platform repository public/Apache-2.0. Do not automatically publish users' private drafts or credentials into that repository or create a public GitHub repository for every user project.
 
 The API documents creating projects in a team scope and deploying files through Vercel. Verify the currently supported request shapes during implementation. [Create project](https://vercel.com/docs/rest-api/projects/create-a-new-project), [deployment workflow](https://vercel.com/docs/deployments).
 
@@ -242,7 +242,7 @@ Work in these milestones, keeping the application runnable at each stage:
 
 Deliver:
 
-- Working source with an MIT license, a lockfile, and a clear README.
+- Working source with an Apache 2.0 license, a lockfile, and a clear README.
 - `.env.example` with placeholders only and setup instructions for the app auth provider, database/storage, credential encryption, Vercel team/deployment access, and optional AI test credentials. Distinguish deployment tokens from AI Gateway keys.
 - A short architecture document explaining the scene/operation protocol, formation system, local/cloud responsibilities, standalone export, and publishing mapping.
 - A concise ChatGPT integration decision note citing current official documentation and stating what was implemented or remains conditional.
