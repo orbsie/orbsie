@@ -1,0 +1,19 @@
+# First implementation architecture
+
+The client owns rendering, input, formation, game session state and durable local drafts. Next.js routes own provider relaying, account checks, optional database storage and deployment credentials. Public exports contain only a standalone player and the committed project snapshot.
+
+`src/lib/protocol.ts` defines a versioned bounded project schema and operation envelope. Operations carry project/run identity, unique IDs, sequence and expected revision. Validation rejects malformed commands, unknown references, oversized entity counts and nonfinite transforms. Duplicate IDs are ignored within the current cursor; ordering and revision conflicts fail closed. The reducer preserves unchanged entity references, avoiding unrelated mesh reconstruction.
+
+`src/components/world.tsx` keeps one React Three Fiber canvas mounted during landing, descent and editing. One progress value drives globe expansion, local patch appearance and camera motion. CSS repositions the composer. The transition is a prototype: it does not yet implement a rigorous shared spherical parcel/tangent basis or preserve the exact mounted form throughout the mode change.
+
+`OrbFormation` is currently implemented by the `Formation` component and geometry helpers. Procedural parts merge into a semantic object mesh. The vertex shader interpolates `aFrom` positions into the target shape. Refinement source positions come from the prior mesh. Geometry complexity is bounded and resources are disposed. Preparation is currently on the main thread; workers, correct correspondence across arbitrary multipart revisions and smoother material transitions are follow-up work. The current normal/shadow interpolation is approximate.
+
+The runtime separates authored entities from score/player state. Movement, collectible goals, moving platforms, portal, and bloom behaviors are interpreted in trusted code. No generated JavaScript is evaluated. This is a limited behavior vocabulary, not the full composable trigger/action language in the brief. Motion simulation uses a fixed delta cap rather than a complete physics engine; moving-platform carry and collision reconciliation need refinement.
+
+Fixtures and model results use the same validated command path. The provider adapter receives SSE text deltas and buffers complete newline-delimited JSON records. Every complete command is schema- and state-validated before delivery. Fragmented JSON is never applied. Requests are bounded to 50 seconds. Cancellation preserves completed state and prior ready forms. Live provider framing, durable generation checkpoints and distributed writer locks remain to be validated/implemented.
+
+Local persistence uses IndexedDB. History is bounded to 30 in-memory turns; draft storage includes recent history but only the snapshot is currently restored on reopen. Cloud writes use Postgres row locking and optimistic revision checks with owner checks. Cloud/account code is configuration-gated. Cross-tab local-draft arbitration is not yet implemented, so use one editing tab per device.
+
+Export bundles the reusable renderer/store/schema into standalone JS and CSS. A ZIP includes that bundle, source, project.json, pinned dependencies and rebuild instructions. A URL-hash play link carries a compressed snapshot without messages; it does not provision a dedicated project. Dedicated publication is a distinct server adapter: deterministic project names, row serialization, immutable revision metadata and deployment recovery are intended to avoid duplicates. The previous public_url updates only after a ready, anonymously reachable deployment. This adapter is unverified against a configured cloud database.
+
+No uploads, remote asset fetches, arbitrary scripts or persisted AI keys are supported in this slice. Account cookies are confined to the editor origin. Public exports do not include them.

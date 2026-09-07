@@ -1,5 +1,88 @@
-import {z} from 'zod';
-import {projectSchema,committed} from '@/lib/protocol';
-import {requireUser,database,checkOrigin,apiError,boundedJSON,HttpError} from '@/lib/server/auth';
-export async function GET(request:Request){try{const user=await requireUser(request);const result=await database().query('SELECT id, title, revision, snapshot, updated_at FROM orbs WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 50',[user.id]);return Response.json({projects:result.rows});}catch(e){return apiError(e);}}
-export async function PUT(request:Request){try{checkOrigin(request);const user=await requireUser(request);const parsed=z.object({project:projectSchema,baseRevision:z.number().int().nullable()}).safeParse(await boundedJSON(request));if(!parsed.success)throw new HttpError(400,'Invalid world data.');const {project,baseRevision}=parsed.data;const client=await database().connect();try{await client.query('BEGIN');const existing=await client.query('SELECT owner_id,revision FROM orbs WHERE id=$1 FOR UPDATE',[project.id]);if(existing.rows.length){if(existing.rows[0].owner_id!==user.id)throw new HttpError(404,'World not found.');if(existing.rows[0].revision!==baseRevision)throw new HttpError(409,'A newer cloud revision exists. Export your local draft before opening the cloud version.');await client.query('UPDATE orbs SET snapshot=$1,title=$2,revision=$3,updated_at=now() WHERE id=$4',[JSON.stringify(committed(project)),project.title,project.revision,project.id]);}else{if(baseRevision!==null)throw new HttpError(409,'Cloud version not found.');await client.query('INSERT INTO orbs(id,owner_id,title,revision,snapshot) VALUES($1,$2,$3,$4,$5)',[project.id,user.id,project.title,project.revision,JSON.stringify(committed(project))]);}await client.query('INSERT INTO orb_revisions(orb_id,revision,snapshot) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',[project.id,project.revision,JSON.stringify(committed(project))]);await client.query('COMMIT');return Response.json({revision:project.revision});}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}catch(e){return apiError(e);}}
+import { z } from "zod";
+import { projectSchema, committed } from "@/lib/protocol";
+import {
+  requireUser,
+  database,
+  checkOrigin,
+  apiError,
+  boundedJSON,
+  HttpError,
+} from "@/lib/server/auth";
+export async function GET(request: Request) {
+  try {
+    const user = await requireUser(request);
+    const result = await database().query(
+      "SELECT id, title, revision, snapshot, updated_at FROM orbs WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 50",
+      [user.id],
+    );
+    return Response.json({ projects: result.rows });
+  } catch (e) {
+    return apiError(e);
+  }
+}
+export async function PUT(request: Request) {
+  try {
+    checkOrigin(request);
+    const user = await requireUser(request);
+    const parsed = z
+      .object({
+        project: projectSchema,
+        baseRevision: z.number().int().nullable(),
+      })
+      .safeParse(await boundedJSON(request));
+    if (!parsed.success) throw new HttpError(400, "Invalid world data.");
+    const { project, baseRevision } = parsed.data;
+    const client = await database().connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        "SELECT owner_id,revision FROM orbs WHERE id=$1 FOR UPDATE",
+        [project.id],
+      );
+      if (existing.rows.length) {
+        if (existing.rows[0].owner_id !== user.id)
+          throw new HttpError(404, "World not found.");
+        if (existing.rows[0].revision !== baseRevision)
+          throw new HttpError(
+            409,
+            "A newer cloud revision exists. Export your local draft before opening the cloud version.",
+          );
+        await client.query(
+          "UPDATE orbs SET snapshot=$1,title=$2,revision=$3,updated_at=now() WHERE id=$4",
+          [
+            JSON.stringify(committed(project)),
+            project.title,
+            project.revision,
+            project.id,
+          ],
+        );
+      } else {
+        if (baseRevision !== null)
+          throw new HttpError(409, "Cloud version not found.");
+        await client.query(
+          "INSERT INTO orbs(id,owner_id,title,revision,snapshot) VALUES($1,$2,$3,$4,$5)",
+          [
+            project.id,
+            user.id,
+            project.title,
+            project.revision,
+            JSON.stringify(committed(project)),
+          ],
+        );
+      }
+      await client.query(
+        "INSERT INTO orb_revisions(orb_id,revision,snapshot) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
+        [project.id, project.revision, JSON.stringify(committed(project))],
+      );
+      await client.query("COMMIT");
+      return Response.json({ revision: project.revision });
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  } catch (e) {
+    return apiError(e);
+  }
+}

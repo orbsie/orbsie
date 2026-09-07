@@ -1,0 +1,29 @@
+{
+  "url": "https://orbsie.vercel.app",
+  "errors": [],
+  "completeMs": 10503,
+  "frames": {
+    "median": 66.70000000000073,
+    "p95": 116.59999999999854,
+    "samples": 120,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "renderer": "WebKit WebGL"
+  },
+  "mobileOverflow": false,
+  "checks": [
+    "landing",
+    "formation",
+    "island generation",
+    "object selection",
+    "mushroom revision",
+    "undo",
+    "keyboard movement",
+    "jump",
+    "ZIP download",
+    "refresh recovery",
+    "signed-out public playback",
+    "mobile garden",
+    "touch controls"
+  ],
+  "shareUrl": "https://orbsie.vercel.app/#orb=H4sIAKU-n2oAA82WTYvbMBCG_0pQr7axHX_mVgo9tdDS3pY9yNZ4I1axjaykG8L-987ETlfyZruBNhBCQpDsmffRfGgObAd6kF3LVpHHpGArFvGmKKow8cOSg58UUeSXaQh-XKcZL8q8ipuMecxIowAf_7jou_oRTLNVi65ZDNt2WMsW8IkBAO0lscc07OToJFl6DFp8V8LAVneH0aXRAH6IryhegcKFz1pCK9R-QTu43ncDvkIG7vwkSL3Qi-7RQc1Jwl0UxKkXBUv6iVPcqDvVaTTzIROlSAs08ADdBozes9WBPcr25BR3BBguyaeGBnUL9uyxCtZ8J8nEgZl9T5iD4UbWtIn_HmhFAxd7XLAZIovhizR4QmcIEpS_tOV7-LFVF01VZHTG11fdd2j1RfP3rQSDAT0u2oe-9MIgTDzf0R1kpHx25HlVg6BYnhE_Gf5v4hU3Tac3bupIPSDCtOVihEixnKUOJhNxBA4EZq7g6RsQL6YvBNl0u2M99MeCCIPcY3zTK2m2ArfJPeNPEuuBEdy7tHaSfZVCYJKdx42OaP7I5hLnr4ibOi_r6xBjZ3F4iz-8T5fwxnZR8b8GN_f8ZJahI2tmswpRJ1BeK7oUTZs2vSi6td7jjnJS-dO4tqCA28UYI1ThtBDyOn1tUB41ocjPg04OL-dEqwpqcwGDnaAnBgqixTAixDeLYOfcCWHpIlBLLLC6bpaB9M4ZklkqUYtAiNvNJRI8h6DG_CqXfLvJ3QZD3-nR4gngx7ZV8mFNN-y04_Yvz89mvTqm-5W-Tq8WoqrewOC6Xl_OMOl4Z6qxi-EnV-rMTEMj2az1RjSO0c0aufNBzrOMonr94UbjYGpJ_wZVpXDsdCuAlLvCqbDxzrBFVzjSVG_cjpOXfxWN7qDdSd21GxyQ6Y3hEd3gbVUDjLeV7rZHjx_KqCpzSoBf3MBRYFpWmBNkdgPDgIZpur5__g23TyJS3wsAAA"
+}
