@@ -8,6 +8,7 @@ import {
 import { ContactShadows, OrbitControls, Stars } from "@react-three/drei";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -17,6 +18,7 @@ import {
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import type { Entity } from "@/lib/protocol";
+import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
   entityGeometry,
   addFormationSource,
@@ -28,9 +30,33 @@ import {
   stepGameplay,
   type PlayerState,
 } from "@/lib/gameplay";
-const reduced = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let motionPreference: MediaQueryList | undefined;
+const reduced = () => {
+  if (typeof window === "undefined") return false;
+  motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
+  return motionPreference.matches;
+};
+function AdaptiveResolution() {
+  const { size, setDpr } = useThree();
+  const budget = useRef<RenderBudget | null>(null);
+  useEffect(() => {
+    const maximum = maximumRenderDpr(
+      size.width,
+      size.height,
+      window.devicePixelRatio,
+    );
+    budget.current = new RenderBudget(maximum);
+    setDpr(maximum);
+  }, [size.width, size.height, setDpr]);
+  useFrame((_, dt) => {
+    const next = budget.current?.sample(
+      dt,
+      document.visibilityState === "visible",
+    );
+    if (next !== undefined) setDpr(next);
+  });
+  return null;
+}
 function Planet({ progress }: { progress: React.RefObject<number> }) {
   const group = useRef<THREE.Group>(null);
   const cloud = useRef<THREE.Group>(null);
@@ -64,6 +90,7 @@ function Planet({ progress }: { progress: React.RefObject<number> }) {
     g.computeVertexNormals();
     return g;
   }, []);
+  useEffect(() => () => geometry.dispose(), [geometry]);
   const trees = useMemo(
     () =>
       Array.from({ length: 110 }, (_, i) => {
@@ -169,6 +196,8 @@ function Formation({ entity }: { entity: Entity }) {
   const group = useRef<THREE.Group>(null);
   const previous = useRef<Float32Array>(undefined);
   const progress = useRef({ value: 0 });
+  const target = useMemo(() => new THREE.Vector3(), []);
+  const targetScale = useMemo(() => new THREE.Vector3(), []);
   const selected = useOrb((s) => s.selected === entity.id);
   const collected = useOrb((s) => s.score.includes(entity.id));
   const playing = useOrb((s) => s.playing);
@@ -206,18 +235,14 @@ function Formation({ entity }: { entity: Entity }) {
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
     if (!group.current) return;
-    const target = new THREE.Vector3(
-      ...movingEntityPosition(entity, clock.elapsedTime),
-    );
+    target.set(...movingEntityPosition(entity, clock.elapsedTime));
     if (entity.geometry?.kind === "crystal")
       target.y += Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
     if (entity.behavior?.type === "move" && entity.stage === "ready")
       group.current.position.copy(target);
     else group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
-    const scale = new THREE.Vector3(...entity.scale).multiplyScalar(
-      bloom ? 1.35 : 1,
-    );
-    group.current.scale.lerp(scale, 1 - Math.exp(-dt * 5));
+    targetScale.set(...entity.scale).multiplyScalar(bloom ? 1.35 : 1);
+    group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
     if (mesh.current && entity.geometry?.kind === "crystal")
       mesh.current.rotation.y += dt * 0.6;
     material.emissive.set(
@@ -282,6 +307,8 @@ function Player() {
     velocityY: 0,
   });
   const keys = useRef(new Set<string>());
+  const direction = useMemo(() => new THREE.Vector3(), []);
+  const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const playing = useOrb((s) => s.playing);
   const reset = useOrb((s) => s.reset);
   useEffect(() => {
@@ -289,7 +316,10 @@ function Player() {
   }, [reset]);
   useEffect(() => {
     const key = (e: KeyboardEvent, down: boolean) => {
-      if (isTextEntryTarget(e.target) || (e.target as Element)?.closest("button"))
+      if (
+        isTextEntryTarget(e.target) ||
+        (e.target as Element)?.closest("button")
+      )
         return;
       if (
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
@@ -329,14 +359,14 @@ function Player() {
     if (!playing) return;
     const dt = Math.min(delta, 0.04),
       k = keys.current;
-    const direction = new THREE.Vector3(
+    direction.set(
       (k.has("d") || k.has("arrowright") ? 1 : 0) -
         (k.has("a") || k.has("arrowleft") ? 1 : 0),
       0,
       (k.has("s") || k.has("arrowdown") ? 1 : 0) -
         (k.has("w") || k.has("arrowup") ? 1 : 0),
     );
-    direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
+    direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
     const s = useOrb.getState();
     const result = stepGameplay(
@@ -379,6 +409,37 @@ function Player() {
     </group>
   );
 }
+function Pebbles() {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    if (!mesh.current) return;
+    const transform = new THREE.Object3D();
+    const color = new THREE.Color();
+    for (let i = 0; i < 45; i++) {
+      const radius = 7.2 + (i % 3) * 0.3;
+      const scale = 0.1 + (i % 4) * 0.08;
+      transform.position.set(
+        Math.cos(i * 2.4) * radius,
+        0.02,
+        Math.sin(i * 2.4) * radius,
+      );
+      transform.scale.set(scale, scale * 0.5, scale);
+      transform.updateMatrix();
+      mesh.current.setMatrixAt(i, transform.matrix);
+      mesh.current.setColorAt(i, color.set(i % 3 ? "#d8d7b0" : "#cad7a6"));
+    }
+    mesh.current.instanceMatrix.needsUpdate = true;
+    if (mesh.current.instanceColor)
+      mesh.current.instanceColor.needsUpdate = true;
+    mesh.current.computeBoundingSphere();
+  }, []);
+  return (
+    <instancedMesh ref={mesh} args={[undefined, undefined, 45]}>
+      <sphereGeometry args={[1, 6, 4]} />
+      <meshStandardMaterial />
+    </instancedMesh>
+  );
+}
 function Scene() {
   const phase = useOrb((s) => s.phase),
     entities = useOrb((s) => s.project.entities),
@@ -389,15 +450,9 @@ function Scene() {
   const island = useRef<THREE.Group>(null);
   const initialized = useRef(false);
   const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null);
-  const pebbles = useMemo(
-    () =>
-      Array.from({ length: 45 }, (_, i) => ({
-        x: Math.cos(i * 2.4) * (7.2 + (i % 3) * 0.3),
-        z: Math.sin(i * 2.4) * (7.2 + (i % 3) * 0.3),
-        s: 0.1 + (i % 4) * 0.08,
-      })),
-    [],
-  );
+  const cameraStart = useMemo(() => new THREE.Vector3(), []);
+  const cameraEnd = useMemo(() => new THREE.Vector3(), []);
+  const cameraLook = useMemo(() => new THREE.Vector3(), []);
   useFrame((_, dt) => {
     const target = phase === "landing" ? 0 : 1;
     progress.current = THREE.MathUtils.damp(
@@ -408,16 +463,11 @@ function Scene() {
     );
     const t = progress.current;
     if (phase === "landing" || t < 0.995 || !initialized.current) {
-      const landing =
-        size.width < 700
-          ? new THREE.Vector3(0, 1.8, 14.5)
-          : new THREE.Vector3(0, 1.8, 10.2);
-      const end =
-        size.width < 700
-          ? new THREE.Vector3(13, 17, 22)
-          : new THREE.Vector3(13, 15, 20);
-      camera.position.copy(landing.lerp(end, t));
-      const look = new THREE.Vector3(
+      const mobile = size.width < 700;
+      cameraStart.set(0, 1.8, mobile ? 14.5 : 10.2);
+      cameraEnd.set(13, mobile ? 17 : 15, mobile ? 22 : 20);
+      camera.position.copy(cameraStart.lerp(cameraEnd, t));
+      const look = cameraLook.set(
         size.width < 700 ? 0 : -2.7,
         THREE.MathUtils.lerp(0.35, 0, t),
         0,
@@ -482,16 +532,7 @@ function Scene() {
             opacity={0.38}
           />
         </mesh>
-        {pebbles.map((p, i) => (
-          <mesh
-            key={i}
-            position={[p.x, 0.02, p.z]}
-            scale={[p.s, p.s * 0.5, p.s]}
-          >
-            <sphereGeometry args={[1, 6, 4]} />
-            <meshStandardMaterial color={i % 3 ? "#d8d7b0" : "#cad7a6"} />
-          </mesh>
-        ))}
+        <Pebbles />
         {entities.map((e) => (
           <Formation key={e.id} entity={e} />
         ))}
@@ -560,6 +601,7 @@ export default function World() {
             useOrb.getState().set({ selected: undefined });
         }}
       >
+        <AdaptiveResolution />
         <Scene />
       </Canvas>
     </Boundary>
