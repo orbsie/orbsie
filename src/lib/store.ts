@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { get, set, update } from "idb-keyval";
+import { get, set } from "idb-keyval";
 import {
   blankProject,
   committed,
@@ -119,6 +119,17 @@ function activateWriter(projectId: string) {
     }, LEASE_MS / 3);
   return true;
 }
+async function withDraftWriteLock(
+  projectId: string,
+  write: () => Promise<boolean>,
+) {
+  if (typeof navigator === "undefined" || !navigator.locks) return write();
+  return navigator.locks.request(
+    `orbsie-write:${projectId}`,
+    { mode: "exclusive", ifAvailable: true },
+    (lock) => (lock ? write() : false),
+  );
+}
 let active: AbortController | undefined;
 let baseline: Project | undefined;
 const pause = (ms: number, signal: AbortSignal) =>
@@ -160,16 +171,27 @@ export const useOrb = create<State>((setState, getState) => ({
         });
         return;
       }
-      await set("orbsie-draft", {
-        project: committed(s.project),
-        history: s.history.slice(-20),
-        savedAt: Date.now(),
-      });
       const snapshot = committed(s.project, baseline);
-      await update<Record<string, Project>>("orbsie-library", (library) => ({
-        ...library,
-        [snapshot.id]: snapshot,
-      }));
+      const wrote = await withDraftWriteLock(snapshot.id, async () => {
+        const library = await get<Record<string, Project>>("orbsie-library");
+        const existing = library?.[snapshot.id];
+        if (existing && existing.revision > snapshot.revision) return false;
+        await set("orbsie-draft", {
+          project: snapshot,
+          history: s.history.slice(-20),
+          savedAt: Date.now(),
+        });
+        await set("orbsie-library", { ...library, [snapshot.id]: snapshot });
+        return true;
+      });
+      if (!wrote) {
+        setState({
+          readOnly: true,
+          error:
+            "A newer local draft was saved in another tab. This tab was made read-only.",
+        });
+        return;
+      }
       setState({
         saved: true,
         recovered: snapshot,

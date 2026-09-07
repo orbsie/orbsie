@@ -33,6 +33,7 @@ import {
 import { useDictation } from "@/lib/use-dictation";
 import { modelModes } from "@/lib/model-modes";
 import { useOrb } from "@/lib/store";
+import { committed } from "@/lib/protocol";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
   ssr: false,
@@ -110,7 +111,13 @@ export default function Orbsie() {
     const current = data.projects?.find(
       (project: CloudProject) => project.id === useOrb.getState().project.id,
     );
-    if (current) setCloudRevision(current.revision);
+    if (
+      current &&
+      JSON.stringify(current.snapshot) ===
+        JSON.stringify(committed(useOrb.getState().project))
+    )
+      setCloudRevision(current.revision);
+    else setCloudRevision(null);
   };
   useEffect(() => {
     if (location.hash.startsWith("#orb=")) {
