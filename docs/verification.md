@@ -27,7 +27,7 @@ Actual flagship creation and edited snapshots were rendered and visually inspect
 
 ## Measurements and limits
 
-AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. Native GPU results, adaptive quality, geometry workers and full path reachability remain unverified.
+AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. A subsequent adaptive-resolution/instancing pass measured median50.0ms and p9583.4ms versus a separate baseline66.7/100.1ms, at lower backing resolution. These single development-server samples are indicative; native GPU results, geometry workers and full path reachability remain unverified. See [measurement conditions](render-performance.md).
 
 Separate production/development Neon Free databases are provisioned and migrated. Real production accounts/cloud saving passed acceptance. The supplied publishing token can read the main project but Vercel denies project creation (HTTP 403); per-Orb publication is not live certified. The main app deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md) and [cloud acceptance](cloud-verification.md).
 
