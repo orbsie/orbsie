@@ -31,7 +31,8 @@ import {
   MicOff,
 } from "lucide-react";
 import { useDictation } from "@/lib/use-dictation";
-import { modelModes } from "@/lib/model-modes";
+import { modelModes, type CatalogModel } from "@/lib/model-modes";
+import { modelRankingMetadata } from "@/lib/model-rankings";
 import {
   scopedValue,
   createProjectScope,
@@ -51,6 +52,10 @@ const World = dynamic(() => import("./world"), {
   ),
 });
 type Connection = { provider: string; model: string; key: string };
+const tokenPrice = (value: number | null | undefined) =>
+  value == null
+    ? "—"
+    : `$${value.toLocaleString("en-US", { maximumFractionDigits: 6 })}`;
 type CloudProject = {
   id: string;
   title: string;
@@ -79,7 +84,13 @@ export default function Orbsie() {
   const [shareUrl, setShareUrl] = useState("");
   const [modalError, setModalError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [models, setModels] = useState<{ id: string; name: string }[]>([]);
+  const [models, setModels] = useState<CatalogModel[]>([]);
+  const [modelSearch, setModelSearch] = useState("");
+  const visibleModels = models.filter((model) =>
+    `${model.name} ${model.id}`
+      .toLowerCase()
+      .includes(modelSearch.trim().toLowerCase()),
+  );
   const [capabilities, setCapabilities] = useState({
     accounts: false,
     publishing: false,
@@ -214,6 +225,7 @@ export default function Orbsie() {
     if (!modal || modal !== "settings") return;
     const controller = new AbortController();
     setModels([]);
+    setModelSearch("");
     fetch(`/api/models?provider=${connection.provider}`, {
       signal: controller.signal,
     })
@@ -691,14 +703,19 @@ export default function Orbsie() {
               <button
                 type="button"
                 className="mode-button"
-                onClick={() => setModal("settings")}
+                onClick={() => {
+                  if (demo) setDemo(false);
+                  setModal("settings");
+                }}
               >
                 <span className="mode-dot" />
                 {demo
-                  ? "Demo"
-                  : connection.provider === "openrouter"
-                    ? "OpenRouter"
-                    : "AI Gateway"}
+                  ? "Demo · Connect provider"
+                  : !connection.key
+                    ? "Connect provider"
+                    : connection.provider === "openrouter"
+                      ? "OpenRouter"
+                      : "AI Gateway"}
                 <ChevronDown size={12} />
               </button>
               <div className="composer-actions">
@@ -754,7 +771,11 @@ export default function Orbsie() {
           {!landing && (
             <div className="panel-foot">
               <span className="mode-dot" />
-              {demo ? "Scripted demo" : "AI connected"}
+              {demo
+                ? "Scripted demo"
+                : connection.key
+                  ? "AI connected"
+                  : "Provider not connected"}
             </div>
           )}
         </section>
@@ -899,8 +920,8 @@ export default function Orbsie() {
               </span>
               <h2>A little creative power</h2>
               <p>
-                Explore the demo, or connect your own AI to make something
-                entirely yours.
+                Explore the scripted demo, or connect a provider API key for
+                real generation. No Orbsie sign-in needed.
               </p>
               <div className="connection-choice">
                 <button
@@ -920,7 +941,9 @@ export default function Orbsie() {
                 >
                   <KeyRound size={18} />
                   <strong>Your AI connection</strong>
-                  <span>Open-ended ideas, using your own API credits.</span>
+                  <span>
+                    Generate your ideas with a provider API key and credits.
+                  </span>
                   {!demo && <Check size={16} />}
                 </button>
               </div>
@@ -929,6 +952,7 @@ export default function Orbsie() {
                   <label>
                     Provider
                     <select
+                      aria-label="Provider"
                       value={connection.provider}
                       onChange={(e) =>
                         setConnection({
@@ -968,32 +992,102 @@ export default function Orbsie() {
                           }
                         >
                           <strong>{mode.label}</strong>
-                          <span>{mode.name}</span>
                         </button>
                       );
                     })}
                   </div>
                   <details className="advanced-models">
                     <summary>Advanced</summary>
-                    <label>
-                      Model
-                      <select
-                        value={connection.model}
-                        onChange={(e) =>
-                          setConnection({
-                            ...connection,
-                            model: e.target.value,
-                          })
-                        }
+                    <p className="fine-print" id="model-ranking-note">
+                      Estimated 3D suitability, highest first. Ranking is a
+                      guide for Orbsie; unranked models lack comparable 3D
+                      evidence.{" "}
+                      <a
+                        className="model-ranking-source"
+                        href={modelRankingMetadata.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
                       >
-                        <option value="">Choose a model</option>
-                        {models.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
+                        Ranking source
+                      </a>{" "}
+                      · {modelRankingMetadata.snapshotDate}
+                    </p>
+                    <label>
+                      Find a model
+                      <input
+                        type="search"
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        placeholder="Search models"
+                      />
                     </label>
+                    <p className="fine-print" id="model-pricing-note">
+                      Estimated USD / 1M tokens. — means unavailable. Actual
+                      provider charges can vary.
+                    </p>
+                    <div className="model-catalog-heading" aria-hidden="true">
+                      <span>Model</span>
+                      <span>Input</span>
+                      <span>Cached input</span>
+                      <span>Output</span>
+                    </div>
+                    <div
+                      className="model-catalog"
+                      role="group"
+                      aria-label="Advanced models"
+                      aria-describedby="model-ranking-note model-pricing-note"
+                    >
+                      {visibleModels.map((model) => (
+                        <button
+                          key={model.id}
+                          type="button"
+                          className="model-catalog-row"
+                          aria-pressed={connection.model === model.id}
+                          data-model-id={model.id}
+                          onClick={() =>
+                            setConnection({ ...connection, model: model.id })
+                          }
+                        >
+                          <span className="model-catalog-name">
+                            <span className="model-rank">
+                              {model.qualityRank == null
+                                ? "—"
+                                : model.qualityRank}
+                            </span>
+                            <span>
+                              <strong>{model.name}</strong>
+                              {model.qualityRank == null && (
+                                <small>Unranked</small>
+                              )}
+                            </span>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Input</span>
+                            <strong>{tokenPrice(model.inputPrice)}</strong>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Cached input</span>
+                            <strong>
+                              {tokenPrice(model.cachedInputPrice)}
+                            </strong>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Output</span>
+                            <strong>{tokenPrice(model.outputPrice)}</strong>
+                          </span>
+                        </button>
+                      ))}
+                      {models.length > 0 && visibleModels.length === 0 && (
+                        <p className="fine-print" role="status">
+                          No models match your search.
+                        </p>
+                      )}
+                      {models.length === 0 && (
+                        <p className="fine-print" role="status">
+                          No models available yet.
+                        </p>
+                      )}
+                    </div>
                   </details>
                   <label>
                     API key
@@ -1008,19 +1102,19 @@ export default function Orbsie() {
                     />
                   </label>
                   <p className="fine-print">
-                    Your key is sent only to Orbsie’s authenticated relay and
-                    your selected provider. It is never saved with your world.{" "}
-                    {user ? "" : "Sign in before generating."}
+                    Your key is sent through Orbsie to your selected provider
+                    and kept only in this tab. Your world saves on this device.
+                    Sign in when you're ready to publish.
                   </p>
-                  {!capabilities.accounts && (
-                    <div className="setup-note">
-                      AI creation will be available when account storage is
-                      connected. The interactive demo works now.
-                    </div>
-                  )}
                 </>
               )}
-              <button className="primary full" onClick={() => setModal(null)}>
+              <button
+                className="primary full"
+                disabled={
+                  !demo && (!connection.key.trim() || !connection.model)
+                }
+                onClick={() => setModal(null)}
+              >
                 Continue {demo ? "with the demo" : "with this connection"}
                 <ArrowUpRight size={16} />
               </button>

@@ -52,7 +52,9 @@ for (const mode of ["Quality", "Balanced", "Budget"]) {
   ).toHaveAttribute("aria-pressed", "true");
   selections.push({
     mode,
-    model: await page.locator(".advanced-models select").inputValue(),
+    model: await page
+      .locator('.model-catalog-row[aria-pressed="true"]')
+      .getAttribute("data-model-id"),
   });
 }
 await page
