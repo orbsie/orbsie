@@ -32,6 +32,13 @@ import {
 } from "lucide-react";
 import { useDictation } from "@/lib/use-dictation";
 import { modelModes } from "@/lib/model-modes";
+import {
+  scopedValue,
+  createProjectScope,
+  readPublication,
+  type ProjectValue,
+  type Publication,
+} from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
 import { committed } from "@/lib/protocol";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
@@ -52,13 +59,6 @@ type CloudProject = {
   updated_at: string;
   public_url?: string | null;
   publication_revision?: number | null;
-};
-type Publication = {
-  servedRevision?: number | null;
-  state: string;
-  url?: string;
-  deploymentUrl?: string;
-  error?: string;
 };
 export default function Orbsie() {
   const s = useOrb();
@@ -90,10 +90,29 @@ export default function Orbsie() {
   const [name, setName] = useState("");
   const [signup, setSignup] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
-  const [cloudRevision, setCloudRevision] = useState<number | null>(null);
+  const [cloudBaseline, setCloudBaseline] =
+    useState<ProjectValue<number> | null>(null);
+  const cloudRevision = scopedValue(cloudBaseline, s.project.id);
   const [cloudProjects, setCloudProjects] = useState<CloudProject[]>([]);
   const [conflict, setConflict] = useState<CloudProject | null>(null);
-  const [publication, setPublication] = useState<Publication | null>(null);
+  const [publicationRecord, setPublicationRecord] =
+    useState<ProjectValue<Publication> | null>(null);
+  const publication = scopedValue(publicationRecord, s.project.id);
+  const projectScope = useRef(createProjectScope(s.project.id));
+  useEffect(
+    () =>
+      useOrb.subscribe((state) => {
+        if (projectScope.current.select(state.project.id)) {
+          setCloudBaseline(null);
+          setPublicationRecord(null);
+          setConflict(null);
+          setShareUrl("");
+          setModalError("");
+          setBusy(false);
+        }
+      }),
+    [],
+  );
   const [objectList, setObjectList] = useState(false);
   const [publicView, setPublicView] = useState(false);
   const chat = useRef<HTMLDivElement>(null);
@@ -111,9 +130,12 @@ export default function Orbsie() {
       s.score.includes(e.id),
   ).length;
   const refreshCloud = async () => {
+    const isCurrent = projectScope.current.capture();
+    const projectId = useOrb.getState().project.id;
     const response = await fetch("/api/projects");
     if (!response.ok) return;
     const data = await response.json();
+    if (!isCurrent()) return;
     setCloudProjects(data.projects ?? []);
     const current = data.projects?.find(
       (project: CloudProject) => project.id === useOrb.getState().project.id,
@@ -123,8 +145,8 @@ export default function Orbsie() {
       JSON.stringify(current.snapshot) ===
         JSON.stringify(committed(useOrb.getState().project))
     )
-      setCloudRevision(current.revision);
-    else setCloudRevision(null);
+      setCloudBaseline({ projectId, value: current.revision });
+    else setCloudBaseline(null);
   };
   useEffect(() => {
     if (location.hash.startsWith("#orb=")) {
@@ -202,23 +224,28 @@ export default function Orbsie() {
   }, [modal, connection.provider]);
   useEffect(() => {
     if (modal !== "share" || !user || !capabilities.publishing) return;
+    const projectId = s.project.id;
+    const inProject = projectScope.current.capture();
     let cancelled = false;
+    const isCurrent = () => !cancelled && inProject();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const check = async () => {
       const response = await fetch(
         `/api/publish?projectId=${encodeURIComponent(s.project.id)}`,
       );
-      if (cancelled || response.status === 404) return;
-      const data = await response.json();
-      if (!response.ok) {
-        setPublication({ state: "ERROR", error: data.error });
-        return;
-      }
-      setPublication(data);
+      const data = await readPublication(response, isCurrent);
+      if (data === undefined) return;
+      setPublicationRecord(data ? { projectId, value: data } : null);
+      if (!data) return;
       if (!["READY", "ERROR", "CANCELED", "PROTECTED"].includes(data.state))
-        timer = setTimeout(check, 2500);
+        timer = setTimeout(() => void poll(), 2500);
     };
-    void check();
+    const poll = () =>
+      check().catch(() => {
+        if (isCurrent())
+          setModalError("Publication status could not be loaded.");
+      });
+    void poll();
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
@@ -263,6 +290,8 @@ export default function Orbsie() {
     }
   };
   const cloudSave = async () => {
+    const projectId = s.project.id;
+    const isCurrent = projectScope.current.capture();
     setBusy(true);
     try {
       const response = await fetch("/api/projects", {
@@ -274,26 +303,31 @@ export default function Orbsie() {
         }),
       });
       const data = await response.json();
+      if (!isCurrent()) return;
       if (response.status === 409 && data.conflict) {
         setConflict(data.conflict);
         throw Error(data.error);
       }
       if (!response.ok) throw Error(data.error);
-      setCloudRevision(data.revision);
+      setCloudBaseline({ projectId, value: data.revision });
       setConflict(null);
       await refreshCloud();
+      if (!isCurrent()) return;
       s.set({
         notice: data.archivePending
           ? "Saved to your account. The backup archive will be retried later."
           : "Saved to your account.",
       });
     } catch (e) {
-      s.set({ error: e instanceof Error ? e.message : "Cloud save failed." });
+      if (isCurrent())
+        s.set({ error: e instanceof Error ? e.message : "Cloud save failed." });
     } finally {
-      setBusy(false);
+      if (isCurrent()) setBusy(false);
     }
   };
   const publish = async () => {
+    const projectId = s.project.id;
+    const isCurrent = projectScope.current.capture();
     setBusy(true);
     setModalError("");
     try {
@@ -306,14 +340,16 @@ export default function Orbsie() {
         }),
       });
       const data = await response.json();
+      if (!isCurrent()) return;
       if (!response.ok) throw Error(data.error);
       setShareUrl(data.url);
-      setPublication(data);
+      setPublicationRecord({ projectId, value: data });
       setModalError("Deployment submitted. This status will update here.");
     } catch (e) {
-      setModalError(e instanceof Error ? e.message : "Publishing failed.");
+      if (isCurrent())
+        setModalError(e instanceof Error ? e.message : "Publishing failed.");
     } finally {
-      setBusy(false);
+      if (isCurrent()) setBusy(false);
     }
   };
   const authenticate = async (e: FormEvent) => {
@@ -1118,7 +1154,12 @@ export default function Orbsie() {
                         void s
                           .loadCloud(cloud.snapshot)
                           .then(() => {
-                            setCloudRevision(cloud.revision);
+                            if (useOrb.getState().project.id !== cloud.id)
+                              return;
+                            setCloudBaseline({
+                              projectId: cloud.id,
+                              value: cloud.revision,
+                            });
                             setConflict(null);
                             setModal(null);
                           })
@@ -1163,7 +1204,12 @@ export default function Orbsie() {
                           void s
                             .loadCloud(conflict.snapshot)
                             .then(() => {
-                              setCloudRevision(conflict.revision);
+                              if (useOrb.getState().project.id !== conflict.id)
+                                return;
+                              setCloudBaseline({
+                                projectId: conflict.id,
+                                value: conflict.revision,
+                              });
                               setConflict(null);
                               setModal(null);
                             })
