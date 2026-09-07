@@ -1,0 +1,25 @@
+# Model ordering and price estimates
+
+Advanced models use **estimated 3D suitability**, based on a dated external preference ranking. This is not an Orbsie benchmark, geometry-accuracy test, or guarantee of better results for a particular prompt. Models without ranking evidence appear alphabetically after ranked models; **unranked does not mean lower quality**.
+
+## Ranking evidence
+
+The September 7, 2026 snapshot in `src/lib/model-rankings.ts` extracts positive integer ranks from `benchmarks.design_arena` entries where `arena` is `models` and `category` is `3d`. Source: the [public OpenRouter catalog](https://openrouter.ai/api/v1/models). The [catalog documentation](https://openrouter.ai/docs/guides/overview/models#benchmarks-object) describes these as third-party Design Arena preference rankings among OpenRouter-listed models. They measure a different setting from Orbsie's structured scene commands, progressive formation, or working gameplay.
+
+The first three observed entries were Kimi K3, Claude Fable 5.1, and Claude Opus 5. This order follows that evidence rather than model price, provider, release date, or an invented composite score. General intelligence and coding scores are not mixed into the 3D ranking. Tied ranks sort by display name, then exact model ID.
+
+Both providers use the same checked-in snapshot so a shared model's rank is consistent. Gateway namespaces `zai/` and `spacexai/` map to `z-ai/` and `x-ai/` for lookup only. Submitted model IDs remain exactly as returned by the selected provider. Undocumented variants do not inherit a base model's rank. Refresh the snapshot by repeating the extraction above from the public catalog and reviewing its date, category and IDs.
+
+The Quality/Balanced/Budget presets retain the established Astra/Sol/Luna IDs. Those models lack Design Arena `3d` entries in this snapshot and are therefore unranked in Advanced. [OpenAI describes Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) as its most capable model for complex reasoning and coding, but that is not a comparative 3D benchmark. A preset and an external preference rank answer different questions.
+
+## Prices and compatibility
+
+The API fetches each provider's catalog, cached for one hour, and multiplies its base per-token rates by one million. OpenRouter uses `pricing.prompt`, `pricing.input_cache_read`, and `pricing.completion`; [Gateway documents](https://vercel.com/docs/ai-gateway/models-and-providers) `pricing.input`, `pricing.input_cache_read`, and `pricing.output`. These exact cache keys were also confirmed in the live responses.
+
+The UI must label amounts **Estimated USD / 1M tokens**. Missing, negative, malformed, or nonfinite rates become `null` and display as unavailable, never zero. An explicitly supplied zero remains zero. These estimates do not promise a cache hit or include cache-write fees, context-tier overrides, routing differences, service tiers, taxes, or additional request/tool charges. We use the selected provider's live rates, which may differ from direct-provider documentation.
+
+The existing language/tool compatibility filter remains. Async `:batch` variants are excluded: the [official Batch API](https://openrouter.ai/docs/batch-quickstart) submits requests for later retrieval rather than providing this app's immediate streaming interaction. No inference-based certification of every catalog entry is claimed.
+
+## Validation
+
+Six deterministic tests cover conversion, unavailable versus free rates, ordering, namespace aliases without ID rewriting, malformed/unsupported rows, preset stability, batch exclusion, and route provenance. Typecheck passed. Public catalog reads produced 293 selectable OpenRouter models (100 ranked) and 249 Gateway models (70 ranked), with the same top three and all three preset IDs available. Evidence: `docs/evidence/model-catalog-estimates.json`. No credentials were read and no inference requests were made.
