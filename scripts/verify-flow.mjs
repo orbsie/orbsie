@@ -25,7 +25,10 @@ await page.waitForSelector("canvas");
 await page.waitForTimeout(1500);
 await page.screenshot({ path: "docs/evidence/landing.png" });
 const started = Date.now();
-await page.getByRole("button", { name: "An island adventure" }).click();
+await page
+  .getByPlaceholder("What experience to build?")
+  .fill("A tiny island treasure hunt");
+await page.getByRole("button", { name: "Create", exact: true }).click();
 await page.waitForTimeout(1800);
 await page.screenshot({ path: "docs/evidence/formation.png" });
 await expect(
@@ -109,7 +112,10 @@ const mp = await mobile.newPage();
 await mp.goto(url);
 await mp.waitForTimeout(2500);
 await mp.screenshot({ path: "docs/evidence/mobile-landing.png" });
-await mp.getByRole("button", { name: "A daydream garden" }).click();
+await mp
+  .getByPlaceholder("What experience to build?")
+  .fill("A garden whose flowers open when clicked");
+await mp.getByRole("button", { name: "Create", exact: true }).click();
 await expect(
   mp.getByText("Your little garden is ready.", { exact: false }),
 ).toBeVisible({ timeout: 25000 });

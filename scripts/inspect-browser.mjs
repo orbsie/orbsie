@@ -16,7 +16,10 @@ page.on("console", (m) => {
 page.on("pageerror", (e) => console.log("PAGEERROR", e.message));
 await page.goto("http://localhost:3001");
 await page.waitForTimeout(3000);
-await page.getByRole("button", { name: "An island adventure" }).click();
+await page
+  .getByPlaceholder("What experience to build?")
+  .fill("A tiny island treasure hunt");
+await page.getByRole("button", { name: "Create", exact: true }).click();
 await page.waitForTimeout(14000);
 console.log(
   await page.evaluate(() => ({

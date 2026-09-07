@@ -44,3 +44,11 @@ TEST_URL=http://localhost:3000 node scripts/verify-flow.mjs
 ```
 
 The browser script's text selectors may require updates when copy changes. `scripts/capture-entrance.mjs` verifies the simplified entrance; standalone verification expects a separately served export on port 3010. All test provider keys are dummy strings. No production credentials are in these artifacts.
+
+## Centered composer and dictation update
+
+The entrance prompt is centered on both desktop and mobile. Island/Garden shortcuts are removed. The placeholder is exactly “What experience to build?”. Microphone input uses the browser's Web Speech API, with interim/final text, stop, manual-edit cancellation, unsupported-browser and permission/error handling. The microphone permissions policy is limited to the same origin. Orbsie does not capture or store audio; the browser's speech service may process it remotely.
+
+`scripts/verify-dictation.mjs` exercises the UI with mocked speech-recognition events. It checks centering, transcript corrections, preservation of existing text, stop, stale results, microphone denial, and unsupported browsers. This validates application behavior, not actual audio capture or a live transcription service. Real microphone/transcription availability remains browser-dependent. API reference: https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition
+
+Live model-backed tests are required to use Astra at low reasoning effort, without fallback. Current unit tests and browser fixtures do not make model calls. The requested local ChatGPT test integration was researched by an Astra/low subagent; no subscription credentials were inspected or used and no live generation test was performed.

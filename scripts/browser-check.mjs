@@ -22,7 +22,10 @@ await page.goto("http://localhost:3001");
 await page.waitForSelector("canvas");
 await page.waitForTimeout(2500);
 await page.screenshot({ path: "docs/evidence/landing.png" });
-await page.getByRole("button", { name: "An island adventure" }).click();
+await page
+  .getByPlaceholder("What experience to build?")
+  .fill("A tiny island treasure hunt");
+await page.getByRole("button", { name: "Create", exact: true }).click();
 await page.waitForTimeout(1800);
 await page.screenshot({ path: "docs/evidence/formation.png" });
 await page.waitForTimeout(11000);

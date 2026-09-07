@@ -1371,7 +1371,9 @@ kbd {
   display: none;
 }
 .is-landing .landing-composer {
-  bottom: 45px;
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
   width: 500px;
   background: #10252ddd;
   border: 1px solid #d4e6e526;
@@ -1463,7 +1465,7 @@ kbd {
   }
   .is-landing .landing-composer {
     width: calc(100% - 32px);
-    bottom: 24px;
+    bottom: auto;
   }
   .is-landing .topbar {
     padding: 20px;
@@ -1478,5 +1480,53 @@ kbd {
   }
   .is-landing .prompt-form textarea {
     font-size: 13px;
+  }
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dictation-button {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+}
+.dictation-button:hover {
+  background: #7196791a;
+}
+.is-landing .dictation-button {
+  color: #c8d9d7;
+}
+.is-landing .dictation-button:hover {
+  background: #ffffff12;
+}
+.dictation-button.is-listening,
+.is-landing .dictation-button.is-listening {
+  color: #fcece3;
+  background: #ab5a58;
+  box-shadow: 0 0 0 4px #ce8a8425;
+}
+.dictation-status {
+  font-size: 10px;
+  color: #9d635e;
+}
+.is-landing .dictation-status {
+  color: #f1b5aa;
+}
+@media (max-width: 650px) {
+  .composer-actions {
+    gap: 7px;
+  }
+  .dictation-button {
+    width: 40px;
+    height: 40px;
+  }
+  .dictation-status {
+    font-size: 9px;
   }
 }

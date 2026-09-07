@@ -3,6 +3,8 @@
 ## Owner updates — 2026-09-07
 
 - Keep Apache 2.0.
+- Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.
+- All live model-backed tests must use Astra with low reasoning effort. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
 - Initial delivery is approximately 30 minutes of implementation, with frequent GitHub pushes and deployment to the Orbsie Vercel app.
 - The entrance planet should occupy roughly 80% of the viewport. Use a dark, space-like background.
 - Remove approximately 80% of visible text and interface clutter. Focus on the planet and essential creation controls; omit landing branding, early-access labels, marketing headings and taglines.

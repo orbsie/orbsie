@@ -27,7 +27,10 @@ import {
   ArrowRight,
   ArrowDown,
   KeyRound,
+  Mic,
+  MicOff,
 } from "lucide-react";
+import { useDictation } from "@/lib/use-dictation";
 import { useOrb } from "@/lib/store";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
@@ -38,27 +41,13 @@ const World = dynamic(() => import("./world"), {
     </div>
   ),
 });
-const examples = [
-  {
-    icon: "✧",
-    title: "A tiny island treasure hunt",
-    label: "An island adventure",
-  },
-  {
-    icon: "✿",
-    title: "A garden whose flowers open when clicked",
-    label: "A daydream garden",
-  },
-  {
-    icon: "◌",
-    title: "A bouncy space playground",
-    label: "A little space to play",
-  },
-];
 type Connection = { provider: string; model: string; key: string };
 export default function Orbsie() {
   const s = useOrb();
   const [prompt, setPrompt] = useState("");
+  const dictation = useDictation(prompt, setPrompt, (message) =>
+    s.set({ error: message }),
+  );
   const [modal, setModal] = useState<"settings" | "share" | "account" | null>(
     null,
   );
@@ -138,8 +127,12 @@ export default function Orbsie() {
       .then((d) => setModels(d.models ?? []))
       .catch(() => setModels([]));
   }, [modal, connection.provider]);
+  useEffect(() => {
+    dictation.cancel();
+  }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);
   const submit = (e?: FormEvent, text = prompt) => {
     e?.preventDefault();
+    dictation.cancel();
     if (!text.trim()) return;
     if (!demo && (!connection.key || !connection.model)) {
       setModal("settings");
@@ -147,10 +140,6 @@ export default function Orbsie() {
     }
     setPrompt("");
     void s.run(text.trim(), demo, connection);
-  };
-  const startExample = (text: string) => {
-    setDemo(true);
-    submit(undefined, text);
   };
   const reset = () => s.set({ score: [], won: false, reset: s.reset + 1 });
   const download = async () => {
@@ -499,20 +488,21 @@ export default function Orbsie() {
               </div>
             )}
             <label className="sr-only" htmlFor="prompt">
-              {selected
-                ? "Change this object"
-                : "What would you like to bring to life?"}
+              {selected ? "Change this object" : "What experience to build?"}
             </label>
             <textarea
               ref={textarea}
               id="prompt"
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => {
+                dictation.cancel();
+                setPrompt(e.target.value);
+              }}
               placeholder={
                 selected
                   ? "What would you like to change?"
                   : landing
-                    ? "What would you like to bring to life?"
+                    ? "What experience to build?"
                     : "A little taller? A little more magical?"
               }
               rows={landing ? 2 : 3}
@@ -538,42 +528,56 @@ export default function Orbsie() {
                     : "AI Gateway"}
                 <ChevronDown size={12} />
               </button>
-              {s.building ? (
+              <div className="composer-actions">
+                {dictation.listening && (
+                  <span className="dictation-status" role="status">
+                    Listening…
+                  </span>
+                )}
                 <button
                   type="button"
-                  className="create-button"
-                  onClick={s.stop}
+                  className={`dictation-button ${dictation.listening ? "is-listening" : ""}`}
+                  aria-label={
+                    dictation.listening ? "Stop dictation" : "Dictate prompt"
+                  }
+                  aria-pressed={dictation.listening}
+                  title={
+                    dictation.supported === false
+                      ? "Speech input unavailable in this browser"
+                      : "Dictate using your browser’s speech service"
+                  }
+                  onClick={dictation.toggle}
                 >
-                  <Square size={13} />
-                  Stop
+                  {dictation.listening ? (
+                    <Square size={16} fill="currentColor" />
+                  ) : dictation.supported === false ? (
+                    <MicOff size={18} />
+                  ) : (
+                    <Mic size={18} />
+                  )}
                 </button>
-              ) : (
-                <button
-                  className="create-button"
-                  type="submit"
-                  disabled={!prompt.trim()}
-                >
-                  {landing ? "Create" : "Change this"}
-                  <ArrowUp size={16} />
-                </button>
-              )}
+                {s.building ? (
+                  <button
+                    type="button"
+                    className="create-button"
+                    onClick={s.stop}
+                  >
+                    <Square size={13} />
+                    Stop
+                  </button>
+                ) : (
+                  <button
+                    className="create-button"
+                    type="submit"
+                    disabled={!prompt.trim()}
+                  >
+                    {landing ? "Create" : "Change this"}
+                    <ArrowUp size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           </form>
-          {landing && (
-            <div className="example-prompts">
-              {examples.slice(0, 2).map((e) => (
-                <button
-                  key={e.title}
-                  aria-label={e.label}
-                  onClick={() => startExample(e.title)}
-                >
-                  <span>{e.icon}</span>
-                  {e.title.includes("garden") ? "Garden" : "Island"}
-                  <ArrowUpRight size={12} />
-                </button>
-              ))}
-            </div>
-          )}
           {!landing && (
             <div className="panel-foot">
               <span className="mode-dot" />

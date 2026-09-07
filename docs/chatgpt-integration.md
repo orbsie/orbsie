@@ -15,3 +15,11 @@ Sources:
 - https://learn.chatgpt.com/docs/auth
 - https://vercel.com/docs/ai-gateway/sdks-and-apis/openai-chat-completions
 - https://openrouter.ai/docs/api_reference/streaming
+
+## Owner-requested E2E setup
+
+Use a trusted local companion for live subscription-backed tests. The user signs in through `codex login` if `codex login status` does not show a valid login. Codex manages the cached credentials and their refresh; do not copy tokens into Orbsie, test fixtures, or Vercel. Connect the local test harness to App Server over stdio and check `account/read`.
+
+Query `model/list`, verify the actual Astra entry supports `low` in `supportedReasoningEfforts`, and use that exact returned identifier with `effort: "low"` on each `turn/start`. Fail clearly if Astra/low is unavailable; do not select a fallback. This account's model availability has not yet been checked. The local adapter is not yet implemented.
+
+The intended live test path is browser → local authenticated test adapter → Astra low → validated Orbsie operations → rendered result. Deterministic layout/protocol/microphone tests do not need model calls. This does not validate the public Vercel API-key relay or authorize public subscription-backed execution.
