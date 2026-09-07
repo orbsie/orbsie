@@ -396,6 +396,7 @@ export const useOrb = create<State>((setState, getState) => ({
       sequence: 0,
       seen: new Set(),
     };
+    let lastAppliedCommand: Command["type"] | undefined;
     const apply = (command: Command) => {
       if (signal.aborted || active !== controller) return;
       const s = getState();
@@ -413,6 +414,7 @@ export const useOrb = create<State>((setState, getState) => ({
         cursor,
       );
       cursor = result.cursor;
+      lastAppliedCommand = command.type;
       setState({ project: result.project });
       if (
         command.type === "set_geometry" &&
@@ -459,6 +461,10 @@ export const useOrb = create<State>((setState, getState) => ({
           }
         }
         if (pending.trim()) apply(JSON.parse(pending));
+        if (lastAppliedCommand !== "commit_revision")
+          throw Error(
+            "The connection ended before committing the scene. Finished objects are safe; try continuing your request.",
+          );
       }
       if (active === controller) {
         setState({
