@@ -48,3 +48,9 @@ TEST_URL=http://localhost:3001 node scripts/verify-dictation.mjs
 ```
 
 Start the app on the chosen test URL first. Stored-live-scene scripts require the evidence files written by the separate authorized live harness; they do not call a model themselves. Screenshots, JSON reports and recordings are in docs/evidence/. Earlier captures may represent previous UI iterations. Provider test keys are dummy values, and credentials are excluded from artifacts.
+
+## Favicon deployment
+
+Source `a6c9a58` is live at https://orbsie.com via `orbsie-5csqmzd63-grappeggias-projects.vercel.app`. Homepage metadata links the SVG favicon; HTTP200 and exact deployed/source equality passed. The icon was visually checked at16,32,64 and160px. This branding-only update followed the65-test/typecheck/build pass and successful anonymous provider UI verification. See [favicon evidence](evidence/production-favicon.json).
+
+Organization avatar artwork is committed under `assets/brand`. Setting the GitHub organization avatar remains pending: browser inventory returned no available apps/browsers, so no authenticated upload was performed.
