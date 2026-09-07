@@ -1580,3 +1580,37 @@ kbd {
     font-size: 9px;
   }
 }
+.model-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+.model-modes button {
+  padding: 14px 8px;
+  border: 1px solid rgba(170, 215, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(150, 185, 230, 0.06);
+  color: inherit;
+}
+.model-modes button[aria-pressed="true"] {
+  border-color: #8dcfff;
+  background: rgba(105, 175, 235, 0.18);
+}
+.model-modes button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.model-modes span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+.advanced-models {
+  margin: 12px 0 20px;
+}
+.advanced-models summary {
+  cursor: pointer;
+  font-size: 13px;
+}

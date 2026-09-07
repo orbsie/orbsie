@@ -5,6 +5,7 @@ import {
   type Cursor,
 } from "../protocol";
 import { z } from "zod";
+import { isRecommendedModel } from "../model-modes";
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
 export const systemPrompt = `You create playful, coherent 3D worlds for Orbsie. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve each entity FIRST with stable ID, label, position, scale, color, stage seed. Then send set_geometry coarse and refined as separate commands. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. Never include code, URLs, credentials, scripts, or external assets. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message. You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
 export async function generateCommands({
@@ -41,6 +42,7 @@ export async function generateCommands({
       model,
       stream: true,
       max_tokens: 10000,
+      ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
       messages: [
         { role: "system", content: systemPrompt },
         {

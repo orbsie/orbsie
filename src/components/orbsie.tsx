@@ -31,6 +31,7 @@ import {
   MicOff,
 } from "lucide-react";
 import { useDictation } from "@/lib/use-dictation";
+import { modelModes } from "@/lib/model-modes";
 import { useOrb } from "@/lib/store";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
@@ -153,10 +154,37 @@ export default function Orbsie() {
   }, [modal]);
   useEffect(() => {
     if (!modal || modal !== "settings") return;
-    fetch(`/api/models?provider=${connection.provider}`)
-      .then((r) => r.json())
-      .then((d) => setModels(d.models ?? []))
-      .catch(() => setModels([]));
+    const controller = new AbortController();
+    setModels([]);
+    fetch(`/api/models?provider=${connection.provider}`, {
+      signal: controller.signal,
+    })
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw Error(data.error);
+        return data;
+      })
+      .then((d) => {
+        if (controller.signal.aborted) return;
+        setModels(d.models ?? []);
+        setConnection((current) => ({
+          ...current,
+          model:
+            current.model ||
+            (d.models?.some(
+              (model: { id: string }) => model.id === modelModes[1].id,
+            )
+              ? modelModes[1].id
+              : ""),
+        }));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setModalError(
+            "The model catalog is unavailable. Please reopen settings to retry.",
+          );
+      });
+    return () => controller.abort();
   }, [modal, connection.provider]);
   useEffect(() => {
     if (modal !== "share" || !user || !capabilities.publishing) return;
@@ -834,6 +862,7 @@ export default function Orbsie() {
                           ...connection,
                           provider: e.target.value,
                           model: "",
+                          key: "",
                         })
                       }
                     >
@@ -841,22 +870,58 @@ export default function Orbsie() {
                       <option value="gateway">Vercel AI Gateway</option>
                     </select>
                   </label>
-                  <label>
-                    Model
-                    <select
-                      value={connection.model}
-                      onChange={(e) =>
-                        setConnection({ ...connection, model: e.target.value })
-                      }
-                    >
-                      <option value="">Choose a model</option>
-                      {models.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div
+                    className="model-modes"
+                    role="group"
+                    aria-label="Creation quality"
+                  >
+                    {modelModes.map((mode) => {
+                      const available = models.some(
+                        (model) => model.id === mode.id,
+                      );
+                      return (
+                        <button
+                          key={mode.id}
+                          type="button"
+                          aria-pressed={connection.model === mode.id}
+                          disabled={!available}
+                          title={
+                            available
+                              ? mode.description
+                              : "Unavailable in this provider's catalog"
+                          }
+                          onClick={() =>
+                            setConnection({ ...connection, model: mode.id })
+                          }
+                        >
+                          <strong>{mode.label}</strong>
+                          <span>{mode.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <details className="advanced-models">
+                    <summary>Advanced</summary>
+                    <label>
+                      Model
+                      <select
+                        value={connection.model}
+                        onChange={(e) =>
+                          setConnection({
+                            ...connection,
+                            model: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="">Choose a model</option>
+                        {models.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </details>
                   <label>
                     API key
                     <input
