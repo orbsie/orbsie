@@ -8,6 +8,9 @@ function PlayerApp() {
   const s = useOrb();
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const collectibles = s.project.entities.filter(
+    (e) => e.stage === "ready" && e.behavior?.type === "collect",
+  );
   useEffect(() => {
     fetch("./project.json")
       .then((r) => {
@@ -39,11 +42,8 @@ function PlayerApp() {
         <div className="message">{error || "Opening your little world…"}</div>
       )}
       <div className="score">
-        ◆ {s.score.length} /{" "}
-        {
-          s.project.entities.filter((e) => e.behavior?.type === "collect")
-            .length
-        }
+        ◆ {collectibles.filter((e) => s.score.includes(e.id)).length} /{" "}
+        {collectibles.length}
       </div>
       <footer>
         W A S D / Arrow keys to move · Space to jump · Click flowers to bloom

@@ -101,7 +101,13 @@ export default function Orbsie() {
   const landing = s.phase === "landing";
   const selected = s.project.entities.find((e) => e.id === s.selected);
   const total = s.project.entities.filter(
-    (e) => e.behavior?.type === "collect",
+    (e) => e.stage === "ready" && e.behavior?.type === "collect",
+  ).length;
+  const collected = s.project.entities.filter(
+    (e) =>
+      e.stage === "ready" &&
+      e.behavior?.type === "collect" &&
+      s.score.includes(e.id),
   ).length;
   const refreshCloud = async () => {
     const response = await fetch("/api/projects");
@@ -722,7 +728,7 @@ export default function Orbsie() {
               <div className="game-hud">
                 <span className="crystal-symbol">◆</span>
                 <strong>
-                  {s.score.length} <span>/ {total}</span>
+                  {collected} <span>/ {total}</span>
                 </strong>
                 <span>
                   {total ? "Crystals collected" : "Explore your garden"}

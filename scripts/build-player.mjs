@@ -19,6 +19,7 @@ const paths = [
   "src/lib/protocol.ts",
   "src/lib/fixtures.ts",
   "src/lib/geometry.ts",
+  "src/lib/gameplay.ts",
   "LICENSE",
 ];
 const sources = {};
