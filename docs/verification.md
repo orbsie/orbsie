@@ -6,16 +6,17 @@ This report covers the first approximately 30-minute implementation. It is an ex
 
 - Production Next.js build and strict TypeScript checks.
 - 10 unit tests: sequence/run/revision rejection, idempotency, unknown references, invalid numeric input, checkpoint cleanup/restoration, stable unrelated entity identities, both deterministic fixtures, share encoding, two provider transport framing tests, invalid model-command rejection.
-- Browser flow against https://orbsie.vercel.app in Chromium 153: island creation, visible formation, object selection, tree-to-mushroom revision, undo, keyboard movement/jump input, ZIP download, refresh recovery, signed-out snapshot-link playback, mobile garden and visible touch controls. No page exceptions; no horizontal overflow at 390 × 844.
+- Browser flow against https://orbsie.com in Chromium 153: island creation, visible formation, object selection, tree-to-mushroom revision, undo, keyboard movement/jump input, ZIP download, refresh recovery, signed-out snapshot-link playback, mobile garden and visible touch controls. No page exceptions; no horizontal overflow at 390 × 844.
 - Latest design: roughly 80vh planet on desktop, dark starfield, branding/headline/footer removed and essential controls retained. Desktop and mobile screenshots are in `evidence/landing-space.png` and `evidence/mobile-space.png`.
+- Independent local projects: created an island, returned to the planet, created a garden, and verified both could be reopened from the local library.
 - Independent export: downloaded ZIP, installed its dependencies, rebuilt runtime from included source, ran its Vite production build, and opened the built game with a separate static HTTP server. `project.json` was fetched successfully; zero external service requests and zero page exceptions. See `evidence/export-report.json` and `evidence/standalone.png`.
 - orbsie.com was added as a verified project domain. An unauthenticated request returned HTTP 200 after its project-domain registration. The app also uses orbsie.vercel.app. Vercel deploys through the authenticated CLI; GitHub push milestones are in repository history.
 
-Screenshots and recordings are in `docs/evidence/`. The browser report contains the tested immutable demo share URL. Some early captures predate the dark-space design. The interaction video records the previous visual design but exercises the same runtime.
+Screenshots and recordings are in `docs/evidence/`. The browser report contains the tested immutable demo share URL. Some early captures predate the dark-space design. The latest interaction video includes the dark-space design and the complete tested flow.
 
 ## Measurements
 
-Chromium 153 headless, Linux x86_64, 1440 × 1000, SwiftShader software WebGL with video recording. Island fixture contains 14 semantic entities. Its scripted generation completed in about 10.5 seconds. Over 120 animation frames during play: median 66.7 ms, p95 116.6 ms. This software-rendered run does not meet the 60 fps target; native GPU performance and adaptive quality need further work. These are measured values for this test environment, not model-latency claims. First-reservation/control/objective timing instrumentation is incomplete.
+AMD EPYC 9124 (16 cores / 32 logical CPUs), Chromium 153 headless, Linux x86_64, 1440 × 1000, SwiftShader software WebGL with video recording. Island fixture contains 14 semantic entities. Its scripted generation completed in about 10.1 seconds. Over 120 animation frames during play: median 66.7 ms, p95 116.7 ms. This software-rendered run does not meet the 60 fps target; native GPU performance and adaptive quality need further work. These are measured values for this test environment, not model-latency claims. First-reservation/control/objective timing instrumentation is incomplete.
 
 ## Not verified or incomplete
 
