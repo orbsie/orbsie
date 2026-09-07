@@ -46,11 +46,36 @@ describe("gameplay runtime", () => {
       position: [start[0], start[1] + 1, start[2]],
       velocityY: 0,
       groundedOn: platform.id,
+      supportPosition: start,
     };
     const next = stepGameplay(state, idle, [platform], [], 0.04, 0.04);
     const displacement =
       movingEntityPosition(platform, 0.04)[0] - movingEntityPosition(platform, 0)[0];
     expect(next.position[0]).toBeCloseTo(state.position[0] + displacement);
+  });
+
+  it("reconciles a compatible platform speed edit from its last pose", () => {
+    const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
+    const oldPose = movingEntityPosition(platform, 1);
+    const edited = {
+      ...platform,
+      behavior: { ...platform.behavior!, speed: 0.2 },
+    };
+    const newPose = movingEntityPosition(edited, 1.016);
+    const result = stepGameplay(
+      {
+        position: [oldPose[0] + 0.2, 1.4, oldPose[2]],
+        velocityY: 0,
+        groundedOn: platform.id,
+        supportPosition: oldPose,
+      },
+      idle,
+      [edited],
+      [],
+      1.016,
+      0.016,
+    );
+    expect(result.position[0]).toBeCloseTo(newPose[0] + 0.2);
   });
 
   it("collects the final crystal and wins at the portal in one step", () => {
