@@ -15,3 +15,4 @@ scripts/verify-flow.mjs
 scripts/verify-standalone.mjs
 scripts/check-export.mjs
 scripts/capture-entrance.mjs
+assets/brand/

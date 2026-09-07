@@ -1,5 +1,11 @@
 # Account UI acceptance — 2026-09-07
 
+## Follow-up: cancel stale cloud activation
+
+Commit `869d897` fixes the remaining race inside `loadCloud`, before store mutation, rather than only checking the UI completion callback. Both UI entrypoints pass the combined account/project validity predicate. The store checks it before acquiring the writer lease, after local-copy persistence, inside the queued cloud-library update, and immediately before loading the cloud project. Invalidated operations return false so callbacks cannot restore a cloud baseline. Completion also verifies that the opened project remains active after saving.
+
+Two regressions pause IndexedDB work separately during local-copy preservation and cloud-library replacement, invalidate the pending operation, and load/save a newer draft. Both failed before the fix (the old account's cloud world replaced the new active draft), then passed after the fix: the active world, persisted current draft, and previous local library entry remain correct. No stale activation occurs after deferred persistence resumes. Focused `draft-regressions` + `project-state` suites: 11/11 passed. Typecheck passed. Only the `loadCloud` store type/implementation was changed; renderer generation/EOF work remains separate.
+
 ## Scope and production evidence
 
 Used Chromium/Playwright against `https://orbsie.com` after account/cloud services became available. Reused the first synthetic account from the ignored mode-0600 cloud acceptance state. Created one separate demo world for UI acceptance; no model inference requests or publication POSTs were made. The cloud acceptance sample was not modified.

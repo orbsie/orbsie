@@ -6,10 +6,10 @@ Latest infrastructure-enabled production verification: source commit `ef00705` d
 
 ## Passing checks
 
-- 50 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.
+- 65 deterministic tests and TypeScript checking pass. Coverage includes operation ordering, provider framing, Astra selection/cancellation, immutable archives, gameplay objectives/platform edits, atomic draft preservation, monotonic undo/redo, cloud conflict recovery, publication compare-and-swap, and project-scoped response handling. No model calls occur in this suite.
 - Production build passes. The editor keeps the large cosmic globe and centered composer, exact placeholder “What experience to build?”, and microphone button.
 - Chromium desktop/mobile fixture flow passes: formation, island, selected mushroom edit, undo, keyboard/jump input, ZIP download, refresh recovery, signed-out snapshot playback, flower garden, and touch controls. Zero page exceptions and no mobile horizontal overflow.
-- Live provider catalogs populate Quality (Astra), Balanced (Sol), Budget (Luna), and Advanced. Both providers return the recommended IDs; changing provider clears the entered key. Desktop/mobile settings and actual Astra snapshots render without exceptions.
+- Presets show only Quality, Balanced, and Budget. Advanced shows searchable models ordered by an external 3D-ranking snapshot, with live provider input/cached-input/output estimates per million tokens; unknown rates remain unavailable. Both providers return the recommended IDs; changing provider clears the entered key. Desktop/mobile settings and actual Astra snapshots render without exceptions.
 - Private development Google Cloud Storage: Vercel OIDC → Google token exchange → archive upload → create-only retry passed. Production/development identities and buckets are separate. Production authenticated cloud saves also completed their private archive writes.
 - Downloaded standalone ZIP installs and rebuilds from included source, then builds with Vite and plays through an independent static server. Gameplay source is included. No editor/API/model service requests and zero runtime exceptions. Vite reports a large ~1.53 MB JavaScript chunk (~402 KB gzip); code splitting remains a performance task.
 
