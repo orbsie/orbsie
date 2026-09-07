@@ -99,6 +99,21 @@ export default function Orbsie() {
     useState<ProjectValue<Publication> | null>(null);
   const publication = scopedValue(publicationRecord, s.project.id);
   const projectScope = useRef(createProjectScope(s.project.id));
+  const accountGeneration = useRef(0);
+  const captureCloudRequest = () => {
+    const inProject = projectScope.current.capture();
+    const generation = accountGeneration.current;
+    return () => inProject() && generation === accountGeneration.current;
+  };
+  const clearAccountState = () => {
+    accountGeneration.current++;
+    setCloudBaseline(null);
+    setCloudProjects([]);
+    setConflict(null);
+    setPublicationRecord(null);
+    setShareUrl("");
+    setModalError("");
+  };
   useEffect(
     () =>
       useOrb.subscribe((state) => {
@@ -130,7 +145,7 @@ export default function Orbsie() {
       s.score.includes(e.id),
   ).length;
   const refreshCloud = async () => {
-    const isCurrent = projectScope.current.capture();
+    const isCurrent = captureCloudRequest();
     const projectId = useOrb.getState().project.id;
     const response = await fetch("/api/projects");
     if (!response.ok) return;
@@ -149,6 +164,7 @@ export default function Orbsie() {
     else setCloudBaseline(null);
   };
   useEffect(() => {
+    const initialAccountGeneration = accountGeneration.current;
     if (location.hash.startsWith("#orb=")) {
       try {
         const project = decodeWorld(location.hash.slice(5));
@@ -163,11 +179,17 @@ export default function Orbsie() {
       .then((r) => r.json())
       .then((c) => {
         setCapabilities(c);
-        if (c.accounts)
+        if (
+          c.accounts &&
+          initialAccountGeneration === accountGeneration.current
+        )
           fetch("/api/auth/get-session")
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {
-              if (d?.user) {
+              if (
+                d?.user &&
+                initialAccountGeneration === accountGeneration.current
+              ) {
                 setUser(d.user);
                 void refreshCloud();
               }
@@ -225,7 +247,7 @@ export default function Orbsie() {
   useEffect(() => {
     if (modal !== "share" || !user || !capabilities.publishing) return;
     const projectId = s.project.id;
-    const inProject = projectScope.current.capture();
+    const inProject = captureCloudRequest();
     let cancelled = false;
     const isCurrent = () => !cancelled && inProject();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -291,7 +313,7 @@ export default function Orbsie() {
   };
   const cloudSave = async () => {
     const projectId = s.project.id;
-    const isCurrent = projectScope.current.capture();
+    const isCurrent = captureCloudRequest();
     setBusy(true);
     try {
       const response = await fetch("/api/projects", {
@@ -327,7 +349,7 @@ export default function Orbsie() {
   };
   const publish = async () => {
     const projectId = s.project.id;
-    const isCurrent = projectScope.current.capture();
+    const isCurrent = captureCloudRequest();
     setBusy(true);
     setModalError("");
     try {
@@ -371,6 +393,7 @@ export default function Orbsie() {
       );
       const data = await response.json();
       if (!response.ok) throw Error(data.message ?? "Sign-in failed.");
+      clearAccountState();
       setUser(data.user);
       await refreshCloud();
       setPassword("");
@@ -1151,10 +1174,14 @@ export default function Orbsie() {
                       key={`cloud-${cloud.id}`}
                       className="share-option"
                       onClick={() => {
+                        const generation = accountGeneration.current;
                         void s
                           .loadCloud(cloud.snapshot)
                           .then(() => {
-                            if (useOrb.getState().project.id !== cloud.id)
+                            if (
+                              generation !== accountGeneration.current ||
+                              useOrb.getState().project.id !== cloud.id
+                            )
                               return;
                             setCloudBaseline({
                               projectId: cloud.id,
@@ -1163,11 +1190,12 @@ export default function Orbsie() {
                             setConflict(null);
                             setModal(null);
                           })
-                          .catch(() =>
-                            setModalError(
-                              "Could not preserve the local draft. Export it before opening the cloud copy.",
-                            ),
-                          );
+                          .catch(() => {
+                            if (generation === accountGeneration.current)
+                              setModalError(
+                                "Could not preserve the local draft. Export it before opening the cloud copy.",
+                              );
+                          });
                       }}
                     >
                       <Globe2 />
@@ -1201,10 +1229,14 @@ export default function Orbsie() {
                       <button
                         className="text-button"
                         onClick={() => {
+                          const generation = accountGeneration.current;
                           void s
                             .loadCloud(conflict.snapshot)
                             .then(() => {
-                              if (useOrb.getState().project.id !== conflict.id)
+                              if (
+                                generation !== accountGeneration.current ||
+                                useOrb.getState().project.id !== conflict.id
+                              )
                                 return;
                               setCloudBaseline({
                                 projectId: conflict.id,
@@ -1213,11 +1245,12 @@ export default function Orbsie() {
                               setConflict(null);
                               setModal(null);
                             })
-                            .catch(() =>
-                              setModalError(
-                                "Could not preserve the local draft. Export it before opening the cloud copy.",
-                              ),
-                            );
+                            .catch(() => {
+                              if (generation === accountGeneration.current)
+                                setModalError(
+                                  "Could not preserve the local draft. Export it before opening the cloud copy.",
+                                );
+                            });
                         }}
                       >
                         Open cloud copy
@@ -1226,14 +1259,29 @@ export default function Orbsie() {
                   )}
                   <button
                     className="text-button"
+                    disabled={busy}
                     onClick={async () => {
-                      await fetch("/api/auth/sign-out", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: "{}",
-                      });
-                      setUser(null);
-                      setConnection({ ...connection, key: "" });
+                      setBusy(true);
+                      try {
+                        const response = await fetch("/api/auth/sign-out", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: "{}",
+                        });
+                        if (!response.ok)
+                          throw Error("Sign-out failed. Please try again.");
+                        clearAccountState();
+                        setUser(null);
+                        setConnection({ ...connection, key: "" });
+                      } catch (e) {
+                        setModalError(
+                          e instanceof Error
+                            ? e.message
+                            : "Sign-out failed. Please try again.",
+                        );
+                      } finally {
+                        setBusy(false);
+                      }
                     }}
                   >
                     Sign out
