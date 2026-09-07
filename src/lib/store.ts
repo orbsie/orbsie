@@ -43,6 +43,41 @@ interface State {
   load: (p: Project, play?: boolean) => void;
   collect: (id: string) => void;
 }
+type LeaseStorage = Pick<Storage, "getItem" | "setItem">;
+type DraftLease = { owner: string; expiresAt: number };
+const LEASE_MS = 45000;
+const tabId = crypto.randomUUID();
+let leasedProject: string | undefined;
+let leaseTimer: ReturnType<typeof setInterval> | undefined;
+export function claimDraftLease(
+  storage: LeaseStorage,
+  projectId: string,
+  owner: string,
+  now: number,
+) {
+  const key = `orbsie-writer:${projectId}`;
+  let lease: DraftLease | undefined;
+  try {
+    lease = JSON.parse(storage.getItem(key) ?? "null") ?? undefined;
+  } catch {
+    lease = undefined;
+  }
+  if (lease && lease.owner !== owner && lease.expiresAt > now) return false;
+  storage.setItem(key, JSON.stringify({ owner, expiresAt: now + LEASE_MS }));
+  return true;
+}
+function activateWriter(projectId: string) {
+  if (typeof window === "undefined") return true;
+  if (!claimDraftLease(localStorage, projectId, tabId, Date.now()))
+    return false;
+  leasedProject = projectId;
+  if (!leaseTimer)
+    leaseTimer = setInterval(() => {
+      if (leasedProject)
+        claimDraftLease(localStorage, leasedProject, tabId, Date.now());
+    }, LEASE_MS / 3);
+  return true;
+}
 let active: AbortController | undefined;
 let baseline: Project | undefined;
 const pause = (ms: number, signal: AbortSignal) =>
@@ -76,6 +111,14 @@ export const useOrb = create<State>((setState, getState) => ({
   async save() {
     try {
       const s = getState();
+      if (!activateWriter(s.project.id)) {
+        setState({
+          readOnly: true,
+          error:
+            "This world is open in another tab. Continue there, or wait a moment before editing here.",
+        });
+        return;
+      }
       await set("orbsie-draft", {
         project: committed(s.project),
         history: s.history.slice(-20),
@@ -122,6 +165,7 @@ export const useOrb = create<State>((setState, getState) => ({
   load(project, play = false) {
     active?.abort();
     baseline = project;
+    const writer = play || activateWriter(project.id);
     setState({
       project: projectSchema.parse(project),
       phase: "editing",
@@ -133,6 +177,13 @@ export const useOrb = create<State>((setState, getState) => ({
       history: [],
       future: [],
       recovered: undefined,
+      readOnly: !writer,
+      ...(!writer
+        ? {
+            error:
+              "This world is open in another tab. This copy is read-only until that tab closes.",
+          }
+        : { error: "" }),
     });
   },
   collect(id) {
@@ -173,6 +224,14 @@ export const useOrb = create<State>((setState, getState) => ({
     void getState().save();
   },
   async run(prompt, demo = true, connection) {
+    if (!activateWriter(getState().project.id)) {
+      setState({
+        readOnly: true,
+        error:
+          "This world is being edited in another tab. Your local copy was not changed.",
+      });
+      return;
+    }
     active?.abort();
     const controller = new AbortController();
     active = controller;
