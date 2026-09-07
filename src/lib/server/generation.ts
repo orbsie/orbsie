@@ -77,7 +77,8 @@ export async function generateCommands({
       let buffer = "",
         records = "",
         working = project,
-        count = 0;
+        count = 0,
+        lastCommandType = "";
       let cursor: Cursor = {
         runId: crypto.randomUUID(),
         sequence: 0,
@@ -105,6 +106,7 @@ export async function generateCommands({
         );
         working = applied.project;
         cursor = applied.cursor;
+        lastCommandType = command.type;
         controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
       }
       try {
@@ -139,6 +141,10 @@ export async function generateCommands({
         if (!count)
           throw Error(
             "This model did not return any supported scene commands. Select another model.",
+          );
+        if (lastCommandType !== "commit_revision")
+          throw Error(
+            "Generation ended before committing this turn. Finished objects are preserved; retry to continue.",
           );
       } catch (error) {
         controller.enqueue(

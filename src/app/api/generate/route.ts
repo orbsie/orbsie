@@ -8,7 +8,7 @@ import {
   apiError,
   HttpError,
 } from "@/lib/server/auth";
-export const maxDuration = 60;
+export const maxDuration = 180;
 export async function POST(request: Request) {
   try {
     checkOrigin(request);
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       throw new HttpError(400, "Check your connection and world data.");
     const stream = await generateCommands({
       ...parsed.data,
-      signal: AbortSignal.any([request.signal, AbortSignal.timeout(50000)]),
+      signal: AbortSignal.any([request.signal, AbortSignal.timeout(175000)]),
     });
     return new Response(stream, {
       headers: {

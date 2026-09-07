@@ -78,3 +78,47 @@ it("invalid generated operations fail closed without executing code", async () =
     "invalid scene update",
   );
 });
+
+it("reports truncated generation after valid partial commands instead of claiming completion", async () => {
+  const command = {
+    type: "reserve_entity",
+    entity: {
+      id: "partial",
+      label: "Unfinished tree",
+      position: [0, 0, 0],
+      scale: [1, 1, 1],
+      color: "#88aa55",
+      stage: "seed",
+    },
+  };
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      new Response(
+        "data: " +
+          JSON.stringify({
+            choices: [
+              {
+                delta: { content: JSON.stringify(command) + "\n" },
+                finish_reason: "length",
+              },
+            ],
+          }) +
+          "\n\n",
+      ),
+  );
+  const stream = await generateCommands({
+    provider: "gateway",
+    model: "catalog-model",
+    key: "test-key",
+    prompt: "Test",
+    project: blankProject(),
+    signal: new AbortController().signal,
+  });
+  const records = (await new Response(stream).text())
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  expect(records[0]).toEqual(command);
+  expect(records[1].error).toContain("before committing");
+});

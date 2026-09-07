@@ -37,7 +37,9 @@ async function vercel(path: string, method = "GET", body?: unknown) {
       response.status === 404 ? 404 : 502,
       response.status === 429
         ? "Vercel is rate limiting publication. Retry later."
-        : `Vercel could not complete publication (${response.status}). Your previous release is safe.`,
+        : response.status === 403
+          ? "The publishing token lacks permission for this Vercel action. Use a team token that can create projects and deployments. Your previous release is safe."
+          : `Vercel could not complete publication (${response.status}). Your previous release is safe.`,
     );
   return response.json();
 }
