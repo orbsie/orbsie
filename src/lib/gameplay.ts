@@ -7,6 +7,7 @@ export type PlayerState = {
   velocityY: number;
   groundedOn?: string;
   supportPosition?: Vec3;
+  supportTop?: number;
 };
 
 export type PlayerInput = {
@@ -69,19 +70,26 @@ export function stepGameplay(
   const dt = Math.min(Math.max(delta, 0), 0.04);
   const position: Vec3 = [...state.position];
   const readyPlatforms = entities.filter(
-    (entity) => entity.stage === "ready" && entity.geometry?.kind === "platform",
+    (entity) =>
+      entity.stage === "ready" && entity.geometry?.kind === "platform",
   );
 
   // A grounded player inherits the exact displacement of a moving platform.
   // This also makes compatible speed/amplitude edits reconcile without a reset.
   if (state.groundedOn) {
-    const support = readyPlatforms.find((entity) => entity.id === state.groundedOn);
+    const support = readyPlatforms.find(
+      (entity) => entity.id === state.groundedOn,
+    );
     if (support) {
       const before =
         state.supportPosition ?? movingEntityPosition(support, time - dt);
       const after = movingEntityPosition(support, time);
       position[0] += after[0] - before[0];
-      position[1] += after[1] - before[1];
+      const afterTop = platformTop(support, time).y;
+      const beforeTop =
+        state.supportTop ??
+        before[1] + 0.52 * support.scale[1] + PLAYER_HALF_HEIGHT;
+      position[1] += afterTop - beforeTop;
       position[2] += after[2] - before[2];
     }
   }
@@ -95,11 +103,14 @@ export function stepGameplay(
   let velocityY = state.velocityY;
   let groundedOn = state.groundedOn;
   let supportPosition = state.supportPosition;
-  const wasSupported = Boolean(groundedOn) || position[1] <= GROUND_CENTER_Y + 0.04;
+  let supportTop = state.supportTop;
+  const wasSupported =
+    Boolean(groundedOn) || position[1] <= GROUND_CENTER_Y + 0.04;
   if (input.jump && wasSupported) {
     velocityY = JUMP_SPEED;
     groundedOn = undefined;
     supportPosition = undefined;
+    supportTop = undefined;
   }
   velocityY -= GRAVITY * dt;
   const previousY = position[1];
@@ -137,9 +148,11 @@ export function stepGameplay(
           time,
         )
       : undefined;
+    supportTop = floorId ? floor : undefined;
   } else if (!floorId) {
     groundedOn = undefined;
     supportPosition = undefined;
+    supportTop = undefined;
   }
 
   const radius = Math.hypot(position[0], position[2]);
@@ -163,16 +176,28 @@ export function stepGameplay(
     )
       collected.push(entity.id);
   }
-  const collectibleCount = entities.filter(
-    (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
-  ).length;
+  const collectibleIds = entities
+    .filter(
+      (entity) =>
+        entity.stage === "ready" && entity.behavior?.type === "collect",
+    )
+    .map((entity) => entity.id);
   const won = entities.some((entity) => {
-    if (entity.stage !== "ready" || entity.behavior?.type !== "portal") return false;
+    if (entity.stage !== "ready" || entity.behavior?.type !== "portal")
+      return false;
     const portal = movingEntityPosition(entity, time);
     return (
-      collected.length >= collectibleCount &&
+      collectibleIds.every((id) => collected.includes(id)) &&
       Math.hypot(position[0] - portal[0], position[2] - portal[2]) < 1.2
     );
   });
-  return { position, velocityY, groundedOn, supportPosition, collected, won };
+  return {
+    position,
+    velocityY,
+    groundedOn,
+    supportPosition,
+    supportTop,
+    collected,
+    won,
+  };
 }

@@ -50,7 +50,8 @@ describe("gameplay runtime", () => {
     };
     const next = stepGameplay(state, idle, [platform], [], 0.04, 0.04);
     const displacement =
-      movingEntityPosition(platform, 0.04)[0] - movingEntityPosition(platform, 0)[0];
+      movingEntityPosition(platform, 0.04)[0] -
+      movingEntityPosition(platform, 0)[0];
     expect(next.position[0]).toBeCloseTo(state.position[0] + displacement);
   });
 
@@ -77,6 +78,46 @@ describe("gameplay runtime", () => {
     );
     expect(result.position[0]).toBeCloseTo(newPose[0] + 0.2);
   });
+
+  it.each([
+    ["grows", 1.8],
+    ["shrinks", 0.45],
+  ])(
+    "keeps a rider on the rendered surface when a platform %s",
+    (_, scaleY) => {
+      const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
+      const pose = movingEntityPosition(platform, 1);
+      const oldTop = pose[1] + 0.52 * platform.scale[1] + 0.42;
+      const edited = {
+        ...platform,
+        scale: [platform.scale[0], scaleY, platform.scale[2]] as [
+          number,
+          number,
+          number,
+        ],
+      };
+      const expectedTop =
+        movingEntityPosition(edited, 1.016)[1] + 0.52 * scaleY + 0.42;
+      const result = stepGameplay(
+        {
+          position: [pose[0], oldTop, pose[2]],
+          velocityY: 0,
+          groundedOn: platform.id,
+          supportPosition: pose,
+          supportTop: oldTop,
+        },
+        idle,
+        [edited],
+        [],
+        1.016,
+        0.016,
+      );
+
+      expect(result.position[1]).toBeCloseTo(expectedTop);
+      expect(result.supportTop).toBeCloseTo(expectedTop);
+      expect(result.groundedOn).toBe(platform.id);
+    },
+  );
 
   it("collects the final crystal and wins at the portal in one step", () => {
     const entities = fixtureEntities();
@@ -106,7 +147,59 @@ describe("gameplay runtime", () => {
       id: "crystal-new",
       position: [7, 0.8, 7],
     });
-    expect(stepGameplay(player([0, 0.42, 5]), idle, entities, prior, 0, 0.016).collected)
-      .toEqual(prior);
+    expect(
+      stepGameplay(player([0, 0.42, 5]), idle, entities, prior, 0, 0.016)
+        .collected,
+    ).toEqual(prior);
+  });
+
+  it("does not let a removed collectible satisfy a replacement objective", () => {
+    const entities = fixtureEntities();
+    const portal = entities.find((e) => e.id === "portal")!;
+    const replacement = {
+      ...entities.find((e) => e.id === "crystal-0")!,
+      id: "crystal-replacement",
+      position: [0, 0.8, 0] as [number, number, number],
+    };
+    const current = entities.filter(
+      (e) => e.behavior?.type !== "collect" || e.id === "crystal-0",
+    );
+    current[current.findIndex((e) => e.id === "crystal-0")] = replacement;
+
+    const result = stepGameplay(
+      player([portal.position[0], 0.42, portal.position[2]]),
+      idle,
+      current,
+      ["crystal-0"],
+      0,
+      0.016,
+    );
+
+    expect(result.collected).toEqual(["crystal-0"]);
+    expect(result.won).toBe(false);
+  });
+
+  it("preserves removed collectible history after completing current objectives", () => {
+    const entities = fixtureEntities();
+    const portal = entities.find((e) => e.id === "portal")!;
+    const replacement = {
+      ...entities.find((e) => e.id === "crystal-0")!,
+      id: "crystal-replacement",
+      position: [...portal.position] as [number, number, number],
+    };
+    const current = entities.filter((e) => e.behavior?.type !== "collect");
+    current.push(replacement);
+
+    const result = stepGameplay(
+      player([portal.position[0], 0.42, portal.position[2]]),
+      idle,
+      current,
+      ["crystal-0"],
+      0,
+      0.016,
+    );
+
+    expect(result.collected).toEqual(["crystal-0", "crystal-replacement"]);
+    expect(result.won).toBe(true);
   });
 });
