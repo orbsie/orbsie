@@ -21,3 +21,14 @@ export const modelModes = [
 export function isRecommendedModel(id: string) {
   return modelModes.some((mode) => mode.id === id);
 }
+
+export type CatalogModel = {
+  id: string;
+  name: string;
+  /** Estimated USD per one million tokens; null means unavailable. */
+  inputPrice: number | null;
+  cachedInputPrice: number | null;
+  outputPrice: number | null;
+  /** External 3D preference rank; null is unranked, not proof of lower quality. */
+  qualityRank: number | null;
+};

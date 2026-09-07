@@ -1,3 +1,5 @@
+import { catalogModels } from "../../../lib/model-catalog";
+import { modelRankingMetadata } from "../../../lib/model-rankings";
 export async function GET(request: Request) {
   const provider = new URL(request.url).searchParams.get("provider");
   if (!["openrouter", "gateway"].includes(provider ?? ""))
@@ -12,21 +14,14 @@ export async function GET(request: Request) {
     if (!response.ok) throw Error("Catalog unavailable");
     const data = await response.json();
     return Response.json({
-      models: data.data
-        .filter(
-          (m: {
-            id: string;
-            supported_parameters?: string[];
-            type?: string;
-          }) =>
-            provider === "gateway"
-              ? m.type === undefined || m.type === "language"
-              : m.supported_parameters?.includes("tools"),
-        )
-        .map((m: { id: string; name?: string }) => ({
-          id: m.id,
-          name: m.name ?? m.id,
-        })),
+      models: catalogModels(data.data, provider as "openrouter" | "gateway"),
+      ranking: modelRankingMetadata,
+      pricing: {
+        currency: "USD",
+        unit: "per 1M tokens",
+        estimated: true,
+        note: "Base catalog rates; routing, context tiers, cache eligibility and other fees can change actual cost.",
+      },
     });
   } catch {
     return Response.json(
