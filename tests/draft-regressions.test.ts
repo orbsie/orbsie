@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({
   values: new Map<string, any>(),
   queue: Promise.resolve(),
+  beforeUpdate: undefined as (() => Promise<void>) | undefined,
 }));
 vi.mock("idb-keyval", () => ({
   get: async (key: string) => structuredClone(db.values.get(key)),
@@ -10,7 +11,8 @@ vi.mock("idb-keyval", () => ({
     db.values.set(key, structuredClone(value));
   },
   update: (key: string, fn: (value: any) => any) => {
-    db.queue = db.queue.then(() => {
+    db.queue = db.queue.then(async () => {
+      await db.beforeUpdate?.();
       db.values.set(key, structuredClone(fn(db.values.get(key))));
     });
     return db.queue;
@@ -21,8 +23,49 @@ import { blankProject } from "../src/lib/protocol";
 beforeEach(() => {
   db.values.clear();
   db.queue = Promise.resolve();
+  db.beforeUpdate = undefined;
   useOrb.setState({ readOnly: false, history: [], future: [] });
 });
+it.each([1, 2])(
+  "discards a cloud open invalidated during persistence step %s and preserves the new draft",
+  async (step) => {
+    const local = {
+      ...blankProject(),
+      title: "Previous account draft",
+      revision: 1,
+    };
+    const cloud = { ...local, title: "Previous account cloud", revision: 2 };
+    const next = { ...blankProject(), title: "Current draft", revision: 3 };
+    useOrb.getState().load(local);
+    await useOrb.getState().save();
+    let release!: () => void, entered!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const waiting = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    let updates = 0,
+      valid = true;
+    db.beforeUpdate = async () => {
+      if (++updates === step) {
+        entered();
+        await gate;
+      }
+    };
+    const opening = useOrb.getState().loadCloud(cloud, () => valid);
+    await waiting;
+    valid = false;
+    useOrb.getState().load(next);
+    const saving = useOrb.getState().save();
+    release();
+    await opening;
+    await saving;
+    expect(useOrb.getState().project).toEqual(next);
+    expect(db.values.get("orbsie-draft").project).toEqual(next);
+    expect(db.values.get("orbsie-library")[local.id]).toEqual(local);
+  },
+);
 it("retains simultaneous saves of distinct worlds", async () => {
   const a = blankProject(),
     b = blankProject();

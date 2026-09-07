@@ -1175,10 +1175,12 @@ export default function Orbsie() {
                       className="share-option"
                       onClick={() => {
                         const generation = accountGeneration.current;
+                        const isCurrent = captureCloudRequest();
                         void s
-                          .loadCloud(cloud.snapshot)
-                          .then(() => {
+                          .loadCloud(cloud.snapshot, isCurrent)
+                          .then((opened) => {
                             if (
+                              !opened ||
                               generation !== accountGeneration.current ||
                               useOrb.getState().project.id !== cloud.id
                             )
@@ -1191,7 +1193,7 @@ export default function Orbsie() {
                             setModal(null);
                           })
                           .catch(() => {
-                            if (generation === accountGeneration.current)
+                            if (isCurrent())
                               setModalError(
                                 "Could not preserve the local draft. Export it before opening the cloud copy.",
                               );
@@ -1230,10 +1232,12 @@ export default function Orbsie() {
                         className="text-button"
                         onClick={() => {
                           const generation = accountGeneration.current;
+                          const isCurrent = captureCloudRequest();
                           void s
-                            .loadCloud(conflict.snapshot)
-                            .then(() => {
+                            .loadCloud(conflict.snapshot, isCurrent)
+                            .then((opened) => {
                               if (
+                                !opened ||
                                 generation !== accountGeneration.current ||
                                 useOrb.getState().project.id !== conflict.id
                               )
@@ -1246,7 +1250,7 @@ export default function Orbsie() {
                               setModal(null);
                             })
                             .catch(() => {
-                              if (generation === accountGeneration.current)
+                              if (isCurrent())
                                 setModalError(
                                   "Could not preserve the local draft. Export it before opening the cloud copy.",
                                 );
