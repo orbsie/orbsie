@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { projectSchema, committed } from "@/lib/protocol";
+import { archiveProjectSnapshot } from "@/lib/server/storage";
 import {
   requireUser,
   database,
@@ -94,7 +95,13 @@ export async function PUT(request: Request) {
         [project.id, project.revision, JSON.stringify(committed(project))],
       );
       await client.query("COMMIT");
-      return Response.json({ revision: project.revision });
+      let archivePending = false;
+      try {
+        await archiveProjectSnapshot(user.id, committed(project));
+      } catch {
+        archivePending = true;
+      }
+      return Response.json({ revision: project.revision, archivePending });
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;

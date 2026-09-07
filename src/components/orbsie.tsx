@@ -42,6 +42,21 @@ const World = dynamic(() => import("./world"), {
   ),
 });
 type Connection = { provider: string; model: string; key: string };
+type CloudProject = {
+  id: string;
+  title: string;
+  revision: number;
+  snapshot: ReturnType<typeof useOrb.getState>["project"];
+  updated_at: string;
+  public_url?: string | null;
+  publication_revision?: number | null;
+};
+type Publication = {
+  state: string;
+  url?: string;
+  deploymentUrl?: string;
+  error?: string;
+};
 export default function Orbsie() {
   const s = useOrb();
   const [prompt, setPrompt] = useState("");
@@ -73,6 +88,9 @@ export default function Orbsie() {
   const [signup, setSignup] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [cloudRevision, setCloudRevision] = useState<number | null>(null);
+  const [cloudProjects, setCloudProjects] = useState<CloudProject[]>([]);
+  const [conflict, setConflict] = useState<CloudProject | null>(null);
+  const [publication, setPublication] = useState<Publication | null>(null);
   const [objectList, setObjectList] = useState(false);
   const [publicView, setPublicView] = useState(false);
   const chat = useRef<HTMLDivElement>(null);
@@ -83,6 +101,16 @@ export default function Orbsie() {
   const total = s.project.entities.filter(
     (e) => e.behavior?.type === "collect",
   ).length;
+  const refreshCloud = async () => {
+    const response = await fetch("/api/projects");
+    if (!response.ok) return;
+    const data = await response.json();
+    setCloudProjects(data.projects ?? []);
+    const current = data.projects?.find(
+      (project: CloudProject) => project.id === useOrb.getState().project.id,
+    );
+    if (current) setCloudRevision(current.revision);
+  };
   useEffect(() => {
     if (location.hash.startsWith("#orb=")) {
       try {
@@ -102,7 +130,10 @@ export default function Orbsie() {
           fetch("/api/auth/get-session")
             .then((r) => (r.ok ? r.json() : null))
             .then((d) => {
-              if (d?.user) setUser(d.user);
+              if (d?.user) {
+                setUser(d.user);
+                void refreshCloud();
+              }
             })
             .catch(() => {});
       })
@@ -127,6 +158,30 @@ export default function Orbsie() {
       .then((d) => setModels(d.models ?? []))
       .catch(() => setModels([]));
   }, [modal, connection.provider]);
+  useEffect(() => {
+    if (modal !== "share" || !user || !capabilities.publishing) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = async () => {
+      const response = await fetch(
+        `/api/publish?projectId=${encodeURIComponent(s.project.id)}`,
+      );
+      if (cancelled || response.status === 404) return;
+      const data = await response.json();
+      if (!response.ok) {
+        setPublication({ state: "ERROR", error: data.error });
+        return;
+      }
+      setPublication(data);
+      if (!["READY", "ERROR", "CANCELED", "PROTECTED"].includes(data.state))
+        timer = setTimeout(check, 2500);
+    };
+    void check();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [modal, user, capabilities.publishing, s.project.id, publication?.state]);
   useEffect(() => {
     dictation.cancel();
   }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);
@@ -177,9 +232,19 @@ export default function Orbsie() {
         }),
       });
       const data = await response.json();
+      if (response.status === 409 && data.conflict) {
+        setConflict(data.conflict);
+        throw Error(data.error);
+      }
       if (!response.ok) throw Error(data.error);
       setCloudRevision(data.revision);
-      s.set({ notice: "Saved to your account." });
+      setConflict(null);
+      await refreshCloud();
+      s.set({
+        notice: data.archivePending
+          ? "Saved to your account. The backup archive will be retried later."
+          : "Saved to your account.",
+      });
     } catch (e) {
       s.set({ error: e instanceof Error ? e.message : "Cloud save failed." });
     } finally {
@@ -201,9 +266,8 @@ export default function Orbsie() {
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
       setShareUrl(data.url);
-      setModalError(
-        "Deployment submitted. Open the link after the Vercel build completes.",
-      );
+      setPublication(data);
+      setModalError("Deployment submitted. This status will update here.");
     } catch (e) {
       setModalError(e instanceof Error ? e.message : "Publishing failed.");
     } finally {
@@ -230,6 +294,7 @@ export default function Orbsie() {
       const data = await response.json();
       if (!response.ok) throw Error(data.message ?? "Sign-in failed.");
       setUser(data.user);
+      await refreshCloud();
       setPassword("");
       setModal(null);
     } catch (e) {
@@ -279,6 +344,13 @@ export default function Orbsie() {
                 onClick={() => setModal("settings")}
               >
                 <Settings2 size={17} />
+              </button>
+              <button
+                className="icon-button"
+                aria-label="Your account and cloud worlds"
+                onClick={() => setModal("account")}
+              >
+                <Globe2 size={17} />
               </button>
               <button
                 className="primary small"
@@ -888,17 +960,35 @@ export default function Orbsie() {
                     credentials. Play links and downloads work now.
                   </span>
                 ) : (
-                  <button
-                    className="primary full"
-                    disabled={busy || !user}
-                    onClick={publish}
-                  >
-                    {busy
-                      ? "Publishing…"
-                      : user
-                        ? "Publish Orb"
-                        : "Sign in to publish"}
-                  </button>
+                  <>
+                    {publication && (
+                      <div className="setup-note" role="status">
+                        Publication: {publication.state.toLowerCase()}
+                        {publication.error ? ` — ${publication.error}` : ""}
+                      </div>
+                    )}
+                    {publication?.state === "READY" && publication.url ? (
+                      <a className="primary full" href={publication.url}>
+                        Open published Orb
+                      </a>
+                    ) : (
+                      <button
+                        className="primary full"
+                        disabled={busy}
+                        onClick={() =>
+                          user ? void publish() : setModal("account")
+                        }
+                      >
+                        {busy
+                          ? "Publishing…"
+                          : user
+                            ? publication
+                              ? "Retry publication"
+                              : "Publish Orb"
+                            : "Sign in to publish"}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </>
@@ -934,6 +1024,32 @@ export default function Orbsie() {
                   <ArrowUpRight size={18} />
                 </button>
               ))}
+              {user && cloudProjects.length > 0 && (
+                <>
+                  <p className="fine-print">Saved to your account</p>
+                  {cloudProjects.map((cloud) => (
+                    <button
+                      key={`cloud-${cloud.id}`}
+                      className="share-option"
+                      onClick={() => {
+                        void s.save().then(() => {
+                          s.load(cloud.snapshot);
+                          setCloudRevision(cloud.revision);
+                          setConflict(null);
+                          setModal(null);
+                        });
+                      }}
+                    >
+                      <Globe2 />
+                      <div>
+                        <strong>{cloud.title}</strong>
+                        <span>Revision {cloud.revision} · Cloud</span>
+                      </div>
+                      <ArrowUpRight size={18} />
+                    </button>
+                  ))}
+                </>
+              )}
               {!capabilities.accounts ? (
                 <div className="setup-note">
                   Cloud accounts are not connected yet. You can create, play,
@@ -948,6 +1064,25 @@ export default function Orbsie() {
                   >
                     Save current world to cloud
                   </button>
+                  {conflict && (
+                    <div className="setup-note" role="alert">
+                      A newer cloud copy exists at revision {conflict.revision}.
+                      Your local copy remains on this device.
+                      <button
+                        className="text-button"
+                        onClick={() => {
+                          void s.save().then(() => {
+                            s.load(conflict.snapshot);
+                            setCloudRevision(conflict.revision);
+                            setConflict(null);
+                            setModal(null);
+                          });
+                        }}
+                      >
+                        Open cloud copy
+                      </button>
+                    </div>
+                  )}
                   <button
                     className="text-button"
                     onClick={async () => {
