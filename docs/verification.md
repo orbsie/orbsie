@@ -1,8 +1,8 @@
 # Verification — 2026-09-07
 
-This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and dedicated publication still need external setup.
+This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and cloud saves are verified; dedicated publication still needs corrected Vercel token permissions.
 
-Latest production verification: source commit `0c087d7` deployed to https://orbsie.com (deployment `orbsie-5f32hhzp8-grappeggias-projects.vercel.app`). Production dictation/layout checks and live-catalog/Astra-snapshot browser checks passed with zero exceptions and no inference calls. Production reports accounts/publishing disabled, matching the outstanding setup.
+Latest infrastructure-enabled production verification: source commit `ef00705` deployed to https://orbsie.com (deployment `orbsie-6gb0ru4gf-grappeggias-projects.vercel.app`). Accounts and publishing configuration are enabled. Production authenticated save/list/reopen, cross-user isolation, stale revision rejection and GCS archive completion passed. Dedicated publication returned upstream Vercel 403 on project creation; configuration availability does not establish publication success.
 
 ## Passing checks
 
@@ -10,7 +10,7 @@ Latest production verification: source commit `0c087d7` deployed to https://orbs
 - Production build passes. The editor keeps the large cosmic globe and centered composer, exact placeholder “What experience to build?”, and microphone button.
 - Chromium desktop/mobile fixture flow passes: formation, island, selected mushroom edit, undo, keyboard/jump input, ZIP download, refresh recovery, signed-out snapshot playback, flower garden, and touch controls. Zero page exceptions and no mobile horizontal overflow.
 - Live provider catalogs populate Quality (Astra), Balanced (Sol), Budget (Luna), and Advanced. Both providers return the recommended IDs; changing provider clears the entered key. Desktop/mobile settings and actual Astra snapshots render without exceptions.
-- Private development Google Cloud Storage: Vercel OIDC → Google token exchange → archive upload → create-only retry passed. Production/development identities and buckets are separate. Production archive writes remain untested until authenticated saving is enabled.
+- Private development Google Cloud Storage: Vercel OIDC → Google token exchange → archive upload → create-only retry passed. Production/development identities and buckets are separate. Production authenticated cloud saves also completed their private archive writes.
 - Downloaded standalone ZIP installs and rebuilds from included source, then builds with Vite and plays through an independent static server. Gameplay source is included. No editor/API/model service requests and zero runtime exceptions. Vite reports a large ~1.53 MB JavaScript chunk (~402 KB gzip); code splitting remains a performance task.
 
 ## Real Astra low evidence
@@ -29,7 +29,7 @@ Actual flagship creation and edited snapshots were rendered and visually inspect
 
 AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. Native GPU results, adaptive quality, geometry workers and full path reachability remain unverified.
 
-Neon provisioning is waiting for the owner's integration terms acceptance. DATABASE_URL and migrations are absent. The owner supplied a dedicated publishing token; project access returned HTTP 200 and production VERCEL_DEPLOY_TOKEN is configured as sensitive. Accounts/cloud saving/per-Orb Vercel publication therefore remain gated and are not live certified. Their regression tests use deterministic database/transport substitutes. The main app itself deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md).
+Separate production/development Neon Free databases are provisioned and migrated. Real production accounts/cloud saving passed acceptance. The supplied publishing token can read the main project but Vercel denies project creation (HTTP 403); per-Orb publication is not live certified. The main app deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md) and [cloud acceptance](cloud-verification.md).
 
 Hosted OpenRouter/Gateway inference has not been tested with API keys. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, reloaded undo history, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
 
