@@ -11,8 +11,17 @@ import {
 export async function GET(request: Request) {
   try {
     const user = await requireUser(request);
+    const id = new URL(request.url).searchParams.get("id");
+    if (id) {
+      const result = await database().query(
+        "SELECT id, title, revision, snapshot, updated_at, public_url, publication_revision FROM orbs WHERE id=$1 AND owner_id=$2",
+        [id, user.id],
+      );
+      if (!result.rows[0]) throw new HttpError(404, "World not found.");
+      return Response.json({ project: result.rows[0] });
+    }
     const result = await database().query(
-      "SELECT id, title, revision, snapshot, updated_at FROM orbs WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 50",
+      "SELECT id, title, revision, snapshot, updated_at, public_url, publication_revision FROM orbs WHERE owner_id=$1 ORDER BY updated_at DESC LIMIT 50",
       [user.id],
     );
     return Response.json({ projects: result.rows });
@@ -42,11 +51,21 @@ export async function PUT(request: Request) {
       if (existing.rows.length) {
         if (existing.rows[0].owner_id !== user.id)
           throw new HttpError(404, "World not found.");
-        if (existing.rows[0].revision !== baseRevision)
-          throw new HttpError(
-            409,
-            "A newer cloud revision exists. Export your local draft before opening the cloud version.",
+        if (existing.rows[0].revision !== baseRevision) {
+          const latest = await client.query(
+            "SELECT id,title,revision,snapshot,updated_at,public_url,publication_revision FROM orbs WHERE id=$1 AND owner_id=$2",
+            [project.id, user.id],
           );
+          await client.query("ROLLBACK");
+          return Response.json(
+            {
+              error:
+                "A newer cloud revision exists. Your local draft is still saved on this device.",
+              conflict: latest.rows[0],
+            },
+            { status: 409 },
+          );
+        }
         await client.query(
           "UPDATE orbs SET snapshot=$1,title=$2,revision=$3,updated_at=now() WHERE id=$4",
           [

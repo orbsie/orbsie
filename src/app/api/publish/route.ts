@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/auth";
 import { projectSchema } from "@/lib/protocol";
 export const maxDuration = 60;
+const publicPath = (id: string) => `/o/${encodeURIComponent(id)}`;
 async function vercel(path: string, method = "GET", body?: unknown) {
   const token = process.env.VERCEL_DEPLOY_TOKEN,
     team = process.env.VERCEL_TEAM_ID;
@@ -74,7 +75,8 @@ export async function POST(request: Request) {
         await client.query("COMMIT");
         return Response.json({
           state: deployment.readyState,
-          url: `https://${deployment.url}`,
+          url: publicPath(projectId),
+          deploymentUrl: `https://${deployment.url}`,
           deploymentId: deployment.id,
         });
       }
@@ -162,7 +164,8 @@ export async function POST(request: Request) {
     await client.query("COMMIT");
     return Response.json({
       state: deployment.readyState ?? deployment.state,
-      url: `https://${deployment.url}`,
+      url: publicPath(projectId),
+      deploymentUrl: `https://${deployment.url}`,
       deploymentId: deployment.id ?? deployment.uid,
     });
   } catch (e) {
@@ -204,7 +207,9 @@ export async function GET(request: Request) {
     }
     return Response.json({
       state: d.readyState,
-      url: d.readyState === "READY" ? `https://${d.url}` : orb.public_url,
+      url: d.readyState === "READY" ? publicPath(id!) : undefined,
+      deploymentUrl:
+        d.readyState === "READY" ? `https://${d.url}` : orb.public_url,
     });
   } catch (e) {
     return apiError(e);
