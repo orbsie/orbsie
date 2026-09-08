@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-09-08T20:39:16.717Z",
+  "inferenceRequests": 0,
+  "providers": [
+    {
+      "provider": "openrouter",
+      "url": "https://openrouter.ai/api/v1/models",
+      "rawCount": 431,
+      "compatibleCount": 359,
+      "astra": {
+        "id": "openai/gpt-6-astra",
+        "capabilities": {
+          "text": {
+            "supported": true,
+            "source": "catalog"
+          },
+          "streamingText": {
+            "supported": true,
+            "source": "provider-contract"
+          },
+          "tools": {
+            "supported": true,
+            "source": "catalog"
+          },
+          "structuredOutput": {
+            "supported": true,
+            "source": "catalog"
+          }
+        }
+      }
+    },
+    {
+      "provider": "gateway",
+      "url": "https://ai-gateway.vercel.sh/v1/models",
+      "rawCount": 372,
+      "compatibleCount": 296,
+      "astra": {
+        "id": "openai/gpt-6-astra",
+        "capabilities": {
+          "text": {
+            "supported": true,
+            "source": "catalog"
+          },
+          "streamingText": {
+            "supported": "unknown",
+            "source": "unspecified"
+          },
+          "tools": {
+            "supported": true,
+            "source": "catalog"
+          },
+          "structuredOutput": {
+            "supported": "unknown",
+            "source": "unspecified"
+          }
+        }
+      }
+    }
+  ],
+  "status": "passed"
+}

@@ -244,3 +244,17 @@ it("keeps unknown Gateway capabilities distinct from advertised support", () => 
     structuredOutput: { supported: "unknown" },
   });
 });
+
+it("does not infer Gateway structured-output rejection from other listed parameters", () => {
+  const [model] = catalogModels(
+    [
+      {
+        id: "gateway/text",
+        type: "language",
+        supported_parameters: ["tools", "max_tokens"],
+      },
+    ],
+    "gateway",
+  );
+  expect(model.capabilities?.structuredOutput.supported).toBe("unknown");
+});

@@ -39,14 +39,14 @@ export function modelCapabilities(
     : tags.includes("tool-use")
       ? { supported: true, source: "catalog" }
       : unknown();
-  const structuredOutput: Capability = parameters
-    ? {
-        supported:
-          parameters.includes("structured_outputs") ||
-          parameters.includes("response_format"),
-        source: "catalog",
-      }
-    : unknown();
+  const advertisedStructuredOutput =
+    parameters?.includes("structured_outputs") ||
+    parameters?.includes("response_format");
+  const structuredOutput: Capability = advertisedStructuredOutput
+    ? { supported: true, source: "catalog" }
+    : provider === "openrouter" && parameters
+      ? { supported: false, source: "catalog" }
+      : unknown();
   const streamingText: Capability =
     text.supported === false
       ? { supported: false, source: "catalog" }
