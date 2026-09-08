@@ -1,0 +1,40 @@
+{
+  "scope": "Actual sharing component/CSS with synthetic database and iframe; no publication or inference",
+  "results": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "bounds": {
+        "viewport": 1280,
+        "scrollWidth": 1280,
+        "headerHeight": 64,
+        "headerBottom": 64,
+        "identityBottom": 55,
+        "actionLeft": 1150.625,
+        "actionRight": 1262,
+        "identityRight": 1136.625,
+        "imageLoaded": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bounds": {
+        "viewport": 390,
+        "scrollWidth": 390,
+        "headerHeight": 58,
+        "headerBottom": 58,
+        "identityBottom": 50,
+        "actionLeft": 286.1875,
+        "actionRight": 378,
+        "identityRight": 272.1875,
+        "imageLoaded": true
+      }
+    }
+  ],
+  "status": "passed"
+}

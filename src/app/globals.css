@@ -1739,3 +1739,9 @@ kbd {
     height: 36px;
   }
 }
+
+.published-identity > div > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
