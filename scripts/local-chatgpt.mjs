@@ -20,7 +20,7 @@ function withoutColors(value) {
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(
     Object.entries(value)
-      .filter(([key]) => key !== "color" && key !== "environment")
+      .filter(([key]) => !["color", "tint", "environment"].includes(key))
       .map(([key, entry]) => [key, withoutColors(entry)]),
   );
 }
@@ -41,6 +41,11 @@ export function assertPinkOnlyEdit(before, after, selectedId, expectedColor) {
     throw Error("Scoped edit changed the selected entity beyond its color.");
   if (selectedAfter.color.toLowerCase() !== expectedColor.toLowerCase())
     throw Error("Selected edit was not applied.");
+  if (
+    selectedAfter.geometry?.tint !== undefined &&
+    selectedAfter.geometry.tint.toLowerCase() !== expectedColor.toLowerCase()
+  )
+    throw Error("Selected material tint was not applied.");
   if (JSON.stringify(before.environment) !== JSON.stringify(after.environment))
     throw Error("Scoped edit changed the environment.");
   for (const entity of before.entities) {

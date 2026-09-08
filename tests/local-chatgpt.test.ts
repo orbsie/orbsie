@@ -44,7 +44,12 @@ test("pink-only validation preserves selected geometry, transform, behavior, and
         id: "selected",
         color: "#111111",
         position: [1, 2, 3],
-        geometry: { kind: "rock", detail: "refined", parts: [] },
+        geometry: {
+          kind: "rock",
+          detail: "refined",
+          parts: [],
+          tint: "#111111",
+        },
         behavior: { type: "bounce" },
       },
     ],
@@ -52,9 +57,15 @@ test("pink-only validation preserves selected geometry, transform, behavior, and
   };
   const after = structuredClone(before);
   after.entities[0].color = "#ff44aa";
+  after.entities[0].geometry.tint = "#ff44aa";
   expect(() =>
     assertPinkOnlyEdit(before, after, "selected", "#ff44aa"),
   ).not.toThrow();
+  const wrongTint = structuredClone(after);
+  wrongTint.entities[0].geometry.tint = "#000000";
+  expect(() =>
+    assertPinkOnlyEdit(before, wrongTint, "selected", "#ff44aa"),
+  ).toThrow("material tint");
   for (const mutation of [
     { position: [9, 2, 3] },
     { geometry: { kind: "flower", detail: "refined", parts: [] } },

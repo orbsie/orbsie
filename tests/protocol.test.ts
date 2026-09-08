@@ -6,6 +6,7 @@ import {
   generatedGeometrySchema,
   commandSchema,
   committed,
+  projectSchema,
   type Command,
   type Cursor,
 } from "../src/lib/protocol";
@@ -91,6 +92,61 @@ describe("scene protocol", () => {
       assetId: "kenney.nature.tree-default",
       tint: "#ed99b5",
     });
+  });
+
+  it("persists procedural material tints without changing multipart recipes", () => {
+    const { project, cursor, op } = setup();
+    const parts = [
+      {
+        shape: "box" as const,
+        position: [-1, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#123456",
+      },
+      {
+        shape: "sphere" as const,
+        position: [1, 0, 0] as [number, number, number],
+        scale: [0.5, 0.5, 0.5] as [number, number, number],
+        color: "#abcdef",
+      },
+    ];
+    const reserved = applyOperation(project, op, cursor);
+    const built = applyOperation(
+      reserved.project,
+      {
+        ...op,
+        operationId: "procedural-geometry",
+        sequence: 2,
+        baseRevision: 1,
+        command: {
+          type: "set_geometry",
+          id: "tree",
+          geometry: { kind: "custom", detail: "refined", parts },
+        },
+      },
+      reserved.cursor,
+    );
+    const recolored = applyOperation(
+      built.project,
+      {
+        ...op,
+        operationId: "procedural-recolor",
+        sequence: 3,
+        baseRevision: 2,
+        command: { type: "set_material", id: "tree", color: "#ed99b5" },
+      },
+      built.cursor,
+    );
+    expect(recolored.project.entities[0].geometry).toEqual({
+      kind: "custom",
+      detail: "refined",
+      parts,
+      tint: "#ed99b5",
+    });
+    expect(
+      projectSchema.parse(JSON.parse(JSON.stringify(recolored.project)))
+        .entities[0].geometry,
+    ).toEqual(recolored.project.entities[0].geometry);
   });
 
   it("does not permit new-only entities to downgrade", () => {

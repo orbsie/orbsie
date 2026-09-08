@@ -40,6 +40,7 @@ export const proceduralGeometrySchema = z.object({
   kind: proceduralGeometryKind,
   parts: z.array(partSchema).max(32).optional(),
   detail: geometryDetail,
+  tint: color.optional(),
 });
 export const assetGeometrySchema = z.object({
   kind: z.literal("asset"),
@@ -295,11 +296,9 @@ export function applyOperation(
                   ...e,
                   color: c.color,
                   assetPolicy: nextAssetPolicy,
-                  geometry:
-                    e.geometry?.kind === "asset" ||
-                    e.geometry?.kind === "generated"
-                      ? { ...e.geometry, tint: c.color }
-                      : e.geometry,
+                  geometry: e.geometry
+                    ? { ...e.geometry, tint: c.color }
+                    : undefined,
                 }
               : c.type === "set_behavior"
                 ? { ...e, behavior: c.behavior, assetPolicy: nextAssetPolicy }

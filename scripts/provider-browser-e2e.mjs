@@ -26,6 +26,10 @@ const DEFAULT_PROMPT =
   "Build a tiny island with one tree and one crystal. Keep it simple and commit the world.";
 const DEFAULT_EDIT =
   "Change only the selected entity to bright pink #ff44aa. Preserve its geometry and every unrelated entity and environment. Commit the edit.";
+const INPUT_GAME_PROMPT =
+  "Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use procedural or custom geometry only, finish both entities as ready refined geometry, and preserve a simple playable presentation. Then define exactly three input game rules: right adds score 7, up wins, and left loses. Use no timers, collection triggers, or collection scoring. Commit the world.";
+const INPUT_GAME_EDIT =
+  "Change only the selected entity's material to bright pink #ff44aa. Preserve its geometry, position, behavior, the complete three-rule input game, the other entity, and the environment. Commit the edit.";
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
@@ -213,8 +217,14 @@ function readConfiguration(argv) {
     keyScope,
     expectedModel,
     outputCap,
-    prompt: process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
-    editPrompt: process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
+    prompt:
+      process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+        ? INPUT_GAME_PROMPT
+        : process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
+    editPrompt:
+      process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+        ? INPUT_GAME_EDIT
+        : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
     publication:
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
     keyEnv:
@@ -224,6 +234,7 @@ function readConfiguration(argv) {
           ? "AI_GATEWAY_API_KEY"
           : undefined,
     requireNewOnly: process.env.ORBSIE_REQUIRE_NEW_ONLY === "1",
+    requireInputGame: process.env.ORBSIE_REQUIRE_INPUT_GAME === "1",
   };
 
   if (
@@ -236,6 +247,14 @@ function readConfiguration(argv) {
   if (config.requireNewOnly && !explicitlyRequestsNew(config.prompt))
     throw new HarnessConfigurationError(
       "ORBSIE_REQUIRE_NEW_ONLY=1 requires an explicit original/new creation prompt.",
+    );
+
+  if (
+    process.env.ORBSIE_REQUIRE_INPUT_GAME !== undefined &&
+    !["0", "1"].includes(process.env.ORBSIE_REQUIRE_INPUT_GAME)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_INPUT_GAME must be 0 or 1.",
     );
 
   if (provider === "chatgpt-local") {
@@ -881,6 +900,79 @@ function assertGenerationRequests(config, info) {
   }
 }
 
+function assertInputGameProject(project, label) {
+  assert(
+    project && Array.isArray(project.entities),
+    `${label} has no entities.`,
+  );
+  assert.equal(
+    project.entities.length,
+    2,
+    `${label} must contain exactly the requested tree and mushroom entities.`,
+  );
+  const entityDescriptions = project.entities.map((entity) => {
+    assert.equal(entity.stage, "ready", `${label} has unfinished geometry.`);
+    assert(
+      entity.geometry &&
+        ["tree", "mushroom", "custom"].includes(entity.geometry.kind),
+      `${label} contains a non-procedural/non-custom entity.`,
+    );
+    assert.equal(
+      entity.geometry.detail,
+      "refined",
+      `${label} contains geometry that is not refined.`,
+    );
+    return `${entity.id} ${entity.label} ${entity.geometry.kind}`.toLowerCase();
+  });
+  assert(
+    entityDescriptions.some((value) => value.includes("tree")),
+    `${label} has no tree entity.`,
+  );
+  assert(
+    entityDescriptions.some((value) => value.includes("mushroom")),
+    `${label} has no mushroom entity.`,
+  );
+
+  const game = project.game;
+  assert(game && Array.isArray(game.rules), `${label} has no game program.`);
+  assert.equal(
+    game.rules.length,
+    3,
+    `${label} must contain exactly three rules.`,
+  );
+  assert.equal(
+    game.variables?.length ?? 0,
+    0,
+    `${label} must not add game variables for this input-only scenario.`,
+  );
+  const expected = new Map([
+    ["right", [{ type: "add_score", amount: 7 }]],
+    ["up", [{ type: "win" }]],
+    ["left", [{ type: "lose" }]],
+  ]);
+  const actions = new Set();
+  for (const rule of game.rules) {
+    assert.equal(rule.trigger?.type, "input", `${label} has a non-input rule.`);
+    const action = rule.trigger.action;
+    assert(!actions.has(action), `${label} repeats input ${action}.`);
+    actions.add(action);
+    assert(expected.has(action), `${label} has unexpected input ${action}.`);
+    assert.deepEqual(rule.conditions ?? [], [], `${label} adds a condition.`);
+    assert.deepEqual(rule.actions, expected.get(action));
+  }
+  assert.deepEqual([...actions].sort(), ["left", "right", "up"]);
+  return {
+    entityCount: project.entities.length,
+    treeAndMushroom: true,
+    refinedGeometry: true,
+    exactRuleCount: true,
+    rightAdds7: true,
+    upWins: true,
+    leftLoses: true,
+    noTimersOrCollectionScoring: true,
+  };
+}
+
 async function extractZip(download, config, expectedRevision, evidenceDir) {
   const tempDir = await mkdtemp(join(tmpdir(), "orbsie-provider-e2e-"));
   const zipPath = join(tempDir, "world.zip");
@@ -1000,40 +1092,132 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
     await writeFile(target, content);
   }
   const served = await serveStaticDirectory(zip.tempDir);
-  const approved = new Set([config.baseOrigin, served.origin]);
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-    reducedMotion: "reduce",
-  });
-  const info = {
-    generationRequests: 0,
-    blockedExternalRequests: 0,
-    blockedExternalOrigins: new Set(),
-    interceptedGeneration: false,
+  const standaloneReport = {
+    status: "running",
+    pageErrors: [],
+    inputGame: config.requireInputGame
+      ? {
+          ready: false,
+          rightAdds7: false,
+          heldRightDeduplicated: false,
+          upWins: false,
+          restartResetsScore: false,
+          leftLoses: false,
+        }
+      : null,
   };
-  await installTrafficGuard(context, config, approved, info);
-  const page = await context.newPage();
-  const unexpected = [];
-  page.on("request", (request) => {
-    const path = new URL(request.url()).pathname;
-    if (path.startsWith("/api/") || path === "/generate" || path === "/health")
-      unexpected.push(path);
-  });
-  await page.goto(`${served.origin}/`, { waitUntil: "networkidle" });
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
-  await expect(page.locator(".score")).toBeVisible({ timeout: 30000 });
-  await expect(page.locator(".message")).toHaveCount(0, { timeout: 30000 });
-  // Capture the loaded scene after its initial formation frames, not the globe.
-  await page.waitForTimeout(2000);
-  assert.deepEqual(
-    unexpected,
-    [],
-    "Standalone playback made an editor/provider request.",
-  );
-  await page.screenshot({ path: join(evidenceDir, "standalone-playback.png") });
-  report.evidence.push("standalone-playback.png");
-  await context.close();
-  await new Promise((resolveServer) => served.server.close(resolveServer));
+  report.standalone = standaloneReport;
+  let context;
+  try {
+    const approved = new Set([config.baseOrigin, served.origin]);
+    context = await browser.newContext({
+      viewport: { width: 1280, height: 800 },
+      reducedMotion: "reduce",
+    });
+    const info = {
+      generationRequests: 0,
+      blockedExternalRequests: 0,
+      blockedExternalOrigins: new Set(),
+      interceptedGeneration: false,
+    };
+    await installTrafficGuard(context, config, approved, info);
+    const page = await context.newPage();
+    const unexpected = [];
+    page.on("pageerror", (error) => {
+      standaloneReport.pageErrors.push(
+        sanitizeMessage(error?.message ?? error, config),
+      );
+    });
+    page.on("request", (request) => {
+      const path = new URL(request.url()).pathname;
+      if (
+        path.startsWith("/api/") ||
+        path === "/generate" ||
+        path === "/health"
+      )
+        unexpected.push(path);
+    });
+    await page.goto(`${served.origin}/`, { waitUntil: "networkidle" });
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".score")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".message")).toHaveCount(0, {
+      timeout: 30000,
+    });
+    if (config.requireInputGame) {
+      await expect(page.locator("main[data-ready=true]")).toBeVisible({
+        timeout: 30000,
+      });
+      await expect(page.locator(".score")).toHaveText("Score: 0");
+      standaloneReport.inputGame.ready = true;
+      await page.screenshot({
+        path: join(evidenceDir, "standalone-input-ready.png"),
+      });
+      report.evidence.push("standalone-input-ready.png");
+
+      await page.keyboard.down("d");
+      try {
+        await expect(page.locator(".score")).toHaveText("Score: 7");
+        standaloneReport.inputGame.rightAdds7 = true;
+        await page.waitForTimeout(150);
+        await expect(page.locator(".score")).toHaveText("Score: 7");
+        standaloneReport.inputGame.heldRightDeduplicated = true;
+      } finally {
+        await page.keyboard.up("d").catch(() => undefined);
+      }
+      await page.screenshot({
+        path: join(evidenceDir, "standalone-input-right.png"),
+      });
+      report.evidence.push("standalone-input-right.png");
+
+      await page.keyboard.press("w", { delay: 100 });
+      await expect(page.locator(".win")).toContainText("Final score: 7");
+      standaloneReport.inputGame.upWins = true;
+      await page.screenshot({
+        path: join(evidenceDir, "standalone-input-win.png"),
+      });
+      report.evidence.push("standalone-input-win.png");
+
+      await page.getByRole("button", { name: /Restart/ }).click();
+      await expect(page.locator(".score")).toHaveText("Score: 0");
+      standaloneReport.inputGame.restartResetsScore = true;
+      await page.keyboard.press("a", { delay: 100 });
+      await expect(page.locator(".win")).toContainText("Try another adventure");
+      standaloneReport.inputGame.leftLoses = true;
+      await page.screenshot({
+        path: join(evidenceDir, "standalone-input-loss.png"),
+      });
+      report.evidence.push("standalone-input-loss.png");
+    }
+    // Capture the loaded scene after its initial formation frames, not the globe.
+    await page.waitForTimeout(2000);
+    assert.deepEqual(
+      unexpected,
+      [],
+      "Standalone playback made an editor/provider request.",
+    );
+    await page.screenshot({
+      path: join(evidenceDir, "standalone-playback.png"),
+    });
+    report.evidence.push("standalone-playback.png");
+    assert.deepEqual(
+      standaloneReport.pageErrors,
+      [],
+      "Standalone playback reported page errors.",
+    );
+    standaloneReport.status = "passed";
+  } catch (error) {
+    standaloneReport.status = "failed";
+    throw error;
+  } finally {
+    await context?.close().catch(() => undefined);
+    await new Promise((resolveServer) => {
+      try {
+        served.server.close(() => resolveServer());
+      } catch {
+        resolveServer();
+      }
+    });
+  }
 }
 
 async function readExplicitCloudStorageState(config) {
@@ -1363,6 +1547,12 @@ async function run(config) {
       fullPage: true,
     });
     projectAfterCreation = await waitForSavedProject(page, 1, 1);
+    if (config.requireInputGame) {
+      report.inputGame = {
+        status: "checking-creation",
+        ...assertInputGameProject(projectAfterCreation, "Created project"),
+      };
+    }
     assert.equal(
       seedObserved,
       true,
@@ -1455,6 +1645,18 @@ async function run(config) {
       projectAfterCreation.revision + 1,
       2,
     );
+    if (config.requireInputGame) {
+      assert.deepEqual(
+        projectAfterEdit.game,
+        projectAfterCreation.game,
+        "The selected material edit changed the input game program.",
+      );
+      report.inputGame = {
+        status: "passed",
+        ...assertInputGameProject(projectAfterEdit, "Edited project"),
+        preservedAcrossEdit: true,
+      };
+    }
     assert(
       projectAfterEdit.messages.filter(
         (message) => message.role === "assistant",
@@ -1488,9 +1690,14 @@ async function run(config) {
     );
     const { color: beforeColor, ...beforeShape } = targetBefore;
     const { color: afterColor, ...afterShape } = targetAfter;
+    assert.notEqual(
+      afterColor.toLowerCase(),
+      beforeColor.toLowerCase(),
+      "The scoped recolor did not change the selected entity color.",
+    );
     if (
-      ["asset", "generated"].includes(beforeShape.geometry?.kind) &&
-      afterShape.geometry?.kind === beforeShape.geometry?.kind
+      beforeShape.geometry &&
+      afterShape.geometry?.kind === beforeShape.geometry.kind
     ) {
       assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
       const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;
@@ -1546,6 +1753,18 @@ async function run(config) {
     });
     const recovered = await waitForSavedProject(page, expectedRevision);
     assert.equal(recovered.revision, expectedRevision);
+    if (config.requireInputGame) {
+      assertInputGameProject(recovered, "Reloaded project");
+      assert.deepEqual(
+        recovered.game,
+        projectAfterEdit.game,
+        "The input game program changed after local reload.",
+      );
+      report.inputGame = {
+        ...report.inputGame,
+        preservedAcrossReload: true,
+      };
+    }
     assert.deepEqual(
       recovered.entities.map((entity) => entity.id),
       projectAfterEdit.entities.map((entity) => entity.id),
@@ -1571,6 +1790,18 @@ async function run(config) {
       expectedRevision,
       evidenceDir,
     );
+    if (config.requireInputGame) {
+      assertInputGameProject(zip.project, "Exported project");
+      assert.deepEqual(
+        zip.project.game,
+        projectAfterEdit.game,
+        "The exported ZIP changed the input game program.",
+      );
+      report.inputGame = {
+        ...report.inputGame,
+        preservedInZip: true,
+      };
+    }
     report.evidence.push("world.zip");
     report.export = "passed";
     await verifyStandalone(browser, zip, config, report, evidenceDir);

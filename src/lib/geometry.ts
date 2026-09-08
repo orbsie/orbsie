@@ -3,6 +3,10 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { Entity } from "./protocol";
 export function entityGeometry(entity: Entity): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
+  const tint =
+    entity.geometry?.kind !== "asset" && entity.geometry?.kind !== "generated"
+      ? entity.geometry?.tint
+      : undefined;
   const coarse = entity.geometry?.detail === "coarse";
   const segments = coarse ? 6 : 14;
   const add = (
@@ -24,7 +28,7 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
         new THREE.Vector3(...s),
       ),
     );
-    const c = new THREE.Color(color);
+    const c = new THREE.Color(tint ?? color);
     const colors = new Float32Array(geometry.attributes.position.count * 3);
     for (let i = 0; i < colors.length; i += 3) {
       colors[i] = c.r;

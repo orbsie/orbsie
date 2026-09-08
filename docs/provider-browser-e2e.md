@@ -137,3 +137,9 @@ model, preserves it during the scoped recolor, and scans storage/ZIP text for
 the builder capability. `ORBSIE_EVIDENCE_DIR` keeps these reports separate from
 other live runs. These options do not change provider/model authorization or
 output limits. Never place the private capability in evidence or source.
+
+## ChatGPT-authored input game
+
+`ORBSIE_LIVE_E2E=1 node scripts/verify-chatgpt-authored-game.mjs` starts a temporary authenticated ChatGPT companion and runs the real browser pairing flow against `http://127.0.0.1:3024`. It requires the managed account to expose `gpt-6-astra`; generation uses low reasoning and default processing. The wrapper passes its temporary capability only through the child environment, revokes it on exit, and records the actual generation count in a sanitized `wrapper.json`.
+
+This scenario creates two original procedural/custom objects and three input rules (right adds 7, up wins, left loses), then performs a selected material edit. It checks the unchanged game program through edit, local reload and ZIP export, and plays the downloaded world through score, held-input deduplication, win, restart and loss. It uses no fixture generation transport. `ORBSIE_REQUIRE_INPUT_GAME=1` enables the same scenario in the general harness; default scenarios remain unchanged. This verifies a bounded input game, not Blender construction, cloud recovery or publication.
