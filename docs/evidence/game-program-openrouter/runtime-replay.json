@@ -3,7 +3,7 @@
   "passed": true,
   "provider": "openrouter",
   "originalProjectSHA256": "701df76977ba036d9311c6a274852512ae745c452609a4a11350c2b87654fb0e",
-  "currentRuntimeSHA256": "44bbb3e987186c90ec15aae15385a2ec91abe8c0dbf2f7393abfdb2a8698324a",
+  "currentRuntimeSHA256": "d025a684d2ab03c272210197b2650e2b67efc718ab4fabbedbbd603a484028f8",
   "betweenFrameTapPreserved": true,
   "realProviderCalls": 0,
   "errors": [],
