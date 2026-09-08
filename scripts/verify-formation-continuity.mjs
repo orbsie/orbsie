@@ -135,6 +135,9 @@ try {
     elapsedMs: recolor.at(-1).time,
     remainedSolid: true,
   };
+  report.preparation = await page.evaluate(() =>
+    window.formationFixture.benchmark(),
+  );
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.externalRequests, []);
   assert.equal(report.samples.length, 3);

@@ -1,3 +1,5 @@
+import * as THREE from "three";
+import { formationParticles } from "../src/lib/formation-particles";
 /** Test-only renderer fixture; never imported by the app or standalone player. */
 import { capturePublicationThumbnail } from "../src/lib/publication-thumbnail";
 import { createRoot } from "react-dom/client";
@@ -100,6 +102,40 @@ let expectedParticles: number[][][];
 let oldGeometries: unknown[];
 (window as any).formationFixture = {
   thumbnail: capturePublicationThumbnail,
+  benchmark() {
+    const dense = new THREE.SphereGeometry(1, 256, 128);
+    const cases = [
+      ...meshes().map((mesh, index) => ({
+        name: entities[index].id,
+        geometry: mesh.geometry,
+      })),
+      { name: "dense-indexed-sphere", geometry: dense },
+    ];
+    const results = cases.map(({ name, geometry }) => {
+      const times = [];
+      for (let repeat = 0; repeat < 5; repeat++) {
+        const started = performance.now();
+        const points = formationParticles(geometry);
+        times.push(performance.now() - started);
+        points.dispose();
+      }
+      return {
+        name,
+        vertices: geometry.getAttribute("position").count,
+        triangles:
+          (geometry.index?.count ?? geometry.getAttribute("position").count) /
+          3,
+        samples: 2048,
+        milliseconds: times,
+      };
+    });
+    dense.dispose();
+    return {
+      userAgent: navigator.userAgent,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      results,
+    };
+  },
   ready: () =>
     !!_roots.get(document.querySelector("canvas")!)?.store &&
     meshes().length === 3 &&

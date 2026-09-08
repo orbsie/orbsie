@@ -32,290 +32,290 @@
   ],
   "realtime": {
     "frames": 41,
-    "elapsedMs": 921.3000000007451,
+    "elapsedMs": 928.5999999977648,
     "samples": [
       {
-        "time": 35.899999998509884,
+        "time": 41.30000000074506,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 37,
+        "time": 42.399999998509884,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 46.5,
+        "time": 52,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 63.30000000074506,
+        "time": 68.80000000074506,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 80,
+        "time": 85.39999999850988,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 96.69999999925494,
+        "time": 101.89999999850988,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 113.60000000149012,
+        "time": 118.59999999776483,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 130.19999999925494,
+        "time": 135.30000000074506,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 147,
+        "time": 152,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 163.80000000074506,
+        "time": 168.69999999925494,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 180,
+        "time": 185.59999999776483,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 197.5,
+        "time": 201.59999999776483,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 213.5,
+        "time": 219.09999999776483,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 230,
+        "time": 235.39999999850988,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 246.60000000149012,
+        "time": 251.59999999776483,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 263.8999999985099,
+        "time": 268.5,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 280,
+        "time": 285.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 296.30000000074506,
+        "time": 302,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 312.8999999985099,
+        "time": 318.69999999925494,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 330.19999999925494,
+        "time": 335.30000000074506,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 346.6000000014901,
+        "time": 352.0999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 366.5,
+        "time": 368.69999999925494,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 405.5,
+        "time": 385,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 413.30000000074506,
+        "time": 402.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 453.5,
+        "time": 418.69999999925494,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 492.19999999925494,
+        "time": 435.30000000074506,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 497.30000000074506,
+        "time": 452,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 538.6999999992549,
+        "time": 468.5999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 577.6999999992549,
+        "time": 485.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 582.6999999992549,
+        "time": 502,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 623,
+        "time": 523,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 661.6000000014901,
+        "time": 535.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 667.3999999985099,
+        "time": 575.0999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 708.3999999985099,
+        "time": 619.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 746.3999999985099,
+        "time": 692.0999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 763.3000000007451,
+        "time": 702.3999999985099,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 792,
+        "time": 772.0999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 829.8000000007451,
+        "time": 810.0999999977648,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 846.8999999985099,
+        "time": 819,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 878.1000000014901,
+        "time": 892.3000000007451,
         "bridges": 2,
         "particles": 2,
         "solids": 1,
         "complete": false
       },
       {
-        "time": 921.3000000007451,
+        "time": 928.5999999977648,
         "bridges": 2,
         "particles": 0,
         "solids": 3,
@@ -324,8 +324,66 @@
     ]
   },
   "recolor": {
-    "frames": 21,
-    "elapsedMs": 907.9000000022352,
+    "frames": 23,
+    "elapsedMs": 914.3999999985099,
     "remainedSolid": true
+  },
+  "preparation": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "hardwareConcurrency": 32,
+    "results": [
+      {
+        "name": "tree",
+        "vertices": 252,
+        "triangles": 84,
+        "samples": 2048,
+        "milliseconds": [
+          1.3999999985098839,
+          1.1000000014901161,
+          0.8999999985098839,
+          0.8000000007450581,
+          1.300000000745058
+        ]
+      },
+      {
+        "name": "platform",
+        "vertices": 180,
+        "triangles": 60,
+        "samples": 2048,
+        "milliseconds": [
+          1.3999999985098839,
+          1.4000000022351742,
+          1.699999999254942,
+          1.1000000014901161,
+          2
+        ]
+      },
+      {
+        "name": "arch",
+        "vertices": 1368,
+        "triangles": 456,
+        "samples": 2048,
+        "milliseconds": [
+          1.5,
+          1.5,
+          1.199999999254942,
+          1.199999999254942,
+          1
+        ]
+      },
+      {
+        "name": "dense-indexed-sphere",
+        "vertices": 33153,
+        "triangles": 65024,
+        "samples": 2048,
+        "milliseconds": [
+          56.099999997764826,
+          27.800000000745058,
+          45.100000001490116,
+          24.699999999254942,
+          12.199999999254942
+        ]
+      }
+    ]
   }
 }
