@@ -12,6 +12,40 @@ import {
 } from "./protocol";
 import { fixtureCommands, fixtureEdit } from "./fixtures";
 export type Phase = "landing" | "descending" | "editing";
+type LocalHistory = { project: Project; history: Project[]; future: Project[] };
+const HISTORY_LIMIT = 20;
+function readLocalHistory(
+  value: unknown,
+  project: Project,
+): LocalHistory | undefined {
+  if (!value || typeof value !== "object") return;
+  const record = value as Partial<LocalHistory>;
+  const saved = projectSchema.safeParse(record.project);
+  if (
+    !saved.success ||
+    JSON.stringify(saved.data) !== JSON.stringify(projectSchema.parse(project))
+  )
+    return;
+  const valid = (entries: unknown, future = false) => {
+    if (!Array.isArray(entries)) return [];
+    const bounded = future
+      ? entries.slice(0, HISTORY_LIMIT)
+      : entries.slice(-HISTORY_LIMIT);
+    return bounded.flatMap((entry) => {
+      const parsed = projectSchema.safeParse(entry);
+      return parsed.success &&
+        parsed.data.id === project.id &&
+        parsed.data.revision <= project.revision
+        ? [committed(parsed.data)]
+        : [];
+    });
+  };
+  return {
+    project: saved.data,
+    history: valid(record.history),
+    future: valid(record.future, true),
+  };
+}
 interface State {
   project: Project;
   phase: Phase;
@@ -27,6 +61,7 @@ interface State {
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
+  draftHistory: Record<string, LocalHistory>;
   readOnly: boolean;
   reset: number;
   set: (patch: Partial<State>) => void;
@@ -159,6 +194,7 @@ export const useOrb = create<State>((setState, getState) => ({
   error: "",
   saved: false,
   drafts: [],
+  draftHistory: {},
   readOnly: false,
   reset: 0,
   set: setState,
@@ -174,6 +210,10 @@ export const useOrb = create<State>((setState, getState) => ({
         return;
       }
       const snapshot = committed(s.project, baseline);
+      const history = readLocalHistory(
+        { project: snapshot, history: s.history, future: s.future },
+        snapshot,
+      )!;
       const wrote = await withDraftWriteLock(snapshot.id, async () => {
         let accepted = false;
         await update<Record<string, Project>>("orbsie-library", (library) => {
@@ -183,9 +223,15 @@ export const useOrb = create<State>((setState, getState) => ({
           return { ...library, [snapshot.id]: snapshot };
         });
         if (!accepted) return false;
+        await update<Record<string, LocalHistory>>(
+          "orbsie-history",
+          (records) => ({
+            ...records,
+            [snapshot.id]: history,
+          }),
+        );
         await set("orbsie-draft", {
-          project: snapshot,
-          history: s.history.slice(-20),
+          ...history,
           savedAt: Date.now(),
         });
 
@@ -200,6 +246,7 @@ export const useOrb = create<State>((setState, getState) => ({
         return;
       }
       setState({
+        draftHistory: { ...getState().draftHistory, [snapshot.id]: history },
         saved: true,
         recovered: snapshot,
         drafts: [
@@ -263,27 +310,46 @@ export const useOrb = create<State>((setState, getState) => ({
     setState({ drafts: [copy, ...getState().drafts] });
   },
   async recover() {
+    const currentProject = getState().project;
     try {
       const draft = await get("orbsie-draft");
       const library = await get<Record<string, Project>>("orbsie-library");
-      const drafts = Object.values(library ?? {}).map((p) =>
-        projectSchema.parse(p),
-      );
-      if (draft)
-        setState({
-          recovered: projectSchema.parse(draft.project),
-          drafts: drafts.length ? drafts : [projectSchema.parse(draft.project)],
-        });
-    } catch {
-      setState({
-        error: "The saved draft could not be read. You can start a new world.",
+      const records = await get<Record<string, unknown>>("orbsie-history");
+      if (getState().project !== currentProject) return;
+      const drafts = Object.entries(library ?? {}).flatMap(([id, value]) => {
+        const parsed = projectSchema.safeParse(value);
+        return parsed.success && parsed.data.id === id ? [parsed.data] : [];
       });
+      const saved = projectSchema.safeParse(draft?.project);
+      const recovered = saved.success
+        ? (drafts.find((p) => p.id === saved.data.id) ?? saved.data)
+        : undefined;
+      if (recovered && !drafts.some((p) => p.id === recovered.id))
+        drafts.push(recovered);
+      const draftHistory = Object.fromEntries(
+        drafts.flatMap((project) => {
+          const history =
+            readLocalHistory(records?.[project.id], project) ??
+            readLocalHistory(draft, project);
+          return history ? [[project.id, history]] : [];
+        }),
+      );
+      setState({ recovered, drafts, draftHistory });
+    } catch {
+      if (getState().project === currentProject)
+        setState({
+          error:
+            "The saved draft could not be read. You can start a new world.",
+        });
     }
   },
   load(project, play = false) {
     active?.abort();
     baseline = project;
     const writer = play || activateWriter(project.id);
+    const history = play
+      ? undefined
+      : readLocalHistory(getState().draftHistory[project.id], project);
     setState({
       project: projectSchema.parse(project),
       phase: "editing",
@@ -292,8 +358,8 @@ export const useOrb = create<State>((setState, getState) => ({
       score: [],
       won: false,
       selected: undefined,
-      history: [],
-      future: [],
+      history: history?.history ?? [],
+      future: history?.future ?? [],
       recovered: undefined,
       readOnly: !writer,
       ...(!writer
@@ -324,7 +390,7 @@ export const useOrb = create<State>((setState, getState) => ({
     if (s.readOnly || s.building || !s.history.length) return;
     setState({
       project: { ...s.history.at(-1)!, revision: s.project.revision + 1 },
-      future: [s.project, ...s.future],
+      future: [s.project, ...s.future].slice(0, HISTORY_LIMIT),
       history: s.history.slice(0, -1),
       selected: undefined,
       notice: "Previous change restored.",
@@ -336,7 +402,7 @@ export const useOrb = create<State>((setState, getState) => ({
     if (s.readOnly || s.building || !s.future.length) return;
     setState({
       project: { ...s.future[0], revision: s.project.revision + 1 },
-      history: [...s.history, s.project],
+      history: [...s.history, s.project].slice(-HISTORY_LIMIT),
       future: s.future.slice(1),
     });
     void getState().save();
@@ -385,7 +451,9 @@ export const useOrb = create<State>((setState, getState) => ({
       error: "",
       notice: "",
       saved: false,
-      history: initial ? [before] : [...getState().history, before].slice(-30),
+      history: initial
+        ? [before]
+        : [...getState().history, before].slice(-HISTORY_LIMIT),
       future: [],
     });
     if (initial)
