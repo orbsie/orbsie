@@ -46,7 +46,7 @@ async function save() {
 }
 for (const prompt of [
   "Create exactly one tiny cyan crystal at [0,0,0]. Use reserve_entity, refined set_geometry, commit_revision. No other objects. Keep this under 300 output tokens.",
-  "Change the existing crystal color to purple. Use one set_color then commit_revision. No other commands. Keep under 100 output tokens.",
+  "Change the existing crystal color to purple. Use one set_material then commit_revision. No other commands. Keep under 100 output tokens.",
   'Keep this world unchanged. Output only commit_revision with message "Ready to explore.". Keep under 40 output tokens.',
 ]) {
   const started = Date.now();

@@ -27,11 +27,11 @@ Actual flagship creation and edited snapshots were rendered and visually inspect
 
 ## Measurements and limits
 
-AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. A subsequent adaptive-resolution/instancing pass measured median 50.0 ms and p95 83.4 ms versus a separate baseline 66.7/100.1 ms, at lower backing resolution. These single development-server samples are indicative; native GPU results, geometry workers and full path reachability remain unverified. See [measurement conditions](render-performance.md).
+AMD EPYC 9124, Linux, Chromium 153 headless, 1440 × 1000, SwiftShader software WebGL with recording: the 14-entity fixture completed in 10.248 seconds; 120 play frames measured median 66.7 ms, p95 116.7 ms. This does not meet the 60 fps target. A subsequent adaptive-resolution/instancing pass measured median 50.0 ms and p95 83.4 ms versus a separate baseline 66.7/100.1 ms, at lower backing resolution. These single development-server samples are indicative; native GPU results, geometry workers and real flagship full-path reachability remain unverified. See [measurement conditions](render-performance.md).
 
 Separate production/development Neon Free databases are provisioned and migrated. Real production accounts/cloud saving passed acceptance. The supplied publishing token can read the main project but Vercel denies project creation (HTTP 403); per-Orb publication is not live certified. The main app deploys successfully using the existing CLI login. See [infrastructure](infrastructure.md) and [cloud acceptance](cloud-verification.md).
 
-One authorized direct OpenRouter Luna request (512 output-token cap) returned HTTP402; no retry or model substitution occurred. Successful OpenRouter inference and hosted relay generation remain unverified. Gateway inference has not been tested with an API key. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, reloaded undo history, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
+Two authorized direct OpenRouter Luna attempts used a 512 output-token cap: the first returned HTTP402; the second reached the model but failed command-schema validation. No successful OpenRouter scene is claimed. Production Gateway Luna completed three free turns, including creation and an edit; the fourth was blocked before inference. Local ChatGPT success does not establish public multitenant subscription relaying. Google sign-in UI, durable generation checkpoint/resume, arbitrary composable behaviors, imported assets, and a rigorous spherical parcel transition remain incomplete.
 
 Dictation tests simulate Web Speech API events: corrections, prefix preservation, stop, manual edits, stale results, permission denial and unsupported browsers. Real microphone audio/transcription remains untested. Orbsie stores no audio; browser speech services may process it remotely.
 
@@ -54,3 +54,13 @@ Start the app on the chosen test URL first. Stored-live-scene scripts require th
 Source `a6c9a58` is live at https://orbsie.com via `orbsie-5csqmzd63-grappeggias-projects.vercel.app`. Homepage metadata links the SVG favicon; HTTP200 and exact deployed/source equality passed. The icon was visually checked at16,32,64 and160px. This branding-only update followed the65-test/typecheck/build pass and successful anonymous provider UI verification. See [favicon evidence](evidence/production-favicon.json).
 
 Organization avatar artwork is committed under `assets/brand`. Setting the GitHub organization avatar remains pending: browser inventory returned no available apps/browsers, so no authenticated upload was performed.
+
+## Free prompts, waitlist and domains
+
+Source `8cdad04` deployed successfully to `orbsie-d8sl7mkia-grappeggias-projects.vercel.app`. Three live server-key Gateway Luna turns completed in 5.476s, 2.418s and 1.029s; remaining allowance was2,1,0, and the fourth request received429. All commands passed the actual protocol and produced one ready crystal with a scoped material edit. See [trial evidence](evidence/free-trial.json). No alternate model or Fast processing was requested.
+
+Dev Postgres integration tests admitted only3 of12 concurrent quota claims and blocked a changed visitor cookie sharing the network bucket; test records were removed. A separate concurrent waitlist test persisted one pending row without contacting email delivery. Production and development schemas are migrated. Waitlist delivery awaits Resend terms acceptance and verified sender configuration; no confirmation email has actually been sent.
+
+Both `orbsie.app` and `www.orbsie.app` are attached to the same Vercel project and verified over HTTPS with308 redirects to `orbsie.com`, preserving query strings. See [domain evidence](evidence/domains.json).
+
+Bounded undo/redo stacks now survive local reloads with snapshot validation and project-scoped recovery guards. Actual fixture winning traversal passed on desktop keyboard and mobile touch, collecting all5crystals and reaching the portal; this does not certify a full win in the model-generated flagship.

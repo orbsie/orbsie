@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-08T00:14:46.182Z",
+  "project": "orbsie",
+  "results": [
+    {
+      "domain": "orbsie.app",
+      "status": 308,
+      "location": "https://orbsie.com/?from=domain-check",
+      "httpsVerified": true
+    },
+    {
+      "domain": "www.orbsie.app",
+      "status": 308,
+      "location": "https://orbsie.com/?from=domain-check",
+      "httpsVerified": true
+    }
+  ]
+}

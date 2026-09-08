@@ -2,7 +2,7 @@
 
 A little world, made by you. An open-source experiment in conversational 3D creation, licensed under Apache 2.0.
 
-**App:** https://orbsie.com · **Vercel:** https://orbsie.vercel.app · **Source:** https://github.com/orbsie/orbsie
+**App:** https://orbsie.com · **Also:** https://orbsie.app · **Vercel:** https://orbsie.vercel.app · **Source:** https://github.com/orbsie/orbsie
 
 ## Run
 
@@ -28,7 +28,7 @@ Open the local URL printed by Next.js. `npm run build` builds both the editor an
 - Trusted local ChatGPT test harness: actual Astra low scene creation and scoped edits verified.
 - Private Google Cloud Storage archives using keyless Vercel workload identity, with separate production/development buckets.
 
-**The hosted default is an interactive fixture demo, not live AI generation.** Email/password accounts, cloud saving and private archives are verified in production. Live hosted AI still needs provider-key testing; dedicated Orb publication is blocked by the publishing token’s project-creation permissions. The initial brief remains the target product; this is a tested implementation in progress. Read [verification](docs/verification.md) for evidence and gaps.
+The hosted Gateway Luna path has passed three real free prompts and a blocked fourth request. The shared credential is private in Vercel, with database-enforced quotas. Email/password accounts, cloud saving and private archives are also verified in production; dedicated Orb publication is blocked by the publishing token’s project-creation permissions. The initial brief remains the target product; this is a tested implementation in progress. Read [verification](docs/verification.md) for evidence and gaps.
 
 ## Cloud configuration
 
@@ -38,7 +38,7 @@ Copy `.env.example` to `.env.local`, fill it privately, and configure the same v
 npm run db:migrate
 ```
 
-Better Auth owns its account tables; `scripts/schema.sql` adds Orbsie project/revision/publication tables. Email/password login is implemented; optional Google provider configuration is accepted by the auth server, but its UI is not yet exposed. Production and development Neon migrations passed, and real production authentication/save/recovery checks passed.
+Better Auth owns its account tables; `scripts/schema.sql` adds Orbsie project/revision/publication tables; migrations also install trial quota and Plus waitlist tables. Email/password login is implemented; optional Google provider configuration is accepted by the auth server, but its UI is not yet exposed. Production and development Neon migrations passed, and real production authentication/save/recovery checks passed.
 
 AI keys are entered in connection settings, kept only in tab memory, and sent to the server relay for the chosen provider. Generating with your own key does not require an Orbsie account; signing in is needed to publish. Signed-out work saves locally. No remembered-key storage is implemented. Disconnect clears the tab's key. Model IDs are obtained from the provider catalogs rather than invented. NDJSON generation depends on the selected model following the framing instructions and needs live testing per model.
 
@@ -56,4 +56,6 @@ See [architecture](docs/architecture.md), [infrastructure](docs/infrastructure.m
 
 For authorized local live tests, run `node scripts/run-local-chatgpt.mjs` or `node scripts/run-flagship-chatgpt.mjs`. They use managed Codex login, discovered Astra low, and explicitly request standard processing. These consume model usage; deterministic `npm test` does not. `.codex/config.toml` selects Fast only for compatible Codex development sessions; Orbsie generation and its live tests do not inherit that setting. Running hosted subagent speed cannot be changed through this session’s agent controls.
 
-For the separately authorized OpenRouter test credential, use only `openai/gpt-5.6-luna`: `node --env-file=.env.openrouter.local scripts/verify-openrouter-luna.mjs`. The private file is Git-ignored and mode0600. The script makes one request capped at512 output tokens, with no model substitution or retry; it is separate from the Astra-only ChatGPT harness. The first request returned HTTP402, so no successful OpenRouter generation is claimed.
+For the separately authorized OpenRouter test credential, use only `openai/gpt-5.6-luna`: `node --env-file=.env.openrouter.local scripts/verify-openrouter-luna.mjs`. The private file is Git-ignored and mode0600. The script makes one request capped at512 output tokens, with no model substitution or retry; it is separate from the Astra-only ChatGPT harness. The first request returned HTTP402; a second reached Luna but failed command-schema validation. No successful OpenRouter scene is claimed. Diagnostics are now retained privately before assertions.
+
+Free visitors use server-owned Luna independently of paid presets: Quality Astra, Balanced Luna, Budget GLM-5.3-Flash. See [free prompt enforcement](docs/free-prompts.md) and [Plus waitlist delivery](docs/waitlist.md). Waitlist email delivery awaits the account owner’s Resend terms acceptance and verified sender setup; saved signups remain pending meanwhile.
