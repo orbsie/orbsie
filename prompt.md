@@ -2,6 +2,9 @@
 
 ## Owner updates — 2026-09-07
 
+- Remove user-facing demo mode. Every creation uses available free prompts or the linked API/account; otherwise preserve the prompt and ask for sign-in or a provider connection. Deterministic fixtures are test infrastructure only. This overrides earlier demo-mode requirements below.
+- Commit and push coherent reviewed changes frequently throughout implementation.
+
 - Keep Apache 2.0.
 - Use GPT-6 Astra with low reasoning and regular/standard processing for the lead and all development-agent defaults. Disable Fast mode. Explicitly delegated Luna workers use GPT-5.6 Luna with xhigh reasoning and regular/standard processing. Orbsie calls use standard processing; live model tests remain Astra low. Speed tier is separate from reasoning effort.
 - Continue implementation with Astra owning planning, integration, and quality, strategically delegating bounded work to Luna xhigh under the execution plan below. Use up to three parallel workers when independent tasks justify them, with frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
@@ -104,6 +107,16 @@ An entity should have a stable ID and progress through states such as reserved �
 - Canceling or failing a generation should preserve completed changes and restore or remove unfinished previews coherently.
 
 Do not imply that the model is streaming finished geometry when it is only streaming prose. The visible pipeline must be driven by actual object reservations, geometry recipes, and revisions. A clearly labeled local demo may replay fixture events through this same pipeline.
+
+## Curated 3D asset collection — owner addition
+
+- Download and maintain a curated local collection of high-quality 3D models from verified original sources with permissive licenses allowing redistribution and commercial use. Preserve the exact license text, author attribution when required, original source URL, version/download date and integrity hash for every asset. License compatibility is an acceptance gate, not an assumption based on a search label.
+- Favor visually consistent stylized assets suitable for Orbsie's aesthetic, with reviewed polygon counts, texture sizes, materials, origins, scale and colliders. Optimize and cache assets for responsive loading while retaining license/provenance alongside originals and distributed derivatives.
+- Add a bounded, typed catalog and asset-reference path to the authoring protocol and standalone player. Models may choose catalog assets when they fit the request, and generate new procedural geometry for novel or customized content. Support a useful mix and alternate between prepared assets and new geometry where appropriate; never restrict a world to the catalog or force inappropriate substitutions.
+- An explicit request for new/original models overrides the collection for the scope of that request. Carry this constraint in generation context and enforce it when validating operations, including follow-up turns. Do not silently select a catalog asset for an object that the user asked to generate anew.
+- Keep genuine incremental reservations/formation for both paths. Load/decode heavy assets away from interaction-critical work; cache/preload only bounded useful assets. Preserve stable IDs, selection, gameplay and smooth revisions when moving between catalog and generated geometry.
+- Public deployments and independent ZIP/source exports must include all referenced assets and their licenses/attribution, with no dependence on the editor or third-party download URLs. Unknown catalog IDs and arbitrary model-supplied remote URLs must be rejected.
+- Verify catalog-only, mixed and explicitly-new workflows with real providers and deterministic regressions. Measure first usable content and interaction responsiveness against the procedural-only baseline; do not claim faster generation solely because a catalog exists.
 
 ## 6. Incremental authoring architecture
 
