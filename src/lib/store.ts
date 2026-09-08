@@ -1,5 +1,13 @@
 "use client";
-import { downloadCloudGeneratedModels } from "./cloud-generated-models";
+import {
+  appendCloudGenerationOperation,
+  cancelCloudGenerationRun,
+} from "./cloud-generation-journal";
+import type { GenerationRun } from "./generation-journal";
+import {
+  uploadCloudGeneratedModels,
+  downloadCloudGeneratedModels,
+} from "./cloud-generated-models";
 import { assertModelingCommand } from "./modeling-policy";
 import {
   buildLocalModel,
@@ -22,6 +30,15 @@ import {
   type Command,
   type Cursor,
 } from "./protocol";
+export type GenerationJournalConnection = {
+  isCurrent: () => boolean;
+  begin: (
+    project: Project,
+    runId: string,
+    prompt: string,
+    selected?: string,
+  ) => Promise<GenerationRun>;
+};
 export type Phase = "landing" | "descending" | "editing";
 type LocalHistory = { project: Project; history: Project[]; future: Project[] };
 const HISTORY_LIMIT = 20;
@@ -78,7 +95,11 @@ interface State {
   readOnly: boolean;
   reset: number;
   set: (patch: Partial<State>) => void;
-  run: (prompt: string, connection?: GenerationConnection) => Promise<void>;
+  run: (
+    prompt: string,
+    connection?: GenerationConnection,
+    journal?: GenerationJournalConnection,
+  ) => Promise<void>;
   stop: () => void;
   undo: () => void;
   redo: () => void;
@@ -425,7 +446,11 @@ export const useOrb = create<State>((setState, getState) => ({
     });
     void getState().save();
   },
-  async run(prompt, connection = { provider: "free", model: "", key: "" }) {
+  async run(
+    prompt,
+    connection = { provider: "free", model: "", key: "" },
+    journal,
+  ) {
     if (!activateWriter(getState().project.id)) {
       setState({
         readOnly: true,
@@ -497,6 +522,16 @@ export const useOrb = create<State>((setState, getState) => ({
       sequence: 0,
       seen: new Set(),
     };
+    let durableRun: GenerationRun | undefined;
+    const journalCurrent = () =>
+      !signal.aborted &&
+      active === controller &&
+      (!journal || journal.isCurrent());
+    const cancelDurable = () => {
+      if (durableRun?.state === "running")
+        void cancelCloudGenerationRun(durableRun.id).catch(() => undefined);
+    };
+    signal.addEventListener("abort", cancelDurable, { once: true });
     let lastAppliedCommand: Command["type"] | undefined;
     const apply = async (command: Command) => {
       if (signal.aborted || active !== controller) return false;
@@ -526,19 +561,38 @@ export const useOrb = create<State>((setState, getState) => ({
         command = { ...command, geometry: { ...command.geometry, model } };
         s = getState();
       }
-      const result = applyOperation(
-        s.project,
-        {
-          version: 1,
-          projectId: s.project.id,
-          runId: cursor.runId,
-          sequence: cursor.sequence + 1,
-          operationId: crypto.randomUUID(),
-          baseRevision: s.project.revision,
-          command,
-        },
-        cursor,
-      );
+      const envelope = {
+        version: 1 as const,
+        projectId: s.project.id,
+        runId: cursor.runId,
+        sequence: cursor.sequence + 1,
+        operationId: crypto.randomUUID(),
+        baseRevision: s.project.revision,
+        command,
+      };
+      const result = applyOperation(s.project, envelope, cursor);
+      if (journal && durableRun) {
+        if (!journalCurrent()) return false;
+        if (
+          command.type === "set_geometry" &&
+          command.geometry.kind === "generated" &&
+          !(await uploadCloudGeneratedModels(result.project, journalCurrent))
+        )
+          return false;
+        const acknowledged = await appendCloudGenerationOperation(
+          envelope,
+          signal,
+        );
+        if (!journalCurrent()) return false;
+        if (
+          JSON.stringify(acknowledged.checkpoint) !==
+          JSON.stringify(projectSchema.parse(result.project))
+        )
+          throw Error(
+            "The cloud checkpoint differs from this update. Recover it before continuing.",
+          );
+        durableRun = acknowledged;
+      }
       cursor = result.cursor;
       lastAppliedCommand = command.type;
       setState({ project: result.project });
@@ -557,6 +611,19 @@ export const useOrb = create<State>((setState, getState) => ({
     try {
       await getState().save();
       if (signal.aborted || active !== controller) return;
+      if (journal) {
+        if (!journalCurrent()) return;
+        durableRun = await journal.begin(
+          project,
+          cursor.runId,
+          prompt,
+          selected,
+        );
+        if (!journalCurrent()) {
+          cancelDurable();
+          return;
+        }
+      }
       {
         const request = generationRequest(connection, {
           prompt,
@@ -623,7 +690,12 @@ export const useOrb = create<State>((setState, getState) => ({
         await getState().save();
       }
     } finally {
-      if (active === controller) active = undefined;
+      signal.removeEventListener("abort", cancelDurable);
+      if (durableRun?.state === "running") cancelDurable();
+      if (active === controller) {
+        active = undefined;
+        setState({ building: false });
+      }
     }
   },
 }));

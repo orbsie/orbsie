@@ -39,6 +39,11 @@ import {
   type Publication,
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
+import {
+  latestCloudGenerationRun,
+  cancelCloudGenerationRun,
+  startCloudGenerationRun,
+} from "@/lib/cloud-generation-journal";
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
   checkModelingConnection,
@@ -488,7 +493,68 @@ export default function Orbsie() {
         selectedConnection = { provider: "free", model: "", key: "" };
       }
       setPrompt("");
-      const generation = s.run(instruction, selectedConnection);
+      const accountVersion = accountGeneration.current;
+      const originProjectId = s.project.id;
+      const journal = user
+        ? {
+            isCurrent: () => accountGeneration.current === accountVersion,
+            begin: async (
+              project: typeof s.project,
+              runId: string,
+              intent: string,
+              selected?: string,
+            ) => {
+              const current = () =>
+                accountGeneration.current === accountVersion &&
+                useOrb.getState().project.id === project.id;
+              if (
+                !current() ||
+                !(await uploadCloudGeneratedModels(project, current))
+              )
+                throw Error(
+                  "Generation account changed before cloud recovery could start.",
+                );
+              const response = await fetch("/api/projects", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  project,
+                  baseRevision:
+                    project.id === originProjectId ? cloudRevision : null,
+                }),
+              });
+              const result = await response.json();
+              if (!current())
+                throw Error(
+                  "Generation account changed before cloud recovery could start.",
+                );
+              if (!response.ok) {
+                if (response.status === 409 && result.conflict)
+                  setConflict(result.conflict);
+                throw Error(
+                  result.error ??
+                    "Cloud recovery could not save the starting world.",
+                );
+              }
+              setCloudBaseline({
+                projectId: project.id,
+                value: result.revision,
+              });
+              const run = await startCloudGenerationRun({
+                project,
+                runId,
+                prompt: intent,
+                selected,
+              });
+              if (!current())
+                throw Error(
+                  "Generation account changed before cloud recovery could start.",
+                );
+              return run;
+            },
+          }
+        : undefined;
+      const generation = s.run(instruction, selectedConnection, journal);
       const generationWorld = captureCloudRequest();
       submission.current.checking = false;
       await generation;
@@ -539,6 +605,60 @@ export default function Orbsie() {
       );
     } finally {
       setBusy(false);
+    }
+  };
+  const recoverGeneration = async () => {
+    const isCurrent = captureCloudRequest();
+    const projectId = s.project.id;
+    setBusy(true);
+    setModalError("");
+    try {
+      let run = await latestCloudGenerationRun(projectId);
+      const response = await fetch(
+        `/api/projects?id=${encodeURIComponent(projectId)}`,
+        { cache: "no-store" },
+      );
+      const data = await response.json();
+      if (!isCurrent()) return;
+      if (!response.ok)
+        throw Error(data.error ?? "Cloud world is unavailable.");
+      if (
+        !run.cloudBaselineCurrent ||
+        data.project.revision !== run.baseRevision
+      )
+        throw Error(
+          "A newer cloud save exists. Open that version before recovering generation.",
+        );
+      if (useOrb.getState().project.revision > run.checkpoint.revision)
+        throw Error(
+          "Your local world is newer than this checkpoint. Export or save it before opening an older recovery.",
+        );
+      if (run.state === "running") run = await cancelCloudGenerationRun(run.id);
+      if (!isCurrent()) return;
+      const recovered = committed(run.checkpoint);
+      if (!(await useOrb.getState().loadCloud(recovered, isCurrent))) return;
+      setCloudBaseline({ projectId, value: data.project.revision });
+      setModal(null);
+      setPrompt(
+        run.state === "complete"
+          ? ""
+          : `Continue this request from the recovered world. Preserve completed objects and finish only what remains: ${run.prompt}`,
+      );
+      useOrb.getState().set({
+        notice:
+          run.state === "complete"
+            ? "Recovered the completed generation. Save it to your account when ready."
+            : "Recovered finished work. Send the continuation to start a new generation request.",
+      });
+    } catch (error) {
+      if (isCurrent())
+        setModalError(
+          error instanceof Error
+            ? error.message
+            : "Could not recover generation.",
+        );
+    } finally {
+      if (isCurrent()) setBusy(false);
     }
   };
   const cloudSave = async () => {
@@ -1595,6 +1715,13 @@ export default function Orbsie() {
                     onClick={cloudSave}
                   >
                     Save current world to cloud
+                  </button>
+                  <button
+                    className="share-option"
+                    disabled={busy || s.building}
+                    onClick={() => void recoverGeneration()}
+                  >
+                    <RotateCcw size={18} /> Recover latest generation
                   </button>
                   {conflict && (
                     <div className="setup-note" role="alert">

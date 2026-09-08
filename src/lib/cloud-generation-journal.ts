@@ -133,3 +133,26 @@ export async function cancelCloudGenerationRun(runId: string) {
     );
   return run;
 }
+
+export async function latestCloudGenerationRun(
+  projectId: string,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    `/api/generation-runs?projectId=${encodeURIComponent(projectId)}`,
+    {
+      credentials: "same-origin",
+      redirect: "error",
+      cache: "no-store",
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(30000)])
+        : AbortSignal.timeout(30000),
+    },
+  );
+  const run = await readResponse(response);
+  if (run.projectId !== projectId)
+    throw new GenerationJournalError(
+      "Cloud recovery returned a different world.",
+    );
+  return run;
+}

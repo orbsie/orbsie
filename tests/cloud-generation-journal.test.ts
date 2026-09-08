@@ -15,6 +15,7 @@ const run = {
   checkpoint: project,
   prompt: "Build a garden",
   baseRevision: 0,
+  cloudBaselineCurrent: true,
 };
 beforeEach(() => {
   fetcher.mockReset();

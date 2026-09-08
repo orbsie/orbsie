@@ -16,6 +16,7 @@ export const generationRunSchema = z.object({
   prompt: z.string().min(1).max(4000),
   selected: z.string().max(80).optional(),
   baseRevision: z.number().int().nonnegative(),
+  cloudBaselineCurrent: z.boolean(),
 });
 export type GenerationRun = z.infer<typeof generationRunSchema>;
 export const journalEnvelopeSchema = envelopeSchema.extend({

@@ -39,6 +39,16 @@ import {
   stepGameplay,
   type PlayerState,
 } from "@/lib/gameplay";
+import {
+  createParcelTransition,
+  globeOffsetY,
+  globeScale,
+  parcelFrame,
+  patchBlend,
+  planetSpinRate,
+  stepParcelTransition,
+  type ParcelFrame,
+} from "@/lib/parcel-transition";
 let motionPreference: MediaQueryList | undefined;
 const reduced = () => {
   if (typeof window === "undefined") return false;
@@ -66,9 +76,27 @@ function AdaptiveResolution() {
   });
   return null;
 }
-function Planet({ progress }: { progress: React.RefObject<number> }) {
+function Planet({
+  progress,
+  frame,
+  spin,
+}: {
+  progress: React.RefObject<number>;
+  frame: ParcelFrame;
+  spin: React.RefObject<number>;
+}) {
   const group = useRef<THREE.Group>(null);
   const cloud = useRef<THREE.Group>(null);
+  const alignment = useMemo(
+    () =>
+      new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(...frame.normal),
+        new THREE.Vector3(0, 0, 1),
+      ),
+    [frame],
+  );
+  const spinAxis = useMemo(() => new THREE.Vector3(...frame.normal), [frame]);
+  const spinQuaternion = useMemo(() => new THREE.Quaternion(), []);
   const geometry = useMemo(() => {
     const g = new THREE.SphereGeometry(3, 96, 64);
     const p = g.attributes.position;
@@ -124,16 +152,17 @@ function Planet({ progress }: { progress: React.RefObject<number> }) {
   useFrame((_, dt) => {
     if (group.current) {
       const p = progress.current;
-      group.current.visible = p < 0.83;
-      group.current.rotation.y += reduced() ? 0 : dt * 0.027 * (1 - p);
-      const s = 1 + p * p * 6;
+      spinQuaternion.setFromAxisAngle(spinAxis, frame.spinPhase + spin.current);
+      group.current.quaternion.copy(alignment).multiply(spinQuaternion);
+      group.current.visible = p < 0.98;
+      const s = globeScale(p);
       group.current.scale.setScalar(s);
-      group.current.position.y = -p * 3 * s;
+      group.current.position.y = globeOffsetY(p);
     }
     if (cloud.current) cloud.current.rotation.y += dt * 0.012;
   });
   return (
-    <group ref={group} rotation={[0.1, -0.35, -0.12]}>
+    <group ref={group}>
       <mesh geometry={geometry}>
         <meshStandardMaterial vertexColors roughness={0.87} />
       </mesh>
@@ -528,20 +557,53 @@ function Scene() {
     playing = useOrb((s) => s.playing);
   const { camera, size } = useThree();
   const progress = useRef(0);
+  const transition = useRef(createParcelTransition());
+  const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
   const initialized = useRef(false);
   const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null);
+  const frame = useMemo(() => parcelFrame(projectId), [projectId]);
+  const alignment = useMemo(
+    () =>
+      new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(...frame.normal),
+        new THREE.Vector3(0, 0, 1),
+      ),
+    [frame],
+  );
+  const spinQuaternion = useMemo(() => new THREE.Quaternion(), []);
+  const surfaceOrientation = useMemo(() => new THREE.Quaternion(), []);
+  const flatQuaternion = useMemo(() => new THREE.Quaternion(), []);
+  const localNormal = useMemo(
+    () => new THREE.Vector3(...frame.normal),
+    [frame],
+  );
+  const surfaceNormal = useMemo(() => new THREE.Vector3(), []);
+  const surfaceEast = useMemo(() => new THREE.Vector3(), []);
+  const surfaceZ = useMemo(() => new THREE.Vector3(), []);
+  const surfacePosition = useMemo(() => new THREE.Vector3(), []);
+  const patchQuaternion = useMemo(() => new THREE.Quaternion(), []);
+  const tangentMatrix = useMemo(() => new THREE.Matrix4(), []);
+  const origin = useMemo(() => new THREE.Vector3(), []);
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
   const cameraLook = useMemo(() => new THREE.Vector3(), []);
+  useEffect(() => {
+    transition.current = createParcelTransition(phase === "landing" ? 0 : 1);
+    spin.current = 0;
+    progress.current = transition.current.progress;
+    initialized.current = false;
+  }, [projectId]);
   useFrame((_, dt) => {
     const target = phase === "landing" ? 0 : 1;
-    progress.current = THREE.MathUtils.damp(
-      progress.current,
+    transition.current = stepParcelTransition(
+      transition.current,
       target,
-      reduced() ? 100 : 1.05,
       dt,
+      reduced(),
     );
+    progress.current = transition.current.progress;
+    spin.current = transition.current.spin;
     const t = progress.current;
     if (phase === "landing" || t < 0.995 || !initialized.current) {
       const mobile = size.width < 700;
@@ -559,11 +621,27 @@ function Scene() {
       initialized.current = t > 0.99;
     }
     if (island.current) {
-      island.current.visible = t > 0.35;
-      island.current.scale.setScalar(
-        Math.max(0.001, THREE.MathUtils.smoothstep(t, 0.35, 0.87)),
+      const blend = patchBlend(t);
+      spinQuaternion.setFromAxisAngle(
+        localNormal,
+        frame.spinPhase + transition.current.spin,
       );
-      island.current.position.y = -2 * (1 - t);
+      surfaceOrientation.copy(alignment).multiply(spinQuaternion);
+      surfaceNormal.set(...frame.normal).applyQuaternion(surfaceOrientation);
+      surfaceEast.set(...frame.east).applyQuaternion(surfaceOrientation);
+      surfaceZ.copy(surfaceEast).cross(surfaceNormal).normalize();
+      tangentMatrix.makeBasis(surfaceEast, surfaceNormal, surfaceZ);
+      patchQuaternion.setFromRotationMatrix(tangentMatrix);
+      island.current.visible = blend > 0.001 || phase !== "landing";
+      surfacePosition.copy(surfaceNormal).multiplyScalar(3 * globeScale(t));
+      surfacePosition.y += globeOffsetY(t);
+      island.current.position.lerpVectors(surfacePosition, origin, blend);
+      island.current.quaternion.slerpQuaternions(
+        patchQuaternion,
+        flatQuaternion,
+        blend,
+      );
+      island.current.scale.setScalar(Math.max(0.001, blend));
     }
   });
   return (
@@ -594,7 +672,7 @@ function Scene() {
         shadow-camera-bottom={-12}
         shadow-normalBias={0.05}
       />
-      <Planet progress={progress} />
+      <Planet progress={progress} frame={frame} spin={spin} />
       <group ref={island} visible={false}>
         <mesh position={[0, -0.65, 0]} receiveShadow>
           <cylinderGeometry args={[8.6, 7.5, 1.2, 80]} />

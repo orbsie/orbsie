@@ -1,5 +1,9 @@
 # Orbsie full scope audit
 
+Latest local validation (2026-09-08): generation checkpoints now persist acknowledged operations with owner isolation, ordered idempotent replay, cancellation and cloud snapshot drift guards. `docs/evidence/generation-journal/report.json` records 17 passing real development-database checks; `browser.json` records signed-in recovery into IndexedDB with zero inference requests and no page errors. This proves completed-checkpoint recovery, not real-provider interrupted-stream continuation. Production migration/deployment and journal retention remain open. The regression suite passes 333 tests, with two optional database tests skipped.
+
+The stable parcel anchor/tangent basis and renderer transition are implemented. `docs/evidence/parcel-transition/report.json` covers descent, local reopen, return, repeated arrival and reduced motion using a stubbed generation fixture, with one canvas and no page errors. Full production timing, interaction responsiveness and camera/composer coordination remain open; historical transition rows below should be read with this narrower new evidence.
+
 Audit date: 2026-09-07/08. This audit compares the complete current `prompt.md` (including the owner additions at lines 5 and 111) with the source, tests, and checked-in evidence. It does not reduce the target scope to the current implementation.
 
 Status meanings: **proven** means the requirement has matching source and credible checked-in test or browser evidence; **partial** means a bounded slice exists but a material requirement is absent; **missing** means no implementation was found; **unverified** means an implementation exists but the required live or external evidence is absent or failed; **conditional** means the brief explicitly allows the current boundary (for example, a trusted ChatGPT companion) pending the stated condition.

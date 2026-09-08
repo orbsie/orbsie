@@ -1,0 +1,12 @@
+{
+  "scope": "Actual signed-in recovery UI from existing dev cloud checkpoint; no inference",
+  "projectId": "146d3928-9820-44d8-81ca-9af349c3bdb3",
+  "runId": "6a6fd917-c948-42db-b0f3-4badbdf32c3c",
+  "sequence": 3,
+  "revision": 3,
+  "entities": 1,
+  "checkpointStatus": 200,
+  "inferenceRequests": 0,
+  "errors": [],
+  "status": "passed"
+}
