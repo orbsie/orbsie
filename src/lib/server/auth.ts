@@ -70,11 +70,30 @@ export function apiError(error: unknown) {
   );
 }
 export async function boundedJSON(request: Request, max = 500000) {
-  const text = await request.text();
-  if (text.length > max) throw new HttpError(413, "This world is too large.");
+  const reader = request.body?.getReader();
+  if (!reader) throw new HttpError(400, "Invalid request.");
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let text = "",
+    bytes = 0,
+    done = false;
   try {
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) {
+        done = true;
+        text += decoder.decode();
+        break;
+      }
+      bytes += chunk.value.byteLength;
+      if (bytes > max) throw new HttpError(413, "This request is too large.");
+      text += decoder.decode(chunk.value, { stream: true });
+    }
     return JSON.parse(text);
-  } catch {
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
     throw new HttpError(400, "Invalid request.");
+  } finally {
+    if (!done) await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
   }
 }

@@ -1,3 +1,4 @@
+import { generatedGLBBounds } from "../src/lib/generated-glb";
 import { readFile } from "node:fs/promises";
 import { beforeEach, expect, it, vi } from "vitest";
 const records = vi.hoisted(() => new Map<string, unknown>());
@@ -23,7 +24,7 @@ it("persists validated bytes by content hash and reloads an independent copy", a
   const input = await bytes();
   const metadata = await saveGeneratedModel(input, {
     blenderVersion: "test-validator-only",
-    bounds: { min: [0, 0, 0], max: [1, 2, 1] },
+    bounds: generatedGLBBounds(await bytes()),
   });
   const restored = await readGeneratedModel(metadata.sha256);
   expect(restored.glb).toEqual(new Uint8Array(input));
@@ -36,7 +37,7 @@ it("persists validated bytes by content hash and reloads an independent copy", a
 it("fails on corrupted persistence rather than silently replacing the model", async () => {
   const metadata = await saveGeneratedModel(await bytes(), {
     blenderVersion: "test-validator-only",
-    bounds: { min: [0, 0, 0], max: [1, 2, 1] },
+    bounds: generatedGLBBounds(await bytes()),
   });
   const record = records.get(`orbsie-model:${metadata.sha256}`) as {
     glb: Uint8Array;
@@ -59,7 +60,7 @@ it("snapshots caller bytes before asynchronous hashing", async () => {
   const original = new Uint8Array(input);
   const pending = saveGeneratedModel(input, {
     blenderVersion: "test-validator-only",
-    bounds: { min: [0, 0, 0], max: [1, 2, 1] },
+    bounds: generatedGLBBounds(await bytes()),
   });
   input.fill(0);
   const saved = await pending;
@@ -69,10 +70,7 @@ it("preserves the first record and rejects conflicting provenance", async () => 
   const input = await bytes();
   const provenance = {
     blenderVersion: "test-validator-only",
-    bounds: {
-      min: [0, 0, 0] as [number, number, number],
-      max: [1, 2, 1] as [number, number, number],
-    },
+    bounds: generatedGLBBounds(input),
   };
   const first = await saveGeneratedModel(input, provenance);
   expect(await saveGeneratedModel(input, provenance)).toEqual(first);
@@ -80,4 +78,34 @@ it("preserves the first record and rejects conflicting provenance", async () => 
     saveGeneratedModel(input, { ...provenance, blenderVersion: "different" }),
   ).rejects.toThrow("provenance conflicts");
   expect((await readGeneratedModel(first.sha256)).metadata).toEqual(first);
+});
+
+it("rejects fabricated bounds before persistence and on read", async () => {
+  const input = await bytes();
+  const bounds = generatedGLBBounds(input);
+  const wrong = structuredClone(bounds);
+  wrong.max[0] += 1;
+  await expect(
+    saveGeneratedModel(input, { blenderVersion: "test", bounds: wrong }),
+  ).rejects.toThrow();
+  expect(records.size).toBe(0);
+  const metadata = await saveGeneratedModel(input, {
+    blenderVersion: "test",
+    bounds,
+  });
+  const record = records.get(`orbsie-model:${metadata.sha256}`) as {
+    metadata: { bounds: typeof bounds };
+  };
+  record.metadata.bounds = wrong;
+  await expect(readGeneratedModel(metadata.sha256)).rejects.toThrow();
+});
+
+it("rejects metadata coordinates outside the supported scene range", async () => {
+  await expect(
+    saveGeneratedModel(await bytes(), {
+      blenderVersion: "test",
+      bounds: { min: [-1e7, 0, 0], max: [1e7, 1, 1] },
+    }),
+  ).rejects.toThrow();
+  expect(records.size).toBe(0);
 });

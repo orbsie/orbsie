@@ -75,7 +75,15 @@ function requireValid(condition: unknown, message: string): asserts condition {
 }
 
 /** Validate a deliberately bounded static, untextured triangle subset before GLTFLoader allocates geometry. */
-export function validateGeneratedGLB(bytes: Uint8Array) {
+export type GeneratedGLBBounds = {
+  min: [number, number, number];
+  max: [number, number, number];
+};
+
+export function inspectGeneratedGLB(
+  bytes: Uint8Array,
+  expectedBounds?: GeneratedGLBBounds,
+) {
   requireValid(
     bytes.byteLength >= 28 && bytes.byteLength <= MAX_BYTES,
     "size budget",
@@ -378,7 +386,11 @@ export function validateGeneratedGLB(bytes: Uint8Array) {
   }
   doc.nodes.forEach((_, id) => cycle(id));
   requireValid(doc.scene < doc.scenes.length, "default scene");
-  for (const scene of doc.scenes) {
+  const bounds: GeneratedGLBBounds = {
+    min: [Infinity, Infinity, Infinity],
+    max: [-Infinity, -Infinity, -Infinity],
+  };
+  for (const [sceneIndex, scene] of doc.scenes.entries()) {
     let vertices = 0,
       triangles = 0;
     const seen = new Set<number>();
@@ -413,6 +425,15 @@ export function validateGeneratedGLB(bytes: Uint8Array) {
           const id = primitive.attributes.POSITION;
           const accessor = doc.accessors[id],
             reader = readers[id];
+          const usedVertices =
+            primitive.indices === undefined
+              ? undefined
+              : new Set(
+                  Array.from(
+                    { length: doc.accessors[primitive.indices].count },
+                    (_, index) => readers[primitive.indices!].read(index),
+                  ),
+                );
           for (let i = 0; i < accessor.count; i++) {
             const point = new Vector3(
               reader.read(i, 0),
@@ -425,6 +446,15 @@ export function validateGeneratedGLB(bytes: Uint8Array) {
               ),
               "world position budget",
             );
+            if (
+              sceneIndex === doc.scene &&
+              (!usedVertices || usedVertices.has(i))
+            ) {
+              [point.x, point.y, point.z].forEach((value, axis) => {
+                bounds.min[axis] = Math.min(bounds.min[axis], value);
+                bounds.max[axis] = Math.max(bounds.max[axis], value);
+              });
+            }
           }
         }
       if (node.mesh !== undefined) {
@@ -440,5 +470,30 @@ export function validateGeneratedGLB(bytes: Uint8Array) {
     scene.nodes.forEach((id) => walk(id));
     requireValid(vertices > 0, "scene has no geometry");
   }
-  return raw as unknown as { meshes: unknown[] };
+  if (expectedBounds !== undefined) {
+    const expected = z
+      .object({ min: vector(3), max: vector(3) })
+      .parse(expectedBounds);
+    for (const side of ["min", "max"] as const)
+      requireValid(
+        expected[side].every(
+          (value, axis) => Math.abs(value - bounds[side][axis]) <= 1e-4,
+        ),
+        "model bounds do not match default-scene geometry",
+      );
+  }
+  return { document: raw as unknown as { meshes: unknown[] }, bounds };
+}
+
+/** Preserve the validator's document return contract while optionally checking provenance bounds. */
+export function validateGeneratedGLB(
+  bytes: Uint8Array,
+  expectedBounds?: GeneratedGLBBounds,
+) {
+  return inspectGeneratedGLB(bytes, expectedBounds).document;
+}
+
+/** Canonical bounds of rendered vertices in the default scene, after node transforms. */
+export function generatedGLBBounds(bytes: Uint8Array): GeneratedGLBBounds {
+  return inspectGeneratedGLB(bytes).bounds;
 }

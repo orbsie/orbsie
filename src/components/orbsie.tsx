@@ -39,6 +39,7 @@ import {
   type Publication,
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
+import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
   checkModelingConnection,
   readModelingLink,
@@ -545,6 +546,7 @@ export default function Orbsie() {
     const isCurrent = captureCloudRequest();
     setBusy(true);
     try {
+      if (!(await uploadCloudGeneratedModels(s.project, isCurrent))) return;
       const response = await fetch("/api/projects", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -1560,10 +1562,12 @@ export default function Orbsie() {
                             setConflict(null);
                             setModal(null);
                           })
-                          .catch(() => {
+                          .catch((error: unknown) => {
                             if (isCurrent())
                               setModalError(
-                                "Could not preserve the local draft. Export it before opening the cloud copy.",
+                                error instanceof Error
+                                  ? error.message
+                                  : "Could not open the cloud world. Your current draft is retained.",
                               );
                           });
                       }}
@@ -1617,10 +1621,12 @@ export default function Orbsie() {
                               setConflict(null);
                               setModal(null);
                             })
-                            .catch(() => {
+                            .catch((error: unknown) => {
                               if (isCurrent())
                                 setModalError(
-                                  "Could not preserve the local draft. Export it before opening the cloud copy.",
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Could not open the cloud world. Your current draft is retained.",
                                 );
                             });
                         }}

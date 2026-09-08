@@ -5,6 +5,12 @@ import {
   findCatalogAsset,
   type CatalogAsset,
 } from "../asset-catalog";
+import { validateGeneratedGLB } from "../generated-glb";
+import {
+  generatedModelMetadataSchema,
+  type GeneratedModelMetadata,
+} from "../generated-models";
+import { projectSchema } from "../protocol";
 
 export const PUBLICATION_MANIFEST_FILE = "publication-manifest.json";
 export const PUBLICATION_ARTIFACT_PATHS = [
@@ -14,6 +20,8 @@ export const PUBLICATION_ARTIFACT_PATHS = [
   "runtime.css",
 ] as const;
 export const PUBLICATION_USED_ASSETS_FILE = "assets/catalog/used-assets.json";
+export const PUBLICATION_GENERATED_MODEL_MANIFEST =
+  "models/generated/manifest.json";
 
 const MANIFEST_VERSION = 2;
 const LEGACY_MANIFEST_VERSION = 1;
@@ -23,6 +31,7 @@ const MAX_TOTAL_ARTIFACT_BYTES = 8 * 1024 * 1024;
 const MAX_MANIFEST_FILES = 64;
 const FETCH_TIMEOUT_MS = 5_000;
 const MAX_PARALLEL_FETCHES = 2;
+const GENERATED_MODEL_PATH = /^models\/generated\/([a-f0-9]{64})\.glb$/;
 
 type PublicationPath = string;
 export type PublicationFile = {
@@ -46,6 +55,11 @@ export type VercelDeploymentFile = {
   encoding?: "base64";
 };
 
+type PublicationBytes = {
+  file: string;
+  bytes: Uint8Array;
+};
+
 const catalogAssetPaths = new Map<string, CatalogAsset>(
   assetManifest.assets.map((asset) => [asset.path.slice(1), asset]),
 );
@@ -66,11 +80,21 @@ function isSafePublicationPath(value: string) {
   );
 }
 
+function generatedModelPath(hash: string) {
+  return `models/generated/${hash}.glb`;
+}
+
+function generatedModelHash(path: string) {
+  return GENERATED_MODEL_PATH.exec(path)?.[1];
+}
+
 export function isKnownPublicationPath(value: string): boolean {
   if (!isSafePublicationPath(value)) return false;
   return (
     (PUBLICATION_ARTIFACT_PATHS as readonly string[]).includes(value) ||
     value === PUBLICATION_USED_ASSETS_FILE ||
+    value === PUBLICATION_GENERATED_MODEL_MANIFEST ||
+    GENERATED_MODEL_PATH.test(value) ||
     catalogAssetPaths.has(value) ||
     catalogLicensePaths.has(value)
   );
@@ -78,6 +102,12 @@ export function isKnownPublicationPath(value: string): boolean {
 
 function publicationByteLength(data: string | Uint8Array) {
   return typeof data === "string" ? Buffer.byteLength(data) : data.byteLength;
+}
+
+function publicationBytes(data: string | Uint8Array) {
+  return typeof data === "string"
+    ? new TextEncoder().encode(data)
+    : new Uint8Array(data);
 }
 
 const manifestSchema = z
@@ -121,6 +151,172 @@ export function isPublicationDigest(value: unknown): value is string {
   return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 }
 
+const generatedManifestSchema = z
+  .object({
+    version: z.literal(1),
+    models: z.array(generatedModelMetadataSchema).max(MAX_MANIFEST_FILES),
+  })
+  .strict();
+
+function parsePublicationJSON(bytes: Uint8Array, label: string): unknown {
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new PublicationVerificationError(`${label} is not valid JSON.`);
+  }
+}
+
+function containsGeneratedGeometry(value: unknown) {
+  if (!value || typeof value !== "object") return false;
+  const entities = (value as { entities?: unknown }).entities;
+  return (
+    Array.isArray(entities) &&
+    entities.some(
+      (entity) =>
+        entity &&
+        typeof entity === "object" &&
+        (entity as { geometry?: unknown }).geometry &&
+        typeof (entity as { geometry?: unknown }).geometry === "object" &&
+        (entity as { geometry: { kind?: unknown } }).geometry.kind ===
+          "generated",
+    )
+  );
+}
+
+function sameGeneratedProvenance(
+  left: GeneratedModelMetadata,
+  right: GeneratedModelMetadata,
+) {
+  return (
+    left.version === right.version &&
+    left.sha256 === right.sha256 &&
+    left.bytes === right.bytes &&
+    left.source === right.source &&
+    left.blenderVersion === right.blenderVersion &&
+    JSON.stringify(left.bounds) === JSON.stringify(right.bounds)
+  );
+}
+
+function generatedProjectReferences(project: unknown) {
+  if (!containsGeneratedGeometry(project))
+    return new Map<string, GeneratedModelMetadata>();
+  const parsed = projectSchema.safeParse(project);
+  if (!parsed.success)
+    throw new PublicationVerificationError(
+      "The generated project snapshot is incomplete or invalid.",
+    );
+  const references = new Map<string, GeneratedModelMetadata>();
+  for (const entity of parsed.data.entities) {
+    if (entity.geometry?.kind !== "generated") continue;
+    if (!entity.geometry.model)
+      throw new PublicationVerificationError(
+        "The generated project contains an unfinished generated model.",
+      );
+    const metadata = generatedModelMetadataSchema.parse(entity.geometry.model);
+    const previous = references.get(metadata.sha256);
+    if (previous && !sameGeneratedProvenance(previous, metadata))
+      throw new PublicationVerificationError(
+        `Generated model ${metadata.sha256} has conflicting project provenance.`,
+      );
+    references.set(metadata.sha256, metadata);
+  }
+  return references;
+}
+
+function parseGeneratedManifest(bytes: Uint8Array) {
+  const parsed = generatedManifestSchema.safeParse(
+    parsePublicationJSON(bytes, "The generated model manifest"),
+  );
+  if (!parsed.success)
+    throw new PublicationVerificationError(
+      "The generated model manifest is invalid.",
+    );
+  if (
+    new Set(parsed.data.models.map((model) => model.sha256)).size !==
+    parsed.data.models.length
+  )
+    throw new PublicationVerificationError(
+      "The generated model manifest contains duplicate models.",
+    );
+  return parsed.data;
+}
+
+function validateGeneratedPublication(
+  project: unknown,
+  entries: readonly PublicationBytes[],
+) {
+  const references = generatedProjectReferences(project);
+  const modelEntries = entries.filter(({ file }) => generatedModelHash(file));
+  const manifestEntry = entries.find(
+    ({ file }) => file === PUBLICATION_GENERATED_MODEL_MANIFEST,
+  );
+  if (!references.size) {
+    if (modelEntries.length || manifestEntry)
+      throw new PublicationVerificationError(
+        "The publication contains generated assets that are not referenced by the project.",
+      );
+    return;
+  }
+  if (!manifestEntry)
+    throw new PublicationVerificationError(
+      "The publication is missing models/generated/manifest.json.",
+    );
+  const generatedManifest = parseGeneratedManifest(manifestEntry.bytes);
+  const manifestModels = new Map(
+    generatedManifest.models.map((model) => [model.sha256, model]),
+  );
+  const modelFiles = new Map(
+    modelEntries.map((entry) => [generatedModelHash(entry.file)!, entry]),
+  );
+  if (
+    modelEntries.length !== references.size ||
+    modelFiles.size !== modelEntries.length ||
+    manifestModels.size !== references.size
+  )
+    throw new PublicationVerificationError(
+      "The publication generated model set does not match the project references.",
+    );
+  for (const [hash, expected] of references) {
+    const entry = modelFiles.get(hash);
+    if (!entry)
+      throw new PublicationVerificationError(
+        `The publication is missing generated model ${hash}.`,
+      );
+    const actualBytes = entry.bytes.byteLength;
+    const actualHash = sha256(entry.bytes);
+    if (
+      actualBytes !== expected.bytes ||
+      actualHash !== hash ||
+      actualHash !== expected.sha256
+    )
+      throw new PublicationVerificationError(
+        `Generated model ${hash} failed its SHA-256 or byte-length check.`,
+      );
+    try {
+      validateGeneratedGLB(entry.bytes, expected.bounds);
+    } catch {
+      throw new PublicationVerificationError(
+        `Generated model ${hash} failed GLB validation.`,
+      );
+    }
+    const manifestModel = manifestModels.get(hash);
+    if (!manifestModel)
+      throw new PublicationVerificationError(
+        `The generated model manifest is missing model ${hash}.`,
+      );
+    if (!sameGeneratedProvenance(manifestModel, expected))
+      throw new PublicationVerificationError(
+        `The generated model manifest provenance for ${hash} does not match the project.`,
+      );
+  }
+  for (const hash of manifestModels.keys()) {
+    if (!references.has(hash))
+      throw new PublicationVerificationError(
+        `The generated model manifest contains unreferenced model ${hash}.`,
+      );
+  }
+}
+
 function canonicalManifest(manifest: PublicationManifest) {
   return JSON.stringify(manifest);
 }
@@ -144,6 +340,19 @@ export function makePublicationManifest(
       "Publication files must contain the immutable runtime set and only known local catalog paths.",
     );
   }
+  const projectFile = files.find((file) => file.file === "project.json");
+  if (!projectFile)
+    throw new Error("Publication files must contain project.json.");
+  validateGeneratedPublication(
+    parsePublicationJSON(
+      publicationBytes(projectFile.data),
+      "The project snapshot",
+    ),
+    files.map((file) => ({
+      file: file.file,
+      bytes: publicationBytes(file.data),
+    })),
+  );
   const paths = new Set<string>();
   let totalBytes = 0;
   for (const file of files) {
@@ -567,14 +776,10 @@ export async function verifyPublicationArtifacts(options: {
     throw new PublicationVerificationError(
       "The public deployment is missing project.json.",
     );
-  let project: unknown;
-  try {
-    project = JSON.parse(new TextDecoder().decode(projectBytes));
-  } catch {
-    throw new PublicationVerificationError(
-      "The public deployment project snapshot is not valid JSON.",
-    );
-  }
+  const project = parsePublicationJSON(
+    projectBytes,
+    "The public deployment project snapshot",
+  );
   if (
     !project ||
     typeof project !== "object" ||
@@ -584,5 +789,9 @@ export async function verifyPublicationArtifacts(options: {
     throw new PublicationVerificationError(
       "The public deployment contains a different world or revision.",
     );
+  validateGeneratedPublication(
+    project,
+    assets.map(({ entry, bytes }) => ({ file: entry.file, bytes })),
+  );
   verifyCatalogReferences(project, manifest, assets);
 }

@@ -1,3 +1,6 @@
+import { bundleGeneratedAssets } from "../../../lib/generated-bundle";
+import { requireCloudGeneratedModels } from "../../../lib/server/generated-registry";
+import { readCloudGeneratedModel } from "../../../lib/server/generated-storage";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -123,25 +126,11 @@ export async function POST(request: Request) {
         429,
         "Your account has reached its published-world limit.",
       );
-    const name = `orb-${createHash("sha256").update(projectId).digest("hex").slice(0, 20)}`;
-    let target = orb.vercel_project_id;
-    if (!target) {
-      try {
-        const existing = await vercel(`/v9/projects/${name}`);
-        target = existing.id;
-      } catch (e) {
-        if (!(e instanceof HttpError) || e.status !== 404) throw e;
-        const created = await vercel("/v11/projects", "POST", {
-          name,
-          framework: null,
-          buildCommand: "",
-          installCommand: "",
-          ssoProtection: null,
-        });
-        target = created.id;
-      }
-    }
     const snapshot = projectSchema.parse(orb.snapshot);
+    const generatedModels = await requireCloudGeneratedModels(
+      user.id,
+      snapshot,
+    );
     const html =
       '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbsie world</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>';
     const files: PublicationFile[] = [
@@ -186,12 +175,46 @@ export async function POST(request: Request) {
     const assetFiles: PublicationFile[] = Object.entries(catalogFiles)
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([file, data]) => ({ file, data }));
-    const publicationFiles = [...files, ...assetFiles];
+    const generatedFiles = await bundleGeneratedAssets(
+      snapshot,
+      async (hash) => {
+        const metadata = generatedModels.get(hash);
+        if (!metadata)
+          throw new HttpError(
+            409,
+            "Save every generated model to your account before publishing.",
+          );
+        return readCloudGeneratedModel(user.id, metadata);
+      },
+    );
+    const publicationFiles = [
+      ...files,
+      ...assetFiles,
+      ...Object.entries(generatedFiles).map(([file, data]) => ({ file, data })),
+    ];
     const artifact = makePublicationManifest(
       projectId,
       revision,
       publicationFiles,
     );
+    const name = `orb-${createHash("sha256").update(projectId).digest("hex").slice(0, 20)}`;
+    let target = orb.vercel_project_id;
+    if (!target) {
+      try {
+        const existing = await vercel(`/v9/projects/${name}`);
+        target = existing.id;
+      } catch (e) {
+        if (!(e instanceof HttpError) || e.status !== 404) throw e;
+        const created = await vercel("/v11/projects", "POST", {
+          name,
+          framework: null,
+          buildCommand: "",
+          installCommand: "",
+          ssoProtection: null,
+        });
+        target = created.id;
+      }
+    }
     const deploymentFiles = [
       ...publicationFiles.map(toVercelDeploymentFile),
       { file: PUBLICATION_MANIFEST_FILE, data: artifact.data },

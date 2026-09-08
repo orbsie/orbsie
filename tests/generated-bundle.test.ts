@@ -1,3 +1,4 @@
+import { generatedGLBBounds } from "../src/lib/generated-glb";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
@@ -24,7 +25,7 @@ function model(glb = fixture): GeneratedModel {
       sha256: createHash("sha256").update(glb).digest("hex"),
       bytes: glb.byteLength,
       blenderVersion: "4.0.2",
-      bounds: { min: [-1, 0, -1], max: [1, 2, 1] },
+      bounds: generatedGLBBounds(glb),
       createdAt: "2026-09-08T00:00:00Z",
     },
   };
@@ -168,4 +169,12 @@ it("blocks quick-share links for local generated geometry while preserving ordin
   };
   expect(decodeWorld(encodeWorld(catalog)).entities).toEqual(catalog.entities);
   await expect(bundleGeneratedAssets(catalog)).resolves.toEqual({});
+});
+
+it("rejects matching fabricated world and reader bounds against the actual GLB", async () => {
+  const record = model();
+  record.metadata.bounds.max[0] += 100;
+  await expect(
+    bundleGeneratedAssets(project([record]), async () => record),
+  ).rejects.toThrow("bounds");
 });

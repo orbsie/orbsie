@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { validateGeneratedGLB } from "../src/lib/generated-glb";
+import {
+  validateGeneratedGLB,
+  generatedGLBBounds,
+  inspectGeneratedGLB,
+} from "../src/lib/generated-glb";
 
 function triangle() {
   return {
@@ -204,4 +208,66 @@ it("rejects invalid accessor bounds and compounded node transforms", () => {
       }),
     ),
   ).toThrow("non-affine");
+});
+it("checks canonical default-scene bounds using actual transformed triangle vertices", () => {
+  const root = Math.SQRT1_2;
+  const doc = {
+    ...triangle(),
+    nodes: [
+      { translation: [10, 20, 30], children: [1] },
+      { mesh: 0, rotation: [0, 0, root, root], scale: [2, 3, 1] },
+    ],
+  };
+  const bytes = encode(doc),
+    bounds = generatedGLBBounds(bytes);
+  expect(bounds.min[0]).toBeCloseTo(7);
+  expect(bounds.min[1]).toBeCloseTo(20);
+  expect(bounds.min[2]).toBeCloseTo(30);
+  expect(bounds.max[0]).toBeCloseTo(10);
+  expect(bounds.max[1]).toBeCloseTo(22);
+  expect(bounds.max[2]).toBeCloseTo(30);
+  expect(() =>
+    validateGeneratedGLB(bytes, { min: [7, 20, 30], max: [10, 22, 30] }),
+  ).not.toThrow();
+  expect(inspectGeneratedGLB(bytes).document.meshes).toHaveLength(1);
+  for (const invalid of [
+    {
+      min: [7, 20, 30] as [number, number, number],
+      max: [10, 23, 30] as [number, number, number],
+    },
+    {
+      min: [0, 0, 0] as [number, number, number],
+      max: [1e308, 1e308, 1e308] as [number, number, number],
+    },
+  ])
+    expect(() => validateGeneratedGLB(bytes, invalid)).toThrow();
+});
+it("does not let unused accessor vertices or other scenes enlarge canonical model bounds", () => {
+  const base = triangle(),
+    binary = new Uint8Array(52);
+  binary.set(
+    new Uint8Array(
+      new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, 999, 999, 999]).buffer,
+    ),
+  );
+  binary.set([0, 1, 2], 48);
+  const doc = {
+    ...base,
+    buffers: [{ byteLength: 52 }],
+    bufferViews: [
+      { buffer: 0, byteLength: 48 },
+      { buffer: 0, byteOffset: 48, byteLength: 3 },
+    ],
+    accessors: [
+      { bufferView: 0, componentType: 5126, count: 4, type: "VEC3" },
+      { bufferView: 1, componentType: 5121, count: 3, type: "SCALAR" },
+    ],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 }, indices: 1 }] }],
+    nodes: [{ mesh: 0 }, { mesh: 0, translation: [100, 100, 100] }],
+    scenes: [{ nodes: [0] }, { nodes: [1] }],
+  };
+  expect(generatedGLBBounds(encode(doc, binary))).toEqual({
+    min: [0, 0, 0],
+    max: [1, 1, 0],
+  });
 });

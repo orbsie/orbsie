@@ -5,9 +5,9 @@ export { validateGeneratedGLB } from "./generated-glb";
 
 export const MAX_GENERATED_MODEL_BYTES = 2 * 1024 * 1024;
 const point = z.tuple([
-  z.number().finite(),
-  z.number().finite(),
-  z.number().finite(),
+  z.number().finite().min(-1e6).max(1e6),
+  z.number().finite().min(-1e6).max(1e6),
+  z.number().finite().min(-1e6).max(1e6),
 ]);
 export const generatedModelMetadataSchema = z
   .object({
@@ -53,7 +53,7 @@ export async function saveGeneratedModel(
 ): Promise<GeneratedModelMetadata> {
   glb = new Uint8Array(glb);
   provenance = structuredClone(provenance);
-  validateGeneratedGLB(glb);
+  validateGeneratedGLB(glb, provenance.bounds);
   const sha256 = await digest(glb);
   const metadata = generatedModelMetadataSchema.parse({
     ...provenance,
@@ -101,10 +101,23 @@ export async function readGeneratedModel(
     (await digest(glb)) !== hash
   )
     throw Error("The saved generated model failed its integrity check.");
-  validateGeneratedGLB(glb);
+  validateGeneratedGLB(glb, metadata.bounds);
   return { metadata, glb };
 }
 export function generatedModelPath(hash: string) {
   storageKey(hash);
   return `models/generated/${hash}.glb`;
+}
+
+/** Timestamps may differ between devices; byte identity and construction provenance may not. */
+export function sameGeneratedProvenance(
+  a: GeneratedModelMetadata,
+  b: GeneratedModelMetadata,
+) {
+  return (
+    a.sha256 === b.sha256 &&
+    a.bytes === b.bytes &&
+    a.blenderVersion === b.blenderVersion &&
+    JSON.stringify(a.bounds) === JSON.stringify(b.bounds)
+  );
 }

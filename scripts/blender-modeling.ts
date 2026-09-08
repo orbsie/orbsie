@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { modelingJobSchema, type ModelingJob } from "../src/lib/modeling";
-import { validateGeneratedGLB } from "../src/lib/generated-glb";
+import { generatedGLBBounds } from "../src/lib/generated-glb";
 
 const BLENDER = process.env.ORBSIE_BLENDER_PATH || "/usr/bin/blender";
 const BWRAP = process.env.ORBSIE_BWRAP_PATH || "/usr/bin/bwrap";
@@ -521,11 +521,12 @@ export async function runBlenderModelingJob(
       progress: 0.5,
       message: "Validating exported GLB",
     });
-    validateGeneratedGLB(glb);
+    const canonicalBounds = generatedGLBBounds(glb);
     const metadata = validatedResult(
       JSON.parse(readFileSync(resultPath, "utf8")),
       job,
     );
+    metadata.bounds = validatedBounds(canonicalBounds);
     const digest = createHash("sha256").update(glb).digest("hex");
     emit(options.onProgress, {
       stage: "complete",

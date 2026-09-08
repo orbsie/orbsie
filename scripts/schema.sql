@@ -5,3 +5,15 @@ CREATE TABLE IF NOT EXISTS generation_runs(id text PRIMARY KEY, orb_id text NOT 
 
 -- The pending attempt revision must never label an older public URL.
 ALTER TABLE orbs ADD COLUMN IF NOT EXISTS published_revision integer;
+
+-- Owner-scoped generated model registry. Pending reservations count toward quota.
+CREATE TABLE IF NOT EXISTS generated_models (
+  owner_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  sha256 text NOT NULL CHECK (sha256 ~ '^[a-f0-9]{64}$'),
+  bytes integer NOT NULL CHECK (bytes > 0 AND bytes <= 2097152),
+  metadata jsonb NOT NULL,
+  ready boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY(owner_id, sha256)
+);

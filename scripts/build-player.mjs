@@ -21,6 +21,7 @@ const paths = [
   "src/lib/modeling-policy.ts",
   "src/lib/modeling-connection.ts",
   "src/lib/generated-models.ts",
+  "src/lib/cloud-generated-models.ts",
   "src/lib/generated-glb.ts",
   "src/lib/generated-geometry.ts",
   "src/lib/use-generated-geometry.ts",

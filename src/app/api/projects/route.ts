@@ -1,3 +1,4 @@
+import { requireCloudGeneratedModels } from "@/lib/server/generated-registry";
 import { z } from "zod";
 import { projectSchema, committed } from "@/lib/protocol";
 import { archiveProjectSnapshot } from "@/lib/server/storage";
@@ -42,6 +43,7 @@ export async function PUT(request: Request) {
       .safeParse(await boundedJSON(request));
     if (!parsed.success) throw new HttpError(400, "Invalid world data.");
     const { project, baseRevision } = parsed.data;
+    await requireCloudGeneratedModels(user.id, project);
     const client = await database().connect();
     try {
       await client.query("BEGIN");

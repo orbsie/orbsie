@@ -1,3 +1,4 @@
+import { generatedGLBBounds } from "../src/lib/generated-glb";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
@@ -33,7 +34,7 @@ async function result() {
     type: "result",
     glb: bytes.toString("base64"),
     sha256: createHash("sha256").update(bytes).digest("hex"),
-    bounds: { min: [0, 0, 0], max: [1, 2, 1], size: [1, 2, 1] },
+    bounds: { ...generatedGLBBounds(bytes), size: [1, 2, 1] },
     blenderVersion: "validator-fixture-only",
   };
 }

@@ -50,7 +50,7 @@ export async function bundleGeneratedAssets(
         throw Error(
           "A generated model failed its integrity check. Export stopped.",
         );
-      validateGeneratedGLB(glb);
+      validateGeneratedGLB(glb, metadata.bounds);
       models.set(hash, metadata);
       files[generatedModelPath(hash)] = glb;
     }

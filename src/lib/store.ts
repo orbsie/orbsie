@@ -1,4 +1,5 @@
 "use client";
+import { downloadCloudGeneratedModels } from "./cloud-generated-models";
 import { assertModelingCommand } from "./modeling-policy";
 import {
   buildLocalModel,
@@ -271,6 +272,7 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   async loadCloud(project, isCurrent = () => true) {
     if (!isCurrent()) return false;
+    if (!(await downloadCloudGeneratedModels(project, isCurrent))) return false;
     if (!activateWriter(project.id))
       throw Error("This cloud world is being edited in another tab.");
     await getState().preserveLocalCopy();
