@@ -18,6 +18,7 @@ import {
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import type { Entity } from "@/lib/protocol";
+import { GameSession, type GameSessionInput } from "@/lib/game-session";
 import {
   useAssetGeometry,
   isAssetGeometryReady,
@@ -229,12 +230,20 @@ function Planet({
     </group>
   );
 }
-function Formation({ entity }: { entity: Entity }) {
+function Formation({
+  entity,
+  session,
+}: {
+  entity: Entity;
+  session: GameSession;
+}) {
   const mesh = useRef<THREE.Mesh>(null);
   const group = useRef<THREE.Group>(null);
   const previous = useRef<Float32Array>(undefined);
   const previousShape = useRef<THREE.BufferGeometry>(undefined);
   const progress = useRef({ value: 0 });
+  const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
+  const gameTintEnabled = useRef({ value: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
   const targetScale = useMemo(() => new THREE.Vector3(), []);
   const selected = useOrb((s) => s.selected === entity.id);
@@ -291,6 +300,15 @@ function Formation({ entity }: { entity: Entity }) {
     });
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uFormation = progress.current;
+      shader.uniforms.uGameTint = gameTint;
+      shader.uniforms.uGameTintEnabled = gameTintEnabled.current;
+      shader.fragmentShader =
+        "uniform vec3 uGameTint; uniform float uGameTintEnabled;\n" +
+        shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <color_fragment>",
+        "#include <color_fragment>\nif(uGameTintEnabled > 0.5) diffuseColor.rgb = uGameTint;",
+      );
       shader.vertexShader =
         "attribute vec3 aFrom; uniform float uFormation;\n" +
         shader.vertexShader;
@@ -299,7 +317,7 @@ function Formation({ entity }: { entity: Entity }) {
         "vec3 transformed=mix(aFrom,position,smoothstep(0.0,1.0,uFormation));",
       );
     };
-    m.customProgramCacheKey = () => "orbsie-formation-v1";
+    m.customProgramCacheKey = () => "orbsie-formation-v2";
     return m;
   }, []);
   useEffect(() => () => material.dispose(), [material]);
@@ -309,14 +327,26 @@ function Formation({ entity }: { entity: Entity }) {
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
     if (!group.current) return;
-    target.set(...movingEntityPosition(entity, clock.elapsedTime));
-    if (entity.geometry?.kind === "crystal")
+    const effective = playing ? session.effectiveEntity(entity) : entity;
+    group.current.visible = effective !== null;
+    if (!effective) return;
+    const override = playing
+      ? session.state?.entityOverrides[entity.id]
+      : undefined;
+    gameTintEnabled.current.value = override?.color ? 1 : 0;
+    if (override?.color) gameTint.value.set(override.color);
+    target.set(...movingEntityPosition(effective, clock.elapsedTime));
+    if (!playing && entity.geometry?.kind === "crystal")
       target.y += Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
-    if (entity.behavior?.type === "move" && entity.stage === "ready")
+    if (
+      playing ||
+      (entity.behavior?.type === "move" && entity.stage === "ready")
+    )
       group.current.position.copy(target);
     else group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
     targetScale.set(...entity.scale).multiplyScalar(bloom ? 1.35 : 1);
-    group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
+    if (playing) group.current.scale.copy(targetScale);
+    else group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
     if (mesh.current && entity.geometry?.kind === "crystal")
       mesh.current.rotation.y += dt * 0.6;
     material.emissive.set(
@@ -334,7 +364,12 @@ function Formation({ entity }: { entity: Entity }) {
           : 0;
   });
   const click = (event: ThreeEvent<MouseEvent>) => {
+    if (playing && !session.effectiveEntity(entity)) return;
     event.stopPropagation();
+    if (playing && session.state) {
+      session.queueClick(entity.id);
+      return;
+    }
     if (playing && entity.behavior?.type === "bloom") {
       setBloom(!bloom);
       return;
@@ -349,6 +384,14 @@ function Formation({ entity }: { entity: Entity }) {
         geometry={geometry}
         material={material}
         onClick={click}
+        raycast={(raycaster, intersections) => {
+          if (mesh.current && (!playing || session.effectiveEntity(entity)))
+            THREE.Mesh.prototype.raycast.call(
+              mesh.current,
+              raycaster,
+              intersections,
+            );
+        }}
         castShadow
         receiveShadow
         onPointerOver={() => {
@@ -378,7 +421,8 @@ function Formation({ entity }: { entity: Entity }) {
     </group>
   );
 }
-function Player() {
+function Player({ session }: { session: GameSession }) {
+  const generation = useRef(-1);
   const usableEntities = useRef(new Map<string, Entity>());
   const ref = useRef<THREE.Group>(null);
   const state = useRef<PlayerState>({
@@ -399,7 +443,8 @@ function Player() {
     const key = (e: KeyboardEvent, down: boolean) => {
       if (
         isTextEntryTarget(e.target) ||
-        (e.target as Element)?.closest("button")
+        ((e.target as Element)?.closest("button") &&
+          [" ", "Enter"].includes(e.key))
       )
         return;
       if (
@@ -438,6 +483,15 @@ function Player() {
     if (!ref.current) return;
     ref.current.visible = playing;
     const s = useOrb.getState();
+    session.sync(s.project.id, s.project.game, s.reset);
+    const resetAvatar = () => {
+      if (generation.current === session.resetGeneration) return false;
+      generation.current = session.resetGeneration;
+      state.current = { position: [0, 0.5, 5], velocityY: 0 };
+      s.set({ score: [], gameScore: 0, won: false, lost: false });
+      return true;
+    };
+    resetAvatar();
     const currentIds = new Set(s.project.entities.map((entity) => entity.id));
     for (const id of usableEntities.current.keys())
       if (!currentIds.has(id)) usableEntities.current.delete(id);
@@ -460,43 +514,75 @@ function Player() {
       (k.has("s") || k.has("arrowdown") ? 1 : 0) -
         (k.has("w") || k.has("arrowup") ? 1 : 0),
     );
+    const actions: GameSessionInput[] = [];
+    if (k.has(" ")) actions.push("jump");
+    if (k.has("w") || k.has("arrowup")) actions.push("up");
+    if (k.has("s") || k.has("arrowdown")) actions.push("down");
+    if (k.has("a") || k.has("arrowleft")) actions.push("left");
+    if (k.has("d") || k.has("arrowright")) actions.push("right");
+    session.advance(dt, actions);
+    const didReset = resetAvatar();
     direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
     const result = stepGameplay(
       state.current,
       { x: direction.x, z: direction.z, jump: k.has(" ") },
-      s.project.entities.map((entity) => {
-        if (
-          (entity.geometry?.kind === "asset" &&
-            !isAssetGeometryReady(entity.geometry.assetId)) ||
-          (entity.geometry?.kind === "generated" &&
-            (!entity.geometry.model ||
-              !isGeneratedGeometryReady(entity.geometry.model.sha256)))
-        )
-          return (
-            usableEntities.current.get(entity.id) ?? {
-              ...entity,
-              stage: "seed" as const,
-            }
-          );
-        usableEntities.current.set(entity.id, entity);
-        return entity;
-      }),
-      s.score,
+      s.project.entities
+        .map((entity) => {
+          if (
+            (entity.geometry?.kind === "asset" &&
+              !isAssetGeometryReady(entity.geometry.assetId)) ||
+            (entity.geometry?.kind === "generated" &&
+              (!entity.geometry.model ||
+                !isGeneratedGeometryReady(entity.geometry.model.sha256)))
+          )
+            return usableEntities.current.has(entity.id)
+              ? {
+                  ...entity,
+                  geometry: usableEntities.current.get(entity.id)!.geometry,
+                  stage: usableEntities.current.get(entity.id)!.stage,
+                }
+              : { ...entity, stage: "seed" as const };
+          usableEntities.current.set(entity.id, entity);
+          return entity;
+        })
+        .map((entity) => session.effectiveEntity(entity))
+        .filter((entity): entity is Entity => entity !== null),
+      didReset ? [] : useOrb.getState().score,
       clock.elapsedTime,
-      dt,
+      session.state && session.state.status !== "playing" ? 0 : dt,
     );
     state.current = result;
-    if (result.collected.length !== s.score.length)
+    const beforeContacts = session.resetGeneration;
+    session.emitContacts(result.contacts);
+    if (session.resetGeneration === beforeContacts)
+      session.emitCollections(result.collected);
+    const resetAfterEvents = resetAvatar();
+    if (
+      !resetAfterEvents &&
+      result.collected.length !== useOrb.getState().score.length
+    )
       s.set({ score: result.collected });
-    if (result.won && !s.won) s.set({ won: true });
-    ref.current.position.set(...result.position);
+    if (session.state) {
+      const current = useOrb.getState();
+      const won = session.state.status === "won",
+        lost = session.state.status === "lost";
+      if (
+        current.gameScore !== session.state.score ||
+        current.won !== won ||
+        current.lost !== lost
+      )
+        s.set({ gameScore: session.state.score, won, lost });
+      if (session.error && current.error !== session.error.message)
+        s.set({ error: session.error.message });
+    } else if (result.won && !s.won) s.set({ won: true });
+    ref.current.position.set(...state.current.position);
     if (direction.length())
       ref.current.rotation.y = Math.atan2(direction.x, direction.z);
     ref.current.position.y += direction.length()
       ? Math.abs(Math.sin(clock.elapsedTime * 10)) * 0.045
       : 0;
-  });
+  }, -1);
   return (
     <group ref={ref}>
       <mesh castShadow>
@@ -550,6 +636,7 @@ function Pebbles() {
   );
 }
 function Scene() {
+  const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
   const phase = useOrb((s) => s.phase),
     entities = useOrb((s) => s.project.entities),
@@ -693,9 +780,13 @@ function Scene() {
         </mesh>
         <Pebbles />
         {entities.map((e) => (
-          <Formation key={`${projectId}/${e.id}`} entity={e} />
+          <Formation
+            key={`${projectId}/${e.id}`}
+            entity={e}
+            session={session}
+          />
         ))}
-        <Player />
+        <Player session={session} />
         <ContactShadows
           position={[0, -0.77, 0]}
           opacity={0.17}

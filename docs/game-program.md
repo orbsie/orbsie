@@ -6,12 +6,19 @@ Finish the geometry of every referenced object before installing rules. A refere
 
 The pure engine supports start, click, collision, collection, input and timer events; variable and score conditions; variable updates, scoring, outcomes, reset, color, visibility, position and movement paths. Execution has explicit numeric, rule, action and timer catch-up bounds and executes no model-supplied code. Runtime state is separate from the saved program.
 
+## Runtime integration and evidence
+
+One scene-owned session feeds the player frame loop. It handles input edges, queued clicks, collision and collection events, timers, resets and program edits without storing per-frame runtime state in project data. Rendering and physics consume the same position and visibility overrides. Hidden objects are excluded from raycasting. Program score and win/loss feedback are shown in the editor and standalone player; legacy portal victory applies only without a program.
+
+`docs/evidence/game-program/report.json` records a deterministic-generation browser run against the production build and its actual downloaded ZIP. It verifies collection/timer/input scoring, held-input deduplication, win, loss, restart, preserved program/source, and standalone playback with no external requests or page errors. The screenshots were visually inspected. This is fixture transport with real runtime execution, not live provider evidence. The full automated suite at this integration passed 387 tests, with three opt-in tests skipped.
+
+Collision triggers use broad-phase axis-aligned bounds derived from the rendered geometry, including multipart transforms and catalog/generated metadata. They are contact volumes, not triangle-accurate collision response. Procedural contact bounds are cached by geometry recipe after initial preparation; moving that initial preparation off the main thread and measuring performance remain open.
+
 ## Remaining delivery gates
 
-- Connect one session to the player frame loop, with edge-triggered input/contact events and queued clicks.
-- Apply the same position and visibility overrides to rendering and physics; keep editing responsive and preserve usable geometry while replacements load.
-- Display program score, win and loss, and reset all runtime state coherently. Program outcomes must supersede legacy portal victory.
-- Prove program persistence through local recovery, cloud checkpoints, exported source and independent browser playback.
-- Run real provider-authored game flows with the authorized OpenRouter, Vercel AI Gateway and ChatGPT configurations. Unit tests and a successful build alone do not establish these workflows.
+- Prove program persistence through browser local recovery and live cloud checkpoints, including edits during play.
+- Extend browser evidence to click rules, movement paths, color/visibility changes and collision-driven resets, beyond their current unit/integration coverage.
+- Measure responsiveness under representative object/rule counts and active background modeling.
+- Run real provider-authored game flows with the authorized OpenRouter, Vercel AI Gateway and ChatGPT configurations.
 
 This document tracks an implementation in progress, not a completed gameplay release.

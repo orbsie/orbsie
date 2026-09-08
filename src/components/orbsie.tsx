@@ -579,7 +579,14 @@ export default function Orbsie() {
         submission.current.checking = false;
     }
   };
-  const reset = () => s.set({ score: [], won: false, reset: s.reset + 1 });
+  const reset = () =>
+    s.set({
+      score: [],
+      gameScore: 0,
+      won: false,
+      lost: false,
+      reset: s.reset + 1,
+    });
   const download = async () => {
     setBusy(true);
     try {
@@ -1146,10 +1153,20 @@ export default function Orbsie() {
               <div className="game-hud">
                 <span className="crystal-symbol">◆</span>
                 <strong>
-                  {collected} <span>/ {total}</span>
+                  {s.project.game ? (
+                    s.gameScore
+                  ) : (
+                    <>
+                      {collected} <span>/ {total}</span>
+                    </>
+                  )}
                 </strong>
                 <span>
-                  {total ? "Crystals collected" : "Explore your garden"}
+                  {s.project.game
+                    ? "Score"
+                    : total
+                      ? "Crystals collected"
+                      : "Explore your garden"}
                 </span>
                 <button
                   className="icon-button"
@@ -1206,15 +1223,15 @@ export default function Orbsie() {
               </div>
             </>
           )}
-          {s.won && (
+          {(s.won || s.lost) && (
             <div className="win-card">
               <span>✧</span>
-              <h2>
-                A little adventure,
-                <br />
-                beautifully done.
-              </h2>
-              <p>You found every crystal and made it home.</p>
+              <h2>{s.lost ? "Try another adventure" : "Adventure complete"}</h2>
+              <p>
+                {s.project.game
+                  ? `Final score: ${s.gameScore}`
+                  : "You found every crystal and made it home."}
+              </p>
               <button className="primary" onClick={reset}>
                 <RotateCcw size={15} />
                 One more adventure

@@ -72,7 +72,15 @@ function PlayerApp() {
         <a href="https://orbsie.com">◉ orbsie</a>
         <span>{s.project.title}</span>
         <button
-          onClick={() => s.set({ score: [], won: false, reset: s.reset + 1 })}
+          onClick={() =>
+            s.set({
+              score: [],
+              gameScore: 0,
+              won: false,
+              lost: false,
+              reset: s.reset + 1,
+            })
+          }
         >
           ↻ Restart
         </button>
@@ -81,8 +89,14 @@ function PlayerApp() {
         <div className="message">{error || "Opening your little world…"}</div>
       )}
       <div className="score">
-        ◆ {collectibles.filter((e) => s.score.includes(e.id)).length} /{" "}
-        {collectibles.length}
+        {s.project.game ? (
+          `Score: ${s.gameScore}`
+        ) : (
+          <>
+            ◆ {collectibles.filter((e) => s.score.includes(e.id)).length} /{" "}
+            {collectibles.length}
+          </>
+        )}
       </div>
       <footer>
         W A S D / Arrow keys to move · Space to jump · Click flowers to bloom
@@ -119,16 +133,24 @@ function PlayerApp() {
           </button>
         ))}
       </div>
-      {s.won && (
+      {(s.won || s.lost) && (
         <div className="win">
-          <h1>
-            A little adventure,
-            <br />
-            beautifully done.
-          </h1>
-          <p>You found every crystal and made it home.</p>
+          <h1>{s.lost ? "Try another adventure" : "Adventure complete"}</h1>
+          <p>
+            {s.project.game
+              ? `Final score: ${s.gameScore}`
+              : "You found every crystal and made it home."}
+          </p>
           <button
-            onClick={() => s.set({ score: [], won: false, reset: s.reset + 1 })}
+            onClick={() =>
+              s.set({
+                score: [],
+                gameScore: 0,
+                won: false,
+                lost: false,
+                reset: s.reset + 1,
+              })
+            }
           >
             Play again
           </button>

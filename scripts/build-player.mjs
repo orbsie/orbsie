@@ -53,6 +53,7 @@ const paths = [
   "src/lib/geometry.ts",
   "src/lib/gameplay.ts",
   "src/lib/game-program.ts",
+  "src/lib/game-session.ts",
   "src/lib/render-budget.ts",
   "LICENSE",
 ];

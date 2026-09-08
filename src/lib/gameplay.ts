@@ -1,3 +1,4 @@
+import { entityGeometry } from "./geometry";
 import type { Entity } from "./protocol";
 import { requireCatalogAsset } from "./asset-catalog";
 
@@ -19,6 +20,7 @@ export type PlayerInput = {
 
 export type GameplayStep = PlayerState & {
   collected: string[];
+  contacts: string[];
   won: boolean;
 };
 
@@ -82,6 +84,50 @@ function platformTop(entity: Entity, time: number) {
     halfZ: entity.scale[2] * 0.55,
     bounce: entity.behavior?.type === "bounce",
   };
+}
+
+type ContactBounds = { min: readonly number[]; max: readonly number[] };
+const contactBounds = new WeakMap<object, ContactBounds>();
+/** Broad-phase contact volumes follow rendered geometry, including multipart bounds. */
+export function touchesEntity(
+  entity: Entity,
+  player: Vec3,
+  time: number,
+): boolean {
+  const recipe = entity.geometry;
+  if (entity.stage !== "ready" || !recipe) return false;
+  let bounds = contactBounds.get(recipe);
+  if (!bounds) {
+    if (recipe.kind === "asset")
+      bounds = requireCatalogAsset(recipe.assetId).bounds;
+    else if (recipe.kind === "generated") bounds = recipe.model?.bounds;
+    else {
+      const geometry = entityGeometry(entity);
+      geometry.computeBoundingBox();
+      const box = geometry.boundingBox;
+      if (box) bounds = { min: box.min.toArray(), max: box.max.toArray() };
+      geometry.dispose();
+    }
+    if (!bounds) return false;
+    contactBounds.set(recipe, bounds);
+  }
+  const origin = movingEntityPosition(entity, time);
+  return [0, 1, 2].every((axis) => {
+    const low =
+      origin[axis] +
+      Math.min(
+        bounds!.min[axis] * entity.scale[axis],
+        bounds!.max[axis] * entity.scale[axis],
+      );
+    const high =
+      origin[axis] +
+      Math.max(
+        bounds!.min[axis] * entity.scale[axis],
+        bounds!.max[axis] * entity.scale[axis],
+      );
+    const radius = (axis === 1 ? PLAYER_HALF_HEIGHT : 0.22) + 1e-5;
+    return player[axis] + radius >= low && player[axis] - radius <= high;
+  });
 }
 
 export function stepGameplay(
@@ -231,6 +277,13 @@ export function stepGameplay(
     supportPosition,
     supportTop,
     collected,
+    contacts: entities
+      .filter(
+        (entity) =>
+          !collectedBefore.includes(entity.id) &&
+          touchesEntity(entity, position, time),
+      )
+      .map((entity) => entity.id),
     won,
   };
 }

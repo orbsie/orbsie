@@ -85,6 +85,8 @@ interface State {
   future: Project[];
   score: string[];
   won: boolean;
+  lost: boolean;
+  gameScore: number;
   notice: string;
   error: string;
   generationErrorCode?: string;
@@ -208,6 +210,8 @@ export const useOrb = create<State>((setState, getState) => ({
   future: [],
   score: [],
   won: false,
+  lost: false,
+  gameScore: 0,
   notice: "",
   error: "",
   saved: false,
@@ -395,6 +399,8 @@ export const useOrb = create<State>((setState, getState) => ({
       building: false,
       score: [],
       won: false,
+      lost: false,
+      gameScore: 0,
       selected: undefined,
       history: history?.history ?? [],
       future: history?.future ?? [],

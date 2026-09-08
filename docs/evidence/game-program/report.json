@@ -1,0 +1,15 @@
+{
+  "mode": "deterministic-generation-real-editor-and-downloaded-standalone",
+  "realProviderCalls": 0,
+  "passed": true,
+  "editorScore": 12,
+  "standaloneScore": 12,
+  "win": true,
+  "loss": true,
+  "restart": true,
+  "heldInputDeduplicated": true,
+  "programPreservedInZIP": true,
+  "sourceIncluded": true,
+  "externalRequests": [],
+  "pageErrors": []
+}
