@@ -214,6 +214,16 @@ Schedule construction below interactive rendering: begin with one active Blender
 
 Record a repeatable baseline on declared test hardware: idle editor versus active modeling, frame-time percentiles, input latency, peak CPU/RAM/GPU memory where measurable, job duration, cancellation latency, download and installed size. Set explicit budgets from these measurements before release, and demonstrate that camera movement, selection and editing remain usable during construction. Keep runtime packaging, local rendering, background modeling, persistence/publication and responsiveness as separate tracked acceptance gates.
 
+Release checklist for this owner requirement (each box requires evidence for the delivered package, not only a development prototype):
+
+- [ ] Generated, procedural and catalog assets render locally in both the editor and exported player; background construction preserves usable camera, selection and editing performance.
+- [ ] A downloadable installer includes the reduced, pinned headless Blender runtime and launcher dependencies, with measured sizes and required license/source materials.
+- [ ] A clean supported computer can install, pair, restart and construct a new LLM-requested model without separately installing Blender, Node or Python.
+- [ ] Background jobs support bounded resource use, actual progress, cancellation and failure recovery; completed models survive reload and appear in exports and publication.
+- [ ] A real-provider request for entirely new models bypasses the collection and completes the packaged companion → local browser rendering flow, with Astra reviewing the evidence.
+
+Track implementation and packaging evidence in [local-blender-runtime.md](docs/local-blender-runtime.md) and [blender-packaging.md](docs/blender-packaging.md). Keep these release boxes open until the combined delivery passes, even when individual worker tasks or prototype tests finish.
+
 Organize code around clear modules: app shell, planet/transition, formation renderer, scene runtime, protocol/reducer, generation adapters, persistence, export, and publishing. The runtime and project schema must be reusable in standalone game exports.
 
 Three.js supports geometry attributes and morph targets; manage geometry lifecycles carefully rather than mutating already-rendered morph data indiscriminately. [Three.js BufferGeometry](https://threejs.org/docs/pages/BufferGeometry.html).
