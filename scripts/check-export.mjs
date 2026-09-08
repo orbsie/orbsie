@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
@@ -11,6 +12,7 @@ const browser = await chromium.launch({
   ],
 });
 const page = await browser.newPage();
+await installFixtureGeneration(page.context());
 const report = JSON.parse(
   await readFile("docs/evidence/browser-report.json", "utf8"),
 );

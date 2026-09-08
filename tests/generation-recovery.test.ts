@@ -84,7 +84,7 @@ it("ignores an old stream EOF after switching to a different world", async () =>
     id: original.entities[0].id,
     geometry: { kind: "mushroom", detail: "refined" },
   });
-  const generation = orb.getState().run("Change the old world", false);
+  const generation = orb.getState().run("Change the old world");
   await waitFor(
     () => orb.getState().project.entities[0]?.geometry?.kind === "mushroom",
   );
@@ -142,7 +142,7 @@ it.each([
     const project = readyProject();
     orb.getState().load(project);
     const release = blockedRelay(command);
-    const generation = orb.getState().run("Edit this object", false);
+    const generation = orb.getState().run("Edit this object");
     await waitFor(() => {
       const saved = db.values.get("orbsie-draft")?.project as
         Project | undefined;
@@ -210,7 +210,7 @@ it("keeps unfinished reservations out of an interrupted checkpoint", async () =>
         }),
       ),
   );
-  const generation = orb.getState().run("Build this world", false);
+  const generation = orb.getState().run("Build this world");
   await waitFor(() => {
     const saved = db.values.get("orbsie-draft")?.project as Project | undefined;
     return Boolean(
@@ -306,7 +306,7 @@ it("stopping initial generation settles descent in editing", async () => {
         }),
       ),
   );
-  const generation = orb.getState().run("Create a tiny world", false);
+  const generation = orb.getState().run("Create a tiny world");
   await waitFor(() => orb.getState().phase === "descending");
   orb.getState().stop();
   expect(orb.getState().phase).toBe("editing");
@@ -325,7 +325,7 @@ it("finishes the landing transition after a fast initial generation", async () =
         JSON.stringify({ type: "commit_revision", message: "Ready." }),
       ),
   );
-  await orb.getState().run("Create a tiny world", false);
+  await orb.getState().run("Create a tiny world");
   expect(orb.getState().phase).toBe("descending");
   await new Promise((resolve) => setTimeout(resolve, 150));
   expect(orb.getState().phase).toBe("editing");

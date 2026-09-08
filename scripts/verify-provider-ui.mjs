@@ -61,6 +61,8 @@ await context.route("**/api/**", async (route) => {
     return route.fulfill({
       json: { accounts: false, publishing: true, google: false },
     });
+  if (path === "/api/trial")
+    return route.fulfill({ json: { enabled: false, remaining: 0 } });
   if (path === "/api/models") return route.fulfill({ json: { models } });
   if (path === "/api/generate") {
     generations++;
@@ -89,21 +91,23 @@ try {
     .locator("#prompt")
     .fill("A world created without an Orbsie account");
   await expect(
-    page.getByRole("button", { name: "Demo · Connect provider" }),
+    page.getByRole("button", { name: "Connect provider" }),
   ).toBeVisible();
   await page.screenshot({ path: `${output}/landing-desktop.png` });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: `${output}/landing-demo-mobile.png` });
+  await page.screenshot({ path: `${output}/landing-mobile-unconnected.png` });
   expect(
     await page
       .locator(".composer-bottom")
       .evaluate((element) => element.scrollWidth > element.clientWidth),
   ).toBe(false);
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByRole("button", { name: "Demo · Connect provider" }).click();
+  await page.getByRole("button", { name: "Connect provider" }).click();
   await expect(page.getByLabel("API key", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("No Orbsie sign-in needed.", { exact: false }),
+    page.getByText("Connect your API key to create and edit your world.", {
+      exact: false,
+    }),
   ).toBeVisible();
   await expect(modeButtons).toHaveText(["Quality", "Balanced", "Budget"]);
   await expect(

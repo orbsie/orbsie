@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium } from "@playwright/test";
 const browser = await chromium.launch({
   headless: true,
@@ -9,6 +10,7 @@ const browser = await chromium.launch({
   ],
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+await installFixtureGeneration(page.context());
 page.on("console", (m) => {
   if (m.type() === "error" || m.type() === "warning")
     console.log(m.type(), m.text().slice(0, 1800));

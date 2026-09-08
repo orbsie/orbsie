@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium, expect } from "@playwright/test";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 
@@ -23,13 +24,14 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
 });
 const page = await context.newPage();
+await installFixtureGeneration(page.context());
 const errors = [],
   checks = [],
   saves = [];
-let inference = 0;
+let fixtureGenerations = 0;
 page.on("pageerror", (error) => errors.push(error.message));
 page.on("request", (request) => {
-  if (request.url().includes("/api/generate")) inference++;
+  if (request.url().includes("/api/generate")) fixtureGenerations++;
 });
 page.on("response", async (response) => {
   if (
@@ -193,7 +195,7 @@ try {
   ).toBe(false);
   await page.screenshot({ path: `${output}/account-mobile.png` });
   checks.push("Account dialog has no horizontal overflow at 390px");
-  expect(inference).toBe(0);
+  expect(fixtureGenerations).toBeGreaterThan(0);
   expect(errors).toEqual([]);
 } finally {
   await writeFile(
@@ -204,7 +206,8 @@ try {
         checks,
         saves: saves.map(({ status, revision }) => ({ status, revision })),
         errors,
-        inference,
+        fixtureGenerations,
+        realProviderCalls: 0,
       },
       null,
       2,
@@ -215,7 +218,8 @@ try {
       checks,
       saveStatuses: saves.map((s) => s.status),
       errors,
-      inference,
+      fixtureGenerations,
+      realProviderCalls: 0,
     }),
   );
   await context.close();

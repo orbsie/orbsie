@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowUp,
   ArrowUpRight,
-  Check,
   ChevronDown,
   ChevronLeft,
   Download,
@@ -26,7 +25,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowDown,
-  KeyRound,
   Mic,
   MicOff,
 } from "lucide-react";
@@ -85,7 +83,25 @@ export default function Orbsie() {
     model: "",
     key: "",
   });
-  const [demo, setDemo] = useState(true);
+  const [trial, setTrial] = useState({ enabled: false, remaining: 0 });
+  const refreshTrial = async () => {
+    try {
+      const response = await fetch("/api/trial", { cache: "no-store" });
+      if (!response.ok) throw Error("Allowance unavailable");
+      const data = await response.json();
+      const next = {
+        enabled: data.enabled === true,
+        remaining: Number.isInteger(data.remaining)
+          ? Math.max(0, data.remaining)
+          : 0,
+      };
+      setTrial(next);
+      return next;
+    } catch {
+      setTrial({ enabled: false, remaining: 0 });
+      return { enabled: false, remaining: 0 };
+    }
+  };
   const [sheet, setSheet] = useState(true);
   const [shareUrl, setShareUrl] = useState("");
   const [modalError, setModalError] = useState("");
@@ -183,6 +199,7 @@ export default function Orbsie() {
     else setCloudBaseline(null);
   };
   useEffect(() => {
+    void refreshTrial();
     const initialAccountGeneration = accountGeneration.current;
     if (location.hash.startsWith("#orb=")) {
       try {
@@ -310,16 +327,50 @@ export default function Orbsie() {
   useEffect(() => {
     dictation.cancel();
   }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);
-  const submit = (e?: FormEvent, text = prompt) => {
+  const submission = useRef({ checking: false, sequence: 0 });
+  const submit = async (e?: FormEvent, text = prompt) => {
     e?.preventDefault();
+    if (submission.current.checking) return;
     dictation.cancel();
-    if (!text.trim()) return;
-    if (!demo && (!connection.key || !connection.model)) {
-      setModal("settings");
-      return;
+    const instruction = text.trim();
+    if (!instruction) return;
+    submission.current.checking = true;
+    const sequence = ++submission.current.sequence;
+    const originalWorld = captureCloudRequest();
+    try {
+      let selectedConnection = connection;
+      if (!connection.key.trim() || !connection.model) {
+        const allowance = await refreshTrial();
+        if (!originalWorld() || textarea.current?.value !== text) return;
+        if (!allowance.enabled || allowance.remaining < 1) {
+          setModal(user || !capabilities.accounts ? "settings" : "account");
+          return;
+        }
+        selectedConnection = { provider: "free", model: "", key: "" };
+      }
+      setPrompt("");
+      const generation = s.run(instruction, selectedConnection);
+      const generationWorld = captureCloudRequest();
+      submission.current.checking = false;
+      await generation;
+      const quotaExceeded =
+        useOrb.getState().generationErrorCode === "FREE_LIMIT_REACHED";
+      if (selectedConnection.provider === "free") {
+        await refreshTrial();
+        if (
+          quotaExceeded &&
+          generationWorld() &&
+          submission.current.sequence === sequence &&
+          !textarea.current?.value
+        ) {
+          setPrompt(instruction);
+          setModal(user || !capabilities.accounts ? "settings" : "account");
+        }
+      }
+    } finally {
+      if (submission.current.sequence === sequence)
+        submission.current.checking = false;
     }
-    setPrompt("");
-    void s.run(text.trim(), demo, connection);
   };
   const reset = () => s.set({ score: [], won: false, reset: s.reset + 1 });
   const download = async () => {
@@ -594,9 +645,7 @@ export default function Orbsie() {
                 </span>
                 <div>
                   <strong>Your world</strong>
-                  <span>
-                    {demo ? "Interactive demo" : "Your creative companion"}
-                  </span>
+                  <span>Your creative companion</span>
                 </div>
                 <button
                   className="icon-button"
@@ -726,18 +775,17 @@ export default function Orbsie() {
                 type="button"
                 className="mode-button"
                 onClick={() => {
-                  if (demo) setDemo(false);
                   setModal("settings");
                 }}
               >
                 <span className="mode-dot" />
-                {demo
-                  ? "Demo · Connect provider"
-                  : !connection.key
-                    ? "Connect provider"
-                    : connection.provider === "openrouter"
-                      ? "OpenRouter"
-                      : "AI Gateway"}
+                {connection.key && connection.model
+                  ? connection.provider === "openrouter"
+                    ? "OpenRouter"
+                    : "AI Gateway"
+                  : trial.enabled && trial.remaining > 0
+                    ? `${trial.remaining} free prompts`
+                    : "Connect provider"}
                 <ChevronDown size={12} />
               </button>
               <div className="composer-actions">
@@ -793,11 +841,11 @@ export default function Orbsie() {
           {!landing && (
             <div className="panel-foot">
               <span className="mode-dot" />
-              {demo
-                ? "Scripted demo"
-                : connection.key
-                  ? "AI connected"
-                  : "Provider not connected"}
+              {connection.key
+                ? "AI connected"
+                : trial.enabled && trial.remaining > 0
+                  ? `${trial.remaining} free prompts left`
+                  : "Connect to keep creating"}
             </div>
           )}
         </section>
@@ -941,203 +989,174 @@ export default function Orbsie() {
                 <Sparkles />
               </span>
               <h2>A little creative power</h2>
-              <p>
-                Explore the scripted demo, or connect a provider API key for
-                real generation. No Orbsie sign-in needed.
-              </p>
-              <div className="connection-choice">
+              <p>Connect your API key to create and edit your world.</p>
+              {trial.enabled && trial.remaining > 0 && (
                 <button
-                  className={demo ? "chosen" : ""}
-                  onClick={() => setDemo(true)}
+                  className="primary full"
+                  onClick={() => {
+                    setConnection({ ...connection, key: "" });
+                    setModal(null);
+                  }}
                 >
-                  <Sun size={18} />
-                  <strong>Interactive demo</strong>
-                  <span>
-                    Play with a scripted island or garden. No key needed.
-                  </span>
-                  {demo && <Check size={16} />}
+                  Use {trial.remaining} free prompts
                 </button>
-                <button
-                  className={!demo ? "chosen" : ""}
-                  onClick={() => setDemo(false)}
-                >
-                  <KeyRound size={18} />
-                  <strong>Your AI connection</strong>
-                  <span>
-                    Generate your ideas with a provider API key and credits.
-                  </span>
-                  {!demo && <Check size={16} />}
-                </button>
-              </div>
-              {!demo && (
-                <>
-                  <label>
-                    Provider
-                    <select
-                      aria-label="Provider"
-                      value={connection.provider}
-                      onChange={(e) =>
-                        setConnection({
-                          ...connection,
-                          provider: e.target.value,
-                          model: "",
-                          key: "",
-                        })
-                      }
-                    >
-                      <option value="openrouter">OpenRouter</option>
-                      <option value="gateway">Vercel AI Gateway</option>
-                    </select>
-                  </label>
-                  <div
-                    className="model-modes"
-                    role="group"
-                    aria-label="Creation quality"
-                  >
-                    {modelModes.map((mode) => {
-                      const available = models.some(
-                        (model) => model.id === mode.id,
-                      );
-                      return (
-                        <button
-                          key={mode.id}
-                          type="button"
-                          aria-pressed={connection.model === mode.id}
-                          disabled={!available}
-                          title={
-                            available
-                              ? mode.description
-                              : "Unavailable in this provider's catalog"
-                          }
-                          onClick={() =>
-                            setConnection({ ...connection, model: mode.id })
-                          }
-                        >
-                          <strong>{mode.label}</strong>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <details className="advanced-models">
-                    <summary>Advanced</summary>
-                    <p className="fine-print" id="model-ranking-note">
-                      Estimated 3D suitability, highest first. Ranking is a
-                      guide for Orbsie; unranked models lack comparable 3D
-                      evidence.{" "}
-                      <a
-                        className="model-ranking-source"
-                        href={modelRankingMetadata.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Ranking source
-                      </a>{" "}
-                      · {modelRankingMetadata.snapshotDate}
-                    </p>
-                    <label>
-                      Find a model
-                      <input
-                        type="search"
-                        value={modelSearch}
-                        onChange={(e) => setModelSearch(e.target.value)}
-                        placeholder="Search models"
-                      />
-                    </label>
-                    <p className="fine-print" id="model-pricing-note">
-                      Estimated USD / 1M tokens. — means unavailable. Actual
-                      provider charges can vary.
-                    </p>
-                    <div className="model-catalog-heading" aria-hidden="true">
-                      <span>Model</span>
-                      <span>Input</span>
-                      <span>Cached input</span>
-                      <span>Output</span>
-                    </div>
-                    <div
-                      className="model-catalog"
-                      role="group"
-                      aria-label="Advanced models"
-                      aria-describedby="model-ranking-note model-pricing-note"
-                    >
-                      {visibleModels.map((model) => (
-                        <button
-                          key={model.id}
-                          type="button"
-                          className="model-catalog-row"
-                          aria-pressed={connection.model === model.id}
-                          data-model-id={model.id}
-                          onClick={() =>
-                            setConnection({ ...connection, model: model.id })
-                          }
-                        >
-                          <span className="model-catalog-name">
-                            <span className="model-rank">
-                              {model.qualityRank == null
-                                ? "—"
-                                : model.qualityRank}
-                            </span>
-                            <span>
-                              <strong>{model.name}</strong>
-                              {model.qualityRank == null && (
-                                <small>Unranked</small>
-                              )}
-                            </span>
-                          </span>
-                          <span className="model-token-price">
-                            <span>Input</span>
-                            <strong>{tokenPrice(model.inputPrice)}</strong>
-                          </span>
-                          <span className="model-token-price">
-                            <span>Cached input</span>
-                            <strong>
-                              {tokenPrice(model.cachedInputPrice)}
-                            </strong>
-                          </span>
-                          <span className="model-token-price">
-                            <span>Output</span>
-                            <strong>{tokenPrice(model.outputPrice)}</strong>
-                          </span>
-                        </button>
-                      ))}
-                      {models.length > 0 && visibleModels.length === 0 && (
-                        <p className="fine-print" role="status">
-                          No models match your search.
-                        </p>
-                      )}
-                      {models.length === 0 && (
-                        <p className="fine-print" role="status">
-                          No models available yet.
-                        </p>
-                      )}
-                    </div>
-                  </details>
-                  <label>
-                    API key
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      value={connection.key}
-                      onChange={(e) =>
-                        setConnection({ ...connection, key: e.target.value })
-                      }
-                      placeholder="Kept in memory for this tab only"
-                    />
-                  </label>
-                  <p className="fine-print">
-                    Your key is sent through Orbsie to your selected provider
-                    and kept only in this tab. Your world saves on this device.
-                    Sign in when you're ready to publish.
-                  </p>
-                </>
               )}
+              <label>
+                Provider
+                <select
+                  aria-label="Provider"
+                  value={connection.provider}
+                  onChange={(e) =>
+                    setConnection({
+                      ...connection,
+                      provider: e.target.value,
+                      model: "",
+                      key: "",
+                    })
+                  }
+                >
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="gateway">Vercel AI Gateway</option>
+                </select>
+              </label>
+              <div
+                className="model-modes"
+                role="group"
+                aria-label="Creation quality"
+              >
+                {modelModes.map((mode) => {
+                  const available = models.some(
+                    (model) => model.id === mode.id,
+                  );
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      aria-pressed={connection.model === mode.id}
+                      disabled={!available}
+                      title={
+                        available
+                          ? mode.description
+                          : "Unavailable in this provider's catalog"
+                      }
+                      onClick={() =>
+                        setConnection({ ...connection, model: mode.id })
+                      }
+                    >
+                      <strong>{mode.label}</strong>
+                    </button>
+                  );
+                })}
+              </div>
+              <details className="advanced-models">
+                <summary>Advanced</summary>
+                <p className="fine-print" id="model-ranking-note">
+                  Estimated 3D suitability, highest first. Ranking is a guide
+                  for Orbsie; unranked models lack comparable 3D evidence.{" "}
+                  <a
+                    className="model-ranking-source"
+                    href={modelRankingMetadata.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Ranking source
+                  </a>{" "}
+                  · {modelRankingMetadata.snapshotDate}
+                </p>
+                <label>
+                  Find a model
+                  <input
+                    type="search"
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    placeholder="Search models"
+                  />
+                </label>
+                <p className="fine-print" id="model-pricing-note">
+                  Estimated USD / 1M tokens. — means unavailable. Actual
+                  provider charges can vary.
+                </p>
+                <div className="model-catalog-heading" aria-hidden="true">
+                  <span>Model</span>
+                  <span>Input</span>
+                  <span>Cached input</span>
+                  <span>Output</span>
+                </div>
+                <div
+                  className="model-catalog"
+                  role="group"
+                  aria-label="Advanced models"
+                  aria-describedby="model-ranking-note model-pricing-note"
+                >
+                  {visibleModels.map((model) => (
+                    <button
+                      key={model.id}
+                      type="button"
+                      className="model-catalog-row"
+                      aria-pressed={connection.model === model.id}
+                      data-model-id={model.id}
+                      onClick={() =>
+                        setConnection({ ...connection, model: model.id })
+                      }
+                    >
+                      <span className="model-catalog-name">
+                        <span className="model-rank">
+                          {model.qualityRank == null ? "—" : model.qualityRank}
+                        </span>
+                        <span>
+                          <strong>{model.name}</strong>
+                          {model.qualityRank == null && <small>Unranked</small>}
+                        </span>
+                      </span>
+                      <span className="model-token-price">
+                        <span>Input</span>
+                        <strong>{tokenPrice(model.inputPrice)}</strong>
+                      </span>
+                      <span className="model-token-price">
+                        <span>Cached input</span>
+                        <strong>{tokenPrice(model.cachedInputPrice)}</strong>
+                      </span>
+                      <span className="model-token-price">
+                        <span>Output</span>
+                        <strong>{tokenPrice(model.outputPrice)}</strong>
+                      </span>
+                    </button>
+                  ))}
+                  {models.length > 0 && visibleModels.length === 0 && (
+                    <p className="fine-print" role="status">
+                      No models match your search.
+                    </p>
+                  )}
+                  {models.length === 0 && (
+                    <p className="fine-print" role="status">
+                      No models available yet.
+                    </p>
+                  )}
+                </div>
+              </details>
+              <label>
+                API key
+                <input
+                  type="password"
+                  autoComplete="off"
+                  value={connection.key}
+                  onChange={(e) =>
+                    setConnection({ ...connection, key: e.target.value })
+                  }
+                  placeholder="Kept in memory for this tab only"
+                />
+              </label>
+              <p className="fine-print">
+                Your key is sent through Orbsie to your selected provider and
+                kept only in this tab. Your world saves on this device. Sign in
+                when you're ready to publish.
+              </p>
               <button
                 className="primary full"
-                disabled={
-                  !demo && (!connection.key.trim() || !connection.model)
-                }
+                disabled={!connection.key.trim() || !connection.model}
                 onClick={() => setModal(null)}
               >
-                Continue {demo ? "with the demo" : "with this connection"}
+                Continue with this connection
                 <ArrowUpRight size={16} />
               </button>
               {connection.key && (
@@ -1145,7 +1164,6 @@ export default function Orbsie() {
                   className="text-button"
                   onClick={() => {
                     setConnection({ ...connection, key: "" });
-                    setDemo(true);
                   }}
                 >
                   Disconnect and clear key

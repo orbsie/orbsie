@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium } from "@playwright/test";
 const browser = await chromium.launch({
   headless: true,
@@ -16,6 +17,7 @@ const context = await browser.newContext({
   },
 });
 const page = await context.newPage();
+await installFixtureGeneration(page.context());
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 await page.goto("http://localhost:3001");

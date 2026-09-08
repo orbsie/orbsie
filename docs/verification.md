@@ -53,7 +53,7 @@ Start the app on the chosen test URL first. Stored-live-scene scripts require th
 
 Source `a6c9a58` is live at https://orbsie.com via `orbsie-5csqmzd63-grappeggias-projects.vercel.app`. Homepage metadata links the SVG favicon; HTTP200 and exact deployed/source equality passed. The icon was visually checked at16,32,64 and160px. This branding-only update followed the65-test/typecheck/build pass and successful anonymous provider UI verification. See [favicon evidence](evidence/production-favicon.json).
 
-Organization avatar artwork is committed under `assets/brand`. Setting the GitHub organization avatar remains pending: browser inventory returned no available apps/browsers, so no authenticated upload was performed.
+Organization avatar artwork is committed under `assets/brand`. The ringless organization avatar was uploaded and verified through regular Chrome desktop control (commit `a6b59b3`).
 
 ## Free prompts, waitlist and domains
 
@@ -67,7 +67,7 @@ Bounded undo/redo stacks now survive local reloads with snapshot validation and 
 
 ## Resumed delivery and ringless branding
 
-The favicon and recommended GitHub avatar now contain only the orb and land shapes, with the orbital rings removed. The favicon was visually checked at 16, 32, 64 and 160 px ([size comparison](evidence/favicon-ringless-sizes.png)); the updated compact avatar is 1254×1254 and 965,276 bytes. GitHub organization upload remains pending because no controllable authenticated browser is connected.
+The favicon and recommended GitHub avatar now contain only the orb and land shapes, with the orbital rings removed. The favicon was visually checked at 16, 32, 64 and 160 px ([size comparison](evidence/favicon-ringless-sizes.png)); the updated compact avatar is 1254×1254 and 965,276 bytes. GitHub organization upload is now complete and verified.
 
 Baseline rerun: 96 deterministic tests passed, two opt-in database tests were skipped, TypeScript and production build passed. The fixture browser flow, anonymous provider connection, and mocked dictation checks passed. The first mobile winning traversal on `next dev` hit the Next development indicator instead of the movement control; hit-testing and touch-event traces identified `NEXTJS-PORTAL` as the target. The identical script on `next start` passed desktop keyboard and mobile touch: all five crystals, portal, jump, no overflow, no page errors, and zero inference calls. Use a production server for traversal acceptance to avoid development overlays. These are fixture results, not new live-model or dedicated-publication claims. Reports are in [resumed delivery evidence](evidence/resumed-delivery/).
 
@@ -80,3 +80,9 @@ Local generation now checkpoints the prompt and each operation that changes comm
 Final Astra review approved the recovery and publication changes after adding early-stop descent handling and an atomic draft-pointer update. The final combined check passed 107 deterministic tests, with two opt-in database tests skipped, plus TypeScript and the production build. The publication browser regression failed before the fix and passed afterward: readiness checks continue after closing Share, the served revision/link is correct on reopening, stale project responses are ignored, and transient background failure retries without leaking an error into the account dialog. Client polling still stops when the page closes.
 
 The exact final production build (`next start`, port 3016) passed both the publication-polling fixture and full browser flow. The latter covered formation, selected-object revision, undo, keyboard/jump, ZIP download, refresh recovery, signed-out snapshot playback, mobile garden and touch controls, with zero page errors and no overflow. Completion was 11.895 seconds; headless SwiftShader frame telemetry was median 83.2 ms/p95 133.4 ms, so this is not a 60 fps performance claim. No live inference or external writes occurred. See the final JSON reports in [resumed delivery evidence](evidence/resumed-delivery/).
+
+## Real-generation-only creation flow
+
+The user-facing demo mode and store fixture branch have been removed. Creation uses a linked provider when configured, otherwise checks the real free-prompt allowance; exhausted or unavailable allowance opens account/connection setup while preserving the prompt. Signing into Orbsie does not itself grant provider access. Fixtures now arrive through a test-only local HTTP streaming transport and are not imported by the application store.
+
+Production-build browser checks passed for free creation, no allowance, an allowance/send quota race, and duplicate submission/new prompt text while allowance is pending. The provider-settings browser check passed with no account requirement for BYOK. All these requests were intercepted test fixtures: no model calls were made. The full streamed-fixture browser workflow passed with no page errors or mobile overflow. Astra review caught and then approved fixes for delayed allowance intent and stale quota handling. See `evidence/creation-access/report.json`.

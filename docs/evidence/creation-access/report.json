@@ -1,0 +1,24 @@
+{
+  "checks": [
+    {
+      "scenario": "free",
+      "generationRequests": 1,
+      "passed": true
+    },
+    {
+      "scenario": "unavailable",
+      "generationRequests": 0,
+      "passed": true
+    },
+    {
+      "scenario": "quota-race",
+      "generationRequests": 1,
+      "passed": true
+    },
+    {
+      "scenario": "pending-allowance-intent",
+      "passed": true
+    }
+  ],
+  "realProviderCalls": 0
+}

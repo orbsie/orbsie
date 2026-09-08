@@ -74,7 +74,7 @@ it.each([false, true])(
   async (earlierCommit) => {
     const original = structuredClone(useOrb.getState().project.entities[0]);
     relay(earlierCommit ? [finish, ...partial] : partial);
-    await useOrb.getState().run("Change this world", false);
+    await useOrb.getState().run("Change this world");
     const state = useOrb.getState();
     expect(state.error).toContain("before committing");
     expect(state.building).toBe(false);
@@ -96,7 +96,7 @@ it.each([false, true])(
 );
 it("accepts a final commit without a trailing newline", async () => {
   relay([finish]);
-  await useOrb.getState().run("Finish this world", false);
+  await useOrb.getState().run("Finish this world");
   expect(useOrb.getState().error).toBe("");
   expect(useOrb.getState().notice).toBe("Your world is saved on this device.");
   expect(useOrb.getState().project.messages.at(-1)?.text).toBe("Ready.");

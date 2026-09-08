@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium, expect } from "@playwright/test";
 const b = await chromium.launch({
   headless: true,
@@ -9,6 +10,7 @@ const b = await chromium.launch({
   ],
 });
 const p = await b.newPage();
+await installFixtureGeneration(p.context());
 await p.goto("http://localhost:3001");
 await p
   .getByPlaceholder("What experience to build?")

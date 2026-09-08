@@ -1,3 +1,4 @@
+import { installFixtureGeneration } from "./fixture-generation.mjs";
 import { chromium, expect } from "@playwright/test";
 import { writeFile, mkdir } from "node:fs/promises";
 const url = process.env.TEST_URL ?? "http://localhost:3001";
@@ -17,6 +18,7 @@ const context = await browser.newContext({
     size: { width: 1440, height: 1000 },
   },
 });
+await installFixtureGeneration(context);
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
@@ -108,6 +110,7 @@ const mobile = await browser.newContext({
   isMobile: true,
   hasTouch: true,
 });
+await installFixtureGeneration(mobile);
 const mp = await mobile.newPage();
 await mp.goto(url);
 await mp.waitForTimeout(2500);

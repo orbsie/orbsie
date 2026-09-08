@@ -10,7 +10,6 @@ import {
   type Command,
   type Cursor,
 } from "./protocol";
-import { fixtureCommands, fixtureEdit } from "./fixtures";
 export type Phase = "landing" | "descending" | "editing";
 type LocalHistory = { project: Project; history: Project[]; future: Project[] };
 const HISTORY_LIMIT = 20;
@@ -58,6 +57,7 @@ interface State {
   won: boolean;
   notice: string;
   error: string;
+  generationErrorCode?: string;
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
@@ -67,7 +67,6 @@ interface State {
   set: (patch: Partial<State>) => void;
   run: (
     prompt: string,
-    demo?: boolean,
     connection?: { provider: string; model: string; key: string },
   ) => Promise<void>;
   stop: () => void;
@@ -169,18 +168,6 @@ async function withDraftWriteLock(
 }
 let active: AbortController | undefined;
 let baseline: Project | undefined;
-const pause = (ms: number, signal: AbortSignal) =>
-  new Promise<void>((resolve, reject) => {
-    const t = setTimeout(resolve, ms);
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(t);
-        reject(new DOMException("Stopped", "AbortError"));
-      },
-      { once: true },
-    );
-  });
 export const useOrb = create<State>((setState, getState) => ({
   project: blankProject(),
   phase: "landing",
@@ -421,7 +408,7 @@ export const useOrb = create<State>((setState, getState) => ({
     });
     void getState().save();
   },
-  async run(prompt, demo = true, connection) {
+  async run(prompt, connection = { provider: "free", model: "", key: "" }) {
     if (!activateWriter(getState().project.id)) {
       setState({
         readOnly: true,
@@ -464,6 +451,7 @@ export const useOrb = create<State>((setState, getState) => ({
       ...(initial ? { score: [], won: false, selected: undefined } : {}),
       building: true,
       error: "",
+      generationErrorCode: undefined,
       notice: "",
       saved: false,
       history: initial
@@ -525,15 +513,7 @@ export const useOrb = create<State>((setState, getState) => ({
     try {
       await getState().save();
       if (signal.aborted || active !== controller) return;
-      if (demo) {
-        const commands = initial
-          ? fixtureCommands(prompt.toLowerCase().includes("garden"))
-          : fixtureEdit(project, prompt, selected);
-        for (const command of commands) {
-          await pause(command.type === "reserve_entity" ? 170 : 240, signal);
-          if (!(await apply(command))) return;
-        }
-      } else {
+      {
         const response = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -542,6 +522,11 @@ export const useOrb = create<State>((setState, getState) => ({
         });
         if (!response.ok) {
           const body = await response.json();
+          if (active === controller && !signal.aborted)
+            setState({
+              generationErrorCode:
+                typeof body.code === "string" ? body.code : undefined,
+            });
           throw Error(body.error ?? "Connection failed. Your world is safe.");
         }
         if (signal.aborted || active !== controller) return;
