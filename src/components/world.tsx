@@ -36,6 +36,7 @@ import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
   entityGeometry,
   addFormationSource,
+  captureFormationSnapshot,
   terrainValue,
 } from "@/lib/geometry";
 import {
@@ -244,7 +245,7 @@ function Formation({
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const group = useRef<THREE.Group>(null);
-  const previous = useRef<Float32Array>(undefined);
+  const previous = useRef<THREE.BufferGeometry>(undefined);
   const previousShape = useRef<THREE.BufferGeometry>(undefined);
   const progress = useRef({ value: 0 });
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
@@ -303,11 +304,16 @@ function Formation({
           max: box.max.toArray(),
         });
     }
-    const g = addFormationSource(source, previous.current);
-    previous.current = new Float32Array(g.attributes.position.array);
-    progress.current.value = 0;
-    return g;
+    return source;
   }, [entity.geometry, entity.color, asset?.geometry]);
+  useLayoutEffect(() => {
+    const visible = previous.current
+      ? captureFormationSnapshot(previous.current, progress.current.value)
+      : undefined;
+    addFormationSource(geometry, visible);
+    previous.current = geometry;
+    progress.current.value = 0;
+  }, [geometry]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => previousShape.current?.dispose(), []);
   const material = useMemo(() => {
@@ -328,14 +334,18 @@ function Formation({
         "#include <color_fragment>\nif(uGameTintEnabled > 0.5) diffuseColor.rgb = uGameTint;",
       );
       shader.vertexShader =
-        "attribute vec3 aFrom; uniform float uFormation;\n" +
+        "attribute vec3 aFrom; attribute vec3 aFromColor; uniform float uFormation;\n" +
         shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace(
+        "#include <color_vertex>",
+        "#include <color_vertex>\n#if defined(USE_COLOR) || defined(USE_COLOR_ALPHA)\nvColor.rgb = mix(aFromColor, color.rgb, smoothstep(0.0,1.0,uFormation));\n#endif",
+      );
       shader.vertexShader = shader.vertexShader.replace(
         "#include <begin_vertex>",
         "vec3 transformed=mix(aFrom,position,smoothstep(0.0,1.0,uFormation));",
       );
     };
-    m.customProgramCacheKey = () => "orbsie-formation-v2";
+    m.customProgramCacheKey = () => "orbsie-formation-v3";
     return m;
   }, []);
   useEffect(() => () => material.dispose(), [material]);

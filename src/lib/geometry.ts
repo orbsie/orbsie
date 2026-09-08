@@ -134,28 +134,175 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
   merged.computeBoundingSphere();
   return merged;
 }
+export interface FormationSnapshot {
+  positions: Float32Array;
+  colors: Float32Array;
+}
+
+function validTriplets(values: unknown): values is Float32Array {
+  return (
+    values instanceof Float32Array &&
+    values.length > 0 &&
+    values.length % 3 === 0 &&
+    values.every((value) => Number.isFinite(value))
+  );
+}
+
+type FormationAttribute =
+  THREE.BufferAttribute | THREE.InterleavedBufferAttribute;
+
+function finiteAttribute(
+  attribute: FormationAttribute | undefined,
+  count: number,
+  fallback: number,
+) {
+  const values = new Float32Array(count * 3);
+  if (!attribute || attribute.count !== count || attribute.itemSize < 3) {
+    values.fill(fallback);
+    return values;
+  }
+  for (let index = 0; index < count; index++) {
+    const targetIndex = index * 3;
+    const x = attribute.getX(index);
+    const y = attribute.getY(index);
+    const z = attribute.getZ(index);
+    values[targetIndex] = Number.isFinite(x) ? x : fallback;
+    values[targetIndex + 1] = Number.isFinite(y) ? y : fallback;
+    values[targetIndex + 2] = Number.isFinite(z) ? z : fallback;
+  }
+  return values;
+}
+
+function validFormationAttribute(
+  attribute: FormationAttribute | undefined,
+  count: number,
+) {
+  if (!attribute || attribute.count !== count || attribute.itemSize < 3)
+    return false;
+  for (let index = 0; index < count; index++) {
+    if (
+      !Number.isFinite(attribute.getX(index)) ||
+      !Number.isFinite(attribute.getY(index)) ||
+      !Number.isFinite(attribute.getZ(index))
+    )
+      return false;
+  }
+  return true;
+}
+
+function formationEase(progress: number) {
+  if (!Number.isFinite(progress)) return 1;
+  const clamped = Math.min(1, Math.max(0, progress));
+  return clamped * clamped * (3 - 2 * clamped);
+}
+
+export function captureFormationSnapshot(
+  geometry: THREE.BufferGeometry,
+  progress: number,
+): FormationSnapshot {
+  const positionAttribute = geometry.getAttribute("position");
+  const count = positionAttribute?.count ?? 0;
+  const positions = finiteAttribute(positionAttribute, count, 0);
+  const colors = finiteAttribute(geometry.getAttribute("color"), count, 1);
+  const fromPositions = finiteAttribute(
+    geometry.getAttribute("aFrom"),
+    count,
+    0,
+  );
+  const fromColors = finiteAttribute(
+    geometry.getAttribute("aFromColor"),
+    count,
+    1,
+  );
+  const fromPositionAttribute = geometry.getAttribute("aFrom");
+  const fromColorAttribute = geometry.getAttribute("aFromColor");
+  const positionSource = validFormationAttribute(fromPositionAttribute, count)
+    ? fromPositions
+    : positions;
+  const colorSource = validFormationAttribute(fromColorAttribute, count)
+    ? fromColors
+    : colors;
+  const ease = formationEase(progress);
+  if (ease === 0)
+    return {
+      positions: positionSource.slice(),
+      colors: colorSource.slice(),
+    };
+  if (ease === 1)
+    return { positions: positions.slice(), colors: colors.slice() };
+  const visiblePositions = new Float32Array(positions.length);
+  const visibleColors = new Float32Array(colors.length);
+  for (let index = 0; index < positions.length; index++)
+    visiblePositions[index] =
+      positionSource[index] + (positions[index] - positionSource[index]) * ease;
+  for (let index = 0; index < colors.length; index++)
+    visibleColors[index] =
+      colorSource[index] + (colors[index] - colorSource[index]) * ease;
+  return { positions: visiblePositions, colors: visibleColors };
+}
+
 export function addFormationSource(
   geometry: THREE.BufferGeometry,
-  previous?: Float32Array,
+  previous?: Float32Array | FormationSnapshot,
 ) {
   const position = geometry.getAttribute("position");
-  const source = new Float32Array(position.count * 3);
-  for (let i = 0; i < position.count; i++) {
-    if (previous) {
-      const n = (i % (previous.length / 3)) * 3;
-      source[i * 3] = previous[n];
-      source[i * 3 + 1] = previous[n + 1];
-      source[i * 3 + 2] = previous[n + 2];
+  const count = position?.count ?? 0;
+  const targetPositions = finiteAttribute(position, count, 0);
+  const targetColors = finiteAttribute(
+    geometry.getAttribute("color"),
+    count,
+    1,
+  );
+  const snapshot =
+    previous && !(previous instanceof Float32Array) ? previous : undefined;
+  const previousPositions = snapshot?.positions ?? previous;
+  const previousColors = snapshot?.colors;
+  const hasPreviousPositions = validTriplets(previousPositions);
+  const hasPreviousColors = validTriplets(previousColors);
+  const previousPositionCount = hasPreviousPositions
+    ? previousPositions.length / 3
+    : 0;
+  const previousColorCount = hasPreviousColors ? previousColors.length / 3 : 0;
+  const matchingPreviousColors =
+    snapshot &&
+    hasPreviousPositions &&
+    hasPreviousColors &&
+    previousColorCount === previousPositionCount;
+  const source = new Float32Array(targetPositions.length);
+  const sourceColors = new Float32Array(targetColors.length);
+  sourceColors.set(targetColors);
+  for (let index = 0; index < count; index++) {
+    const targetIndex = index * 3;
+    if (hasPreviousPositions) {
+      const sourceCount = previousPositionCount;
+      const sourceIndex = (index % Math.max(1, sourceCount)) * 3;
+      source[targetIndex] = previousPositions[sourceIndex];
+      source[targetIndex + 1] = previousPositions[sourceIndex + 1];
+      source[targetIndex + 2] = previousPositions[sourceIndex + 2];
+    } else if (!previous) {
+      const y = count ? 1 - (2 * (index + 0.5)) / count : 0;
+      const a = index * 2.399963;
+      const r = Math.sqrt(Math.max(0, 1 - y * y)) * 0.58;
+      source[targetIndex] = Math.cos(a) * r;
+      source[targetIndex + 1] = y * 0.58 + 0.7;
+      source[targetIndex + 2] = Math.sin(a) * r;
     } else {
-      const y = 1 - (2 * (i + 0.5)) / position.count,
-        a = i * 2.399963,
-        r = Math.sqrt(1 - y * y) * 0.58;
-      source[i * 3] = Math.cos(a) * r;
-      source[i * 3 + 1] = y * 0.58 + 0.7;
-      source[i * 3 + 2] = Math.sin(a) * r;
+      source[targetIndex] = targetPositions[targetIndex];
+      source[targetIndex + 1] = targetPositions[targetIndex + 1];
+      source[targetIndex + 2] = targetPositions[targetIndex + 2];
+    }
+    if (matchingPreviousColors && previousColors) {
+      const sourceIndex = (index % previousColorCount) * 3;
+      sourceColors[targetIndex] = previousColors[sourceIndex];
+      sourceColors[targetIndex + 1] = previousColors[sourceIndex + 1];
+      sourceColors[targetIndex + 2] = previousColors[sourceIndex + 2];
     }
   }
   geometry.setAttribute("aFrom", new THREE.BufferAttribute(source, 3));
+  geometry.setAttribute(
+    "aFromColor",
+    new THREE.BufferAttribute(sourceColors, 3),
+  );
   return geometry;
 }
 export function terrainValue(x: number, y: number, z: number) {

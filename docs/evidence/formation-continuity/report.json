@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "scope": "Shared World renderer in an isolated deterministic WebGL fixture",
+  "providerCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "samples": [
+    {
+      "family": "tree",
+      "maxPositionError": 5.817413351039136e-8,
+      "maxColorError": 0
+    },
+    {
+      "family": "platform",
+      "maxPositionError": 2.9563903880536202e-8,
+      "maxColorError": 0
+    },
+    {
+      "family": "arch",
+      "maxPositionError": 5.960464477539063e-8,
+      "maxColorError": 0
+    }
+  ]
+}
