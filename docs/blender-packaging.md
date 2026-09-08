@@ -150,3 +150,9 @@ This remains a component, not the complete installer. Blender, native dependency
 `node scripts/assemble-modeling-distribution.mjs OUTPUT --application-root APPLICATION --runtime-root RUNTIME` combines the explicit bundled-Node application package with an existing verified pinned Blender runtime. It performs no downloads or provider requests, rejects existing destinations and overlapping roots, checks source and copied runtime integrity, and records the complete copied tree in a candidate manifest. Application payloads are allowlisted; contained relative runtime symlinks are preserved. Partial output cleanup handles read-only directories without following symlinks.
 
 The manifest explicitly keeps portability, native dependencies, complete licensing/corresponding source and clean-host certification open. The real-runtime assembly test is skipped when the official bundle is absent; synthetic tree and rejection tests do not prove a complete installer. The current workspace has no official runtime bundle, so this assembler has not yet produced a newly validated complete distribution here.
+
+### Candidate installer component
+
+The offline distribution can now be wrapped in a self-extracting Linux x64 installer with `scripts/package-modeling-installer.mjs`. It verifies a private snapshot against the complete tree manifest, checks payload integrity before extraction, preserves existing destinations, and cleans newly created partial installations, including read-only directories. See [installer instructions](modeling-installer.md).
+
+Four targeted installer tests and a real companion/Node installation-and-relocation smoke passed; see [installer evidence](evidence/modeling-installer/README.md). The latter uses a synthetic runtime placeholder and proves launcher installation only. The official Blender payload, source/native closure, downloadable certified release and clean-host construction remain open.

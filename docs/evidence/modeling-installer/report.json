@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "checkedAt": "2026-09-08T22:47:07.646Z",
+  "scope": "Actual companion and pinned Node, synthetic absent Blender runtime; installer integrity/relocation/help only",
+  "releaseCertified": false,
+  "providerCalls": 0,
+  "networkRequests": 0,
+  "packagerSha256": "3e741207ab7cfa3c1cdb1eaab251f42c267910ef3ccacb1307a9bdb461755363",
+  "payloadSha256": "21b55620c5d1264a429aa7e677ef422b231e541f0fa5e2a0532b2b501ea5f504",
+  "installerSha256": "c5784beb25feae2986b1ddce11bbc4c48867a2f29fd14668733537ec89ad90c9",
+  "installerBytes": 43676956,
+  "installedBytes": 124804048,
+  "installMs": 1598.2784549999997,
+  "helpMs": 88.31691599999976,
+  "fullTreeMatches": true,
+  "manifestBytesPreserved": true,
+  "relocatedHelpWithEmptyPath": true,
+  "inheritedNodeOptionsCleared": true,
+  "host": {
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "nodeVersion": "v22.22.0",
+  "limitations": [
+    "No real Blender runtime in this fixture",
+    "No construction, pairing, clean-host or full installer release certification",
+    "Timing is one local run; help is not Blender cold start"
+  ]
+}

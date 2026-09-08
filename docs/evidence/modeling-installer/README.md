@@ -1,0 +1,9 @@
+# Installer component evidence
+
+Astra reviewed the candidate installer and its four synthetic regressions, including corrupted payload rejection, destination preservation, relocation, and cleanup after copying read-only directories fails. The earlier combined installer/assembler check passed twelve tests with one absent-official-runtime skip; the final installer-only check passed four tests after the cleanup correction. Typecheck and formatting passed.
+
+`report.json` records a separate local smoke check with the actual packaged companion and pinned Node 22.22.0. The input was built with `scripts/package-modeling-companion.mjs --node-root` using the local pinned Node distribution, then given a clearly labeled synthetic `runtime/README.txt` and candidate manifest using the assembler's `buildTreeIntegrity` entries/digest. This fixture deliberately contains no Blender executable.
+
+The reviewed `scripts/package-modeling-installer.mjs INPUT_DIRECTORY OUTPUT.run` produced the self-extracting archive. It installed into a new path containing spaces using standard system utilities; the directory was then renamed. Every installed integrity entry and the manifest bytes matched the input. The real `orbsie-builder --help` succeeded from a different working directory with `PATH` empty and deliberately invalid inherited `NODE_OPTIONS`/`NODE_PATH` cleared by the launcher. The report records the exact packager and installer hashes.
+
+The archive was 43,676,956 bytes; the installed test tree was 124,804,048 bytes. Installation took about 1.60 seconds and help startup 88 ms in this one local run. These are component measurements, not complete Blender package size, Blender cold start, clean-machine compatibility, construction, pairing or release certification. No provider calls or network requests were made. The temporary synthetic archive is not published as a user download.
