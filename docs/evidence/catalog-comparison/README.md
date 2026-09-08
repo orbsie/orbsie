@@ -19,3 +19,5 @@ Reviewed run (SwiftShader, one fresh context per mode):
 | mixed | 50.2 ms | 121.4 ms |
 
 Timing starts after the blank renderer has drawn a frame, immediately before applying fixture entities. It excludes model inference. Fresh contexts reset browser asset caches but do not establish cold operating-system or GPU caches. Different geometry and one sample per mode prevent a general speed comparison. The mixed catalog entity exceeded the roughly 100 ms update target in this run; functional success does not certify that performance gate.
+
+Loader review: the pending-load map deduplicates catalog IDs, consistent with the recorded one request and one decoded worker response for three identical catalog trees. The mixed case has only one catalog ID, so this fixture cannot establish repeated worker startup as the cause of its delay. No loader optimization was made. The focused asset-loader and queue suite passed 10 tests across two files (`npm test -- --run tests/asset-geometry.test.ts tests/asset-geometry-queue.test.ts`). Further optimization needs evidence that separates loading, worker preparation and main-thread rendering costs.
