@@ -17,12 +17,40 @@ import {
   assertContainedPath,
   assertDisposableOutputPath,
   copyDirectory,
+  copyOfficialReleaseNotices,
   isPathContained,
   PINNED_OFFICIAL_ARCHIVES,
   validateArchiveEntries,
 } from "../scripts/package-blender-runtime.mjs";
 
 describe("Blender packaging path boundaries", () => {
+  it("preserves both top-level official release notices verbatim and fails when one is absent", () => {
+    const root = mkdtempSync(join(tmpdir(), "orbsie-notices-"));
+    const source = join(root, "source");
+    const bundle = join(root, "bundle");
+    mkdirSync(source);
+    mkdirSync(bundle);
+    try {
+      writeFileSync(join(source, "copyright.txt"), "Copyright notice\n");
+      expect(() => copyOfficialReleaseNotices(source, bundle)).toThrow(
+        /readme.html/,
+      );
+      writeFileSync(
+        join(source, "readme.html"),
+        "<p>Release documentation</p>\n",
+      );
+      const records = copyOfficialReleaseNotices(source, bundle);
+      expect(records).toHaveLength(2);
+      for (const record of records) {
+        expect(readFileSync(join(bundle, record.bundled))).toEqual(
+          readFileSync(record.source),
+        );
+        expect(record.sha256).toMatch(/^[a-f0-9]{64}$/);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("pins the supported official archive to its authoritative digest", () => {
     expect(PINNED_OFFICIAL_ARCHIVES["blender-4.0.2-linux-x64.tar.xz"]).toBe(
       "5583a5588736da8858c522ef17fff5d73be59c47a6fe91ad29c6f3263e22086a",

@@ -444,6 +444,21 @@ export function relocateContainedSymlink({
   return relocatedTarget;
 }
 
+export function copyOfficialReleaseNotices(sourceRoot, bundle) {
+  return ["copyright.txt", "readme.html"].map((name) => {
+    const source = join(sourceRoot, name);
+    ensureFile(source, `Official release notice ${name}`);
+    assertContainedPath(
+      realpathSync(sourceRoot),
+      realpathSync(source),
+      "release notice",
+    );
+    const bundled = join("licenses", "blender", name);
+    copyFile(source, join(bundle, bundled));
+    return { source, bundled, sha256: sha256(source) };
+  });
+}
+
 function copyFile(source, destination, mode = undefined) {
   mkdirSync(dirname(destination), { recursive: true });
   cpSync(source, destination, { dereference: false });
@@ -828,6 +843,14 @@ function main() {
       });
     }
   }
+
+  if (extracted)
+    licenses.push(
+      ...copyOfficialReleaseNotices(extracted.root, bundle).map((notice) => ({
+        ...notice,
+        source: sourcePath(notice.source),
+      })),
+    );
 
   const sourceStats = {
     blenderExecutable: {
