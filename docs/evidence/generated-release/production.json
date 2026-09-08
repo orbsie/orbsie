@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "b60a694",
+  "deployment": "https://orbsie-4skrav0xa-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 10301
+    },
+    {
+      "path": "/player/generated-geometry-worker.js",
+      "status": 200,
+      "bytes": 839910,
+      "sha256": "6ad9bdef60a35871d17e11914bc86924b566d286d61c2f08321fa4d72260e174",
+      "matchesCommittedWorker": true
+    },
+    {
+      "path": "/api/generated-models",
+      "status": 401,
+      "bytes": 61
+    }
+  ],
+  "scope": "GET-only production smoke check; no inference or private data writes. Production migration applied separately; dedicated world publication remains unverified."
+}

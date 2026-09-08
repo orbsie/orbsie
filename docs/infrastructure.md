@@ -28,7 +28,7 @@ A fresh production publication check on 2026-09-07 reused the existing synthetic
 
 ## Generated model storage
 
-Commit `094bfb8` adds authenticated `/api/generated-models` upload/read and the additive `generated_models` table. Apply `npm run db:migrate` to each target database before deploying this capability. The development migration has been applied; production migration remains outstanding. Live development generated-model cloud acceptance is recorded in `docs/evidence/generated-cloud/report.json`.
+Commit `094bfb8` adds authenticated `/api/generated-models` upload/read and the additive `generated_models` table. Apply `npm run db:migrate` to each target database before deploying this capability. The development and production migrations have been applied. Commit `b60a694` is deployed at `https://orbsie.com`; `docs/evidence/generated-release/production.json` records its worker hash and anonymous access check. Live development generated-model cloud acceptance is recorded in `docs/evidence/generated-cloud/report.json`.
 
 Generated GLBs use immutable private paths `generated/<owner SHA-256>/<content SHA-256>.glb`. Upload admission verifies byte length, content hash, supported geometry and actual scene bounds. A per-owner database lock reserves quota before storage: at most 256 models or 64 MiB, counting pending uploads. Failed writes remain pending and can be retried at the same identity. A successful immutable-object conflict is accepted only after reading and verifying the stored bytes.
 
