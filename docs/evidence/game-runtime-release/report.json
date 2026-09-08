@@ -1,12 +1,12 @@
 {
   "status": "passed",
-  "checkedAt": "2026-09-08T08:54:45.833Z",
-  "sourceCommit": "6d6829e",
+  "checkedAt": "2026-09-08T17:42:27.305Z",
+  "sourceCommit": "edbef92",
   "deployment": {
     "origin": "https://orbsie.com",
     "id": null,
     "environment": "production",
-    "url": "https://orbsie-e38wx5yz8-grappeggias-projects.vercel.app"
+    "url": "https://orbsie-emrv0pyhw-grappeggias-projects.vercel.app"
   },
   "checks": {
     "root": {
@@ -20,9 +20,9 @@
     "playerRuntime": {
       "status": "passed",
       "httpStatus": 200,
-      "expectedSha256": "9b5672b4d95b981a971239a77239b151916f1bf158b487e08f85a4a2c364c388",
-      "observedSha256": "9b5672b4d95b981a971239a77239b151916f1bf158b487e08f85a4a2c364c388",
-      "bytes": 1716628
+      "expectedSha256": "e1a449a2edfbcf6b32e94f02b36e1cd96ba3f3e3156983f3eb80ddc9ca6ef80d",
+      "observedSha256": "e1a449a2edfbcf6b32e94f02b36e1cd96ba3f3e3156983f3eb80ddc9ca6ef80d",
+      "bytes": 1716877
     },
     "browser": {
       "status": "passed",
