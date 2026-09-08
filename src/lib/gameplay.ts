@@ -84,9 +84,13 @@ function platformTop(entity: Entity, time: number, positionOverride?: Vec3) {
     id: entity.id,
     x: position[0],
     z: position[2],
-    y: position[1] + 0.52 * entity.scale[1] + PLAYER_HALF_HEIGHT,
-    halfX: entity.scale[0] * 0.55,
-    halfZ: entity.scale[2] * 0.55,
+    // Reflect both vertical endpoints of the procedural platform mesh.
+    y:
+      position[1] +
+      Math.max(-0.025 * entity.scale[1], 0.52 * entity.scale[1]) +
+      PLAYER_HALF_HEIGHT,
+    halfX: Math.abs(entity.scale[0]) * 0.55,
+    halfZ: Math.abs(entity.scale[2]) * 0.55,
     bounce: entity.behavior?.type === "bounce",
   };
 }
@@ -234,9 +238,7 @@ export function stepGameplay(
     const after = movingEntityPosition(support, time);
     position[0] += after[0] - before[0];
     const afterTop = platformTop(support, time).y;
-    const beforeTop =
-      state.supportTop ??
-      before[1] + 0.52 * support.scale[1] + PLAYER_HALF_HEIGHT;
+    const beforeTop = state.supportTop ?? platformTop(support, time, before).y;
     position[1] += afterTop - beforeTop;
     position[2] += after[2] - before[2];
   }

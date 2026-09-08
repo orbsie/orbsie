@@ -3,7 +3,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { unzipSync, strFromU8 } from "fflate";
 import sharp from "sharp";
-const dir = "docs/evidence/game-actions";
+const dir =
+  process.env.ORBSIE_GAME_ACTIONS_EVIDENCE_DIRECTORY ??
+  "docs/evidence/game-actions";
 await mkdir(dir, { recursive: true });
 const variable = (name, value) => ({
   operand: { type: "variable", name },

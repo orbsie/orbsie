@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true,
+    "setPositionVisible": true,
+    "pathMovesVisibleObject": true,
+    "changedVariableClosesGate": true,
+    "restartRestoresColorAndVariables": true
+  },
+  "standalone": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true,
+    "setPositionVisible": true,
+    "pathMovesVisibleObject": true,
+    "changedVariableClosesGate": true,
+    "restartRestoresColorAndVariables": true
+  },
+  "pageErrors": [],
+  "externalStandaloneRequests": []
+}

@@ -15,6 +15,45 @@ const player = (position: [number, number, number]): PlayerState => ({
 });
 
 describe("gameplay runtime", () => {
+  it.each([
+    [-2, 1, 2],
+    [2, 1, -2],
+    [2, -2, 2],
+    [-2, -2, -2],
+  ])("lands on a reflected procedural platform (%s, %s, %s)", (x, y, z) => {
+    const platform: Entity = {
+      id: "reflected",
+      label: "Reflected platform",
+      stage: "ready",
+      position: [0, 2, 0],
+      scale: [x, y, z],
+      color: "#ffffff",
+      geometry: { kind: "platform", detail: "refined" },
+    };
+    // Independent rendered mesh bounds: base spans -0.025..0.425;
+    // the top cap reaches 0.52 before reflection.
+    const expectedTop = 2 + Math.max(-0.025 * y, 0.52 * y) + 0.42;
+    const result = stepGameplay(
+      { position: [0.4, expectedTop + 0.01, 0.4], velocityY: -2 },
+      idle,
+      [platform],
+      [],
+      0,
+      0.02,
+    );
+    expect(result.groundedOn).toBe(platform.id);
+    expect(result.position[1]).toBeCloseTo(expectedTop);
+    const jump = stepGameplay(
+      result,
+      { x: 0, z: 0, jump: true },
+      [platform],
+      [],
+      0.02,
+      0.02,
+    );
+    expect(jump.velocityY).toBeGreaterThan(0);
+    expect(jump.groundedOn).toBeUndefined();
+  });
   it("uses scaled catalog bounds for platforms and excludes unfinished assets", () => {
     const platform: Entity = {
       id: "catalog-platform",
