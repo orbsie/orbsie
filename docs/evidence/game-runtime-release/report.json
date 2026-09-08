@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-08T08:54:45.833Z",
+  "sourceCommit": "6d6829e",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": null,
+    "environment": "production",
+    "url": "https://orbsie-e38wx5yz8-grappeggias-projects.vercel.app"
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "9b5672b4d95b981a971239a77239b151916f1bf158b487e08f85a4a2c364c388",
+      "observedSha256": "9b5672b4d95b981a971239a77239b151916f1bf158b487e08f85a4a2c364c388",
+      "bytes": 1716628
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": [
+        {
+          "method": "GET",
+          "path": "/css2"
+        }
+      ]
+    }
+  },
+  "screenshot": "docs/evidence/game-runtime-release/landing.png"
+}
