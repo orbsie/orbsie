@@ -3,8 +3,8 @@
 ## Owner updates — 2026-09-07
 
 - Keep Apache 2.0.
-- Use Fast mode only for Codex development agents, never for Orbsie generation agents or their live test calls. Orbsie calls use standard processing; live model tests remain Astra low. Speed tier is separate from reasoning effort.
-- Continue implementation with three parallel worker agents plus root integration and frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
+- Use GPT-6 Astra with low reasoning and regular/standard processing for the lead and all development-agent defaults. Disable Fast mode. Explicitly delegated Luna workers use GPT-5.6 Luna with xhigh reasoning and regular/standard processing. Orbsie calls use standard processing; live model tests remain Astra low. Speed tier is separate from reasoning effort.
+- Continue implementation with Astra owning planning, integration, and quality, strategically delegating bounded work to Luna xhigh under the execution plan below. Use up to three parallel workers when independent tasks justify them, with frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
 - Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. Put the full compatible model catalog under Advanced.
 - Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.
 - All live model-backed tests must use Astra with low reasoning effort. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
@@ -12,6 +12,15 @@
 - The entrance planet should occupy roughly 80% of the viewport. Use a dark, space-like background.
 - Remove approximately 80% of visible text and interface clutter. Focus on the planet and essential creation controls; omit landing branding, early-access labels, marketing headings and taglines.
 
+
+## Development execution and quality plan
+
+1. Astra low/regular owns the task breakdown, architecture, shared interfaces, acceptance criteria, and final delivery. Before delegation, inspect the relevant code and specify the intended behavior, file ownership, constraints, and required evidence.
+2. Offload independent, bounded work to Luna xhigh/regular: focused investigations, isolated implementation with an agreed contract, targeted regression checks, and documentation grounded in verified behavior. Use the `luna_worker` role where supported, or explicitly select `gpt-5.6-luna` and `xhigh` when spawning. All other agents default to Astra low/regular.
+3. Parallelize only disjoint work that lets Astra make useful progress on integration or another task. Avoid overlapping file ownership, speculative tasks, and delegation whose coordination cost exceeds the work. Workers report changed files, checks run and their results, unresolved risks, and assumptions.
+4. Astra reviews every delegated diff against the requirements and surrounding code, checks failure paths and regressions, and requests corrections or takes over when evidence is weak. Keep ambiguous product decisions, cross-cutting architecture, authentication/data-boundary decisions, and final visual judgment with Astra. Worker completion alone is not acceptance.
+5. Astra integrates accepted changes and verifies the combined result with the relevant tests, type/build checks, and real-browser review for user-facing changes. Confirm the intended interaction and visual quality; distinguish deterministic checks from live-provider evidence. Live model-backed tests retain the owner's Astra-low constraint.
+6. Astra owns the final quality decision and delivery report, including evidence and remaining limitations. If Luna repeatedly misses the contract or needs broad context, move that task back to Astra instead of expanding delegation. Keep regular processing for every development agent.
 
 You are the implementation agent for Orbsie. Act as a product-minded full-stack engineer and a skilled interactive 3D designer. Build the product described below, verify it in a real browser, and leave a working, reviewable implementation. Do not stop after producing another plan.
 

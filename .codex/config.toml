@@ -1,4 +1,14 @@
-service_tier = "fast"
+model = "gpt-6-astra"
+model_reasoning_effort = "low"
+service_tier = "default"
 
 [features]
-fast_mode = true
+fast_mode = false
+
+[agents]
+default_subagent_model = "gpt-6-astra"
+default_subagent_reasoning_effort = "low"
+
+[agents.luna_worker]
+description = "Bounded implementation, investigation, or verification delegated by Astra; Astra must review the result before acceptance."
+config_file = "agents/luna-worker.toml"

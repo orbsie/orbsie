@@ -15,3 +15,11 @@ Live development OIDC exchange, object upload and immutable retry passed. `scrip
 Set `GCS_BUCKET` per environment and `GCP_WORKLOAD_IDENTITY_PROVIDER` to the full `//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER` resource. Vercel supplies a short-lived OIDC token, exchanged through Google's documented Security Token Service. Local development uses `vercel env pull` to obtain a temporary development token; refresh it when expired.
 
 References: [Vercel OIDC](https://vercel.com/docs/oidc/gcp), [Google federation](https://docs.cloud.google.com/iam/docs/workload-identity-federation), [Cloud Storage pricing](https://cloud.google.com/storage/pricing), [Neon pricing](https://neon.com/pricing).
+
+## Additional domain and private trial credential
+
+`orbsie.app` and `www.orbsie.app` are attached to the existing `orbsie` project. Both verified HTTPS and return308 to `https://orbsie.com`, preserving paths and query strings. No second application or database was created for these aliases.
+
+`AI_GATEWAY_API_KEY_FREE` is a sensitive production-only Vercel environment variable. The temporary local input file used to install it was deleted. The application uses it only in the server generation route; no public environment variable or client key delivery exists. See [trial policy](free-prompts.md).
+
+Production and development trial/waitlist tables are migrated. Resend's Free native integration was selected for confirmation email, but installation is waiting for account-owner terms acceptance. No Resend key or verified sender exists yet; durable signups remain pending until those are configured.
