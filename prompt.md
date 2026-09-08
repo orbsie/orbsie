@@ -106,7 +106,7 @@ An entity should have a stable ID and progress through states such as reserved â
 - Keep unfinished forms identifiable as previews. Apply gameplay/collider changes only at valid simulation boundaries; do not knock the player through the floor because a mesh is being replaced.
 - Canceling or failing a generation should preserve completed changes and restore or remove unfinished previews coherently.
 
-Do not imply that the model is streaming finished geometry when it is only streaming prose. The visible pipeline must be driven by actual object reservations, geometry recipes, and revisions. A clearly labeled local demo may replay fixture events through this same pipeline.
+Do not imply that the model is streaming finished geometry when it is only streaming prose. The visible pipeline must be driven by actual object reservations, geometry recipes, and revisions. Deterministic replay of this pipeline is permitted only in test infrastructure, never as a user-facing generation mode.
 
 ## Curated 3D asset collection â€” owner addition
 
@@ -218,7 +218,7 @@ Let users select a provider and a supported model in settings. The owner's origi
 
 Store credentials outside the project document. Keep keys out of prompts, generated code, browser bundles, localStorage, exported projects, and logs. Use an authenticated server relay; make remembered credentials opt-in and encrypted server-side. A session-only credential path is appropriate initially. Disconnect must revoke Orbsie's access to the stored credential.
 
-Preserve the initial prompt if authentication or AI setup is needed. Allow visitors to explore a clearly marked interactive demo without keys. Do not present that demo as a real AI generation. Show useful connection, quota, and retry messages with the user's existing Orb preserved.
+Preserve the initial prompt if authentication or AI setup is needed. Visitors create using available free prompts or a linked provider/account; otherwise request connection or sign-in without discarding their prompt. Show useful connection, quota, and retry messages with the user's existing Orb preserved.
 
 ## 10. Independent projects and Vercel publishing
 
@@ -239,7 +239,7 @@ The API documents creating projects in a team scope and deploying files through 
 
 ## 11. Accounts, saving, and trust boundaries
 
-Basic accounts and cloud saving are part of this delivery, but the first screen should remain an invitation to create. Permit a local draft/demo before sign-in; request sign-in when cloud ownership or publishing is needed. Keep Orb content intact through that flow.
+Basic accounts and cloud saving are part of this delivery, but the first screen should remain an invitation to create. Permit a real locally saved draft before sign-in; request sign-in when cloud ownership or publishing is needed. Keep Orb content intact through that flow.
 
 Store users, projects, chat messages with entity references, committed revisions, generation runs/checkpoints, assets, and publication mappings. Scope every read/write to its owner or explicit public visibility. Account identity is separate from the user's AI provider connection.
 
@@ -299,7 +299,7 @@ Deliver:
 - `.env.example` with placeholders only and setup instructions for the app auth provider, database/storage, credential encryption, Vercel team/deployment access, and optional AI test credentials. Distinguish deployment tokens from AI Gateway keys.
 - A short architecture document explaining the scene/operation protocol, formation system, local/cloud responsibilities, standalone export, and publishing mapping.
 - A concise ChatGPT integration decision note citing current official documentation and stating what was implemented or remains conditional.
-- A test/verification report that separates local demo, live provider, account, export, and cloud deployment evidence.
+- A test/verification report that separates deterministic fixture, live provider, account, export, and cloud deployment evidence.
 - Screenshots and a short interaction recording where supported.
 - A final handoff listing actual repository/preview/deployment URLs, how to run locally, measured limitations, and any specific missing external configuration.
 
