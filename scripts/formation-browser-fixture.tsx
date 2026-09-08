@@ -149,6 +149,13 @@ let oldGeometries: unknown[];
     });
     dense.dispose();
     return {
+      renderer: (() => {
+        const context = state().gl.getContext();
+        const extension = context.getExtension("WEBGL_debug_renderer_info");
+        return extension
+          ? context.getParameter(extension.UNMASKED_RENDERER_WEBGL)
+          : "unknown";
+      })(),
       userAgent: navigator.userAgent,
       hardwareConcurrency: navigator.hardwareConcurrency,
       results,
