@@ -8,13 +8,13 @@ Use case: logo-brand. Create one exceptional orb-style brand mark for Orbsie, an
 
 ## Upload status
 
-Recommended upload: `orbsie-org-avatar-compact.png` (1254×1254 PNG, 965,276 bytes, below 1 MiB), updated to the ringless orb on 2026-09-07. Prepared for https://github.com/organizations/orbsie/settings/profile. Organization avatar upload requires an authenticated browser session; no controllable browser was available in this session. Committing the asset to the repository does not change the organization avatar.
+Recommended upload: `orbsie-org-avatar-compact.png` (1254×1254 PNG, 965,276 bytes, below 1 MiB), updated to the ringless orb on 2026-09-07. Uploaded through the owner’s signed-in regular Chrome session using desktop mouse and keyboard control on 2026-09-07. The ringless orb was verified on https://github.com/orbsie after saving.
 
 ## Favicon
 
 `public/icon.svg` is a native SVG adaptation of Orbsie’s existing icon: the cyan orb and two lime land shapes remain clear at browser-tab sizes. The orbital ellipse, foreground ribbon and their masking stroke were removed at the owner’s request. It is wired through Next.js metadata, uses no external resources, and was visually checked at 16, 32, 64 and 160px (`docs/evidence/favicon-ringless-sizes.png`).
 
-`orbsie-org-avatar-flat.png` is an intermediate built-in image edit that preserves the original identity while simplifying terrain texture. Both original and intermediate files are preserved. The organization avatar itself has not been changed.
+`orbsie-org-avatar-flat.png` is an intermediate built-in image edit that preserves the original identity while simplifying terrain texture. Both original and intermediate files are preserved. The organization avatar now uses the compact ringless asset.
 
 ## Final compact-avatar prompt (built-in image edit)
 
@@ -24,4 +24,4 @@ The tool produced1254×1254 despite the requested512×512; the actual dimensions
 
 ## Ringless avatar update
 
-The owner requested just the orb, with no rings. A built-in image edit removed the entire orbital ribbon from the compact avatar while preserving the turquoise globe, two lime land shapes, framing and navy background. The older original and flat files above are historical sources, not the upload target. The current compact asset was visually inspected and has no ring. Browser inventory again returned no connected browsers, so the GitHub organization avatar upload remains pending.
+The owner requested just the orb, with no rings. A built-in image edit removed the entire orbital ribbon from the compact avatar while preserving the turquoise globe, two lime land shapes, framing and navy background. The older original and flat files above are historical sources, not the upload target. The current compact asset was visually inspected and has no ring. The GitHub organization avatar upload is complete and was visually verified on the organization overview.
