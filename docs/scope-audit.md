@@ -23,6 +23,8 @@ Portable-runtime follow-up: `docs/evidence/native-notices/` maps 342 installed-s
 
 Composer continuity follow-up: `docs/evidence/composer-continuity/` proves the desktop keyboard Enter path keeps the same focused textarea and canvas during normal logical descent while a fixture response is held. A follow-up draft typed without refocusing survives completion, and the original message appears exactly once. Blur/focusout counts are zero; the final reviewed run has 129 continuity samples without violations. This is deterministic fixture evidence, not partial-stream gameplay, mobile, live-provider, or performance certification.
 
+Play-during-stream follow-up: `docs/evidence/play-during-stream/` derives a deterministic stream from the saved ChatGPT one-crystal input-rule game. The real Play button and ArrowRight produce score 7 before commit; a material update persists before EOF while the same game program, score and Play mode remain intact. After commit/EOF, ArrowUp wins with score 7. One response remains open between those phases. This proves this input-rule path under incremental scene updates, not physical traversal or live-provider streaming.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.
