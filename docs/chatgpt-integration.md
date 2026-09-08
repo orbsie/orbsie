@@ -1,25 +1,33 @@
 # ChatGPT subscription integration decision
 
-Checked official documentation and the installed Codex App Server protocol on 2026-09-07.
+Reviewed against the implementation and official documentation on 2026-09-08.
 
-Orbsie now includes a **trusted local CLI test adapter**, `scripts/local-chatgpt.mjs`, using documented App Server JSON-RPC over child-process stdio. It checks `account/read` for managed ChatGPT authentication and queries all `model/list` pages for an Astra model supporting low reasoning. Every `turn/start` specifies the exact returned model identifier and `effort: "low"`; missing Astra/low fails without fallback. No cached credentials are read, copied, logged, or exported by Orbsie. Codex manages login and refresh.
+Orbsie implements a trusted local browser companion, using the managed Codex App Server over child-process stdio. The companion runs on the user's computer and connects the browser's normal authoring flow to their locally managed ChatGPT account. The hosted Orbsie server does not receive subscription credentials or relay these requests. This supersedes the initial CLI-only feasibility note.
 
-Run from the repository with dependencies installed:
+The official [App Server documentation](https://learn.chatgpt.com/docs/app-server) describes managed account inspection through `account/read`, available-model discovery through `model/list`, and streamed turns. The [authentication documentation](https://learn.chatgpt.com/docs/auth) distinguishes ChatGPT subscription sign-in from separately billed API-key access and documents local `codex login`. These interfaces support the chosen local integration; they do not establish account-specific Astra availability or authorize a public subscription relay.
+
+## Implemented connection
+
+From a checkout with dependencies installed and Codex available:
 
 ```sh
 codex login status
-# If needed, complete the managed login yourself with codex login.
-ORBSIE_EVIDENCE_PATH=/tmp/orbsie-live-evidence.json node scripts/run-local-chatgpt.mjs
+# Complete codex login locally if needed.
+node scripts/run-chatgpt-companion.mjs
 ```
 
-This explicitly invokes two live subscription-backed turns: a three-object scene and an edit to one selected object. The harness validates each streamed JSON command using the application's schema and reducer, requires a concluding revision commit, and checks that the selected edit preserves unrelated entities. Optional evidence contains model ID, effort, commands, and resulting projects, never account details. Temporary bundled code and the empty working directory are removed afterward.
+Open the private link printed by the foreground process. The default website origin is `https://orbsie.com`; local development can set an exact origin, for example `ORBSIE_ORIGIN=http://localhost:3031`. Stop the process with Ctrl+C to revoke the connection. See [companion setup and protocol](chatgpt-companion.md) for browser local-network permissions and connection details.
 
-The adapter opens **no HTTP or WebSocket listener**. It runs ephemeral threads with read-only sandbox, network access disabled at turn level, shell tools disabled, web search disabled, and rejects client-side tool/approval requests. Turns have a three-minute deadline and an interrupt path. Run only on the trusted user's workstation. This is not a public subscription relay, a browser connector, or an enabled production “Connect ChatGPT” button. A browser companion would additionally require loopback binding, capability authentication, explicit origin checks, and per-user isolation; none is silently deployed here.
+`scripts/local-chatgpt.mjs` checks for a managed ChatGPT account and queries every model catalog page. It selects an available Astra model with low reasoning support and fails without substitution if none exists. Thread and turn requests explicitly select default processing; turns use low effort. Orbsie neither reads credential files nor copies OAuth tokens. The adapter requests ephemeral threads, a read-only sandbox, disabled network and shell/web tools, and rejects tool or approval requests from App Server.
 
-The installed account catalog returned `gpt-6-astra` with low support during the 2026-09-07 verification. This is an observed account-specific identifier, not a hardcoded selection or a promise of availability on other accounts. Live results and remaining verification limitations are recorded in the task report.
+`scripts/chatgpt-companion.ts` binds an ephemeral `127.0.0.1` port and checks the exact configured Origin and listener Host. Authenticated requests require a fresh random capability. The browser consumes the private link fragment, removes it from the URL, and keeps that capability in memory; reload requires reconnection. This capability is distinct from ChatGPT authentication. The server permits one generation at a time, validates bounded scene commands before streaming them, and aborts on disconnect or deadline. The editor uses its normal reducer, persistence, scoped editing, and export paths. These boundaries assume a trusted local OS and authorized website.
 
-Public Vercel generation continues to use the separate OpenRouter and AI Gateway API-key paths. This local test does not validate their billing/authentication paths or establish support for public multitenant use of subscription credentials.
+The original `scripts/run-local-chatgpt.mjs` remains an opt-in CLI integration check. It makes live model calls and is separate from mock-based unit tests.
 
-Sources:
-- [Codex App Server](https://learn.chatgpt.com/docs/app-server): managed account APIs, model discovery, stdio protocol, turns and interrupts.
-- [Codex authentication](https://learn.chatgpt.com/docs/auth): credential lifecycle and trusted-environment restrictions.
+## Verified scope and remaining conditions
+
+- [Initial live browser report](evidence/provider-e2e/chatgpt-local.json): managed `gpt-6-astra`, low reasoning, default processing; creation, selected-object material edit, local reload, ZIP export and standalone loading. Two generation requests, no fallback. This records a past run rather than current account availability.
+- [Live reload-recovery report](evidence/provider-e2e/chatgpt-reload-recovery/chatgpt-local.json): interruption by document reload, recovery of a durable checkpoint, explicit continuation, scoped edit, export and input-rule gameplay. Fresh-context cloud recovery requires no new generation. This is checkpoint continuation, not resumption of the original provider stream.
+- [Scope audit](scope-audit.md): remaining full-plan acceptance gates, including the Astra OpenRouter/Gateway matrix, dedicated signed-out publication, and portable Blender release. Local ChatGPT evidence does not prove those paths.
+
+Users still need a compatible managed account, available model access, a running local companion, and a browser that permits the loopback connection. Orbsie does not implement hosted multitenant subscription execution. OpenRouter and Vercel AI Gateway use their own API-key connections and require separate provider-specific validation.
