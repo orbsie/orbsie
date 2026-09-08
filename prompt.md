@@ -118,6 +118,14 @@ Do not imply that the model is streaming finished geometry when it is only strea
 - Public deployments and independent ZIP/source exports must include all referenced assets and their licenses/attribution, with no dependence on the editor or third-party download URLs. Unknown catalog IDs and arbitrary model-supplied remote URLs must be rejected.
 - Verify catalog-only, mixed and explicitly-new workflows with real providers and deterministic regressions. Measure first usable content and interaction responsiveness against the procedural-only baseline; do not claim faster generation solely because a catalog exists.
 
+Implementation order and acceptance gates:
+1. Acquire a small coherent collection, review rendered previews and technical budgets, and verify original-source licenses and hashes before admitting assets to the catalog.
+2. Add typed local asset references, asynchronous loading, shared formation/selection/collider behavior, and license-preserving export/publication packaging.
+3. Add a request-scoped asset policy to generation and validation. Prefer a useful alternation of prepared and newly generated models across eligible objects, without a fixed quota that harms prompt fidelity. Explicit new/original requests take precedence over speed and reuse, including retries and follow-up edits; unrelated existing assets need not be replaced.
+4. Test mixed scenes and rejection of catalog references in new-only scopes, then compare first usable content and input responsiveness against the same procedural-only requests. Ship the runtime integration only after standalone exports retain the referenced models and licenses and these checks pass.
+
+Downloaded files alone do not complete this feature. Track acquisition, runtime integration, policy enforcement, export integrity and measured responsiveness as separate completion gates.
+
 ## 6. Incremental authoring architecture
 
 Choose a persistent scene runtime with streamed, validated operations as the fast path. Do not regenerate a whole web application, run a server build, or reload the preview for each edit.
