@@ -10,6 +10,14 @@ import {
   HttpError,
 } from "@/lib/server/auth";
 import { projectSchema } from "@/lib/protocol";
+import {
+  makePublicationManifest,
+  PUBLICATION_MANIFEST_FILE,
+  verifyPublicationArtifacts,
+  PublicationVerificationError,
+  isPublicationDigest,
+  type PublicationFile,
+} from "../../../lib/server/publication-artifact";
 export const maxDuration = 60;
 const publicPath = (id: string) => `/o/${encodeURIComponent(id)}`;
 async function vercel(path: string, method = "GET", body?: unknown) {
@@ -79,7 +87,12 @@ export async function POST(request: Request) {
       );
     if (orb.deployment_id && orb.publication_revision === revision) {
       const deployment = await vercel(`/v13/deployments/${orb.deployment_id}`);
-      if (!["ERROR", "CANCELED"].includes(deployment.readyState)) {
+      if (
+        !["ERROR", "CANCELED"].includes(deployment.readyState) &&
+        deployment.meta?.orbId === projectId &&
+        deployment.meta?.orbRevision === String(revision) &&
+        isPublicationDigest(deployment.meta?.artifactDigest)
+      ) {
         await client.query("COMMIT");
         return Response.json({
           state:
@@ -126,7 +139,7 @@ export async function POST(request: Request) {
     const snapshot = projectSchema.parse(orb.snapshot);
     const html =
       '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbsie world</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>';
-    const files = [
+    const files: PublicationFile[] = [
       { file: "index.html", data: html },
       {
         file: "project.json",
@@ -147,11 +160,25 @@ export async function POST(request: Request) {
         ),
       },
     ];
+    const artifact = makePublicationManifest(projectId, revision, files);
+    const deploymentFiles = [
+      ...files,
+      { file: PUBLICATION_MANIFEST_FILE, data: artifact.data },
+    ];
     // Recover an accepted deployment after a request timeout by its immutable revision metadata.
     const prior = await vercel(`/v6/deployments?projectId=${target}&limit=10`);
     const recovered = prior.deployments?.find(
-      (d: { meta?: { orbRevision?: string }; state: string }) =>
+      (d: {
+        meta?: {
+          orbRevision?: string;
+          orbId?: string;
+          artifactDigest?: string;
+        };
+        state: string;
+      }) =>
         d.meta?.orbRevision === String(revision) &&
+        d.meta?.orbId === projectId &&
+        d.meta?.artifactDigest === artifact.digest &&
         !["ERROR", "CANCELED"].includes(d.state),
     );
     const deployment =
@@ -160,14 +187,18 @@ export async function POST(request: Request) {
         name,
         project: target,
         target: "production",
-        files,
+        files: deploymentFiles,
         projectSettings: {
           framework: null,
           buildCommand: "",
           installCommand: "",
           outputDirectory: null,
         },
-        meta: { orbRevision: String(revision), orbId: projectId },
+        meta: {
+          orbRevision: String(revision),
+          orbId: projectId,
+          artifactDigest: artifact.digest,
+        },
       }));
     await client.query(
       "UPDATE orbs SET vercel_project_id=$1,deployment_id=$2,publication_revision=$3 WHERE id=$4",
@@ -204,25 +235,62 @@ export async function GET(request: Request) {
       throw new HttpError(404, "This world has not been published.");
     const d = await vercel(`/v13/deployments/${orb.deployment_id}`);
     if (d.readyState === "READY") {
-      const url = `https://${d.url}`;
-      const accessible = await fetch(url, {
-        method: "HEAD",
-        redirect: "manual",
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!accessible.ok)
+      const deploymentUrl =
+        typeof d.url === "string" ? `https://${d.url}` : undefined;
+      const expectedDigest = d.meta?.artifactDigest;
+      if (
+        !deploymentUrl ||
+        d.meta?.orbId !== id ||
+        d.meta?.orbRevision !== String(orb.publication_revision) ||
+        typeof expectedDigest !== "string"
+      )
         return Response.json({
-          state: "PROTECTED",
+          state: "VERIFYING",
           servedRevision: orb.published_revision ?? null,
           deploymentUrl: orb.public_url,
           error:
-            "The game is deployed but not publicly accessible. Review Vercel deployment protection.",
+            "This deployment is missing immutable integrity metadata. Publish this revision again to create a verifiable release.",
         });
+      try {
+        await verifyPublicationArtifacts({
+          deploymentUrl,
+          projectId: id!,
+          revision: orb.publication_revision,
+          expectedDigest,
+        });
+      } catch (error) {
+        const verification =
+          error instanceof PublicationVerificationError
+            ? error
+            : new PublicationVerificationError(
+                "The public deployment could not be verified yet.",
+                "unavailable",
+              );
+        if (verification.kind === "protected")
+          return Response.json({
+            state: "PROTECTED",
+            servedRevision: orb.published_revision ?? null,
+            deploymentUrl: orb.public_url,
+            error: verification.message,
+          });
+        return Response.json({
+          state: "VERIFYING",
+          servedRevision: orb.published_revision ?? null,
+          deploymentUrl: orb.public_url,
+          error: verification.message,
+        });
+      }
       const promoted = await database().query(
         "UPDATE orbs SET public_url=$1,published_revision=publication_revision WHERE id=$2 AND owner_id=$3 AND deployment_id=$4 AND publication_revision=$5 RETURNING published_revision",
-        [url, id, user.id, orb.deployment_id, orb.publication_revision],
+        [
+          deploymentUrl,
+          id,
+          user.id,
+          orb.deployment_id,
+          orb.publication_revision,
+        ],
       );
-      // A new POST may have replaced the attempt while Vercel/HEAD was in flight.
+      // A new POST may have replaced the attempt while artifact verification was in flight.
       if (!promoted.rows.length) return Response.json({ state: "VERIFYING" });
       orb.published_revision = promoted.rows[0].published_revision;
     }
