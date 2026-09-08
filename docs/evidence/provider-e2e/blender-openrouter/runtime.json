@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "b60a694",
+  "provider": "openrouter",
+  "model": "openai/gpt-5.6-luna",
+  "runtime": "Official Blender 4.0.2 packaged prototype",
+  "runtimePath": "/tmp/orbsie-blender-runtime-official-4.0.2",
+  "portable": false,
+  "generatedModels": 1,
+  "catalogModels": 0,
+  "modelSha256": "e3bc0ebc53936463dbddd1e283f1fd5fa93f5185c310e6f361af67a016a3fa73",
+  "modelShape": "box",
+  "assetPolicy": null,
+  "scope": "Simple one-model create/edit/reload/export workflow. Does not prove broad modeling quality, performance, publication or Astra OpenRouter coverage."
+}
