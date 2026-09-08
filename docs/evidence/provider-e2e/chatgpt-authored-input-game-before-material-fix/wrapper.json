@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "serviceTier": "default",
+  "actualGenerateCalls": 2,
+  "childExitCode": 0,
+  "childSignal": null
+}
