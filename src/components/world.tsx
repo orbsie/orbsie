@@ -600,6 +600,7 @@ function Player({
       didReset ? [] : useOrb.getState().score,
       clock.elapsedTime,
       session.state && session.state.status !== "playing" ? 0 : dt,
+      session.collisionTargets,
     );
     state.current = result;
     const beforeContacts = session.resetGeneration;

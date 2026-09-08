@@ -1,0 +1,43 @@
+{
+  "scope": "Cold CPU contact preparation for 80 procedural decorations; fresh geometry recipes each sample; excludes setup, GPU rendering, provider latency and input responsiveness",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "AMD EPYC 9124 16-Core Processor",
+  "samples": 7,
+  "entityCount": 80,
+  "medianMs": {
+    "all": 33.074,
+    "none": 0.03,
+    "one": 0.489
+  },
+  "samplesMs": {
+    "all": [
+      56.74118400000003,
+      34.84068500000001,
+      33.074411,
+      38.141111999999964,
+      32.025251999999966,
+      31.678718000000003,
+      32.41299500000002
+    ],
+    "none": [
+      0.2549420000000282,
+      0.029769999999984975,
+      0.026119999999991705,
+      0.027970000000038908,
+      0.03652999999997064,
+      0.029500999999982014,
+      0.028950000000008913
+    ],
+    "one": [
+      13.310039000000017,
+      0.7464560000000233,
+      0.48892399999999725,
+      0.41497299999997495,
+      0.4902539999999931,
+      0.48419400000000223,
+      0.4325330000000349
+    ]
+  }
+}

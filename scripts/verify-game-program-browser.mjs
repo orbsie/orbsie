@@ -7,6 +7,11 @@ const directory = "docs/evidence/game-program";
 await mkdir(directory, { recursive: true });
 const rules = [
   {
+    id: "contact",
+    trigger: { type: "collision", entityId: "crystal" },
+    actions: [{ type: "add_score", amount: 11 }],
+  },
+  {
     id: "collect",
     trigger: { type: "collect", entityId: "crystal" },
     actions: [{ type: "add_score", amount: 3 }],
@@ -95,17 +100,17 @@ try {
   await page.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.getByText("Program ready.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Play", exact: true }).click();
-  await expect(page.locator(".game-hud strong")).toHaveText("5");
+  await expect(page.locator(".game-hud strong")).toHaveText("16");
   await page.keyboard.down("d");
-  await expect(page.locator(".game-hud strong")).toHaveText("12");
+  await expect(page.locator(".game-hud strong")).toHaveText("23");
   await page.waitForTimeout(150);
   await page.keyboard.up("d");
-  await expect(page.locator(".game-hud strong")).toHaveText("12");
+  await expect(page.locator(".game-hud strong")).toHaveText("23");
   await page.keyboard.press("w", { delay: 100 });
-  await expect(page.locator(".win-card")).toContainText("Final score: 12");
+  await expect(page.locator(".win-card")).toContainText("Final score: 23");
   await page.screenshot({ path: directory + "/editor-win.png" });
   await page.getByRole("button", { name: "Restart game", exact: true }).click();
-  await expect(page.locator(".game-hud strong")).toHaveText("5");
+  await expect(page.locator(".game-hud strong")).toHaveText("16");
   await page.keyboard.press("a", { delay: 100 });
   await expect(page.locator(".win-card")).toContainText(
     "Try another adventure",
@@ -152,7 +157,7 @@ try {
       external.push(r.url());
   });
   await player.goto(origin);
-  await expect(player.locator(".score")).toHaveText("Score: 5");
+  await expect(player.locator(".score")).toHaveText("Score: 16");
   await player.evaluate(() => {
     document.body.dispatchEvent(
       new KeyboardEvent("keydown", { key: "d", bubbles: true }),
@@ -161,11 +166,11 @@ try {
       new KeyboardEvent("keyup", { key: "d", bubbles: true }),
     );
   });
-  await expect(player.locator(".score")).toHaveText("Score: 12");
+  await expect(player.locator(".score")).toHaveText("Score: 23");
   await player.keyboard.press("w", { delay: 100 });
-  await expect(player.locator(".win")).toContainText("Final score: 12");
+  await expect(player.locator(".win")).toContainText("Final score: 23");
   await player.getByRole("button", { name: /Restart/ }).click();
-  await expect(player.locator(".score")).toHaveText("Score: 5");
+  await expect(player.locator(".score")).toHaveText("Score: 16");
   await player.keyboard.press("a", { delay: 100 });
   await expect(player.locator(".win")).toContainText("Try another adventure");
   await player.screenshot({ path: directory + "/standalone-loss.png" });
@@ -175,8 +180,9 @@ try {
     mode: "deterministic-generation-real-editor-and-downloaded-standalone",
     realProviderCalls: 0,
     passed: true,
-    editorScore: 12,
-    standaloneScore: 12,
+    editorScore: 23,
+    standaloneScore: 23,
+    collisionScored: true,
     win: true,
     loss: true,
     restart: true,

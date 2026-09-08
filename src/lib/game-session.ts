@@ -76,6 +76,11 @@ export class GameSession {
   private queuedClicks: string[] = [];
   private queuedInputs: GameSessionInput[] = [];
   private generation = 0;
+  private collisionTargetIds: ReadonlySet<string> = new Set();
+
+  get collisionTargets(): ReadonlySet<string> {
+    return this.collisionTargetIds;
+  }
 
   get state(): GameProgramState | undefined {
     return this.currentState;
@@ -119,6 +124,12 @@ export class GameSession {
     this.sourceProgram = program;
     this.restartToken = reset;
     this.program = parsedProgram;
+    if (programChanged)
+      this.collisionTargetIds = new Set(
+        parsedProgram?.rules.flatMap((rule) =>
+          rule.trigger.type === "collision" ? [rule.trigger.entityId] : [],
+        ) ?? [],
+      );
     this.programSignature = signature;
     this.hasSynced = true;
     if (!firstSync && !restartChanged && !projectChanged && !programChanged)

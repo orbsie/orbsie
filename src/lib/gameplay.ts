@@ -143,6 +143,7 @@ export function stepGameplay(
   collectedBefore: readonly string[],
   time: number,
   delta: number,
+  collisionTargets?: ReadonlySet<string>,
 ): GameplayStep {
   const dt = Math.min(Math.max(delta, 0), 0.04);
   const position: Vec3 = [...state.position];
@@ -279,6 +280,7 @@ export function stepGameplay(
     contacts: entities
       .filter(
         (entity) =>
+          (collisionTargets === undefined || collisionTargets.has(entity.id)) &&
           !collectedBefore.includes(entity.id) &&
           touchesEntity(entity, position, time),
       )
