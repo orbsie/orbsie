@@ -1,0 +1,11 @@
+# Free prompts
+
+Production stores `AI_GATEWAY_API_KEY_FREE` as a sensitive Vercel environment variable. It has no public-prefixed counterpart and is never returned by an API. Local development defaults to disabled unless its own private environment configures the feature.
+
+`GET /api/trial` returns `{enabled,remaining,limit:3}` and initializes a signed, HTTP-only, Secure (HTTPS), SameSite=Lax visitor cookie. `POST /api/generate` accepts `provider:"free"`; the server ignores client model/key overrides and always calls Vercel AI Gateway with `openai/gpt-5.6-luna`, low reasoning, standard processing and at most 4,096 output tokens. Free project input is limited to 60,000 serialized characters. Normal provider-key generation remains anonymous and outside this quota.
+
+PostgreSQL row locks atomically admit at most three attempts per visitor. A secondary three-attempt UTC-day network limit prevents cookie clearing from immediately resetting the allowance. Shared networks therefore share that secondary allowance; anonymous identity cannot reliably identify a person across devices/networks. Only keyed IP hashes are stored, using the Vercel-owned forwarding header on Vercel; another deployment needs its own trusted ingress adapter. Missing trusted IP metadata fails closed. A global daily ceiling defaults to 100 attempts and is configurable through the private `FREE_PROMPTS_DAILY_LIMIT` environment variable. No quota is kept solely in browser storage.
+
+An attempt is consumed when admitted, before contacting the provider; failures and interrupted streams consume an attempt. The remaining count is returned as `X-Orbsie-Trial-Remaining` and can be refreshed through `/api/trial`. Exhaustion returns HTTP429 with `{code:"FREE_LIMIT_REACHED",remaining:0,error:...}` and never forwards the request to inference. A database error fails closed. All trial responses are uncached.
+
+Run the normal deterministic tests with `npm test`. The additional real database concurrency check is explicitly opt-in: `RUN_TRIAL_DATABASE_TEST=1 node --env-file=.env.local node_modules/vitest/vitest.mjs run tests/trial-database.test.ts`. It uses uniquely prefixed synthetic buckets, verifies only three of twelve parallel claims succeed, checks cookie reset rejection, and removes only its own records. It performs no inference.

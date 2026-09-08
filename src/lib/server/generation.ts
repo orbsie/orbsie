@@ -57,6 +57,7 @@ export async function generateCommands({
   project,
   selected,
   signal,
+  maxTokens = 10000,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -65,6 +66,7 @@ export async function generateCommands({
   project: Project;
   selected?: string;
   signal: AbortSignal;
+  maxTokens?: number;
 }) {
   const endpoint =
     provider === "openrouter"
@@ -82,7 +84,7 @@ export async function generateCommands({
     body: JSON.stringify({
       model,
       stream: true,
-      max_tokens: 10000,
+      max_tokens: maxTokens,
       ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
       messages: [
         { role: "system", content: systemPrompt },
@@ -184,7 +186,9 @@ export async function generateCommands({
           encoder.encode(
             JSON.stringify({
               error:
-                error instanceof Error && !(error instanceof z.ZodError)
+                error instanceof Error &&
+                !(error instanceof z.ZodError) &&
+                !(error instanceof SyntaxError)
                   ? error.message
                   : "The model returned an invalid scene update. Finished objects are preserved.",
             }) + "\n",

@@ -16,6 +16,7 @@ vi.mock("@/lib/server/auth", async () => {
     },
   };
 });
+vi.mock("@/lib/server/trial", async () => import("../src/lib/server/trial"));
 import { POST as generate } from "../src/app/api/generate/route";
 import { POST as publish } from "../src/app/api/publish/route";
 
@@ -104,3 +105,14 @@ for (const [upstream, status, message] of [
     expect(authCheck).not.toHaveBeenCalled();
   });
 }
+
+it("does not return raw malformed provider stream diagnostics", async () => {
+  vi.stubGlobal(
+    "fetch",
+    async () => new Response("data: private-upstream-diagnostic\n\n"),
+  );
+  const response = await generate(request(input()));
+  const text = await response.text();
+  expect(text).not.toContain("private-upstream");
+  expect(text).toContain("invalid scene update");
+});

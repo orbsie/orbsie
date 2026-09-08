@@ -41,14 +41,29 @@ const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       {
         role: "user",
         content:
-          'Create one small pink mushroom at [0,0,0] for a 3D world. Output ONLY three newline-delimited JSON commands, no markdown: reserve_entity with entity {id,label,position,scale,color,stage:"seed"}; set_geometry with the same id and geometry {kind:"mushroom",detail:"refined"}; commit_revision with a short message. Pick suitable label, hex color and scale; no other entities or commands.',
+          'Create one small pink mushroom at [0,0,0] for a 3D world. Each command MUST have a "type" discriminator. Output ONLY three newline-delimited JSON commands, no markdown: reserve_entity with entity {id,label,position,scale,color,stage:"seed"}; set_geometry with the same id and geometry {kind:"mushroom",detail:"refined"}; commit_revision with a short message. Pick suitable label, hex color and scale; no other entities or commands.',
       },
     ],
   }),
   signal: AbortSignal.timeout(45000),
 });
 if (!response.ok) {
-  await response.body?.cancel();
+  const failure = await response.json().catch(() => null);
+  await mkdir(".vercel", { recursive: true });
+  await writeFile(
+    ".vercel/openrouter-test-error.json",
+    JSON.stringify(
+      {
+        status: response.status,
+        message: String(
+          failure?.error?.message ?? "No provider diagnostic",
+        ).replaceAll(key, "[redacted]"),
+      },
+      null,
+      2,
+    ),
+    { mode: 0o600 },
+  );
   await mkdir("docs/evidence", { recursive: true });
   await writeFile(
     "docs/evidence/openrouter-luna.json",
@@ -72,6 +87,17 @@ if (!response.ok) {
   );
 }
 const data = await response.json();
+// Keep bounded diagnostics before schema assertions, without credentials or account metadata.
+await mkdir(".vercel", { recursive: true });
+await writeFile(
+  ".vercel/openrouter-test-response.json",
+  JSON.stringify(
+    { model: data.model, choices: data.choices, usage: data.usage },
+    null,
+    2,
+  ).replaceAll(key, "[redacted]"),
+  { mode: 0o600 },
+);
 assert(
   data.model === model || data.model === "gpt-5.6-luna",
   "Unexpected returned model.",

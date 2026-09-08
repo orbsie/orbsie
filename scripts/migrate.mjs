@@ -10,5 +10,7 @@ const migration = await getMigrations({
 });
 await migration.runMigrations();
 await database.query(await readFile("scripts/schema.sql", "utf8"));
+await database.query(await readFile("scripts/trial-schema.sql", "utf8"));
+await database.query(await readFile("scripts/waitlist-schema.sql", "utf8"));
 await database.end();
 console.log("Orbsie account and project tables are ready.");
