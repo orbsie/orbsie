@@ -36,6 +36,29 @@ async function setup(
   return { ...companion, client };
 }
 describe("trusted local ChatGPT companion", () => {
+  it("passes earlier user constraints as bounded context to ChatGPT", async () => {
+    const project = blankProject();
+    project.messages = [
+      { role: "user", text: "Make the garden pink" },
+      { role: "user", text: "Add a tree" },
+    ];
+    const c = await setup(async (_system, input, emit) => {
+      expect(input).toMatchObject({
+        instruction: "Add a tree",
+        recentConversation: [project.messages[0]],
+        project: { messages: [] },
+      });
+      emit('{"type":"commit_revision","message":"Ready"}\n');
+    });
+    const response = await fetch(c.url + "/generate", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ prompt: "Add a tree", project }),
+    });
+    expect(response.status).toBe(200);
+    await response.text();
+    expect(c.client.generate).toHaveBeenCalledOnce();
+  });
   it("requires an exact safe configured origin", () => {
     for (const value of [
       "https://orbsie.com/",

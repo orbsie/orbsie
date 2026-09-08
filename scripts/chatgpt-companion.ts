@@ -1,6 +1,7 @@
 import { assertModelingCommand } from "../src/lib/modeling-policy";
 import { deriveAssetPolicy, enforceAssetPolicy } from "../src/lib/asset-policy";
 import { promptCatalogForPolicy } from "../src/lib/asset-catalog";
+import { authoringHistory } from "../src/lib/authoring-history";
 /** Trusted loopback boundary; never import into a hosted route or browser bundle. */
 import {
   createServer,
@@ -237,6 +238,7 @@ export async function startChatGPTCompanion({
         systemPrompt,
         {
           instruction: prompt,
+          recentConversation: authoringHistory(project, prompt),
           localModeling,
           assetPolicy,
           assetCatalog: promptCatalogForPolicy(assetPolicy.requestAssetPolicy),

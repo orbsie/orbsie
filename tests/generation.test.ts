@@ -31,12 +31,14 @@ for (const provider of ["openrouter", "gateway"] as const) {
         ),
     );
     vi.stubGlobal("fetch", fetcher);
+    const project = blankProject();
+    project.messages = [{ role: "user", text: "Keep the garden pink" }];
     const stream = await generateCommands({
       provider,
       model: "openai/gpt-6-astra",
       key: "test-key-not-real",
       prompt: "Hello",
-      project: blankProject(),
+      project,
       signal: new AbortController().signal,
     });
     const text = await new Response(stream).text();
@@ -50,6 +52,9 @@ for (const provider of ["openrouter", "gateway"] as const) {
     const submitted = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
     expect(submitted.model).toBe("openai/gpt-6-astra");
     expect(submitted.reasoning).toEqual({ effort: "low" });
+    expect(
+      JSON.parse(submitted.messages[1].content).recentConversation,
+    ).toEqual(project.messages);
   });
 }
 it("invalid generated operations fail closed without executing code", async () => {
