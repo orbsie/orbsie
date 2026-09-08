@@ -10,7 +10,7 @@ The first three observed entries were Kimi K3, Claude Fable 5.1, and Claude Opus
 
 Both providers use the same checked-in snapshot so a shared model's rank is consistent. Gateway namespaces `zai/` and `spacexai/` map to `z-ai/` and `x-ai/` for lookup only. Submitted model IDs remain exactly as returned by the selected provider. Undocumented variants do not inherit a base model's rank. Refresh the snapshot by repeating the extraction above from the public catalog and reviewing its date, category and IDs.
 
-The Quality/Balanced/Budget presets retain the established Astra/Sol/Luna IDs. Those models lack Design Arena `3d` entries in this snapshot and are therefore unranked in Advanced. [OpenAI describes Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) as its most capable model for complex reasoning and coding, but that is not a comparative 3D benchmark. A preset and an external preference rank answer different questions.
+The current user-selected presets are Quality: GPT-6 Astra, Balanced: GPT-5.6 Luna, and Budget: GLM-5.3-Flash. OpenRouter's Budget ID is `z-ai/glm-5.3-flash`; Gateway's is `zai/glm-5.3-flash`. Both use `openai/gpt-5.6-luna` for Balanced and `openai/gpt-6-astra` for Quality. `modelModesForProvider` resolves these exact catalog IDs; the free three-creation mode remains separately configured to Luna and does not follow Budget. Astra and Luna lack Design Arena `3d` entries in this ranking snapshot and are therefore unranked in Advanced. [OpenAI describes Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) as its most capable model for complex reasoning and coding, but that is not a comparative 3D benchmark. A preset and an external preference rank answer different questions.
 
 ## Prices and compatibility
 
@@ -23,3 +23,7 @@ The existing language/tool compatibility filter remains. Async `:batch` variants
 ## Validation
 
 Six deterministic tests cover conversion, unavailable versus free rates, ordering, namespace aliases without ID rewriting, malformed/unsupported rows, preset stability, batch exclusion, and route provenance. Typecheck passed. Public catalog reads produced 293 selectable OpenRouter models (100 ranked) and 249 Gateway models (70 ranked), with the same top three and all three preset IDs available. Evidence: `docs/evidence/model-catalog-estimates.json`. No credentials were read and no inference requests were made.
+
+## Preset update verification
+
+The preset IDs above were independently checked against fresh unauthenticated reads of both official catalogs on September 7, 2026 (Pacific). All three IDs survive the app's compatibility filter. Current catalog estimates for GLM-5.3-Flash differ by provider: OpenRouter input/cache-read/output are $0.075/$0.015/$0.25 per million tokens; Gateway reports $0.15/$0.03/$0.50. These remain provider estimates, not guaranteed charges. See `docs/evidence/preset-catalog.json` for timestamps, source URLs, exact IDs and all preset rates. No inference or credential access was needed.
