@@ -1,0 +1,29 @@
+{
+  "scope": "One actual ChatGPT follow-up through local HTTP and protocol reducer; not a browser E2E",
+  "status": "passed",
+  "inferenceRequests": 1,
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "stage": "complete",
+  "httpStatus": 200,
+  "commandTypes": [
+    "set_environment",
+    "commit_revision"
+  ],
+  "commands": [
+    {
+      "type": "set_environment",
+      "sky": "#d9a7c7"
+    },
+    {
+      "type": "commit_revision",
+      "message": "Sky set to exactly #d9a7c7. Everything else is unchanged."
+    }
+  ],
+  "actualSky": "#d9a7c7",
+  "durationMs": 6819,
+  "prompt": "Apply the exact sky color I specified earlier, leave everything else unchanged, and commit.",
+  "expectedSky": "#d9a7c7",
+  "unchangedEntities": true,
+  "unchangedGroundAndWater": true
+}

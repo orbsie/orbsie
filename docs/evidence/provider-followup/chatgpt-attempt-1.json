@@ -1,0 +1,7 @@
+{
+  "scope": "One actual ChatGPT follow-up through local HTTP and protocol reducer; not a browser E2E",
+  "status": "failed",
+  "inferenceRequests": 1,
+  "model": "gpt-6-astra",
+  "reasoning": "low"
+}
