@@ -1,0 +1,170 @@
+# Local Blender runtime probe
+
+This document records the first local companion capability check for Orbsie. It
+is a foundation probe only. It does not ship a companion, execute model output,
+or establish that a local Blender workflow is ready for production.
+
+## Measured Linux probe
+
+Run it from the repository with:
+
+```sh
+node scripts/blender-probe.mjs --output /tmp/orbsie-blender-probe-verified.glb
+```
+
+The probe ran on 2026-09-07 in this workspace with the following result:
+
+| Measurement                    | Result                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| Platform                       | Linux x86_64                                                            |
+| Blender                        | 4.0.2 (`/usr/bin/blender`)                                              |
+| Bubblewrap                     | 0.12.0 (`/usr/bin/bwrap`)                                               |
+| Probe wall time                | 1,292 ms                                                                |
+| GLB size                       | 11,256 bytes                                                            |
+| GLB format                     | glTF 2 / GLB, header length matched file length                         |
+| GLB JSON chunk                 | 2,228 bytes                                                             |
+| GLB meshes / materials / nodes | 2 / 2 / 2                                                               |
+| Procedural geometry            | 42-vertex icosphere (80 triangles) and 8-vertex platform (12 triangles) |
+
+The output file was written with mode `0600` and independently checked by the
+Node probe: the `glTF` magic, version 2 header, declared file length, first JSON
+chunk, and `asset.version = "2.0"` all validated. The elapsed value is a single
+local run, including process startup and GLB export, on a warm development
+machine; it is not an installation or cold-cache benchmark.
+
+The trusted Blender job also emitted per-object semantic IDs, material names,
+triangle and vertex counts, and world-space bounds. These are the fields a
+future companion can feed into reservation and formation validation. A
+thumbnail, collider, and provenance manifest are intentionally not fabricated
+by this probe.
+
+## Isolation boundary exercised
+
+`scripts/blender-probe.mjs` writes a repository-owned Python program to a
+temporary job directory and invokes it through:
+
+- `bubblewrap --unshare-all --clearenv --die-with-parent --new-session`, which
+  leaves the job without a network namespace interface and isolates user, PID,
+  mount, IPC, UTS, and related namespaces;
+- read-only mounts for `/usr`, `/bin`, `/lib`, `/lib64`, the dynamic-loader
+  cache, `/etc/alternatives`, and the small non-secret `/etc` identity files
+  Blender needs;
+- a read-only mount of the exact NumPy package used by this Debian Blender
+  install, because its GLB exporter imports NumPy;
+- a temporary writable `/work` bind for the job script, intermediate GLB, and
+  metadata; `/tmp` and `/home` are private temporary filesystems;
+- `--factory-startup --disable-autoexec`, with no normal Blender user
+  configuration or addon path mounted;
+- `/usr/bin/timeout` at 30 seconds, `RLIMIT_CPU=20` seconds,
+  `RLIMIT_AS=2 GiB`, `RLIMIT_FSIZE=64 MiB`, and `RLIMIT_NPROC=4096`.
+
+The 2 GiB address-space limit is deliberate. A 1 GiB limit caused Blender's
+jemalloc startup to fail inside this namespace; 2 GiB was the smallest tested
+limit that completed the probe. Likewise, `RLIMIT_NPROC` values of 512, 1,024,
+and 2,048 prevented bubblewrap from creating its namespace in this workspace's
+large shared user session; 4,096 started reliably. A production companion
+should measure and enforce a per-job cgroup/process budget rather than assuming
+these development-host values are portable.
+
+The system package exposes Blender's Python through Python 3.12 and the GLB
+exporter imports NumPy 2.5.0 from the current user's site-packages. The probe
+mounts only `numpy` and `numpy.libs` read-only; it does not mount the user's
+home, project tree, credentials, or arbitrary site-packages. A distributed
+companion must bundle a version-pinned Blender Python dependency set instead of
+depending on a user's site-packages directory.
+
+The current scope is Linux x86_64 with bubblewrap and a Blender installation
+laid out like this Debian package. There is no evidence yet for Windows,
+macOS, ARM, GPU rendering, restart behavior, cancellation recovery, or an
+installed companion. Those platforms and capabilities must not be presented as
+supported until separately tested.
+
+## Trusted job and future typed protocol
+
+The probe does not accept Python, Blender files, URLs, or model text. Its static
+job creates two tiny procedural meshes and exports them through Blender's glTF
+exporter. Future LLM-driven modeling should preserve that boundary:
+
+1. The provider adapter emits a complete, schema-validated modeling plan. It
+   never emits executable Python to the browser or directly to Blender.
+2. Trusted companion code translates the plan into a bounded Blender program
+   or into a small set of trusted Blender API calls. The generated program is
+   run in the same isolated job boundary as this probe, with no access to
+   credentials, arbitrary host paths, or the network.
+3. The job returns a typed artifact envelope, for example:
+
+   ```json
+   {
+     "protocolVersion": "orbsie.modeling-job.v1",
+     "jobId": "job_...",
+     "projectId": "orb_...",
+     "runId": "run_...",
+     "baseRevision": 12,
+     "entityId": "entity_...",
+     "status": "ready",
+     "glb": { "path": "result/model.glb", "sha256": "...", "bytes": 0 },
+     "bounds": { "min": [0, 0, 0], "max": [0, 0, 0] },
+     "materials": [{ "name": "...", "baseColor": [1, 1, 1, 1] }],
+     "thumbnail": { "path": "result/thumbnail.webp", "sha256": "..." },
+     "provenance": { "source": "generated", "seed": "..." }
+   }
+   ```
+
+   The real schema should use the project's typed validation library and carry
+   operation IDs, expected base revision, stage progress, limits, and failure
+   diagnostics. Paths are job-relative and are resolved only inside the job
+   directory.
+
+4. Trusted validation checks GLB structure, file size, mesh counts, finite
+   bounds, material references, texture limits, and the requested stable entity
+   ID before publishing the result to the reservation/formation/revision
+   pipeline. Unknown catalog IDs and remote URLs remain invalid.
+5. The client persists the accepted GLB and metadata with its revision. A
+   standalone export or publication must include the GLB, thumbnail, and
+   generated-art provenance; it must not depend on a running editor or Blender.
+
+Suggested job stages are `queued`, `building`, `validating`, `exporting`,
+`ready`, `cancelled`, and `failed`. Each stage should report bounded progress,
+allow cancellation, and leave the last committed scene intact on failure.
+Generation and geometry refinement should remain separate from the editor's
+render loop so a local job cannot freeze play or selection.
+
+## Packaging and licensing work still required
+
+A shippable optional companion needs a reproducible distribution step:
+
+1. Pin the exact Blender release and platform artifact, record its SHA-256,
+   and verify it before installation. The current probe observed 4.0.2 only; it
+   is not a release pin or a claim that this binary can be redistributed.
+2. Bundle only after the modeling/export acceptance suite identifies the needed
+   Blender data, Python modules, exporter addon, and native libraries. Measure
+   archive size, installed size, first launch, peak memory, and restart time on
+   every declared platform before calling the distribution minimal.
+3. Include Blender's GPL notices, the corresponding source and build
+   instructions or source offer required for the shipped binary, and dependency
+   license notices. Track generated artwork provenance separately from the
+   Blender software license.
+4. Keep the native companion outside the browser bundle. The browser should
+   use an explicit capability handshake with the companion and show an honest
+   unavailable state when it is absent. A browser page must never assume it can
+   execute a native Blender binary.
+5. Add installation, restart, cancellation, failure recovery, isolation, and
+   editor-responsiveness checks before enabling the capability for real users.
+
+The Blender license and distribution guidance are published at
+[blender.org/about/license](https://www.blender.org/about/license/). Blender's
+headless command-line behavior is documented in the
+[official command-line rendering manual](https://docs.blender.org/manual/en/latest/advanced/command_line/render.html).
+
+## Running and interpreting the probe
+
+Use `--keep-workdir` when diagnosing a failed job; it preserves the temporary
+job script and intermediate files under `/tmp`. `ORBSIE_BLENDER_PATH`,
+`ORBSIE_BWRAP_PATH`, and `ORBSIE_BLENDER_NUMPY_PATH` can point at a compatible
+local installation for investigation, but the current mount layout remains
+Linux/Debian-specific. A successful result proves only that this trusted tiny
+procedural mesh can be exported to a structurally valid GLB in the measured
+namespace. It does not prove arbitrary model plans, generated Python, GPU
+rendering, or an LLM-to-Blender-to-browser round trip.
+
+Root independently reran the probe successfully in 1,299 ms with the same 11,256-byte GLB. The reported object bounds are Blender Z-up coordinates; future runtime integration must convert them to glTF/Orbsie Y-up or recompute bounds from the exported GLB. The probe uses the tested `/usr/bin/blender` package; arbitrary binary-path overrides are not supported.
