@@ -37,6 +37,7 @@ import {
 import {
   isTextEntryTarget,
   movingEntityPosition,
+  registerContactBounds,
   stepGameplay,
   type PlayerState,
 } from "@/lib/gameplay";
@@ -284,6 +285,19 @@ function Formation({
     if (!assetRecipe || asset?.geometry) {
       previousShape.current?.dispose();
       previousShape.current = source.clone();
+    }
+    if (
+      entity.geometry &&
+      entity.geometry.kind !== "asset" &&
+      entity.geometry.kind !== "generated"
+    ) {
+      source.computeBoundingBox();
+      const box = source.boundingBox;
+      if (box)
+        registerContactBounds(entity.geometry, {
+          min: box.min.toArray(),
+          max: box.max.toArray(),
+        });
     }
     const g = addFormationSource(source, previous.current);
     previous.current = new Float32Array(g.attributes.position.array);
@@ -866,13 +880,10 @@ function Scene({ onReady }: { onReady?: () => void }) {
 }
 const webglUnavailableMessage =
   "Your world needs WebGL2. Try a browser with hardware acceleration enabled.";
-function Unavailable({ onError }: { onError?: (message: string) => void }) {
-  useEffect(() => {
-    onError?.(webglUnavailableMessage);
-  }, [onError]);
-  return onError ? null : (
-    <div className="webgl-fallback">{webglUnavailableMessage}</div>
-  );
+function Unavailable() {
+  // R3F mounts fallback inside the canvas even when WebGL works. This markup
+  // must never report renderer availability as a side effect.
+  return <div className="webgl-fallback">{webglUnavailableMessage}</div>;
 }
 class Boundary extends Component<
   { children: ReactNode; onError?: (message: string) => void },
@@ -905,18 +916,31 @@ export default function World({
   onReady,
   onError,
 }: { onReady?: () => void; onError?: (message: string) => void } = {}) {
+  const [rendererFailed, setRendererFailed] = useState(false);
+  if (rendererFailed) return onError ? null : <Unavailable />;
   return (
     <Boundary onError={onError}>
       <Canvas
         shadows={{ type: THREE.PCFShadowMap }}
         dpr={[1, 1.5]}
         camera={{ position: [0, 1.8, 10.4], fov: 43, near: 0.1, far: 250 }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
+        gl={(defaults) => {
+          try {
+            return new THREE.WebGLRenderer({
+              ...defaults,
+              antialias: true,
+              alpha: true,
+              powerPreference: "high-performance",
+            });
+          } catch (error) {
+            // R3F configures the renderer asynchronously, outside React's
+            // error boundary. Report the actual construction failure here.
+            setRendererFailed(true);
+            onError?.(webglUnavailableMessage);
+            throw error;
+          }
         }}
-        fallback={<Unavailable onError={onError} />}
+        fallback={<Unavailable />}
         onPointerMissed={() => {
           if (!useOrb.getState().playing)
             useOrb.getState().set({ selected: undefined });

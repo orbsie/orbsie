@@ -65,7 +65,7 @@ function PlayerApp() {
       .catch((e) => setError(e.message));
   }, []);
   return (
-    <main data-ready={ready}>
+    <main data-ready={ready && !error}>
       <div className="canvas">
         {loaded && <World onReady={() => setReady(true)} onError={setError} />}
       </div>

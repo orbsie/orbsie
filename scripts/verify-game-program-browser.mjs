@@ -157,6 +157,9 @@ try {
       external.push(r.url());
   });
   await player.goto(origin);
+  await expect(player.locator("main[data-ready=true]")).toBeVisible();
+  await expect(player.locator(".message")).toHaveCount(0);
+  await expect(player.locator(".score")).toBeVisible();
   await expect(player.locator(".score")).toHaveText("Score: 16");
   await player.evaluate(() => {
     document.body.dispatchEvent(
@@ -174,6 +177,7 @@ try {
   await player.keyboard.press("a", { delay: 100 });
   await expect(player.locator(".win")).toContainText("Try another adventure");
   await player.screenshot({ path: directory + "/standalone-loss.png" });
+  await expect(player.locator(".message")).toHaveCount(0);
   expect(external).toEqual([]);
   expect(errors).toEqual([]);
   const report = {
@@ -198,6 +202,16 @@ try {
     JSON.stringify(report, null, 2) + "\n",
   );
   console.log(JSON.stringify(report));
+} catch (error) {
+  await writeFile(
+    directory + "/failure.json",
+    JSON.stringify(
+      { passed: false, error: String(error), pageErrors: errors },
+      null,
+      2,
+    ) + "\n",
+  );
+  throw error;
 } finally {
   await browser.close();
   if (server) await new Promise((resolve) => server.close(resolve));

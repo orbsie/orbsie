@@ -91,8 +91,45 @@ function platformTop(entity: Entity, time: number) {
   };
 }
 
-type ContactBounds = { min: readonly number[]; max: readonly number[] };
+export type ContactBounds = {
+  readonly min: readonly [number, number, number];
+  readonly max: readonly [number, number, number];
+};
+export type ContactBoundsInput = {
+  readonly min: readonly number[];
+  readonly max: readonly number[];
+};
 const contactBounds = new WeakMap<object, ContactBounds>();
+
+function normalizeContactBounds(bounds: ContactBoundsInput): ContactBounds {
+  const min = [...bounds.min];
+  const max = [...bounds.max];
+  if (
+    min.length !== 3 ||
+    max.length !== 3 ||
+    !min.every(Number.isFinite) ||
+    !max.every(Number.isFinite) ||
+    min.some((value, index) => value > max[index])
+  )
+    throw new Error("Contact bounds must be finite, ordered 3D extents.");
+  return {
+    min: min as [number, number, number],
+    max: max as [number, number, number],
+  };
+}
+
+/** Bind renderer-prepared bounds to one immutable geometry recipe identity. */
+export function registerContactBounds(
+  recipe: object,
+  bounds: ContactBoundsInput,
+): ContactBounds {
+  if (!recipe || typeof recipe !== "object")
+    throw new Error("Contact bounds require an object recipe identity.");
+  const normalized = normalizeContactBounds(bounds);
+  contactBounds.set(recipe, normalized);
+  return normalized;
+}
+
 /** Broad-phase contact volumes follow rendered geometry, including multipart bounds. */
 export function touchesEntity(
   entity: Entity,
@@ -104,13 +141,22 @@ export function touchesEntity(
   let bounds = contactBounds.get(recipe);
   if (!bounds) {
     if (recipe.kind === "asset")
-      bounds = requireCatalogAsset(recipe.assetId).bounds;
-    else if (recipe.kind === "generated") bounds = recipe.model?.bounds;
-    else {
+      bounds = registerContactBounds(
+        recipe,
+        requireCatalogAsset(recipe.assetId).bounds,
+      );
+    else if (recipe.kind === "generated") {
+      if (recipe.model?.bounds)
+        bounds = registerContactBounds(recipe, recipe.model.bounds);
+    } else {
       const geometry = entityGeometry(entity);
       geometry.computeBoundingBox();
       const box = geometry.boundingBox;
-      if (box) bounds = { min: box.min.toArray(), max: box.max.toArray() };
+      if (box)
+        bounds = registerContactBounds(recipe, {
+          min: box.min.toArray(),
+          max: box.max.toArray(),
+        });
       geometry.dispose();
     }
     if (!bounds) return false;
