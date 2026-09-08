@@ -25,3 +25,11 @@ References: [Vercel OIDC](https://vercel.com/docs/oidc/gcp), [Google federation]
 Production and development trial/waitlist tables are migrated. Resend's Free native integration was selected for confirmation email, but installation is waiting for account-owner terms acceptance. No Resend key or verified sender exists yet; durable signups remain pending until those are configured.
 
 A fresh production publication check on 2026-09-07 reused the existing synthetic cloud acceptance account and saved world. Reading the project returned HTTP 200; one `/api/publish` attempt returned HTTP 502 with the application's publishing-token permission error. No replacement credential was requested and no successful dedicated deployment is claimed. See [key recheck](evidence/resumed-delivery/publication-key-recheck.json).
+
+## Generated model storage
+
+Commit `094bfb8` adds authenticated `/api/generated-models` upload/read and the additive `generated_models` table. Apply `npm run db:migrate` to each target database before deploying this capability. The development migration has been applied; production migration and live generated-model cloud acceptance remain outstanding.
+
+Generated GLBs use immutable private paths `generated/<owner SHA-256>/<content SHA-256>.glb`. Upload admission verifies byte length, content hash, supported geometry and actual scene bounds. A per-owner database lock reserves quota before storage: at most 256 models or 64 MiB, counting pending uploads. Failed writes remain pending and can be retried at the same identity. A successful immutable-object conflict is accepted only after reading and verifying the stored bytes.
+
+Cloud world saving requires ready assets owned by the signed-in account. Opening a cloud world fetches and verifies its assets before replacing the current draft. Publication copies verified generated files and their manifest into the standalone artifact; private bucket URLs and account credentials are not included. This implementation does not establish successful dedicated Vercel publication, which still needs live verification after the existing token permission failure is resolved.
