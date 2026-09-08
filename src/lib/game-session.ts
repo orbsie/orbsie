@@ -74,6 +74,7 @@ export class GameSession {
   private contactIds = new Set<string>();
   private collectionIds = new Set<string>();
   private queuedClicks: string[] = [];
+  private queuedInputs: GameSessionInput[] = [];
   private generation = 0;
 
   get state(): GameProgramState | undefined {
@@ -131,6 +132,7 @@ export class GameSession {
     this.contactIds.clear();
     this.collectionIds.clear();
     this.queuedClicks = [];
+    this.queuedInputs = [];
     this.currentState = parsedProgram
       ? createGameProgramState(parsedProgram)
       : undefined;
@@ -140,6 +142,12 @@ export class GameSession {
   queueClick(entityId: string): void {
     if (this.queuedClicks.length >= MAX_QUEUED_CLICKS) return;
     this.queuedClicks.push(entityId);
+  }
+
+  /** Preserve discrete DOM input edges even when press/release occur between frames. */
+  queueInput(action: GameSessionInput): void {
+    if (this.queuedInputs.length < 64 && GAME_SESSION_INPUTS.includes(action))
+      this.queuedInputs.push(action);
   }
 
   /**
@@ -166,7 +174,7 @@ export class GameSession {
     }
 
     this.heldInputs = nextInputs;
-    for (const action of pressed) {
+    for (const action of [...this.queuedInputs.splice(0, 64), ...pressed]) {
       this.applyEvent({ type: "input", action });
       if (this.stopped || !this.started) return this.currentState;
     }
@@ -267,5 +275,6 @@ export class GameSession {
     this.contactIds.clear();
     this.collectionIds.clear();
     this.queuedClicks = [];
+    this.queuedInputs = [];
   }
 }

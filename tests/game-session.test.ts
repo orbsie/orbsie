@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GameSession } from "../src/lib/game-session";
-import type { GameProgram } from "../src/lib/game-program";
+import { gameProgramSchema, type GameProgram } from "../src/lib/game-program";
 import type { Entity } from "../src/lib/protocol";
 
 function session(program: GameProgram, reset = 0) {
@@ -260,4 +260,30 @@ describe("GameSession", () => {
     value.advance(0, []);
     expect(value.state).toBe(before);
   });
+});
+
+it("preserves separate input press edges between frames without held-key repeats", () => {
+  const session = new GameSession();
+  session.sync(
+    "world",
+    gameProgramSchema.parse({
+      rules: [
+        {
+          id: "tap",
+          trigger: { type: "input", action: "right" },
+          actions: [{ type: "add_score", amount: 7 }],
+        },
+      ],
+    }),
+  );
+  session.queueInput("right");
+  session.queueInput("right");
+  session.advance(0.04);
+  expect(session.state?.score).toBe(14);
+  session.advance(0.04);
+  expect(session.state?.score).toBe(14);
+  session.queueInput("right");
+  session.sync("world", undefined, 1);
+  session.advance(0.04);
+  expect(session.state).toBeUndefined();
 });

@@ -153,7 +153,14 @@ try {
   });
   await player.goto(origin);
   await expect(player.locator(".score")).toHaveText("Score: 5");
-  await player.keyboard.press("d", { delay: 100 });
+  await player.evaluate(() => {
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "d", bubbles: true }),
+    );
+    document.body.dispatchEvent(
+      new KeyboardEvent("keyup", { key: "d", bubbles: true }),
+    );
+  });
   await expect(player.locator(".score")).toHaveText("Score: 12");
   await player.keyboard.press("w", { delay: 100 });
   await expect(player.locator(".win")).toContainText("Final score: 12");
@@ -174,6 +181,7 @@ try {
     loss: true,
     restart: true,
     heldInputDeduplicated: true,
+    betweenFrameTapPreserved: true,
     programPreservedInZIP: true,
     sourceIncluded: true,
     externalRequests: external,

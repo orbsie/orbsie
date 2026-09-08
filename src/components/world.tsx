@@ -430,16 +430,51 @@ function Player({ session }: { session: GameSession }) {
     velocityY: 0,
   });
   const keys = useRef(new Set<string>());
+  const presses = useRef<GameSessionInput[]>([]);
   const direction = useMemo(() => new THREE.Vector3(), []);
   const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const playing = useOrb((s) => s.playing);
   const reset = useOrb((s) => s.reset);
   const projectId = useOrb((s) => s.project.id);
   useEffect(() => {
+    if (!playing) {
+      presses.current = [];
+      keys.current.clear();
+    }
+  }, [playing]);
+  useEffect(() => {
     state.current = { position: [0, 0.5, 5], velocityY: 0 };
     usableEntities.current.clear();
+    presses.current = [];
   }, [reset, projectId]);
   useEffect(() => {
+    const actionForKey = (key: string): GameSessionInput | undefined =>
+      (
+        ({
+          w: "up",
+          arrowup: "up",
+          s: "down",
+          arrowdown: "down",
+          a: "left",
+          arrowleft: "left",
+          d: "right",
+          arrowright: "right",
+          " ": "jump",
+        }) as Record<string, GameSessionInput>
+      )[key];
+    const changeKey = (key: string, down: boolean) => {
+      const action = actionForKey(key);
+      if (down) {
+        if (
+          action &&
+          useOrb.getState().playing &&
+          presses.current.length < 64 &&
+          ![...keys.current].some((held) => actionForKey(held) === action)
+        )
+          presses.current.push(action);
+        keys.current.add(key);
+      } else keys.current.delete(key);
+    };
     const key = (e: KeyboardEvent, down: boolean) => {
       if (
         isTextEntryTarget(e.target) ||
@@ -451,20 +486,21 @@ function Player({ session }: { session: GameSession }) {
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
       )
         e.preventDefault();
-      if (down) keys.current.add(e.key.toLowerCase());
-      else keys.current.delete(e.key.toLowerCase());
+      changeKey(e.key.toLowerCase(), down);
     };
     const d = (e: KeyboardEvent) => key(e, true),
       u = (e: KeyboardEvent) => key(e, false);
-    const blur = () => keys.current.clear();
+    const blur = () => {
+      keys.current.clear();
+      presses.current = [];
+    };
     const focus = (event: FocusEvent) => {
-      if (isTextEntryTarget(event.target)) keys.current.clear();
+      if (isTextEntryTarget(event.target)) blur();
     };
     const touch = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      detail.down
-        ? keys.current.add(detail.key)
-        : keys.current.delete(detail.key);
+      if (typeof detail?.key === "string")
+        changeKey(detail.key, Boolean(detail.down));
     };
     window.addEventListener("keydown", d);
     window.addEventListener("keyup", u);
@@ -504,7 +540,10 @@ function Player({ session }: { session: GameSession }) {
             isAssetGeometryReady(entity.geometry.assetId)
       )
         usableEntities.current.set(entity.id, entity);
-    if (!playing) return;
+    if (!playing) {
+      presses.current = [];
+      return;
+    }
     const dt = Math.min(delta, 0.04),
       k = keys.current;
     direction.set(
@@ -514,19 +553,19 @@ function Player({ session }: { session: GameSession }) {
       (k.has("s") || k.has("arrowdown") ? 1 : 0) -
         (k.has("w") || k.has("arrowup") ? 1 : 0),
     );
-    const actions: GameSessionInput[] = [];
-    if (k.has(" ")) actions.push("jump");
-    if (k.has("w") || k.has("arrowup")) actions.push("up");
-    if (k.has("s") || k.has("arrowdown")) actions.push("down");
-    if (k.has("a") || k.has("arrowleft")) actions.push("left");
-    if (k.has("d") || k.has("arrowright")) actions.push("right");
-    session.advance(dt, actions);
+    const pressed = presses.current.splice(0, 64);
+    for (const action of pressed) session.queueInput(action);
+    session.advance(dt);
     const didReset = resetAvatar();
     direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
     const result = stepGameplay(
       state.current,
-      { x: direction.x, z: direction.z, jump: k.has(" ") },
+      {
+        x: direction.x,
+        z: direction.z,
+        jump: k.has(" ") || pressed.includes("jump"),
+      },
       s.project.entities
         .map((entity) => {
           if (

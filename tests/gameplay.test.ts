@@ -114,6 +114,73 @@ describe("gameplay runtime", () => {
     expect(result.position[0]).toBeCloseTo(newPose[0] + 0.2);
   });
 
+  it("requires 3D contact for elevated, scaled, and moving pickup poses", () => {
+    const crystal = fixtureEntities().find((e) => e.id === "crystal-0")!;
+    const elevated = stepGameplay(
+      player([crystal.position[0], 0.42, crystal.position[2]]),
+      idle,
+      [{ ...crystal, position: [crystal.position[0], 3, crystal.position[2]] }],
+      [],
+      0,
+      0,
+    );
+    expect(elevated.collected).toEqual([]);
+
+    // The scaled crystal reaches the avatar with its actual custom geometry
+    // even though its center is more than the old 0.85 X/Z radius away.
+    const scaled = {
+      ...crystal,
+      id: "scaled-crystal",
+      position: [1, 0.8, 0] as [number, number, number],
+      scale: [3, 3, 3] as [number, number, number],
+    };
+    const scaledResult = stepGameplay(
+      player([2, 0.42, 0]),
+      idle,
+      [scaled],
+      [],
+      0,
+      0,
+    );
+    expect(scaledResult.collected).toContain(scaled.id);
+
+    // A moving pickup is represented by the current pose supplied by the
+    // project snapshot; only the pose that reaches the avatar is collected.
+    const movingHigh = {
+      ...crystal,
+      id: "moving-crystal",
+      position: [0, 3, 0] as [number, number, number],
+    };
+    const movingLow = {
+      ...movingHigh,
+      position: [0, 0.8, 0] as [number, number, number],
+    };
+    expect(
+      stepGameplay(player([0, 0.42, 0]), idle, [movingHigh], [], 0, 0)
+        .collected,
+    ).toEqual([]);
+    expect(
+      stepGameplay(player([0, 0.42, 0]), idle, [movingLow], [], 0, 0).collected,
+    ).toContain(movingLow.id);
+  });
+
+  it("does not win at an elevated portal from underneath", () => {
+    const portal = fixtureEntities().find((e) => e.id === "portal")!;
+    const elevatedPortal = {
+      ...portal,
+      position: [0, 3, 0] as [number, number, number],
+    };
+    const result = stepGameplay(
+      player([0, 0.42, 0]),
+      idle,
+      [elevatedPortal],
+      [],
+      0,
+      0,
+    );
+    expect(result.won).toBe(false);
+  });
+
   it.each([
     ["grows", 1.8],
     ["shrinks", 0.45],

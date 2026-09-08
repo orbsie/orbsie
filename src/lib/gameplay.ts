@@ -29,6 +29,11 @@ const PLAYER_HALF_HEIGHT = 0.42;
 const MOVE_SPEED = 4;
 const JUMP_SPEED = 6;
 const GRAVITY = 15;
+// Gameplay contact treats the avatar as a small capsule: 0.22 units of
+// horizontal reach and its 0.42-unit half-height. Pickups and portals use
+// this same geometry-aware tolerance, so an object must touch the avatar in
+// 3D rather than merely sharing its ground-plane X/Z position.
+const CONTACT_HORIZONTAL_TOLERANCE = 0.22;
 
 export function movingEntityPosition(entity: Entity, time: number): Vec3 {
   const position: Vec3 = [...entity.position];
@@ -125,7 +130,8 @@ export function touchesEntity(
         bounds!.min[axis] * entity.scale[axis],
         bounds!.max[axis] * entity.scale[axis],
       );
-    const radius = (axis === 1 ? PLAYER_HALF_HEIGHT : 0.22) + 1e-5;
+    const radius =
+      (axis === 1 ? PLAYER_HALF_HEIGHT : CONTACT_HORIZONTAL_TOLERANCE) + 1e-5;
     return player[axis] + radius >= low && player[axis] - radius <= high;
   });
 }
@@ -242,15 +248,9 @@ export function stepGameplay(
 
   const collected = [...collectedBefore];
   for (const entity of entities) {
-    if (entity.stage !== "ready") continue;
-    const entityPosition = movingEntityPosition(entity, time);
-    const distance = Math.hypot(
-      position[0] - entityPosition[0],
-      position[2] - entityPosition[2],
-    );
     if (
       entity.behavior?.type === "collect" &&
-      distance < 0.85 &&
+      touchesEntity(entity, position, time) &&
       !collected.includes(entity.id)
     )
       collected.push(entity.id);
@@ -264,10 +264,9 @@ export function stepGameplay(
   const won = entities.some((entity) => {
     if (entity.stage !== "ready" || entity.behavior?.type !== "portal")
       return false;
-    const portal = movingEntityPosition(entity, time);
     return (
       collectibleIds.every((id) => collected.includes(id)) &&
-      Math.hypot(position[0] - portal[0], position[2] - portal[2]) < 1.2
+      touchesEntity(entity, position, time)
     );
   });
   return {

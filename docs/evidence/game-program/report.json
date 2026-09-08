@@ -8,6 +8,7 @@
   "loss": true,
   "restart": true,
   "heldInputDeduplicated": true,
+  "betweenFrameTapPreserved": true,
   "programPreservedInZIP": true,
   "sourceIncluded": true,
   "externalRequests": [],
