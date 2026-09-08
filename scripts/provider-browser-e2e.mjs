@@ -36,6 +36,7 @@ const REPORT_DIR = resolve(
 );
 const REPORT_MODE = "live-browser";
 const JOURNAL_POLL_TIMEOUT = 120000;
+const INTERRUPTION_METHODS = new Set(["stop", "reload"]);
 
 class HarnessConfigurationError extends Error {
   constructor(message) {
@@ -72,6 +73,7 @@ function parseArgs(argv) {
           "",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
           "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1 for authenticated chatgpt-local recovery.",
+          "Set ORBSIE_INTERRUPTION_METHOD=reload for the page-reload interruption variant; stop is the default.",
         ].join("\n"),
       );
       process.exit(0);
@@ -232,6 +234,7 @@ function readConfiguration(argv) {
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
+    interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
     keyEnv:
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
@@ -284,6 +287,17 @@ function readConfiguration(argv) {
   if (config.interruptedRecovery && provider !== "chatgpt-local")
     throw new HarnessConfigurationError(
       "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 is currently supported only with --provider chatgpt-local.",
+    );
+  if (
+    process.env.ORBSIE_INTERRUPTION_METHOD !== undefined &&
+    !config.interruptedRecovery
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_INTERRUPTION_METHOD is valid only with ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1.",
+    );
+  if (!INTERRUPTION_METHODS.has(config.interruptionMethod))
+    throw new HarnessConfigurationError(
+      "ORBSIE_INTERRUPTION_METHOD must be stop or reload.",
     );
 
   if (
@@ -422,6 +436,7 @@ function emptyReport(config) {
         ? {
             mode: "real",
             status: "not-started",
+            method: config.interruptionMethod,
             phases: [],
             requestCounts: [],
           }
@@ -1315,6 +1330,119 @@ async function readLatestJournalRun(page, projectId) {
   return run;
 }
 
+async function reconnectChatGPTLocalAfterReload(page, config) {
+  // The app consumes pairing fragments on mount, not on hash-only navigation.
+  await page.goto("about:blank");
+  const healthResponse = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return (
+        url.origin === config.companionURL &&
+        url.pathname === "/health" &&
+        response.request().method() === "GET"
+      );
+    },
+    { timeout: 30000 },
+  );
+  await page.goto(companionLink(config), { waitUntil: "domcontentloaded" });
+  const response = await healthResponse;
+  assert.equal(
+    response.status(),
+    200,
+    "ChatGPT local companion health failed after interruption reload.",
+  );
+  const health = await response.json();
+  assert.equal(health.protocolVersion, 1);
+  assert.equal(health.effort, "low");
+  assert.equal(
+    health.model,
+    config.expectedModel,
+    "ChatGPT local model changed after interruption reload.",
+  );
+  assert(["ready", "busy"].includes(health.status));
+  await expect(
+    page.getByText("ChatGPT is connected on this computer.", { exact: false }),
+  ).toBeVisible({ timeout: 30000 });
+  assert.equal(new URL(page.url()).hash, "");
+}
+
+async function restoreReloadedWorldThroughAccountUI(
+  page,
+  projectId,
+  run,
+  interruption,
+) {
+  const account = page.getByRole("button", {
+    name: /Your worlds|Your account and cloud worlds/,
+  });
+  await expect(account).toBeVisible({ timeout: 30000 });
+  await account.click();
+  const projectsResponse = await sameOriginJSON(page, "/api/projects");
+  assert.equal(
+    projectsResponse.status,
+    200,
+    "Authenticated cloud project lookup failed while restoring after reload.",
+  );
+  const projects = Array.isArray(projectsResponse.body?.projects)
+    ? projectsResponse.body.projects
+    : [];
+  const baselineProject = projects.find(
+    (candidate) =>
+      candidate?.id === projectId && candidate?.revision === run.baseRevision,
+  );
+  const title = baselineProject?.title ?? "";
+  const cloudRows = projects.filter(
+    (candidate) =>
+      candidate?.title === title && candidate?.revision === run.baseRevision,
+  );
+  const cloudIndex = cloudRows.findIndex(
+    (candidate) => candidate?.id === projectId,
+  );
+  const cloudEntry = page
+    .getByRole("button", {
+      name: new RegExp(
+        `${escapeRegExp(title)}[\\s\\S]*Revision ${run.baseRevision} · Cloud`,
+      ),
+    })
+    .nth(Math.max(0, cloudIndex));
+  if (cloudIndex >= 0) {
+    await expect(cloudEntry).toBeVisible({ timeout: 30000 });
+    await cloudEntry.click();
+    await expect(page.locator(".workspace-heading h2")).toBeVisible({
+      timeout: 30000,
+    });
+    await expect
+      .poll(async () => (await storageSnapshot(page)).project, {
+        timeout: 30000,
+        intervals: [100, 200, 400, 800, 1200],
+      })
+      .toMatchObject({ id: projectId, revision: run.baseRevision });
+    interruption.reloadRestoredVia = "account-cloud-baseline";
+  } else {
+    await page
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click()
+      .catch(() => undefined);
+    const resume = page.getByRole("button", {
+      name: "Continue your saved world",
+      exact: true,
+    });
+    await expect(resume).toBeVisible({ timeout: 30000 });
+    await resume.click();
+    await expect(page.locator(".workspace-heading h2")).toBeVisible({
+      timeout: 30000,
+    });
+    await expect
+      .poll(async () => (await storageSnapshot(page)).project?.id, {
+        timeout: 30000,
+        intervals: [100, 200, 400, 800, 1200],
+      })
+      .toBe(projectId);
+    interruption.reloadRestoredVia = "resume-same-id";
+  }
+  await prepareObserver(page);
+}
+
 /**
  * Interrupt the first real ChatGPT-local stream after a durable ready
  * checkpoint, then drive the account UI recovery and its continuation.
@@ -1338,6 +1466,7 @@ async function verifyInterruptedRecovery(
   const requestCounts = interruption.requestCounts;
   let lastRun;
   let earlyCompleteRun;
+  let observerBeforeInterruption;
 
   requestCounts.push({
     phase: "initial-generation-started",
@@ -1388,80 +1517,112 @@ async function verifyInterruptedRecovery(
   interruption.readyEntityCount = readyCheckpointEntities(
     lastRun.checkpoint,
   ).length;
-
-  const stop = page.getByRole("button", { name: "Stop", exact: true });
-  try {
-    await expect(stop).toBeVisible({ timeout: 30000 });
-  } catch (error) {
-    const current = await readLatestJournalRun(page, projectId).catch(
-      () => lastRun,
-    );
-    if (current?.state === "complete")
-      throw Error(
-        `The initial generation completed before the harness could click the live Stop control (${journalRunDescription(current)}).`,
-      );
-    throw Error(
-      `The live Stop control disappeared before interruption (${journalRunDescription(current)}): ${error instanceof Error ? error.message : error}`,
-    );
-  }
-  phases.push("live-stop-control-observed");
-  await stop.click();
-  requestCounts.push({ phase: "stop-clicked", count: info.generationRequests });
-  assert.equal(
-    info.generationRequests,
-    1,
-    "Stopping the initial stream unexpectedly created another generation request.",
-  );
-  await expect(stop).toHaveCount(0, { timeout: 30000 });
-  phases.push("live-stop-clicked");
-
-  let terminalRun;
-  let terminalCompleteRun;
-  try {
-    await expect
-      .poll(
-        async () => {
-          terminalRun = await readLatestJournalRun(page, projectId);
-          if (terminalRun.state === "complete") {
-            terminalCompleteRun = terminalRun;
-            return "complete";
-          }
-          return terminalRun.state;
-        },
-        {
-          timeout: JOURNAL_POLL_TIMEOUT,
-          intervals: [100, 200, 400, 800, 1200],
-        },
-      )
-      .toMatch(/^(cancelled|interrupted)$/);
-  } catch (error) {
-    if (terminalCompleteRun)
-      throw Error(
-        `The initial generation completed after Stop was clicked; the harness will not treat it as interrupted (${journalRunDescription(terminalCompleteRun)}).`,
-      );
-    throw Error(
-      `The stopped generation did not reach a terminal noncomplete journal state within ${JOURNAL_POLL_TIMEOUT}ms (${journalRunDescription(terminalRun)}): ${error instanceof Error ? error.message : error}`,
-    );
-  }
-  assert(
-    terminalRun.sequence > 0,
-    `The terminal interrupted journal checkpoint has no committed operation (${journalRunDescription(terminalRun)}).`,
-  );
-  assert(
-    ["cancelled", "interrupted"].includes(terminalRun.state),
-    `The initial generation did not end in a noncomplete state (${journalRunDescription(terminalRun)}).`,
-  );
-  phases.push(`terminal-${terminalRun.state}`);
-  requestCounts.push({
-    phase: `terminal-${terminalRun.state}`,
-    count: info.generationRequests,
+  await expect(page.locator(".object-list button").first()).toBeVisible({
+    timeout: 30000,
   });
-  interruption.runId = terminalRun.id;
-  interruption.terminalState = terminalRun.state;
-  interruption.terminalSequence = terminalRun.sequence;
+  observerBeforeInterruption = await observerEvidence(page);
+  let terminalRun;
+  if (config.interruptionMethod === "reload") {
+    interruption.preReloadObserverStageCount =
+      observerBeforeInterruption?.stages?.length ?? 0;
+    phases.push("ready-checkpoint-observer-captured");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    phases.push("page-reloaded-while-journal-running");
+    await reconnectChatGPTLocalAfterReload(page, config);
+    phases.push("chatgpt-local-reconnected");
+    await restoreReloadedWorldThroughAccountUI(
+      page,
+      projectId,
+      lastRun,
+      interruption,
+    );
+    phases.push(interruption.reloadRestoredVia);
+  } else {
+    const stop = page.getByRole("button", { name: "Stop", exact: true });
+    try {
+      await expect(stop).toBeVisible({ timeout: 30000 });
+    } catch (error) {
+      const current = await readLatestJournalRun(page, projectId).catch(
+        () => lastRun,
+      );
+      if (current?.state === "complete")
+        throw Error(
+          `The initial generation completed before the harness could click the live Stop control (${journalRunDescription(current)}).`,
+        );
+      throw Error(
+        `The live Stop control disappeared before interruption (${journalRunDescription(current)}): ${error instanceof Error ? error.message : error}`,
+      );
+    }
+    phases.push("live-stop-control-observed");
+    await stop.click();
+    requestCounts.push({
+      phase: "stop-clicked",
+      count: info.generationRequests,
+    });
+    assert.equal(
+      info.generationRequests,
+      1,
+      "Stopping the initial stream unexpectedly created another generation request.",
+    );
+    await expect(stop).toHaveCount(0, { timeout: 30000 });
+    phases.push("live-stop-clicked");
+  }
+
+  if (config.interruptionMethod === "reload") {
+    requestCounts.push({
+      phase: "reload-before-account-recovery",
+      count: info.generationRequests,
+    });
+  } else {
+    let terminalCompleteRun;
+    try {
+      await expect
+        .poll(
+          async () => {
+            terminalRun = await readLatestJournalRun(page, projectId);
+            if (terminalRun.state === "complete") {
+              terminalCompleteRun = terminalRun;
+              return "complete";
+            }
+            return terminalRun.state;
+          },
+          {
+            timeout: JOURNAL_POLL_TIMEOUT,
+            intervals: [100, 200, 400, 800, 1200],
+          },
+        )
+        .toMatch(/^(cancelled|interrupted)$/);
+    } catch (error) {
+      if (terminalCompleteRun)
+        throw Error(
+          `The initial generation completed after Stop was clicked; the harness will not treat it as interrupted (${journalRunDescription(terminalCompleteRun)}).`,
+        );
+      throw Error(
+        `The stopped generation did not reach a terminal noncomplete journal state within ${JOURNAL_POLL_TIMEOUT}ms (${journalRunDescription(terminalRun)}): ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  if (terminalRun) {
+    assert(
+      terminalRun.sequence > 0,
+      `The terminal interrupted journal checkpoint has no committed operation (${journalRunDescription(terminalRun)}).`,
+    );
+    assert(
+      ["cancelled", "interrupted"].includes(terminalRun.state),
+      `The initial generation did not end in a noncomplete state (${journalRunDescription(terminalRun)}).`,
+    );
+    phases.push(`terminal-${terminalRun.state}`);
+    requestCounts.push({
+      phase: `terminal-${terminalRun.state}`,
+      count: info.generationRequests,
+    });
+  }
 
   await page
-    .getByRole("button", { name: "Your account and cloud worlds", exact: true })
+    .getByRole("button", {
+      name: /Your worlds|Your account and cloud worlds/,
+    })
     .click();
   phases.push("account-ui-opened-for-recovery");
   const recover = page.getByRole("button", {
@@ -1470,13 +1631,70 @@ async function verifyInterruptedRecovery(
   });
   await expect(recover).toBeVisible({ timeout: 30000 });
   await recover.click();
-  await expect(
-    page.getByText(
-      "Recovered finished work. Send the continuation to start a new generation request.",
-      { exact: true },
-    ),
-  ).toBeVisible({ timeout: 30000 });
+  const finishedNotice = page.getByText(
+    "Recovered finished work. Send the continuation to start a new generation request.",
+    { exact: true },
+  );
+  const completedNotice = page.getByText(
+    "Recovered the completed generation. Save it to your account when ready.",
+    { exact: true },
+  );
+  await expect
+    .poll(
+      async () => {
+        if (await completedNotice.isVisible().catch(() => false))
+          return "completed";
+        if (await finishedNotice.isVisible().catch(() => false))
+          return "finished";
+        return "waiting";
+      },
+      { timeout: 30000, intervals: [100, 200, 400, 800, 1200] },
+    )
+    .toMatch(/^(finished|completed)$/);
+  if (await completedNotice.isVisible().catch(() => false))
+    throw Error(
+      `The ${config.interruptionMethod} interruption completed before account recovery could settle it; completed generation is not treated as interrupted recovery.`,
+    );
   phases.push("account-ui-recovery-terminal-noncomplete");
+
+  if (!terminalRun) {
+    let terminalCompleteRun;
+    try {
+      await expect
+        .poll(
+          async () => {
+            terminalRun = await readLatestJournalRun(page, projectId);
+            if (terminalRun.state === "complete") {
+              terminalCompleteRun = terminalRun;
+              return "complete";
+            }
+            return terminalRun.state;
+          },
+          {
+            timeout: 30000,
+            intervals: [100, 200, 400, 800, 1200],
+          },
+        )
+        .toMatch(/^(cancelled|interrupted)$/);
+    } catch (error) {
+      if (terminalCompleteRun)
+        throw Error(
+          `The reloaded generation completed before account recovery settled it (${journalRunDescription(terminalCompleteRun)}).`,
+        );
+      throw Error(
+        `Account recovery did not settle the reloaded journal to a terminal noncomplete state (${journalRunDescription(terminalRun)}): ${error instanceof Error ? error.message : error}`,
+      );
+    }
+    assert(terminalRun.sequence > 0);
+    phases.push(`terminal-${terminalRun.state}`);
+    requestCounts.push({
+      phase: `terminal-${terminalRun.state}`,
+      count: info.generationRequests,
+    });
+  }
+  interruption.runId = terminalRun.id;
+  interruption.terminalState = terminalRun.state;
+  interruption.terminalSequence = terminalRun.sequence;
 
   const expectedCheckpoint =
     terminalRun.recoveryCheckpoint ?? terminalRun.checkpoint;
@@ -1502,6 +1720,15 @@ async function verifyInterruptedRecovery(
     fullPage: true,
   });
   report.evidence.push("interrupted-recovery.png");
+  const showObjects = page.getByRole("button", {
+    name: "Show objects",
+    exact: true,
+  });
+  if (await showObjects.isVisible().catch(() => false))
+    await showObjects.click();
+  await expect(page.locator(".object-list button").first()).toBeVisible({
+    timeout: 30000,
+  });
 
   const continuationPrompt = page.locator("#prompt");
   await expect(continuationPrompt).toHaveValue(/.+/, { timeout: 30000 });
@@ -1543,6 +1770,11 @@ async function verifyInterruptedRecovery(
     exact: true,
   });
   await expect(continuationButton).toBeEnabled({ timeout: 30000 });
+  assert.equal(
+    info.generationRequests,
+    1,
+    `The ${config.interruptionMethod} recovery path created an unexpected generation before the continuation was submitted.`,
+  );
   await continuationButton.click();
   await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(2);
   const continuationRequest = info.generationBodies[1];
@@ -1565,6 +1797,7 @@ async function verifyInterruptedRecovery(
     checkpoint: expectedCheckpoint,
     terminalRun,
     continuation,
+    observerEvidence: observerBeforeInterruption,
   };
 }
 
@@ -2170,7 +2403,8 @@ async function run(config) {
     await expect(page.locator(".object-list button").first()).toBeVisible({
       timeout: 180000,
     });
-    const firstEvidence = await observerEvidence(page);
+    const firstEvidence =
+      interrupted?.observerEvidence ?? (await observerEvidence(page));
     const seedObserved = Boolean(
       firstEvidence?.stages?.some((entry) =>
         ["seed", "coarse"].includes(entry.stage),
@@ -2180,11 +2414,13 @@ async function run(config) {
       ? Math.max(0, Math.round(firstEvidence.stages[0].at))
       : null;
     report.creation.seedObserved = seedObserved;
-    report.evidence.push("intermediate-seed.png");
-    await page.screenshot({
-      path: join(evidenceDir, "intermediate-seed.png"),
-      fullPage: true,
-    });
+    if (!interrupted) {
+      report.evidence.push("intermediate-seed.png");
+      await page.screenshot({
+        path: join(evidenceDir, "intermediate-seed.png"),
+        fullPage: true,
+      });
+    }
     projectAfterCreation = await waitForSavedProject(
       page,
       interrupted ? interrupted.checkpoint.revision + 1 : 1,

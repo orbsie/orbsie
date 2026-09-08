@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "serviceTier": "default",
+  "actualGenerateCalls": 3,
+  "cloudRecoveryRequested": true,
+  "interruptedRecoveryRequested": true,
+  "interruptionMethod": "reload",
+  "childExitCode": 0,
+  "childSignal": null
+}

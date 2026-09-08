@@ -126,6 +126,11 @@ Set `ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1` together with
 `ORBSIE_VERIFY_CLOUD_RECOVERY=1` to run the opt-in interrupted-stream scenario.
 This mode currently accepts only `--provider chatgpt-local` and requires the
 mode-0600 `ORBSIE_CLOUD_TEST_STATE` to contain authenticated session cookies.
+The interruption method defaults to the editor Stop control; set
+`ORBSIE_INTERRUPTION_METHOD=reload` to exercise a page reload while the
+authenticated journal is still running. `ORBSIE_INTERRUPTION_METHOD` is
+rejected unless interrupted recovery is enabled, and its only values are
+`stop` and `reload`.
 Invalid combinations are rejected before the browser can send a generation
 request. The mode is separate from completed-generation cloud recovery; the
 existing `ORBSIE_VERIFY_CLOUD_RECOVERY=1` flow remains unchanged when the
@@ -134,12 +139,19 @@ interrupted flag is absent.
 After the first real ChatGPT-local generation request starts, the harness observes
 successful authenticated `/api/generation-runs` operation acknowledgements until
 it sees a running checkpoint with sequence greater than zero and at least one
-ready entity. This avoids adding repeated API requests during the short interruption window. It
-then clicks the visible editor `Stop` control while the stream is still in
-progress. The checkpoint wait is bounded and condition-driven; a completed run
-or an early disappearance of the Stop control fails with a diagnostic instead
-of being reported as interrupted recovery. No generation response is mocked or
-inserted by the harness.
+ready entity. This avoids adding repeated API requests during the short
+interruption window. It then uses the configured interruption method. The
+default clicks the visible editor `Stop` control while the stream is still in
+progress. With `ORBSIE_INTERRUPTION_METHOD=reload`, it reloads the page while
+the run remains active, reconnects the local companion through the explicit
+connection link, and restores the same project through the authenticated cloud
+account UI. If the authoritative local project has the same ID, the harness
+may resume it instead. It then uses the account recovery control to settle the
+active run; it does not cancel the run through a direct API call. The
+checkpoint wait is bounded and condition-driven; a completed run or a missing
+live control/recovery state fails with a diagnostic instead of being reported
+as interrupted recovery. No generation response is mocked or inserted by the
+harness.
 
 The harness opens the account UI, chooses `Recover latest generation`, and
 requires a terminal noncomplete journal state (`cancelled` or `interrupted`).
@@ -152,7 +164,9 @@ editor as the second real generation request; the normal creation assertions
 then run on the completed continuation, followed by the existing scoped edit,
 reload, ZIP, standalone playback, and cloud recovery checks. The sanitized
 report records interruption phases, journal sequence/state, and generation
-request counts under `cloudRecovery.interruptedRecovery`.
+request counts under `cloudRecovery.interruptedRecovery`, including the
+selected interruption method and the pre-reload observer evidence for the
+reload variant.
 
 Each run writes a sanitized JSON report to
 `docs/evidence/provider-e2e/<provider>.json` and screenshots/ZIP evidence under

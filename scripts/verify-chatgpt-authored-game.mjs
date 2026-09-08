@@ -39,6 +39,16 @@ if (VERIFY_INTERRUPTED)
     "Interrupted recovery requires authenticated cloud recovery.",
   );
 const GENERATION_BUDGET = VERIFY_INTERRUPTED ? 3 : 2;
+const INTERRUPTION_METHOD = process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop";
+assert(
+  ["stop", "reload"].includes(INTERRUPTION_METHOD),
+  "Interruption method must be stop or reload.",
+);
+if (INTERRUPTION_METHOD === "reload")
+  assert(
+    VERIFY_INTERRUPTED,
+    "Reload interruption requires the interrupted recovery scenario.",
+  );
 if (VERIFY_CLOUD)
   assert.equal(
     BASE_ORIGIN,
@@ -86,6 +96,9 @@ async function writeWrapperReport() {
         actualGenerateCalls,
         cloudRecoveryRequested: VERIFY_CLOUD,
         interruptedRecoveryRequested: VERIFY_INTERRUPTED,
+        interruptionMethod: VERIFY_INTERRUPTED
+          ? INTERRUPTION_METHOD
+          : undefined,
         childExitCode: harnessResult?.code ?? null,
         childSignal: harnessResult?.signal ?? null,
         error: wrapperFailure ? safeError(wrapperFailure) : undefined,
