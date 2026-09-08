@@ -27,6 +27,8 @@ Play-during-stream follow-up: `docs/evidence/play-during-stream/` derives a dete
 
 Publication recovery follow-up: the retry path now searches bounded Vercel v7 pages with decreasing timestamp cursors and exact immutable metadata, separating the Vercel project ID from the Orb ID. Incomplete/aborted searches fail closed before deployment creation. A three-page regression caught and corrected a cursor-direction defect; 56 publication-focused tests and the production build passed. See [publication recovery](publication-recovery.md). Live dedicated publication remains unverified.
 
+Garden interaction follow-up: `docs/evidence/garden-interaction/` proves the current no-demo editor creates the distinct garden via one test-only fixture response, reloads the authored world, and exports its 15 entities including 12 bloom behaviors. Stable rendered flower pixels expand after a real pointer click and return near their original area/position on a second click, in both editor and independent ZIP player. Astra reviewed the source/screenshots and strengthened the initial evidence with baseline and reversible-toggle checks. Normal-motion SwiftShader desktop checks passed with no live provider calls or page errors; this is not live-provider, mobile, or dedicated-publication evidence.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.

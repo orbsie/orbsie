@@ -1,0 +1,106 @@
+{
+  "passed": true,
+  "scope": "One deterministic local garden generation, reload persistence, export, and standalone flower interaction run",
+  "appUrl": "http://localhost:3031",
+  "appSourceCommit": "385b66206f7b827bdab9da1c5b7a9356f5c5a11b",
+  "sourceCommitSupplied": true,
+  "fixtureGeneration": true,
+  "liveProviderCalls": 0,
+  "generationRequests": 1,
+  "externalRequests": [],
+  "standaloneExternalRequests": [],
+  "pageErrors": [],
+  "checks": {
+    "generation": true,
+    "reloadRecoveryPrompt": true,
+    "authoredGardenRestored": true,
+    "playReady": true,
+    "editorBloom": {
+      "baseline": {
+        "area": 1321,
+        "x": 825.7834973504921,
+        "y": 575.5707797123391,
+        "minX": 799,
+        "maxX": 853,
+        "minY": 558,
+        "maxY": 592
+      },
+      "restored": {
+        "area": 1268,
+        "x": 825.935331230284,
+        "y": 575.7082018927445,
+        "minX": 799,
+        "maxX": 852,
+        "minY": 559,
+        "maxY": 593
+      },
+      "before": {
+        "area": 1321,
+        "x": 825.7834973504921,
+        "y": 575.5707797123391,
+        "minX": 799,
+        "maxX": 853,
+        "minY": 558,
+        "maxY": 592
+      },
+      "after": {
+        "area": 2447,
+        "x": 826.6305680425011,
+        "y": 560.4912137310993,
+        "minX": 789,
+        "maxX": 863,
+        "minY": 537,
+        "maxY": 583
+      },
+      "componentCountBefore": 23,
+      "componentCountAfter": 23
+    },
+    "exported": true,
+    "exportedProject": {
+      "title": "The daydream garden",
+      "entities": 15,
+      "bloomingFlowers": 12
+    },
+    "standaloneReady": true,
+    "standaloneBloom": {
+      "baseline": {
+        "area": 841,
+        "x": 724.5838287752675,
+        "y": 460.35671819262785,
+        "minX": 703,
+        "maxX": 746,
+        "minY": 447,
+        "maxY": 474
+      },
+      "restored": {
+        "area": 801,
+        "x": 724.6429463171036,
+        "y": 460.5143570536829,
+        "minX": 703,
+        "maxX": 746,
+        "minY": 447,
+        "maxY": 474
+      },
+      "before": {
+        "area": 841,
+        "x": 724.5838287752675,
+        "y": 460.35671819262785,
+        "minX": 703,
+        "maxX": 746,
+        "minY": 447,
+        "maxY": 474
+      },
+      "after": {
+        "area": 1490,
+        "x": 725.2026845637583,
+        "y": 448.6335570469799,
+        "minX": 696,
+        "maxX": 754,
+        "minY": 430,
+        "maxY": 467
+      },
+      "componentCountBefore": 20,
+      "componentCountAfter": 19
+    }
+  }
+}
