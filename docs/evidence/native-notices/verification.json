@@ -1,0 +1,9 @@
+{
+  "inventorySha256": "2510f33f5bca9ae4d465a422e1be335fbcadafbd6c8b4fde50614adc15f901a7",
+  "checkedNoticeHashes": 289,
+  "mismatches": [],
+  "files": 342,
+  "packages": 289,
+  "scope": "Independent reread of recorded installed notice bytes; no portability or corresponding-source certification",
+  "providerCalls": 0
+}
