@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "projectId": "f4227cbd-2b44-4219-aa5d-2c42cd271256",
+  "errors": [],
+  "requestsBlocked": 0,
+  "freshStorageEmpty": true,
+  "exportSnapshotMatches": true,
+  "cloudMessageCount": 4,
+  "matchIndex": 0,
+  "matchCount": 1
+}

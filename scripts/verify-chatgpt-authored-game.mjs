@@ -10,15 +10,36 @@
  */
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  rm,
+  writeFile,
+  readFile,
+  stat,
+} from "node:fs/promises";
+import { request } from "@playwright/test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 import { LocalChatGPT } from "./local-chatgpt.mjs";
 
-const BASE_ORIGIN = "http://127.0.0.1:3024";
-const EVIDENCE_DIR = "docs/evidence/provider-e2e/chatgpt-authored-input-game";
+const BASE_ORIGIN = process.env.ORBSIE_TEST_URL ?? "http://127.0.0.1:3024";
+assert(
+  ["http://127.0.0.1:3017", "http://127.0.0.1:3024"].includes(BASE_ORIGIN),
+  "Only the known local test origins are allowed.",
+);
+const VERIFY_CLOUD = process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1";
+if (VERIFY_CLOUD)
+  assert.equal(
+    BASE_ORIGIN,
+    "http://127.0.0.1:3017",
+    "Cloud verification uses the existing development account origin.",
+  );
+const EVIDENCE_DIR =
+  process.env.ORBSIE_EVIDENCE_DIR ??
+  "docs/evidence/provider-e2e/chatgpt-authored-input-game";
 
 if (process.env.ORBSIE_LIVE_E2E !== "1")
   throw Error(
@@ -55,6 +76,7 @@ async function writeWrapperReport() {
         effort: "low",
         serviceTier: "default",
         actualGenerateCalls,
+        cloudRecoveryRequested: VERIFY_CLOUD,
         childExitCode: harnessResult?.code ?? null,
         childSignal: harnessResult?.signal ?? null,
         error: wrapperFailure ? safeError(wrapperFailure) : undefined,
@@ -90,21 +112,24 @@ function runHarness(environment) {
 async function stop() {
   if (stopping) return;
   stopping = true;
-  if (child && child.exitCode === null && !child.killed) {
-    child.kill("SIGTERM");
-    await new Promise((resolve) => child.once("close", resolve));
-  }
-  child = undefined;
-  if (companion) {
-    await companion.close();
+  try {
+    try {
+      if (child && child.exitCode === null && !child.killed) {
+        child.kill("SIGTERM");
+        await new Promise((resolve) => child.once("close", resolve));
+      }
+    } finally {
+      child = undefined;
+      if (companion) await companion.close();
+      else client?.close();
+    }
+  } finally {
     companion = undefined;
-  } else {
-    client?.close();
-  }
-  client = undefined;
-  if (temporaryDirectory) {
-    await rm(temporaryDirectory, { recursive: true, force: true });
-    temporaryDirectory = undefined;
+    client = undefined;
+    if (temporaryDirectory) {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+      temporaryDirectory = undefined;
+    }
   }
 }
 
@@ -142,6 +167,8 @@ try {
   companion = await startChatGPTCompanion({
     client: {
       generate: (...args) => {
+        if (actualGenerateCalls >= 2)
+          throw Error("The two-generation live test budget is exhausted.");
         actualGenerateCalls += 1;
         return client.generate(...args);
       },
@@ -180,6 +207,49 @@ try {
   ])
     delete childEnvironment[name];
 
+  if (VERIFY_CLOUD) {
+    const fixturePath = ".vercel/dev-generated-cloud-state.json";
+    assert.equal(
+      (await stat(fixturePath)).mode & 0o777,
+      0o600,
+      "Development account fixture must be private.",
+    );
+    const fixture = JSON.parse(await readFile(fixturePath, "utf8"));
+    assert.equal(
+      fixture.baseURL,
+      BASE_ORIGIN,
+      "Development account origin mismatch.",
+    );
+    const auth = await request.newContext({
+      baseURL: BASE_ORIGIN,
+      extraHTTPHeaders: { Origin: BASE_ORIGIN },
+      timeout: 30000,
+    });
+    try {
+      const response = await auth.post("/api/auth/sign-in/email", {
+        data: fixture.credentials,
+        maxRedirects: 0,
+      });
+      assert.equal(
+        response.status(),
+        200,
+        "Existing development account authentication failed; no retry.",
+      );
+      const privateState = join(temporaryDirectory, "cloud-state.json");
+      await writeFile(
+        privateState,
+        JSON.stringify({ storageState: await auth.storageState() }),
+        { mode: 0o600 },
+      );
+      childEnvironment.ORBSIE_CLOUD_TEST_STATE = privateState;
+      childEnvironment.ORBSIE_VERIFY_CLOUD_RECOVERY = "1";
+    } finally {
+      await auth.dispose();
+    }
+  } else {
+    delete childEnvironment.ORBSIE_VERIFY_CLOUD_RECOVERY;
+  }
+
   const result = await runHarness(childEnvironment);
   harnessResult = result;
   child = undefined;
@@ -201,6 +271,12 @@ try {
   process.exitCode = 1;
   console.error(safeError(error));
 } finally {
-  await stop();
-  await writeWrapperReport().catch(() => {});
+  try {
+    await stop();
+  } catch (error) {
+    wrapperFailure ??= error;
+    process.exitCode = 1;
+  } finally {
+    await writeWrapperReport();
+  }
 }

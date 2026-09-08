@@ -1,0 +1,11 @@
+{
+  "status": "failed",
+  "model": "gpt-6-astra",
+  "effort": "low",
+  "serviceTier": "default",
+  "actualGenerateCalls": 2,
+  "cloudRecoveryRequested": true,
+  "childExitCode": 1,
+  "childSignal": null,
+  "error": "The provider browser harness did not complete successfully; inspect its sanitized evidence report.\n\n1 !== 0\n"
+}

@@ -12,6 +12,7 @@
  * credential environment variable is read.
  */
 import assert from "node:assert/strict";
+import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
@@ -68,7 +69,7 @@ function parseArgs(argv) {
           "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> \\",
           "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local",
           "",
-          "Add --publication (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud/publication check.",
+          "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
         ].join("\n"),
       );
       process.exit(0);
@@ -227,6 +228,7 @@ function readConfiguration(argv) {
         : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
     publication:
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
+    cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     keyEnv:
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
@@ -255,6 +257,14 @@ function readConfiguration(argv) {
   )
     throw new HarnessConfigurationError(
       "ORBSIE_REQUIRE_INPUT_GAME must be 0 or 1.",
+    );
+
+  if (
+    process.env.ORBSIE_VERIFY_CLOUD_RECOVERY !== undefined &&
+    !["0", "1"].includes(process.env.ORBSIE_VERIFY_CLOUD_RECOVERY)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_VERIFY_CLOUD_RECOVERY must be 0 or 1.",
     );
 
   if (provider === "chatgpt-local") {
@@ -319,9 +329,12 @@ function readConfiguration(argv) {
     config.builderURL = builder.origin;
     config.builderToken = process.env.ORBSIE_BUILDER_TOKEN;
   }
-  if (config.publication && !process.env.ORBSIE_CLOUD_TEST_STATE)
+  if (
+    (config.publication || config.cloudRecovery) &&
+    !process.env.ORBSIE_CLOUD_TEST_STATE
+  )
     throw new HarnessConfigurationError(
-      "Real publication was explicitly requested; set ORBSIE_CLOUD_TEST_STATE to the private mode-0600 state file.",
+      "A real cloud phase was explicitly requested; set ORBSIE_CLOUD_TEST_STATE to the private mode-0600 state file.",
     );
   return config;
 }
@@ -345,6 +358,15 @@ function sanitizedError(error, config) {
     error instanceof Error ? error.message : error,
     config,
   );
+}
+
+function persistenceJSON(value) {
+  const encoded = JSON.stringify(value);
+  return encoded === undefined ? undefined : JSON.parse(encoded);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function emptyReport(config) {
@@ -372,6 +394,11 @@ function emptyReport(config) {
       mode: config.publication ? "real" : "blocked",
       status: config.publication ? "not-started" : "not-requested",
     },
+    cloudRecovery: {
+      mode: config.cloudRecovery ? "real" : "not-requested",
+      status: config.cloudRecovery ? "not-started" : "not-requested",
+      phases: [],
+    },
     fallbackUsed: false,
     traffic: {
       generationRequests: 0,
@@ -396,75 +423,6 @@ async function writeReport(report, config) {
 
 function storageKeyDigest(key) {
   return createHash("sha256").update(key).digest("hex");
-}
-
-async function storageSnapshot(page, keyDigest) {
-  return page.evaluate(async (digest) => {
-    const textDigest = async (value) => {
-      const bytes = new TextEncoder().encode(value);
-      const hash = await crypto.subtle.digest("SHA-256", bytes);
-      return [...new Uint8Array(hash)]
-        .map((value) => value.toString(16).padStart(2, "0"))
-        .join("");
-    };
-    const containsKey = async (value) => {
-      if (typeof value === "string")
-        return (await textDigest(value)) === digest;
-      if (Array.isArray(value)) {
-        for (const child of value) if (await containsKey(child)) return true;
-        return false;
-      }
-      if (value && typeof value === "object") {
-        for (const [name, child] of Object.entries(value)) {
-          if ((await textDigest(name)) === digest) return true;
-          if (await containsKey(child)) return true;
-        }
-      }
-      return false;
-    };
-    const getValue = (key) =>
-      new Promise((resolve, reject) => {
-        const request = indexedDB.open("keyval-store");
-        request.onerror = () =>
-          reject(request.error || Error("IndexedDB open failed"));
-        request.onsuccess = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains("keyval")) {
-            db.close();
-            resolve(undefined);
-            return;
-          }
-          const transaction = db.transaction("keyval", "readonly");
-          const getRequest = transaction.objectStore("keyval").get(key);
-          getRequest.onerror = () =>
-            reject(getRequest.error || Error("IndexedDB read failed"));
-          getRequest.onsuccess = () => {
-            const value = getRequest.result;
-            db.close();
-            resolve(value);
-          };
-        };
-      }).catch(() => undefined);
-    const draft = await getValue("orbsie-draft");
-    const library = await getValue("orbsie-library");
-    const project =
-      draft && typeof draft === "object" ? draft.project : undefined;
-    const storedProject =
-      project && library && typeof library === "object"
-        ? library[project.id]
-        : undefined;
-    const sensitive =
-      (await containsKey(draft)) ||
-      (await containsKey(library)) ||
-      (await containsKey(localStorage)) ||
-      (await containsKey(sessionStorage));
-    return {
-      project: storedProject || project || null,
-      revision: storedProject?.revision ?? project?.revision ?? null,
-      sensitive,
-      localStorageKeys: Object.keys(localStorage),
-    };
-  }, keyDigest || "__no-provider-key__");
 }
 
 async function installTrafficGuard(context, config, approvedOrigins, info) {
@@ -1221,7 +1179,7 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
 }
 
 async function readExplicitCloudStorageState(config) {
-  if (!config.publication) return undefined;
+  if (!config.publication && !config.cloudRecovery) return undefined;
   const cloudStatePath = resolve(process.env.ORBSIE_CLOUD_TEST_STATE);
   const mode = await stat(cloudStatePath);
   if ((mode.mode & 0o077) !== 0)
@@ -1235,6 +1193,303 @@ async function readExplicitCloudStorageState(config) {
       "The explicit cloud test state has no storageState.",
     );
   return storageState;
+}
+
+async function sameOriginJSON(page, path) {
+  return page.evaluate(async (requestPath) => {
+    const response = await fetch(requestPath, {
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+    });
+    let body;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    return { status: response.status, body };
+  }, path);
+}
+
+async function verifyCloudRecovery(
+  page,
+  browser,
+  config,
+  report,
+  approvedOrigins,
+  projectAfterEdit,
+  storageState,
+  evidenceDir,
+) {
+  if (!config.cloudRecovery) return;
+  const phases = [];
+  report.cloudRecovery = {
+    mode: "real",
+    status: "running",
+    projectId: projectAfterEdit.id,
+    expectedRevision: projectAfterEdit.revision,
+    phases,
+  };
+
+  const latestResponse = await sameOriginJSON(
+    page,
+    `/api/generation-runs?projectId=${encodeURIComponent(projectAfterEdit.id)}`,
+  );
+  assert.equal(
+    latestResponse.status,
+    200,
+    "Latest cloud journal lookup failed.",
+  );
+  const latestRun = latestResponse.body?.run;
+  assert(latestRun, "Latest cloud journal response omitted its run.");
+  assert.equal(latestRun.projectId, projectAfterEdit.id);
+  assert.equal(
+    latestRun.state,
+    "complete",
+    "Latest cloud journal is not complete.",
+  );
+  assert.equal(latestRun.checkpoint.revision, projectAfterEdit.revision);
+  assert.deepEqual(
+    persistenceJSON(latestRun.checkpoint),
+    persistenceJSON(projectAfterEdit),
+    "Latest cloud journal checkpoint entities differ from the edited world.",
+  );
+  phases.push("latest-journal-complete");
+
+  await page
+    .getByRole("button", { name: "Close dialog", exact: true })
+    .click()
+    .catch(() => undefined);
+  await page
+    .getByRole("button", {
+      name: "Your account and cloud worlds",
+      exact: true,
+    })
+    .click();
+  const recover = page.getByRole("button", {
+    name: "Recover latest generation",
+    exact: true,
+  });
+  await expect(recover).toBeVisible({ timeout: 30000 });
+  await recover.click();
+  await expect(
+    page.getByText(
+      "Recovered the completed generation. Save it to your account when ready.",
+      { exact: true },
+    ),
+  ).toBeVisible({ timeout: 30000 });
+  phases.push("account-ui-recovery-complete");
+  await expect(page.locator("#prompt")).toHaveValue("", { timeout: 30000 });
+  await expect
+    .poll(async () => (await storageSnapshot(page)).project, {
+      timeout: 30000,
+    })
+    .toMatchObject({
+      id: projectAfterEdit.id,
+      revision: projectAfterEdit.revision,
+    });
+  const recovered = await storageSnapshot(page);
+  assert.deepEqual(
+    persistenceJSON(recovered.project),
+    persistenceJSON(projectAfterEdit),
+  );
+  phases.push("recovered-indexeddb-verified");
+  await page.screenshot({
+    path: join(evidenceDir, "cloud-recovery.png"),
+    fullPage: true,
+  });
+  report.evidence.push("cloud-recovery.png");
+
+  await page
+    .getByRole("button", { name: "Your account and cloud worlds", exact: true })
+    .click();
+  const save = page.getByRole("button", {
+    name: "Save current world to cloud",
+    exact: true,
+  });
+  await expect(save).toBeVisible({ timeout: 30000 });
+  const saveResponsePromise = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return (
+        url.origin === config.baseOrigin &&
+        url.pathname === "/api/projects" &&
+        response.request().method() === "PUT"
+      );
+    },
+    { timeout: 30000 },
+  );
+  await save.click();
+  const saveResponse = await saveResponsePromise;
+  let saveBody = null;
+  try {
+    saveBody = await saveResponse.json();
+  } catch {
+    // The status assertion below reports a non-JSON cloud response.
+  }
+  assert.equal(saveResponse.status(), 200, "Recovered cloud save failed.");
+  assert.equal(saveBody?.revision, projectAfterEdit.revision);
+  assert.match(
+    saveBody?.snapshotToken ?? "",
+    /^[a-f0-9]{64}$/,
+    "Recovered cloud save omitted its snapshot token.",
+  );
+  phases.push("cloud-save-200-same-revision");
+  await page
+    .getByRole("button", { name: "Close dialog", exact: true })
+    .click()
+    .catch(() => undefined);
+
+  const cookieOnlyState = {
+    cookies: Array.isArray(storageState?.cookies) ? storageState.cookies : [],
+    origins: [],
+  };
+  const freshContext = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    storageState: cookieOnlyState,
+  });
+  const freshInfo = {
+    generationRequests: [],
+    blockedExternalRequests: 0,
+    blockedExternalOrigins: new Set(),
+  };
+  let freshPage;
+  const freshPageErrors = [];
+  try {
+    await installTrafficGuard(freshContext, config, approvedOrigins, freshInfo);
+    freshPage = await freshContext.newPage();
+    freshPage.on("pageerror", (error) =>
+      freshPageErrors.push(sanitizeMessage(error?.message ?? error, config)),
+    );
+    freshPage.on("request", (request) => {
+      const url = new URL(request.url());
+      if (
+        (url.pathname === "/api/generate" &&
+          url.origin === config.baseOrigin) ||
+        (url.pathname === "/generate" && url.origin === config.companionURL)
+      )
+        freshInfo.generationRequests.push(url.pathname);
+    });
+    const projectsResponsePromise = freshPage.waitForResponse(
+      (response) => {
+        const url = new URL(response.url());
+        return (
+          url.origin === config.baseOrigin &&
+          url.pathname === "/api/projects" &&
+          response.request().method() === "GET" &&
+          !url.searchParams.has("id")
+        );
+      },
+      { timeout: 30000 },
+    );
+    await freshPage.goto(config.baseOrigin, { waitUntil: "domcontentloaded" });
+    const empty = await storageSnapshot(freshPage);
+    assert.equal(
+      empty.project,
+      null,
+      "Fresh cloud context inherited local world data.",
+    );
+    await expect(
+      freshPage.getByRole("button", {
+        name: /^(Your worlds|Your account and cloud worlds)$/,
+      }),
+    ).toBeVisible({ timeout: 30000 });
+    const projectsResponse = await projectsResponsePromise;
+    assert.equal(projectsResponse.status(), 200);
+    const projectsBody = await projectsResponse.json();
+    const projects = Array.isArray(projectsBody.projects)
+      ? projectsBody.projects
+      : [];
+    const matchingCloudRows = projects.filter(
+      (candidate) =>
+        candidate?.title === projectAfterEdit.title &&
+        candidate?.revision === projectAfterEdit.revision,
+    );
+    const matchingCloudIndex = matchingCloudRows.findIndex(
+      (candidate) => candidate?.id === projectAfterEdit.id,
+    );
+    assert(
+      matchingCloudIndex >= 0,
+      "Fresh cloud project listing omitted the recovered project.",
+    );
+    await freshPage
+      .getByRole("button", {
+        name: /^(Your worlds|Your account and cloud worlds)$/,
+      })
+      .click();
+    const cloudEntry = freshPage
+      .getByRole("button", {
+        name: new RegExp(
+          `${escapeRegExp(projectAfterEdit.title)}[\\s\\S]*Revision ${projectAfterEdit.revision} · Cloud`,
+        ),
+      })
+      .nth(matchingCloudIndex);
+    await expect(cloudEntry).toBeVisible({ timeout: 30000 });
+    await cloudEntry.click();
+    await expect(freshPage.locator(".workspace-heading h2")).toBeVisible({
+      timeout: 30000,
+    });
+    await expect
+      .poll(async () => (await storageSnapshot(freshPage)).project, {
+        timeout: 30000,
+      })
+      .toMatchObject({
+        id: projectAfterEdit.id,
+        revision: projectAfterEdit.revision,
+      });
+    phases.push("fresh-cookie-only-context-cloud-open");
+    const freshSnapshot = await storageSnapshot(freshPage);
+    assert.deepEqual(
+      persistenceJSON(freshSnapshot.project),
+      persistenceJSON(projectAfterEdit),
+    );
+    assert.deepEqual(
+      freshInfo.generationRequests,
+      [],
+      "Fresh cloud recovery made a provider generation request.",
+    );
+    assert.deepEqual(
+      freshPageErrors,
+      [],
+      "Fresh cloud recovery reported a page error.",
+    );
+    report.cloudRecovery.freshContextTraffic = {
+      generationRequests: freshInfo.generationRequests.length,
+      blockedExternalRequests: freshInfo.blockedExternalRequests,
+      blockedExternalOrigins: [...freshInfo.blockedExternalOrigins].slice(0, 8),
+      pageErrors: freshPageErrors,
+    };
+    phases.push("fresh-indexeddb-verified");
+    await freshPage.screenshot({
+      path: join(evidenceDir, "cloud-recovery-fresh-context.png"),
+      fullPage: true,
+    });
+    report.evidence.push("cloud-recovery-fresh-context.png");
+  } catch (error) {
+    if (freshPage) {
+      await freshPage
+        .screenshot({
+          path: join(evidenceDir, "cloud-recovery-fresh-context-failure.png"),
+          fullPage: true,
+        })
+        .then(() =>
+          report.evidence.push("cloud-recovery-fresh-context-failure.png"),
+        )
+        .catch(() => undefined);
+    }
+    throw error;
+  } finally {
+    report.cloudRecovery.freshContextTraffic = {
+      generationRequests: freshInfo.generationRequests.length,
+      blockedExternalRequests: freshInfo.blockedExternalRequests,
+      blockedExternalOrigins: [...freshInfo.blockedExternalOrigins].slice(0, 8),
+      pageErrors: freshPageErrors,
+    };
+    await freshContext.close().catch(() => undefined);
+  }
+  report.cloudRecovery.status = "passed";
+  report.cloudRecovery.runId = latestRun.id;
 }
 
 async function runPublication(
@@ -1503,6 +1758,22 @@ async function run(config) {
           exact: true,
         }),
       ).toBeVisible();
+      await page
+        .getByRole("button", { name: "Close dialog", exact: true })
+        .click();
+    }
+    if (config.cloudRecovery) {
+      const account = page.getByRole("button", {
+        name: /Your worlds|Your account and cloud worlds/,
+      });
+      await expect(account).toBeVisible({ timeout: 30000 });
+      await account.click();
+      await expect(
+        page.getByRole("button", {
+          name: "Save current world to cloud",
+          exact: true,
+        }),
+      ).toBeVisible({ timeout: 30000 });
       await page
         .getByRole("button", { name: "Close dialog", exact: true })
         .click();
@@ -1806,6 +2077,16 @@ async function run(config) {
     report.export = "passed";
     await verifyStandalone(browser, zip, config, report, evidenceDir);
     report.standalonePlayback = "passed";
+    await verifyCloudRecovery(
+      page,
+      browser,
+      config,
+      report,
+      approvedOrigins,
+      projectAfterEdit,
+      storageState,
+      evidenceDir,
+    );
     await runPublication(
       page,
       browser,
@@ -1829,6 +2110,8 @@ async function run(config) {
     };
   } catch (error) {
     report.error = sanitizedError(error, config);
+    if (config.cloudRecovery && report.cloudRecovery.status !== "passed")
+      report.cloudRecovery.status = "failed";
     if (report.publication.status === "not-started" && config.publication)
       report.publication.status =
         error instanceof HarnessBlockedError ? "blocked" : "failed";

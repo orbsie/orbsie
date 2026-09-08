@@ -1,0 +1,94 @@
+{
+  "provider": "chatgpt-local",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3017",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": null,
+  "creation": {
+    "status": "passed",
+    "operations": 11,
+    "firstReservationMs": 8724,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 2,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "real",
+    "status": "failed",
+    "projectId": "f4227cbd-2b44-4219-aa5d-2c42cd271256",
+    "expectedRevision": 13,
+    "phases": [
+      "latest-journal-complete",
+      "account-ui-recovery-complete",
+      "recovered-indexeddb-verified",
+      "cloud-save-200-same-revision"
+    ]
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "blockedExternalRequests": 2,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-chatgpt-local.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-input-ready.png",
+    "standalone-input-right.png",
+    "standalone-input-win.png",
+    "standalone-input-loss.png",
+    "standalone-playback.png",
+    "cloud-recovery.png",
+    "failure.png"
+  ],
+  "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('.workspace-heading h2')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('.workspace-heading h2') with timeout 30000ms\n  - waiting for locator('.workspace-heading h2')\n",
+  "inputGame": {
+    "status": "passed",
+    "entityCount": 2,
+    "treeAndMushroom": true,
+    "refinedGeometry": true,
+    "exactRuleCount": true,
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "noTimersOrCollectionScoring": true,
+    "preservedAcrossEdit": true,
+    "preservedAcrossReload": true,
+    "preservedInZip": true
+  },
+  "standalone": {
+    "status": "passed",
+    "pageErrors": [],
+    "inputGame": {
+      "ready": true,
+      "rightAdds7": true,
+      "heldRightDeduplicated": true,
+      "upWins": true,
+      "restartResetsScore": true,
+      "leftLoses": true
+    }
+  }
+}
