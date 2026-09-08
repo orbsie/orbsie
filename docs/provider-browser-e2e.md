@@ -111,3 +111,5 @@ all report paths are mode `0600`. A nonzero exit code means the provider flow
 failed or was explicitly blocked; it never means that a fixture passed.
 
 Initial development used syntax checks only. Root integration then ran real managed ChatGPT browser calls with Astra low/default. The current evidence report records the actual completed phases and any remaining failure; a partial report is not a full E2E pass. OpenRouter, Gateway and real publication require their own independent successful reports.
+
+The local OpenRouter Luna exception also passed creation, exact scoped edit, reload, ZIP export and standalone load with the server configured to 512 output tokens. Its first visible reservation was 3.891 seconds. This verifies the authorized Luna path, not the separate Astra requirement. Local test servers must set `BETTER_AUTH_URL` to the exact test origin; production configuration intentionally rejects a mismatched browser origin.

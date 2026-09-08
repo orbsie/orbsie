@@ -272,6 +272,7 @@ function emptyReport(config) {
     reasoning: "low",
     serviceTier: "default",
     keyScope: config.keyScope,
+    outputCapTokens: config.outputCap,
     creation: {
       status: "blocked",
       operations: 0,
@@ -1362,6 +1363,7 @@ async function run(config) {
     assertGenerationRequests(config, info);
     report.traffic = {
       generationRequests: info.generationRequests,
+      generationStatuses: info.generationStatuses,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
       interceptedGeneration: info.interceptedGeneration,
@@ -1382,6 +1384,7 @@ async function run(config) {
     }
     report.traffic = {
       generationRequests: info.generationRequests,
+      generationStatuses: info.generationStatuses,
       blockedExternalRequests: info.blockedExternalRequests,
       interceptedGeneration: info.interceptedGeneration,
     };
@@ -1390,6 +1393,7 @@ async function run(config) {
   } finally {
     report.traffic = {
       generationRequests: info.generationRequests,
+      generationStatuses: info.generationStatuses,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
       interceptedGeneration: info.interceptedGeneration,
