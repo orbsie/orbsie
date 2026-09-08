@@ -156,3 +156,30 @@ export async function latestCloudGenerationRun(
     );
   return run;
 }
+
+/** Recheck the durable baseline after settling the latest checkpoint. */
+export async function settleCloudGenerationRecovery(run: GenerationRun) {
+  const settled =
+    run.state === "running"
+      ? await cancelCloudGenerationRun(run.id)
+      : await readCloudGenerationRun(run.id);
+  if (
+    settled.projectId !== run.projectId ||
+    settled.checkpoint.id !== run.projectId
+  )
+    throw new GenerationJournalError(
+      "Cloud recovery returned a different world.",
+    );
+  if (
+    !settled.cloudBaselineCurrent ||
+    settled.baseRevision !== run.baseRevision
+  )
+    throw new GenerationJournalError(
+      "A newer cloud save exists. Open that version before recovering generation.",
+    );
+  if (settled.state === "running")
+    throw new GenerationJournalError(
+      "Generation is still running. Stop it before recovering.",
+    );
+  return settled;
+}

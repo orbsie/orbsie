@@ -330,3 +330,45 @@ it("finishes the landing transition after a fast initial generation", async () =
   await new Promise((resolve) => setTimeout(resolve, 150));
   expect(orb.getState().phase).toBe("editing");
 });
+
+it("preserves a same-project edit arriving while cloud recovery saves its local copy", async () => {
+  const original = readyProject();
+  orb.getState().load(original);
+  const recovery = { ...original, title: "Cloud checkpoint" };
+  const edited = { ...original, title: "New local edit" };
+  db.beforeUpdate = async () => {
+    db.beforeUpdate = undefined;
+    orb.getState().set({ project: edited });
+  };
+  expect(await orb.getState().loadCloud(recovery)).toBe(false);
+  expect(orb.getState().project).toBe(edited);
+});
+
+it("reports cloud open as stale if its account scope changes during final save", async () => {
+  const original = readyProject();
+  orb.getState().load(original);
+  let current = true;
+  db.beforeDraftUpdate = async () => {
+    db.beforeDraftUpdate = undefined;
+    current = false;
+  };
+  expect(
+    await orb.getState().loadCloud(
+      { ...original, title: "Cloud" },
+      () => current,
+      () => current,
+    ),
+  ).toBe(false);
+});
+
+it("accepts its own cross-project installation after the old project scope expires", async () => {
+  const original = readyProject();
+  orb.getState().load(original);
+  const next = readyProject({ id: crypto.randomUUID() });
+  expect(
+    await orb
+      .getState()
+      .loadCloud(next, () => orb.getState().project.id === original.id),
+  ).toBe(true);
+  expect(orb.getState().project.id).toBe(next.id);
+});

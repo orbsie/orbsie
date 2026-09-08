@@ -16,3 +16,11 @@ Target: https://orbsie.com
 
 
 Infrastructure diagnosis: the dedicated token can read the main Vercel project (HTTP 200), but creating a deterministic Orb project returns HTTP 403 with action `create`, resource `project`. Database and storage checks above completed successfully. No public deployment was created.
+
+## Recovery race guards (2026-09-08)
+
+Recovery now settles a running journal through cancellation, or rereads a terminal run, before accepting its current cloud-baseline flag and checkpoint identity. This prevents using an earlier successful baseline check after cancellation reports a conflicting save. The local installer captures the starting project object and refuses replacement if same-project edits arrive during asset download, local-copy preservation or the library write. Final account validity is a separate callback because intentionally opening another project invalidates the original project scope. Recovery also checks scope again before restoring UI state.
+
+Two store regressions reproduced the old behavior before the fix: a late local edit was replaced, and an account change during final save still reported success. Additional tests verify successful cross-project opening, stale cancellation/terminal responses, latest terminal checkpoints and checkpoint identity. The full suite passed 432 tests with 7 explicit skips; production build and TypeScript checks passed. These are deterministic store/transport tests; no new live account, database, browser or provider recovery flow was run for this patch.
+
+The separate cross-endpoint cloud-save race remains open: a cloud write can occur after the last baseline check, and revision-only save preconditions do not distinguish same-revision content changes. End-to-end conflict protection requires a content/version precondition on subsequent cloud saves; these guards alone do not establish that broader guarantee.

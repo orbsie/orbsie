@@ -42,7 +42,7 @@ import { useOrb } from "@/lib/store";
 import { recoveredGenerationInput } from "@/lib/generation-journal";
 import {
   latestCloudGenerationRun,
-  cancelCloudGenerationRun,
+  settleCloudGenerationRecovery,
   startCloudGenerationRun,
 } from "@/lib/cloud-generation-journal";
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
@@ -641,10 +641,23 @@ export default function Orbsie() {
         throw Error(
           "Your local world is newer than this checkpoint. Export or save it before opening an older recovery.",
         );
-      if (run.state === "running") run = await cancelCloudGenerationRun(run.id);
+      run = await settleCloudGenerationRecovery(run);
+      if (useOrb.getState().project.revision > run.checkpoint.revision)
+        throw Error(
+          "Your local world is newer than this checkpoint. Export or save it before opening an older recovery.",
+        );
       if (!isCurrent()) return;
       const recovered = committed(run.checkpoint);
-      if (!(await useOrb.getState().loadCloud(recovered, isCurrent))) return;
+      if (
+        !(await useOrb.getState().loadCloud(recovered, isCurrent, isCurrent))
+      ) {
+        if (isCurrent())
+          throw Error(
+            "Your local world changed during recovery. Try again after saving your edits.",
+          );
+        return;
+      }
+      if (!isCurrent()) return;
       setCloudBaseline({ projectId, value: data.project.revision });
       setModal(null);
       const recoveryInput = recoveredGenerationInput(run);

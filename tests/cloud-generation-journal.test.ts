@@ -4,6 +4,7 @@ import {
   appendCloudGenerationOperation,
   readCloudGenerationRun,
   startCloudGenerationRun,
+  settleCloudGenerationRecovery,
 } from "../src/lib/cloud-generation-journal";
 const fetcher = vi.fn();
 const project = blankProject();
@@ -11,7 +12,7 @@ const run = {
   id: "run-1",
   projectId: project.id,
   sequence: 0,
-  state: "running",
+  state: "running" as const,
   checkpoint: project,
   prompt: "Build a garden",
   baseRevision: 0,
@@ -91,4 +92,51 @@ it("rejects oversized streamed recovery before parsing", async () => {
     "response budget",
   );
   expect(cancelled).toBe(true);
+});
+
+it("rejects a cloud baseline that changes before cancellation completes", async () => {
+  fetcher.mockResolvedValue(
+    Response.json({
+      run: { ...run, state: "cancelled", cloudBaselineCurrent: false },
+    }),
+  );
+  await expect(settleCloudGenerationRecovery(run)).rejects.toThrow(
+    "newer cloud save",
+  );
+  expect(fetcher.mock.calls[0][1].method).toBe("PATCH");
+});
+it("rechecks completed recovery instead of trusting its earlier baseline", async () => {
+  fetcher.mockResolvedValue(
+    Response.json({
+      run: { ...run, state: "complete", cloudBaselineCurrent: false },
+    }),
+  );
+  await expect(
+    settleCloudGenerationRecovery({ ...run, state: "complete" }),
+  ).rejects.toThrow("newer cloud save");
+  expect(fetcher.mock.calls[0][0]).toContain("?runId=run-1");
+});
+it("returns the latest settled checkpoint after a concurrent final operation", async () => {
+  const final = {
+    ...run,
+    state: "complete",
+    sequence: 2,
+    checkpoint: { ...project, revision: 1 },
+  };
+  fetcher.mockResolvedValue(Response.json({ run: final }));
+  await expect(settleCloudGenerationRecovery(run)).resolves.toEqual(final);
+});
+it("rejects an embedded checkpoint for another world", async () => {
+  fetcher.mockResolvedValue(
+    Response.json({
+      run: {
+        ...run,
+        state: "cancelled",
+        checkpoint: { ...project, id: "other-world" },
+      },
+    }),
+  );
+  await expect(settleCloudGenerationRecovery(run)).rejects.toThrow(
+    "different world",
+  );
 });
