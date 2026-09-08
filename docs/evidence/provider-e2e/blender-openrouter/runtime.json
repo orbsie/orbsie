@@ -9,6 +9,6 @@
   "catalogModels": 0,
   "modelSha256": "e3bc0ebc53936463dbddd1e283f1fd5fa93f5185c310e6f361af67a016a3fa73",
   "modelShape": "box",
-  "assetPolicy": null,
+  "assetPolicy": "new-only",
   "scope": "Simple one-model create/edit/reload/export workflow. Does not prove broad modeling quality, performance, publication or Astra OpenRouter coverage."
 }
