@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "b60a694",
+  "provider": "chatgpt-local",
+  "model": "gpt-6-astra",
+  "runtime": "Official Blender 4.0.2 packaged prototype",
+  "runtimePath": "/tmp/orbsie-blender-runtime-official-4.0.2",
+  "portable": false,
+  "generatedModels": 1,
+  "catalogModels": 0,
+  "modelSha256": "2e724f172da61dc16b2f4e8832dcad82c7b264c56f89ad127edbe3d4a8ace0d3",
+  "assetPolicy": "new-only",
+  "scope": "Single vase create/edit/reload/export workflow, not an installer, performance or dedicated-publication acceptance test."
+}
