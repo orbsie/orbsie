@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "scope": "Development system Blender runtime; real editor, loopback modeling transport and isolated construction. Software-rendered browser baseline, not clean-host packaged runtime or hardware GPU certification.",
+  "hardware": {
+    "cpu": "AMD EPYC 9124 16-Core Processor",
+    "logicalCpus": 32,
+    "ramBytes": 67081015296,
+    "kernel": "6.8.0-139-generic"
+  },
+  "jobs": [],
+  "pageErrors": [],
+  "browserVersion": "153.0.8010.12",
+  "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Blender is ready to build models on this computer.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Blender is ready to build models on this computer.', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Blender is ready to build models on this computer.', { exact: true })\n"
+}

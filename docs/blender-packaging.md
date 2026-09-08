@@ -144,3 +144,9 @@ The companion packager now accepts `OUTPUT_DIRECTORY --node-root NODE_DISTRIBUTI
 Offline integration passed relocation into a path containing spaces, an empty PATH, cleared inherited Node options, repeated help startup, rejected empty runtime arguments, and failure without a Blender runtime. See [launcher evidence](evidence/packaged-node-launcher/report.json). The application plus Node occupies 124,801,022 bytes on the test host; the 89 ms measurement is help startup, not Blender cold start.
 
 This remains a component, not the complete installer. Blender, native dependency closure, independent official Node archive provenance, clean-host installation and complete license/source delivery remain release gates. No new Blender construction or real-provider flow was exercised by this check.
+
+### Offline distribution assembly (2026-09-08)
+
+`node scripts/assemble-modeling-distribution.mjs OUTPUT --application-root APPLICATION --runtime-root RUNTIME` combines the explicit bundled-Node application package with an existing verified pinned Blender runtime. It performs no downloads or provider requests, rejects existing destinations and overlapping roots, checks source and copied runtime integrity, and records the complete copied tree in a candidate manifest. Application payloads are allowlisted; contained relative runtime symlinks are preserved. Partial output cleanup handles read-only directories without following symlinks.
+
+The manifest explicitly keeps portability, native dependencies, complete licensing/corresponding source and clean-host certification open. The real-runtime assembly test is skipped when the official bundle is absent; synthetic tree and rejection tests do not prove a complete installer. The current workspace has no official runtime bundle, so this assembler has not yet produced a newly validated complete distribution here.

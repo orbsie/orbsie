@@ -1,0 +1,301 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "scope": "Development system Blender runtime; real editor, loopback modeling transport and isolated construction. Software-rendered browser baseline, not clean-host packaged runtime or hardware GPU certification.",
+  "workload": {
+    "baselineEntities": 2,
+    "completedEntities": 5,
+    "generatedModels": 3,
+    "partsPerModel": 8,
+    "sphereSegments": 16,
+    "comparison": "Whole creation workload including decoding and added geometry"
+  },
+  "hardware": {
+    "cpu": "AMD EPYC 9124 16-Core Processor",
+    "logicalCpus": 32,
+    "ramBytes": 67081015296,
+    "kernel": "6.8.0-139-generic"
+  },
+  "jobs": [
+    {
+      "index": 0,
+      "startedAt": 1788892868563,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892868565
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892868566
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892869459
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892869466
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892869472
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892869479
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892869485
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892869491
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892869499
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892869503
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892869509
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892869509
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892869732
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892869823
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892869881
+        }
+      ],
+      "status": "complete",
+      "bytes": 555728,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892869882,
+      "durationMs": 1319
+    },
+    {
+      "index": 1,
+      "startedAt": 1788892870062,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892870063
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892870064
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892871034
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892871043
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892871051
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892871057
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892871064
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892871070
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892871077
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892871083
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892871089
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892871089
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892871328
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892871419
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892871432
+        }
+      ],
+      "status": "complete",
+      "bytes": 561624,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892871432,
+      "durationMs": 1370
+    },
+    {
+      "index": 2,
+      "startedAt": 1788892871611,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892871611
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892871612
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892872487
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892872494
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892872501
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892872510
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892872516
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892872523
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892872529
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892872535
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892872541
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892872542
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892872760
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892872850
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892872880
+        }
+      ],
+      "status": "complete",
+      "bytes": 561624,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892872880,
+      "durationMs": 1269
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "153.0.8010.12",
+  "webgl": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "dpr": 1,
+    "width": 1280,
+    "height": 800
+  },
+  "idleInteractionRounds": 8,
+  "idleBackingBuffer": {
+    "width": 960,
+    "height": 600
+  },
+  "selectionDuringModelingAt": 1788892868722,
+  "sampledPeakBlenderRSSBytes": 246456320,
+  "activeInteractionRounds": 8,
+  "activeBackingBuffer": {
+    "width": 960,
+    "height": 600
+  },
+  "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.object-list button').filter({ hasText: 'Retained tree' })\u001b[22m\n",
+  "cleanupFailures": 0
+}

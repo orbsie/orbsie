@@ -271,3 +271,9 @@ The companion packager now accepts `OUTPUT_DIRECTORY --node-root NODE_DISTRIBUTI
 Offline integration passed relocation into a path containing spaces, an empty PATH, cleared inherited Node options, repeated help startup, rejected empty runtime arguments, and failure without a Blender runtime. See [launcher evidence](evidence/packaged-node-launcher/report.json). The application plus Node occupies 124,801,022 bytes on the test host; the 89 ms measurement is help startup, not Blender cold start.
 
 This remains a component, not the complete installer. Blender, native dependency closure, independent official Node archive provenance, clean-host installation and complete license/source delivery remain release gates. No new Blender construction or real-provider flow was exercised by this check.
+
+### Measured background construction (2026-09-08)
+
+The real editor and isolated system Blender completed three local models while typing, camera dragging and selection remained operable. Jobs took 1.27–1.33 seconds; Stop cancelled a running job in 128 ms. Sampled peak Blender RSS was 253,710,336 bytes. The software-rendered host recorded active frame interval p95 of 83.3 ms, exceeding the 33.33 ms fallback target. Performance certification remains open. This was a fixture-driven authoring test with actual Blender construction and zero provider calls, not a packaged-runtime installation or real-provider acceptance run. See [measurement scope and evidence](evidence/modeling-responsiveness/README.md).
+
+The measurement also exposed a canvas DPR reset when typing. The editor now keeps adaptive DPR in React state, preserving reduced rendering resolution through typing and selection; the separate browser regression verifies that behavior.

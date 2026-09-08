@@ -1,0 +1,119 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "scope": "Development system Blender runtime; real editor, loopback modeling transport and isolated construction. Software-rendered browser baseline, not clean-host packaged runtime or hardware GPU certification.",
+  "hardware": {
+    "cpu": "AMD EPYC 9124 16-Core Processor",
+    "logicalCpus": 32,
+    "ramBytes": 67081015296,
+    "kernel": "6.8.0-139-generic"
+  },
+  "jobs": [
+    {
+      "index": 0,
+      "startedAt": 1788892241809,
+      "stages": [
+        {
+          "stage": "validation",
+          "at": 1788892241810
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892241811
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242661
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242676
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242692
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242707
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242722
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242738
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242752
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242767
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242784
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242798
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242813
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242829
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242845
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242862
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242878
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242892
+        },
+        {
+          "stage": "modeling",
+          "at": 1788892242907
+        },
+        {
+          "stage": "exporting",
+          "at": 1788892242911
+        },
+        {
+          "stage": "exporting",
+          "at": 1788892243201
+        }
+      ],
+      "status": "failed",
+      "endedAt": 1788892243284,
+      "durationMs": 1475
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "153.0.8010.12",
+  "webgl": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "dpr": 1,
+    "width": 1280,
+    "height": 800
+  },
+  "idleInteractionRounds": 7,
+  "sampledPeakBlenderRSSBytes": 246751232,
+  "activeInteractionRounds": 8,
+  "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Local models ready.', { exact: true })\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Local models ready.', { exact: true }) with timeout 60000ms\n  - waiting for getByText('Local models ready.', { exact: true })\n",
+  "cleanupFailures": 0
+}

@@ -1,0 +1,421 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "scope": "Development system Blender runtime; real editor, loopback modeling transport and isolated construction. Software-rendered browser baseline, not clean-host packaged runtime or hardware GPU certification.",
+  "workload": {
+    "baselineEntities": 2,
+    "completedEntities": 5,
+    "generatedModels": 3,
+    "partsPerModel": 8,
+    "sphereSegments": 16,
+    "comparison": "Whole creation workload including decoding and added geometry"
+  },
+  "hardware": {
+    "cpu": "AMD EPYC 9124 16-Core Processor",
+    "logicalCpus": 32,
+    "ramBytes": 67081015296,
+    "kernel": "6.8.0-139-generic"
+  },
+  "jobs": [
+    {
+      "index": 0,
+      "startedAt": 1788892940338,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892940340
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892940340
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892941259
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892941267
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892941275
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892941280
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892941287
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892941293
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892941301
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892941306
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892941312
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892941313
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892941529
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892941632
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892941666
+        }
+      ],
+      "status": "complete",
+      "bytes": 561624,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892941667,
+      "durationMs": 1329
+    },
+    {
+      "index": 1,
+      "startedAt": 1788892941857,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892941858
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892941858
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892942732
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892942738
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892942746
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892942752
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892942759
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892942763
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892942770
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892942777
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892942783
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892942784
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892943005
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892943096
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892943124
+        }
+      ],
+      "status": "complete",
+      "bytes": 561624,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892943125,
+      "durationMs": 1268
+    },
+    {
+      "index": 2,
+      "startedAt": 1788892943257,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892943257
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892943258
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892944171
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892944178
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892944184
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892944192
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892944199
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892944204
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892944210
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892944217
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892944222
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892944222
+        },
+        {
+          "stage": "exporting",
+          "progress": 1,
+          "at": 1788892944456
+        },
+        {
+          "stage": "validation",
+          "progress": 0.5,
+          "at": 1788892944544
+        },
+        {
+          "stage": "complete",
+          "progress": 1,
+          "at": 1788892944574
+        }
+      ],
+      "status": "complete",
+      "bytes": 555728,
+      "blenderVersion": "4.0.2",
+      "endedAt": 1788892944574,
+      "durationMs": 1317
+    },
+    {
+      "index": 3,
+      "startedAt": 1788892949874,
+      "stages": [
+        {
+          "stage": "validation",
+          "progress": 1,
+          "at": 1788892949874
+        },
+        {
+          "stage": "modeling",
+          "progress": 0,
+          "at": 1788892949874
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.05,
+          "at": 1788892950765
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.19375,
+          "at": 1788892950772
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.2875,
+          "at": 1788892950778
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.38125,
+          "at": 1788892950785
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.475,
+          "at": 1788892950791
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.56875,
+          "at": 1788892950797
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.6625,
+          "at": 1788892950804
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.75625,
+          "at": 1788892950809
+        },
+        {
+          "stage": "modeling",
+          "progress": 0.85,
+          "at": 1788892950816
+        },
+        {
+          "stage": "exporting",
+          "progress": 0.9,
+          "at": 1788892950816
+        }
+      ],
+      "status": "cancelled",
+      "endedAt": 1788892950900,
+      "durationMs": 1026
+    }
+  ],
+  "pageErrors": [],
+  "browserVersion": "153.0.8010.12",
+  "webgl": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "dpr": 1,
+    "width": 1280,
+    "height": 800
+  },
+  "idleInteractionRounds": 8,
+  "idleBackingBuffer": {
+    "width": 960,
+    "height": 600
+  },
+  "selectionDuringModelingAt": 1788892940486,
+  "sampledPeakBlenderRSSBytes": 253710336,
+  "activeInteractionRounds": 8,
+  "activeBackingBuffer": {
+    "width": 960,
+    "height": 600
+  },
+  "selectionAfterModeling": true,
+  "idle": {
+    "frames": {
+      "samples": 144,
+      "meanMs": 44.0951388888889,
+      "p50Ms": 49.899999999999636,
+      "p95Ms": 66.80000000000018,
+      "p99Ms": 100,
+      "maxMs": 150
+    },
+    "inputDispatchToFrameCallback": {
+      "samples": 183,
+      "meanMs": 15.871584699300875,
+      "p50Ms": 8.400000000372529,
+      "p95Ms": 48.100000001490116,
+      "p99Ms": 54.5,
+      "maxMs": 57.09999999962747
+    }
+  },
+  "active": {
+    "frames": {
+      "samples": 88,
+      "meanMs": 44.506818181818204,
+      "p50Ms": 49.899999999999636,
+      "p95Ms": 83.29999999999927,
+      "p99Ms": 133.39999999999964,
+      "maxMs": 133.39999999999964
+    },
+    "inputDispatchToFrameCallback": {
+      "samples": 111,
+      "meanMs": 20.805405405291296,
+      "p50Ms": 16,
+      "p95Ms": 63.79999999888241,
+      "p99Ms": 115.90000000037253,
+      "maxMs": 119.69999999925494
+    }
+  },
+  "performanceTargets": {
+    "normalFrameMs": 16.666666666666668,
+    "fallbackFrameMs": 33.333333333333336,
+    "activeP95MeetsFallback": false,
+    "note": "These measurements do not certify a hardware-GPU laptop. Passing this probe means functional measurement completed, not performance targets achieved."
+  },
+  "sampledBlenderCpuSeconds": 3.84,
+  "sampling": {
+    "intervalMs": 150,
+    "pageBytes": 4096,
+    "clockTicksPerSecond": 100,
+    "note": "Sampled Blender processes only; short-lived work can be missed. GPU memory unavailable."
+  },
+  "cancellationMs": 128,
+  "fixtureGenerationRequests": 3,
+  "cleanupFailures": 0
+}
