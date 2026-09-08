@@ -87,6 +87,15 @@ try {
   await page.screenshot({ path: `${directory}/midpoint.png` });
   await page.evaluate(() => window.formationFixture.frame(1));
   await page.screenshot({ path: `${directory}/finished.png` });
+  const thumbnail = await page.evaluate(() =>
+    window.formationFixture.thumbnail(),
+  );
+  assert.match(thumbnail, /^data:image\/png;base64,/);
+  const png = Buffer.from(thumbnail.split(",")[1], "base64");
+  assert.equal(png.readUInt32BE(16), 320);
+  assert.equal(png.readUInt32BE(20), 180);
+  assert.ok(png.length < 200 * 1024);
+  await writeFile(`${directory}/publication-thumbnail.png`, png);
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.externalRequests, []);
   assert.equal(report.samples.length, 3);

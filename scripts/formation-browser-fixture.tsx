@@ -1,4 +1,5 @@
 /** Test-only renderer fixture; never imported by the app or standalone player. */
+import { capturePublicationThumbnail } from "../src/lib/publication-thumbnail";
 import { createRoot } from "react-dom/client";
 import { _roots } from "@react-three/fiber";
 import World from "../src/components/world";
@@ -60,6 +61,7 @@ const samples = (mesh: any, amount: number) => {
 let expected: number[][][];
 let oldGeometries: unknown[];
 (window as any).formationFixture = {
+  thumbnail: capturePublicationThumbnail,
   ready: () =>
     !!_roots.get(document.querySelector("canvas")!)?.store &&
     meshes().length === 3 &&

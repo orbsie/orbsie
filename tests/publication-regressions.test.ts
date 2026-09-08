@@ -193,6 +193,7 @@ it("verifies every immutable artifact before atomically labeling the confirmed U
   );
   expect(mock.query.mock.calls[1][1]).toEqual([
     "https://orb.vercel.app",
+    null,
     "orb",
     "owner",
     "d2",
@@ -204,6 +205,39 @@ it("verifies every immutable artifact before atomically labeling the confirmed U
       "/publication-manifest.json",
       ...PUBLICATION_ARTIFACT_PATHS.map((file) => `/${file}`),
     ]),
+  );
+});
+
+it("promotes matching pending metadata with the verified public URL", async () => {
+  const publicationMetadata = {
+    title: "Immutable world",
+    creator: "Orb maker",
+    revision: 2,
+  };
+  mock.query.mockResolvedValueOnce({
+    rows: [row({ publication_metadata: publicationMetadata })],
+  });
+  mock.query.mockResolvedValueOnce({
+    rows: [{ published_revision: 2, published_metadata: publicationMetadata }],
+  });
+  installFetch(publicDeployment());
+
+  const response = await get();
+
+  expect(await response.json()).toMatchObject({
+    state: "READY",
+    servedRevision: 2,
+  });
+  expect(mock.query.mock.calls[1][1]).toEqual([
+    "https://orb.vercel.app",
+    JSON.stringify(publicationMetadata),
+    "orb",
+    "owner",
+    "d2",
+    2,
+  ]);
+  expect(mock.query.mock.calls[1][0]).toContain(
+    "published_metadata=COALESCE($2::jsonb,published_metadata)",
   );
 });
 
@@ -288,7 +322,16 @@ it("rejects catalog model bytes that do not match the checked-in asset hash", as
 });
 
 it("does not claim readiness when an in-flight status request loses the deployment compare-and-swap", async () => {
-  mock.query.mockResolvedValueOnce({ rows: [row({ deployment_id: "old" })] });
+  const pendingMetadata = {
+    title: "New release",
+    creator: "Orb maker",
+    revision: 2,
+  };
+  mock.query.mockResolvedValueOnce({
+    rows: [
+      row({ deployment_id: "old", publication_metadata: pendingMetadata }),
+    ],
+  });
   mock.query.mockResolvedValueOnce({ rows: [] });
   installFetch(publicDeployment());
 
@@ -296,12 +339,35 @@ it("does not claim readiness when an in-flight status request loses the deployme
 
   expect(await response.json()).toEqual({ state: "VERIFYING" });
   expect(mock.query.mock.calls[1][0]).toContain(
-    "AND deployment_id=$4 AND publication_revision=$5",
+    "AND deployment_id=$5 AND publication_revision=$6",
   );
+  expect(mock.query.mock.calls[1][1]).toEqual([
+    "https://orb.vercel.app",
+    JSON.stringify(pendingMetadata),
+    "orb",
+    "owner",
+    "old",
+    2,
+  ]);
 });
 
 it("keeps the previous public release when an artifact is corrupt", async () => {
-  mock.query.mockResolvedValueOnce({ rows: [row()] });
+  mock.query.mockResolvedValueOnce({
+    rows: [
+      row({
+        publication_metadata: {
+          title: "Pending release",
+          creator: "Orb maker",
+          revision: 2,
+        },
+        published_metadata: {
+          title: "Previous release",
+          creator: "Orb maker",
+          revision: 1,
+        },
+      }),
+    ],
+  });
   const deployment = publicDeployment();
   deployment.responses.set(
     "runtime.js",
@@ -517,7 +583,17 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
   );
   expect(client.query).toHaveBeenCalledWith(
     expect.stringContaining("UPDATE orbs SET vercel_project_id"),
-    ["vp", "new-deployment", 2, "orb"],
+    [
+      "vp",
+      "new-deployment",
+      2,
+      JSON.stringify({
+        title: "Test world",
+        creator: "Orbsie creator",
+        revision: 2,
+      }),
+      "orb",
+    ],
   );
 });
 

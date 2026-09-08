@@ -24,6 +24,12 @@ import {
   toVercelDeploymentFile,
   type PublicationFile,
 } from "../../../lib/server/publication-artifact";
+import {
+  createPublicationMetadata,
+  MAX_PUBLICATION_REQUEST_BYTES,
+  parsePublicationMetadata,
+  publicationThumbnailSchema,
+} from "../../../lib/publication-metadata";
 export const maxDuration = 60;
 const publicPath = (id: string) => `/o/${encodeURIComponent(id)}`;
 const publicationModelsRoot = join(process.cwd(), "public/models");
@@ -68,14 +74,15 @@ export async function POST(request: Request) {
       .object({
         projectId: z.string().min(1).max(80),
         revision: z.number().int().min(0),
+        thumbnail: publicationThumbnailSchema.optional(),
       })
-      .safeParse(await boundedJSON(request, 1000));
+      .safeParse(await boundedJSON(request, MAX_PUBLICATION_REQUEST_BYTES));
     if (!parsed.success)
       throw new HttpError(
         400,
         "Check your world and revision before publishing.",
       );
-    const { projectId, revision } = parsed.data;
+    const { projectId, revision, thumbnail } = parsed.data;
     client = await database().connect();
     await client.query("BEGIN");
     const result = await client.query(
@@ -127,6 +134,12 @@ export async function POST(request: Request) {
         "Your account has reached its published-world limit.",
       );
     const snapshot = projectSchema.parse(orb.snapshot);
+    const publicationMetadata = createPublicationMetadata({
+      title: snapshot.title,
+      creator: user.name,
+      thumbnail,
+      revision,
+    });
     const generatedModels = await requireCloudGeneratedModels(
       user.id,
       snapshot,
@@ -269,8 +282,14 @@ export async function POST(request: Request) {
         },
       }));
     await client.query(
-      "UPDATE orbs SET vercel_project_id=$1,deployment_id=$2,publication_revision=$3 WHERE id=$4",
-      [target, deployment.id ?? deployment.uid, revision, projectId],
+      "UPDATE orbs SET vercel_project_id=$1,deployment_id=$2,publication_revision=$3,publication_metadata=$4 WHERE id=$5",
+      [
+        target,
+        deployment.id ?? deployment.uid,
+        revision,
+        JSON.stringify(publicationMetadata),
+        projectId,
+      ],
     );
     await client.query("COMMIT");
     return Response.json({
@@ -295,7 +314,7 @@ export async function GET(request: Request) {
     const user = await requireUser(request);
     const id = new URL(request.url).searchParams.get("projectId");
     const result = await database().query(
-      "SELECT deployment_id,public_url,publication_revision,published_revision FROM orbs WHERE id=$1 AND owner_id=$2",
+      "SELECT deployment_id,public_url,publication_revision,published_revision,publication_metadata,published_metadata FROM orbs WHERE id=$1 AND owner_id=$2",
       [id, user.id],
     );
     const orb = result.rows[0];
@@ -348,10 +367,18 @@ export async function GET(request: Request) {
           error: verification.message,
         });
       }
+      const pendingMetadata = parsePublicationMetadata(
+        orb.publication_metadata,
+      );
+      const promotedMetadata =
+        pendingMetadata?.revision === orb.publication_revision
+          ? JSON.stringify(pendingMetadata)
+          : null;
       const promoted = await database().query(
-        "UPDATE orbs SET public_url=$1,published_revision=publication_revision WHERE id=$2 AND owner_id=$3 AND deployment_id=$4 AND publication_revision=$5 RETURNING published_revision",
+        "UPDATE orbs SET public_url=$1,published_revision=publication_revision,published_metadata=COALESCE($2::jsonb,published_metadata) WHERE id=$3 AND owner_id=$4 AND deployment_id=$5 AND publication_revision=$6 RETURNING published_revision,published_metadata",
         [
           deploymentUrl,
+          promotedMetadata,
           id,
           user.id,
           orb.deployment_id,

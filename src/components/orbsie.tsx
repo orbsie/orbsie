@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import { capturePublicationThumbnail } from "@/lib/publication-thumbnail";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowUp,
@@ -759,6 +760,7 @@ export default function Orbsie() {
         body: JSON.stringify({
           projectId: s.project.id,
           revision: s.project.revision,
+          thumbnail: capturePublicationThumbnail(),
         }),
       });
       const data = await response.json();

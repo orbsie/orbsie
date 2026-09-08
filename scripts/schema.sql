@@ -1,10 +1,12 @@
-CREATE TABLE IF NOT EXISTS orbs (id text PRIMARY KEY, owner_id text NOT NULL REFERENCES "user"(id), title text NOT NULL, revision integer NOT NULL, snapshot jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now(), vercel_project_id text, public_url text, deployment_id text, publication_revision integer);
+CREATE TABLE IF NOT EXISTS orbs (id text PRIMARY KEY, owner_id text NOT NULL REFERENCES "user"(id), title text NOT NULL, revision integer NOT NULL, snapshot jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now(), vercel_project_id text, public_url text, deployment_id text, publication_revision integer, publication_metadata jsonb, published_metadata jsonb);
 CREATE INDEX IF NOT EXISTS orbs_owner_idx ON orbs(owner_id);
 CREATE TABLE IF NOT EXISTS orb_revisions(orb_id text NOT NULL REFERENCES orbs(id) ON DELETE CASCADE, revision integer NOT NULL, snapshot jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(orb_id,revision));
 CREATE TABLE IF NOT EXISTS generation_runs(id text PRIMARY KEY, orb_id text NOT NULL REFERENCES orbs(id), owner_id text NOT NULL, base_revision integer NOT NULL, sequence integer NOT NULL DEFAULT 0, state text NOT NULL, checkpoint jsonb, updated_at timestamptz NOT NULL DEFAULT now());
 
 -- The pending attempt revision must never label an older public URL.
 ALTER TABLE orbs ADD COLUMN IF NOT EXISTS published_revision integer;
+ALTER TABLE orbs ADD COLUMN IF NOT EXISTS publication_metadata jsonb;
+ALTER TABLE orbs ADD COLUMN IF NOT EXISTS published_metadata jsonb;
 
 -- Owner-scoped generated model registry. Pending reservations count toward quota.
 CREATE TABLE IF NOT EXISTS generated_models (

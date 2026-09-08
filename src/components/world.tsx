@@ -17,6 +17,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
+import { registerPublicationThumbnail } from "@/lib/publication-thumbnail";
 import type { Entity } from "@/lib/protocol";
 import {
   GameSession,
@@ -729,7 +730,35 @@ function Scene({ onReady }: { onReady?: () => void }) {
     entities = useOrb((s) => s.project.entities),
     environment = useOrb((s) => s.project.environment),
     playing = useOrb((s) => s.playing);
-  const { camera, size } = useThree();
+  const { camera, size, gl, scene } = useThree();
+  useEffect(
+    () =>
+      registerPublicationThumbnail(() => {
+        gl.render(scene, camera);
+        const thumbnail = document.createElement("canvas");
+        thumbnail.width = 320;
+        thumbnail.height = 180;
+        const context = thumbnail.getContext("2d");
+        if (!context) throw new Error("Could not capture a world preview.");
+        const scale = Math.min(
+          thumbnail.width / gl.domElement.width,
+          thumbnail.height / gl.domElement.height,
+        );
+        const width = gl.domElement.width * scale;
+        const height = gl.domElement.height * scale;
+        context.fillStyle = "#07100f";
+        context.fillRect(0, 0, thumbnail.width, thumbnail.height);
+        context.drawImage(
+          gl.domElement,
+          (thumbnail.width - width) / 2,
+          (thumbnail.height - height) / 2,
+          width,
+          height,
+        );
+        return thumbnail.toDataURL("image/png");
+      }),
+    [gl, scene, camera],
+  );
   const progress = useRef(0);
   const transition = useRef(createParcelTransition());
   const spin = useRef(0);

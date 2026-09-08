@@ -1716,3 +1716,26 @@ kbd {
     line-height: 1.45;
   }
 }
+
+.published-orb > header > .published-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.published-identity > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.published-thumbnail {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+@media (max-width: 520px) {
+  .published-thumbnail {
+    width: 48px;
+    height: 36px;
+  }
+}
