@@ -1,5 +1,8 @@
+import { generationMaxTokens } from "@/lib/server/generation-limits";
+
 export async function GET() {
   return Response.json({
+    generationMaxTokens: generationMaxTokens(),
     accounts: !!(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET),
     publishing: !!(
       process.env.DATABASE_URL &&

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { generationMaxTokens } from "@/lib/server/generation-limits";
 import { projectSchema, entitySchema } from "@/lib/protocol";
 import {
   generateCommands,
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     if (!parsed.success)
       throw new HttpError(400, "Check your connection and world data.");
     const free = parsed.data.provider === "free";
+    const maxTokens = generationMaxTokens(free);
     if (
       !free &&
       (!parsed.data.model || !parsed.data.key || parsed.data.key.length < 10)
@@ -64,7 +66,7 @@ export async function POST(request: Request) {
         : (parsed.data.provider as "gateway" | "openrouter"),
       model: free ? FREE_MODEL : parsed.data.model!,
       key: free ? process.env.AI_GATEWAY_API_KEY_FREE! : parsed.data.key!,
-      maxTokens: free ? 4096 : undefined,
+      maxTokens,
       signal: AbortSignal.any([request.signal, AbortSignal.timeout(175000)]),
     });
     return new Response(stream, {

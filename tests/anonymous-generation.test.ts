@@ -1,3 +1,7 @@
+vi.mock(
+  "@/lib/server/generation-limits",
+  async () => import("../src/lib/server/generation-limits"),
+);
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 const authCheck = vi.hoisted(() => vi.fn());
@@ -62,6 +66,17 @@ it("requires a provider key even when generation is anonymous", async () => {
   vi.stubGlobal("fetch", provider);
   expect((await generate(request({ ...input(), key: "" }))).status).toBe(400);
   expect(provider).not.toHaveBeenCalled();
+});
+it("enforces the server output cap despite a larger client-supplied value", async () => {
+  vi.stubEnv("ORBSIE_GENERATION_MAX_TOKENS", "512");
+  let sent: { max_tokens?: number } = {};
+  vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
+    sent = JSON.parse(String(init.body));
+    return new Response("data: [DONE]\n\n");
+  });
+  const response = await generate(request({ ...input(), maxTokens: 10000 }));
+  await response.text();
+  expect(sent.max_tokens).toBe(512);
 });
 it("keeps the origin boundary for anonymous generation", async () => {
   const provider = vi.fn();

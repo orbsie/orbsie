@@ -1,3 +1,7 @@
+vi.mock(
+  "@/lib/server/generation-limits",
+  async () => import("../src/lib/server/generation-limits"),
+);
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 const quota = vi.hoisted(() => ({
