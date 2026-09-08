@@ -1,5 +1,7 @@
 # Blender distribution inventory
 
+The archive/package observations below are historical evidence. The current workspace does not contain the official runtime bundle needed by the distribution assembler. The installed `/usr/bin/blender` is the Ubuntu `blender` package, version `4.0.2+dfsg-1ubuntu8`; its notice is `/usr/share/doc/blender/copyright`. Inventorying that installed system is a separate provenance step and does not certify the official portable archive or supply corresponding sources.
+
 Local file inventory reviewed on 2026-09-08 against the pinned official Blender 4.0.2 Linux archive and its runtime package. This records observed materials and gaps; it is not a distribution-completeness finding.
 
 The package's `licenses/blender/license/` contains 15 release files, including GPL, Apache, BSD, MIT, Python, OpenSSL, font and jemalloc notices. `THIRD-PARTY-LICENSES.txt` contains 101 component headings. Additional notices remain inside the copied Python tree, `datafiles` and `scripts/addons/cycles/license`. The aggregate catalog has not been mapped to each shipped binary.
