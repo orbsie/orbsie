@@ -1,0 +1,56 @@
+{
+  "checkedAt": "2026-09-08T20:42:49.902Z",
+  "origin": "https://orbsie.com",
+  "status": "passed",
+  "credential": "synthetic",
+  "results": [
+    {
+      "provider": "openrouter",
+      "catalogStatus": 200,
+      "astraCapabilities": {
+        "text": {
+          "supported": true,
+          "source": "catalog"
+        },
+        "streamingText": {
+          "supported": true,
+          "source": "provider-contract"
+        },
+        "tools": {
+          "supported": true,
+          "source": "catalog"
+        },
+        "structuredOutput": {
+          "supported": true,
+          "source": "catalog"
+        }
+      },
+      "rejectionStatus": 400,
+      "error": "This model does not support the current world-generation connection. Choose a supported model in Advanced."
+    },
+    {
+      "provider": "gateway",
+      "catalogStatus": 200,
+      "astraCapabilities": {
+        "text": {
+          "supported": true,
+          "source": "catalog"
+        },
+        "streamingText": {
+          "supported": "unknown",
+          "source": "unspecified"
+        },
+        "tools": {
+          "supported": true,
+          "source": "catalog"
+        },
+        "structuredOutput": {
+          "supported": "unknown",
+          "source": "unspecified"
+        }
+      },
+      "rejectionStatus": 400,
+      "error": "This model does not support the current world-generation connection. Choose a supported model in Advanced."
+    }
+  ]
+}
