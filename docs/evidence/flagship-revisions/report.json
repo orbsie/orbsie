@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "mode": "deterministic-fixture-browser",
+  "appSourceCommit": "23c26d4a9b955148a9ef724a98d477d4cb606dbf",
+  "repositoryCommit": "2ed1264d97dad3891227189a90dba0a92e5ff81b",
+  "url": "http://localhost:3028",
+  "fixtureTransport": true,
+  "generationRequests": 3,
+  "blockedExternalHttpRequests": [],
+  "fixtureFontStylesheets": [
+    "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap",
+    "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap"
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:43563/api/generate",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:43563/api/generate",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:43563/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "checks": {
+    "initialScene": {
+      "revision": 43,
+      "entities": 14,
+      "collectibles": 5
+    },
+    "mushroomRevision": {
+      "revision": 47,
+      "targetId": "tree-0",
+      "targetKind": "mushroom",
+      "targetColor": "#ed99b5",
+      "unchangedEntityCount": 13
+    },
+    "platformRevision": {
+      "revision": 53,
+      "platformId": "platform-1",
+      "previousSpeed": 1,
+      "revisedSpeed": 0.3,
+      "collectibles": 7,
+      "uniqueCollectibles": 7,
+      "preservedMushroom": true
+    },
+    "playGoal7": true,
+    "undo": {
+      "revision": 54,
+      "restoredEntityState": true,
+      "collectibles": 5,
+      "hudGoal": 5
+    },
+    "reloadRecovery": {
+      "revision": 54,
+      "restoredEntityState": true,
+      "collectibles": 5,
+      "hudGoal": 5
+    }
+  },
+  "finishedAt": "2026-09-08T21:34:48.450Z"
+}

@@ -15,7 +15,7 @@ This checkpoint supersedes conflicting historical statements below. The full pla
 | Experience milestones | `23c26d4` records submission, reservation, seed draw, controls, objective readiness, generation completion and publish readiness independently in bounded browser memory. Twenty-four focused tests and the actual renderer fixture pass. See `docs/evidence/experience-metrics/README.md` for precise semantics. | Fixture observations do not establish live provider latency, objective reachability or normal-device performance. |
 | Portable local modeling | Local isolated Blender execution, generated assets, persistence and exports have prior real ChatGPT evidence. | A release-certified portable runtime with dependency/license/source closure and clean-host validation is still absent. |
 
-Active acceptance follow-up: verify the flagship's combined middle-platform/two-crystal revision, goal reconciliation, undo and reload through the actual editor with a deterministic transport. This adds fixture coverage only; the real-provider matrix and signed-out dedicated publication remain required.
+Flagship revision follow-up: `docs/evidence/flagship-revisions/report.json` now records a passed actual-editor fixture run: selected giant pink mushroom with unrelated entities preserved, middle-platform speed 1 → 0.3, two added crystals, HUD goal 7, exact undo restoration to goal 5, and reload recovery. Astra reviewed the harness and screenshots. Fonts are explicitly stubbed and motion reduced; this is not live-provider, animation, or dedicated-publication evidence. The real-provider matrix and signed-out dedicated publication remain required.
 
 ## Historical audit and supporting evidence
 
