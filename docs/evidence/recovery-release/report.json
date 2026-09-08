@@ -1,0 +1,31 @@
+{
+  "sourceCommit": "9b2cc0c",
+  "deployment": "https://orbsie-6b5a6ccy5-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "productionJournalMigration": "committed",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 10301
+    },
+    {
+      "path": "/api/generation-runs?projectId=release-smoke",
+      "status": 401,
+      "bytes": 61
+    },
+    {
+      "path": "/player/runtime.js",
+      "status": 200,
+      "bytes": 1698830,
+      "sha256": "a6c3e363ef71fa2425da3f8154ec6987f0e9f112a25244bb33daca1599b8d02e",
+      "matchesSource": true
+    }
+  ],
+  "browser": {
+    "canvasCount": 1,
+    "errors": []
+  },
+  "scope": "Public GET-only smoke; no inference or account writes. Signed-in recovery tested separately on development.",
+  "checkedAt": "2026-09-08T06:47:33.969Z"
+}
