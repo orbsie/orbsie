@@ -11,11 +11,14 @@ import { execFileSync, spawnSync } from "node:child_process";
 import {
   cpSync,
   chmodSync,
+  closeSync,
   existsSync,
   mkdtempSync,
   mkdirSync,
+  openSync,
   readFileSync,
   readlinkSync,
+  readSync,
   lstatSync,
   readdirSync,
   realpathSync,
@@ -388,7 +391,86 @@ function treeStats(root) {
 }
 
 function sha256(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  const descriptor = openSync(path, "r");
+  const hash = createHash("sha256");
+  const chunk = Buffer.allocUnsafe(1024 * 1024);
+  try {
+    let bytesRead;
+    do {
+      bytesRead = readSync(descriptor, chunk, 0, chunk.length, null);
+      if (bytesRead > 0) hash.update(chunk.subarray(0, bytesRead));
+    } while (bytesRead > 0);
+  } finally {
+    closeSync(descriptor);
+  }
+  return hash.digest("hex");
+}
+
+function sha256Bytes(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function stableCompare(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/**
+ * Record every bundle entry except the manifest itself. Directories and
+ * symlinks are recorded as entries so a package cannot silently change its
+ * Python/native tree shape between packaging and execution.
+ */
+export function buildTreeIntegrity(
+  root,
+  { excluded = ["manifest.json"] } = {},
+) {
+  const canonicalRoot = realpathSync(root);
+  const excludedSet = new Set(excluded);
+  const entries = [];
+  const visit = (current) => {
+    const children = readdirSync(current, { withFileTypes: true }).sort(
+      (a, b) => stableCompare(a.name, b.name),
+    );
+    for (const child of children) {
+      const path = join(current, child.name);
+      const entryPath = relative(canonicalRoot, path).replaceAll("\\", "/");
+      if (excludedSet.has(entryPath)) continue;
+      const info = lstatSync(path);
+      const mode = info.mode & 0o7777;
+      if (info.isSymbolicLink()) {
+        const target = readlinkSync(path);
+        if (!isPathContained(canonicalRoot, resolve(dirname(path), target)))
+          fail(`bundle symlink escapes its package: ${path} -> ${target}`);
+        entries.push({
+          path: entryPath,
+          kind: "symlink",
+          mode,
+          target,
+        });
+      } else if (info.isDirectory()) {
+        entries.push({ path: entryPath, kind: "directory", mode });
+        visit(path);
+      } else if (info.isFile()) {
+        entries.push({
+          path: entryPath,
+          kind: "file",
+          mode,
+          bytes: info.size,
+          sha256: sha256(path),
+        });
+      } else {
+        fail(`unsupported bundle entry type: ${path}`);
+      }
+    }
+  };
+  visit(canonicalRoot);
+  entries.sort((a, b) => stableCompare(a.path, b.path));
+  return {
+    schema: "orbsie.blender-runtime/tree-integrity/v1",
+    excluded: [...excludedSet].sort(),
+    entryCount: entries.length,
+    treeSha256: sha256Bytes(JSON.stringify(entries)),
+    entries,
+  };
 }
 
 function parseLdd(binary) {
@@ -692,8 +774,26 @@ function main() {
       : dependency,
   );
   let verification = { status: "skipped" };
-  if (options.verify) verification = verifyCleanEnvironment(bundle);
+  if (options.verify) {
+    verification = verifyCleanEnvironment(bundle);
+    // Verification output is evidence captured in the manifest, not runtime
+    // payload. Removing it also prevents temporary absolute Pulse symlinks
+    // from making the package tree path-dependent.
+    rmSync(join(bundle, "verification"), { recursive: true, force: true });
+  }
   const bundleStats = treeStats(bundle);
+  const integrity = buildTreeIntegrity(bundle);
+  const pythonLayout = options.numpy
+    ? "lib/python3.12/site-packages/numpy"
+    : (() => {
+        const pythonLib = join(bundle, "share/blender/python/lib");
+        const version = readdirSync(pythonLib, { withFileTypes: true }).find(
+          (entry) => entry.isDirectory() && /^python\d+\.\d+$/.test(entry.name),
+        )?.name;
+        if (!version)
+          fail("packaged Blender Python version directory is missing");
+        return `share/blender/python/lib/${version}/site-packages/numpy`;
+      })();
   const manifest = {
     schema: "orbsie.blender-runtime/v1",
     status: `${sourceKind}-prototype`,
@@ -723,7 +823,7 @@ function main() {
       launcher: "bin/orbsie-blender",
       executable: "bin/blender",
       resources: "share/blender",
-      python: "lib/python3.12/site-packages/numpy",
+      python: pythonLayout,
     },
     sourceStats,
     runtimeDependencies: {
@@ -736,6 +836,7 @@ function main() {
     },
     licenses,
     verification,
+    integrity,
     bundle: {
       payloadBytes: bundleStats.bytes,
       payloadFiles: bundleStats.files,
@@ -753,7 +854,24 @@ function main() {
     manifest.bundle.totalBytes = bundleStats.bytes + manifestBytes;
   }
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
-  console.log(JSON.stringify(manifest, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        status: "ok",
+        manifest: manifestPath,
+        blenderVersion: version.version,
+        verification: manifest.verification,
+        bundle: manifest.bundle,
+        integrity: {
+          schema: manifest.integrity.schema,
+          entryCount: manifest.integrity.entryCount,
+          treeSha256: manifest.integrity.treeSha256,
+        },
+      },
+      null,
+      2,
+    ),
+  );
   if (extracted)
     rmSync(extracted.extractRoot, { recursive: true, force: true });
 }

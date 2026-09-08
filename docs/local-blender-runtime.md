@@ -199,10 +199,14 @@ starting a job. Bubblewrap mounts that root read-only at
 system-install path remains the default when this variable is unset.
 
 The manifest check establishes consistency with the package metadata generated
-by the local packaging probe; it is not a signature, full extracted-tree
-measurement, or a supply-chain trust anchor. The executable digest is checked,
-but the manifest, resource files, native libraries and license files remain
-mutable local files under the configured runtime directory. The current
+by the local packaging probe; it is not a signature or a supply-chain trust
+anchor. The required tree-integrity section now covers every extracted entry
+except the manifest itself: file hashes/sizes/modes, directories and symlink
+targets. Missing, changed and extra entries fail validation. Hashing uses fixed
+1 MiB buffers and stable path ordering. Older integrity-less manifests must be
+regenerated from the pinned archive; they are not silently accepted. The
+manifest remains mutable local metadata, so replacing both files and metadata
+is outside this consistency check's protection. The current
 package still depends on host glibc, X11 and related Linux libraries, and its
 1.6 GiB prototype footprint is not a minimal distribution.
 The package includes Blender license notices and records the official source,

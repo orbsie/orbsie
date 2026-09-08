@@ -1,0 +1,26 @@
+{
+  "scope": "Rebuilt pinned local archive with full extracted-tree integrity; real modeling suite passed 7 tests",
+  "portable": false,
+  "archiveSha256": "5583a5588736da8858c522ef17fff5d73be59c47a6fe91ad29c6f3263e22086a",
+  "treeSha256": "c4b47a29c6f75c71afd80a77a701f1c4b169270083c4f3dad880d612be82d1a3",
+  "entryCount": 6558,
+  "bundle": {
+    "payloadBytes": 1697147484,
+    "payloadFiles": 5786,
+    "manifestBytes": 1622724,
+    "totalBytes": 1698770208
+  },
+  "verification": {
+    "status": "passed",
+    "command": "orbsie-blender --background --factory-startup --disable-autoexec --python trusted-probe.py",
+    "environment": "env -i equivalent: no inherited HOME, PYTHONPATH, credentials, or project cwd",
+    "blenderVersion": "4.0.2",
+    "numpyVersion": "1.23.5",
+    "coldStartMs": 1306,
+    "glb": {
+      "bytes": 3272,
+      "sha256": "d008134db9aba8f720a342df0bbe15c10d8a243330a5a9d8a741d042c14f7e90"
+    },
+    "blendBytes": 395308
+  }
+}

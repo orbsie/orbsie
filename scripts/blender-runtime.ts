@@ -1,10 +1,14 @@
 import { createHash } from "node:crypto";
 import {
+  closeSync,
   existsSync,
   lstatSync,
+  openSync,
   readFileSync,
+  readlinkSync,
   readdirSync,
   realpathSync,
+  readSync,
   statSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -40,6 +44,7 @@ type RuntimeManifest = {
     blenderVersion?: unknown;
     glb?: { bytes?: unknown };
   };
+  integrity?: unknown;
 };
 
 export type BlenderRuntime = {
@@ -59,7 +64,198 @@ function fail(message: string): never {
 }
 
 function fileSha256(path: string) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  const descriptor = openSync(path, "r");
+  const hash = createHash("sha256");
+  const chunk = Buffer.allocUnsafe(1024 * 1024);
+  try {
+    let bytesRead;
+    do {
+      bytesRead = readSync(descriptor, chunk, 0, chunk.length, null);
+      if (bytesRead > 0) hash.update(chunk.subarray(0, bytesRead));
+    } while (bytesRead > 0);
+  } finally {
+    closeSync(descriptor);
+  }
+  return hash.digest("hex");
+}
+
+function stableCompare(left: string, right: string) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function isContained(root: string, candidate: string) {
+  const relativePath = relative(root, candidate);
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && relativePath !== "..")
+  );
+}
+
+type TreeIntegrityEntry =
+  | { path: string; kind: "directory"; mode: number }
+  | {
+      path: string;
+      kind: "file";
+      mode: number;
+      bytes: number;
+      sha256: string;
+    }
+  | { path: string; kind: "symlink"; mode: number; target: string };
+
+type TreeIntegrityManifest = {
+  schema?: unknown;
+  excluded?: unknown;
+  entryCount?: unknown;
+  treeSha256?: unknown;
+  entries?: unknown;
+};
+
+function actualTreeEntries(root: string, excluded: Set<string>) {
+  const entries: TreeIntegrityEntry[] = [];
+  const visit = (current: string) => {
+    const children = readdirSync(current, { withFileTypes: true }).sort(
+      (a, b) => stableCompare(a.name, b.name),
+    );
+    for (const child of children) {
+      const path = join(current, child.name);
+      const entryPath = relative(root, path).replaceAll("\\", "/");
+      if (excluded.has(entryPath)) continue;
+      const info = lstatSync(path);
+      const mode = info.mode & 0o7777;
+      if (info.isSymbolicLink()) {
+        const target = readlinkSync(path);
+        if (!isContained(root, resolve(dirname(path), target)))
+          fail(`packaged runtime symlink escapes its package: ${entryPath}`);
+        entries.push({
+          path: entryPath,
+          kind: "symlink",
+          mode,
+          target,
+        });
+      } else if (info.isDirectory()) {
+        entries.push({ path: entryPath, kind: "directory", mode });
+        visit(path);
+      } else if (info.isFile()) {
+        entries.push({
+          path: entryPath,
+          kind: "file",
+          mode,
+          bytes: info.size,
+          sha256: fileSha256(path),
+        });
+      } else {
+        fail(`unsupported packaged runtime entry type: ${path}`);
+      }
+    }
+  };
+  visit(root);
+  entries.sort((a, b) => stableCompare(a.path, b.path));
+  return entries;
+}
+
+function validTreeEntry(value: unknown): TreeIntegrityEntry {
+  if (!value || typeof value !== "object")
+    fail("packaged runtime tree integrity entry is invalid");
+  const entry = value as Record<string, unknown>;
+  const path = entry.path;
+  const kind = entry.kind;
+  const mode = entry.mode;
+  if (
+    typeof path !== "string" ||
+    path.length === 0 ||
+    path.startsWith("/") ||
+    path.split("/").includes("..") ||
+    path.includes("\\") ||
+    typeof kind !== "string" ||
+    !Number.isSafeInteger(mode) ||
+    (mode as number) < 0
+  )
+    fail(
+      "packaged runtime tree integrity entry has invalid path, kind or mode",
+    );
+  if (kind === "directory") return { path, kind, mode: mode as number };
+  if (kind === "file") {
+    if (
+      !Number.isSafeInteger(entry.bytes) ||
+      (entry.bytes as number) < 0 ||
+      typeof entry.sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(entry.sha256)
+    )
+      fail(`packaged runtime file integrity entry is invalid: ${path}`);
+    return {
+      path,
+      kind,
+      mode: mode as number,
+      bytes: entry.bytes as number,
+      sha256: entry.sha256,
+    };
+  }
+  if (kind === "symlink" && typeof entry.target === "string")
+    return { path, kind, mode: mode as number, target: entry.target };
+  fail(`packaged runtime integrity entry has unsupported kind: ${path}`);
+}
+
+/** Verify a complete package tree against the versioned manifest section. */
+export function verifyTreeIntegrity(
+  root: string,
+  value: unknown,
+): TreeIntegrityEntry[] {
+  if (!value || typeof value !== "object")
+    fail(
+      "packaged runtime manifest has no tree integrity section; regenerate it",
+    );
+  const manifest = value as TreeIntegrityManifest;
+  if (manifest.schema !== "orbsie.blender-runtime/tree-integrity/v1")
+    fail(
+      "packaged runtime tree integrity schema is unsupported; regenerate it",
+    );
+  if (
+    !Array.isArray(manifest.excluded) ||
+    manifest.excluded.length !== 1 ||
+    manifest.excluded[0] !== "manifest.json"
+  )
+    fail("packaged runtime tree integrity exclusion set is invalid");
+  if (!Array.isArray(manifest.entries))
+    fail("packaged runtime tree integrity entries are missing");
+  const expected = manifest.entries.map(validTreeEntry);
+  if (
+    manifest.entryCount !== expected.length ||
+    !Number.isSafeInteger(manifest.entryCount)
+  )
+    fail("packaged runtime tree integrity entry count is invalid");
+  const paths = new Set<string>();
+  for (const entry of expected) {
+    if (paths.has(entry.path))
+      fail(
+        `packaged runtime tree integrity contains duplicate path: ${entry.path}`,
+      );
+    paths.add(entry.path);
+  }
+  const expectedCanonical = JSON.stringify(expected);
+  if (
+    typeof manifest.treeSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(manifest.treeSha256) ||
+    createHash("sha256").update(expectedCanonical).digest("hex") !==
+      manifest.treeSha256
+  )
+    fail("packaged runtime tree integrity manifest digest is invalid");
+  const actual = actualTreeEntries(root, new Set(["manifest.json"]));
+  if (JSON.stringify(actual) !== expectedCanonical) {
+    const actualByPath = new Map(actual.map((entry) => [entry.path, entry]));
+    for (const entry of expected) {
+      const actualEntry = actualByPath.get(entry.path);
+      if (!actualEntry)
+        fail(`packaged runtime entry is missing: ${entry.path}`);
+      if (JSON.stringify(actualEntry) !== JSON.stringify(entry))
+        fail(`packaged runtime entry changed: ${entry.path}`);
+    }
+    const expectedByPath = new Set(expected.map((entry) => entry.path));
+    const unexpected = actual.find((entry) => !expectedByPath.has(entry.path));
+    fail(
+      `packaged runtime has an unexpected entry: ${unexpected?.path || "unknown"}`,
+    );
+  }
+  return actual;
 }
 
 function stringField(value: unknown, label: string): string {
@@ -187,6 +383,7 @@ export function resolveBlenderRuntime(): BlenderRuntime {
     fail(
       `official Blender ${version} archive digest does not match the pinned release`,
     );
+  verifyTreeIntegrity(root, manifest.integrity);
 
   const blenderPath = relativeRuntimePath(
     root,
