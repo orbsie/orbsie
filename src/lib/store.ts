@@ -1,6 +1,6 @@
 "use client";
 import { create } from "zustand";
-import { get, set, update } from "idb-keyval";
+import { get, update } from "idb-keyval";
 import {
   blankProject,
   committed,
@@ -199,19 +199,27 @@ export const useOrb = create<State>((setState, getState) => ({
   reset: 0,
   set: setState,
   async save() {
+    const captured = getState();
+    const capturedProject = captured.project;
+    const capturedBaseline = baseline;
+    const isCurrent = () => getState().project === capturedProject;
     try {
-      const s = getState();
-      if (!activateWriter(s.project.id)) {
-        setState({
-          readOnly: true,
-          error:
-            "This world is open in another tab. Continue there, or wait a moment before editing here.",
-        });
+      if (!activateWriter(capturedProject.id)) {
+        if (isCurrent())
+          setState({
+            readOnly: true,
+            error:
+              "This world is open in another tab. Continue there, or wait a moment before editing here.",
+          });
         return;
       }
-      const snapshot = committed(s.project, baseline);
+      const snapshot = committed(capturedProject, capturedBaseline);
       const history = readLocalHistory(
-        { project: snapshot, history: s.history, future: s.future },
+        {
+          project: snapshot,
+          history: captured.history,
+          future: captured.future,
+        },
         snapshot,
       )!;
       const wrote = await withDraftWriteLock(snapshot.id, async () => {
@@ -230,21 +238,24 @@ export const useOrb = create<State>((setState, getState) => ({
             [snapshot.id]: history,
           }),
         );
-        await set("orbsie-draft", {
-          ...history,
-          savedAt: Date.now(),
-        });
 
+        // A switched world still keeps its own library/history checkpoint, but
+        // must not replace the compatibility pointer for the newly selected world.
+        await update("orbsie-draft", (current) =>
+          isCurrent() ? { ...history, savedAt: Date.now() } : current,
+        );
         return true;
       });
       if (!wrote) {
-        setState({
-          readOnly: true,
-          error:
-            "A newer local draft was saved in another tab. This tab was made read-only.",
-        });
+        if (isCurrent())
+          setState({
+            readOnly: true,
+            error:
+              "A newer local draft was saved in another tab. This tab was made read-only.",
+          });
         return;
       }
+      if (!isCurrent()) return;
       setState({
         draftHistory: { ...getState().draftHistory, [snapshot.id]: history },
         saved: true,
@@ -255,10 +266,11 @@ export const useOrb = create<State>((setState, getState) => ({
         ],
       });
     } catch {
-      setState({
-        error:
-          "This browser could not save your draft. Export it before closing.",
-      });
+      if (isCurrent())
+        setState({
+          error:
+            "This browser could not save your draft. Export it before closing.",
+        });
     }
   },
   async loadCloud(project, isCurrent = () => true) {
@@ -345,6 +357,7 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   load(project, play = false) {
     active?.abort();
+    active = undefined;
     baseline = project;
     const writer = play || activateWriter(project.id);
     const history = play
@@ -379,6 +392,7 @@ export const useOrb = create<State>((setState, getState) => ({
     active = undefined;
     const s = getState();
     setState({
+      phase: s.phase === "descending" ? "editing" : s.phase,
       building: false,
       project: committed(s.project, baseline),
       notice: "Stopped. Finished objects are safe.",
@@ -417,6 +431,7 @@ export const useOrb = create<State>((setState, getState) => ({
       return;
     }
     active?.abort();
+    active = undefined;
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
@@ -459,7 +474,12 @@ export const useOrb = create<State>((setState, getState) => ({
     if (initial)
       setTimeout(
         () => {
-          if (getState().phase === "descending") setState({ phase: "editing" });
+          if (
+            !signal.aborted &&
+            getState().project.id === project.id &&
+            getState().phase === "descending"
+          )
+            setState({ phase: "editing" });
         },
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? 100
@@ -471,8 +491,8 @@ export const useOrb = create<State>((setState, getState) => ({
       seen: new Set(),
     };
     let lastAppliedCommand: Command["type"] | undefined;
-    const apply = (command: Command) => {
-      if (signal.aborted || active !== controller) return;
+    const apply = async (command: Command) => {
+      if (signal.aborted || active !== controller) return false;
       const s = getState();
       const result = applyOperation(
         s.project,
@@ -490,20 +510,28 @@ export const useOrb = create<State>((setState, getState) => ({
       cursor = result.cursor;
       lastAppliedCommand = command.type;
       setState({ project: result.project });
-      if (
-        command.type === "set_geometry" &&
-        command.geometry.detail === "refined"
-      )
-        void getState().save();
+      const checkpoint =
+        (command.type === "set_geometry" &&
+          command.geometry.detail === "refined") ||
+        command.type === "set_material" ||
+        command.type === "set_transform" ||
+        command.type === "set_behavior" ||
+        command.type === "set_environment" ||
+        command.type === "remove_entity" ||
+        command.type === "commit_revision";
+      if (checkpoint) await getState().save();
+      return !signal.aborted && active === controller;
     };
     try {
+      await getState().save();
+      if (signal.aborted || active !== controller) return;
       if (demo) {
         const commands = initial
           ? fixtureCommands(prompt.toLowerCase().includes("garden"))
           : fixtureEdit(project, prompt, selected);
         for (const command of commands) {
           await pause(command.type === "reserve_entity" ? 170 : 240, signal);
-          apply(command);
+          if (!(await apply(command))) return;
         }
       } else {
         const response = await fetch("/api/generate", {
@@ -516,6 +544,7 @@ export const useOrb = create<State>((setState, getState) => ({
           const body = await response.json();
           throw Error(body.error ?? "Connection failed. Your world is safe.");
         }
+        if (signal.aborted || active !== controller) return;
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let pending = "";
@@ -531,16 +560,19 @@ export const useOrb = create<State>((setState, getState) => ({
             if (!line.trim()) continue;
             const record = JSON.parse(line);
             if (record.error) throw Error(record.error);
-            apply(record);
+            if (!(await apply(record))) {
+              await reader.cancel().catch(() => undefined);
+              return;
+            }
           }
         }
-        if (pending.trim()) apply(JSON.parse(pending));
+        if (pending.trim() && !(await apply(JSON.parse(pending)))) return;
         if (lastAppliedCommand !== "commit_revision")
           throw Error(
             "The connection ended before committing the scene. Finished objects are safe; try continuing your request.",
           );
       }
-      if (active === controller) {
+      if (active === controller && !signal.aborted) {
         setState({
           building: false,
           notice: "Your world is saved on this device.",
@@ -548,7 +580,7 @@ export const useOrb = create<State>((setState, getState) => ({
         await getState().save();
       }
     } catch (error) {
-      if (active === controller) {
+      if (active === controller && !signal.aborted) {
         setState({
           building: false,
           project: committed(getState().project, before),
@@ -560,6 +592,8 @@ export const useOrb = create<State>((setState, getState) => ({
         });
         await getState().save();
       }
+    } finally {
+      if (active === controller) active = undefined;
     }
   },
 }));

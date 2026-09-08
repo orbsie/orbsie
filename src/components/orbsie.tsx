@@ -56,6 +56,12 @@ const tokenPrice = (value: number | null | undefined) =>
   value == null
     ? "—"
     : `$${value.toLocaleString("en-US", { maximumFractionDigits: 6 })}`;
+const terminalPublicationStates = new Set([
+  "READY",
+  "ERROR",
+  "CANCELED",
+  "PROTECTED",
+]);
 type CloudProject = {
   id: string;
   title: string;
@@ -109,6 +115,8 @@ export default function Orbsie() {
   const [publicationRecord, setPublicationRecord] =
     useState<ProjectValue<Publication> | null>(null);
   const publication = scopedValue(publicationRecord, s.project.id);
+  const publicationNeedsPolling =
+    publication != null && !terminalPublicationStates.has(publication.state);
   const projectScope = useRef(createProjectScope(s.project.id));
   const accountGeneration = useRef(0);
   const captureCloudRequest = () => {
@@ -257,7 +265,12 @@ export default function Orbsie() {
     return () => controller.abort();
   }, [modal, connection.provider]);
   useEffect(() => {
-    if (modal !== "share" || !user || !capabilities.publishing) return;
+    if (
+      !user ||
+      !capabilities.publishing ||
+      (modal !== "share" && !publicationNeedsPolling)
+    )
+      return;
     const projectId = s.project.id;
     const inProject = captureCloudRequest();
     let cancelled = false;
@@ -271,20 +284,29 @@ export default function Orbsie() {
       if (data === undefined) return;
       setPublicationRecord(data ? { projectId, value: data } : null);
       if (!data) return;
-      if (!["READY", "ERROR", "CANCELED", "PROTECTED"].includes(data.state))
+      if (!terminalPublicationStates.has(data.state))
         timer = setTimeout(() => void poll(), 2500);
     };
     const poll = () =>
       check().catch(() => {
-        if (isCurrent())
+        if (isCurrent() && modal === "share")
           setModalError("Publication status could not be loaded.");
+        if (isCurrent() && publicationNeedsPolling)
+          timer = setTimeout(() => void poll(), 2500);
       });
     void poll();
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [modal, user, capabilities.publishing, s.project.id, publication?.state]);
+  }, [
+    modal,
+    user,
+    capabilities.publishing,
+    s.project.id,
+    publicationNeedsPolling,
+    publication?.state,
+  ]);
   useEffect(() => {
     dictation.cancel();
   }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);

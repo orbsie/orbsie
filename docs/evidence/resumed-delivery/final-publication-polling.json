@@ -1,0 +1,85 @@
+{
+  "base": "http://localhost:3016",
+  "checks": [
+    "opened saved fixture world",
+    "queued publication through intercepted POST",
+    "background polling retrieved READY after Share closed",
+    "reopened Share with served revision and stable link",
+    "project switch discarded delayed stale publication",
+    "background status failure did not spill into account dialog and retried",
+    "fixture run made no unexpected API or model requests"
+  ],
+  "publicationGets": [
+    {
+      "projectId": "publication-poll-regression",
+      "state": "404",
+      "servedRevision": null,
+      "afterShareClosed": false
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "READY",
+      "servedRevision": 7,
+      "afterShareClosed": true
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "READY",
+      "servedRevision": 7,
+      "afterShareClosed": true
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "READY",
+      "servedRevision": 7,
+      "afterShareClosed": false
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "QUEUED",
+      "servedRevision": 6,
+      "afterShareClosed": true
+    },
+    {
+      "projectId": "publication-poll-other-world",
+      "state": "404",
+      "servedRevision": null,
+      "afterShareClosed": false
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "QUEUED",
+      "servedRevision": 6,
+      "afterShareClosed": false
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "QUEUED",
+      "servedRevision": 6,
+      "afterShareClosed": false
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "QUEUED",
+      "servedRevision": 6,
+      "afterShareClosed": true
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "NETWORK_ERROR",
+      "servedRevision": null,
+      "afterShareClosed": true
+    },
+    {
+      "projectId": "publication-poll-regression",
+      "state": "QUEUED",
+      "servedRevision": 6,
+      "afterShareClosed": true
+    }
+  ],
+  "publicationPosts": [
+    "publication-poll-regression"
+  ],
+  "unexpectedApi": [],
+  "inferenceRequests": []
+}

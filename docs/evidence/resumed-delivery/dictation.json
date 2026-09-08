@@ -1,0 +1,28 @@
+{
+  "url": "http://localhost:3012",
+  "errors": [],
+  "centered": {
+    "x": 0,
+    "y": 0
+  },
+  "mobile": {
+    "x": 0,
+    "y": 0,
+    "overflow": false
+  },
+  "permissionPolicy": "camera=(), microphone=(self), geolocation=()",
+  "checks": [
+    "exact placeholder",
+    "selectors removed",
+    "desktop and mobile centered",
+    "interim transcript",
+    "final correction without duplication",
+    "preserved typed prefix",
+    "stop",
+    "manual edit cancels recognition",
+    "late result ignored",
+    "permission denial preserves text",
+    "unsupported browser fallback"
+  ],
+  "speechEngine": "Mocked Web Speech API events; no real microphone audio or browser transcription service tested."
+}

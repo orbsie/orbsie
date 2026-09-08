@@ -48,12 +48,18 @@ export async function POST(request: Request) {
   try {
     checkOrigin(request);
     const user = await requireUser(request);
-    const { projectId, revision } = z
+    const parsed = z
       .object({
-        projectId: z.string().max(80),
+        projectId: z.string().min(1).max(80),
         revision: z.number().int().min(0),
       })
-      .parse(await boundedJSON(request, 1000));
+      .safeParse(await boundedJSON(request, 1000));
+    if (!parsed.success)
+      throw new HttpError(
+        400,
+        "Check your world and revision before publishing.",
+      );
+    const { projectId, revision } = parsed.data;
     client = await database().connect();
     await client.query("BEGIN");
     const result = await client.query(

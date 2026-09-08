@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "fixtureGenerations": 1,
+  "providerNetworkCalls": 0,
+  "authenticatedRequests": 0,
+  "errors": [],
+  "models": [
+    "openai/gpt-6-astra",
+    "openai/gpt-5.6-sol",
+    "openai/gpt-5.6-luna",
+    "test/unknown"
+  ]
+}

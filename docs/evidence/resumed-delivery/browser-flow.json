@@ -1,0 +1,29 @@
+{
+  "url": "http://localhost:3012",
+  "errors": [],
+  "completeMs": 12010,
+  "frames": {
+    "median": 83.40000000000146,
+    "p95": 150,
+    "samples": 120,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "renderer": "WebKit WebGL"
+  },
+  "mobileOverflow": false,
+  "checks": [
+    "landing",
+    "formation",
+    "island generation",
+    "object selection",
+    "mushroom revision",
+    "undo",
+    "keyboard movement",
+    "jump",
+    "ZIP download",
+    "refresh recovery",
+    "signed-out public playback",
+    "mobile garden",
+    "touch controls"
+  ],
+  "shareUrl": "http://localhost:3012/#orb=H4sIAExnn2oAA82W32vbMBDH_5WgvtrGv-3kbQz2tMHG9lb6IFvnRlSxjaxkDaH_--5ih0puuga2lhASgmTdfT--H7oD24EeZNeyVeQxKdiKJYlosrTI_Aog8dO4iv0yCRNflCJOawF5VmbMY0YaBfj4p0Xf1Q9gmq1adM1i2LbDWraATwwAaC-NPaZhJ0cnaekxaPGshIGtbg-jS6MB_BCPKF6BwoUvWkIr1H5BO7jedwMeIQO3fhpkXuhFd-ig5iThNgrizIuChH7iDDfqTnUazdzkYimyEg3cQ7cBo_dsdWAPsj05xR0BhkvyqaFB3YI9eayCNd9JMnFgZt8T5mC4kTVt4r97WtHAxR4XbIbIYvgqDb6hMwQpyk9s-R5-bNVlU5V5_iGq-w6tPmv-sZVgMKDHRfulJ14YhKnnO7qDnJTPXnlR1SAolmfET4b_m3jFTdPpjZs6Ug-IMG25GCFSJLPUwWQijsCBwMwVnLL8HMSz6QtBNt3uWA_9sSDCoPAY3_RKmq3AbXLP-KPEemAE9yatnWTfpBCYZOdxoyOaP7K5xMUL4qYulvX7EGNncXixB0y8j5fwxnZR8b8Gt_D8dJahI2tuswpRp7B8r-hSNG3a7KLo1nqPO8pJ5c_j2oICbhdjjFCl00LI6_S1QXnUhKI4Dzo5vJwTrSqozQUMdoKeGCiIFsOIEF8tgp1zJ4TERaCWWGJ1XS0D6Z0zpLNUohaBENebSyR4DkGN-UUu-XaTuw6GvtOjxRPAz22r5P2abthpx-1fnp_PenVM9yt9nV4tRFW9gsF1vb6cYdLxxlRjF8MvrtSZmYZGslnrjWgco5s1cueDguc5RfX9hxuNg6kl_TtUlcKx060AUu4Kp8LGO8MWXeFIU71yO05e_lU0uoN2J3XXbnBAphPDA7rB26oGGG8r3W2PHm-WUbUsKAF-cwNHgdmywpwgsxsYBjRM0_Xd0x8sHM-J3wsAAA"
+}
