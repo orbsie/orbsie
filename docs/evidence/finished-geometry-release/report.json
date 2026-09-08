@@ -1,0 +1,59 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-08T19:48:02.041Z",
+  "sourceCommit": "8fc9dd1",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": null,
+    "environment": null,
+    "url": "https://orbsie-jnj20jje5-grappeggias-projects.vercel.app"
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "9c60ee6be9b2872d4884633a46af93297922d17b86546032670a287ecbacf316",
+      "observedSha256": "9c60ee6be9b2872d4884633a46af93297922d17b86546032670a287ecbacf316",
+      "bytes": 1724617
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": [
+        {
+          "method": "GET",
+          "path": "/css2"
+        }
+      ]
+    },
+    "geometryWorkers": [
+      {
+        "file": "generated-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "6ad9bdef60a35871d17e11914bc86924b566d286d61c2f08321fa4d72260e174",
+        "bytes": 839910
+      },
+      {
+        "file": "asset-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "c967a2e275589bbe4a024ceb05c60a8075f30fd943815d9644fe84f7d33376be",
+        "bytes": 410412
+      }
+    ]
+  },
+  "screenshot": "docs/evidence/finished-geometry-release/landing.png"
+}

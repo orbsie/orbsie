@@ -35,6 +35,7 @@ const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
 const REPORT_MODE = "live-browser";
+const JOURNAL_POLL_TIMEOUT = 120000;
 
 class HarnessConfigurationError extends Error {
   constructor(message) {
@@ -70,6 +71,7 @@ function parseArgs(argv) {
           "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local",
           "",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
+          "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1 for authenticated chatgpt-local recovery.",
         ].join("\n"),
       );
       process.exit(0);
@@ -229,6 +231,7 @@ function readConfiguration(argv) {
     publication:
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
+    interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     keyEnv:
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
@@ -265,6 +268,30 @@ function readConfiguration(argv) {
   )
     throw new HarnessConfigurationError(
       "ORBSIE_VERIFY_CLOUD_RECOVERY must be 0 or 1.",
+    );
+
+  if (
+    process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY !== undefined &&
+    !["0", "1"].includes(process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY must be 0 or 1.",
+    );
+  if (config.interruptedRecovery && !config.cloudRecovery)
+    throw new HarnessConfigurationError(
+      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 requires ORBSIE_VERIFY_CLOUD_RECOVERY=1 so the authenticated cloud journal is enabled.",
+    );
+  if (config.interruptedRecovery && provider !== "chatgpt-local")
+    throw new HarnessConfigurationError(
+      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 is currently supported only with --provider chatgpt-local.",
+    );
+
+  if (
+    (config.publication || config.cloudRecovery) &&
+    !process.env.ORBSIE_CLOUD_TEST_STATE
+  )
+    throw new HarnessConfigurationError(
+      "A real cloud phase was explicitly requested; set ORBSIE_CLOUD_TEST_STATE to the private mode-0600 state file.",
     );
 
   if (provider === "chatgpt-local") {
@@ -329,13 +356,6 @@ function readConfiguration(argv) {
     config.builderURL = builder.origin;
     config.builderToken = process.env.ORBSIE_BUILDER_TOKEN;
   }
-  if (
-    (config.publication || config.cloudRecovery) &&
-    !process.env.ORBSIE_CLOUD_TEST_STATE
-  )
-    throw new HarnessConfigurationError(
-      "A real cloud phase was explicitly requested; set ORBSIE_CLOUD_TEST_STATE to the private mode-0600 state file.",
-    );
   return config;
 }
 
@@ -398,6 +418,14 @@ function emptyReport(config) {
       mode: config.cloudRecovery ? "real" : "not-requested",
       status: config.cloudRecovery ? "not-started" : "not-requested",
       phases: [],
+      interruptedRecovery: config.interruptedRecovery
+        ? {
+            mode: "real",
+            status: "not-started",
+            phases: [],
+            requestCounts: [],
+          }
+        : undefined,
     },
     fallbackUsed: false,
     traffic: {
@@ -475,6 +503,8 @@ function attachRequestEvidence(page, config, info) {
         hasKey,
         promptLength:
           typeof payload.prompt === "string" ? payload.prompt.length : 0,
+        projectSnapshot: payload.project,
+        projectId: payload.project?.id ?? null,
         projectRevision: payload.project?.revision ?? null,
         selected: typeof payload.selected === "string" ? true : false,
         selectedId:
@@ -490,6 +520,8 @@ function attachRequestEvidence(page, config, info) {
         hasKeyField: Object.hasOwn(payload, "key"),
         promptLength:
           typeof payload.prompt === "string" ? payload.prompt.length : 0,
+        projectSnapshot: payload.project,
+        projectId: payload.project?.id ?? null,
         projectRevision: payload.project?.revision ?? null,
         selected: typeof payload.selected === "string" ? true : false,
         selectedId:
@@ -499,6 +531,25 @@ function attachRequestEvidence(page, config, info) {
   });
   page.on("response", (response) => {
     const responseURL = new URL(response.url());
+    if (
+      config.interruptedRecovery &&
+      responseURL.origin === config.baseOrigin &&
+      responseURL.pathname === "/api/generation-runs" &&
+      response.request().method() === "PUT" &&
+      response.status() === 200
+    ) {
+      void response
+        .json()
+        .then((body) => {
+          if (
+            body.run &&
+            (!info.latestJournalRun ||
+              body.run.sequence >= info.latestJournalRun.sequence)
+          )
+            info.latestJournalRun = body.run;
+        })
+        .catch(() => {});
+    }
     if (
       (responseURL.pathname === "/api/generate" &&
         responseURL.origin === config.baseOrigin) ||
@@ -817,22 +868,35 @@ async function configureChatGPTLocal(page, config, report, info, evidenceDir) {
 }
 
 function assertGenerationRequests(config, info) {
-  const expectedCount = 2;
+  const expectedCount = config.interruptedRecovery ? 3 : 2;
   assert.equal(
     info.generationRequests,
     expectedCount,
-    `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
+    config.interruptedRecovery
+      ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
+      : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
   );
   assert.equal(
     info.interceptedGeneration,
     false,
     "A generation request was not a complete live request.",
   );
-  assert.deepEqual(
-    info.generationStatuses,
-    [200, 200],
-    "A live generation transport did not return two successful responses.",
-  );
+  if (config.interruptedRecovery) {
+    assert(
+      info.generationStatuses.every((status) => status === 200),
+      "A live interrupted-recovery transport returned a non-success response.",
+    );
+    assert(
+      info.generationStatuses.length >= 2,
+      "The continuation and edit did not both return successful responses.",
+    );
+  } else {
+    assert.deepEqual(
+      info.generationStatuses,
+      [200, 200],
+      "A live generation transport did not return two successful responses.",
+    );
+  }
   if (config.provider === "chatgpt-local") {
     for (const body of info.generationBodies) {
       assert.equal(body.transport, "loopback-companion");
@@ -1192,6 +1256,13 @@ async function readExplicitCloudStorageState(config) {
     throw new HarnessBlockedError(
       "The explicit cloud test state has no storageState.",
     );
+  if (
+    config.interruptedRecovery &&
+    (!Array.isArray(storageState.cookies) || storageState.cookies.length === 0)
+  )
+    throw new HarnessBlockedError(
+      "Interrupted recovery requires an authenticated cloud storageState with session cookies; no inference was attempted.",
+    );
   return storageState;
 }
 
@@ -1212,6 +1283,291 @@ async function sameOriginJSON(page, path) {
   }, path);
 }
 
+function readyCheckpointEntities(project) {
+  return Array.isArray(project?.entities)
+    ? project.entities.filter(
+        (entity) => entity?.stage === "ready" && entity?.geometry,
+      )
+    : [];
+}
+
+function journalRunDescription(run) {
+  if (!run) return "no run returned";
+  return `state=${run.state}, sequence=${run.sequence}, revision=${run.checkpoint?.revision ?? "?"}, readyEntities=${readyCheckpointEntities(run.checkpoint).length}`;
+}
+
+async function readLatestJournalRun(page, projectId) {
+  const latestResponse = await sameOriginJSON(
+    page,
+    `/api/generation-runs?projectId=${encodeURIComponent(projectId)}`,
+  );
+  if (latestResponse.status !== 200)
+    throw new HarnessBlockedError(
+      `Authenticated cloud journal lookup failed before interruption (HTTP ${latestResponse.status}).`,
+    );
+  const run = latestResponse.body?.run;
+  assert(run, "Authenticated cloud journal response omitted its run.");
+  assert.equal(
+    run.projectId,
+    projectId,
+    "Authenticated cloud journal returned a different project.",
+  );
+  return run;
+}
+
+/**
+ * Interrupt the first real ChatGPT-local stream after a durable ready
+ * checkpoint, then drive the account UI recovery and its continuation.
+ *
+ * The journal is the timing source. The harness never sleeps hoping that a
+ * provider command arrived: it polls the authenticated API and records the
+ * last durable run state when a bounded wait fails.
+ */
+async function verifyInterruptedRecovery(
+  page,
+  config,
+  report,
+  info,
+  projectId,
+  evidenceDir,
+) {
+  assert(config.interruptedRecovery);
+  const interruption = report.cloudRecovery.interruptedRecovery;
+  interruption.status = "running";
+  const phases = interruption.phases;
+  const requestCounts = interruption.requestCounts;
+  let lastRun;
+  let earlyCompleteRun;
+
+  requestCounts.push({
+    phase: "initial-generation-started",
+    count: info.generationRequests,
+  });
+  assert.equal(
+    info.generationRequests,
+    1,
+    "Interrupted recovery requires exactly one initial live generation request before checkpoint polling.",
+  );
+
+  try {
+    await expect
+      .poll(
+        async () => {
+          lastRun = info.latestJournalRun;
+          if (!lastRun) return "waiting-for-durable-acknowledgement";
+          assert.equal(lastRun.projectId, projectId);
+          if (lastRun.state === "complete") {
+            earlyCompleteRun = lastRun;
+            return "complete";
+          }
+          const ready = readyCheckpointEntities(lastRun.checkpoint).length;
+          return `${lastRun.state}:${lastRun.sequence}:${ready}`;
+        },
+        {
+          timeout: JOURNAL_POLL_TIMEOUT,
+          intervals: [100, 150, 250],
+        },
+      )
+      .toMatch(/^running:[1-9]\d*:[1-9]\d*$/);
+  } catch (error) {
+    if (earlyCompleteRun)
+      throw Error(
+        `The initial generation completed before it could be interrupted (${journalRunDescription(earlyCompleteRun)}). Rerun with a slower or longer-lived real ChatGPT stream; a completed run is not treated as interrupted recovery.`,
+      );
+    throw Error(
+      `Timed out waiting for a running cloud journal checkpoint with sequence > 0 and a ready entity after ${JOURNAL_POLL_TIMEOUT}ms (${journalRunDescription(lastRun)}): ${error instanceof Error ? error.message : error}`,
+    );
+  }
+  phases.push("ready-checkpoint-sequence-observed");
+  requestCounts.push({
+    phase: "ready-checkpoint",
+    count: info.generationRequests,
+  });
+  interruption.checkpointSequence = lastRun.sequence;
+  interruption.checkpointRevision = lastRun.checkpoint.revision;
+  interruption.readyEntityCount = readyCheckpointEntities(
+    lastRun.checkpoint,
+  ).length;
+
+  const stop = page.getByRole("button", { name: "Stop", exact: true });
+  try {
+    await expect(stop).toBeVisible({ timeout: 30000 });
+  } catch (error) {
+    const current = await readLatestJournalRun(page, projectId).catch(
+      () => lastRun,
+    );
+    if (current?.state === "complete")
+      throw Error(
+        `The initial generation completed before the harness could click the live Stop control (${journalRunDescription(current)}).`,
+      );
+    throw Error(
+      `The live Stop control disappeared before interruption (${journalRunDescription(current)}): ${error instanceof Error ? error.message : error}`,
+    );
+  }
+  phases.push("live-stop-control-observed");
+  await stop.click();
+  requestCounts.push({ phase: "stop-clicked", count: info.generationRequests });
+  assert.equal(
+    info.generationRequests,
+    1,
+    "Stopping the initial stream unexpectedly created another generation request.",
+  );
+  await expect(stop).toHaveCount(0, { timeout: 30000 });
+  phases.push("live-stop-clicked");
+
+  let terminalRun;
+  let terminalCompleteRun;
+  try {
+    await expect
+      .poll(
+        async () => {
+          terminalRun = await readLatestJournalRun(page, projectId);
+          if (terminalRun.state === "complete") {
+            terminalCompleteRun = terminalRun;
+            return "complete";
+          }
+          return terminalRun.state;
+        },
+        {
+          timeout: JOURNAL_POLL_TIMEOUT,
+          intervals: [100, 200, 400, 800, 1200],
+        },
+      )
+      .toMatch(/^(cancelled|interrupted)$/);
+  } catch (error) {
+    if (terminalCompleteRun)
+      throw Error(
+        `The initial generation completed after Stop was clicked; the harness will not treat it as interrupted (${journalRunDescription(terminalCompleteRun)}).`,
+      );
+    throw Error(
+      `The stopped generation did not reach a terminal noncomplete journal state within ${JOURNAL_POLL_TIMEOUT}ms (${journalRunDescription(terminalRun)}): ${error instanceof Error ? error.message : error}`,
+    );
+  }
+  assert(
+    terminalRun.sequence > 0,
+    `The terminal interrupted journal checkpoint has no committed operation (${journalRunDescription(terminalRun)}).`,
+  );
+  assert(
+    ["cancelled", "interrupted"].includes(terminalRun.state),
+    `The initial generation did not end in a noncomplete state (${journalRunDescription(terminalRun)}).`,
+  );
+  phases.push(`terminal-${terminalRun.state}`);
+  requestCounts.push({
+    phase: `terminal-${terminalRun.state}`,
+    count: info.generationRequests,
+  });
+  interruption.runId = terminalRun.id;
+  interruption.terminalState = terminalRun.state;
+  interruption.terminalSequence = terminalRun.sequence;
+
+  await page
+    .getByRole("button", { name: "Your account and cloud worlds", exact: true })
+    .click();
+  phases.push("account-ui-opened-for-recovery");
+  const recover = page.getByRole("button", {
+    name: "Recover latest generation",
+    exact: true,
+  });
+  await expect(recover).toBeVisible({ timeout: 30000 });
+  await recover.click();
+  await expect(
+    page.getByText(
+      "Recovered finished work. Send the continuation to start a new generation request.",
+      { exact: true },
+    ),
+  ).toBeVisible({ timeout: 30000 });
+  phases.push("account-ui-recovery-terminal-noncomplete");
+
+  const expectedCheckpoint =
+    terminalRun.recoveryCheckpoint ?? terminalRun.checkpoint;
+  interruption.recoveryCheckpointUsed = terminalRun.recoveryCheckpoint
+    ? "recoveryCheckpoint"
+    : "checkpoint";
+  await expect
+    .poll(async () => persistenceJSON((await storageSnapshot(page)).project), {
+      timeout: 30000,
+      intervals: [100, 200, 400, 800, 1200],
+    })
+    .toEqual(persistenceJSON(expectedCheckpoint));
+  const recovered = await storageSnapshot(page);
+  assert.deepEqual(
+    persistenceJSON(recovered.project),
+    persistenceJSON(expectedCheckpoint),
+    "Interrupted recovery installed a different project than the terminal journal checkpoint.",
+  );
+  assert.equal(recovered.project.id, projectId);
+  phases.push("terminal-checkpoint-persistence-equal");
+  await page.screenshot({
+    path: join(evidenceDir, "interrupted-recovery.png"),
+    fullPage: true,
+  });
+  report.evidence.push("interrupted-recovery.png");
+
+  const continuationPrompt = page.locator("#prompt");
+  await expect(continuationPrompt).toHaveValue(/.+/, { timeout: 30000 });
+  const continuation = await continuationPrompt.inputValue();
+  assert(
+    continuation.includes(terminalRun.prompt),
+    "Recovered continuation prompt omitted the original generation prompt.",
+  );
+  const selectedEntity = terminalRun.selected
+    ? expectedCheckpoint.entities.find(
+        (entity) => entity.id === terminalRun.selected,
+      )
+    : undefined;
+  if (terminalRun.selected) {
+    assert(
+      selectedEntity,
+      "The terminal journal selected entity was not present in its checkpoint.",
+    );
+    await expect(page.locator(".selection-chip")).toContainText(
+      selectedEntity.label,
+    );
+  } else {
+    assert.equal(
+      await page.locator(".selection-chip").count(),
+      0,
+      "Recovery restored a selection that the terminal journal did not record.",
+    );
+  }
+  phases.push("continuation-prompt-original-and-selection-restored");
+  interruption.continuationPromptIncludesOriginal = true;
+  interruption.selectedRestored = true;
+  requestCounts.push({
+    phase: "recovery-installed-before-continuation",
+    count: info.generationRequests,
+  });
+
+  const continuationButton = page.getByRole("button", {
+    name: "Change this",
+    exact: true,
+  });
+  await expect(continuationButton).toBeEnabled({ timeout: 30000 });
+  await continuationButton.click();
+  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(2);
+  const continuationRequest = info.generationBodies[1];
+  assert.deepEqual(
+    persistenceJSON({
+      ...continuationRequest.projectSnapshot,
+      messages: expectedCheckpoint.messages,
+    }),
+    persistenceJSON(expectedCheckpoint),
+    "Continuation request did not carry the recovered scene checkpoint.",
+  );
+  assert.equal(continuationRequest.selectedId, terminalRun.selected ?? null);
+  interruption.continuationContextVerified = true;
+  phases.push("continuation-submitted");
+  requestCounts.push({
+    phase: "continuation-submitted",
+    count: info.generationRequests,
+  });
+  return {
+    checkpoint: expectedCheckpoint,
+    terminalRun,
+    continuation,
+  };
+}
+
 async function verifyCloudRecovery(
   page,
   browser,
@@ -1224,12 +1580,14 @@ async function verifyCloudRecovery(
 ) {
   if (!config.cloudRecovery) return;
   const phases = [];
+  const interruptedRecovery = report.cloudRecovery.interruptedRecovery;
   report.cloudRecovery = {
     mode: "real",
     status: "running",
     projectId: projectAfterEdit.id,
     expectedRevision: projectAfterEdit.revision,
     phases,
+    ...(interruptedRecovery ? { interruptedRecovery } : {}),
   };
 
   const latestResponse = await sameOriginJSON(
@@ -1799,6 +2157,16 @@ async function run(config) {
     });
     await expect(showObjects).toBeVisible({ timeout: 30000 });
     await showObjects.click();
+    const interrupted = config.interruptedRecovery
+      ? await verifyInterruptedRecovery(
+          page,
+          config,
+          report,
+          info,
+          info.generationBodies[0].projectId,
+          evidenceDir,
+        )
+      : null;
     await expect(page.locator(".object-list button").first()).toBeVisible({
       timeout: 180000,
     });
@@ -1817,7 +2185,26 @@ async function run(config) {
       path: join(evidenceDir, "intermediate-seed.png"),
       fullPage: true,
     });
-    projectAfterCreation = await waitForSavedProject(page, 1, 1);
+    projectAfterCreation = await waitForSavedProject(
+      page,
+      interrupted ? interrupted.checkpoint.revision + 1 : 1,
+      1,
+    );
+    if (interrupted) {
+      for (const finished of readyCheckpointEntities(interrupted.checkpoint)) {
+        assert.deepEqual(
+          persistenceJSON(
+            projectAfterCreation.entities.find(
+              (entity) => entity.id === finished.id,
+            ),
+          ),
+          persistenceJSON(finished),
+          "Continuation replaced or altered an already finished entity.",
+        );
+      }
+      report.cloudRecovery.interruptedRecovery.completedEntitiesPreserved = true;
+      report.cloudRecovery.interruptedRecovery.status = "passed";
+    }
     if (config.requireInputGame) {
       report.inputGame = {
         status: "checking-creation",
@@ -1899,7 +2286,7 @@ async function run(config) {
       .click();
     await expect
       .poll(() => info.generationRequests, { timeout: 30000 })
-      .toBe(2);
+      .toBe(config.interruptedRecovery ? 3 : 2);
     assert.equal(
       info.generationBodies.at(-1)?.selectedId,
       targetBefore.id,
@@ -2112,6 +2499,11 @@ async function run(config) {
     report.error = sanitizedError(error, config);
     if (config.cloudRecovery && report.cloudRecovery.status !== "passed")
       report.cloudRecovery.status = "failed";
+    if (
+      config.interruptedRecovery &&
+      report.cloudRecovery.interruptedRecovery.status !== "passed"
+    )
+      report.cloudRecovery.interruptedRecovery.status = "failed";
     if (report.publication.status === "not-started" && config.publication)
       report.publication.status =
         error instanceof HarnessBlockedError ? "blocked" : "failed";

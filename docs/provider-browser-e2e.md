@@ -120,6 +120,40 @@ configuration, revision mismatch, or non-`READY` terminal state is recorded as
 `READY` link is opened in a fresh signed-out context and its independent
 `project.json` revision and playable canvas are checked.
 
+### Interrupted cloud recovery
+
+Set `ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1` together with
+`ORBSIE_VERIFY_CLOUD_RECOVERY=1` to run the opt-in interrupted-stream scenario.
+This mode currently accepts only `--provider chatgpt-local` and requires the
+mode-0600 `ORBSIE_CLOUD_TEST_STATE` to contain authenticated session cookies.
+Invalid combinations are rejected before the browser can send a generation
+request. The mode is separate from completed-generation cloud recovery; the
+existing `ORBSIE_VERIFY_CLOUD_RECOVERY=1` flow remains unchanged when the
+interrupted flag is absent.
+
+After the first real ChatGPT-local generation request starts, the harness observes
+successful authenticated `/api/generation-runs` operation acknowledgements until
+it sees a running checkpoint with sequence greater than zero and at least one
+ready entity. This avoids adding repeated API requests during the short interruption window. It
+then clicks the visible editor `Stop` control while the stream is still in
+progress. The checkpoint wait is bounded and condition-driven; a completed run
+or an early disappearance of the Stop control fails with a diagnostic instead
+of being reported as interrupted recovery. No generation response is mocked or
+inserted by the harness.
+
+The harness opens the account UI, chooses `Recover latest generation`, and
+requires a terminal noncomplete journal state (`cancelled` or `interrupted`).
+It compares the entire recovered IndexedDB project with the terminal journal
+checkpoint (`recoveryCheckpoint` when the server supplies the durable committed
+fallback, otherwise `checkpoint`), verifies that the continuation prompt still
+contains the original prompt, and verifies the journal-selected entity is
+restored when one was recorded. That continuation is submitted through the
+editor as the second real generation request; the normal creation assertions
+then run on the completed continuation, followed by the existing scoped edit,
+reload, ZIP, standalone playback, and cloud recovery checks. The sanitized
+report records interruption phases, journal sequence/state, and generation
+request counts under `cloudRecovery.interruptedRecovery`.
+
 Each run writes a sanitized JSON report to
 `docs/evidence/provider-e2e/<provider>.json` and screenshots/ZIP evidence under
 `docs/evidence/provider-e2e/<provider>/`. Failure screenshots are retained and

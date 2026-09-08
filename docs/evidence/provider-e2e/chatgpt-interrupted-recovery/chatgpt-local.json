@@ -1,0 +1,161 @@
+{
+  "provider": "chatgpt-local",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3017",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": null,
+  "creation": {
+    "status": "passed",
+    "operations": 11,
+    "firstReservationMs": 10329,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 2,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "real",
+    "status": "passed",
+    "projectId": "05a576c8-a7f2-4184-8d96-5bac70907bba",
+    "expectedRevision": 13,
+    "phases": [
+      "latest-journal-complete",
+      "account-ui-recovery-complete",
+      "recovered-indexeddb-verified",
+      "cloud-save-200-same-revision",
+      "fresh-cookie-only-context-cloud-open",
+      "fresh-indexeddb-verified"
+    ],
+    "interruptedRecovery": {
+      "mode": "real",
+      "status": "passed",
+      "phases": [
+        "ready-checkpoint-sequence-observed",
+        "live-stop-control-observed",
+        "live-stop-clicked",
+        "terminal-cancelled",
+        "account-ui-opened-for-recovery",
+        "account-ui-recovery-terminal-noncomplete",
+        "terminal-checkpoint-persistence-equal",
+        "continuation-prompt-original-and-selection-restored",
+        "continuation-submitted"
+      ],
+      "requestCounts": [
+        {
+          "phase": "initial-generation-started",
+          "count": 1
+        },
+        {
+          "phase": "ready-checkpoint",
+          "count": 1
+        },
+        {
+          "phase": "stop-clicked",
+          "count": 1
+        },
+        {
+          "phase": "terminal-cancelled",
+          "count": 1
+        },
+        {
+          "phase": "recovery-installed-before-continuation",
+          "count": 1
+        },
+        {
+          "phase": "continuation-submitted",
+          "count": 2
+        }
+      ],
+      "checkpointSequence": 5,
+      "checkpointRevision": 5,
+      "readyEntityCount": 1,
+      "runId": "4cadda27-55c8-4103-8b68-199022b71d42",
+      "terminalState": "cancelled",
+      "terminalSequence": 5,
+      "recoveryCheckpointUsed": "recoveryCheckpoint",
+      "continuationPromptIncludesOriginal": true,
+      "selectedRestored": true,
+      "continuationContextVerified": true,
+      "completedEntitiesPreserved": true
+    },
+    "freshContextTraffic": {
+      "generationRequests": 0,
+      "blockedExternalRequests": 1,
+      "blockedExternalOrigins": [
+        "https://fonts.googleapis.com"
+      ],
+      "pageErrors": []
+    },
+    "runId": "88321a57-1b55-40d3-b25a-ad958fed528e"
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 3,
+    "generationStatuses": [
+      200,
+      200,
+      200
+    ],
+    "blockedExternalRequests": 2,
+    "blockedExternalOrigins": [
+      "https://fonts.googleapis.com"
+    ],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-chatgpt-local.png",
+    "interrupted-recovery.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-input-ready.png",
+    "standalone-input-right.png",
+    "standalone-input-win.png",
+    "standalone-input-loss.png",
+    "standalone-playback.png",
+    "cloud-recovery.png",
+    "cloud-recovery-fresh-context.png"
+  ],
+  "inputGame": {
+    "status": "passed",
+    "entityCount": 2,
+    "treeAndMushroom": true,
+    "refinedGeometry": true,
+    "exactRuleCount": true,
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "noTimersOrCollectionScoring": true,
+    "preservedAcrossEdit": true,
+    "preservedAcrossReload": true,
+    "preservedInZip": true
+  },
+  "standalone": {
+    "status": "passed",
+    "pageErrors": [],
+    "inputGame": {
+      "ready": true,
+      "rightAdds7": true,
+      "heldRightDeduplicated": true,
+      "upWins": true,
+      "restartResetsScore": true,
+      "leftLoses": true
+    }
+  }
+}

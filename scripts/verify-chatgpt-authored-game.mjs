@@ -31,6 +31,14 @@ assert(
   "Only the known local test origins are allowed.",
 );
 const VERIFY_CLOUD = process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1";
+const VERIFY_INTERRUPTED =
+  process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1";
+if (VERIFY_INTERRUPTED)
+  assert(
+    VERIFY_CLOUD,
+    "Interrupted recovery requires authenticated cloud recovery.",
+  );
+const GENERATION_BUDGET = VERIFY_INTERRUPTED ? 3 : 2;
 if (VERIFY_CLOUD)
   assert.equal(
     BASE_ORIGIN,
@@ -77,6 +85,7 @@ async function writeWrapperReport() {
         serviceTier: "default",
         actualGenerateCalls,
         cloudRecoveryRequested: VERIFY_CLOUD,
+        interruptedRecoveryRequested: VERIFY_INTERRUPTED,
         childExitCode: harnessResult?.code ?? null,
         childSignal: harnessResult?.signal ?? null,
         error: wrapperFailure ? safeError(wrapperFailure) : undefined,
@@ -167,8 +176,8 @@ try {
   companion = await startChatGPTCompanion({
     client: {
       generate: (...args) => {
-        if (actualGenerateCalls >= 2)
-          throw Error("The two-generation live test budget is exhausted.");
+        if (actualGenerateCalls >= GENERATION_BUDGET)
+          throw Error("The bounded live test generation budget is exhausted.");
         actualGenerateCalls += 1;
         return client.generate(...args);
       },
@@ -260,8 +269,8 @@ try {
   );
   assert.equal(
     actualGenerateCalls,
-    2,
-    `Expected exactly two actual ChatGPT generations, observed ${actualGenerateCalls}.`,
+    GENERATION_BUDGET,
+    `Expected exactly ${GENERATION_BUDGET} actual ChatGPT generations, observed ${actualGenerateCalls}.`,
   );
   console.log(
     `ChatGPT-authored input-game E2E passed; sanitized evidence: ${EVIDENCE_DIR}`,
