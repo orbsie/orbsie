@@ -4,7 +4,11 @@ import {
   pricePerMillion,
   qualityRank,
 } from "../src/lib/model-catalog";
-import { modelModes } from "../src/lib/model-modes";
+import {
+  modelModes,
+  modelModesForProvider,
+  isRecommendedModel,
+} from "../src/lib/model-modes";
 import { GET } from "../src/app/api/models/route";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -115,9 +119,39 @@ describe("model catalog estimates", () => {
     ).toEqual(["tools"]);
     expect(modelModes.map((mode) => mode.id)).toEqual([
       "openai/gpt-6-astra",
-      "openai/gpt-5.6-sol",
       "openai/gpt-5.6-luna",
+      "z-ai/glm-5.3-flash",
     ]);
+  });
+  it("resolves the Budget preset using each provider's exact model ID", () => {
+    const router = modelModesForProvider("openrouter");
+    const gateway = modelModesForProvider("gateway");
+    expect(router.map(({ label, id }) => [label, id])).toEqual([
+      ["Quality", "openai/gpt-6-astra"],
+      ["Balanced", "openai/gpt-5.6-luna"],
+      ["Budget", "z-ai/glm-5.3-flash"],
+    ]);
+    expect(gateway.map(({ id }) => id)).toEqual([
+      "openai/gpt-6-astra",
+      "openai/gpt-5.6-luna",
+      "zai/glm-5.3-flash",
+    ]);
+    for (const provider of ["openrouter", "gateway"] as const) {
+      const modes = modelModesForProvider(provider);
+      const models = catalogModels(
+        modes.map(({ id }) => ({
+          id,
+          type: "language",
+          supported_parameters: ["tools"],
+        })),
+        provider,
+      );
+      for (const mode of modes) {
+        expect(models.some(({ id }) => id === mode.id)).toBe(true);
+        expect(isRecommendedModel(mode.id)).toBe(true);
+      }
+    }
+    expect(isRecommendedModel("z-ai/glm-5.3-flash:batch")).toBe(false);
   });
   it("excludes async batch variants even when they advertise tool support", () => {
     const data = [
