@@ -1,4 +1,5 @@
 "use client";
+import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import {
   generationRequest,
   type GenerationConnection,
@@ -436,6 +437,7 @@ export const useOrb = create<State>((setState, getState) => ({
     baseline = before;
     const initial = before.entities.length === 0;
     const selected = initial ? undefined : getState().selected;
+    const assetPolicy = deriveAssetPolicy(prompt, selected, before);
     const project = {
       ...before,
       title: initial
@@ -489,6 +491,7 @@ export const useOrb = create<State>((setState, getState) => ({
     const apply = async (command: Command) => {
       if (signal.aborted || active !== controller) return false;
       const s = getState();
+      command = enforceAssetPolicy(s.project, command, assetPolicy);
       const result = applyOperation(
         s.project,
         {

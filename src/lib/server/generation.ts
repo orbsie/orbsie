@@ -1,3 +1,5 @@
+import { deriveAssetPolicy, enforceAssetPolicy } from "../asset-policy";
+import { promptCatalogForPolicy } from "../asset-catalog";
 import {
   commandSchema,
   applyOperation,
@@ -48,7 +50,7 @@ function providerFailure(status: number) {
   return new GenerationProviderError(code, message);
 }
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
-export const systemPrompt = `You create playful, coherent 3D worlds for Orbsie. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. Then send set_geometry coarse and refined as separate commands. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. Never include code, URLs, credentials, scripts, or external assets. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message. You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
+export const systemPrompt = `You create playful, coherent 3D worlds for Orbsie. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. Then send set_geometry coarse and refined as separate commands. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. Never include code, URLs, credentials, scripts, or external assets. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message. You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
 export async function generateCommands({
   provider,
   model,
@@ -68,6 +70,7 @@ export async function generateCommands({
   signal: AbortSignal;
   maxTokens?: number;
 }) {
+  const assetPolicy = deriveAssetPolicy(prompt, selected, project);
   const endpoint =
     provider === "openrouter"
       ? "https://openrouter.ai/api/v1/chat/completions"
@@ -92,6 +95,10 @@ export async function generateCommands({
           role: "user",
           content: JSON.stringify({
             instruction: prompt,
+            assetPolicy,
+            assetCatalog: promptCatalogForPolicy(
+              assetPolicy.requestAssetPolicy,
+            ),
             selectedEntityId: selected,
             project: { ...project, messages: [] },
           }),
@@ -125,7 +132,11 @@ export async function generateCommands({
           throw Error(
             "This turn reached its scene update limit. Continue from the saved world.",
           );
-        const command = commandSchema.parse(JSON.parse(line));
+        const command = enforceAssetPolicy(
+          working,
+          commandSchema.parse(JSON.parse(line)),
+          assetPolicy,
+        );
         const applied = applyOperation(
           working,
           {

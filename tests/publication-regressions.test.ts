@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   makePublicationManifest,
   PUBLICATION_MANIFEST_FILE,
   PUBLICATION_ARTIFACT_PATHS,
+  PUBLICATION_USED_ASSETS_FILE,
+  sha256,
+  toVercelDeploymentFile,
+  type PublicationFile,
 } from "../src/lib/server/publication-artifact";
+import { assetManifest } from "../src/lib/asset-catalog";
 
 const mock = vi.hoisted(() => ({
   query: vi.fn(),
@@ -36,8 +42,57 @@ function artifactFiles(projectData = project()) {
   ] as const;
 }
 
+const catalogAsset = assetManifest.assets[0];
+const catalogSource = assetManifest.sources.find(
+  (source) => source.sourceId === catalogAsset.sourceId,
+)!;
+const catalogAssetFiles = (projectData = projectWithCatalogAsset()) =>
+  [
+    ...artifactFiles(projectData),
+    {
+      file: catalogAsset.path.slice(1),
+      data: new Uint8Array(readFileSync(`public${catalogAsset.path}`)),
+    },
+    {
+      file: catalogSource.license.textFile,
+      data: new Uint8Array(readFileSync(catalogSource.license.textFile)),
+    },
+    {
+      file: PUBLICATION_USED_ASSETS_FILE,
+      data: JSON.stringify({
+        schemaVersion: assetManifest.schemaVersion,
+        catalogVersion: assetManifest.catalogVersion,
+        assets: [catalogAsset],
+        sources: [catalogSource],
+      }),
+    },
+  ] as const;
+
+function projectWithCatalogAsset() {
+  return JSON.stringify({
+    id: "orb",
+    revision: 2,
+    title: "Test world",
+    entities: [
+      {
+        id: "tree",
+        label: "Tree",
+        position: [0, 0, 0],
+        scale: [1, 1, 1],
+        color: "#ffffff",
+        stage: "ready",
+        geometry: {
+          kind: "asset",
+          assetId: catalogAsset.id,
+          detail: "refined",
+        },
+      },
+    ],
+  });
+}
+
 function publicDeployment(
-  files = artifactFiles(),
+  files: readonly PublicationFile[] = artifactFiles(),
   overrides: { projectId?: string; revision?: number } = {},
 ) {
   const projectId = overrides.projectId ?? "orb";
@@ -46,7 +101,16 @@ function publicDeployment(
   const responses = new Map<string, Response>([
     [PUBLICATION_MANIFEST_FILE, new Response(artifact.data, { status: 200 })],
     ...files.map(
-      ({ file, data }) => [file, new Response(data, { status: 200 })] as const,
+      ({ file, data }) =>
+        [
+          file,
+          new Response(
+            typeof data === "string"
+              ? data
+              : new Blob([data as unknown as BlobPart]),
+            { status: 200 },
+          ),
+        ] as const,
     ),
   ]);
   return { artifact, responses };
@@ -139,6 +203,86 @@ it("verifies every immutable artifact before atomically labeling the confirmed U
       ...PUBLICATION_ARTIFACT_PATHS.map((file) => `/${file}`),
     ]),
   );
+});
+
+it("continues to verify historical four-file publication manifests", async () => {
+  mock.query.mockResolvedValueOnce({ rows: [row()] });
+  mock.query.mockResolvedValueOnce({ rows: [{ published_revision: 2 }] });
+  const deployment = publicDeployment();
+  const legacyData = JSON.stringify({
+    version: 1,
+    projectId: "orb",
+    revision: 2,
+    files: deployment.artifact.manifest.files,
+  });
+  deployment.responses.set(
+    PUBLICATION_MANIFEST_FILE,
+    new Response(legacyData, { status: 200 }),
+  );
+  deployment.artifact.digest = sha256(legacyData);
+  installFetch(deployment);
+
+  const response = await get();
+
+  expect(await response.json()).toMatchObject({
+    state: "READY",
+    servedRevision: 2,
+  });
+});
+
+it("verifies referenced catalog GLBs, licenses, and provenance", async () => {
+  mock.query.mockResolvedValueOnce({ rows: [row()] });
+  mock.query.mockResolvedValueOnce({ rows: [{ published_revision: 2 }] });
+  const deployment = publicDeployment(catalogAssetFiles());
+  const { calls } = installFetch(deployment);
+
+  const response = await get();
+
+  expect(await response.json()).toMatchObject({
+    state: "READY",
+    servedRevision: 2,
+  });
+  expect(calls.map(([url]) => new URL(url).pathname)).toEqual(
+    expect.arrayContaining([
+      `/${catalogAsset.path.slice(1)}`,
+      `/${catalogSource.license.textFile}`,
+      `/${PUBLICATION_USED_ASSETS_FILE}`,
+    ]),
+  );
+});
+
+it("rejects a catalog reference when the model is omitted from the deployment", async () => {
+  mock.query.mockResolvedValueOnce({ rows: [row()] });
+  const files = catalogAssetFiles().filter(
+    ({ file }) => file !== catalogAsset.path.slice(1),
+  );
+  installFetch(publicDeployment(files));
+
+  const response = await get();
+
+  expect(await response.json()).toMatchObject({
+    state: "VERIFYING",
+    error: `The public deployment is missing catalog asset ${catalogAsset.id}.`,
+  });
+  expect(mock.query).toHaveBeenCalledTimes(1);
+});
+
+it("rejects catalog model bytes that do not match the checked-in asset hash", async () => {
+  mock.query.mockResolvedValueOnce({ rows: [row()] });
+  const files = catalogAssetFiles().map((file) =>
+    file.file === catalogAsset.path.slice(1)
+      ? { ...file, data: new Uint8Array([0, 1, 2, 3]) }
+      : file,
+  );
+  installFetch(publicDeployment(files));
+
+  const response = await get();
+
+  expect(await response.json()).toMatchObject({
+    state: "VERIFYING",
+    error: `The public deployment catalog asset ${catalogAsset.id} failed its catalog integrity check.`,
+  });
+  expect(mock.query).toHaveBeenCalledTimes(1);
 });
 
 it("does not claim readiness when an in-flight status request loses the deployment compare-and-swap", async () => {
@@ -275,7 +419,21 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
             title: "Test world",
             seed: 1,
             revision: 2,
-            entities: [],
+            entities: [
+              {
+                id: "tree",
+                label: "Tree",
+                position: [0, 0, 0],
+                scale: [1, 1, 1],
+                color: "#ffffff",
+                stage: "ready",
+                geometry: {
+                  kind: "asset",
+                  assetId: catalogAsset.id,
+                  detail: "refined",
+                },
+              },
+            ],
             environment: {
               sky: "#dceee9",
               ground: "#91b977",
@@ -342,6 +500,19 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
       expect.objectContaining({ file: PUBLICATION_MANIFEST_FILE }),
     ]),
   );
+  const deployedModel = body.files.find(
+    (file: { file?: string }) => file.file === catalogAsset.path.slice(1),
+  );
+  expect(deployedModel).toMatchObject({ encoding: "base64" });
+  expect(Buffer.from(deployedModel.data, "base64")).toEqual(
+    readFileSync(`public${catalogAsset.path}`),
+  );
+  expect(body.files).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ file: catalogSource.license.textFile }),
+      expect.objectContaining({ file: PUBLICATION_USED_ASSETS_FILE }),
+    ]),
+  );
   expect(client.query).toHaveBeenCalledWith(
     expect.stringContaining("UPDATE orbs SET vercel_project_id"),
     ["vp", "new-deployment", 2, "orb"],
@@ -358,4 +529,28 @@ it("rejects an oversized publication asset before producing a manifest", () => {
       { file: "runtime.css", data: "style" },
     ]),
   ).toThrow("runtime.js is larger than the publication verification limit.");
+});
+
+it("rejects arbitrary publication paths", () => {
+  expect(() =>
+    makePublicationManifest("orb", 2, [
+      ...artifactFiles(),
+      { file: "../../secrets.txt", data: "nope" },
+    ]),
+  ).toThrow(
+    "Publication files must contain the immutable runtime set and only known local catalog paths.",
+  );
+});
+
+it("encodes binary catalog files for the Vercel deployment API", () => {
+  const file = toVercelDeploymentFile({
+    file: catalogAsset.path.slice(1),
+    data: new Uint8Array([0, 255, 1, 254]),
+  });
+
+  expect(file).toEqual({
+    file: catalogAsset.path.slice(1),
+    data: Buffer.from([0, 255, 1, 254]).toString("base64"),
+    encoding: "base64",
+  });
 });

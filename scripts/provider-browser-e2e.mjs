@@ -878,6 +878,7 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
   const approved = new Set([config.baseOrigin, served.origin]);
   const context = await browser.newContext({
     viewport: { width: 1280, height: 800 },
+    reducedMotion: "reduce",
   });
   const info = {
     generationRequests: 0,
@@ -896,6 +897,9 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
   await page.goto(`${served.origin}/`, { waitUntil: "networkidle" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
   await expect(page.locator(".score")).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".message")).toHaveCount(0, { timeout: 30000 });
+  // Capture the loaded scene after its initial formation frames, not the globe.
+  await page.waitForTimeout(2000);
   assert.deepEqual(
     unexpected,
     [],
@@ -1216,6 +1220,12 @@ async function run(config) {
     await assertNoStoredKey(page, config);
     report.creation.status = "passed";
     report.creation.operations = projectAfterCreation.revision;
+    report.creation.catalogEntities = projectAfterCreation.entities.filter(
+      (entity) => entity.geometry?.kind === "asset",
+    ).length;
+    report.creation.proceduralEntities = projectAfterCreation.entities.filter(
+      (entity) => entity.geometry && entity.geometry.kind !== "asset",
+    ).length;
 
     const firstRow = page.locator(".object-list button").first();
     const selectedLabel = (await firstRow.innerText()).split("\n")[0].trim();
@@ -1270,6 +1280,16 @@ async function run(config) {
     );
     const { color: beforeColor, ...beforeShape } = targetBefore;
     const { color: afterColor, ...afterShape } = targetAfter;
+    if (
+      beforeShape.geometry?.kind === "asset" &&
+      afterShape.geometry?.kind === "asset"
+    ) {
+      assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
+      const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;
+      const { tint: afterTint, ...afterGeometry } = afterShape.geometry;
+      beforeShape.geometry = beforeGeometry;
+      afterShape.geometry = afterGeometry;
+    }
     assert.deepEqual(
       afterShape,
       beforeShape,

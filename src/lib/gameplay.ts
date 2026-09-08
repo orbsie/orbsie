@@ -1,4 +1,5 @@
 import type { Entity } from "./protocol";
+import { requireCatalogAsset } from "./asset-catalog";
 
 export type Vec3 = [number, number, number];
 
@@ -48,6 +49,24 @@ export function isTextEntryTarget(target: EventTarget | null) {
 
 function platformTop(entity: Entity, time: number) {
   const position = movingEntityPosition(entity, time);
+  if (entity.geometry?.kind === "asset") {
+    const { min, max } = requireCatalogAsset(entity.geometry.assetId).bounds;
+    const low = min.map((value, i) =>
+      Math.min(value * entity.scale[i], max[i] * entity.scale[i]),
+    );
+    const high = max.map((value, i) =>
+      Math.max(value * entity.scale[i], min[i] * entity.scale[i]),
+    );
+    return {
+      id: entity.id,
+      x: position[0] + (low[0] + high[0]) / 2,
+      z: position[2] + (low[2] + high[2]) / 2,
+      y: position[1] + high[1] + PLAYER_HALF_HEIGHT,
+      halfX: (high[0] - low[0]) / 2,
+      halfZ: (high[2] - low[2]) / 2,
+      bounce: entity.behavior?.type === "bounce",
+    };
+  }
   return {
     id: entity.id,
     x: position[0],
@@ -71,7 +90,12 @@ export function stepGameplay(
   const position: Vec3 = [...state.position];
   const readyPlatforms = entities.filter(
     (entity) =>
-      entity.stage === "ready" && entity.geometry?.kind === "platform",
+      entity.stage === "ready" &&
+      (entity.geometry?.kind === "platform" ||
+        (entity.geometry?.kind === "asset" &&
+          requireCatalogAsset(entity.geometry.assetId).tags.some(
+            (tag) => tag === "platform" || tag === "bridge",
+          ))),
   );
 
   // A grounded player inherits the exact displacement of a moving platform.

@@ -174,4 +174,50 @@ describe("asynchronous catalog geometry loading", () => {
     expect(pendingLoader.stats.entries).toBe(0);
     pendingLoader.dispose();
   });
+
+  it("verifies the checked-in manifest size and SHA-256 before parsing", async () => {
+    const id = "kenney.nature.tree-default" as const;
+    const bytes = new Uint8Array(await checkedInBytes(id));
+    bytes[bytes.length - 1] ^= 1;
+    const loader = new AssetGeometryLoader({
+      fetchBytes: async () => bytes,
+    });
+    await expect(loader.load(id)).rejects.toMatchObject({
+      code: "integrity-failed",
+    });
+    expect(loader.stats.entries).toBe(0);
+    loader.dispose();
+  });
+
+  it("does not let a cancelled pending request poison an immediate reload", async () => {
+    const id = "kenney.nature.tree-default" as const;
+    const firstController = new AbortController();
+    let calls = 0;
+    const loader = new AssetGeometryLoader({
+      fetchBytes: async (_url, signal) => {
+        calls += 1;
+        if (calls === 1)
+          return new Promise<ArrayBuffer>((_, reject) => {
+            signal.addEventListener(
+              "abort",
+              () => reject(new Error("aborted")),
+              {
+                once: true,
+              },
+            );
+          });
+        return checkedInBytes(id);
+      },
+    });
+    const first = loader.load(id, { signal: firstController.signal });
+    const firstFailure = first.catch((error: unknown) => error);
+    await Promise.resolve();
+    firstController.abort();
+    const second = await loader.load(id);
+    expect(await firstFailure).toMatchObject({ code: "aborted" });
+    expect(second.geometry.getAttribute("position").count).toBeGreaterThan(0);
+    expect(calls).toBe(2);
+    second.release();
+    loader.dispose();
+  });
 });

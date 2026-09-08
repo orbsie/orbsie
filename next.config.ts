@@ -5,6 +5,8 @@ const config: NextConfig = {
     "/api/publish": [
       "./public/player/runtime.js",
       "./public/player/runtime.css",
+      "./public/models/**/*.glb",
+      "./assets/catalog/licenses/**/*",
     ],
   },
   async headers() {

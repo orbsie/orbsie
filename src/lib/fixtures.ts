@@ -1,8 +1,13 @@
-import type { Command, Entity, Project } from "./protocol";
+import type {
+  Command,
+  Entity,
+  Project,
+  ProceduralGeometryRecipe,
+} from "./protocol";
 const e = (
   id: string,
   label: string,
-  kind: NonNullable<Entity["geometry"]>["kind"],
+  kind: ProceduralGeometryRecipe["kind"],
   position: Entity["position"],
   color: string,
   scale: Entity["scale"] = [1, 1, 1],
@@ -111,7 +116,7 @@ export function* fixtureCommands(garden = false): Generator<Command> {
     yield {
       type: "set_geometry",
       id: entity.id,
-      geometry: { kind: entity.geometry!.kind, detail: "coarse" },
+      geometry: { ...entity.geometry!, detail: "coarse" },
     };
     yield { type: "set_geometry", id: entity.id, geometry: entity.geometry! };
   }

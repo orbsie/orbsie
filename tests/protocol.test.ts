@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   blankProject,
   applyOperation,
+  assetGeometrySchema,
   commandSchema,
   committed,
   type Command,
@@ -35,6 +36,95 @@ function setup() {
   return { project, cursor, op };
 }
 describe("scene protocol", () => {
+  it("accepts known catalog geometry and rejects unknown IDs or URLs", () => {
+    expect(
+      assetGeometrySchema.safeParse({
+        kind: "asset",
+        assetId: "kenney.nature.tree-default",
+        detail: "refined",
+      }).success,
+    ).toBe(true);
+    for (const assetId of ["unknown.asset", "https://evil.example/model.glb"])
+      expect(
+        assetGeometrySchema.safeParse({
+          kind: "asset",
+          assetId,
+          detail: "refined",
+        }).success,
+      ).toBe(false);
+  });
+
+  it("preserves asset palette until set_material explicitly adds a tint", () => {
+    const { project, cursor, op } = setup();
+    const reserved = applyOperation(
+      project,
+      {
+        ...op,
+        command: {
+          ...seed,
+          entity: {
+            ...seed.entity,
+            geometry: {
+              kind: "asset",
+              assetId: "kenney.nature.tree-default",
+              detail: "refined",
+            },
+          },
+        },
+      },
+      cursor,
+    );
+    const recolored = applyOperation(
+      reserved.project,
+      {
+        ...op,
+        operationId: "recolor",
+        sequence: 2,
+        baseRevision: 1,
+        command: { type: "set_material", id: "tree", color: "#ed99b5" },
+      },
+      reserved.cursor,
+    );
+    expect(recolored.project.entities[0].geometry).toMatchObject({
+      kind: "asset",
+      assetId: "kenney.nature.tree-default",
+      tint: "#ed99b5",
+    });
+  });
+
+  it("does not permit new-only entities to downgrade", () => {
+    const { project, cursor, op } = setup();
+    const reserved = applyOperation(
+      project,
+      {
+        ...op,
+        command: {
+          ...seed,
+          entity: { ...seed.entity, assetPolicy: "new-only" },
+        },
+      },
+      cursor,
+    );
+    expect(() =>
+      applyOperation(
+        reserved.project,
+        {
+          ...op,
+          operationId: "downgrade",
+          sequence: 2,
+          baseRevision: 1,
+          command: {
+            type: "set_geometry",
+            id: "tree",
+            geometry: { kind: "asset", assetId: "kenney.nature.tree-default" },
+            assetPolicy: "catalog-allowed",
+          },
+        },
+        reserved.cursor,
+      ),
+    ).toThrow();
+  });
+
   it("accepts an ordered reservation and ignores exact retries", () => {
     const { project, cursor, op } = setup();
     const a = applyOperation(project, op, cursor);

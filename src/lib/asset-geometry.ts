@@ -24,6 +24,7 @@ export class AssetGeometryError extends Error {
     | "too-large"
     | "parse-failed"
     | "empty-geometry"
+    | "integrity-failed"
     | "aborted"
     | "disposed";
 
@@ -58,6 +59,11 @@ export interface AssetGeometryLoaderOptions {
   readonly baseUrl?: string | URL;
   /** Injected reader for tests and standalone packaging. */
   readonly fetchBytes?: AssetBytesFetcher;
+  /**
+   * Keep true for checked-in runtime assets. Tests that exercise merging with
+   * synthetic GLBs may explicitly disable the manifest boundary.
+   */
+  readonly verifyManifest?: boolean;
 }
 
 export interface AssetGeometryLoadOptions {
@@ -353,10 +359,11 @@ async function defaultFetchBytes(
   url: string,
   signal: AbortSignal,
   maxBytes: number,
+  expectedSize?: number,
 ): Promise<ArrayBuffer> {
   let response: Response;
   try {
-    response = await fetch(url, { signal });
+    response = await fetch(url, { signal, redirect: "error" });
   } catch (error) {
     if (signal.aborted) throw abortError();
     throw new AssetGeometryError(
@@ -378,12 +385,26 @@ async function defaultFetchBytes(
       "too-large",
       `Asset ${url} is larger than the ${maxBytes} byte read limit.`,
     );
+  if (
+    declared &&
+    expectedSize !== undefined &&
+    Number(declared) !== expectedSize
+  )
+    throw new AssetGeometryError(
+      "integrity-failed",
+      `Asset ${url} has an unexpected manifest size.`,
+    );
   if (!response.body) {
     const bytes = await response.arrayBuffer();
     if (bytes.byteLength > maxBytes)
       throw new AssetGeometryError(
         "too-large",
         `Asset ${url} is larger than the ${maxBytes} byte read limit.`,
+      );
+    if (expectedSize !== undefined && bytes.byteLength !== expectedSize)
+      throw new AssetGeometryError(
+        "integrity-failed",
+        `Asset ${url} has an unexpected manifest size.`,
       );
     return bytes;
   }
@@ -414,7 +435,26 @@ async function defaultFetchBytes(
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
+  if (expectedSize !== undefined && bytes.byteLength !== expectedSize)
+    throw new AssetGeometryError(
+      "integrity-failed",
+      `Asset ${url} has an unexpected manifest size.`,
+    );
   return bytes.buffer;
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  if (!globalThis.crypto?.subtle)
+    throw new AssetGeometryError(
+      "integrity-failed",
+      "This runtime cannot verify catalog asset integrity.",
+    );
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
+  return [...new Uint8Array(digest)]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function parseManager(expectedPath: string): THREE.LoadingManager {
@@ -431,6 +471,7 @@ export class AssetGeometryLoader {
   readonly #maxVertices: number;
   readonly #baseUrl?: string | URL;
   readonly #fetchBytes?: AssetBytesFetcher;
+  readonly #verifyManifest: boolean;
   readonly #cache = new Map<AssetId, GeometryEntry>();
   readonly #pending = new Map<AssetId, PendingEntry>();
   readonly #ephemeral = new Set<GeometryEntry>();
@@ -461,6 +502,7 @@ export class AssetGeometryLoader {
     );
     this.#baseUrl = options.baseUrl;
     this.#fetchBytes = options.fetchBytes;
+    this.#verifyManifest = options.verifyManifest ?? true;
   }
 
   get stats(): AssetGeometryCacheStats {
@@ -501,6 +543,10 @@ export class AssetGeometryLoader {
     }
 
     let pending = this.#pending.get(asset.id as AssetId);
+    if (pending?.controller.signal.aborted && !pending.done) {
+      this.#pending.delete(asset.id as AssetId);
+      pending = undefined;
+    }
     if (!pending) {
       const controller = new AbortController();
       pending = {
@@ -514,13 +560,25 @@ export class AssetGeometryLoader {
       this.#pending.set(pending.id, pending);
     }
     pending.consumers += 1;
+    let abandoned = false;
+    const abandon = () => {
+      if (abandoned) return;
+      abandoned = true;
+      pending!.consumers -= 1;
+      if (pending!.consumers <= 0 && !pending!.done)
+        pending!.controller.abort();
+    };
+    options.signal?.addEventListener("abort", abandon, { once: true });
     try {
       const entry = await raceAbort(pending.promise, options.signal);
       throwIfAborted(options.signal);
       return this.#lease(entry);
     } finally {
-      pending.consumers -= 1;
-      if (pending.consumers <= 0 && !pending.done) pending.controller.abort();
+      options.signal?.removeEventListener("abort", abandon);
+      if (!abandoned) {
+        pending.consumers -= 1;
+        if (pending.consumers <= 0 && !pending.done) pending.controller.abort();
+      }
     }
   }
 
@@ -559,6 +617,7 @@ export class AssetGeometryLoader {
               url,
               pending.controller.signal,
               this.#maxAssetBytes,
+              this.#verifyManifest ? asset.sizeBytes : undefined,
             );
         throwIfAborted(pending.controller.signal);
         const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
@@ -567,6 +626,19 @@ export class AssetGeometryLoader {
             "too-large",
             `Asset ${asset.id} is larger than the ${this.#maxAssetBytes} byte read limit.`,
           );
+        if (this.#verifyManifest) {
+          if (bytes.byteLength !== asset.sizeBytes)
+            throw new AssetGeometryError(
+              "integrity-failed",
+              `Asset ${asset.id} does not match its manifest size.`,
+            );
+          const digest = await sha256Hex(bytes);
+          if (digest !== asset.sha256)
+            throw new AssetGeometryError(
+              "integrity-failed",
+              `Asset ${asset.id} does not match its manifest SHA-256.`,
+            );
+        }
         let gltf: { scene: THREE.Group };
         try {
           const loader = new GLTFLoader(parseManager(path));

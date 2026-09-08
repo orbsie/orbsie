@@ -1,0 +1,10 @@
+{
+  "mode": "mock-generation-real-catalog-render-export",
+  "passed": true,
+  "generations": 2,
+  "realModelCalls": 0,
+  "assetHTTPStatus": 200,
+  "mixedExport": true,
+  "newOnlyReuseRejected": true,
+  "pageErrors": []
+}

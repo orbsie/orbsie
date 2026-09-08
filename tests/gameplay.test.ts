@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fixtureEntities } from "../src/lib/fixtures";
+import type { Entity } from "../src/lib/protocol";
+import { requireCatalogAsset } from "../src/lib/asset-catalog";
 import {
   movingEntityPosition,
   stepGameplay,
@@ -13,6 +15,39 @@ const player = (position: [number, number, number]): PlayerState => ({
 });
 
 describe("gameplay runtime", () => {
+  it("uses scaled catalog bounds for platforms and excludes unfinished assets", () => {
+    const platform: Entity = {
+      id: "catalog-platform",
+      label: "Grass platform",
+      position: [0, 2, 0],
+      scale: [2, 3, 2],
+      color: "#ffffff",
+      stage: "ready",
+      geometry: {
+        kind: "asset",
+        assetId: "kenney.nature.platform-grass",
+        detail: "refined",
+      },
+    };
+    const bounds = requireCatalogAsset("kenney.nature.platform-grass").bounds;
+    const top = 2 + bounds.max[1] * 3 + 0.42;
+    const falling: PlayerState = {
+      position: [0, top + 0.01, 0],
+      velocityY: -2,
+    };
+    const landed = stepGameplay(falling, idle, [platform], [], 0, 0.02);
+    expect(landed.groundedOn).toBe(platform.id);
+    expect(landed.position[1]).toBeCloseTo(top);
+    const pending = stepGameplay(
+      falling,
+      idle,
+      [{ ...platform, stage: "seed" }],
+      [],
+      0,
+      0.02,
+    );
+    expect(pending.groundedOn).toBeUndefined();
+  });
   it("lands only after crossing a platform top", () => {
     const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
     const center = movingEntityPosition(platform, 0);

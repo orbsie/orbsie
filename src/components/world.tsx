@@ -18,6 +18,11 @@ import {
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import type { Entity } from "@/lib/protocol";
+import {
+  useAssetGeometry,
+  isAssetGeometryReady,
+} from "@/lib/use-asset-geometry";
+import { isAssetId } from "@/lib/asset-catalog";
 import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
   entityGeometry,
@@ -195,6 +200,7 @@ function Formation({ entity }: { entity: Entity }) {
   const mesh = useRef<THREE.Mesh>(null);
   const group = useRef<THREE.Group>(null);
   const previous = useRef<Float32Array>(undefined);
+  const previousShape = useRef<THREE.BufferGeometry>(undefined);
   const progress = useRef({ value: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
   const targetScale = useMemo(() => new THREE.Vector3(), []);
@@ -202,13 +208,42 @@ function Formation({ entity }: { entity: Entity }) {
   const collected = useOrb((s) => s.score.includes(entity.id));
   const playing = useOrb((s) => s.playing);
   const [bloom, setBloom] = useState(false);
+  const assetRecipe =
+    entity.geometry?.kind === "asset" ? entity.geometry : undefined;
+  const asset = useAssetGeometry(
+    assetRecipe && isAssetId(assetRecipe.assetId)
+      ? assetRecipe.assetId
+      : undefined,
+  );
+  const pendingAsset = !!assetRecipe && !asset?.geometry;
+  useEffect(() => {
+    if (asset?.error)
+      useOrb.getState().set({ error: `${entity.label}: ${asset.error}` });
+  }, [asset?.error, entity.label]);
   const geometry = useMemo(() => {
-    const g = addFormationSource(entityGeometry(entity), previous.current);
+    const source = assetRecipe
+      ? (asset?.geometry?.clone() ??
+        previousShape.current?.clone() ??
+        entityGeometry({ ...entity, geometry: undefined }))
+      : entityGeometry(entity);
+    if (assetRecipe?.tint && asset?.geometry) {
+      const tint = new THREE.Color(assetRecipe.tint);
+      const colors = source.getAttribute("color");
+      for (let i = 0; i < colors.count; i++)
+        colors.setXYZ(i, tint.r, tint.g, tint.b);
+      colors.needsUpdate = true;
+    }
+    if (!assetRecipe || asset?.geometry) {
+      previousShape.current?.dispose();
+      previousShape.current = source.clone();
+    }
+    const g = addFormationSource(source, previous.current);
     previous.current = new Float32Array(g.attributes.position.array);
     progress.current.value = 0;
     return g;
-  }, [entity.geometry, entity.color]);
+  }, [entity.geometry, entity.color, asset?.geometry]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => previousShape.current?.dispose(), []);
   const material = useMemo(() => {
     const m = new THREE.MeshStandardMaterial({
       vertexColors: true,
@@ -246,10 +281,14 @@ function Formation({ entity }: { entity: Entity }) {
     if (mesh.current && entity.geometry?.kind === "crystal")
       mesh.current.rotation.y += dt * 0.6;
     material.emissive.set(
-      entity.stage !== "ready" ? "#9debd4" : selected ? "#497d6c" : "#000000",
+      entity.stage !== "ready" || pendingAsset
+        ? "#9debd4"
+        : selected
+          ? "#497d6c"
+          : "#000000",
     );
     material.emissiveIntensity =
-      entity.stage !== "ready"
+      entity.stage !== "ready" || pendingAsset
         ? 0.3 + Math.sin(clock.elapsedTime * 3) * 0.15
         : selected
           ? 0.18
@@ -301,6 +340,7 @@ function Formation({ entity }: { entity: Entity }) {
   );
 }
 function Player() {
+  const usableEntities = useRef(new Map<string, Entity>());
   const ref = useRef<THREE.Group>(null);
   const state = useRef<PlayerState>({
     position: [0, 0.5, 5],
@@ -311,9 +351,11 @@ function Player() {
   const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const playing = useOrb((s) => s.playing);
   const reset = useOrb((s) => s.reset);
+  const projectId = useOrb((s) => s.project.id);
   useEffect(() => {
     state.current = { position: [0, 0.5, 5], velocityY: 0 };
-  }, [reset]);
+    usableEntities.current.clear();
+  }, [reset, projectId]);
   useEffect(() => {
     const key = (e: KeyboardEvent, down: boolean) => {
       if (
@@ -356,6 +398,16 @@ function Player() {
   useFrame(({ clock }, delta) => {
     if (!ref.current) return;
     ref.current.visible = playing;
+    const s = useOrb.getState();
+    const currentIds = new Set(s.project.entities.map((entity) => entity.id));
+    for (const id of usableEntities.current.keys())
+      if (!currentIds.has(id)) usableEntities.current.delete(id);
+    for (const entity of s.project.entities)
+      if (
+        entity.geometry?.kind !== "asset" ||
+        isAssetGeometryReady(entity.geometry.assetId)
+      )
+        usableEntities.current.set(entity.id, entity);
     if (!playing) return;
     const dt = Math.min(delta, 0.04),
       k = keys.current;
@@ -368,11 +420,23 @@ function Player() {
     );
     direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
-    const s = useOrb.getState();
     const result = stepGameplay(
       state.current,
       { x: direction.x, z: direction.z, jump: k.has(" ") },
-      s.project.entities,
+      s.project.entities.map((entity) => {
+        if (
+          entity.geometry?.kind === "asset" &&
+          !isAssetGeometryReady(entity.geometry.assetId)
+        )
+          return (
+            usableEntities.current.get(entity.id) ?? {
+              ...entity,
+              stage: "seed" as const,
+            }
+          );
+        usableEntities.current.set(entity.id, entity);
+        return entity;
+      }),
       s.score,
       clock.elapsedTime,
       dt,
@@ -441,6 +505,7 @@ function Pebbles() {
   );
 }
 function Scene() {
+  const projectId = useOrb((s) => s.project.id);
   const phase = useOrb((s) => s.phase),
     entities = useOrb((s) => s.project.entities),
     environment = useOrb((s) => s.project.environment),
@@ -534,7 +599,7 @@ function Scene() {
         </mesh>
         <Pebbles />
         {entities.map((e) => (
-          <Formation key={e.id} entity={e} />
+          <Formation key={`${projectId}/${e.id}`} entity={e} />
         ))}
         <Player />
         <ContactShadows

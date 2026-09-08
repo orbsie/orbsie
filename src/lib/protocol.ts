@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  catalogAssetIds,
+  isAssetId,
+  type AssetRequestPolicy,
+} from "./asset-catalog";
 export const vector = z.tuple([
   z.number().finite().min(-100).max(100),
   z.number().finite().min(-100).max(100),
@@ -12,21 +17,41 @@ export const partSchema = z.object({
   rotation: vector.optional(),
   color,
 });
-export const geometrySchema = z.object({
-  kind: z.enum([
-    "tree",
-    "mushroom",
-    "platform",
-    "arch",
-    "crystal",
-    "pond",
-    "flower",
-    "rock",
-    "custom",
-  ]),
+const geometryDetail = z.enum(["coarse", "refined"]).default("refined");
+const proceduralGeometryKind = z.enum([
+  "tree",
+  "mushroom",
+  "platform",
+  "arch",
+  "crystal",
+  "pond",
+  "flower",
+  "rock",
+  "custom",
+]);
+export const proceduralGeometrySchema = z.object({
+  kind: proceduralGeometryKind,
   parts: z.array(partSchema).max(32).optional(),
-  detail: z.enum(["coarse", "refined"]).default("refined"),
+  detail: geometryDetail,
 });
+export const assetGeometrySchema = z.object({
+  kind: z.literal("asset"),
+  assetId: z
+    .enum(catalogAssetIds)
+    .refine(isAssetId, "Unknown catalog asset ID."),
+  detail: geometryDetail,
+  tint: color.optional(),
+});
+export const geometrySchema = z.union([
+  proceduralGeometrySchema,
+  assetGeometrySchema,
+]);
+export type AssetGeometryRecipe = z.infer<typeof assetGeometrySchema>;
+export type ProceduralGeometryRecipe = z.infer<typeof proceduralGeometrySchema>;
+export type GeometryRecipe = z.infer<typeof geometrySchema>;
+export const assetRequestPolicySchema = z.enum(["catalog-allowed", "new-only"]);
+export const entityAssetPolicy = assetRequestPolicySchema;
+export type EntityAssetPolicy = AssetRequestPolicy;
 export const behaviorSchema = z.object({
   type: z.enum(["static", "collect", "move", "portal", "bloom", "bounce"]),
   speed: z.number().min(0).max(5).optional(),
@@ -41,10 +66,10 @@ export const entitySchema = z.object({
   color: color.default("#6ead60"),
   geometry: geometrySchema.optional(),
   behavior: behaviorSchema.optional(),
+  assetPolicy: assetRequestPolicySchema.optional(),
   stage: z.enum(["seed", "coarse", "ready"]).default("seed"),
 });
 export type Entity = z.infer<typeof entitySchema>;
-export type GeometryRecipe = z.infer<typeof geometrySchema>;
 export const projectSchema = z.object({
   version: z.literal(1),
   id: z.string().max(80),
@@ -70,18 +95,26 @@ export const commandSchema = z.discriminatedUnion("type", [
     type: z.literal("set_geometry"),
     id: z.string(),
     geometry: geometrySchema,
+    assetPolicy: assetRequestPolicySchema.optional(),
   }),
-  z.object({ type: z.literal("set_material"), id: z.string(), color }),
+  z.object({
+    type: z.literal("set_material"),
+    id: z.string(),
+    color,
+    assetPolicy: assetRequestPolicySchema.optional(),
+  }),
   z.object({
     type: z.literal("set_transform"),
     id: z.string(),
     position: vector.optional(),
     scale: vector.optional(),
+    assetPolicy: assetRequestPolicySchema.optional(),
   }),
   z.object({
     type: z.literal("set_behavior"),
     id: z.string(),
     behavior: behaviorSchema,
+    assetPolicy: assetRequestPolicySchema.optional(),
   }),
   z.object({ type: z.literal("remove_entity"), id: z.string() }),
   z.object({
@@ -145,6 +178,11 @@ export function applyOperation(
       throw Error("Object already exists.");
     if (entities.length >= 160)
       throw Error("This world reached its 160-object limit.");
+    if (
+      c.entity.assetPolicy === "new-only" &&
+      c.entity.geometry?.kind === "asset"
+    )
+      throw Error("A new-only object cannot use a catalog asset.");
     entities = [...entities, { ...c.entity, stage: "seed" }];
   } else if (c.type === "set_environment") {
     environment = {
@@ -155,11 +193,34 @@ export function applyOperation(
   } else if (c.type === "commit_revision") {
     messages = [...messages, { role: "assistant", text: c.message }];
   } else {
-    if (!entities.some((e) => e.id === c.id))
-      throw Error("That object no longer exists.");
-    if (c.type === "remove_entity")
+    const existing = entities.find((e) => e.id === c.id);
+    if (!existing) throw Error("That object no longer exists.");
+    if (c.type === "remove_entity") {
       entities = entities.filter((e) => e.id !== c.id);
-    else
+    } else {
+      if (
+        existing.assetPolicy === "new-only" &&
+        c.assetPolicy === "catalog-allowed"
+      )
+        throw Error("An object marked new-only cannot be downgraded.");
+      if (
+        c.type === "set_geometry" &&
+        c.geometry.kind === "asset" &&
+        (existing.assetPolicy === "new-only" || c.assetPolicy === "new-only")
+      )
+        throw Error("A new-only object cannot use a catalog asset.");
+      if (
+        c.type !== "set_geometry" &&
+        c.assetPolicy === "new-only" &&
+        existing.geometry?.kind === "asset"
+      )
+        throw Error(
+          "A catalog object must be replaced before it is marked new-only.",
+        );
+      const nextAssetPolicy =
+        existing.assetPolicy === "new-only" || c.assetPolicy === "new-only"
+          ? "new-only"
+          : (c.assetPolicy ?? existing.assetPolicy);
       entities = entities.map((e) =>
         e.id !== c.id
           ? e
@@ -167,18 +228,29 @@ export function applyOperation(
             ? {
                 ...e,
                 geometry: c.geometry,
+                assetPolicy: nextAssetPolicy,
                 stage: c.geometry.detail === "coarse" ? "coarse" : "ready",
               }
             : c.type === "set_material"
-              ? { ...e, color: c.color }
+              ? {
+                  ...e,
+                  color: c.color,
+                  assetPolicy: nextAssetPolicy,
+                  geometry:
+                    e.geometry?.kind === "asset"
+                      ? { ...e.geometry, tint: c.color }
+                      : e.geometry,
+                }
               : c.type === "set_behavior"
-                ? { ...e, behavior: c.behavior }
+                ? { ...e, behavior: c.behavior, assetPolicy: nextAssetPolicy }
                 : {
                     ...e,
                     position: c.position ?? e.position,
                     scale: c.scale ?? e.scale,
+                    assetPolicy: nextAssetPolicy,
                   },
       );
+    }
   }
   const next: Project = {
     ...project,

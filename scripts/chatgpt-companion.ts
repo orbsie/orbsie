@@ -1,3 +1,5 @@
+import { deriveAssetPolicy, enforceAssetPolicy } from "../src/lib/asset-policy";
+import { promptCatalogForPolicy } from "../src/lib/asset-catalog";
 /** Trusted loopback boundary; never import into a hosted route or browser bundle. */
 import {
   createServer,
@@ -168,6 +170,7 @@ export async function startChatGPTCompanion({
       );
       if (!parsed.success) return send(res, 400, "Invalid generation request.");
       const { prompt, project, selected } = parsed.data;
+      const assetPolicy = deriveAssetPolicy(prompt, selected, project);
       if (
         selected &&
         !project.entities.some((entity) => entity.id === selected)
@@ -198,7 +201,11 @@ export async function startChatGPTCompanion({
         if (!line.trim()) return;
         controller.signal.throwIfAborted();
         if (++count > 250) throw Error("Invalid command sequence.");
-        const command = commandSchema.parse(JSON.parse(line));
+        const command = enforceAssetPolicy(
+          working,
+          commandSchema.parse(JSON.parse(line)),
+          assetPolicy,
+        );
         const applied = applyOperation(
           working,
           {
@@ -227,6 +234,8 @@ export async function startChatGPTCompanion({
         systemPrompt,
         {
           instruction: prompt,
+          assetPolicy,
+          assetCatalog: promptCatalogForPolicy(assetPolicy.requestAssetPolicy),
           selectedEntityId: selected,
           project: { ...project, messages: [] },
         },

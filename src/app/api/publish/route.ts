@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { z } from "zod";
 import {
   requireUser,
@@ -10,16 +11,20 @@ import {
   HttpError,
 } from "@/lib/server/auth";
 import { projectSchema } from "@/lib/protocol";
+import { bundleCatalogAssets } from "../../../lib/asset-bundle";
 import {
   makePublicationManifest,
   PUBLICATION_MANIFEST_FILE,
   verifyPublicationArtifacts,
   PublicationVerificationError,
   isPublicationDigest,
+  toVercelDeploymentFile,
   type PublicationFile,
 } from "../../../lib/server/publication-artifact";
 export const maxDuration = 60;
 const publicPath = (id: string) => `/o/${encodeURIComponent(id)}`;
+const publicationModelsRoot = join(process.cwd(), "public/models");
+const publicationLicenseRoot = join(process.cwd(), "assets/catalog/licenses");
 async function vercel(path: string, method = "GET", body?: unknown) {
   const token = process.env.VERCEL_DEPLOY_TOKEN,
     team = process.env.VERCEL_TEAM_ID;
@@ -160,9 +165,35 @@ export async function POST(request: Request) {
         ),
       },
     ];
-    const artifact = makePublicationManifest(projectId, revision, files);
+    const catalogFiles = await bundleCatalogAssets(snapshot, async (path) => {
+      if (path.startsWith("models/"))
+        return new Uint8Array(
+          await readFile(
+            join(publicationModelsRoot, path.slice("models/".length)),
+          ),
+        );
+      if (path.startsWith("assets/catalog/licenses/"))
+        return new Uint8Array(
+          await readFile(
+            join(
+              publicationLicenseRoot,
+              path.slice("assets/catalog/licenses/".length),
+            ),
+          ),
+        );
+      throw new Error("The publication requested an unknown local asset path.");
+    });
+    const assetFiles: PublicationFile[] = Object.entries(catalogFiles)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([file, data]) => ({ file, data }));
+    const publicationFiles = [...files, ...assetFiles];
+    const artifact = makePublicationManifest(
+      projectId,
+      revision,
+      publicationFiles,
+    );
     const deploymentFiles = [
-      ...files,
+      ...publicationFiles.map(toVercelDeploymentFile),
       { file: PUBLICATION_MANIFEST_FILE, data: artifact.data },
     ];
     // Recover an accepted deployment after a request timeout by its immutable revision metadata.

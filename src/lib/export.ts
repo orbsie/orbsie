@@ -6,6 +6,7 @@ import {
   strFromU8,
 } from "fflate";
 import { committed, projectSchema, type Project } from "./protocol";
+import { bundleCatalogAssets } from "./asset-bundle";
 export function encodeWorld(project: Project) {
   const p = { ...committed(project), messages: [] };
   return btoa(String.fromCharCode(...compressSync(strToU8(JSON.stringify(p)))))
@@ -81,11 +82,28 @@ export async function exportWorld(project: Project) {
     ),
   };
   files["build.mjs"] = strToU8(
-    "import {execFileSync} from 'node:child_process';import {copyFileSync} from 'node:fs';execFileSync(process.execPath,['node_modules/vite/bin/vite.js','build'],{stdio:'inherit'});copyFileSync('project.json','dist/project.json');",
+    "import {execFileSync} from 'node:child_process';import {copyFileSync,cpSync,existsSync} from 'node:fs';execFileSync(process.execPath,['node_modules/vite/bin/vite.js','build'],{stdio:'inherit'});copyFileSync('project.json','dist/project.json');for(const path of ['models','assets'])if(existsSync(path))cpSync(path,'dist/'+path,{recursive:true});",
   );
   const sources = (await source.json()) as Record<string, string>;
   for (const [path, text] of Object.entries(sources))
     files[path] = strToU8(text);
+  Object.assign(
+    files,
+    await bundleCatalogAssets(committed(project), async (path) => {
+      if (
+        path.startsWith("assets/catalog/licenses/") &&
+        sources[path] !== undefined
+      )
+        return strToU8(sources[path]);
+      const response = await fetch(`/${path}`, {
+        redirect: "error",
+        credentials: "omit",
+      });
+      if (!response.ok)
+        throw Error("A model required by this world could not be exported.");
+      return new Uint8Array(await response.arrayBuffer());
+    }),
+  );
   const data = zipSync(files, { level: 6 });
   const blob = new Blob([new Uint8Array(data)], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
