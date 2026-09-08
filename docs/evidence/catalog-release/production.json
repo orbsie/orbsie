@@ -1,0 +1,12 @@
+{
+  "source": "0b8b88a",
+  "url": "https://orbsie.com",
+  "deployment": "https://orbsie-j97jq3erq-grappeggias-projects.vercel.app",
+  "mode": "production-read-only-live-generated-mixed-world",
+  "homepageStatus": 200,
+  "assetStatus": 200,
+  "assetHashVerified": true,
+  "mutations": 0,
+  "realModelCalls": 0,
+  "pageErrors": []
+}

@@ -9,11 +9,11 @@
   "outputCapTokens": null,
   "creation": {
     "status": "passed",
-    "operations": 9,
-    "firstReservationMs": 8476,
+    "operations": 8,
+    "firstReservationMs": 6976,
     "seedObserved": true,
-    "catalogEntities": 0,
-    "proceduralEntities": 2
+    "catalogEntities": 1,
+    "proceduralEntities": 1
   },
   "edit": {
     "status": "passed",
