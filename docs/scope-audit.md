@@ -21,6 +21,8 @@ Latest local measurement follow-up: `f9967e2` adds accepted entity-update-to-dra
 
 Portable-runtime follow-up: `docs/evidence/native-notices/` maps 342 installed-system files to 289 package notices, whose bytes/hashes were independently verified. This does not supply the absent official runtime archive, corresponding sources, an installer, or clean-host certification. The bundled Node launcher is implemented and tested separately in `docs/evidence/packaged-node-launcher/`; older statements that every package requires host Node are historical.
 
+Composer continuity follow-up: `docs/evidence/composer-continuity/` proves the desktop keyboard Enter path keeps the same focused textarea and canvas during normal logical descent while a fixture response is held. A follow-up draft typed without refocusing survives completion, and the original message appears exactly once. Blur/focusout counts are zero; the final reviewed run has 129 continuity samples without violations. This is deterministic fixture evidence, not partial-stream gameplay, mobile, live-provider, or performance certification.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.

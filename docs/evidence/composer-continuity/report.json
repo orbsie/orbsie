@@ -1,0 +1,160 @@
+{
+  "status": "passed",
+  "mode": "deterministic-fixture-browser",
+  "scope": "One normal-motion actual-editor keyboard run checks the landing-to-chat composer transition, held-response building workspace, textarea DOM/focus/canvas continuity, and follow-up draft persistence. It does not cover partial-stream gameplay or live provider behavior.",
+  "url": "http://localhost:3030",
+  "appSourceCommit": "f6e58014983878c6136babfe86c8aaa782bcb4c0",
+  "repositoryCommit": "4c70a132566847a097937dd68b924f698b4e9409",
+  "fixtureTransport": true,
+  "fixtureResponseHeldUntilRelease": true,
+  "fixtureServerRequestCount": 1,
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "reducedMotion": "no-preference",
+  "generationRequestCount": 1,
+  "generationLifecycle": [
+    {
+      "event": "response",
+      "url": "http://127.0.0.1:35107/api/generate",
+      "status": 200
+    },
+    {
+      "event": "requestfailed",
+      "url": "http://127.0.0.1:35107/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "blockedExternalHttpRequests": [],
+  "fixtureFontStylesheets": [
+    "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap"
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:35107/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "checks": {
+    "actualEditorKeyboardEnter": true,
+    "nativeSubmitEventAbsent": true,
+    "heldGenerationRequestObserved": true,
+    "buildingWorkspaceObserved": true,
+    "textareaAndCanvasContinuousWhileHeld": true,
+    "normalMotionDescentSettledWhileHeld": true,
+    "followUpTypedWithoutRefocus": true,
+    "followUpSurvivedResponse": true,
+    "originalPromptAppearsExactlyOnce": true,
+    "textareaAndCanvasContinuousAfterSettledTransition": true,
+    "oneFixtureServerRequest": true
+  },
+  "observations": {
+    "hold": {
+      "sampleCount": 11,
+      "sampleOverflow": false,
+      "blurEvents": 0,
+      "focusoutEvents": 0,
+      "firstSample": {
+        "label": "typed",
+        "at": 651.1000000014901,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond."
+      },
+      "heldSample": {
+        "label": "held-response",
+        "at": 1028.5,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": ""
+      },
+      "lastSample": {
+        "label": "held-response",
+        "at": 1028.5,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": ""
+      },
+      "continuityViolations": []
+    },
+    "settledWhileHeld": {
+      "sampleCount": 73,
+      "sampleOverflow": false,
+      "blurEvents": 0,
+      "focusoutEvents": 0,
+      "firstSample": {
+        "label": "typed",
+        "at": 651.1000000014901,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond."
+      },
+      "heldSample": {
+        "label": "held-response",
+        "at": 1028.5,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": ""
+      },
+      "lastSample": {
+        "label": "motion-settled-while-held",
+        "at": 5377.60000000149,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": ""
+      },
+      "continuityViolations": []
+    },
+    "draft": {
+      "value": " Keep the follow-up idea ready for later.",
+      "active": true
+    },
+    "final": {
+      "sampleCount": 129,
+      "sampleOverflow": false,
+      "blurEvents": 0,
+      "focusoutEvents": 0,
+      "firstSample": {
+        "label": "typed",
+        "at": 651.1000000014901,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond."
+      },
+      "heldSample": {
+        "label": "held-response",
+        "at": 1028.5,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": ""
+      },
+      "lastSample": {
+        "label": "settled",
+        "at": 9256.300000000745,
+        "connected": true,
+        "active": true,
+        "sameCanvas": true,
+        "value": " Keep the follow-up idea ready for later."
+      },
+      "continuityViolations": []
+    },
+    "finalUserMessages": [
+      "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond."
+    ]
+  },
+  "requestFailureNote": "Chromium reports net::ERR_ABORTED for the rewritten localhost fixture request after the committed response was consumed; this is the existing deterministic fixture transport behavior. No provider request was made.",
+  "screenshot": "final.png",
+  "finishedAt": "2026-09-08T23:02:20.017Z"
+}
