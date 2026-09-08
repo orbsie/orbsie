@@ -1,10 +1,22 @@
 # Orbsie full scope audit
 
-Production update: `9b2cc0c` deployed to https://orbsie.com with the additive journal schema migration committed. `docs/evidence/recovery-release/report.json` verifies homepage 200, anonymous journal access 401, the exact committed player bundle hash, and one rendered canvas with no page errors. This supersedes older production-rollout gaps below; signed-in production recovery and real-provider interruption recovery remain unverified.
+## Current evidence checkpoint — 2026-09-08
 
-Retention follow-up: the opt-in real PostgreSQL regression now passes concurrent quota admission, oldest-history removal, operation cascade, owner isolation and active-run protection against development storage. See `tests/generation-retention-database.test.ts` and `docs/evidence/generation-journal/README.md`. This does not establish production rollout or provider interruption recovery.
+This checkpoint supersedes conflicting historical statements below. The full plan remains incomplete. Evidence records a particular run and source revision; it is not a fresh observation of production.
 
-Latest local validation (2026-09-08): generation checkpoints now persist acknowledged operations with owner isolation, ordered idempotent replay, cancellation and cloud snapshot drift guards. `docs/evidence/generation-journal/report.json` records 17 passing real development-database checks; `browser.json` records signed-in recovery into IndexedDB with zero inference requests and no page errors. This proves completed-checkpoint recovery, not real-provider interrupted-stream continuation. Production migration/deployment remains open. Bounded superseded-run retention and recovered selection/prompt limits subsequently passed 28 focused tests and the production build; live retention validation remains open. The preceding full regression suite passed 333 tests, with two optional database tests skipped.
+| Area | Verified evidence | Remaining scope |
+|---|---|---|
+| Production release | `docs/evidence/local-finished-geometry-release/report.json` records source `361f9da`, homepage 200, anonymous journal 401, exact player/worker hashes, and a visible canvas without page errors. | Formation change `670b52e` is committed locally and is not covered by that release evidence. |
+| Real ChatGPT interruption recovery | `docs/evidence/provider-e2e/chatgpt-reload-recovery/chatgpt-local.json` and `wrapper.json` record a passed document-reload recovery, explicit continuation, targeted edit, local persistence, export and standalone playback, with three generation requests. Fresh-context recovery records zero generation requests. | Does not prove provider-stream resumption, every network failure, or equivalent OpenRouter/Gateway workflows. |
+| Interrupted formation revisions | `670b52e`; `docs/evidence/formation-continuity/report.json` verifies three families with position error below 0.000001, zero color error, no browser errors or external requests. Seven geometry tests and type checking passed. | Midpoint visual review still shows jagged surfaces when topology changes. Implement the required surface/particle bridge; do not treat sampled-vertex continuity as complete visual acceptance. |
+| Development usage policy | `675a48f`; `AGENTS.md`, `prompt.md`, `.codex/config.toml`, and the Luna role specify Astra low review, one Luna xhigh worker, concise context, batched validation, standard processing and Fast disabled. Both TOML files parse. | Runtime settings require reload where the host does not apply them dynamically; enforce the one-worker rule in current orchestration. |
+| Public sharing metadata | Current `src/app/o/[id]/page.tsx` selects draft `title`, `public_url`, and `published_revision` and renders the title/player. | Required thumbnail and creator are absent. Published title must be tied to the promoted immutable revision so draft edits cannot change release metadata. |
+
+Next implementation contract: persist title, thumbnail and safe public creator attribution with the captured publication revision; promote them only when deployment is ready; render them on the stable sharing page. Preserve the prior release metadata after failed publication and verify draft edits cannot mutate the public release. This is a product requirement, not a request to expose private account email or draft content.
+
+## Historical audit and supporting evidence
+
+The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.
 
 The stable parcel anchor/tangent basis and renderer transition are implemented. `docs/evidence/parcel-transition/report.json` covers descent, local reopen, return, repeated arrival and reduced motion using a stubbed generation fixture, with one canvas and no page errors. Full production timing, interaction responsiveness and camera/composer coordination remain open; historical transition rows below should be read with this narrower new evidence.
 
