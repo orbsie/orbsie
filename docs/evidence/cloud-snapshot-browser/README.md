@@ -1,0 +1,5 @@
+# Browser cloud conflict verification
+
+The final report passed the actual local account UI with fixture generation and real development cloud storage: sign-in/sign-out retain pending input, saving succeeds, an intervening same-revision cloud change causes a 409, the local draft survives, opening the cloud copy preserves a recovery branch, and saving with its new baseline succeeds. Reload restores the cloud library. The account dialog has no horizontal overflow at 390px. Conflict and mobile screenshots were visually reviewed.
+
+No real provider inference or dedicated publication was requested. The local share panel correctly reports missing dedicated-deployment configuration. `before-persistence-wait.json` retains a probe that read IndexedDB before the cloud-copy save completed; the final probe waits for persisted equality. `before-capability-check.json` retains a probe that incorrectly required the publishing button despite local publishing being unconfigured. The final report explicitly records passed=true only after all checks complete.

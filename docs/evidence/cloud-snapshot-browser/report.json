@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "base": "http://127.0.0.1:3017",
+  "checks": [
+    "Sign-in preserves unsubmitted landing prompt",
+    "UI saves generated local draft to configured cloud",
+    "Sign-out/sign-in preserves active local draft and pending edit",
+    "Same-revision cloud change exposes conflict and preserves local draft",
+    "Conflict resolution opens cloud revision, preserves recovery copy, and saves with new baseline",
+    "Share dialog accurately reflects configured publishing capability; no deployment requested",
+    "Reload restores session and cloud library; cloud UI opens saved world",
+    "Account dialog has no horizontal overflow at 390px"
+  ],
+  "saves": [
+    {
+      "status": 200,
+      "revision": 0
+    },
+    {
+      "status": 200,
+      "revision": 43
+    },
+    {
+      "status": 409
+    },
+    {
+      "status": 200,
+      "revision": 43
+    }
+  ],
+  "errors": [],
+  "fixtureGenerations": 1,
+  "realProviderCalls": 0
+}

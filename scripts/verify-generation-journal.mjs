@@ -14,7 +14,9 @@ assert.equal(
 );
 const state = JSON.parse(await readFile(privatePath, "utf8"));
 assert.equal(state.baseURL, origin);
-const output = "docs/evidence/generation-journal";
+const output =
+  process.env.ORBSIE_JOURNAL_EVIDENCE_DIRECTORY ??
+  "docs/evidence/generation-journal";
 await mkdir(output, { recursive: true });
 const report = {
   scope:

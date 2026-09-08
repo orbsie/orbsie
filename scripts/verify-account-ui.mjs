@@ -7,8 +7,11 @@ const statePath = process.env.CLOUD_TEST_STATE;
 if (!statePath)
   throw Error("Set CLOUD_TEST_STATE to the synthetic credential file.");
 const state = JSON.parse(await readFile(statePath, "utf8"));
-const credentials = state.users[0];
 const base = process.env.TEST_URL || "https://orbsie.com";
+const credentials =
+  state.users?.[0] ?? (state.baseURL === base ? state.credentials : undefined);
+if (!credentials)
+  throw Error("Synthetic account does not match the test origin.");
 const output = process.env.UI_EVIDENCE_DIR || ".vercel/account-ui";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({
@@ -29,6 +32,7 @@ const errors = [],
   checks = [],
   saves = [];
 let fixtureGenerations = 0;
+let passed = false;
 page.on("pageerror", (error) => errors.push(error.message));
 page.on("request", (request) => {
   if (request.url().includes("/api/generate")) fixtureGenerations++;
@@ -113,7 +117,7 @@ try {
     .fill("An unsubmitted edit that must survive sign-in");
   await account();
   await save(200);
-  checks.push("UI saves generated local draft to production cloud");
+  checks.push("UI saves generated local draft to configured cloud");
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await signIn();
   await expect(page.locator("#prompt")).toHaveValue(
@@ -125,8 +129,8 @@ try {
   // Simulate another device updating this test's own project, then save the stale UI copy.
   const remote = {
     ...original,
-    title: "UI acceptance cloud update",
-    revision: original.revision + 1,
+    title: `UI acceptance cloud update ${original.id}`,
+    revision: original.revision,
   };
   await page.waitForTimeout(2000);
   const remoteBaseline = await context.request.get(
@@ -153,12 +157,14 @@ try {
   ).toBeVisible();
   expect(await draft()).toEqual(original);
   await page.screenshot({ path: `${output}/conflict.png` });
-  checks.push("Stale cloud save exposes conflict and preserves local draft");
+  checks.push(
+    "Same-revision cloud change exposes conflict and preserves local draft",
+  );
   await page
     .getByRole("button", { name: "Open cloud copy", exact: true })
     .click();
   await expect(page.locator(".workspace-heading h2")).toHaveText(remote.title);
-  expect(await draft()).toEqual(remote);
+  await expect.poll(draft).toEqual(remote);
   await account();
   await expect(
     page
@@ -173,9 +179,24 @@ try {
   );
   await close();
   await page.getByRole("button", { name: "Share Orb", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Publish Orb", exact: true }),
-  ).toBeVisible();
+  const capabilityResponse = await context.request.get(`${base}/api/config`);
+  expect(capabilityResponse.status()).toBe(200);
+  const capabilities = await capabilityResponse.json();
+  if (capabilities.publishing) {
+    await expect(
+      page.getByRole("button", { name: "Publish Orb", exact: true }),
+    ).toBeVisible();
+  } else {
+    await expect(
+      page.getByText(
+        "Dedicated publishing needs cloud storage and deployment credentials.",
+        { exact: false },
+      ),
+    ).toBeVisible();
+  }
+  checks.push(
+    "Share dialog accurately reflects configured publishing capability; no deployment requested",
+  );
   await page.screenshot({ path: `${output}/share.png` });
   await close();
 
@@ -206,11 +227,13 @@ try {
   checks.push("Account dialog has no horizontal overflow at 390px");
   expect(fixtureGenerations).toBeGreaterThan(0);
   expect(errors).toEqual([]);
+  passed = true;
 } finally {
   await writeFile(
     `${output}/report.json`,
     JSON.stringify(
       {
+        passed,
         base,
         checks,
         saves: saves.map(({ status, revision }) => ({ status, revision })),

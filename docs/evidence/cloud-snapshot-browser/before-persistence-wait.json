@@ -1,0 +1,25 @@
+{
+  "base": "http://127.0.0.1:3017",
+  "checks": [
+    "Sign-in preserves unsubmitted landing prompt",
+    "UI saves generated local draft to production cloud",
+    "Sign-out/sign-in preserves active local draft and pending edit",
+    "Same-revision cloud change exposes conflict and preserves local draft"
+  ],
+  "saves": [
+    {
+      "status": 200,
+      "revision": 0
+    },
+    {
+      "status": 200,
+      "revision": 43
+    },
+    {
+      "status": 409
+    }
+  ],
+  "errors": [],
+  "fixtureGenerations": 1,
+  "realProviderCalls": 0
+}

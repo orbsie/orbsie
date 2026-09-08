@@ -1,0 +1,29 @@
+{
+  "scope": "Local dev API and real PostgreSQL; no inference or production requests",
+  "origin": "http://127.0.0.1:3017",
+  "startedAt": "2026-09-08T19:12:54.258Z",
+  "checks": [
+    "reserve acknowledged at sequence one",
+    "exact retry does not duplicate operation",
+    "conflicting retry rejected",
+    "out-of-order operation rejected",
+    "geometry and commit checkpoint persisted",
+    "latest owner checkpoint discovered",
+    "replay ordered after acknowledged sequence",
+    "anonymous cannot read checkpoint",
+    "anonymous cannot append",
+    "second owner cannot read checkpoint",
+    "second owner cannot append",
+    "concurrent append and cancel serialize",
+    "cancelled run rejects later operation",
+    "cloud revision drift rejects checkpoint mutation",
+    "rejected drift preserves checkpoint",
+    "same-revision content drift rejects mutation",
+    "diverged baseline remains readable and flagged"
+  ],
+  "requests": 34,
+  "projectId": "eff7890b-b39b-4ec8-8d4b-2b64e1c3debc",
+  "runId": "674213d6-c61b-439b-b4e6-2a9078756fcd",
+  "status": "passed",
+  "finishedAt": "2026-09-08T19:13:11.487Z"
+}

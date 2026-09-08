@@ -3,13 +3,14 @@ import { chromium } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 const origin = "http://127.0.0.1:3017";
+const directory =
+  process.env.ORBSIE_JOURNAL_EVIDENCE_DIRECTORY ??
+  "docs/evidence/generation-journal";
 const fixture = JSON.parse(
   await readFile(".vercel/dev-generated-cloud-state.json", "utf8"),
 );
 assert.equal(fixture.baseURL, origin);
-const evidence = JSON.parse(
-  await readFile("docs/evidence/generation-journal/report.json", "utf8"),
-);
+const evidence = JSON.parse(await readFile(`${directory}/report.json`, "utf8"));
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -108,7 +109,7 @@ try {
   assert.equal(inference, 0);
   assert.deepEqual(errors, []);
   await page.screenshot({
-    path: "docs/evidence/generation-journal/recovered-browser.png",
+    path: `${directory}/recovered-browser.png`,
   });
   const report = {
     scope:
@@ -124,7 +125,7 @@ try {
     status: "passed",
   };
   await writeFile(
-    "docs/evidence/generation-journal/browser.json",
+    `${directory}/browser.json`,
     JSON.stringify(report, null, 2) + "\n",
   );
   console.log(JSON.stringify(report));

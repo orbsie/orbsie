@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "id": "49277e9e-3f9a-4aef-b262-aa9842bcd043",
+  "title": "A pocketful of sunshine",
+  "seed": 42,
+  "revision": 43,
+  "entities": [
+    {
+      "id": "tree-0",
+      "label": "Friendly tree",
+      "position": [
+        -4.5,
+        0,
+        1
+      ],
+      "scale": [
+        1.25,
+        1.35,
+        1.25
+      ],
+      "color": "#6d9d58",
+      "geometry": {
+        "kind": "tree",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "static"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "tree-1",
+      "label": "Little tree",
+      "position": [
+        4,
+        0,
+        3
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#8fb866",
+      "geometry": {
+        "kind": "tree",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "static"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "pond",
+      "label": "Quiet pond",
+      "position": [
+        -3,
+        0.04,
+        -3
+      ],
+      "scale": [
+        1.6,
+        1,
+        1.25
+      ],
+      "color": "#7bced0",
+      "geometry": {
+        "kind": "pond",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "static"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "platform-0",
+      "label": "First platform",
+      "position": [
+        0,
+        0.3,
+        1
+      ],
+      "scale": [
+        1.5,
+        0.6,
+        1.5
+      ],
+      "color": "#eedda5",
+      "geometry": {
+        "kind": "platform",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 0.7,
+        "amplitude": 0.6,
+        "axis": "y"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "platform-1",
+      "label": "Middle platform",
+      "position": [
+        1,
+        0.6,
+        -1.5
+      ],
+      "scale": [
+        1.5,
+        0.7,
+        1.5
+      ],
+      "color": "#efc79c",
+      "geometry": {
+        "kind": "platform",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 1,
+        "amplitude": 0.8,
+        "axis": "x"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "platform-2",
+      "label": "Last platform",
+      "position": [
+        0,
+        0.7,
+        -4
+      ],
+      "scale": [
+        1.6,
+        0.7,
+        1.6
+      ],
+      "color": "#ddc4e9",
+      "geometry": {
+        "kind": "platform",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 0.6,
+        "amplitude": 0.5,
+        "axis": "y"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "crystal-0",
+      "label": "Crystal 1",
+      "position": [
+        -2,
+        0.8,
+        3
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "color": "#a1f0d7",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "crystal-1",
+      "label": "Crystal 2",
+      "position": [
+        2,
+        0.8,
+        2
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "color": "#a1f0d7",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "crystal-2",
+      "label": "Crystal 3",
+      "position": [
+        3,
+        0.8,
+        -1
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "color": "#a1f0d7",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "crystal-3",
+      "label": "Crystal 4",
+      "position": [
+        -1,
+        0.8,
+        -3
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "color": "#a1f0d7",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "crystal-4",
+      "label": "Crystal 5",
+      "position": [
+        2,
+        0.8,
+        -5
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "color": "#a1f0d7",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "portal",
+      "label": "Sunlight portal",
+      "position": [
+        0,
+        0,
+        -6.5
+      ],
+      "scale": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "color": "#eddbb7",
+      "geometry": {
+        "kind": "arch",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "portal"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "tree-2",
+      "label": "Tall tree",
+      "position": [
+        5,
+        0,
+        -4
+      ],
+      "scale": [
+        1.15,
+        1.6,
+        1.15
+      ],
+      "color": "#77a664",
+      "geometry": {
+        "kind": "tree",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "static"
+      },
+      "stage": "ready"
+    },
+    {
+      "id": "rock",
+      "label": "Pebbles",
+      "position": [
+        -5,
+        0,
+        4
+      ],
+      "scale": [
+        1.3,
+        0.7,
+        1
+      ],
+      "color": "#bed0bc",
+      "geometry": {
+        "kind": "rock",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "static"
+      },
+      "stage": "ready"
+    }
+  ],
+  "environment": {
+    "sky": "#dceee9",
+    "ground": "#91b977",
+    "water": "#59bdbb"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "text": "A tiny island treasure hunt for account UI acceptance"
+    },
+    {
+      "role": "assistant",
+      "text": "Your island is alive! Collect five crystals, explore the moving platforms, and find the portal. You can play now or change any object."
+    }
+  ]
+}
