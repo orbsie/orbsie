@@ -116,7 +116,7 @@ describe("model catalog estimates", () => {
         [{ id: "no-tools" }, { id: "tools", supported_parameters: ["tools"] }],
         "openrouter",
       ).map((model) => model.id),
-    ).toEqual(["tools"]);
+    ).toEqual(["no-tools", "tools"]);
     expect(modelModes.map((mode) => mode.id)).toEqual([
       "openai/gpt-6-astra",
       "openai/gpt-5.6-luna",
@@ -204,5 +204,43 @@ describe("model catalog estimates", () => {
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://openrouter.ai/api/v1/models",
     );
+  });
+});
+
+it("declares streaming text without requiring native tools and excludes nontext output", () => {
+  const models = catalogModels(
+    [
+      {
+        id: "text",
+        architecture: { output_modalities: ["text"] },
+        supported_parameters: [],
+      },
+      {
+        id: "image",
+        architecture: { output_modalities: ["image"] },
+        supported_parameters: ["tools"],
+      },
+      { id: "unknown" },
+    ],
+    "openrouter",
+  );
+  expect(models.map((model) => model.id)).toEqual(["text", "unknown"]);
+  expect(models[0].capabilities).toMatchObject({
+    text: { supported: true, source: "catalog" },
+    streamingText: { supported: true, source: "provider-contract" },
+    tools: { supported: false },
+  });
+  expect(models[1].capabilities?.streamingText.supported).toBe("unknown");
+});
+it("keeps unknown Gateway capabilities distinct from advertised support", () => {
+  const [model] = catalogModels(
+    [{ id: "language", type: "language" }],
+    "gateway",
+  );
+  expect(model.capabilities).toMatchObject({
+    text: { supported: true },
+    streamingText: { supported: "unknown" },
+    tools: { supported: "unknown" },
+    structuredOutput: { supported: "unknown" },
   });
 });

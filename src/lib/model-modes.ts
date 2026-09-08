@@ -1,3 +1,4 @@
+import type { ModelCapabilities } from "./model-capabilities";
 export const modelModes = [
   {
     label: "Quality",
@@ -34,6 +35,7 @@ export function isRecommendedModel(id: string) {
 }
 
 export type CatalogModel = {
+  capabilities?: ModelCapabilities;
   id: string;
   name: string;
   /** Estimated USD per one million tokens; null means unavailable. */

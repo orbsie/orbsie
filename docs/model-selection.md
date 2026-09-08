@@ -27,3 +27,11 @@ Six deterministic tests cover conversion, unavailable versus free rates, orderin
 ## Preset update verification
 
 The preset IDs above were independently checked against fresh unauthenticated reads of both official catalogs on September 7, 2026 (Pacific). All three IDs survive the app's compatibility filter. Current catalog estimates for GLM-5.3-Flash differ by provider: OpenRouter input/cache-read/output are $0.075/$0.015/$0.25 per million tokens; Gateway reports $0.15/$0.03/$0.50. These remain provider estimates, not guaranteed charges. See `docs/evidence/preset-catalog.json` for timestamps, source URLs, exact IDs and all preset rates. No inference or credential access was needed.
+
+## Generation capability contract
+
+The remote adapter consumes streamed text containing complete NDJSON commands and validates each command locally before applying it. Native tool calling and provider-enforced JSON schema are optional capabilities, not requirements of this transport. OpenRouter documents streaming for all models at https://openrouter.ai/docs/api_reference/streaming; this does not establish that every model follows the scene protocol reliably.
+
+Generation now checks the exact chosen model against the provider's public catalog before spending a free prompt or starting inference. Catalog lookup is cached for one hour, sends no user credential, and fails clearly when unavailable. Missing or known-incompatible models are rejected without silently selecting a different ID. Provider metadata declarations distinguish unknown capabilities from confirmed support; catalog compatibility alone is not live E2E evidence.
+
+Local verification of this change: 18 generation-route tests and 12 catalog/preflight tests passed, along with type checking. Coverage includes exact model lookup, unavailable catalogs, explicit non-language rejection, unknown metadata, and preserving free quota when preflight fails. This change has not yet been deployed or verified through live provider inference. Gateway streaming remains explicitly unknown where its catalog does not establish support; the relay still detects provider errors and validates complete records at runtime.

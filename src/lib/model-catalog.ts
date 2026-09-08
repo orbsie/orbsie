@@ -1,3 +1,7 @@
+import {
+  modelCapabilities,
+  modelSupportsGeneration,
+} from "./model-capabilities";
 import type { CatalogModel } from "./model-modes";
 import { modelQualityRanks } from "./model-rankings";
 
@@ -32,16 +36,16 @@ export function catalogModels(
   for (const value of data) {
     const model = record(value);
     if (typeof model.id !== "string" || !model.id.trim()) continue;
-    const supported =
-      provider === "gateway"
-        ? model.type === undefined || model.type === "language"
-        : Array.isArray(model.supported_parameters) &&
-          model.supported_parameters.includes("tools");
-    // Batch variants require an asynchronous batch submission, not this live relay.
-    if (!supported || model.id.endsWith(":batch")) continue;
+    const capabilities = modelCapabilities(model, provider);
+    if (
+      !modelSupportsGeneration({ capabilities }) ||
+      model.id.endsWith(":batch")
+    )
+      continue;
     const prices = record(model.pricing);
     models.push({
       id: model.id,
+      capabilities,
       name:
         typeof model.name === "string" && model.name.trim()
           ? model.name

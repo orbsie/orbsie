@@ -1,3 +1,4 @@
+import { requireGenerationModel } from "../../../lib/server/model-preflight";
 import { z } from "zod";
 import { generationMaxTokens } from "@/lib/server/generation-limits";
 import { projectSchema, entitySchema } from "@/lib/protocol";
@@ -57,9 +58,16 @@ export async function POST(request: Request) {
           413,
           "Connect your provider to keep building this larger world.",
         );
+      await requireGenerationModel("gateway", FREE_MODEL, request.signal);
       identity = trialIdentity(request);
       remaining = await claimTrial(identity);
     }
+    if (!free)
+      await requireGenerationModel(
+        parsed.data.provider as "openrouter" | "gateway",
+        parsed.data.model!,
+        request.signal,
+      );
     const stream = await generateCommands({
       ...parsed.data,
       provider: free

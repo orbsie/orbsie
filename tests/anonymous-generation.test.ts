@@ -1,3 +1,6 @@
+vi.mock("../src/lib/server/model-preflight", () => ({
+  requireGenerationModel: vi.fn(async () => ({})),
+}));
 vi.mock(
   "@/lib/server/generation-limits",
   async () => import("../src/lib/server/generation-limits"),

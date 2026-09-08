@@ -1,3 +1,6 @@
+vi.mock("../src/lib/server/model-preflight", () => ({
+  requireGenerationModel: vi.fn(async () => ({})),
+}));
 vi.mock(
   "@/lib/server/generation-limits",
   async () => import("../src/lib/server/generation-limits"),
@@ -121,6 +124,21 @@ it("rejects oversized selection metadata before quota admission or inference", a
   const upstream = vi.fn();
   vi.stubGlobal("fetch", upstream);
   const response = await POST(request({ selected: "x".repeat(430000) }));
+  expect(response.status).toBe(400);
+  expect(quota.claim).not.toHaveBeenCalled();
+  expect(upstream).not.toHaveBeenCalled();
+});
+
+it("does not consume a free prompt when model preflight rejects it", async () => {
+  const { requireGenerationModel } =
+    await import("../src/lib/server/model-preflight");
+  const { HttpError } = await import("../src/lib/server/auth");
+  vi.mocked(requireGenerationModel).mockRejectedValueOnce(
+    new HttpError(400, "Unsupported model"),
+  );
+  const upstream = vi.fn();
+  vi.stubGlobal("fetch", upstream);
+  const response = await POST(request());
   expect(response.status).toBe(400);
   expect(quota.claim).not.toHaveBeenCalled();
   expect(upstream).not.toHaveBeenCalled();
