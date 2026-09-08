@@ -9,7 +9,7 @@ if (args.length > 1 || (args[0] && !["--help", "--check"].includes(args[0]))) {
   process.exitCode = 2;
 } else if (args[0] === "--help") {
   console.log(
-    "Orbsie local model builder\nUsage: node companion.mjs [--check]\nRequires Node 22, Linux x86_64, bubblewrap and the verified Blender runtime in ./runtime.\nORBSIE_ORIGIN selects the app origin (default https://orbsie.com).\n--check constructs and validates a tiny model, then exits without opening a connection.",
+    "Orbsie local model builder\nRun ./orbsie-builder [--check] when the bundled launcher is included; otherwise use node companion.mjs [--check] with Node 22.\nModel construction requires Linux x86_64, bubblewrap and the verified Blender runtime in ./runtime.\nORBSIE_ORIGIN selects the app origin (default https://orbsie.com).\n--check constructs and validates a tiny model, then exits without opening a connection.",
   );
 } else {
   // A packaged launcher must never silently use an unrelated system Blender.

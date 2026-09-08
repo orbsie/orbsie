@@ -204,6 +204,8 @@ Delivery contract: local rendering is the default for every asset source. The op
 
 “Optional” describes the user's choice to install the companion; delivering the packaged companion is mandatory project scope. Client-side construction means execution on the user's computer through that companion, while the browser renders the resulting assets locally. The installer must also supply any launcher runtime it needs so a nontechnical user does not need Node, Python, a repository checkout or developer tools.
 
+Package delivery must be self-contained for each supported platform: include the launcher runtime, Blender’s required Python components and native dependencies, or declare verified operating-system prerequisites. Test on a clean machine without developer tools; a bundled Node launcher alone does not complete Blender delivery.
+
 Schedule construction below interactive rendering: begin with one active Blender job and a bounded pending queue, retain the last usable asset during builds, and expose cancellation. Increase concurrency only when measurements show that camera movement, selection and editing remain within the declared responsiveness budgets. Use available local GPU capabilities for rendering; do not assume every Blender modeling operation benefits from GPU execution.
 
 1. Keep generated assets rendering on the browser's GPU. Move expensive decoding and geometry preparation off the UI thread where supported, and measure frame responsiveness while background construction runs.

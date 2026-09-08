@@ -263,3 +263,11 @@ scoped edit, reload and standalone export flow passed in
 models and made two actual ChatGPT generation requests. Cloud asset storage,
 dedicated publication, the remaining provider matrix, portable installation
 and measured responsiveness remain open gates.
+
+### Bundled launcher component (2026-09-08)
+
+The companion packager now accepts `OUTPUT_DIRECTORY --node-root NODE_DISTRIBUTION_DIRECTORY` and includes the pinned Linux x64 Node 22.22.0 executable and its complete license file. `orbsie-builder` launches without Node on PATH or a repository checkout. Only the executable and license are copied; global modules are excluded. Source and copied bytes must match the recorded hashes, and existing outputs are preserved.
+
+Offline integration passed relocation into a path containing spaces, an empty PATH, cleared inherited Node options, repeated help startup, rejected empty runtime arguments, and failure without a Blender runtime. See [launcher evidence](evidence/packaged-node-launcher/report.json). The application plus Node occupies 124,801,022 bytes on the test host; the 89 ms measurement is help startup, not Blender cold start.
+
+This remains a component, not the complete installer. Blender, native dependency closure, independent official Node archive provenance, clean-host installation and complete license/source delivery remain release gates. No new Blender construction or real-provider flow was exercised by this check.
