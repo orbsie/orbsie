@@ -7,6 +7,7 @@ vi.mock("../src/lib/server/auth", async () => ({
 }));
 import {
   startGenerationRun,
+  supersededGenerationRuns,
   appendGenerationRun,
   readGenerationRun,
   replayGenerationRun,
@@ -225,6 +226,57 @@ it("rejects same-revision snapshot drift and exposes it on reads", async () => {
   ).rejects.toMatchObject({ status: 409 });
   expect(operations).toHaveLength(0);
   expect((await readGenerationRun("owner", id)).cloudBaselineCurrent).toBe(
+    false,
+  );
+});
+
+it("retention preserves newest per world and every live run while pruning oldest eligible history", () => {
+  const runs = [
+    { id: "a-new", orb_id: "a", state: "complete", expired: true },
+    { id: "b-only", orb_id: "b", state: "cancelled", expired: true },
+    { id: "a-active", orb_id: "a", state: "running", expired: false },
+    { id: "a-old", orb_id: "a", state: "complete", expired: true },
+    { id: "a-expired", orb_id: "a", state: "running", expired: true },
+  ];
+  expect(supersededGenerationRuns(runs, 1)).toEqual(["a-expired"]);
+  expect(supersededGenerationRuns(runs, 64)).toEqual(["a-expired", "a-old"]);
+  expect(supersededGenerationRuns(runs, 0)).toEqual([]);
+});
+it("at quota prunes only enough owner-scoped superseded terminal rows to admit one run", async () => {
+  db.query.mockImplementation(async (sql: string, args: any[] = []) => {
+    if (sql.startsWith("SELECT revision"))
+      return { rows: [{ revision: 0, snapshot: project }] };
+    if (sql.startsWith("SELECT count")) return { rows: [{ count: 64 }] };
+    if (sql.startsWith("SELECT id,orb_id,state"))
+      return {
+        rows: [
+          { id: "new", orb_id: project.id, state: "running", expired: false },
+          { id: "old", orb_id: project.id, state: "complete", expired: true },
+        ],
+      };
+    if (sql.startsWith("INSERT INTO generation_runs"))
+      return { rows: [{ ...row, id: args[0] }] };
+    return { rows: [] };
+  });
+  await startGenerationRun("owner", { runId: id, project, prompt: "Build" });
+  expect(db.query).toHaveBeenCalledWith(
+    "DELETE FROM generation_runs WHERE owner_id=$1 AND id=ANY($2::text[])",
+    ["owner", ["old"]],
+  );
+  expect(db.query.mock.calls.at(-1)?.[0]).toBe("COMMIT");
+});
+it("does not prune below quota", async () => {
+  db.query.mockImplementation(async (sql: string) => ({
+    rows: sql.startsWith("SELECT revision")
+      ? [{ revision: 0, snapshot: project }]
+      : sql.startsWith("SELECT count")
+        ? [{ count: 63 }]
+        : sql.startsWith("INSERT INTO generation_runs")
+          ? [row]
+          : [],
+  }));
+  await startGenerationRun("owner", { runId: id, project, prompt: "Build" });
+  expect(db.query.mock.calls.some(([sql]) => sql.startsWith("DELETE"))).toBe(
     false,
   );
 });

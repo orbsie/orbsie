@@ -39,6 +39,7 @@ import {
   type Publication,
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
+import { recoveredGenerationInput } from "@/lib/generation-journal";
 import {
   latestCloudGenerationRun,
   cancelCloudGenerationRun,
@@ -639,12 +640,10 @@ export default function Orbsie() {
       if (!(await useOrb.getState().loadCloud(recovered, isCurrent))) return;
       setCloudBaseline({ projectId, value: data.project.revision });
       setModal(null);
-      setPrompt(
-        run.state === "complete"
-          ? ""
-          : `Continue this request from the recovered world. Preserve completed objects and finish only what remains: ${run.prompt}`,
-      );
+      const recoveryInput = recoveredGenerationInput(run);
+      setPrompt(recoveryInput.prompt);
       useOrb.getState().set({
+        selected: recoveryInput.selected,
         notice:
           run.state === "complete"
             ? "Recovered the completed generation. Save it to your account when ready."

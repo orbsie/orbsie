@@ -142,6 +142,29 @@ async function locked(c: PoolClient, owner: string, id: string): Promise<Row> {
     equal(orb.rows[0].snapshot, row.starting_snapshot);
   return row;
 }
+type RetentionRun = {
+  id: string;
+  orb_id: string;
+  state: string;
+  expired: boolean;
+};
+/** Rows must be newest-first (created_at DESC,id DESC), from one owner only. */
+export function supersededGenerationRuns(
+  rows: readonly RetentionRun[],
+  limit: number,
+): string[] {
+  const newest = new Set<string>();
+  const candidates: string[] = [];
+  for (const row of rows) {
+    const superseded = newest.has(row.orb_id);
+    newest.add(row.orb_id);
+    const terminal =
+      ["complete", "cancelled", "interrupted"].includes(row.state) ||
+      (row.state === "running" && row.expired);
+    if (superseded && terminal) candidates.push(row.id);
+  }
+  return candidates.reverse().slice(0, Math.max(0, Math.min(64, limit)));
+}
 export async function startGenerationRun(owner: string, input: unknown) {
   const value = startRunSchema.parse(input);
   bounded(value.project);
@@ -187,11 +210,29 @@ export async function startGenerationRun(owner: string, input: unknown) {
       "SELECT count(*)::integer AS count FROM generation_runs WHERE owner_id=$1",
       [owner],
     );
-    if (quota.rows[0].count >= 64)
-      throw new HttpError(
-        413,
-        "Your account has reached its saved generation run limit.",
+    if (quota.rows[0].count >= 64) {
+      // The owner admission lock serializes pruning/start. Row locks serialize
+      // pruning with append/cancel; active leases and newest-per-orb survive.
+      const retained = await c.query(
+        "SELECT id,orb_id,state,(lease_until<=now() OR created_at+interval '15 minutes'<=now()) AS expired FROM generation_runs WHERE owner_id=$1 ORDER BY created_at DESC,id DESC LIMIT 256 FOR UPDATE",
+        [owner],
       );
+      const remove = supersededGenerationRuns(
+        retained.rows,
+        Number(quota.rows[0].count) - 63,
+      );
+      if (Number(quota.rows[0].count) - remove.length >= 64)
+        throw new HttpError(
+          413,
+          "Your recovery slots are full. The newest checkpoint for every world and active runs are protected.",
+        );
+      // Expired running candidates are terminal in effect; deleting their
+      // superseded checkpoints also cascades their operation journals.
+      await c.query(
+        "DELETE FROM generation_runs WHERE owner_id=$1 AND id=ANY($2::text[])",
+        [owner, remove],
+      );
+    }
     await assets(c, owner, value.project);
     const result = await c.query(
       "INSERT INTO generation_runs(id,orb_id,owner_id,base_revision,sequence,state,checkpoint,starting_snapshot,prompt,selected,lease_until) VALUES($1,$2,$3,$4,0,'running',$5,$5,$6,$7,now()+interval '180 seconds') RETURNING *",
