@@ -351,8 +351,14 @@ export const useOrb = create<State>((setState, getState) => ({
     const history = play
       ? undefined
       : readLocalHistory(getState().draftHistory[project.id], project);
+    const saved = getState().drafts.some(
+      (draft) =>
+        draft.id === project.id &&
+        JSON.stringify(draft) === JSON.stringify(project),
+    );
     setState({
       project: projectSchema.parse(project),
+      saved,
       phase: "editing",
       playing: play,
       building: false,

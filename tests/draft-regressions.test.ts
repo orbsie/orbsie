@@ -26,6 +26,14 @@ beforeEach(() => {
   db.beforeUpdate = undefined;
   useOrb.setState({ readOnly: false, history: [], future: [] });
 });
+it("reports a recovered exact local revision as saved and clears that status for a changed copy", () => {
+  const project = blankProject();
+  useOrb.setState({ drafts: [structuredClone(project)], saved: false });
+  useOrb.getState().load(project);
+  expect(useOrb.getState().saved).toBe(true);
+  useOrb.getState().load({ ...project, title: "Unsaved change" });
+  expect(useOrb.getState().saved).toBe(false);
+});
 it.each([1, 2])(
   "discards a cloud open invalidated during persistence step %s and preserves the new draft",
   async (step) => {
