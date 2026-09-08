@@ -202,6 +202,10 @@ Implementation sequence and completion gates:
 
 Delivery contract: local rendering is the default for every asset source. The optional Blender companion is a downloadable client installation; it must include its verified runtime so users do not need to install or configure Blender separately. Background construction must work without opening Blender's desktop interface. A developer machine's existing Blender installation or an unpruned packaging prototype does not satisfy the shipped-runtime gate.
 
+“Optional” describes the user's choice to install the companion; delivering the packaged companion is mandatory project scope. Client-side construction means execution on the user's computer through that companion, while the browser renders the resulting assets locally. The installer must also supply any launcher runtime it needs so a nontechnical user does not need Node, Python, a repository checkout or developer tools.
+
+Schedule construction below interactive rendering: begin with one active Blender job and a bounded pending queue, retain the last usable asset during builds, and expose cancellation. Increase concurrency only when measurements show that camera movement, selection and editing remain within the declared responsiveness budgets. Use available local GPU capabilities for rendering; do not assume every Blender modeling operation benefits from GPU execution.
+
 1. Keep generated assets rendering on the browser's GPU. Move expensive decoding and geometry preparation off the UI thread where supported, and measure frame responsiveness while background construction runs.
 2. Build and validate the bounded, data-only modeling protocol and isolated Blender executor. Cover custom meshes, extrusions, surfaces of revolution and multipart models; validate exported geometry and resource limits before loading it into the scene.
 3. Package the smallest verified runtime with an installer, version/capability handshake, integrity checks and required license/source materials. Record download size, installed size, cold start and peak memory; publish a supported-platform matrix based on actual installation tests.
