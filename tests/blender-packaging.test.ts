@@ -1,4 +1,5 @@
 import {
+  existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -9,7 +10,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import {
@@ -20,6 +21,8 @@ import {
   copyOfficialReleaseNotices,
   isPathContained,
   PINNED_OFFICIAL_ARCHIVES,
+  pruneStaticPythonArchives,
+  STATIC_PYTHON_ARCHIVE_PATHS,
   validateArchiveEntries,
 } from "../scripts/package-blender-runtime.mjs";
 
@@ -204,5 +207,63 @@ describe("Blender packaging path boundaries", () => {
     expect(() =>
       assertContainedPath(bundle, `${bundle}/licenses/../../escape`),
     ).toThrow(/escapes/);
+  });
+
+  it("prunes only the two opt-in static Python archives and records exact bytes", () => {
+    const root = mkdtempSync(join(tmpdir(), "orbsie-static-python-prune-"));
+    try {
+      for (const [
+        index,
+        relativePath,
+      ] of STATIC_PYTHON_ARCHIVE_PATHS.entries()) {
+        const path = join(root, relativePath);
+        mkdirSync(dirname(path), { recursive: true });
+        writeFileSync(path, Buffer.alloc(7 + index));
+      }
+      const retained = join(root, "share/blender/python/lib/keep.a");
+      writeFileSync(retained, "retain\n");
+
+      const result = pruneStaticPythonArchives(root);
+
+      expect(result.enabled).toBe(true);
+      expect(result.removed).toHaveLength(2);
+      expect(result.removedBytes).toBe(15);
+      expect(result.removed).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: STATIC_PYTHON_ARCHIVE_PATHS[0],
+            bytes: 7,
+            sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+          }),
+          expect.objectContaining({
+            path: STATIC_PYTHON_ARCHIVE_PATHS[1],
+            bytes: 8,
+            sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+          }),
+        ]),
+      );
+      for (const relativePath of STATIC_PYTHON_ARCHIVE_PATHS)
+        expect(existsSync(join(root, relativePath))).toBe(false);
+      expect(existsSync(retained)).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("does not remove a static archive symlink during opt-in pruning", () => {
+    const root = mkdtempSync(join(tmpdir(), "orbsie-static-python-link-"));
+    try {
+      const path = join(root, STATIC_PYTHON_ARCHIVE_PATHS[0]);
+      const target = join(root, "outside.a");
+      writeFileSync(target, "outside\n");
+      mkdirSync(dirname(path), { recursive: true });
+      symlinkSync(target, path);
+      expect(() => pruneStaticPythonArchives(root)).toThrow(
+        /not a regular file/,
+      );
+      expect(existsSync(path)).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

@@ -92,6 +92,8 @@ Options:
   --numpy PATH         NumPy package directory used by Blender Python
   --output PATH        Bundle directory (default ${DEFAULT_OUTPUT})
   --replace            Remove an existing output directory under /tmp first
+  --prune-static-python
+                       Remove bundled Python static archives from the headless bundle
   --no-verify          Package without the clean-environment GLB probe
   -h, --help           Show this help
 `);
@@ -107,6 +109,7 @@ function parseArgs(argv) {
     numpyExplicit: false,
     output: DEFAULT_OUTPUT,
     replace: false,
+    pruneStaticPython: false,
     verify: true,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -120,6 +123,7 @@ function parseArgs(argv) {
       options.numpyExplicit = true;
     } else if (arg === "--output") options.output = resolve(argv[++index]);
     else if (arg === "--replace") options.replace = true;
+    else if (arg === "--prune-static-python") options.pruneStaticPython = true;
     else if (arg === "--no-verify") options.verify = false;
     else if (arg === "--help" || arg === "-h") {
       usage();
@@ -465,6 +469,38 @@ function copyFile(source, destination, mode = undefined) {
   // chmod is deliberately done through the source-independent file API so
   // the result is executable even when the host umask is restrictive.
   if (mode !== undefined) chmodSync(destination, mode);
+}
+
+export const STATIC_PYTHON_ARCHIVE_PATHS = Object.freeze([
+  "share/blender/python/lib/libpython3.10.a",
+  "share/blender/python/lib/python3.10/config-3.10-x86_64-linux-gnu/libpython3.10.a",
+]);
+
+/**
+ * Remove only the compile-time Python archives from an explicitly requested
+ * headless bundle. The exact original paths, sizes, and digests are returned
+ * for the manifest so a size reduction cannot be hidden by a broad glob.
+ */
+export function pruneStaticPythonArchives(bundle) {
+  const removed = [];
+  for (const relativePath of STATIC_PYTHON_ARCHIVE_PATHS) {
+    const path = join(bundle, relativePath);
+    if (!existsSync(path)) continue;
+    const info = lstatSync(path);
+    if (!info.isFile())
+      fail(`static Python archive is not a regular file: ${path}`);
+    removed.push({
+      path: relativePath,
+      bytes: info.size,
+      sha256: sha256(path),
+    });
+    rmSync(path);
+  }
+  return {
+    enabled: true,
+    removed,
+    removedBytes: removed.reduce((total, entry) => total + entry.bytes, 0),
+  };
 }
 
 function walkFiles(root) {
@@ -815,6 +851,13 @@ function main() {
   writeFileSync(join(bundle, "bin/orbsie-blender"), launcherText(), {
     mode: 0o755,
   });
+  const pruning = options.pruneStaticPython
+    ? pruneStaticPythonArchives(bundle)
+    : {
+        enabled: false,
+        removed: [],
+        removedBytes: 0,
+      };
 
   const licenses = [];
   if (options.numpy && distInfo)
@@ -946,6 +989,9 @@ function main() {
         ? "Blender's bundled library directory is included; the executable still links to host glibc, X11, and other platform libraries."
         : "The executable links to the host glibc and system multimedia/OpenGL libraries; this bundle intentionally does not copy them.",
       ldd: dependencyManifest,
+    },
+    pruning: {
+      staticPythonArchives: pruning,
     },
     licenses,
     verification,

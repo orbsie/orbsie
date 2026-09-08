@@ -15,7 +15,7 @@ Remaining evidence needed before redistributing an installer:
 
 - Exact corresponding Blender source, build configuration/instructions and dependency source materials for the shipped binaries. Current metadata contains URLs, not a source bundle or source-offer artifact. The archive's 267 Cycles source files are only a partial subset.
 - Binary-to-license inventory for the bundled native dependency closure. The earlier manifest identifies 33 bundled and 29 host-provided direct native dependencies; host portability remains a separate gate.
-- Resolve missing per-distribution license files declared by nine bundled Python distributions: Cython, autopep8, certifi, charset-normalizer, idna, pycodestyle, requests, toml and urllib3. NumPy, pip, setuptools and zstandard license files were found. Check whether relevant aggregate notices cover each component before adding verified original-source materials.
+- Nine missing per-distribution notices have now been acquired from the matching upstream PyPI source releases: Cython, autopep8, certifi, charset-normalizer, idna, pycodestyle, requests, toml and urllib3. `third_party/blender-python-notices/manifest.json` records verified archive and notice hashes. Their checked packaging integration remains pending. NumPy, pip, setuptools and zstandard license files were already present. This acquisition does not establish complete corresponding-source coverage.
 - Node runtime distribution and its notices/source obligations if Node becomes part of the installer. The current application component requires host Node and includes Orbsie and Zod licenses.
 - Trusted release artifact/manifest distribution, installation tests and supported-platform declarations. Local integrity metadata alone is not a signed source of trust.
 

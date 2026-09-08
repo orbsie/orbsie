@@ -2,6 +2,14 @@
 
 ## Bundled application component
 
+The optional `--prune-static-python` packaging flag removes only the two
+`libpython3.10.a` development archives and records their exact paths, hashes and
+sizes in the manifest. The measured reduction is 104,427,456 bytes, leaving a
+1,218,248,740-byte runtime including the restored release notices. All 25
+packaging, integrity and real modeling tests passed against this build. The
+flag is not enabled by default; this evidence does not establish portability
+or complete distribution readiness. See `docs/evidence/packaged-companion/static-pruning.json`.
+
 `node scripts/package-modeling-companion.mjs OUTPUT_DIRECTORY` builds the foreground launcher, trusted modeling code, Python job and application/Zod licenses into a new directory. It refuses an existing destination. Execution uses `node companion.mjs`; no repository checkout, npm install or startup bundling is required. Put the verified Blender package in `runtime` beside the launcher, or set `ORBSIE_BLENDER_RUNTIME_DIR` explicitly. An unset or empty setting uses that bundled path and never silently selects system Blender.
 
 `node companion.mjs --check` performs a real isolated box construction and GLB validation, prints bounded readiness/timing/size data and exits without opening a connection. `--help` needs no Blender. Normal startup performs the same preflight before showing a private browser connection link; Ctrl+C revokes the foreground connection.

@@ -1,0 +1,138 @@
+[
+  {
+    "name": "Cython",
+    "version": "0.29.30",
+    "metadataURL": "https://pypi.org/pypi/Cython/0.29.30/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/d4/ad/7ce0cccd68824ac9623daf4e973c587aa7e2d23418cd028f8860c80651f5/Cython-0.29.30.tar.gz",
+    "archiveSha256": "2235b62da8fe6fa8b99422c8e583f2fb95e143867d337b5c75e4b9a1a865f9e3",
+    "notices": [
+      {
+        "archivePath": "Cython-0.29.30/COPYING.txt",
+        "path": "Cython-0.29.30/COPYING.txt",
+        "sha256": "e1eb1c49a8508e8173dac30157e4a6439a44ad8846194746c424fbc3fc2b95d7"
+      },
+      {
+        "archivePath": "Cython-0.29.30/LICENSE.txt",
+        "path": "Cython-0.29.30/LICENSE.txt",
+        "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9"
+      }
+    ]
+  },
+  {
+    "name": "autopep8",
+    "version": "1.6.0",
+    "metadataURL": "https://pypi.org/pypi/autopep8/1.6.0/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/ec/67/564f7d15712a84d4035aa5ad0b97eeafdeccdb7e806d6a822595bf0ffa5f/autopep8-1.6.0.tar.gz",
+    "archiveSha256": "44f0932855039d2c15c4510d6df665e4730f2b8582704fa48f9c55bd3e17d979",
+    "notices": [
+      {
+        "archivePath": "autopep8-1.6.0/LICENSE",
+        "path": "autopep8-1.6.0/LICENSE",
+        "sha256": "8d1d0238e48543441914cab0741d4de3e070a1b8367f787af5f209afb60b096a"
+      }
+    ]
+  },
+  {
+    "name": "certifi",
+    "version": "2021.10.8",
+    "metadataURL": "https://pypi.org/pypi/certifi/2021.10.8/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/6c/ae/d26450834f0acc9e3d1f74508da6df1551ceab6c2ce0766a593362d6d57f/certifi-2021.10.8.tar.gz",
+    "archiveSha256": "78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872",
+    "notices": [
+      {
+        "archivePath": "certifi-2021.10.8/LICENSE",
+        "path": "certifi-2021.10.8/LICENSE",
+        "sha256": "be9d82f36112f87a7f1d74ecd4887e1467bbae8878a84004a00117b1e475a3e2"
+      }
+    ]
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "2.0.10",
+    "metadataURL": "https://pypi.org/pypi/charset-normalizer/2.0.10/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/48/44/76b179e0d1afe6e6a91fd5661c284f60238987f3b42b676d141d01cd5b97/charset-normalizer-2.0.10.tar.gz",
+    "archiveSha256": "876d180e9d7432c5d1dfd4c5d26b72f099d503e8fcc0feb7532c9289be60fcbd",
+    "notices": [
+      {
+        "archivePath": "charset-normalizer-2.0.10/LICENSE",
+        "path": "charset-normalizer-2.0.10/LICENSE",
+        "sha256": "eb31a0c5a4fb09b8a4e32055d25c1e5f9c358a2752fef3cd720213d1ccfee241"
+      }
+    ]
+  },
+  {
+    "name": "idna",
+    "version": "3.3",
+    "metadataURL": "https://pypi.org/pypi/idna/3.3/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/62/08/e3fc7c8161090f742f504f40b1bccbfc544d4a4e09eb774bf40aafce5436/idna-3.3.tar.gz",
+    "archiveSha256": "9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d",
+    "notices": [
+      {
+        "archivePath": "idna-3.3/LICENSE.md",
+        "path": "idna-3.3/LICENSE.md",
+        "sha256": "a2d6e4d940bd24dbe7b9645cde19a9792cc51db7ae0d5acd301ac860caa3e836"
+      }
+    ]
+  },
+  {
+    "name": "pycodestyle",
+    "version": "2.8.0",
+    "metadataURL": "https://pypi.org/pypi/pycodestyle/2.8.0/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/08/dc/b29daf0a202b03f57c19e7295b60d1d5e1281c45a6f5f573e41830819918/pycodestyle-2.8.0.tar.gz",
+    "archiveSha256": "eddd5847ef438ea1c7870ca7eb78a9d47ce0cdb4851a5523949f2601d0cbbe7f",
+    "notices": [
+      {
+        "archivePath": "pycodestyle-2.8.0/LICENSE",
+        "path": "pycodestyle-2.8.0/LICENSE",
+        "sha256": "f772295e81af3478d34e88e52d076200230ec7dd6a39e123bc5cb35aa66abdae"
+      }
+    ]
+  },
+  {
+    "name": "requests",
+    "version": "2.27.1",
+    "metadataURL": "https://pypi.org/pypi/requests/2.27.1/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/60/f3/26ff3767f099b73e0efa138a9998da67890793bfa475d8278f84a30fec77/requests-2.27.1.tar.gz",
+    "archiveSha256": "68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61",
+    "notices": [
+      {
+        "archivePath": "requests-2.27.1/LICENSE",
+        "path": "requests-2.27.1/LICENSE",
+        "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+      },
+      {
+        "archivePath": "requests-2.27.1/NOTICE",
+        "path": "requests-2.27.1/NOTICE",
+        "sha256": "f5110972dedad2b4e9d314518daf3b7d72d6e02e499acd802181de6f74571dcc"
+      }
+    ]
+  },
+  {
+    "name": "toml",
+    "version": "0.10.2",
+    "metadataURL": "https://pypi.org/pypi/toml/0.10.2/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz",
+    "archiveSha256": "b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f",
+    "notices": [
+      {
+        "archivePath": "toml-0.10.2/LICENSE",
+        "path": "toml-0.10.2/LICENSE",
+        "sha256": "2d9294823df6c89357c8be4927fce79361d6561e5ee7532d5926e63939aaa536"
+      }
+    ]
+  },
+  {
+    "name": "urllib3",
+    "version": "1.26.8",
+    "metadataURL": "https://pypi.org/pypi/urllib3/1.26.8/json",
+    "archiveURL": "https://files.pythonhosted.org/packages/b0/b1/7bbf5181f8e3258efae31702f5eab87d8a74a72a0aa78bc8c08c1466e243/urllib3-1.26.8.tar.gz",
+    "archiveSha256": "0e7c33d9a63e7ddfcb86780aac87befc2fbddf46c58dbb487e0855f7ceec283c",
+    "notices": [
+      {
+        "archivePath": "urllib3-1.26.8/LICENSE.txt",
+        "path": "urllib3-1.26.8/LICENSE.txt",
+        "sha256": "c37bf186e27cf9dbe9619e55edfe3cea7b30091ceb3da63c7dacbe0e6d77907b"
+      }
+    ]
+  }
+]
