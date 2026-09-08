@@ -1,5 +1,13 @@
 # Local Blender runtime probe
 
+## Bundled application component
+
+`node scripts/package-modeling-companion.mjs OUTPUT_DIRECTORY` builds the foreground launcher, trusted modeling code, Python job and application/Zod licenses into a new directory. It refuses an existing destination. Execution uses `node companion.mjs`; no repository checkout, npm install or startup bundling is required. Put the verified Blender package in `runtime` beside the launcher, or set `ORBSIE_BLENDER_RUNTIME_DIR` explicitly. An unset or empty setting uses that bundled path and never silently selects system Blender.
+
+`node companion.mjs --check` performs a real isolated box construction and GLB validation, prints bounded readiness/timing/size data and exits without opening a connection. `--help` needs no Blender. Normal startup performs the same preflight before showing a private browser connection link; Ctrl+C revokes the foreground connection.
+
+Local validation on 2026-09-08: the bundled application successfully ran `--check` with the existing official 4.0.2 runtime prototype (1,884-byte GLB; initial measured preflight 806 ms). Missing-runtime startup failed without a system fallback. This is application packaging evidence only: the output does not contain Blender or Node, the tested runtime remains nonportable, and complete installer, source/license distribution and supported-platform validation remain release gates.
+
 This document records the first local companion capability check for Orbsie. It
 is a foundation probe only. It does not ship a companion, execute model output,
 or establish that a local Blender workflow is ready for production.
