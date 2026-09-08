@@ -1,0 +1,15 @@
+{
+  "scope": "Actual OpenRouter rules on fixture scene; editor passed, first standalone input assertion failed before scene readiness; saved ZIP subsequently passed independent replay",
+  "sourceRevision": "aa7f0ad",
+  "model": "openai/gpt-5.6-luna",
+  "outputCapTokens": 512,
+  "localOrigin": "http://127.0.0.1:3024",
+  "actualGenerationRouteRequests": 1,
+  "responseStatus": 200,
+  "editorScoringWinLossRestart": true,
+  "unchangedEntities": true,
+  "zipProgramAndSourcePreserved": true,
+  "initialStandaloneResult": "Score: 0 remained after input sent before WebGL scene readiness",
+  "zipSHA256": "07d88f5480b75223a1ff00984ffcac1314fe4938ea8b9e0ec6608bcb4e4f5fdc",
+  "standaloneReplay": "standalone-replay.json"
+}

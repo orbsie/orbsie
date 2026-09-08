@@ -1,0 +1,11 @@
+{
+  "scope": "Replay previously live-authored exported ZIP without another provider call",
+  "passed": true,
+  "realProviderCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "score": 7,
+  "win": true,
+  "loss": true,
+  "restart": true
+}
