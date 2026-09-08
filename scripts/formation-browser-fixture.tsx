@@ -32,6 +32,18 @@ const meshes = () => {
   });
   return result.sort((a, b) => a.parent.position.x - b.parent.position.x);
 };
+const pointMeshes = () => {
+  const result: any[] = [];
+  state().scene.traverse((object: any) => {
+    if (
+      object.isPoints &&
+      object.material?.customProgramCacheKey?.() ===
+        "orbsie-formation-particles-v1"
+    )
+      result.push(object);
+  });
+  return result.sort((a, b) => a.parent.position.x - b.parent.position.x);
+};
 const progress = (mesh: any) => {
   const shader = {
     uniforms: {},
@@ -84,6 +96,7 @@ const render = () => {
   state().gl.render(state().scene, state().camera);
 };
 let expected: number[][][];
+let expectedParticles: number[][][];
 let oldGeometries: unknown[];
 (window as any).formationFixture = {
   thumbnail: capturePublicationThumbnail,
@@ -95,6 +108,7 @@ let oldGeometries: unknown[];
     state().setFrameloop("never");
     for (const mesh of meshes()) progress(mesh).value = 0.4;
     expected = meshes().map((mesh) => samples(mesh, 0.4));
+    expectedParticles = pointMeshes().map((mesh) => samples(mesh, 0.4));
     oldGeometries = meshes().map((mesh) => mesh.geometry);
     render();
     const project = useOrb.getState().project;
@@ -130,7 +144,22 @@ let oldGeometries: unknown[];
       }
       if (maxPositionError > 0.00001 || maxColorError > 0.00001)
         throw Error("Morph restarted from an endpoint");
+      const points = pointMeshes()[entityIndex];
+      let maxParticleError = 0;
+      for (const [attributeIndex, name] of ["aFrom", "aFromColor"].entries()) {
+        const actual = points.geometry.getAttribute(name).array;
+        const prior = expectedParticles[entityIndex][attributeIndex];
+        for (let index = 0; index < actual.length; index++)
+          maxParticleError = Math.max(
+            maxParticleError,
+            Math.abs(actual[index] - prior[index % prior.length]),
+          );
+      }
+      if (maxParticleError > 0.00001)
+        throw Error("Surface particles lost visible continuity");
       return {
+        particleCount: points.geometry.getAttribute("position").count,
+        maxParticleError,
         family: entities[entityIndex].id,
         particleBridge: !!mesh.geometry.userData.particleBridge,
         maxPositionError,

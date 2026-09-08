@@ -17,6 +17,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
+import { formationParticles } from "@/lib/formation-particles";
 import { registerPublicationThumbnail } from "@/lib/publication-thumbnail";
 import type { Entity } from "@/lib/protocol";
 import {
@@ -248,6 +249,7 @@ function Formation({
   const particles = useRef<THREE.Points>(null);
   const group = useRef<THREE.Group>(null);
   const previous = useRef<THREE.BufferGeometry>(undefined);
+  const previousParticles = useRef<THREE.BufferGeometry>(undefined);
   const previousShape = useRef<THREE.BufferGeometry>(undefined);
   const progress = useRef({ value: 0 });
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
@@ -308,7 +310,19 @@ function Formation({
     }
     return source;
   }, [entity.geometry, entity.color, asset?.geometry]);
+  const particleGeometry = useMemo(
+    () => formationParticles(geometry),
+    [geometry],
+  );
   useLayoutEffect(() => {
+    const particleSnapshot = previousParticles.current
+      ? captureFormationSnapshot(
+          previousParticles.current,
+          progress.current.value,
+        )
+      : undefined;
+    addFormationSource(particleGeometry, particleSnapshot);
+    previousParticles.current = particleGeometry;
     const prior = previous.current;
     const sameIndex =
       prior &&
@@ -321,9 +335,11 @@ function Formation({
           )));
     geometry.userData.particleBridge =
       !prior ||
+      (prior.userData.particleBridge && progress.current.value < 1) ||
       !sameIndex ||
       prior.getAttribute("position").count !==
         geometry.getAttribute("position").count;
+    particleGeometry.userData.particleBridge = geometry.userData.particleBridge;
     const visible = previous.current
       ? captureFormationSnapshot(previous.current, progress.current.value)
       : undefined;
@@ -333,7 +349,8 @@ function Formation({
     if (mesh.current) mesh.current.visible = !geometry.userData.particleBridge;
     if (particles.current)
       particles.current.visible = geometry.userData.particleBridge;
-  }, [geometry]);
+  }, [geometry, particleGeometry]);
+  useEffect(() => () => particleGeometry.dispose(), [particleGeometry]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => previousShape.current?.dispose(), []);
   const material = useMemo(() => {
@@ -422,6 +439,8 @@ function Formation({
     else group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
     if (mesh.current && entity.geometry?.kind === "crystal")
       mesh.current.rotation.y += dt * 0.6;
+    if (particles.current && mesh.current)
+      particles.current.rotation.copy(mesh.current.rotation);
     material.emissive.set(
       entity.stage !== "ready" || pendingAsset
         ? "#9debd4"
@@ -454,7 +473,7 @@ function Formation({
     <group ref={group} position={entity.position} scale={entity.scale}>
       <points
         ref={particles}
-        geometry={geometry}
+        geometry={particleGeometry}
         material={particleMaterial}
         frustumCulled={false}
         onClick={click}
