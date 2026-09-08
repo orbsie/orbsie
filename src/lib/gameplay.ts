@@ -54,8 +54,8 @@ export function isTextEntryTarget(target: EventTarget | null) {
   );
 }
 
-function platformTop(entity: Entity, time: number) {
-  const position = movingEntityPosition(entity, time);
+function platformTop(entity: Entity, time: number, positionOverride?: Vec3) {
+  const position = positionOverride ?? movingEntityPosition(entity, time);
   const bounds =
     entity.geometry?.kind === "asset"
       ? requireCatalogAsset(entity.geometry.assetId).bounds
@@ -89,6 +89,16 @@ function platformTop(entity: Entity, time: number) {
     halfZ: entity.scale[2] * 0.55,
     bounce: entity.behavior?.type === "bounce",
   };
+}
+
+function isInsidePlatform(
+  platform: ReturnType<typeof platformTop>,
+  position: Vec3,
+) {
+  return (
+    Math.abs(position[0] - platform.x) <= platform.halfX &&
+    Math.abs(position[2] - platform.z) <= platform.halfZ
+  );
 }
 
 export type ContactBounds = {
@@ -208,22 +218,27 @@ export function stepGameplay(
 
   // A grounded player inherits the exact displacement of a moving platform.
   // This also makes compatible speed/amplitude edits reconcile without a reset.
-  if (state.groundedOn) {
-    const support = readyPlatforms.find(
-      (entity) => entity.id === state.groundedOn,
-    );
-    if (support) {
-      const before =
-        state.supportPosition ?? movingEntityPosition(support, time - dt);
-      const after = movingEntityPosition(support, time);
-      position[0] += after[0] - before[0];
-      const afterTop = platformTop(support, time).y;
-      const beforeTop =
-        state.supportTop ??
-        before[1] + 0.52 * support.scale[1] + PLAYER_HALF_HEIGHT;
-      position[1] += afterTop - beforeTop;
-      position[2] += after[2] - before[2];
-    }
+  const support = state.groundedOn
+    ? readyPlatforms.find((entity) => entity.id === state.groundedOn)
+    : undefined;
+  const beforePosition = support
+    ? (state.supportPosition ?? movingEntityPosition(support, time - dt))
+    : undefined;
+  const supportedBeforeDisplacement = Boolean(
+    support &&
+    beforePosition &&
+    isInsidePlatform(platformTop(support, time, beforePosition), position),
+  );
+  if (support && beforePosition && supportedBeforeDisplacement) {
+    const before = beforePosition;
+    const after = movingEntityPosition(support, time);
+    position[0] += after[0] - before[0];
+    const afterTop = platformTop(support, time).y;
+    const beforeTop =
+      state.supportTop ??
+      before[1] + 0.52 * support.scale[1] + PLAYER_HALF_HEIGHT;
+    position[1] += afterTop - beforeTop;
+    position[2] += after[2] - before[2];
   }
 
   const magnitude = Math.hypot(input.x, input.z);
@@ -233,11 +248,18 @@ export function stepGameplay(
   }
 
   let velocityY = state.velocityY;
-  let groundedOn = state.groundedOn;
-  let supportPosition = state.supportPosition;
-  let supportTop = state.supportTop;
+  const supportedAfterDisplacement = Boolean(
+    support &&
+    supportedBeforeDisplacement &&
+    isInsidePlatform(platformTop(support, time), position),
+  );
+  let groundedOn = supportedAfterDisplacement ? support?.id : undefined;
+  let supportPosition = supportedAfterDisplacement
+    ? state.supportPosition
+    : undefined;
+  let supportTop = supportedAfterDisplacement ? state.supportTop : undefined;
   const wasSupported =
-    Boolean(groundedOn) || position[1] <= GROUND_CENTER_Y + 0.04;
+    supportedAfterDisplacement || position[1] <= GROUND_CENTER_Y + 0.04;
   if (input.jump && wasSupported) {
     velocityY = JUMP_SPEED;
     groundedOn = undefined;
@@ -253,9 +275,7 @@ export function stepGameplay(
   let bounce = false;
   for (const entity of readyPlatforms) {
     const platform = platformTop(entity, time);
-    const inside =
-      Math.abs(position[0] - platform.x) <= platform.halfX &&
-      Math.abs(position[2] - platform.z) <= platform.halfZ;
+    const inside = isInsidePlatform(platform, position);
     // Only land while descending and crossing a top surface. This avoids
     // teleporting onto a platform when walking below or beside it.
     if (

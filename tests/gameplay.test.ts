@@ -90,6 +90,114 @@ describe("gameplay runtime", () => {
     expect(next.position[0]).toBeCloseTo(state.position[0] + displacement);
   });
 
+  it.each<[string, Entity[]]>([
+    ["removed", [] as Entity[]],
+    [
+      "not-ready",
+      [
+        {
+          ...fixtureEntities().find((e) => e.id === "platform-1")!,
+          stage: "seed" as const,
+        },
+      ],
+    ],
+    [
+      "retyped",
+      [
+        {
+          ...fixtureEntities().find((e) => e.id === "platform-1")!,
+          geometry: { kind: "tree" as const, detail: "refined" as const },
+        },
+      ],
+    ],
+  ])("does not jump from a stale %s support", (_, currentEntities) => {
+    const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
+    const pose = movingEntityPosition(platform, 1);
+    const top = pose[1] + 0.52 * platform.scale[1] + 0.42;
+    const state: PlayerState = {
+      position: [pose[0], top, pose[2]],
+      velocityY: 0,
+      groundedOn: platform.id,
+      supportPosition: pose,
+      supportTop: top,
+    };
+
+    const next = stepGameplay(
+      state,
+      { x: 0, z: 0, jump: true },
+      currentEntities,
+      [],
+      1,
+      0.04,
+    );
+
+    expect(next.position[1]).toBeLessThan(state.position[1]);
+    expect(next.velocityY).toBeLessThan(0);
+    expect(next.groundedOn).toBeUndefined();
+    expect(next.supportPosition).toBeUndefined();
+    expect(next.supportTop).toBeUndefined();
+  });
+
+  it("does not jump after a support footprint shrinks away from the player", () => {
+    const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
+    const pose = movingEntityPosition(platform, 1);
+    const top = pose[1] + 0.52 * platform.scale[1] + 0.42;
+    const state: PlayerState = {
+      position: [pose[0] + 0.7, top, pose[2]],
+      velocityY: 0,
+      groundedOn: platform.id,
+      supportPosition: pose,
+      supportTop: top,
+    };
+    const shrunk = {
+      ...platform,
+      scale: [0.1, platform.scale[1], 0.1] as [number, number, number],
+    };
+
+    const next = stepGameplay(
+      state,
+      { x: 0, z: 0, jump: true },
+      [shrunk],
+      [],
+      1,
+      0.04,
+    );
+
+    expect(next.position[1]).toBeLessThan(state.position[1]);
+    expect(next.velocityY).toBeLessThan(0);
+    expect(next.groundedOn).toBeUndefined();
+    expect(next.supportPosition).toBeUndefined();
+    expect(next.supportTop).toBeUndefined();
+  });
+
+  it("does not jump after horizontal input walks off a support footprint", () => {
+    const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
+    const pose = movingEntityPosition(platform, 1);
+    const top = pose[1] + 0.52 * platform.scale[1] + 0.42;
+    const state: PlayerState = {
+      position: [pose[0] + 0.75, top, pose[2]],
+      velocityY: 0,
+      groundedOn: platform.id,
+      supportPosition: pose,
+      supportTop: top,
+    };
+
+    const next = stepGameplay(
+      state,
+      { x: 1, z: 0, jump: true },
+      [platform],
+      [],
+      1,
+      0.04,
+    );
+
+    expect(next.position[1]).toBeLessThan(state.position[1]);
+    expect(next.velocityY).toBeLessThan(0);
+    expect(next.groundedOn).toBeUndefined();
+    expect(next.supportPosition).toBeUndefined();
+    expect(next.supportTop).toBeUndefined();
+  });
+
   it("reconciles a compatible platform speed edit from its last pose", () => {
     const platform = fixtureEntities().find((e) => e.id === "platform-1")!;
     const oldPose = movingEntityPosition(platform, 1);
