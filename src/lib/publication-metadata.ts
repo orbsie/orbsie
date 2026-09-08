@@ -46,11 +46,19 @@ function isPngDataUrl(value: string) {
   )
     return false;
   const bytes = decodeBase64(value);
-  return (
-    bytes !== null &&
-    bytes.byteLength >= pngSignature.byteLength &&
-    pngSignature.every((byte, index) => bytes[index] === byte)
-  );
+  if (
+    !bytes ||
+    bytes.byteLength < 33 ||
+    !pngSignature.every((byte, index) => bytes[index] === byte)
+  )
+    return false;
+  const header = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  // PNG requires a 13-byte IHDR first. Bound decoded pixels, not just compressed bytes.
+  if (header.getUint32(8) !== 13 || header.getUint32(12) !== 0x49484452)
+    return false;
+  const width = header.getUint32(16);
+  const height = header.getUint32(20);
+  return width > 0 && height > 0 && width <= 1024 && height <= 1024;
 }
 
 export const publicationThumbnailSchema = z

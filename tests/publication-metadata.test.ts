@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PUBLICATION_CREATOR,
@@ -8,7 +9,10 @@ import {
   safePublicCreator,
 } from "../src/lib/publication-metadata";
 
-const png = "data:image/png;base64,iVBORw0KGgo=";
+const pngBytes = readFileSync(
+  "docs/evidence/formation-continuity/publication-thumbnail.png",
+);
+const png = `data:image/png;base64,${pngBytes.toString("base64")}`;
 
 function pngDataUrl(bytes: number) {
   const data = new Uint8Array(bytes);
@@ -26,9 +30,8 @@ describe("publication metadata", () => {
         .success,
     ).toBe(false);
     expect(
-      publicationThumbnailSchema.safeParse(
-        png.replace("iVBORw0KGgo=", "not-base64"),
-      ).success,
+      publicationThumbnailSchema.safeParse("data:image/png;base64,not-base64")
+        .success,
     ).toBe(false);
   });
 
@@ -66,4 +69,27 @@ describe("publication metadata", () => {
       }),
     ).toBeNull();
   });
+});
+
+it("rejects truncated headers and excessive decoded dimensions", () => {
+  expect(
+    publicationThumbnailSchema.safeParse("data:image/png;base64,iVBORw0KGgo=")
+      .success,
+  ).toBe(false);
+  for (const [width, height] of [
+    [0, 180],
+    [320, 0],
+    [1025, 180],
+    [320, 1025],
+    [0xffffffff, 0xffffffff],
+  ]) {
+    const bytes = Buffer.from(pngBytes);
+    bytes.writeUInt32BE(width, 16);
+    bytes.writeUInt32BE(height, 20);
+    expect(
+      publicationThumbnailSchema.safeParse(
+        `data:image/png;base64,${bytes.toString("base64")}`,
+      ).success,
+    ).toBe(false);
+  }
 });
