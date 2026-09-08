@@ -1,0 +1,11 @@
+{
+  "status": "failed",
+  "model": "openai/gpt-5.6-luna",
+  "outputCapTokens": 512,
+  "generationRequests": 1,
+  "responseStatus": 200,
+  "error": "The provider interrupted this generation. Please retry.",
+  "validCommands": 0,
+  "browserChecks": "not reached",
+  "harness": "Stopped after provider-response.json confirmed a terminal provider error; no retry or model fallback"
+}

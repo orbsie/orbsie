@@ -46,6 +46,7 @@ configureGeneratedGeometryResolver(async (hash, signal) => {
 function PlayerApp() {
   const s = useOrb();
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [ready, setReady] = useState(false);
   const collectibles = s.project.entities.filter(
     (e) => e.stage === "ready" && e.behavior?.type === "collect",
@@ -59,14 +60,14 @@ function PlayerApp() {
       .then((p) => {
         s.load(projectSchema.parse(p), true);
         s.set({ readOnly: true });
-        setReady(true);
+        setLoaded(true);
       })
       .catch((e) => setError(e.message));
   }, []);
   return (
-    <main>
+    <main data-ready={ready}>
       <div className="canvas">
-        <World />
+        {loaded && <World onReady={() => setReady(true)} onError={setError} />}
       </div>
       <header>
         <a href="https://orbsie.com">◉ orbsie</a>
@@ -85,10 +86,10 @@ function PlayerApp() {
           ↻ Restart
         </button>
       </header>
-      {!ready && (
+      {(!ready || error) && (
         <div className="message">{error || "Opening your little world…"}</div>
       )}
-      <div className="score">
+      <div className="score" hidden={!ready || Boolean(error)}>
         {s.project.game ? (
           `Score: ${s.gameScore}`
         ) : (

@@ -1,0 +1,15 @@
+{
+  "scope": "Replay the unchanged live-authored project with the current rebuilt runtime; no new provider call",
+  "passed": true,
+  "provider": "openrouter",
+  "originalProjectSHA256": "701df76977ba036d9311c6a274852512ae745c452609a4a11350c2b87654fb0e",
+  "currentRuntimeSHA256": "44bbb3e987186c90ec15aae15385a2ec91abe8c0dbf2f7393abfdb2a8698324a",
+  "betweenFrameTapPreserved": true,
+  "realProviderCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "score": 7,
+  "win": true,
+  "loss": true,
+  "restart": true
+}

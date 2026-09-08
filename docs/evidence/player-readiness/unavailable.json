@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "scope": "Actual standalone browser with WebGL disabled",
+  "loadingReplacedWithFailure": true,
+  "scoreHidden": true,
+  "expectedContextErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "unexpectedPageErrors": []
+}

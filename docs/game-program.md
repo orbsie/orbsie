@@ -22,3 +22,7 @@ Collision triggers use broad-phase axis-aligned bounds derived from the rendered
 - Run real provider-authored game flows with the authorized OpenRouter, Vercel AI Gateway and ChatGPT configurations.
 
 This document tracks an implementation in progress, not a completed gameplay release.
+
+## Live-provider observations
+
+OpenRouter Luna/512 and local ChatGPT Astra-low each authored the requested rules and passed editor gameplay on a deterministic starter scene. Their saved programs also pass independent playback; reports distinguish original live attempts from replays. Standalone startup and short-input failures found during these checks were fixed with an explicit ready signal and queued input edges. A later OpenRouter request was interrupted by the provider and remains recorded as failed. See `docs/evidence/game-program-openrouter/README.md` and `docs/evidence/game-program-chatgpt/README.md` for exact scope and retained failures. Gateway gameplay, full live scene creation, recovery and publication remain unverified for this feature.

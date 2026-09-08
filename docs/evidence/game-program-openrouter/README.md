@@ -9,3 +9,5 @@ The editor passed right-input scoring (7 points), held-input deduplication, win,
 This proves one live rules-edit workflow on a fixture scene. It does not prove live scene creation, cloud recovery, publication, all gameplay action types, or Gateway/ChatGPT coverage.
 
 Repeat with the capped loopback server and `ORBSIE_LIVE_E2E=1 ORBSIE_OUTPUT_CAP_TOKENS=512 node scripts/verify-live-openrouter-game.mjs`. The cap is server-owned; the client flag alone does not enforce it. `node scripts/verify-openrouter-game-replay.mjs` replays the saved ZIP without credentials or inference.
+
+Follow-up evidence: `run-queued-input/provider-response.json` records a later actual capped request that returned a provider-interruption error and no valid commands. It was not treated as a successful live run and no fallback model was used. `runtime-replay.json` verifies the original live-authored project with the queued-input runtime without another provider call. `source-rebuild.json` records a successful rebuild from the original ZIP's included source using the already installed pinned repository dependencies, not a fresh dependency installation.

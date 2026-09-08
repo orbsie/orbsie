@@ -1,0 +1,7 @@
+{
+  "scope": "Rebuild exported source using installed pinned repository dependencies via node_modules symlink; no fresh dependency installation",
+  "passed": true,
+  "zipSHA256": "07d88f5480b75223a1ff00984ffcac1314fe4938ea8b9e0ec6608bcb4e4f5fdc",
+  "runtimeSHA256": "1ffa94c4b820d8d10925a9f2d71c6afe481ae40bf38a193fa2db4468e8beb4b7",
+  "runtimeBytes": 1714894
+}

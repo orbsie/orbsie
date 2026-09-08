@@ -421,7 +421,15 @@ function Formation({
     </group>
   );
 }
-function Player({ session }: { session: GameSession }) {
+function Player({
+  session,
+  onReady,
+}: {
+  session: GameSession;
+  onReady?: () => void;
+}) {
+  const inputsReady = useRef(false);
+  const announcedReady = useRef(false);
   const generation = useRef(-1);
   const usableEntities = useRef(new Map<string, Entity>());
   const ref = useRef<THREE.Group>(null);
@@ -507,7 +515,9 @@ function Player({ session }: { session: GameSession }) {
     window.addEventListener("blur", blur);
     window.addEventListener("focusin", focus);
     window.addEventListener("orbsie-input", touch);
+    inputsReady.current = true;
     return () => {
+      inputsReady.current = false;
       window.removeEventListener("keydown", d);
       window.removeEventListener("keyup", u);
       window.removeEventListener("blur", blur);
@@ -615,6 +625,10 @@ function Player({ session }: { session: GameSession }) {
       if (session.error && current.error !== session.error.message)
         s.set({ error: session.error.message });
     } else if (result.won && !s.won) s.set({ won: true });
+    if (inputsReady.current && !announcedReady.current) {
+      announcedReady.current = true;
+      onReady?.();
+    }
     ref.current.position.set(...state.current.position);
     if (direction.length())
       ref.current.rotation.y = Math.atan2(direction.x, direction.z);
@@ -674,7 +688,7 @@ function Pebbles() {
     </instancedMesh>
   );
 }
-function Scene() {
+function Scene({ onReady }: { onReady?: () => void }) {
   const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
   const phase = useOrb((s) => s.phase),
@@ -825,7 +839,7 @@ function Scene() {
             session={session}
           />
         ))}
-        <Player session={session} />
+        <Player session={session} onReady={onReady} />
         <ContactShadows
           position={[0, -0.77, 0]}
           opacity={0.17}
@@ -849,28 +863,49 @@ function Scene() {
     </>
   );
 }
-class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
+const webglUnavailableMessage =
+  "Your world needs WebGL2. Try a browser with hardware acceleration enabled.";
+function Unavailable({ onError }: { onError?: (message: string) => void }) {
+  useEffect(() => {
+    onError?.(webglUnavailableMessage);
+  }, [onError]);
+  return onError ? null : (
+    <div className="webgl-fallback">{webglUnavailableMessage}</div>
+  );
+}
+class Boundary extends Component<
+  { children: ReactNode; onError?: (message: string) => void },
+  { error: boolean }
+> {
   state = { error: false };
   static getDerivedStateFromError() {
     return { error: true };
   }
+  componentDidCatch() {
+    this.props.onError?.(webglUnavailableMessage);
+  }
   render() {
     return this.state.error ? (
-      <div className="webgl-fallback">
-        <strong>Your world needs WebGL2</strong>
-        <p>
-          Try a recent browser with hardware acceleration enabled. Your saved
-          world is safe.
-        </p>
-      </div>
+      this.props.onError ? null : (
+        <div className="webgl-fallback">
+          <strong>Your world needs WebGL2</strong>
+          <p>
+            Try a recent browser with hardware acceleration enabled. Your saved
+            world is safe.
+          </p>
+        </div>
+      )
     ) : (
       this.props.children
     );
   }
 }
-export default function World() {
+export default function World({
+  onReady,
+  onError,
+}: { onReady?: () => void; onError?: (message: string) => void } = {}) {
   return (
-    <Boundary>
+    <Boundary onError={onError}>
       <Canvas
         shadows={{ type: THREE.PCFShadowMap }}
         dpr={[1, 1.5]}
@@ -880,18 +915,14 @@ export default function World() {
           alpha: true,
           powerPreference: "high-performance",
         }}
-        fallback={
-          <div className="webgl-fallback">
-            Your browser needs WebGL2 to open a 3D world.
-          </div>
-        }
+        fallback={<Unavailable onError={onError} />}
         onPointerMissed={() => {
           if (!useOrb.getState().playing)
             useOrb.getState().set({ selected: undefined });
         }}
       >
         <AdaptiveResolution />
-        <Scene />
+        <Scene onReady={onReady} />
       </Canvas>
     </Boundary>
   );

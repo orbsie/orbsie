@@ -1,0 +1,11 @@
+{
+  "model": "openai/gpt-5.6-luna",
+  "outputCapTokens": 512,
+  "responseStatus": 200,
+  "generationRequests": 1,
+  "commands": [
+    {
+      "error": "The provider interrupted this generation. Please retry."
+    }
+  ]
+}

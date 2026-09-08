@@ -1,0 +1,87 @@
+{
+  "scope": "Replay saved ChatGPT-authored commands through editor and newly exported ZIP; no inference or settings pairing.",
+  "status": "passed",
+  "stage": "complete",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "browserGenerationRequests": 2,
+  "clientGenerateCalls": 0,
+  "commands": [
+    {
+      "type": "set_game",
+      "game": {
+        "variables": [],
+        "rules": [
+          {
+            "id": "right_score",
+            "trigger": {
+              "type": "input",
+              "action": "right"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_score",
+                "amount": 7
+              }
+            ]
+          },
+          {
+            "id": "up_win",
+            "trigger": {
+              "type": "input",
+              "action": "up"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "win"
+              }
+            ]
+          },
+          {
+            "id": "left_lose",
+            "trigger": {
+              "type": "input",
+              "action": "left"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "lose"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "commit_revision",
+      "message": "Three controls ready: right adds 7, up wins, left loses. All objects unchanged."
+    }
+  ],
+  "commandTypes": [
+    "set_game",
+    "commit_revision"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "replayedCommands": true,
+  "gameRuleChecks": {
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "exactRuleCount": true
+  },
+  "fixtureGenerationRequests": 1,
+  "editorScore": 7,
+  "standaloneScore": 7,
+  "win": true,
+  "loss": true,
+  "restart": true,
+  "heldInputDeduplicated": true,
+  "unchangedEntities": true,
+  "programPreservedInZIP": true,
+  "sourceIncluded": true
+}

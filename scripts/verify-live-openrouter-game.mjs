@@ -17,7 +17,12 @@ let realCommands = [];
 let calls = 0;
 let beforeEntities;
 let responseStatus;
-const directory = "docs/evidence/game-program-openrouter";
+const evidenceRun = process.env.ORBSIE_EVIDENCE_RUN ?? "";
+if (evidenceRun && !/^[a-z0-9-]{1,32}$/.test(evidenceRun))
+  throw Error("Invalid evidence run name.");
+const directory =
+  "docs/evidence/game-program-openrouter" +
+  (evidenceRun ? `/run-${evidenceRun}` : "");
 await mkdir(directory, { recursive: true });
 const commands = [
   {
@@ -147,12 +152,15 @@ try {
     .fill(
       "Keep every existing object unchanged. Add a game program with exactly three rules: pressing right adds 7 score; pressing up wins; pressing left loses. No timers or collection scoring. Output set_game then commit_revision only. Keep the reply under 400 tokens.",
     );
+  const generationResponse = page.waitForResponse(
+    (response) => response.url() === base + "/api/generate",
+    { timeout: 125000 },
+  );
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect
-    .poll(() => realCommands.some((c) => c.type === "set_game"), {
-      timeout: 120000,
-    })
-    .toBe(true);
+  expect((await generationResponse).status()).toBe(200);
+  expect(realCommands.some((command) => command.type === "set_game")).toBe(
+    true,
+  );
   await expect(
     page.getByText(realCommands.at(-1).message, { exact: true }),
   ).toBeVisible();
@@ -217,7 +225,9 @@ try {
   });
   await player.goto(origin);
   await expect(player.locator("canvas")).toBeVisible();
-  await player.waitForTimeout(1000); // Allow the first WebGL frame to install input handlers.
+  await expect(player.locator("main[data-ready=true]")).toBeVisible({
+    timeout: 30000,
+  }); // Allow the first WebGL frame to install input handlers.
   await expect(player.locator(".score")).toHaveText("Score: 0");
   await player.keyboard.press("d", { delay: 100 });
   await expect(player.locator(".score")).toHaveText("Score: 7");
@@ -256,6 +266,24 @@ try {
     JSON.stringify(report, null, 2) + "\n",
   );
   console.log(JSON.stringify(report));
+} catch {
+  process.exitCode = 1;
+  const failure = {
+    scope: "Live OpenRouter rules on fixture scene",
+    status: "failed",
+    model,
+    outputCapTokens: 512,
+    generationRequests,
+    responseStatus,
+    commands: realCommands,
+    error:
+      "Generation transport or browser gameplay verification did not complete.",
+  };
+  await writeFile(
+    directory + "/failure.json",
+    JSON.stringify(failure, null, 2) + "\n",
+  );
+  console.log(JSON.stringify(failure));
 } finally {
   await browser.close();
   if (server) await new Promise((resolve) => server.close(resolve));
