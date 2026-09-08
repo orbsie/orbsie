@@ -1,0 +1,16 @@
+{
+  "scope": "Fresh pinned official archive build with verified supplemental Python notices; 32 packaging/runtime/modeling/notice tests passed",
+  "bundle": {
+    "payloadBytes": 1216669041,
+    "payloadFiles": 5709,
+    "manifestBytes": 1629618,
+    "totalBytes": 1218298659
+  },
+  "treeSha256": "008d1676e9f64af5e614da3365e762cbae6e76a458c961c8401025d4a1ed1253",
+  "entryCount": 6564,
+  "packages": 9,
+  "notices": 11,
+  "allNoticeHashesVerified": true,
+  "allNoticesInTreeManifest": true,
+  "portable": false
+}

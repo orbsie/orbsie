@@ -31,7 +31,8 @@ import { createHash } from "node:crypto";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { performance } from "node:perf_hooks";
-import { pathToFileURL } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import { copyPythonNotices } from "./blender-python-notices.mjs";
 
 const DEFAULT_BLENDER = "/usr/bin/blender";
 const DEFAULT_DATA = "/usr/share/blender";
@@ -893,6 +894,14 @@ function main() {
         ...notice,
         source: sourcePath(notice.source),
       })),
+    );
+
+  if (extracted)
+    licenses.push(
+      ...copyPythonNotices(
+        fileURLToPath(new URL("../", import.meta.url)),
+        bundle,
+      ),
     );
 
   const sourceStats = {
