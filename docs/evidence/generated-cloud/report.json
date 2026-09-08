@@ -1,0 +1,39 @@
+{
+  "sourceCommit": "cfcdfec",
+  "status": "passed",
+  "target": "http://127.0.0.1:3017",
+  "projectId": "f8972b3d-824a-4296-9ee3-38967de23064",
+  "modelSha256": "f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4",
+  "save": {
+    "uploadStatus": 200,
+    "projectStatus": 200
+  },
+  "restore": {
+    "projectStatus": 200,
+    "modelStatus": 200,
+    "render": {
+      "width": 1440,
+      "height": 1000,
+      "workers": [
+        {
+          "error": null,
+          "hash": "f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4",
+          "vertices": 3024
+        }
+      ]
+    },
+    "storedModel": {
+      "sha256": "f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4",
+      "bytes": 52104,
+      "storedBytes": 52104,
+      "digest": "f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4"
+    }
+  },
+  "ownership": {
+    "anonymousProject": 401,
+    "anonymousModel": 401,
+    "secondProject": 404,
+    "secondModel": 404
+  },
+  "scope": "Existing real Astra-generated vase; actual development GCS and database with synthetic accounts. No new inference or publication. Fresh browser retained authentication cookies only, with empty localStorage and IndexedDB."
+}
