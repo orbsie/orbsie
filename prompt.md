@@ -206,6 +206,8 @@ Delivery contract: local rendering is the default for every asset source. The op
 
 Package delivery must be self-contained for each supported platform: include the launcher runtime, Blender’s required Python components and native dependencies, or declare verified operating-system prerequisites. Test on a clean machine without developer tools; a bundled Node launcher alone does not complete Blender delivery.
 
+Define the minimal Blender profile from the actual modeling/export workload: retain headless execution, the bundled Python modules, mesh and modifier operations, materials and GLB export required by the protocol. Evaluate desktop UI resources, sample content and unused rendering features for removal only after dependency inspection and regression checks. Compare the reduced package with the unmodified pinned distribution, record exactly what was removed, and verify the same model outputs on a clean supported machine. Scene rendering stays in the local browser; Blender rendering features are included only when an accepted asset-building operation needs them.
+
 Schedule construction below interactive rendering: begin with one active Blender job and a bounded pending queue, retain the last usable asset during builds, and expose cancellation. Increase concurrency only when measurements show that camera movement, selection and editing remain within the declared responsiveness budgets. Use available local GPU capabilities for rendering; do not assume every Blender modeling operation benefits from GPU execution.
 
 1. Keep generated assets rendering on the browser's GPU. Move expensive decoding and geometry preparation off the UI thread where supported, and measure frame responsiveness while background construction runs.
@@ -215,6 +217,8 @@ Schedule construction below interactive rendering: begin with one active Blender
 5. Run the complete real-provider flow on the packaged runtime, including a request that explicitly forbids catalog reuse. Astra reviews worker changes and the acceptance evidence before marking any gate complete; Luna can implement independent executor, packaging and integration tasks in parallel.
 
 Record a repeatable baseline on declared test hardware: idle editor versus active modeling, frame-time percentiles, input latency, peak CPU/RAM/GPU memory where measurable, job duration, cancellation latency, download and installed size. Set explicit budgets from these measurements before release, and demonstrate that camera movement, selection and editing remain usable during construction. Keep runtime packaging, local rendering, background modeling, persistence/publication and responsiveness as separate tracked acceptance gates.
+
+Responsiveness verification must also cover typing and selecting objects while adaptive render resolution is reduced: ordinary editor updates must preserve the active resolution budget. A functional background-build test on a software-rendered development host is useful evidence, but does not close the normal-device frame-rate or packaged-installation gates.
 
 Release checklist for this owner requirement (each box requires evidence for the delivered package, not only a development prototype):
 
