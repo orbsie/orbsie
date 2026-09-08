@@ -7,7 +7,12 @@ import {
 } from "fflate";
 import { committed, projectSchema, type Project } from "./protocol";
 import { bundleCatalogAssets } from "./asset-bundle";
+import { bundleGeneratedAssets } from "./generated-bundle";
 export function encodeWorld(project: Project) {
+  if (project.entities.some((entity) => entity.geometry?.kind === "generated"))
+    throw Error(
+      "Generated models are stored on this device and cannot travel in a quick share link. Download your world to share its complete files, or use publication when generated-model publishing is available.",
+    );
   const p = { ...committed(project), messages: [] };
   return btoa(String.fromCharCode(...compressSync(strToU8(JSON.stringify(p)))))
     .replaceAll("+", "-")
@@ -31,6 +36,15 @@ export function playerHTML(title: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title.replace(/[<>&"']/g, "")} — Orbsie</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>`;
 }
 export async function exportWorld(project: Project) {
+  if (
+    project.entities.some(
+      (entity) =>
+        entity.geometry?.kind === "generated" && !entity.geometry.model,
+    )
+  )
+    throw Error(
+      "This world has an unfinished generated model. Finish modeling before exporting it.",
+    );
   const [js, css, source] = await Promise.all([
     fetch("/player/runtime.js"),
     fetch("/player/runtime.css"),
@@ -104,6 +118,7 @@ export async function exportWorld(project: Project) {
       return new Uint8Array(await response.arrayBuffer());
     }),
   );
+  Object.assign(files, await bundleGeneratedAssets(committed(project)));
   const data = zipSync(files, { level: 6 });
   const blob = new Blob([new Uint8Array(data)], { type: "application/zip" });
   const url = URL.createObjectURL(blob);

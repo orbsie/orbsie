@@ -26,7 +26,7 @@ const DEFAULT_PROMPT =
   "Build a tiny island with one tree and one crystal. Keep it simple and commit the world.";
 const DEFAULT_EDIT =
   "Change only the selected entity to bright pink #ff44aa. Preserve its geometry and every unrelated entity and environment. Commit the edit.";
-const REPORT_DIR = resolve("docs/evidence/provider-e2e");
+const REPORT_DIR = resolve(process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e");
 const REPORT_MODE = "live-browser";
 
 class HarnessConfigurationError extends Error {
@@ -239,6 +239,25 @@ function readConfiguration(argv) {
       );
   }
 
+  if (process.env.ORBSIE_BUILDER_URL || process.env.ORBSIE_BUILDER_TOKEN) {
+    const builder = new URL(process.env.ORBSIE_BUILDER_URL);
+    if (
+      builder.protocol !== "http:" ||
+      builder.hostname !== "127.0.0.1" ||
+      !builder.port ||
+      builder.pathname !== "/" ||
+      builder.search ||
+      builder.hash ||
+      builder.username ||
+      builder.password ||
+      !/^[A-Za-z0-9_-]{43}$/.test(process.env.ORBSIE_BUILDER_TOKEN ?? "")
+    )
+      throw new HarnessConfigurationError(
+        "A valid local Blender URL and capability are required.",
+      );
+    config.builderURL = builder.origin;
+    config.builderToken = process.env.ORBSIE_BUILDER_TOKEN;
+  }
   if (config.publication && !process.env.ORBSIE_CLOUD_TEST_STATE)
     throw new HarnessConfigurationError(
       "Real publication was explicitly requested; set ORBSIE_CLOUD_TEST_STATE to the private mode-0600 state file.",
@@ -248,7 +267,11 @@ function readConfiguration(argv) {
 
 function sanitizeMessage(message, config) {
   let value = String(message || "");
-  for (const secret of [config?.key, config?.companionToken]) {
+  for (const secret of [
+    config?.key,
+    config?.companionToken,
+    config?.builderToken,
+  ]) {
     if (secret) value = value.split(secret).join("[redacted]");
   }
   value = value.replace(/Bearer\s+[A-Za-z0-9._~-]+/gi, "Bearer [redacted]");
@@ -476,6 +499,17 @@ async function assertNoStoredKey(page, config) {
     false,
     "Provider capability appeared in browser storage.",
   );
+  if (config.builderToken) {
+    const builderSnapshot = await storageSnapshot(
+      page,
+      storageKeyDigest(config.builderToken),
+    );
+    assert.equal(
+      builderSnapshot.sensitive,
+      false,
+      "Builder capability appeared in storage.",
+    );
+  }
   return snapshot;
 }
 
@@ -804,6 +838,10 @@ async function extractZip(download, config, expectedRevision, evidenceDir) {
       !joined.includes(config.key ?? config.companionToken),
     "Provider key appeared in the exported ZIP.",
   );
+  assert(
+    !config.builderToken || !joined.includes(config.builderToken),
+    "Builder capability appeared in exported ZIP.",
+  );
   const sanitizedName = "world.zip";
   await writeFile(join(evidenceDir, sanitizedName), bytes, { mode: 0o600 });
   return { tempDir, names, project };
@@ -1130,6 +1168,7 @@ async function run(config) {
   await mkdir(evidenceDir, { recursive: true });
   const approvedOrigins = new Set([config.baseOrigin]);
   if (config.companionURL) approvedOrigins.add(config.companionURL);
+  if (config.builderURL) approvedOrigins.add(config.builderURL);
   const info = {
     generationRequests: 0,
     generationBodies: [],
@@ -1166,6 +1205,35 @@ async function run(config) {
     if (config.provider === "chatgpt-local")
       await configureChatGPTLocal(page, config, report, info, evidenceDir);
     else await configureApiProvider(page, config, report, info, evidenceDir);
+    if (config.builderURL) {
+      await page
+        .getByRole("button", { name: "Connections", exact: true })
+        .first()
+        .click();
+      const link =
+        config.baseOrigin +
+        "/#builder=" +
+        encodeURIComponent(
+          JSON.stringify({
+            url: config.builderURL,
+            token: config.builderToken,
+          }),
+        );
+      await page
+        .getByLabel("Local Blender connection link", { exact: true })
+        .fill(link);
+      await page
+        .getByRole("button", { name: "Connect local Blender", exact: true })
+        .click();
+      await expect(
+        page.getByText("Blender is ready to build models on this computer.", {
+          exact: true,
+        }),
+      ).toBeVisible();
+      await page
+        .getByRole("button", { name: "Close dialog", exact: true })
+        .click();
+    }
     await prepareObserver(page);
     projectBefore = await storageSnapshot(
       page,
@@ -1224,8 +1292,20 @@ async function run(config) {
       (entity) => entity.geometry?.kind === "asset",
     ).length;
     report.creation.proceduralEntities = projectAfterCreation.entities.filter(
-      (entity) => entity.geometry && entity.geometry.kind !== "asset",
+      (entity) =>
+        entity.geometry &&
+        !["asset", "generated"].includes(entity.geometry.kind),
     ).length;
+
+    report.creation.generatedEntities = projectAfterCreation.entities.filter(
+      (entity) =>
+        entity.geometry?.kind === "generated" && entity.geometry.model,
+    ).length;
+    if (config.builderURL)
+      assert(
+        report.creation.generatedEntities > 0,
+        "The live model did not build a local Blender asset.",
+      );
 
     const firstRow = page.locator(".object-list button").first();
     const selectedLabel = (await firstRow.innerText()).split("\n")[0].trim();
@@ -1281,8 +1361,8 @@ async function run(config) {
     const { color: beforeColor, ...beforeShape } = targetBefore;
     const { color: afterColor, ...afterShape } = targetAfter;
     if (
-      beforeShape.geometry?.kind === "asset" &&
-      afterShape.geometry?.kind === "asset"
+      ["asset", "generated"].includes(beforeShape.geometry?.kind) &&
+      afterShape.geometry?.kind === beforeShape.geometry?.kind
     ) {
       assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
       const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;

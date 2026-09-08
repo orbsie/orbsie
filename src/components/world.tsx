@@ -22,6 +22,10 @@ import {
   useAssetGeometry,
   isAssetGeometryReady,
 } from "@/lib/use-asset-geometry";
+import {
+  useGeneratedGeometry,
+  isGeneratedGeometryReady,
+} from "@/lib/use-generated-geometry";
 import { isAssetId } from "@/lib/asset-catalog";
 import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
@@ -209,12 +213,18 @@ function Formation({ entity }: { entity: Entity }) {
   const playing = useOrb((s) => s.playing);
   const [bloom, setBloom] = useState(false);
   const assetRecipe =
-    entity.geometry?.kind === "asset" ? entity.geometry : undefined;
-  const asset = useAssetGeometry(
-    assetRecipe && isAssetId(assetRecipe.assetId)
+    entity.geometry?.kind === "asset" || entity.geometry?.kind === "generated"
+      ? entity.geometry
+      : undefined;
+  const catalog = useAssetGeometry(
+    assetRecipe?.kind === "asset" && isAssetId(assetRecipe.assetId)
       ? assetRecipe.assetId
       : undefined,
   );
+  const generated = useGeneratedGeometry(
+    assetRecipe?.kind === "generated" ? assetRecipe.model?.sha256 : undefined,
+  );
+  const asset = assetRecipe?.kind === "generated" ? generated : catalog;
   const pendingAsset = !!assetRecipe && !asset?.geometry;
   useEffect(() => {
     if (asset?.error)
@@ -404,8 +414,11 @@ function Player() {
       if (!currentIds.has(id)) usableEntities.current.delete(id);
     for (const entity of s.project.entities)
       if (
-        entity.geometry?.kind !== "asset" ||
-        isAssetGeometryReady(entity.geometry.assetId)
+        entity.geometry?.kind === "generated"
+          ? !!entity.geometry.model &&
+            isGeneratedGeometryReady(entity.geometry.model.sha256)
+          : entity.geometry?.kind !== "asset" ||
+            isAssetGeometryReady(entity.geometry.assetId)
       )
         usableEntities.current.set(entity.id, entity);
     if (!playing) return;
@@ -425,8 +438,11 @@ function Player() {
       { x: direction.x, z: direction.z, jump: k.has(" ") },
       s.project.entities.map((entity) => {
         if (
-          entity.geometry?.kind === "asset" &&
-          !isAssetGeometryReady(entity.geometry.assetId)
+          (entity.geometry?.kind === "asset" &&
+            !isAssetGeometryReady(entity.geometry.assetId)) ||
+          (entity.geometry?.kind === "generated" &&
+            (!entity.geometry.model ||
+              !isGeneratedGeometryReady(entity.geometry.model.sha256)))
         )
           return (
             usableEntities.current.get(entity.id) ?? {

@@ -111,7 +111,7 @@ The execution plan is mostly a process contract rather than a product feature. T
 
 ## Local Blender construction (mandatory owner addition)
 
-The typed modeling schema, isolated Linux executor and generated-asset persistence are under implementation. A system-runtime packaging prototype is not a portable shipped companion. Completion still requires a packaged runtime with license/source materials, supported-platform installation/restart evidence, LLM-to-Blender-to-browser integration, durable generated assets through edits/export/publication, and measured responsiveness/cancellation/isolation. The delivery gates in `prompt.md` remain open.
+The typed modeling protocol, isolated Linux executor, authenticated local connection, editor integration, generated GLB persistence and ZIP export are implemented. The real Astra-low browser flow in `docs/evidence/provider-e2e/blender/chatgpt-local.json` created one new Blender model, recolored it without changing geometry, recovered it after reload and played the exported standalone world. This is a functional single-model proof, not a performance or gameplay-completeness result. The official runtime repackaging prototype remains `portable: false`; cloud storage/publication of generated assets, the other provider paths, supported-platform installation and measured editor responsiveness still need completion.
 
 ## 6. Incremental authoring architecture
 

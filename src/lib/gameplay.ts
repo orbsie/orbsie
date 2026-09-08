@@ -49,8 +49,14 @@ export function isTextEntryTarget(target: EventTarget | null) {
 
 function platformTop(entity: Entity, time: number) {
   const position = movingEntityPosition(entity, time);
-  if (entity.geometry?.kind === "asset") {
-    const { min, max } = requireCatalogAsset(entity.geometry.assetId).bounds;
+  const bounds =
+    entity.geometry?.kind === "asset"
+      ? requireCatalogAsset(entity.geometry.assetId).bounds
+      : entity.geometry?.kind === "generated"
+        ? entity.geometry.model?.bounds
+        : undefined;
+  if (bounds) {
+    const { min, max } = bounds;
     const low = min.map((value, i) =>
       Math.min(value * entity.scale[i], max[i] * entity.scale[i]),
     );
@@ -92,6 +98,9 @@ export function stepGameplay(
     (entity) =>
       entity.stage === "ready" &&
       (entity.geometry?.kind === "platform" ||
+        (entity.geometry?.kind === "generated" &&
+          entity.geometry.collision === "platform" &&
+          !!entity.geometry.model) ||
         (entity.geometry?.kind === "asset" &&
           requireCatalogAsset(entity.geometry.assetId).tags.some(
             (tag) => tag === "platform" || tag === "bridge",

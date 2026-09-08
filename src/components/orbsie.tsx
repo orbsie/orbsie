@@ -40,6 +40,11 @@ import {
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
 import {
+  checkModelingConnection,
+  readModelingLink,
+  type ModelingConnection,
+} from "@/lib/modeling-connection";
+import {
   readCompanionLink,
   type GenerationConnection,
 } from "@/lib/generation-connection";
@@ -87,6 +92,39 @@ export default function Orbsie() {
     model: "",
     key: "",
   });
+  const [builderLink, setBuilderLink] = useState("");
+  const [builderConnecting, setBuilderConnecting] = useState(false);
+  const builderVersion = useRef(0);
+  const pendingBuilder = useRef<ModelingConnection | null>(null);
+  async function connectBuilder(
+    link: ModelingConnection,
+    signal?: AbortSignal,
+  ) {
+    const version = ++builderVersion.current;
+    setBuilderConnecting(true);
+    try {
+      await checkModelingConnection(link, signal);
+      if (signal?.aborted || version !== builderVersion.current) return;
+      pendingBuilder.current = null;
+      setBuilderLink("");
+      s.set({
+        modelingConnection: link,
+        notice: "Local Blender is connected.",
+        error: "",
+      });
+    } catch {
+      if (!signal?.aborted && version === builderVersion.current) {
+        pendingBuilder.current = null;
+        const message =
+          "Could not connect to local Blender. Keep the companion running and use its new connection link.";
+        s.set({ error: message });
+        setModalError(message);
+      }
+    } finally {
+      if (!signal?.aborted && version === builderVersion.current)
+        setBuilderConnecting(false);
+    }
+  }
   const connectionVersion = useRef(0);
   const setConnection = (next: Parameters<typeof setConnectionState>[0]) => {
     connectionVersion.current++;
@@ -212,6 +250,20 @@ export default function Orbsie() {
   useEffect(() => {
     const companionController = new AbortController();
     const connectingVersion = connectionVersion.current;
+    try {
+      const builder = pendingBuilder.current ?? readModelingLink(location.hash);
+      if (builder) {
+        pendingBuilder.current = builder;
+        history.replaceState(null, "", location.pathname + location.search);
+        void connectBuilder(builder, companionController.signal);
+      }
+    } catch {
+      history.replaceState(null, "", location.pathname + location.search);
+      s.set({
+        error:
+          "This Blender connection link is invalid. Open a new link from the companion.",
+      });
+    }
     try {
       const link = pendingCompanion.current ?? readCompanionLink(location.hash);
       if (link) {
@@ -472,13 +524,18 @@ export default function Orbsie() {
   };
   const share = async () => {
     setBusy(true);
+    setShareUrl("");
     try {
       const url = shareWorld(s.project);
       setShareUrl(url);
       await navigator.clipboard.writeText(url);
       s.set({ notice: "Play link copied." });
-    } catch {
-      setShareUrl(shareWorld(s.project));
+    } catch (error) {
+      setModalError(
+        error instanceof Error
+          ? error.message
+          : "Could not copy the play link. Use the displayed link or download the world.",
+      );
     } finally {
       setBusy(false);
     }
@@ -1083,6 +1140,62 @@ export default function Orbsie() {
                   ? "Your ChatGPT account is connected through the companion on this computer."
                   : "Connect your API key to create and edit your world."}
               </p>
+              <p className="fine-print">
+                {s.modelingConnection
+                  ? "Blender is ready to build models on this computer."
+                  : "For local Blender modeling, start the companion and connect its private link. Your world renders on this device."}
+              </p>
+              {s.modelingConnection ? (
+                <button
+                  className="secondary full"
+                  onClick={() => {
+                    builderVersion.current++;
+                    pendingBuilder.current = null;
+                    s.stop();
+                    s.set({
+                      modelingConnection: undefined,
+                      notice: "Local Blender disconnected.",
+                    });
+                  }}
+                >
+                  Disconnect local Blender
+                </button>
+              ) : (
+                <>
+                  <label>
+                    Local Blender connection link
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      value={builderLink}
+                      onChange={(event) => setBuilderLink(event.target.value)}
+                      placeholder="Paste the companion link"
+                    />
+                  </label>
+                  <button
+                    className="secondary full"
+                    disabled={builderConnecting || !builderLink.trim()}
+                    onClick={() => {
+                      try {
+                        const link = readModelingLink(
+                          new URL(builderLink.trim()).hash,
+                        );
+                        if (!link) throw Error();
+                        void connectBuilder(link);
+                      } catch {
+                        s.set({
+                          error:
+                            "Paste the complete connection link from the local Blender companion.",
+                        });
+                      }
+                    }}
+                  >
+                    {builderConnecting
+                      ? "Connecting Blender…"
+                      : "Connect local Blender"}
+                  </button>
+                </>
+              )}
               {trial.enabled && trial.remaining > 0 && (
                 <button
                   className="primary full"

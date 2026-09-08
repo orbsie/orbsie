@@ -1,3 +1,4 @@
+import { assertModelingCommand } from "../src/lib/modeling-policy";
 import { deriveAssetPolicy, enforceAssetPolicy } from "../src/lib/asset-policy";
 import { promptCatalogForPolicy } from "../src/lib/asset-catalog";
 /** Trusted loopback boundary; never import into a hosted route or browser bundle. */
@@ -30,6 +31,7 @@ const requestSchema = z
   .object({
     prompt: z.string().trim().min(1).max(5000),
     project: projectSchema,
+    localModeling: z.boolean().default(false),
     selected: z
       .string()
       .regex(/^[\w-]{1,80}$/)
@@ -169,7 +171,7 @@ export async function startChatGPTCompanion({
         JSON.parse(Buffer.concat(chunks).toString("utf8")),
       );
       if (!parsed.success) return send(res, 400, "Invalid generation request.");
-      const { prompt, project, selected } = parsed.data;
+      const { prompt, project, selected, localModeling } = parsed.data;
       const assetPolicy = deriveAssetPolicy(prompt, selected, project);
       if (
         selected &&
@@ -206,6 +208,7 @@ export async function startChatGPTCompanion({
           commandSchema.parse(JSON.parse(line)),
           assetPolicy,
         );
+        assertModelingCommand(command, localModeling);
         const applied = applyOperation(
           working,
           {
@@ -234,6 +237,7 @@ export async function startChatGPTCompanion({
         systemPrompt,
         {
           instruction: prompt,
+          localModeling,
           assetPolicy,
           assetCatalog: promptCatalogForPolicy(assetPolicy.requestAssetPolicy),
           selectedEntityId: selected,

@@ -3,6 +3,7 @@ import {
   blankProject,
   applyOperation,
   assetGeometrySchema,
+  generatedGeometrySchema,
   commandSchema,
   committed,
   type Command,
@@ -229,4 +230,176 @@ it("restores an existing ready object if a refinement stops midway", () => {
     entities: ready.entities.map((e) => ({ ...e, stage: "coarse" as const })),
   };
   expect(committed(pending, ready).entities[0].stage).toBe("ready");
+});
+const generatedJob = {
+  version: 1,
+  parts: [{ id: "body", shape: "box", color: "#123456" }],
+};
+const generatedMetadata = {
+  version: 1,
+  sha256: "a".repeat(64),
+  bytes: 2048,
+  source: "local-blender",
+  blenderVersion: "4.0.2",
+  bounds: { min: [-1, -1, -1], max: [1, 1, 1] },
+  createdAt: "2026-09-08T00:00:00Z",
+};
+it("accepts unresolved generated jobs for validation projection and resolved metadata for persistence", () => {
+  const unresolved = generatedGeometrySchema.parse({
+    kind: "generated",
+    job: generatedJob,
+  });
+  expect(unresolved.detail).toBe("refined");
+  expect(unresolved.model).toBeUndefined();
+  expect(unresolved.job.parts[0].scale).toEqual([1, 1, 1]);
+  const resolved = generatedGeometrySchema.parse({
+    ...unresolved,
+    model: generatedMetadata,
+    tint: "#ff44aa",
+  });
+  expect(resolved.model?.sha256).toBe(generatedMetadata.sha256);
+  expect(
+    commandSchema.parse({
+      type: "set_geometry",
+      id: "tree",
+      geometry: resolved,
+    }),
+  ).toMatchObject({ geometry: { kind: "generated", tint: "#ff44aa" } });
+});
+it("rejects invalid generated modeling jobs, metadata, and unknown recipe fields", () => {
+  for (const patch of [
+    { job: { ...generatedJob, python: "run code" } },
+    {
+      job: {
+        version: 1,
+        parts: [
+          {
+            ...generatedJob.parts[0],
+            shape: "mesh",
+            vertices: [
+              [0, 0, 0],
+              [1, 0, 0],
+              [0, 1, 0],
+            ],
+            faces: [[0, 1, 99]],
+          },
+        ],
+      },
+    },
+    { model: { ...generatedMetadata, sha256: "../../file" } },
+    {
+      model: {
+        ...generatedMetadata,
+        bounds: { min: [2, 0, 0], max: [1, 1, 1] },
+      },
+    },
+    { model: { ...generatedMetadata, source: "remote" } },
+    { url: "https://example.test/evil.glb" },
+    { tint: "red" },
+  ])
+    expect(
+      generatedGeometrySchema.safeParse({
+        kind: "generated",
+        job: generatedJob,
+        ...patch,
+      }).success,
+    ).toBe(false);
+});
+it("allows new-only generated geometry and recolors it without replacing its job or metadata", () => {
+  const { project, cursor, op } = setup();
+  const first = applyOperation(project, op, cursor);
+  const geometry = generatedGeometrySchema.parse({
+    kind: "generated",
+    job: generatedJob,
+    model: generatedMetadata,
+  });
+  const generated = applyOperation(
+    first.project,
+    {
+      ...op,
+      operationId: "generated",
+      sequence: 2,
+      baseRevision: 1,
+      command: {
+        type: "set_geometry",
+        id: "tree",
+        assetPolicy: "new-only",
+        geometry,
+      },
+    },
+    first.cursor,
+  );
+  expect(generated.project.entities[0]).toMatchObject({
+    stage: "ready",
+    assetPolicy: "new-only",
+    geometry: { kind: "generated" },
+  });
+  const tinted = applyOperation(
+    generated.project,
+    {
+      ...op,
+      operationId: "tint",
+      sequence: 3,
+      baseRevision: 2,
+      command: { type: "set_material", id: "tree", color: "#ff44aa" },
+    },
+    generated.cursor,
+  );
+  expect(tinted.project.entities[0]).toMatchObject({
+    color: "#ff44aa",
+    assetPolicy: "new-only",
+    geometry: { ...geometry, tint: "#ff44aa" },
+  });
+  expect(() =>
+    applyOperation(
+      tinted.project,
+      {
+        ...op,
+        operationId: "catalog",
+        sequence: 4,
+        baseRevision: 3,
+        command: {
+          type: "set_geometry",
+          id: "tree",
+          geometry: {
+            kind: "asset",
+            assetId: "kenney.nature.tree-default",
+            detail: "refined",
+          },
+        },
+      },
+      tinted.cursor,
+    ),
+  ).toThrow("new-only");
+});
+it("allows unresolved generated geometry in the server reducer projection", () => {
+  const { project, cursor, op } = setup();
+  const reserved = applyOperation(project, op, cursor);
+  const geometry = generatedGeometrySchema.parse({
+    kind: "generated",
+    job: generatedJob,
+    detail: "coarse",
+  });
+  const applied = applyOperation(
+    reserved.project,
+    {
+      ...op,
+      operationId: "projected",
+      sequence: 2,
+      baseRevision: 1,
+      command: {
+        type: "set_geometry",
+        id: "tree",
+        assetPolicy: "new-only",
+        geometry,
+      },
+    },
+    reserved.cursor,
+  );
+  expect(applied.project.entities[0]).toMatchObject({
+    stage: "coarse",
+    assetPolicy: "new-only",
+    geometry: { kind: "generated" },
+  });
+  expect(applied.project.entities[0].geometry).not.toHaveProperty("model");
 });

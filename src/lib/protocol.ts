@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { modelingJobSchema } from "./modeling";
+import { generatedModelMetadataSchema } from "./generated-models";
 import {
   catalogAssetIds,
   isAssetId,
@@ -42,9 +44,21 @@ export const assetGeometrySchema = z.object({
   detail: geometryDetail,
   tint: color.optional(),
 });
+export const generatedGeometrySchema = z
+  .object({
+    kind: z.literal("generated"),
+    collision: z.enum(["none", "platform"]).default("none"),
+    job: modelingJobSchema,
+    model: generatedModelMetadataSchema.optional(),
+    detail: geometryDetail,
+    tint: color.optional(),
+  })
+  .strict();
+export type GeneratedGeometryRecipe = z.infer<typeof generatedGeometrySchema>;
 export const geometrySchema = z.union([
   proceduralGeometrySchema,
   assetGeometrySchema,
+  generatedGeometrySchema,
 ]);
 export type AssetGeometryRecipe = z.infer<typeof assetGeometrySchema>;
 export type ProceduralGeometryRecipe = z.infer<typeof proceduralGeometrySchema>;
@@ -237,7 +251,8 @@ export function applyOperation(
                   color: c.color,
                   assetPolicy: nextAssetPolicy,
                   geometry:
-                    e.geometry?.kind === "asset"
+                    e.geometry?.kind === "asset" ||
+                    e.geometry?.kind === "generated"
                       ? { ...e.geometry, tint: c.color }
                       : e.geometry,
                 }

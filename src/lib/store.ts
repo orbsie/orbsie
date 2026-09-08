@@ -1,4 +1,9 @@
 "use client";
+import { assertModelingCommand } from "./modeling-policy";
+import {
+  buildLocalModel,
+  type ModelingConnection,
+} from "./modeling-connection";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import {
   generationRequest,
@@ -8,6 +13,7 @@ import { create } from "zustand";
 import { get, update } from "idb-keyval";
 import {
   blankProject,
+  commandSchema,
   committed,
   projectSchema,
   applyOperation,
@@ -56,6 +62,7 @@ interface State {
   playing: boolean;
   building: boolean;
   selected?: string;
+  modelingConnection?: ModelingConnection;
   history: Project[];
   future: Project[];
   score: string[];
@@ -430,6 +437,7 @@ export const useOrb = create<State>((setState, getState) => ({
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
+    const modelingConnection = getState().modelingConnection;
     const before =
       getState().phase === "landing"
         ? blankProject()
@@ -490,8 +498,32 @@ export const useOrb = create<State>((setState, getState) => ({
     let lastAppliedCommand: Command["type"] | undefined;
     const apply = async (command: Command) => {
       if (signal.aborted || active !== controller) return false;
-      const s = getState();
-      command = enforceAssetPolicy(s.project, command, assetPolicy);
+      let s = getState();
+      command = enforceAssetPolicy(
+        s.project,
+        commandSchema.parse(command),
+        assetPolicy,
+      );
+      assertModelingCommand(command, !!modelingConnection);
+      if (
+        command.type === "set_geometry" &&
+        command.geometry.kind === "generated"
+      ) {
+        const model = await buildLocalModel(
+          modelingConnection!,
+          command.geometry.job,
+          {
+            signal,
+            onProgress: (event) => {
+              if (!signal.aborted && active === controller)
+                setState({ notice: `Building locally: ${event.message}` });
+            },
+          },
+        );
+        if (signal.aborted || active !== controller) return false;
+        command = { ...command, geometry: { ...command.geometry, model } };
+        s = getState();
+      }
       const result = applyOperation(
         s.project,
         {
@@ -528,6 +560,7 @@ export const useOrb = create<State>((setState, getState) => ({
           prompt,
           project,
           selected,
+          localModeling: !!modelingConnection,
         });
         const response = await fetch(request.url, { ...request.init, signal });
         if (!response.ok) {

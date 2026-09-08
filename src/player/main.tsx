@@ -4,6 +4,45 @@ import World from "../components/world";
 import { useOrb } from "../lib/store";
 import { projectSchema } from "../lib/protocol";
 import "./player.css";
+import { configureGeneratedGeometryResolver } from "../lib/use-generated-geometry";
+import {
+  generatedModelPath,
+  MAX_GENERATED_MODEL_BYTES,
+} from "../lib/generated-models";
+configureGeneratedGeometryResolver(async (hash, signal) => {
+  const response = await fetch(`./${generatedModelPath(hash)}`, {
+    signal,
+    redirect: "error",
+    credentials: "omit",
+  });
+  if (!response.ok || !response.body)
+    throw Error("This world's generated model is missing.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_GENERATED_MODEL_BYTES)
+        throw Error("The generated model exceeds its size budget.");
+      chunks.push(value);
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => undefined);
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
+});
 function PlayerApp() {
   const s = useOrb();
   const [error, setError] = useState("");

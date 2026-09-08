@@ -45,7 +45,11 @@ def source_from_blender(point):
 
 
 def color_from_hex(value):
-    return tuple(int(value[index : index + 2], 16) / 255.0 for index in (1, 3, 5))
+    def srgb_to_linear(channel):
+        channel /= 255.0
+        return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+
+    return tuple(srgb_to_linear(int(value[index : index + 2], 16)) for index in (1, 3, 5))
 
 
 def material_for(color, cache):

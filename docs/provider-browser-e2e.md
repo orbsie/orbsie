@@ -113,3 +113,11 @@ failed or was explicitly blocked; it never means that a fixture passed.
 Initial development used syntax checks only. Root integration then ran real managed ChatGPT browser calls with Astra low/default. The current evidence report records the actual completed phases and any remaining failure; a partial report is not a full E2E pass. OpenRouter, Gateway and real publication require their own independent successful reports.
 
 The local OpenRouter Luna exception also passed creation, exact scoped edit, reload, ZIP export and standalone load with the server configured to 512 output tokens. Its first visible reservation was 3.891 seconds. This verifies the authorized Luna path, not the separate Astra requirement. Local test servers must set `BETTER_AUTH_URL` to the exact test origin; production configuration intentionally rejects a mismatched browser origin.
+
+Local Blender runs additionally accept `ORBSIE_BUILDER_URL` and
+`ORBSIE_BUILDER_TOKEN` for the foreground modeling companion. The harness
+connects through the real Connections UI, requires at least one generated
+model, preserves it during the scoped recolor, and scans storage/ZIP text for
+the builder capability. `ORBSIE_EVIDENCE_DIR` keeps these reports separate from
+other live runs. These options do not change provider/model authorization or
+output limits. Never place the private capability in evidence or source.

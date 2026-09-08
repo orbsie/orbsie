@@ -201,11 +201,17 @@ this probe performs no LLM inference and does not exercise the Orbsie editor.
 
 `node scripts/run-modeling-companion.mjs` starts the development companion after
 an actual tiny Blender preflight; `ORBSIE_ORIGIN` chooses its one allowed origin.
-The emitted builder capability link is for the pending editor integration, not
-a currently enabled production feature. Keep it private and stop the foreground
-process to revoke access. No credentials or subscription connection are needed
+The emitted builder capability link connects the editor after a health check;
+it can also be pasted under Connections without replacing an existing ChatGPT
+connection. Keep it private and stop the foreground process to revoke access.
+No credentials or subscription connection are needed
 for local geometry construction.
 
-LLM generation, editor scene operations, generated-asset export/publication and
-a portable packaged installation remain open. The actual executor and browser
-transport probes do not establish the required full real-provider round trip.
+The editor now awaits validated local construction before applying generated
+geometry. Scoped recolors preserve the geometry and identity; standalone ZIPs
+include generated GLBs, provenance and source. The real Astra-low creation,
+scoped edit, reload and standalone export flow passed in
+`docs/evidence/provider-e2e/blender/chatgpt-local.json`. This run used no catalog
+models and made two actual ChatGPT generation requests. Cloud asset storage,
+dedicated publication, the remaining provider matrix, portable installation
+and measured responsiveness remain open gates.
