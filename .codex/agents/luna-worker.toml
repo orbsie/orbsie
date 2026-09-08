@@ -2,5 +2,7 @@ model = "gpt-5.6-luna"
 model_reasoning_effort = "xhigh"
 service_tier = "default"
 
+developer_instructions = "Implement only the bounded assigned task. Do not spawn agents. Report changed files, targeted validation results, and unresolved risks. Astra owns review and integration; do not repeat full E2E or live model tests unless the task explicitly requires a milestone check."
+
 [features]
 fast_mode = false

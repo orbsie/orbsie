@@ -6,8 +6,9 @@ service_tier = "default"
 fast_mode = false
 
 [agents]
-default_subagent_model = "gpt-6-astra"
-default_subagent_reasoning_effort = "low"
+max_concurrent_threads_per_session = 1
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "xhigh"
 
 [agents.luna_worker]
 description = "Bounded implementation, investigation, or verification delegated by Astra; Astra must review the result before acceptance."

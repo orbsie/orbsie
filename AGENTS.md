@@ -1,8 +1,10 @@
 # Development model and delegation policy
 
-- Default all development agents to GPT-6 Astra, low reasoning, regular/standard processing. Disable Fast mode.
-- Strategically delegate independent, bounded work to GPT-5.6 Luna with xhigh reasoning and regular processing. Use `.codex/agents/luna-worker.toml` through the `luna_worker` role, or explicit model/effort overrides when the runtime uses spawn arguments.
-- Astra owns task contracts, architecture, review of every delegated diff, integration, and final verification. Do not accept worker completion without checking its code and evidence.
+- Astra low owns architecture, task contracts, review of every finished diff, integration, and final verification. Review code and evidence without duplicating the worker's investigation unless a specific gap requires it.
+- Luna xhigh implements bounded tasks. Use `.codex/agents/luna-worker.toml` through `luna_worker`, or explicit `gpt-5.6-luna` / `xhigh` spawn overrides.
+- Allow at most one worker at a time, including nested delegation. Workers must not spawn additional agents. Give concise, self-contained task context and file ownership; use `fork_turns="none"` rather than copying the full conversation.
+- Batch validation: targeted tests per change; full E2E and live model calls at meaningful integration or release milestones. Repeat checks only after relevant changes, failures, or unresolved concerns.
+- Use regular/standard processing (`service_tier = "default"`) for lead and workers; keep Fast mode off.
 - Follow the development execution and quality plan in `prompt.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
