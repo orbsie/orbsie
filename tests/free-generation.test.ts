@@ -112,3 +112,12 @@ it("fails closed before upstream calls when the private credential is unavailabl
   expect(upstream).not.toHaveBeenCalled();
   expect(quota.claim).not.toHaveBeenCalled();
 });
+
+it("rejects oversized selection metadata before quota admission or inference", async () => {
+  const upstream = vi.fn();
+  vi.stubGlobal("fetch", upstream);
+  const response = await POST(request({ selected: "x".repeat(430000) }));
+  expect(response.status).toBe(400);
+  expect(quota.claim).not.toHaveBeenCalled();
+  expect(upstream).not.toHaveBeenCalled();
+});

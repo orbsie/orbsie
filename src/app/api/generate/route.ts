@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { projectSchema } from "@/lib/protocol";
+import { projectSchema, entitySchema } from "@/lib/protocol";
 import {
   generateCommands,
   GenerationProviderError,
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         key: z.string().max(1024).optional(),
         prompt: z.string().min(1).max(4000),
         project: projectSchema,
-        selected: z.string().optional(),
+        selected: entitySchema.shape.id.optional(),
       })
       .safeParse(await boundedJSON(request));
     if (!parsed.success)
