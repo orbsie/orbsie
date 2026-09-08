@@ -129,9 +129,18 @@ try {
     revision: original.revision + 1,
   };
   await page.waitForTimeout(2000);
+  const remoteBaseline = await context.request.get(
+    `${base}/api/projects?id=${encodeURIComponent(original.id)}`,
+  );
+  expect(remoteBaseline.status()).toBe(200);
+  const remoteToken = (await remoteBaseline.json()).project.snapshotToken;
   const updated = await context.request.put(`${base}/api/projects`, {
     headers: { Origin: base },
-    data: { project: remote, baseRevision: original.revision },
+    data: {
+      project: remote,
+      baseRevision: original.revision,
+      baseSnapshotToken: remoteToken,
+    },
   });
   expect(updated.status()).toBe(200);
   await account();

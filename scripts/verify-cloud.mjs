@@ -115,6 +115,8 @@ try {
   const saved = await call(users[0], "put", "/api/projects", {
     project,
     baseRevision,
+    baseSnapshotToken:
+      existing.status === 200 ? existing.body.project.snapshotToken : null,
   });
   assert.equal(
     saved.status,
@@ -143,6 +145,7 @@ try {
       await call(users[1], "put", "/api/projects", {
         project,
         baseRevision: project.revision,
+        baseSnapshotToken: saved.body.snapshotToken,
       })
     ).status,
     404,
@@ -155,19 +158,23 @@ try {
       await call(users[0], "put", "/api/projects", {
         project,
         baseRevision: project.revision - 1,
+        baseSnapshotToken: saved.body.snapshotToken,
       })
     ).status,
     409,
   );
   await record("Stale cloud compare-and-swap rejected (409).");
+  let snapshotToken = saved.body.snapshotToken;
   for (let release = 0; release < 2; release++) {
     if (release) {
       project.revision++;
       const r = await call(users[0], "put", "/api/projects", {
         project,
         baseRevision: project.revision - 1,
+        baseSnapshotToken: snapshotToken,
       });
       assert.equal(r.status, 200);
+      snapshotToken = r.body.snapshotToken;
       assert.equal(r.body.archivePending, false);
     }
     assert(

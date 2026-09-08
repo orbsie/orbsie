@@ -98,6 +98,7 @@ try {
     200,
     "Second synthetic owner authentication failed",
   );
+  const snapshotTokens = new Map();
   async function start() {
     const project = {
       version: 1,
@@ -114,6 +115,7 @@ try {
       baseRevision: null,
     });
     assert.equal(saved.status, 200, "Baseline save failed");
+    snapshotTokens.set(project.id, saved.data.snapshotToken);
     const created = await call(owner, "POST", "/api/generation-runs", {
       runId: randomUUID(),
       project,
@@ -258,6 +260,7 @@ try {
   result = await call(owner, "PUT", "/api/projects", {
     project: { ...drift.checkpoint, revision: 1, title: "Newer cloud save" },
     baseRevision: 0,
+    baseSnapshotToken: snapshotTokens.get(drift.projectId),
   });
   assert.equal(result.status, 200);
   result = await call(owner, "PUT", "/api/generation-runs", {
@@ -276,6 +279,7 @@ try {
   result = await call(owner, "PUT", "/api/projects", {
     project: { ...same.checkpoint, title: "Changed content at same revision" },
     baseRevision: 0,
+    baseSnapshotToken: snapshotTokens.get(same.projectId),
   });
   assert.equal(result.status, 200);
   result = await call(owner, "PUT", "/api/generation-runs", {

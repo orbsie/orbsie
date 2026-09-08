@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "scope": "Local authenticated API and real database, no browser UI",
+  "checks": [
+    "New project returns a content token",
+    "Same-revision intervening save rejects stale token and returns current conflict",
+    "Existing project rejects missing content precondition",
+    "Rejected writes leave the remote snapshot intact",
+    "Explicitly rebased write with current token succeeds"
+  ],
+  "projectId": "055f9df6-cb99-411c-846f-42db9f5f919d"
+}

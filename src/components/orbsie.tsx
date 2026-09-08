@@ -77,6 +77,7 @@ const terminalPublicationStates = new Set([
   "PROTECTED",
 ]);
 type CloudProject = {
+  snapshotToken: string;
   id: string;
   title: string;
   revision: number;
@@ -178,9 +179,12 @@ export default function Orbsie() {
   const [name, setName] = useState("");
   const [signup, setSignup] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
-  const [cloudBaseline, setCloudBaseline] =
-    useState<ProjectValue<number> | null>(null);
-  const cloudRevision = scopedValue(cloudBaseline, s.project.id);
+  const [cloudBaseline, setCloudBaseline] = useState<ProjectValue<{
+    revision: number;
+    snapshotToken: string;
+  }> | null>(null);
+  const cloudVersion = scopedValue(cloudBaseline, s.project.id);
+  const cloudRevision = cloudVersion?.revision ?? null;
   const [cloudProjects, setCloudProjects] = useState<CloudProject[]>([]);
   const [conflict, setConflict] = useState<CloudProject | null>(null);
   const [publicationRecord, setPublicationRecord] =
@@ -251,7 +255,13 @@ export default function Orbsie() {
       JSON.stringify(current.snapshot) ===
         JSON.stringify(committed(useOrb.getState().project))
     )
-      setCloudBaseline({ projectId, value: current.revision });
+      setCloudBaseline({
+        projectId,
+        value: {
+          revision: current.revision,
+          snapshotToken: current.snapshotToken,
+        },
+      });
     else setCloudBaseline(null);
   };
   useEffect(() => {
@@ -522,6 +532,10 @@ export default function Orbsie() {
                   project,
                   baseRevision:
                     project.id === originProjectId ? cloudRevision : null,
+                  baseSnapshotToken:
+                    project.id === originProjectId
+                      ? (cloudVersion?.snapshotToken ?? null)
+                      : null,
                 }),
               });
               const result = await response.json();
@@ -539,7 +553,10 @@ export default function Orbsie() {
               }
               setCloudBaseline({
                 projectId: project.id,
-                value: result.revision,
+                value: {
+                  revision: result.revision,
+                  snapshotToken: result.snapshotToken,
+                },
               });
               const run = await startCloudGenerationRun({
                 project,
@@ -658,7 +675,13 @@ export default function Orbsie() {
         return;
       }
       if (!isCurrent()) return;
-      setCloudBaseline({ projectId, value: data.project.revision });
+      setCloudBaseline({
+        projectId,
+        value: {
+          revision: data.project.revision,
+          snapshotToken: data.project.snapshotToken,
+        },
+      });
       setModal(null);
       const recoveryInput = recoveredGenerationInput(run);
       setPrompt(recoveryInput.prompt);
@@ -692,6 +715,7 @@ export default function Orbsie() {
         body: JSON.stringify({
           project: s.project,
           baseRevision: cloudRevision,
+          baseSnapshotToken: cloudVersion?.snapshotToken ?? null,
         }),
       });
       const data = await response.json();
@@ -701,7 +725,10 @@ export default function Orbsie() {
         throw Error(data.error);
       }
       if (!response.ok) throw Error(data.error);
-      setCloudBaseline({ projectId, value: data.revision });
+      setCloudBaseline({
+        projectId,
+        value: { revision: data.revision, snapshotToken: data.snapshotToken },
+      });
       setConflict(null);
       await refreshCloud();
       if (!isCurrent()) return;
@@ -1706,7 +1733,10 @@ export default function Orbsie() {
                               return;
                             setCloudBaseline({
                               projectId: cloud.id,
-                              value: cloud.revision,
+                              value: {
+                                revision: cloud.revision,
+                                snapshotToken: cloud.snapshotToken,
+                              },
                             });
                             setConflict(null);
                             setModal(null);
@@ -1772,7 +1802,10 @@ export default function Orbsie() {
                                 return;
                               setCloudBaseline({
                                 projectId: conflict.id,
-                                value: conflict.revision,
+                                value: {
+                                  revision: conflict.revision,
+                                  snapshotToken: conflict.snapshotToken,
+                                },
                               });
                               setConflict(null);
                               setModal(null);

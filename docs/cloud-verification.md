@@ -23,4 +23,12 @@ Recovery now settles a running journal through cancellation, or rereads a termin
 
 Two store regressions reproduced the old behavior before the fix: a late local edit was replaced, and an account change during final save still reported success. Additional tests verify successful cross-project opening, stale cancellation/terminal responses, latest terminal checkpoints and checkpoint identity. The full suite passed 432 tests with 7 explicit skips; production build and TypeScript checks passed. These are deterministic store/transport tests; no new live account, database, browser or provider recovery flow was run for this patch.
 
-The separate cross-endpoint cloud-save race remains open: a cloud write can occur after the last baseline check, and revision-only save preconditions do not distinguish same-revision content changes. End-to-end conflict protection requires a content/version precondition on subsequent cloud saves; these guards alone do not establish that broader guarantee.
+The cross-endpoint cloud-save race is addressed by the snapshot precondition described below: any intervening content change invalidates the token retained by recovery, even if its revision number is unchanged.
+
+## Snapshot preconditions for cloud saves
+
+Existing-world PUT requests now require both `baseRevision` and `baseSnapshotToken`. The server derives a canonical SHA-256 token from the stored snapshot and compares it under the same row lock as the update. GET/list/conflict responses and successful PUT acknowledgements return `snapshotToken`. The editor retains the pair when opening, saving, recovering or preparing a generation journal. New worlds still use a null baseline; older clients without a token receive a safe conflict rather than overwriting an existing world. No database migration is required.
+
+The actual local authenticated API/database probe passed creation, a same-revision intervening write, stale-token rejection, missing-token rejection, unchanged remote content after rejection, and an explicitly rebased successful save. See `evidence/cloud-snapshot-cas/report.json` and `scripts/verify-cloud-snapshot-cas.mjs`. No inference, production requests or browser UI were exercised by that probe. Six route/hash tests and the full 438-test suite passed (7 explicit skips); build/typecheck passed. Review caught and removed recursive parsing of JSON-looking string fields, preserving distinctions such as titles “1” and “1.0”.
+
+This protects current snapshot writes. The existing `orb_revisions` table still retains its first snapshot when an authored revision number is reused; this patch does not change that historical storage behavior. Browser conflict/recovery verification and deployment of these latest changes remain separate checks.
