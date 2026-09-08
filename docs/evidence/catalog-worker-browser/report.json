@@ -1,0 +1,74 @@
+{
+  "mode": "mock-generation-real-catalog-render-export",
+  "passed": true,
+  "generations": 2,
+  "realModelCalls": 0,
+  "fullCatalogResults": [
+    {
+      "error": null,
+      "vertices": 342
+    },
+    {
+      "error": null,
+      "vertices": 234
+    },
+    {
+      "error": null,
+      "vertices": 144
+    },
+    {
+      "error": null,
+      "vertices": 312
+    },
+    {
+      "error": null,
+      "vertices": 240
+    },
+    {
+      "error": null,
+      "vertices": 660
+    },
+    {
+      "error": null,
+      "vertices": 558
+    },
+    {
+      "error": null,
+      "vertices": 1572
+    },
+    {
+      "error": null,
+      "vertices": 792
+    },
+    {
+      "error": null,
+      "vertices": 600
+    }
+  ],
+  "fullCatalogFixtureGenerations": 1,
+  "editorWorker": [
+    {
+      "error": null,
+      "vertices": 342
+    }
+  ],
+  "editorTreePixels": 248,
+  "directAndBuiltTreePixelsVerified": true,
+  "standaloneWorker": [
+    {
+      "error": null,
+      "vertices": 342
+    }
+  ],
+  "builtStandaloneWorker": [
+    {
+      "error": null,
+      "vertices": 342
+    }
+  ],
+  "externalRequests": [],
+  "assetHTTPStatus": 200,
+  "mixedExport": true,
+  "newOnlyReuseRejected": true,
+  "pageErrors": []
+}

@@ -24,7 +24,9 @@ export const PUBLICATION_GENERATED_MODEL_MANIFEST =
   "models/generated/manifest.json";
 
 export const PUBLICATION_GEOMETRY_WORKER = "generated-geometry-worker.js";
-const MANIFEST_VERSION = 3;
+export const PUBLICATION_ASSET_WORKER = "asset-geometry-worker.js";
+const MANIFEST_VERSION = 4;
+const GENERATED_MANIFEST_VERSION = 3;
 const ASSET_MANIFEST_VERSION = 2;
 const LEGACY_MANIFEST_VERSION = 1;
 const MAX_MANIFEST_BYTES = 64 * 1024;
@@ -42,6 +44,7 @@ export type PublicationFile = {
 };
 export type PublicationManifest = {
   version:
+    | typeof GENERATED_MANIFEST_VERSION
     | typeof MANIFEST_VERSION
     | typeof ASSET_MANIFEST_VERSION
     | typeof LEGACY_MANIFEST_VERSION;
@@ -98,6 +101,7 @@ export function isKnownPublicationPath(value: string): boolean {
   return (
     (PUBLICATION_ARTIFACT_PATHS as readonly string[]).includes(value) ||
     value === PUBLICATION_GEOMETRY_WORKER ||
+    value === PUBLICATION_ASSET_WORKER ||
     value === PUBLICATION_USED_ASSETS_FILE ||
     value === PUBLICATION_GENERATED_MODEL_MANIFEST ||
     GENERATED_MODEL_PATH.test(value) ||
@@ -121,6 +125,7 @@ const manifestSchema = z
     version: z.union([
       z.literal(LEGACY_MANIFEST_VERSION),
       z.literal(ASSET_MANIFEST_VERSION),
+      z.literal(GENERATED_MANIFEST_VERSION),
       z.literal(MANIFEST_VERSION),
     ]),
     projectId: z.string().min(1).max(80),
@@ -349,6 +354,8 @@ export function makePublicationManifest(
   }
   if (!files.some((file) => file.file === PUBLICATION_GEOMETRY_WORKER))
     throw new Error("Publication is missing its generated geometry worker.");
+  if (!files.some((file) => file.file === PUBLICATION_ASSET_WORKER))
+    throw new Error("Publication is missing its catalog geometry worker.");
   const projectFile = files.find((file) => file.file === "project.json");
   if (!projectFile)
     throw new Error("Publication files must contain project.json.");
@@ -551,7 +558,7 @@ function parseManifest(bytes: Uint8Array): PublicationManifest {
     );
   const files = parsed.data.files;
   if (
-    parsed.data.version === MANIFEST_VERSION &&
+    parsed.data.version >= GENERATED_MANIFEST_VERSION &&
     !files.some((file) => file.file === PUBLICATION_GEOMETRY_WORKER)
   )
     throw new PublicationVerificationError(
@@ -568,6 +575,13 @@ function parseManifest(bytes: Uint8Array): PublicationManifest {
   )
     throw new PublicationVerificationError(
       "The public deployment manifest does not describe the expected assets.",
+    );
+  if (
+    parsed.data.version === MANIFEST_VERSION &&
+    !files.some((file) => file.file === PUBLICATION_ASSET_WORKER)
+  )
+    throw new PublicationVerificationError(
+      "The publication manifest is missing its catalog geometry worker.",
     );
   if (
     parsed.data.version === LEGACY_MANIFEST_VERSION &&

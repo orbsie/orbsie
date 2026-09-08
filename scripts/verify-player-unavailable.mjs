@@ -13,6 +13,7 @@ for (const path of [
   "runtime.js",
   "runtime.css",
   "generated-geometry-worker.js",
+  "asset-geometry-worker.js",
 ])
   files[path] = await readFile("public/player/" + path);
 const server = createServer((req, res) => {

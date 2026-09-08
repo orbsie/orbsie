@@ -6,6 +6,7 @@ const config: NextConfig = {
       "./public/player/runtime.js",
       "./public/player/runtime.css",
       "./public/player/generated-geometry-worker.js",
+      "./public/player/asset-geometry-worker.js",
       "./public/models/**/*.glb",
       "./assets/catalog/licenses/**/*",
     ],

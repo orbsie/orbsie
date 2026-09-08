@@ -161,6 +161,13 @@ export async function POST(request: Request) {
         "utf8",
       ),
     });
+    files.push({
+      file: "asset-geometry-worker.js",
+      data: await readFile(
+        process.cwd() + "/public/player/asset-geometry-worker.js",
+        "utf8",
+      ),
+    });
     const catalogFiles = await bundleCatalogAssets(snapshot, async (path) => {
       if (path.startsWith("models/"))
         return new Uint8Array(

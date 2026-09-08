@@ -9,6 +9,13 @@ await build({
   outfile: "public/player/generated-geometry-worker.js",
 });
 await build({
+  entryPoints: ["src/lib/asset-geometry-worker.ts"],
+  bundle: true,
+  minify: true,
+  format: "esm",
+  outfile: "public/player/asset-geometry-worker.js",
+});
+await build({
   entryPoints: ["src/player/main.tsx"],
   bundle: true,
   minify: true,
@@ -18,6 +25,9 @@ await build({
   define: {
     "process.env.NODE_ENV": '"production"',
     ORBSIE_STANDALONE_WORKER: JSON.stringify("./generated-geometry-worker.js"),
+    ORBSIE_STANDALONE_ASSET_WORKER: JSON.stringify(
+      "./asset-geometry-worker.js",
+    ),
   },
   alias: { "@": "./src" },
 });
@@ -45,6 +55,10 @@ const paths = [
   "src/lib/asset-catalog.ts",
   "src/lib/asset-policy.ts",
   "src/lib/asset-geometry.ts",
+  "src/lib/asset-geometry-core.ts",
+  "src/lib/asset-geometry-error.ts",
+  "src/lib/asset-geometry-queue.ts",
+  "src/lib/asset-geometry-worker.ts",
   "src/lib/use-asset-geometry.ts",
   "assets/catalog/manifest.json",
   "assets/catalog/licenses/kenney-nature-kit-License.txt",
@@ -60,5 +74,5 @@ const paths = [
 const sources = {};
 for (const path of paths) sources[path] = await readFile(path, "utf8");
 sources["build-source.mjs"] =
-  `import {build} from 'esbuild';await build({entryPoints:['src/lib/generated-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'generated-geometry-worker.js'});await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,jsx:'automatic',format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"',ORBSIE_STANDALONE_WORKER:JSON.stringify('./generated-geometry-worker.js')},alias:{'@':'./src'}});`;
+  `import {build} from 'esbuild';await build({entryPoints:['src/lib/generated-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'generated-geometry-worker.js'});await build({entryPoints:['src/lib/asset-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'asset-geometry-worker.js'});await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,jsx:'automatic',format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"',ORBSIE_STANDALONE_WORKER:JSON.stringify('./generated-geometry-worker.js'),ORBSIE_STANDALONE_ASSET_WORKER:JSON.stringify('./asset-geometry-worker.js')},alias:{'@':'./src'}});`;
 await writeFile("public/player/source.json", JSON.stringify(sources));

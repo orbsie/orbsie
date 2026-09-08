@@ -69,6 +69,7 @@ function generatedFiles(
     { file: "runtime.js", data: "console.log('runtime');" },
     { file: "runtime.css", data: "body{}" },
     { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
+    { file: "asset-geometry-worker.js", data: "self.onmessage=()=>{}" },
     {
       file: `models/generated/${metadata.sha256}.glb`,
       data: model,
@@ -137,6 +138,46 @@ describe("generated publication artifacts", () => {
         ),
       ),
     ).toThrow(/missing.*geometry worker/);
+  });
+
+  it("requires the catalog worker in new manifests and verifies its bytes", async () => {
+    expect(() =>
+      makePublicationManifest(
+        "orb",
+        2,
+        generatedFiles().filter(
+          (file) => file.file !== "asset-geometry-worker.js",
+        ),
+      ),
+    ).toThrow(/missing.*catalog geometry worker/);
+    const value = deployment(generatedFiles());
+    expect(value.artifact.manifest.version).toBe(4);
+    value.responses.set("asset-geometry-worker.js", new Response("tampered"));
+    installFetch(value.responses);
+    await expect(verify(value)).rejects.toThrow();
+  });
+
+  it("still verifies version 3 publications without a catalog worker", async () => {
+    const value = deployment(generatedFiles());
+    const manifest = {
+      ...value.artifact.manifest,
+      version: 3,
+      files: value.artifact.manifest.files.filter(
+        (file) => file.file !== "asset-geometry-worker.js",
+      ),
+    };
+    const data = JSON.stringify(manifest);
+    value.responses.set(PUBLICATION_MANIFEST_FILE, new Response(data));
+    value.responses.delete("asset-geometry-worker.js");
+    installFetch(value.responses);
+    await expect(
+      verifyPublicationArtifacts({
+        deploymentUrl: "https://orb.vercel.app",
+        projectId: "orb",
+        revision: 2,
+        expectedDigest: sha256(data),
+      }),
+    ).resolves.toBeUndefined();
   });
 
   it("rejects incomplete generated projects before creating a manifest", () => {
@@ -222,6 +263,7 @@ describe("generated publication artifacts", () => {
       { file: "runtime.js", data: "console.log('legacy');" },
       { file: "runtime.css", data: "body{}" },
       { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
+      { file: "asset-geometry-worker.js", data: "self.onmessage=()=>{}" },
     ];
     const modern = deployment(files);
     const legacyManifest = JSON.stringify({

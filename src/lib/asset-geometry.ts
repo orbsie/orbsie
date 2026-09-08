@@ -1,6 +1,4 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import {
   assetManifest,
   assetPathFor,
@@ -9,6 +7,14 @@ import {
   type AssetId,
   type CatalogAsset,
 } from "./asset-catalog";
+import {
+  prepareAssetGeometry,
+  type AssetGeometryWorkerFactory,
+} from "./asset-geometry-queue";
+import { AssetGeometryError } from "./asset-geometry-error";
+
+export { AssetGeometryError } from "./asset-geometry-error";
+export type { AssetGeometryWorkerFactory } from "./asset-geometry-queue";
 
 const DEFAULT_MAX_ASSET_BYTES = assetManifest.policy.maxCheckedInBytes;
 const DEFAULT_MAX_CACHE_ENTRIES = 12;
@@ -16,28 +22,9 @@ const DEFAULT_MAX_CACHE_BYTES = 12 * 1024 * 1024;
 const DEFAULT_MAX_GEOMETRY_BYTES = 24 * 1024 * 1024;
 const DEFAULT_MAX_VERTICES = 250_000;
 
-export class AssetGeometryError extends Error {
-  readonly code:
-    | "unknown-id"
-    | "unsafe-url"
-    | "fetch-failed"
-    | "too-large"
-    | "parse-failed"
-    | "empty-geometry"
-    | "integrity-failed"
-    | "aborted"
-    | "disposed";
-
-  constructor(
-    code: AssetGeometryError["code"],
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "AssetGeometryError";
-    this.code = code;
-  }
-}
+// The standalone player is served from an exported directory. Keep catalog
+// fetches relative there; the editor remains rooted at the app origin.
+declare const ORBSIE_STANDALONE_ASSET_WORKER: string | undefined;
 
 export type AssetBytesFetcher = (
   url: string,
@@ -45,25 +32,18 @@ export type AssetBytesFetcher = (
 ) => Promise<ArrayBuffer | Uint8Array>;
 
 export interface AssetGeometryLoaderOptions {
-  /** Maximum bytes read from any one checked-in model. */
   readonly maxAssetBytes?: number;
-  /** Maximum number of cached merged geometries. */
   readonly maxCacheEntries?: number;
-  /** Maximum estimated GPU attribute bytes retained by the cache. */
   readonly maxCacheBytes?: number;
-  /** Reject a merged result larger than this before it reaches the cache. */
   readonly maxGeometryBytes?: number;
-  /** Reject maliciously complex models before merging. */
   readonly maxVertices?: number;
-  /** Optional same-origin absolute URL used by a browser test or app shell. */
   readonly baseUrl?: string | URL;
-  /** Injected reader for tests and standalone packaging. */
   readonly fetchBytes?: AssetBytesFetcher;
-  /**
-   * Keep true for checked-in runtime assets. Tests that exercise merging with
-   * synthetic GLBs may explicitly disable the manifest boundary.
-   */
   readonly verifyManifest?: boolean;
+  readonly workerUrl?: string;
+  readonly workerFactory?: AssetGeometryWorkerFactory;
+  readonly workerTimeoutMs?: number;
+  readonly maxQueuedJobs?: number;
 }
 
 export interface AssetGeometryLoadOptions {
@@ -73,11 +53,8 @@ export interface AssetGeometryLoadOptions {
 export interface LoadedAssetGeometry {
   readonly asset: CatalogAsset;
   readonly geometry: THREE.BufferGeometry;
-  /** Estimated attribute memory retained by this geometry. */
   readonly byteLength: number;
-  /** Release this caller's ownership; safe to call more than once. */
   readonly release: () => void;
-  /** Alias used by scene teardown code. */
   readonly dispose: () => void;
 }
 
@@ -116,243 +93,18 @@ function throwIfAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted) throw abortError();
 }
 
+function positiveBound(value: number, name: string): number {
+  if (!Number.isFinite(value) || value <= 0)
+    throw new RangeError(`${name} must be positive.`);
+  return Math.floor(value);
+}
+
 function bytesOfGeometry(geometry: THREE.BufferGeometry): number {
   let bytes = 0;
-  for (const attribute of Object.values(geometry.attributes)) {
-    const array = attribute.array as ArrayBufferView;
-    bytes += array.byteLength;
-  }
+  for (const attribute of Object.values(geometry.attributes))
+    bytes += (attribute.array as ArrayBufferView).byteLength;
   if (geometry.index) bytes += geometry.index.array.byteLength;
   return bytes;
-}
-
-function disposeObjectResources(root: THREE.Object3D): void {
-  root.traverse((object) => {
-    const mesh = object as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    mesh.geometry?.dispose();
-    const materials = Array.isArray(mesh.material)
-      ? mesh.material
-      : mesh.material
-        ? [mesh.material]
-        : [];
-    for (const material of materials) {
-      for (const value of Object.values(material)) {
-        if (
-          value &&
-          typeof value === "object" &&
-          (value as THREE.Texture).isTexture
-        )
-          (value as THREE.Texture).dispose();
-      }
-      material.dispose();
-    }
-  });
-}
-
-function cloneAttributeRange(
-  attribute: THREE.BufferAttribute,
-  start: number,
-  count: number,
-): THREE.BufferAttribute {
-  const itemSize = attribute.itemSize;
-  const values = attribute.array.slice(
-    start * itemSize,
-    (start + count) * itemSize,
-  ) as typeof attribute.array;
-  return new THREE.BufferAttribute(values, itemSize, attribute.normalized);
-}
-
-function asNonIndexedPart(
-  source: THREE.BufferGeometry,
-  start = 0,
-  count = source.index?.count ?? source.getAttribute("position")?.count ?? 0,
-): THREE.BufferGeometry {
-  const nonIndexed = source.index ? source.toNonIndexed() : source.clone();
-  const part = new THREE.BufferGeometry();
-  for (const [name, attribute] of Object.entries(nonIndexed.attributes)) {
-    if (
-      "isInterleavedBufferAttribute" in attribute &&
-      attribute.isInterleavedBufferAttribute
-    )
-      throw new AssetGeometryError(
-        "parse-failed",
-        "Interleaved asset attributes are not supported by the formation mesh.",
-      );
-    part.setAttribute(
-      name,
-      cloneAttributeRange(attribute as THREE.BufferAttribute, start, count),
-    );
-  }
-  nonIndexed.dispose();
-  return part;
-}
-
-function materialColor(material: THREE.Material | undefined): THREE.Color {
-  const color = material && "color" in material ? material.color : undefined;
-  return color instanceof THREE.Color
-    ? color.clone()
-    : new THREE.Color(0xffffff);
-}
-
-function addVertexColors(
-  geometry: THREE.BufferGeometry,
-  material: THREE.Material | undefined,
-): void {
-  const source = geometry.getAttribute("color");
-  const color = materialColor(material);
-  const colors = new Float32Array(geometry.getAttribute("position").count * 3);
-  for (let i = 0; i < colors.length / 3; i++) {
-    if (source) {
-      colors[i * 3] = color.r * source.getX(i);
-      colors[i * 3 + 1] = color.g * source.getY(i);
-      colors[i * 3 + 2] = color.b * source.getZ(i);
-    } else {
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
-    }
-  }
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-}
-
-function sourceParts(mesh: THREE.Mesh): THREE.BufferGeometry[] {
-  const source = mesh.geometry;
-  const materials: THREE.Material[] = Array.isArray(mesh.material)
-    ? mesh.material
-    : [mesh.material];
-  const groups = source.groups.length
-    ? source.groups
-    : [
-        {
-          start: 0,
-          count: source.index?.count ?? source.getAttribute("position").count,
-          materialIndex: 0,
-        },
-      ];
-  const parts: THREE.BufferGeometry[] = [];
-  try {
-    for (const group of groups) {
-      const part = asNonIndexedPart(source, group.start, group.count);
-      // The formation material consumes position, normal, and vertex color. UVs,
-      // tangents and skin attributes are intentionally omitted from the merged
-      // result because they cannot be safely combined across source materials.
-      for (const name of [
-        "uv",
-        "uv1",
-        "uv2",
-        "tangent",
-        "skinIndex",
-        "skinWeight",
-      ]) {
-        part.deleteAttribute(name);
-      }
-      if (!part.getAttribute("normal")) part.computeVertexNormals();
-      addVertexColors(
-        part,
-        materials[group.materialIndex ?? 0] ?? materials[0],
-      );
-      part.applyMatrix4(mesh.matrixWorld);
-      parts.push(part);
-    }
-    return parts;
-  } catch (error) {
-    parts.forEach((part) => part.dispose());
-    throw error;
-  }
-}
-
-function mergeSourceGeometry(
-  gltf: { scene: THREE.Group },
-  asset: CatalogAsset,
-  maxVertices: number,
-  maxGeometryBytes: number,
-): THREE.BufferGeometry {
-  gltf.scene.updateMatrixWorld(true);
-  const parts: THREE.BufferGeometry[] = [];
-  let vertices = 0;
-  let merged: THREE.BufferGeometry | undefined;
-  try {
-    gltf.scene.traverse((object) => {
-      const mesh = object as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      if ((mesh as THREE.SkinnedMesh).isSkinnedMesh)
-        throw new AssetGeometryError(
-          "parse-failed",
-          `${asset.id} contains a skinned mesh; static formation geometry is required.`,
-        );
-      const meshParts = sourceParts(mesh);
-      vertices += meshParts.reduce(
-        (total, part) => total + part.getAttribute("position").count,
-        0,
-      );
-      if (vertices > maxVertices) {
-        meshParts.forEach((part) => part.dispose());
-        throw new AssetGeometryError(
-          "too-large",
-          `${asset.id} exceeds the ${maxVertices.toLocaleString()} vertex limit.`,
-        );
-      }
-      parts.push(...meshParts);
-    });
-    if (!parts.length)
-      throw new AssetGeometryError(
-        "empty-geometry",
-        `${asset.id} contains no mesh geometry.`,
-      );
-    merged = mergeGeometries(parts, false);
-    if (!merged)
-      throw new AssetGeometryError(
-        "parse-failed",
-        `Could not merge ${asset.id} geometry.`,
-      );
-    merged.computeBoundingBox();
-    merged.computeBoundingSphere();
-    const bytes = bytesOfGeometry(merged);
-    if (bytes > maxGeometryBytes) {
-      merged.dispose();
-      throw new AssetGeometryError(
-        "too-large",
-        `${asset.id} merged geometry exceeds the ${maxGeometryBytes} byte limit.`,
-      );
-    }
-    merged.userData.orbsieAssetId = asset.id;
-    merged.userData.orbsieAssetPath = asset.path;
-    merged.userData.sourceTransformsPreserved = true;
-    merged.userData.sourceMaterialColorsPreserved = true;
-    return merged;
-  } finally {
-    parts.forEach((part) => part.dispose());
-  }
-}
-
-function localResourceUrl(url: string, expectedPath: string): string {
-  // GLB assets in this catalog are self-contained.  A model-supplied URI is
-  // accepted only when it resolves to the exact checked-in GLB path.  This
-  // rejects HTTP(S), data:, blob:, file:, and sibling .bin/texture requests.
-  let parsed: URL;
-  try {
-    parsed = new URL(url, "https://orbsie.local");
-  } catch (error) {
-    throw new AssetGeometryError(
-      "unsafe-url",
-      `Invalid asset resource URL ${url}.`,
-      {
-        cause: error,
-      },
-    );
-  }
-  if (
-    parsed.origin !== "https://orbsie.local" ||
-    parsed.pathname !== expectedPath ||
-    parsed.search ||
-    parsed.hash
-  )
-    throw new AssetGeometryError(
-      "unsafe-url",
-      `Asset ${expectedPath} attempted to reference an external resource ${url}.`,
-    );
-  return expectedPath;
 }
 
 async function defaultFetchBytes(
@@ -369,9 +121,7 @@ async function defaultFetchBytes(
     throw new AssetGeometryError(
       "fetch-failed",
       `Could not fetch local asset ${url}.`,
-      {
-        cause: error,
-      },
+      { cause: error },
     );
   }
   if (!response.ok)
@@ -379,16 +129,22 @@ async function defaultFetchBytes(
       "fetch-failed",
       `Could not fetch local asset ${url} (HTTP ${response.status}).`,
     );
-  const declared = response.headers.get("content-length");
-  if (declared && Number(declared) > maxBytes)
+  const declaredText = response.headers.get("content-length");
+  const declared = declaredText === null ? undefined : Number(declaredText);
+  if (declared !== undefined && (!Number.isFinite(declared) || declared < 0))
+    throw new AssetGeometryError(
+      "fetch-failed",
+      `Asset ${url} returned an invalid content length.`,
+    );
+  if (declared !== undefined && declared > maxBytes)
     throw new AssetGeometryError(
       "too-large",
       `Asset ${url} is larger than the ${maxBytes} byte read limit.`,
     );
   if (
-    declared &&
+    declared !== undefined &&
     expectedSize !== undefined &&
-    Number(declared) !== expectedSize
+    declared !== expectedSize
   )
     throw new AssetGeometryError(
       "integrity-failed",
@@ -429,17 +185,17 @@ async function defaultFetchBytes(
   } finally {
     reader.releaseLock();
   }
+  if (expectedSize !== undefined && total !== expectedSize)
+    throw new AssetGeometryError(
+      "integrity-failed",
+      `Asset ${url} has an unexpected manifest size.`,
+    );
   const bytes = new Uint8Array(total);
   let offset = 0;
   for (const chunk of chunks) {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  if (expectedSize !== undefined && bytes.byteLength !== expectedSize)
-    throw new AssetGeometryError(
-      "integrity-failed",
-      `Asset ${url} has an unexpected manifest size.`,
-    );
   return bytes.buffer;
 }
 
@@ -457,10 +213,26 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
     .join("");
 }
 
-function parseManager(expectedPath: string): THREE.LoadingManager {
-  const manager = new THREE.LoadingManager();
-  manager.setURLModifier((url) => localResourceUrl(url, expectedPath));
-  return manager;
+function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(abortError());
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener("abort", abort);
+      reject(abortError());
+    };
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", abort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", abort);
+        reject(error);
+      },
+    );
+  });
 }
 
 export class AssetGeometryLoader {
@@ -472,6 +244,10 @@ export class AssetGeometryLoader {
   readonly #baseUrl?: string | URL;
   readonly #fetchBytes?: AssetBytesFetcher;
   readonly #verifyManifest: boolean;
+  readonly #workerUrl?: string;
+  readonly #workerFactory?: AssetGeometryWorkerFactory;
+  readonly #workerTimeoutMs?: number;
+  readonly #maxQueuedJobs?: number;
   readonly #cache = new Map<AssetId, GeometryEntry>();
   readonly #pending = new Map<AssetId, PendingEntry>();
   readonly #ephemeral = new Set<GeometryEntry>();
@@ -503,6 +279,10 @@ export class AssetGeometryLoader {
     this.#baseUrl = options.baseUrl;
     this.#fetchBytes = options.fetchBytes;
     this.#verifyManifest = options.verifyManifest ?? true;
+    this.#workerUrl = options.workerUrl;
+    this.#workerFactory = options.workerFactory;
+    this.#workerTimeoutMs = options.workerTimeoutMs;
+    this.#maxQueuedJobs = options.maxQueuedJobs;
   }
 
   get stats(): AssetGeometryCacheStats {
@@ -536,28 +316,28 @@ export class AssetGeometryLoader {
       );
     }
     throwIfAborted(options.signal);
-    const cached = this.#cache.get(asset.id as AssetId);
+    const id = asset.id as AssetId;
+    const cached = this.#cache.get(id);
     if (cached) {
       this.#touch(cached);
       return this.#lease(cached);
     }
-
-    let pending = this.#pending.get(asset.id as AssetId);
+    let pending = this.#pending.get(id);
     if (pending?.controller.signal.aborted && !pending.done) {
-      this.#pending.delete(asset.id as AssetId);
+      this.#pending.delete(id);
       pending = undefined;
     }
     if (!pending) {
       const controller = new AbortController();
       pending = {
-        id: asset.id as AssetId,
+        id,
         controller,
         consumers: 0,
         done: false,
         promise: Promise.resolve(undefined as never),
       };
       pending.promise = this.#start(asset, pending);
-      this.#pending.set(pending.id, pending);
+      this.#pending.set(id, pending);
     }
     pending.consumers += 1;
     let abandoned = false;
@@ -582,7 +362,6 @@ export class AssetGeometryLoader {
     }
   }
 
-  /** Cancel an in-flight load, or all in-flight loads when no ID is supplied. */
   cancel(value?: AssetId): void {
     if (value === undefined) {
       for (const pending of this.#pending.values()) pending.controller.abort();
@@ -593,24 +372,34 @@ export class AssetGeometryLoader {
       ?.controller.abort();
   }
 
-  /** Release all cache ownership and abort unresolved work. */
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
     for (const pending of this.#pending.values()) pending.controller.abort();
     this.#pending.clear();
-    for (const entry of this.#cache.values()) entry.geometry.dispose();
+    for (const entry of this.#cache.values()) {
+      entry.released = true;
+      entry.geometry.dispose();
+    }
     this.#cache.clear();
     this.#cacheBytes = 0;
-    for (const entry of this.#ephemeral) entry.geometry.dispose();
+    for (const entry of this.#ephemeral) {
+      entry.released = true;
+      entry.geometry.dispose();
+    }
     this.#ephemeral.clear();
+    this.#activeLeases = 0;
   }
 
   #start(asset: CatalogAsset, pending: PendingEntry): Promise<GeometryEntry> {
     const promise = (async () => {
       try {
-        const path = assetPathFor(asset.id);
-        const url = assetUrlFor(asset.id, this.#baseUrl);
+        const url =
+          this.#baseUrl !== undefined
+            ? assetUrlFor(asset.id, this.#baseUrl)
+            : typeof ORBSIE_STANDALONE_ASSET_WORKER !== "undefined"
+              ? `.${assetPathFor(asset.id)}`
+              : assetPathFor(asset.id);
         const raw = this.#fetchBytes
           ? await this.#fetchBytes(url, pending.controller.signal)
           : await defaultFetchBytes(
@@ -620,6 +409,11 @@ export class AssetGeometryLoader {
               this.#verifyManifest ? asset.sizeBytes : undefined,
             );
         throwIfAborted(pending.controller.signal);
+        if (!(raw instanceof ArrayBuffer) && !(raw instanceof Uint8Array))
+          throw new AssetGeometryError(
+            "fetch-failed",
+            "The catalog asset resolver returned invalid bytes.",
+          );
         const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
         if (bytes.byteLength > this.#maxAssetBytes)
           throw new AssetGeometryError(
@@ -632,35 +426,29 @@ export class AssetGeometryLoader {
               "integrity-failed",
               `Asset ${asset.id} does not match its manifest size.`,
             );
-          const digest = await sha256Hex(bytes);
-          if (digest !== asset.sha256)
+          if ((await sha256Hex(bytes)) !== asset.sha256)
             throw new AssetGeometryError(
               "integrity-failed",
               `Asset ${asset.id} does not match its manifest SHA-256.`,
             );
         }
-        let gltf: { scene: THREE.Group };
-        try {
-          const loader = new GLTFLoader(parseManager(path));
-          const parseBuffer = new ArrayBuffer(bytes.byteLength);
-          new Uint8Array(parseBuffer).set(bytes);
-          gltf = await loader.parseAsync(parseBuffer, path);
-        } catch (error) {
-          if (error instanceof AssetGeometryError) throw error;
-          throw new AssetGeometryError(
-            "parse-failed",
-            `Could not parse catalog asset ${asset.id}.`,
-            { cause: error },
-          );
-        }
         let geometry: THREE.BufferGeometry | undefined;
         let transferred = false;
         try {
-          geometry = mergeSourceGeometry(
-            gltf,
-            asset,
+          geometry = await prepareAssetGeometry(
+            bytes,
+            asset.id as AssetId,
             this.#maxVertices,
             this.#maxGeometryBytes,
+            pending.controller.signal,
+            {
+              workerUrl: this.#workerUrl,
+              workerFactory: this.#workerFactory,
+              workerTimeoutMs: this.#workerTimeoutMs,
+              maxQueuedJobs: this.#maxQueuedJobs,
+              maxAssetBytes: this.#maxAssetBytes,
+              verifyManifest: this.#verifyManifest,
+            },
           );
           throwIfAborted(pending.controller.signal);
           const entry: GeometryEntry = {
@@ -677,13 +465,10 @@ export class AssetGeometryLoader {
             this.#cache.set(entry.id, entry);
             this.#cacheBytes += entry.byteLength;
             this.#trimCache();
-          } else {
-            this.#ephemeral.add(entry);
-          }
+          } else this.#ephemeral.add(entry);
           transferred = true;
           return entry;
         } finally {
-          disposeObjectResources(gltf.scene);
           if (!transferred) geometry?.dispose();
         }
       } catch (error) {
@@ -750,34 +535,6 @@ export class AssetGeometryLoader {
       entry.geometry.dispose();
     }
   }
-}
-
-function positiveBound(value: number, name: string): number {
-  if (!Number.isFinite(value) || value <= 0)
-    throw new RangeError(`${name} must be positive.`);
-  return Math.floor(value);
-}
-
-function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
-  if (!signal) return promise;
-  if (signal.aborted) return Promise.reject(abortError());
-  return new Promise<T>((resolve, reject) => {
-    const abort = () => {
-      signal.removeEventListener("abort", abort);
-      reject(abortError());
-    };
-    signal.addEventListener("abort", abort, { once: true });
-    promise.then(
-      (value) => {
-        signal.removeEventListener("abort", abort);
-        resolve(value);
-      },
-      (error) => {
-        signal.removeEventListener("abort", abort);
-        reject(error);
-      },
-    );
-  });
 }
 
 export function createAssetGeometryLoader(

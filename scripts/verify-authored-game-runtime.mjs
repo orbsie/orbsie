@@ -27,6 +27,9 @@ try {
   files["generated-geometry-worker.js"] = await readFile(
     "public/player/generated-geometry-worker.js",
   );
+  files["asset-geometry-worker.js"] = await readFile(
+    "public/player/asset-geometry-worker.js",
+  );
   const source = JSON.parse(
     await readFile("public/player/source.json", "utf8"),
   );

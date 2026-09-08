@@ -40,6 +40,7 @@ function artifactFiles(projectData = project()) {
     { file: "runtime.js", data: "console.log('runtime');" },
     { file: "runtime.css", data: "body{margin:0}" },
     { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
+    { file: "asset-geometry-worker.js", data: "self.onmessage=()=>{}" },
   ] as const;
 }
 
@@ -529,6 +530,7 @@ it("rejects an oversized publication asset before producing a manifest", () => {
       { file: "runtime.js", data: oversized },
       { file: "runtime.css", data: "style" },
       { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
+      { file: "asset-geometry-worker.js", data: "self.onmessage=()=>{}" },
     ]),
   ).toThrow("runtime.js is larger than the publication verification limit.");
 });

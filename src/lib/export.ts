@@ -45,13 +45,14 @@ export async function exportWorld(project: Project) {
     throw Error(
       "This world has an unfinished generated model. Finish modeling before exporting it.",
     );
-  const [js, css, source, worker] = await Promise.all([
+  const [js, css, source, worker, assetWorker] = await Promise.all([
     fetch("/player/runtime.js"),
     fetch("/player/runtime.css"),
     fetch("/player/source.json"),
     fetch("/player/generated-geometry-worker.js"),
+    fetch("/player/asset-geometry-worker.js"),
   ]);
-  if (!js.ok || !css.ok || !source.ok || !worker.ok)
+  if (!js.ok || !css.ok || !source.ok || !worker.ok || !assetWorker.ok)
     throw Error(
       "The standalone runtime is not ready. Please try again after deployment.",
     );
@@ -62,6 +63,7 @@ export async function exportWorld(project: Project) {
     ),
     "runtime.js": new Uint8Array(await js.arrayBuffer()),
     "generated-geometry-worker.js": new Uint8Array(await worker.arrayBuffer()),
+    "asset-geometry-worker.js": new Uint8Array(await assetWorker.arrayBuffer()),
     "runtime.css": strToU8(await css.text()),
     "package.json": strToU8(
       JSON.stringify(
@@ -98,7 +100,7 @@ export async function exportWorld(project: Project) {
     ),
   };
   files["build.mjs"] = strToU8(
-    "import {execFileSync} from 'node:child_process';import {copyFileSync,cpSync,existsSync} from 'node:fs';execFileSync(process.execPath,['node_modules/vite/bin/vite.js','build'],{stdio:'inherit'});copyFileSync('project.json','dist/project.json');for(const path of ['models','assets'])if(existsSync(path))cpSync(path,'dist/'+path,{recursive:true});",
+    "import {execFileSync} from 'node:child_process';import {copyFileSync,cpSync,existsSync} from 'node:fs';execFileSync(process.execPath,['node_modules/vite/bin/vite.js','build'],{stdio:'inherit'});copyFileSync('project.json','dist/project.json');for(const path of ['generated-geometry-worker.js','asset-geometry-worker.js','models','assets'])if(existsSync(path))cpSync(path,'dist/'+path,{recursive:true});",
   );
   const sources = (await source.json()) as Record<string, string>;
   for (const [path, text] of Object.entries(sources))

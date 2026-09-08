@@ -16,7 +16,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const execFile = promisify(execFileCallback);
 const DEFAULT_ORIGIN = "https://orbsie.com";
-const EVIDENCE_DIRECTORY = "docs/evidence/game-runtime-release";
+const EVIDENCE_DIRECTORY =
+  process.env.ORBSIE_RELEASE_EVIDENCE_DIRECTORY ||
+  "docs/evidence/game-runtime-release";
 const SCREENSHOT_PATH = `${EVIDENCE_DIRECTORY}/landing.png`;
 const REPORT_PATH = `${EVIDENCE_DIRECTORY}/report.json`;
 const MAX_RUNTIME_BYTES = 8 * 1024 * 1024;
@@ -230,6 +232,29 @@ async function main() {
       "Deployed player runtime does not match checked-in public/player/runtime.js.",
     );
     report.checks.playerRuntime.status = "passed";
+    report.checks.geometryWorkers = [];
+    for (const file of [
+      "generated-geometry-worker.js",
+      "asset-geometry-worker.js",
+    ]) {
+      const expected = createHash("sha256")
+        .update(await readFile(`public/player/${file}`))
+        .digest("hex");
+      const observed = await readRuntime(`${origin}/player/${file}`);
+      const digest = createHash("sha256").update(observed.bytes).digest("hex");
+      assert.equal(
+        digest,
+        expected,
+        `Deployed ${file} does not match checked-in runtime.`,
+      );
+      report.checks.geometryWorkers.push({
+        file,
+        status: "passed",
+        httpStatus: observed.response.status,
+        sha256: digest,
+        bytes: observed.bytes.byteLength,
+      });
+    }
 
     browser = await chromium.launch({
       headless: true,
