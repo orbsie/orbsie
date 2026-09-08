@@ -17,6 +17,10 @@ This checkpoint supersedes conflicting historical statements below. The full pla
 
 Flagship revision follow-up: `docs/evidence/flagship-revisions/report.json` now records a passed actual-editor fixture run: selected giant pink mushroom with unrelated entities preserved, middle-platform speed 1 → 0.3, two added crystals, HUD goal 7, exact undo restoration to goal 5, and reload recovery. Astra reviewed the harness and screenshots. Fonts are explicitly stubbed and motion reduced; this is not live-provider, animation, or dedicated-publication evidence. The real-provider matrix and signed-out dedicated publication remain required.
 
+Latest local measurement follow-up: `f9967e2` adds accepted entity-update-to-draw timing, and `b48d9bd` includes that instrumentation in the standalone player. `docs/evidence/input-feedback-normal-motion/` records next-RAF feedback at 106.9 ms, exceeding the 100 ms target. `docs/evidence/render-performance-no-recording/` records SwiftShader frame intervals of 33.4 ms median and 50.1 ms p95; this is not normal-GPU certification. `docs/evidence/catalog-comparison/` verifies actual catalog response bytes and worker decoding across procedural, catalog and mixed modes without inference; catalog-only and mixed all-entity draw times exceeded 100 ms. These measurements keep the performance gate open.
+
+Portable-runtime follow-up: `docs/evidence/native-notices/` maps 342 installed-system files to 289 package notices, whose bytes/hashes were independently verified. This does not supply the absent official runtime archive, corresponding sources, an installer, or clean-host certification. The bundled Node launcher is implemented and tested separately in `docs/evidence/packaged-node-launcher/`; older statements that every package requires host Node are historical.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.
