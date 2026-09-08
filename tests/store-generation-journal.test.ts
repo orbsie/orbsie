@@ -32,6 +32,7 @@ import {
   type Envelope,
 } from "../src/lib/protocol";
 import { fixtureEntities } from "../src/lib/fixtures";
+import { GAME_RULES_RESTART_NOTICE } from "../src/lib/game-session";
 import type { GenerationRun } from "../src/lib/generation-journal";
 let durable: GenerationRun;
 let current: boolean;
@@ -162,50 +163,68 @@ it.each(["cancel", "account change"])(
     expect(useOrb.getState().building).toBe(false);
   },
 );
-it("uploads built model bytes before acknowledging the geometry operation", async () => {
-  const gate = deferred<boolean>();
-  mocks.upload.mockImplementationOnce(() => gate.promise);
-  mocks.build.mockResolvedValue({
-    version: 1,
-    sha256: "a".repeat(64),
-    bytes: 32,
-    source: "local-blender",
-    blenderVersion: "test",
-    bounds: { min: [0, 0, 0], max: [1, 1, 1] },
-    createdAt: "2026-09-08T00:00:00.000Z",
-  });
-  useOrb.getState().set({
-    modelingConnection: {
-      url: "http://127.0.0.1:1234",
-      token: "a".repeat(43),
-    },
-  });
-  const before = useOrb.getState().project.entities[0].geometry;
-  relay(
-    commandSchema.parse({
-      type: "set_geometry",
-      id: useOrb.getState().project.entities[0].id,
-      geometry: {
-        kind: "generated",
-        detail: "refined",
-        collision: "none",
-        job: {
-          version: 1,
-          parts: [{ id: "box", shape: "box", color: "#ffffff" }],
-        },
+it.each([false, true])(
+  "uploads model bytes before acknowledgement and retains restart=%s through progress",
+  async (restarted) => {
+    const gate = deferred<boolean>();
+    mocks.upload.mockImplementationOnce(() => gate.promise);
+    mocks.build.mockImplementation(async (_connection, _job, options) => {
+      if (restarted)
+        useOrb
+          .getState()
+          .set({
+            ruleRestartCount: useOrb.getState().ruleRestartCount + 1,
+            notice: GAME_RULES_RESTART_NOTICE,
+          });
+      options.onProgress({ message: "Exporting geometry" });
+      return {
+        version: 1,
+        sha256: "a".repeat(64),
+        bytes: 32,
+        source: "local-blender",
+        blenderVersion: "test",
+        bounds: { min: [0, 0, 0], max: [1, 1, 1] },
+        createdAt: "2026-09-08T00:00:00.000Z",
+      };
+    });
+    useOrb.getState().set({
+      modelingConnection: {
+        url: "http://127.0.0.1:1234",
+        token: "a".repeat(43),
       },
-    }),
-  );
-  const run = useOrb.getState().run("Build a box", connection, journal);
-  await vi.waitFor(() => expect(mocks.upload).toHaveBeenCalledOnce());
-  expect(mocks.append).not.toHaveBeenCalled();
-  expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
-  gate.resolve(true);
-  await run;
-  expect(mocks.append.mock.calls[0][0].command.geometry.model.sha256).toBe(
-    "a".repeat(64),
-  );
-  expect(mocks.upload.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.append.mock.invocationCallOrder[0],
-  );
-});
+    });
+    const before = useOrb.getState().project.entities[0].geometry;
+    relay(
+      commandSchema.parse({
+        type: "set_geometry",
+        id: useOrb.getState().project.entities[0].id,
+        geometry: {
+          kind: "generated",
+          detail: "refined",
+          collision: "none",
+          job: {
+            version: 1,
+            parts: [{ id: "box", shape: "box", color: "#ffffff" }],
+          },
+        },
+      }),
+    );
+    const run = useOrb.getState().run("Build a box", connection, journal);
+    await vi.waitFor(() => expect(mocks.upload).toHaveBeenCalledOnce());
+    expect(mocks.append).not.toHaveBeenCalled();
+    expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
+    gate.resolve(true);
+    await run;
+    expect(mocks.append.mock.calls[0][0].command.geometry.model.sha256).toBe(
+      "a".repeat(64),
+    );
+    expect(mocks.upload.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.append.mock.invocationCallOrder[0],
+    );
+    expect(useOrb.getState().notice).toBe(
+      restarted
+        ? GAME_RULES_RESTART_NOTICE
+        : "Your world is saved on this device.",
+    );
+  },
+);

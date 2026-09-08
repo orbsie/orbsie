@@ -84,16 +84,21 @@ describe("GameSession", () => {
       ],
       variables: [{ initial: 0, name: "score" }],
     } satisfies GameProgram;
-    value.sync("project", equivalent, 0);
+    expect(value.sync("project", equivalent, 0)).toBeUndefined();
     expect(value.state).toBe(runningState);
     expect(value.resetGeneration).toBe(generation);
 
-    value.sync("project", equivalent, 1);
+    expect(value.sync("project", equivalent, 1)).toBeUndefined();
     expect(value.state?.variables.score).toBe(0);
     expect(value.resetGeneration).toBe(generation + 1);
-    value.sync("another-project", equivalent, 1);
+    expect(value.sync("another-project", equivalent, 1)).toBeUndefined();
     expect(value.state?.variables.score).toBe(0);
     expect(value.resetGeneration).toBe(generation + 2);
+    expect(value.sync("another-project", undefined, 1)).toBe("rules-changed");
+    expect(value.state).toBeUndefined();
+    expect(value.sync("another-project", undefined, 1)).toBeUndefined();
+    expect(value.sync("another-project", equivalent, 1)).toBe("rules-changed");
+    expect(value.state?.variables.score).toBe(0);
   });
 
   it("bounds queued clicks and emits contact rising edges", () => {

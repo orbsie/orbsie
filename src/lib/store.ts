@@ -14,6 +14,7 @@ import {
   type ModelingConnection,
 } from "./modeling-connection";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
+import { GAME_RULES_RESTART_NOTICE } from "./game-session";
 import {
   generationRequest,
   type GenerationConnection,
@@ -87,6 +88,7 @@ interface State {
   won: boolean;
   lost: boolean;
   gameScore: number;
+  ruleRestartCount: number;
   notice: string;
   error: string;
   generationErrorCode?: string;
@@ -213,6 +215,7 @@ export const useOrb = create<State>((setState, getState) => ({
   lost: false,
   gameScore: 0,
   notice: "",
+  ruleRestartCount: 0,
   error: "",
   saved: false,
   drafts: [],
@@ -475,6 +478,7 @@ export const useOrb = create<State>((setState, getState) => ({
       getState().phase === "landing"
         ? blankProject()
         : committed(getState().project, baseline);
+    const ruleRestartsBeforeGeneration = getState().ruleRestartCount;
     baseline = before;
     const initial = before.entities.length === 0;
     const selected = initial ? undefined : getState().selected;
@@ -679,7 +683,10 @@ export const useOrb = create<State>((setState, getState) => ({
       if (active === controller && !signal.aborted) {
         setState({
           building: false,
-          notice: "Your world is saved on this device.",
+          notice:
+            getState().ruleRestartCount !== ruleRestartsBeforeGeneration
+              ? GAME_RULES_RESTART_NOTICE
+              : "Your world is saved on this device.",
         });
         await getState().save();
       }

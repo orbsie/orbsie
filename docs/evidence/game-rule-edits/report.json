@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "fixtureRequests": 3,
+  "materialPreservesScore": true,
+  "changedRulesResetScore": true,
+  "resetNoticeVisible": true,
+  "replacementRuleWorks": true,
+  "pageErrors": []
+}

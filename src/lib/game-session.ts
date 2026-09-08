@@ -22,6 +22,8 @@ const MAX_QUEUED_CLICKS = 64;
 const MAX_CONTACTS = 256;
 const MAX_COLLECTIONS = 256;
 const MAX_TICK_DELTA = 0.04;
+export const GAME_RULES_RESTART_NOTICE =
+  "Rules changed. Play restarted from the beginning.";
 
 function asError(value: unknown): Error {
   return value instanceof Error ? value : new Error(String(value));
@@ -95,7 +97,11 @@ export class GameSession {
   }
 
   /** Connect the session to the current project snapshot. */
-  sync(projectId: string, program: GameProgram | undefined, reset = 0): void {
+  sync(
+    projectId: string,
+    program: GameProgram | undefined,
+    reset = 0,
+  ): "rules-changed" | undefined {
     const restartChanged = this.restartToken !== reset;
     const projectChanged = this.projectId !== projectId;
     if (
@@ -147,6 +153,8 @@ export class GameSession {
     this.currentState = parsedProgram
       ? createGameProgramState(parsedProgram)
       : undefined;
+    if (!firstSync && !restartChanged && !projectChanged && programChanged)
+      return "rules-changed";
   }
 
   /** Queue a bounded click edge for the next advance. */

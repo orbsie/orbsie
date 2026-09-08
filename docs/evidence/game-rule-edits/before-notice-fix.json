@@ -1,0 +1,11 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "fixtureRequests": 3,
+  "materialPreservesScore": true,
+  "changedRulesResetScore": true,
+  "resetNoticeVisible": false,
+  "replacementRuleWorks": false,
+  "pageErrors": [],
+  "error": "Error: expect(locator).toContainText(expected) failed\n\nLocator: getByRole('status')\nExpected substring: \"Rules changed. Play restarted\"\nReceived string:    \"Your world is saved on this device.\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"toContainText\" getByRole('status') with timeout 5000ms\n  - waiting for getByRole('status')\n    14 × locator resolved to <div role=\"status\" class=\"toast \">…</div>\n       - unexpected value \"Your world is saved on this device.\"\n"
+}

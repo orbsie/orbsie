@@ -18,7 +18,11 @@ import {
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import type { Entity } from "@/lib/protocol";
-import { GameSession, type GameSessionInput } from "@/lib/game-session";
+import {
+  GameSession,
+  GAME_RULES_RESTART_NOTICE,
+  type GameSessionInput,
+} from "@/lib/game-session";
 import {
   useAssetGeometry,
   isAssetGeometryReady,
@@ -543,7 +547,12 @@ function Player({
     if (!ref.current) return;
     ref.current.visible = playing;
     const s = useOrb.getState();
-    session.sync(s.project.id, s.project.game, s.reset);
+    const restartReason = session.sync(s.project.id, s.project.game, s.reset);
+    if (playing && restartReason === "rules-changed")
+      s.set({
+        notice: GAME_RULES_RESTART_NOTICE,
+        ruleRestartCount: s.ruleRestartCount + 1,
+      });
     const resetAvatar = () => {
       if (generation.current === session.resetGeneration) return false;
       generation.current = session.resetGeneration;
