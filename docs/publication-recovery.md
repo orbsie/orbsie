@@ -1,0 +1,9 @@
+# Publication retry recovery
+
+A timed-out deployment request can have succeeded at Vercel before Orbsie receives its response. Retrying must find that accepted immutable revision before submitting another deployment. The previous lookup considered only the newest ten results and could miss an older match.
+
+Recovery now uses Vercel's [deployment-list API](https://vercel.com/docs/rest-api/deployments/list-deployments), with a separate Vercel project ID for the query and Orb ID for metadata matching. It follows `pagination.next` through decreasing `until` timestamps, at most five pages of 100 entries, under one 15-second abort signal shared by the list requests. Only an explicit terminal page establishes absence. Missing/malformed pagination, repeated or increasing cursors, exhausted bounds, network failures, and aborted searches stop publication before a deployment POST. Existing permission and rate-limit errors retain their messages.
+
+Matches require the exact Orb ID, revision and artifact digest. ERROR/CANCELED deployments are skipped; a matching accepted deployment must have a nonempty identity and URL. An upload that has not received a URL is inconclusive and is not submitted again. The existing ownership checks, transaction lock, immutable artifact verification and publication promotion remain in place.
+
+Astra reviewed Luna's implementation, separated the two project identifiers, and corrected a cursor-direction defect with a failing three-page regression before the fix. The final focused suite passed 56 tests across recovery, route regressions, input, metadata and generated publication. The production build and TypeScript passed. Route tests verify a later-page match reuses its deployment and incomplete pagination returns 503 without creating one. These are mocked upstream tests; they do not prove successful dedicated publication with the configured team token.

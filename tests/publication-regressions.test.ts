@@ -21,8 +21,15 @@ vi.mock("@/lib/server/auth", () => ({
   database: () => mock,
   checkOrigin: vi.fn(),
   boundedJSON: mock.boundedJSON,
-  HttpError: class extends Error {},
-  apiError: (e: Error) => Response.json({ error: e.message }, { status: 500 }),
+  HttpError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.status = status;
+    }
+  },
+  apiError: (e: Error & { status?: number }) =>
+    Response.json({ error: e.message }, { status: e.status ?? 500 }),
 }));
 vi.mock("@/lib/protocol", async () => import("../src/lib/protocol"));
 import { GET, POST } from "../src/app/api/publish/route";
@@ -157,6 +164,79 @@ function row(overrides: Record<string, unknown> = {}) {
     published_revision: 1,
     ...overrides,
   };
+}
+
+function publishSnapshot() {
+  return {
+    version: 1 as const,
+    id: "orb",
+    title: "Test world",
+    seed: 1,
+    revision: 2,
+    entities: [],
+    environment: { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" },
+    messages: [],
+  };
+}
+
+function publishArtifact() {
+  const files: PublicationFile[] = [
+    {
+      file: "index.html",
+      data: '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbsie world</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>',
+    },
+    { file: "project.json", data: JSON.stringify(publishSnapshot()) },
+    {
+      file: "runtime.js",
+      data: readFileSync("public/player/runtime.js", "utf8"),
+    },
+    {
+      file: "runtime.css",
+      data: readFileSync("public/player/runtime.css", "utf8"),
+    },
+    {
+      file: "generated-geometry-worker.js",
+      data: readFileSync("public/player/generated-geometry-worker.js", "utf8"),
+    },
+    {
+      file: "asset-geometry-worker.js",
+      data: readFileSync("public/player/asset-geometry-worker.js", "utf8"),
+    },
+  ];
+  return makePublicationManifest("orb", 2, files);
+}
+
+function preparePublishRoute() {
+  const client = { query: vi.fn(), release: vi.fn() };
+  mock.connect.mockResolvedValue(client);
+  mock.boundedJSON.mockResolvedValue({ projectId: "orb", revision: 2 });
+  client.query
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({
+      rows: [
+        row({
+          deployment_id: null,
+          publication_revision: null,
+          published_revision: null,
+          revision: 2,
+          snapshot: publishSnapshot(),
+          vercel_project_id: "prj_test",
+        }),
+      ],
+    })
+    .mockResolvedValueOnce({ rows: [{ count: "0" }] })
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({});
+  return { client, artifact: publishArtifact() };
+}
+
+function publishRequest() {
+  return POST(
+    new Request("https://orbsie.test/api/publish", {
+      method: "POST",
+      body: JSON.stringify({ projectId: "orb", revision: 2 }),
+    }),
+  );
 }
 
 async function get() {
@@ -470,6 +550,99 @@ it("rejects redirects from the trusted deployment host", async () => {
   expect(mock.query).toHaveBeenCalledTimes(1);
 });
 
+it("recovers an accepted deployment from a later Vercel page without POST", async () => {
+  const { artifact } = preparePublishRoute();
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  let deploymentPosts = 0;
+  const fetchMock = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, init });
+      if (url.includes("/v7/deployments?")) {
+        const params = new URL(url).searchParams;
+        expect(params.get("projectId")).toBe("prj_test");
+        expect(params.get("limit")).toBe("100");
+        if (!params.has("until"))
+          return Response.json({ deployments: [], pagination: { next: 123 } });
+        expect(params.get("until")).toBe("123");
+        return Response.json({
+          deployments: [
+            {
+              id: "recovered-deployment",
+              state: "READY",
+              url: "recovered.vercel.app",
+              meta: {
+                orbId: "orb",
+                orbRevision: "2",
+                artifactDigest: artifact.digest,
+              },
+            },
+          ],
+          pagination: { next: null },
+        });
+      }
+      if (url.includes("/v13/deployments?")) {
+        deploymentPosts += 1;
+        return Response.json({
+          id: "unexpected-new-deployment",
+          state: "BUILDING",
+          url: "unexpected.vercel.app",
+        });
+      }
+      throw new Error(`Unexpected Vercel call: ${url}`);
+    },
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const response = await publishRequest();
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    state: "VERIFYING",
+    deploymentId: "recovered-deployment",
+    deploymentUrl: "https://recovered.vercel.app",
+  });
+  expect(deploymentPosts).toBe(0);
+  expect(
+    calls
+      .filter(({ url }) => url.includes("/v7/deployments?"))
+      .map(({ url }) => Object.fromEntries(new URL(url).searchParams)),
+  ).toEqual([
+    { projectId: "prj_test", limit: "100", teamId: "test" },
+    { projectId: "prj_test", limit: "100", until: "123", teamId: "test" },
+  ]);
+});
+
+it("fails closed on uncertain Vercel pagination without POST", async () => {
+  preparePublishRoute();
+  let deploymentPosts = 0;
+  const fetchMock = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/v7/deployments?"))
+        return Response.json({ deployments: [] });
+      if (url.includes("/v13/deployments?")) {
+        deploymentPosts += 1;
+        return Response.json({
+          id: "unexpected",
+          state: "BUILDING",
+          url: "unexpected.vercel.app",
+        });
+      }
+      throw new Error(`Unexpected Vercel call: ${url}`);
+    },
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const response = await publishRequest();
+
+  expect(response.status).toBe(503);
+  expect(await response.json()).toMatchObject({
+    error: expect.stringContaining("search was inconclusive"),
+  });
+  expect(deploymentPosts).toBe(0);
+});
+
 it("republishes a legacy READY deployment with a new integrity manifest", async () => {
   const client = { query: vi.fn(), release: vi.fn() };
   mock.connect.mockResolvedValue(client);
@@ -530,8 +703,11 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
           url: "legacy.vercel.app",
           meta: { orbId: "orb", orbRevision: "2" },
         });
-      if (url.includes("/v6/deployments?"))
-        return Response.json({ deployments: [] });
+      if (url.includes("/v7/deployments?"))
+        return Response.json({
+          deployments: [],
+          pagination: { next: null },
+        });
       if (url.includes("/v13/deployments?"))
         return Response.json({
           id: "new-deployment",

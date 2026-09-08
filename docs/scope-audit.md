@@ -25,6 +25,8 @@ Composer continuity follow-up: `docs/evidence/composer-continuity/` proves the d
 
 Play-during-stream follow-up: `docs/evidence/play-during-stream/` derives a deterministic stream from the saved ChatGPT one-crystal input-rule game. The real Play button and ArrowRight produce score 7 before commit; a material update persists before EOF while the same game program, score and Play mode remain intact. After commit/EOF, ArrowUp wins with score 7. One response remains open between those phases. This proves this input-rule path under incremental scene updates, not physical traversal or live-provider streaming.
 
+Publication recovery follow-up: the retry path now searches bounded Vercel v7 pages with decreasing timestamp cursors and exact immutable metadata, separating the Vercel project ID from the Orb ID. Incomplete/aborted searches fail closed before deployment creation. A three-page regression caught and corrected a cursor-direction defect; 56 publication-focused tests and the production build passed. See [publication recovery](publication-recovery.md). Live dedicated publication remains unverified.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.

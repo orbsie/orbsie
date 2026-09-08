@@ -30,11 +30,21 @@ import {
   parsePublicationMetadata,
   publicationThumbnailSchema,
 } from "../../../lib/publication-metadata";
+import {
+  recoverPublicationDeployment,
+  PublicationRecoveryError,
+} from "../../../lib/server/publication-recovery";
 export const maxDuration = 60;
+const PUBLICATION_RECOVERY_BUDGET_MS = 15000;
 const publicPath = (id: string) => `/o/${encodeURIComponent(id)}`;
 const publicationModelsRoot = join(process.cwd(), "public/models");
 const publicationLicenseRoot = join(process.cwd(), "assets/catalog/licenses");
-async function vercel(path: string, method = "GET", body?: unknown) {
+async function vercel(
+  path: string,
+  method = "GET",
+  body?: unknown,
+  signal?: AbortSignal,
+) {
   const token = process.env.VERCEL_DEPLOY_TOKEN,
     team = process.env.VERCEL_TEAM_ID;
   if (!token || !team)
@@ -51,7 +61,7 @@ async function vercel(path: string, method = "GET", body?: unknown) {
         "Content-Type": "application/json",
       },
       ...(body ? { body: JSON.stringify(body) } : {}),
-      signal: AbortSignal.timeout(18000),
+      signal: signal ?? AbortSignal.timeout(18000),
     },
   );
   if (!response.ok)
@@ -246,22 +256,34 @@ export async function POST(request: Request) {
       ...publicationFiles.map(toVercelDeploymentFile),
       { file: PUBLICATION_MANIFEST_FILE, data: artifact.data },
     ];
-    // Recover an accepted deployment after a request timeout by its immutable revision metadata.
-    const prior = await vercel(`/v6/deployments?projectId=${target}&limit=10`);
-    const recovered = prior.deployments?.find(
-      (d: {
-        meta?: {
-          orbRevision?: string;
-          orbId?: string;
-          artifactDigest?: string;
-        };
-        state: string;
-      }) =>
-        d.meta?.orbRevision === String(revision) &&
-        d.meta?.orbId === projectId &&
-        d.meta?.artifactDigest === artifact.digest &&
-        !["ERROR", "CANCELED"].includes(d.state),
-    );
+    // Recover an accepted deployment after a request timeout by its immutable
+    // revision metadata. An incomplete search must fail closed before POST.
+    let recovered;
+    try {
+      const recoverySignal = AbortSignal.any([
+        request.signal,
+        AbortSignal.timeout(PUBLICATION_RECOVERY_BUDGET_MS),
+      ]);
+      recovered = await recoverPublicationDeployment({
+        orbId: projectId,
+        vercelProjectId: target,
+        revision,
+        artifactDigest: artifact.digest,
+        signal: recoverySignal,
+        isUpstreamError: (error) => error instanceof HttpError,
+        listDeployments: (params, signal) =>
+          vercel(
+            `/v7/deployments?${params.toString()}`,
+            "GET",
+            undefined,
+            signal,
+          ),
+      });
+    } catch (error) {
+      if (error instanceof PublicationRecoveryError)
+        throw new HttpError(503, error.message);
+      throw error;
+    }
     const deployment =
       recovered ??
       (await vercel("/v13/deployments", "POST", {
@@ -281,11 +303,15 @@ export async function POST(request: Request) {
           artifactDigest: artifact.digest,
         },
       }));
+    const deploymentId =
+      typeof deployment.id === "string" && deployment.id.length > 0
+        ? deployment.id
+        : deployment.uid;
     await client.query(
       "UPDATE orbs SET vercel_project_id=$1,deployment_id=$2,publication_revision=$3,publication_metadata=$4 WHERE id=$5",
       [
         target,
-        deployment.id ?? deployment.uid,
+        deploymentId,
         revision,
         JSON.stringify(publicationMetadata),
         projectId,
@@ -300,7 +326,7 @@ export async function POST(request: Request) {
       servedRevision: orb.published_revision ?? null,
       url: publicPath(projectId),
       deploymentUrl: `https://${deployment.url}`,
-      deploymentId: deployment.id ?? deployment.uid,
+      deploymentId,
     });
   } catch (e) {
     if (client) await client.query("ROLLBACK");
