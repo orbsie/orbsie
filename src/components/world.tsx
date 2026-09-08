@@ -20,6 +20,7 @@ import { useOrb } from "@/lib/store";
 import {
   markExperience,
   markVisibleSeed,
+  markSceneUpdateDraw,
   hasExperienceMilestone,
 } from "@/lib/experience-metrics";
 import { collectGameProgramEntityIds } from "@/lib/game-program";
@@ -488,6 +489,8 @@ function Formation({
       <points
         ref={particles}
         onAfterRender={(_renderer, _scene, renderCamera) => {
+          if (renderCamera === mainCamera && (!assetRecipe || asset?.geometry))
+            markSceneUpdateDraw(projectId, entity);
           if (renderCamera === mainCamera && progress.current.value < 0.15)
             markVisibleSeed(projectId, entity.id);
         }}
@@ -498,6 +501,10 @@ function Formation({
       />
       <mesh
         ref={mesh}
+        onAfterRender={(_renderer, _scene, renderCamera) => {
+          if (renderCamera === mainCamera && (!assetRecipe || asset?.geometry))
+            markSceneUpdateDraw(projectId, entity);
+        }}
         geometry={geometry}
         material={material}
         onClick={click}

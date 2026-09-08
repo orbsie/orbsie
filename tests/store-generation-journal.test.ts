@@ -123,6 +123,9 @@ it("does not apply an operation before its durable acknowledgement", async () =>
   const run = useOrb.getState().run("Recolor", connection, journal);
   await vi.waitFor(() => expect(mocks.append).toHaveBeenCalledOnce());
   expect(useOrb.getState().project.entities[0].color).toBe(before);
+  expect(
+    getExperienceMetrics(useOrb.getState().project.id)[0].sceneUpdates,
+  ).toEqual([]);
   gate.resolve(durable);
   await run;
   expect(useOrb.getState().project.entities[0].color).toBe("#ff66aa");
@@ -130,6 +133,11 @@ it("does not apply an operation before its durable acknowledgement", async () =>
   const [metrics] = getExperienceMetrics(useOrb.getState().project.id);
   expect(metrics.outcome).toBe("success");
   expect(metrics.milestones.generationComplete).not.toBeNull();
+  expect(metrics.sceneUpdates).toHaveLength(1);
+  expect(metrics.sceneUpdates[0].entityId).toBe(
+    useOrb.getState().project.entities[0].id,
+  );
+  expect(metrics.sceneUpdates[0].drawnAt).toBeNull();
 });
 it("keeps a lost-ACK checkpoint recoverable without applying or resending the operation", async () => {
   mocks.append.mockImplementationOnce(async (envelope: Envelope) => {

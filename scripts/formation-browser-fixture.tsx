@@ -1,6 +1,7 @@
 import {
   beginExperience,
   noteReservation,
+  noteSceneUpdate,
   getExperienceMetrics,
 } from "../src/lib/experience-metrics";
 import * as THREE from "three";
@@ -126,7 +127,11 @@ let oldGeometries: unknown[];
     }
     const snapshot = getExperienceMetrics(fixtureProject.id)[0];
     useOrb.setState({ playing: false });
-    return { milestones: snapshot.milestones, outcome: snapshot.outcome };
+    return {
+      milestones: snapshot.milestones,
+      outcome: snapshot.outcome,
+      sceneUpdates: snapshot.sceneUpdates,
+    };
   },
   benchmark() {
     const dense = new THREE.SphereGeometry(1, 256, 128);
@@ -256,19 +261,22 @@ let oldGeometries: unknown[];
   async realtime(tint?: string) {
     const prior = meshes().map((mesh) => mesh.geometry);
     const project = useOrb.getState().project;
+    const updatedEntities: Entity[] = project.entities.map((entity) => ({
+      ...entity,
+      ...(tint ? { color: tint } : {}),
+      geometry: {
+        ...entity.geometry!,
+        detail: "coarse",
+        ...(tint ? { tint } : {}),
+      },
+    }));
+    for (const entity of updatedEntities)
+      noteSceneUpdate(project.id, entity, experienceToken);
     useOrb.setState({
       project: {
         ...project,
         revision: project.revision + 1,
-        entities: project.entities.map((entity) => ({
-          ...entity,
-          ...(tint ? { color: tint } : {}),
-          geometry: {
-            ...entity.geometry!,
-            detail: "coarse",
-            ...(tint ? { tint } : {}),
-          },
-        })),
+        entities: updatedEntities,
       },
     });
     state().setFrameloop("always");

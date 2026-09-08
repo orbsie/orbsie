@@ -141,6 +141,20 @@ try {
   report.experience = await page.evaluate(() =>
     window.formationFixture.metrics(),
   );
+  assert.equal(report.experience.sceneUpdates.length, 6);
+  const updateLatencies = report.experience.sceneUpdates.map((sample) => {
+    assert.ok(Number.isFinite(sample.latencyMs) && sample.latencyMs >= 0);
+    assert.equal(sample.drawnAt - sample.acceptedAt, sample.latencyMs);
+    return sample.latencyMs;
+  });
+  report.updateDrawLatency = {
+    scope:
+      "Six procedural entity revisions in the shared renderer; main-camera draw, not pixel visibility or normal-device certification",
+    samples: updateLatencies,
+    maximumMs: Math.max(...updateLatencies),
+    targetMs: 100,
+    withinTarget: updateLatencies.every((latency) => latency <= 100),
+  };
   assert.equal(report.experience.milestones.submission, 0);
   assert.ok(report.experience.milestones.reservation !== null);
   assert.ok(report.experience.milestones.visibleSeed !== null);

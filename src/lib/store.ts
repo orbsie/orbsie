@@ -36,6 +36,7 @@ import {
   finishExperience,
   markExperience,
   noteReservation,
+  noteSceneUpdate,
 } from "./experience-metrics";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
@@ -647,6 +648,20 @@ export const useOrb = create<State>((setState, getState) => ({
       baseline = committed(result.project, baseline);
       cursor = result.cursor;
       lastAppliedCommand = command.type;
+      const updatedId =
+        command.type === "reserve_entity"
+          ? command.entity.id
+          : command.type === "set_geometry" ||
+              command.type === "set_material" ||
+              command.type === "set_transform" ||
+              command.type === "set_behavior"
+            ? command.id
+            : undefined;
+      const updatedEntity = updatedId
+        ? result.project.entities.find((entity) => entity.id === updatedId)
+        : undefined;
+      if (updatedEntity)
+        noteSceneUpdate(project.id, updatedEntity, experienceToken);
       setState({ project: result.project });
       if (command.type === "reserve_entity")
         noteReservation(project.id, command.entity.id, experienceToken);

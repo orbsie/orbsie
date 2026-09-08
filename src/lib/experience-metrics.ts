@@ -16,17 +16,28 @@ export type ExperienceReservation = {
   at: number;
 };
 
+export type ExperienceSceneUpdate = {
+  entityId: string;
+  acceptedAt: number;
+  drawnAt: number | null;
+  latencyMs: number | null;
+};
+
 export type ExperienceMetricsSnapshot = {
   projectId: string;
   token: string;
   milestones: Record<ExperienceMilestone, number | null>;
   reservations: ExperienceReservation[];
+  sceneUpdates: ExperienceSceneUpdate[];
   outcome: ExperienceOutcome | null;
   finishedAt: number | null;
 };
 
 const MAX_RUNS = 20;
 const MAX_RESERVATIONS = 160;
+const MAX_SCENE_UPDATES = 256;
+
+type SceneEntity = { id: string };
 
 type Run = {
   projectId: string;
@@ -35,6 +46,8 @@ type Run = {
   lastElapsed: number;
   milestones: Record<ExperienceMilestone, number | null>;
   reservations: Map<string, number>;
+  sceneUpdates: ExperienceSceneUpdate[];
+  pendingSceneUpdates: WeakMap<SceneEntity, ExperienceSceneUpdate>;
   outcome?: ExperienceOutcome;
   finishedAt?: number;
 };
@@ -98,6 +111,8 @@ export function beginExperience(projectId: string): string {
     lastElapsed: 0,
     milestones: emptyMilestones(),
     reservations: new Map(),
+    sceneUpdates: [],
+    pendingSceneUpdates: new WeakMap(),
   };
   run.milestones.submission = 0;
   runs.unshift(run);
@@ -138,6 +153,35 @@ export function markVisibleSeed(projectId: string, entityId: string) {
   if (run?.reservations.has(entityId)) recordMilestone(run, "visibleSeed");
 }
 
+export function noteSceneUpdate(
+  projectId: string,
+  entity: SceneEntity,
+  token: string,
+) {
+  const run = currentRun(projectId, token);
+  if (!run) return;
+
+  const sample: ExperienceSceneUpdate = {
+    entityId: entity.id,
+    acceptedAt: elapsed(run),
+    drawnAt: null,
+    latencyMs: null,
+  };
+  run.sceneUpdates.push(sample);
+  if (run.sceneUpdates.length > MAX_SCENE_UPDATES) run.sceneUpdates.shift();
+  run.pendingSceneUpdates.set(entity, sample);
+}
+
+export function markSceneUpdateDraw(projectId: string, entity: SceneEntity) {
+  const run = currentRun(projectId);
+  const sample = run?.pendingSceneUpdates.get(entity);
+  if (!run || !sample || sample.drawnAt !== null) return;
+
+  const drawnAt = elapsed(run);
+  sample.drawnAt = drawnAt;
+  sample.latencyMs = Math.max(0, drawnAt - sample.acceptedAt);
+}
+
 export function finishExperience(
   projectId: string,
   token: string,
@@ -169,6 +213,7 @@ export function getExperienceMetrics(
         entityId,
         at,
       })),
+      sceneUpdates: run.sceneUpdates.map((sample) => ({ ...sample })),
       outcome: run.outcome ?? null,
       finishedAt: run.finishedAt ?? null,
     }));
