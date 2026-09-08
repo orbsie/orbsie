@@ -8,7 +8,8 @@ evidence.
 
 The harness fails closed before Chromium starts unless the caller explicitly
 sets `ORBSIE_LIVE_E2E=1`, chooses `--provider openrouter`, `--provider gateway`,
-or `--provider chatgpt-local`, supplies an exact `ORBSIE_EXPECTED_MODEL`, and
+`--provider free`, or `--provider chatgpt-local`, supplies an exact
+`ORBSIE_EXPECTED_MODEL`, and
 declares `ORBSIE_KEY_SCOPE=local-only` or `ORBSIE_KEY_SCOPE=cloud-authorized`.
 It also requires a bounded `ORBSIE_OUTPUT_CAP_TOKENS` for API-key providers.
 The target must be supplied as `ORBSIE_TEST_URL` (the existing `TEST_URL` name
@@ -34,6 +35,21 @@ cap, the harness records a blocked result and refuses to call the provider.
 The harness reports low reasoning and the default service tier as the required
 run contract. This is an assertion boundary for the server/provider adapter;
 it does not increase a server cap.
+
+The `free` provider mode is separate from Gateway BYOK. It does not read an
+API key or select a client model. It checks `/api/trial` in the browser,
+requires at least two remaining prompts, and asserts both generation requests
+use `provider: "free"` with empty client model and key fields. The server-owned
+route is fixed to Gateway Luna with low reasoning and its 4,096-token ceiling;
+set `ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna` and
+`ORBSIE_OUTPUT_CAP_TOKENS=4096` as the explicit run contract.
+
+Set `ORBSIE_REQUIRE_NEW_ONLY=1` when the creation prompt explicitly requests
+original geometry. The harness then rejects catalog entities in both the
+creation and edit snapshots. When a local Blender builder is connected, it
+selects the committed generated entity by stable project order, verifies the
+edit request carries that entity ID, and requires its generated model digest to
+remain unchanged after the edit.
 
 ## Creation, edit, recovery, and playback
 

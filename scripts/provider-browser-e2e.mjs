@@ -20,13 +20,15 @@ import { tmpdir } from "node:os";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 
-const PROVIDERS = new Set(["openrouter", "gateway", "chatgpt-local"]);
+const PROVIDERS = new Set(["openrouter", "gateway", "free", "chatgpt-local"]);
 const KEY_SCOPES = new Set(["local-only", "cloud-authorized"]);
 const DEFAULT_PROMPT =
   "Build a tiny island with one tree and one crystal. Keep it simple and commit the world.";
 const DEFAULT_EDIT =
   "Change only the selected entity to bright pink #ff44aa. Preserve its geometry and every unrelated entity and environment. Commit the edit.";
-const REPORT_DIR = resolve(process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e");
+const REPORT_DIR = resolve(
+  process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
+);
 const REPORT_MODE = "live-browser";
 
 class HarnessConfigurationError extends Error {
@@ -60,7 +62,7 @@ function parseArgs(argv) {
           "  ORBSIE_EXPECTED_MODEL=<exact-catalog-id> \\",
           "  ORBSIE_KEY_SCOPE=local-only|cloud-authorized \\",
           "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> \\",
-          "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|chatgpt-local",
+          "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local",
           "",
           "Add --publication (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud/publication check.",
         ].join("\n"),
@@ -95,6 +97,19 @@ function validModelId(value) {
   return typeof value === "string" && /^[A-Za-z0-9_.:/-]{1,150}$/.test(value);
 }
 
+function explicitlyRequestsNew(prompt) {
+  const positive =
+    /\bfrom\s+scratch\b|\bbrand[- ]new\b|\b(?:original|new)\s+(?:model|mesh|geometry|asset|object|shape|form)\b|\bwithout\b[^.!?;\n]{0,50}\b(?:catalog|library|prepared|stock|existing)\b/i;
+  const preserved =
+    /\b(?:keep|preserve|retain|leave)\b[^.!?;\n]{0,50}\b(?:original|existing)\s+(?:model|mesh|geometry|asset|object|shape|form)\b/i;
+  const forbidden =
+    /\b(?:don't|do not|never|avoid)\b[^.!?;\n]{0,50}\b(?:generate|create|build|make|use|reuse|select|choose)\w*\b[^.!?;\n]{0,35}\b(?:brand[- ]new|new|original)\s+(?:model|mesh|geometry|asset|object|shape|form)\b/i;
+  return prompt.split(/[.!?;\n]|\b(?:but|however|then)\b/i).some((clause) => {
+    if (preserved.test(clause) || forbidden.test(clause)) return false;
+    return positive.test(clause);
+  });
+}
+
 function readConfiguration(argv) {
   // Keep this check before all key/token reads. A normal syntax check or an
   // accidental invocation cannot inspect provider credentials.
@@ -107,7 +122,7 @@ function readConfiguration(argv) {
   const provider = args.provider;
   if (!PROVIDERS.has(provider))
     throw new HarnessConfigurationError(
-      "--provider is required and must be openrouter, gateway, or chatgpt-local.",
+      "--provider is required and must be openrouter, gateway, free, or chatgpt-local.",
     );
   const baseValue = process.env.ORBSIE_TEST_URL ?? process.env.TEST_URL;
   if (!baseValue)
@@ -174,6 +189,16 @@ function readConfiguration(argv) {
         "The supplied local-only OpenRouter run is capped at 512 output tokens or less.",
       );
   }
+  if (provider === "free") {
+    if (expectedModel !== "openai/gpt-5.6-luna")
+      throw new HarnessConfigurationError(
+        "The server-owned free path is restricted to the explicit Luna model; set ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna.",
+      );
+    if (outputCap !== 4096)
+      throw new HarnessConfigurationError(
+        "The server-owned free path has a fixed 4096 output-token ceiling; set ORBSIE_OUTPUT_CAP_TOKENS=4096.",
+      );
+  }
   if (
     process.env.ORBSIE_SERVICE_TIER &&
     process.env.ORBSIE_SERVICE_TIER !== "default"
@@ -193,8 +218,25 @@ function readConfiguration(argv) {
     publication:
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
     keyEnv:
-      provider === "openrouter" ? "OPENROUTER_API_KEY" : "AI_GATEWAY_API_KEY",
+      provider === "openrouter"
+        ? "OPENROUTER_API_KEY"
+        : provider === "gateway"
+          ? "AI_GATEWAY_API_KEY"
+          : undefined,
+    requireNewOnly: process.env.ORBSIE_REQUIRE_NEW_ONLY === "1",
   };
+
+  if (
+    process.env.ORBSIE_REQUIRE_NEW_ONLY !== undefined &&
+    !["0", "1"].includes(process.env.ORBSIE_REQUIRE_NEW_ONLY)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_NEW_ONLY must be 0 or 1.",
+    );
+  if (config.requireNewOnly && !explicitlyRequestsNew(config.prompt))
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_NEW_ONLY=1 requires an explicit original/new creation prompt.",
+    );
 
   if (provider === "chatgpt-local") {
     config.companionURL = process.env.ORBSIE_CHATGPT_COMPANION_URL;
@@ -229,7 +271,7 @@ function readConfiguration(argv) {
         "ORBSIE_CHATGPT_COMPANION_TOKEN must be the 256-bit capability printed by the companion.",
       );
     config.companionURL = companion.origin;
-  } else {
+  } else if (provider !== "free") {
     // This is the only point where an API credential is read, and it is
     // unreachable unless the explicit live flag and all safety gates passed.
     config.key = process.env[config.keyEnv];
@@ -303,6 +345,7 @@ function emptyReport(config) {
       seedObserved: false,
     },
     edit: { status: "blocked", selectedIdPreserved: false },
+    freeTrial: config.provider === "free" ? { status: "blocked" } : null,
     localRecovery: "blocked",
     export: "blocked",
     standalonePlayback: "blocked",
@@ -457,6 +500,8 @@ function attachRequestEvidence(page, config, info) {
           typeof payload.prompt === "string" ? payload.prompt.length : 0,
         projectRevision: payload.project?.revision ?? null,
         selected: typeof payload.selected === "string" ? true : false,
+        selectedId:
+          typeof payload.selected === "string" ? payload.selected : null,
       });
     } else {
       const auth = request.headers().authorization || "";
@@ -470,6 +515,8 @@ function attachRequestEvidence(page, config, info) {
           typeof payload.prompt === "string" ? payload.prompt.length : 0,
         projectRevision: payload.project?.revision ?? null,
         selected: typeof payload.selected === "string" ? true : false,
+        selectedId:
+          typeof payload.selected === "string" ? payload.selected : null,
       });
     }
   });
@@ -590,7 +637,8 @@ async function waitForSavedProject(page, minRevision, assistantCount = 0) {
 }
 
 async function setupOutputCap(page, config) {
-  if (config.provider === "chatgpt-local") return null;
+  if (config.provider === "chatgpt-local" || config.provider === "free")
+    return null;
   const response = await page.request.get(`${config.baseOrigin}/api/config`, {
     headers: { Origin: config.baseOrigin },
     timeout: 30000,
@@ -614,6 +662,38 @@ async function setupOutputCap(page, config) {
       `The server did not expose the requested output cap (${config.outputCap}); generation was refused before any provider call.`,
     );
   return observed;
+}
+
+async function setupFreeTrial(page, config, report) {
+  const trial = await page.evaluate(async () => {
+    const response = await fetch("/api/trial", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    let body;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    return { status: response.status, body };
+  });
+  if (trial.status !== 200 || !trial.body || trial.body.enabled !== true)
+    throw new HarnessBlockedError(
+      "The server-owned free Gateway path is unavailable; no generation was attempted.",
+    );
+  if (!Number.isInteger(trial.body.remaining) || trial.body.remaining < 2)
+    throw new HarnessBlockedError(
+      "The server-owned free Gateway allowance has fewer than two prompts; no generation was attempted.",
+    );
+  report.freeTrial = {
+    status: "ready",
+    remainingBefore: trial.body.remaining,
+    limit: Number.isInteger(trial.body.limit) ? trial.body.limit : null,
+    model: config.expectedModel,
+    outputCapTokens: config.outputCap,
+  };
+  return report.freeTrial;
 }
 
 async function configureApiProvider(page, config, report, info, evidenceDir) {
@@ -783,6 +863,13 @@ function assertGenerationRequests(config, info) {
       assert.equal(body.hasProviderField, false);
       assert.equal(body.hasModelField, false);
       assert.equal(body.hasKeyField, false);
+    }
+  } else if (config.provider === "free") {
+    for (const body of info.generationBodies) {
+      assert.equal(body.transport, "same-origin-api");
+      assert.equal(body.provider, "free");
+      assert.equal(body.model, "");
+      assert.equal(body.hasKey, false);
     }
   } else {
     for (const body of info.generationBodies) {
@@ -1204,6 +1291,8 @@ async function run(config) {
     await setupOutputCap(page, config);
     if (config.provider === "chatgpt-local")
       await configureChatGPTLocal(page, config, report, info, evidenceDir);
+    else if (config.provider === "free")
+      await setupFreeTrial(page, config, report);
     else await configureApiProvider(page, config, report, info, evidenceDir);
     if (config.builderURL) {
       await page
@@ -1301,23 +1390,41 @@ async function run(config) {
       (entity) =>
         entity.geometry?.kind === "generated" && entity.geometry.model,
     ).length;
+    if (config.requireNewOnly)
+      assert.equal(
+        report.creation.catalogEntities,
+        0,
+        "The explicit new-only creation produced a catalog entity.",
+      );
     if (config.builderURL)
       assert(
         report.creation.generatedEntities > 0,
         "The live model did not build a local Blender asset.",
       );
 
-    const firstRow = page.locator(".object-list button").first();
-    const selectedLabel = (await firstRow.innerText()).split("\n")[0].trim();
-    const targetBefore =
-      projectAfterCreation.entities.find(
-        (entity) => entity.label === selectedLabel,
-      ) || projectAfterCreation.entities[0];
+    const targetBefore = config.builderURL
+      ? projectAfterCreation.entities.find(
+          (entity) =>
+            entity.geometry?.kind === "generated" && entity.geometry.model,
+        )
+      : projectAfterCreation.entities[0];
     assert(
       targetBefore,
       "The visible object list did not map to a committed entity.",
     );
-    await firstRow.click();
+    if (config.builderURL)
+      assert.equal(
+        targetBefore.geometry?.kind,
+        "generated",
+        "The Blender run did not produce a generated entity for the scoped edit.",
+      );
+    const targetIndex = projectAfterCreation.entities.findIndex(
+      (entity) => entity.id === targetBefore.id,
+    );
+    assert(targetIndex >= 0);
+    const targetRow = page.locator(".object-list button").nth(targetIndex);
+    await expect(targetRow).toHaveCount(1);
+    await targetRow.click();
     await expect(page.locator(".selection-chip")).toContainText(
       targetBefore.label,
     );
@@ -1332,6 +1439,11 @@ async function run(config) {
     await expect
       .poll(() => info.generationRequests, { timeout: 30000 })
       .toBe(2);
+    assert.equal(
+      info.generationBodies.at(-1)?.selectedId,
+      targetBefore.id,
+      "The edit request did not target the selected entity identity.",
+    );
     await expect(page.locator(".message.user").last()).toContainText(
       config.editPrompt.slice(0, 40),
     );
@@ -1349,10 +1461,26 @@ async function run(config) {
       ).length >= 2,
       "The edit stream did not commit a terminal assistant response.",
     );
+    if (config.requireNewOnly)
+      assert.equal(
+        projectAfterEdit.entities.filter(
+          (entity) => entity.geometry?.kind === "asset",
+        ).length,
+        0,
+        "The explicit new-only workflow introduced a catalog entity during edit.",
+      );
     const targetAfter = projectAfterEdit.entities.find(
       (entity) => entity.id === targetBefore.id,
     );
     assert(targetAfter, "The provider edit removed the selected entity.");
+    if (config.builderURL) {
+      assert.equal(targetAfter.geometry?.kind, "generated");
+      assert.equal(
+        targetAfter.geometry.model?.sha256,
+        targetBefore.geometry.model?.sha256,
+        "The scoped edit replaced the generated Blender model.",
+      );
+    }
     assert.equal(
       targetAfter.color.toLowerCase(),
       "#ff44aa",
