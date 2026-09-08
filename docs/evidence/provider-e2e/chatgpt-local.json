@@ -1,0 +1,43 @@
+{
+  "provider": "chatgpt-local",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3017",
+  "model": "gpt-6-astra",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "creation": {
+    "status": "passed",
+    "operations": 9,
+    "firstReservationMs": 8132,
+    "seedObserved": true
+  },
+  "edit": {
+    "status": "passed",
+    "selectedIdPreserved": true
+  },
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "blockedExternalRequests": 2,
+    "blockedExternalOrigins": [
+      "https://fonts.googleapis.com"
+    ],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-chatgpt-local.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
+  ]
+}
