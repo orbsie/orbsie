@@ -168,3 +168,44 @@ namespace. It does not prove arbitrary model plans, generated Python, GPU
 rendering, or an LLM-to-Blender-to-browser round trip.
 
 Root independently reran the probe successfully in 1,299 ms with the same 11,256-byte GLB. The reported object bounds are Blender Z-up coordinates; future runtime integration must convert them to glTF/Orbsie Y-up or recompute bounds from the exported GLB. The probe uses the tested `/usr/bin/blender` package; arbitrary binary-path overrides are not supported.
+
+## Typed modeling implementation
+
+`scripts/blender-modeling.ts` translates validated `src/lib/modeling.ts` jobs
+through a fixed Python program in the isolated Linux runtime. Supported parts
+are boxes, spheres, cylinders, cones, tori, custom polygon meshes, profile
+extrusions and surfaces of revolution. Job coordinates are Y-up; the executor
+converts to Blender coordinates and exports Y-up GLB results. Input budgets,
+process limits, cancellation and output validation apply before results can be
+accepted by the editor.
+
+`src/lib/generated-glb.ts` checks the static, untextured triangle subset before
+loading: complete chunks, internal buffer ranges, accessor allocation budgets,
+indices, node graphs and unsupported resource/extension rejection.
+`src/lib/generated-models.ts` provides content-addressed IndexedDB persistence,
+verifies saved bytes on read and preserves the first provenance record. Bounds
+and engine version come from the trusted executor; this storage API is not an
+untrusted upload endpoint.
+
+The provider-neutral HTTP boundary (`scripts/modeling-companion.ts`) and browser
+client (`src/lib/modeling-connection.ts`) now connect modeling to local storage.
+The private capability stays in memory and is sent only to the exact loopback
+origin. Jobs stream bounded progress, allow cancellation and reject concurrent
+requests; shutdown waits for the isolated job's cleanup.
+
+`node scripts/verify-local-modeling.mjs` is a developer verification command
+against the local app on port 3017. It performs real Blender construction,
+browser GLB loading/rendering, exact bounds comparison and IndexedDB recovery
+after reload. `docs/evidence/local-modeling/report.json` records the result;
+this probe performs no LLM inference and does not exercise the Orbsie editor.
+
+`node scripts/run-modeling-companion.mjs` starts the development companion after
+an actual tiny Blender preflight; `ORBSIE_ORIGIN` chooses its one allowed origin.
+The emitted builder capability link is for the pending editor integration, not
+a currently enabled production feature. Keep it private and stop the foreground
+process to revoke access. No credentials or subscription connection are needed
+for local geometry construction.
+
+LLM generation, editor scene operations, generated-asset export/publication and
+a portable packaged installation remain open. The actual executor and browser
+transport probes do not establish the required full real-provider round trip.

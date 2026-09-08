@@ -1,0 +1,53 @@
+{
+  "scope": "actual browser transport, isolated Blender, GLB decode/render and IndexedDB persistence; no LLM inference or editor integration",
+  "health": {
+    "protocolVersion": 1,
+    "capability": "local-blender",
+    "status": "ready"
+  },
+  "stages": [
+    "validation",
+    "modeling",
+    "modeling",
+    "modeling",
+    "modeling",
+    "exporting",
+    "exporting",
+    "validation",
+    "complete"
+  ],
+  "elapsedMs": 1609,
+  "metadata": {
+    "version": 1,
+    "sha256": "eacfa6805a0223f12db810489c967ad9681e68f9025ebe415d734c680a882d04",
+    "bytes": 8044,
+    "source": "local-blender",
+    "blenderVersion": "4.0.2",
+    "bounds": {
+      "min": [
+        -0.699999988079071,
+        0,
+        -0.699999988079071
+      ],
+      "max": [
+        2,
+        2.299999952316284,
+        0.699999988079071
+      ]
+    },
+    "createdAt": "2026-09-08T04:59:25.658Z"
+  },
+  "renderedBounds": {
+    "min": [
+      -0.699999988079071,
+      0,
+      -0.699999988079071
+    ],
+    "max": [
+      2,
+      2.299999952316284,
+      0.699999988079071
+    ]
+  },
+  "reloadVerified": true
+}
