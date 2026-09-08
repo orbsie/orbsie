@@ -80,7 +80,7 @@ it("rejects oversized streamed recovery before parsing", async () => {
     new Response(
       new ReadableStream({
         start(c) {
-          c.enqueue(new Uint8Array(601 * 1024));
+          c.enqueue(new Uint8Array(1101 * 1024));
         },
         cancel() {
           cancelled = true;

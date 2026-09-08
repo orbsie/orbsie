@@ -1,0 +1,13 @@
+{
+  "passed": false,
+  "scope": "Actual development PostgreSQL and account recovery UI; fixture operations, zero inference",
+  "projectId": "61069c07-268e-437e-b9c8-a59b3fb71eee",
+  "requests": 7,
+  "generationRequests": 0,
+  "errors": [],
+  "checks": [
+    "baseline-ready-geometry-retained",
+    "latest-finished-geometry-retained"
+  ],
+  "error": "expect(locator).toContainText(expected) failed\n\nLocator: locator('.selected-chip')\nExpected substring: \"Original tree\"\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toContainText\" locator('.selected-chip') with timeout 5000ms\n  - waiting for locator('.selected-chip')\n"
+}

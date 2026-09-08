@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { fixtureEntities } from "../src/lib/fixtures";
 import { blankProject } from "../src/lib/protocol";
 const db = vi.hoisted(() => ({ query: vi.fn(), release: vi.fn() }));
 vi.mock("../src/lib/server/auth", async () => ({
@@ -25,6 +26,7 @@ beforeEach(() => {
     state: "running",
     checkpoint: project,
     starting_snapshot: project,
+    recovery_checkpoint: project,
     prompt: "Build a garden",
     selected: null,
     base_revision: 0,
@@ -37,7 +39,9 @@ beforeEach(() => {
     if (sql.startsWith("SELECT *,"))
       return { rows: args[1] === "owner" ? [structuredClone(row)] : [] };
     if (sql.startsWith("SELECT revision,snapshot FROM orbs"))
-      return { rows: [{ revision: 0, snapshot: project }] };
+      return { rows: [{ revision: 0, snapshot: row.starting_snapshot }] };
+    if (sql.includes("ORDER BY sequence LIMIT 257"))
+      return { rows: operations.map((envelope) => ({ envelope })) };
     if (sql.startsWith("SELECT envelope"))
       return {
         rows: operations
@@ -54,6 +58,7 @@ beforeEach(() => {
         sequence: args[1],
         checkpoint: JSON.parse(args[2]),
         state: args[3],
+        recovery_checkpoint: JSON.parse(args[4]),
       };
       return { rows: [row] };
     }
@@ -245,7 +250,7 @@ it("retention preserves newest per world and every live run while pruning oldest
 it("at quota prunes only enough owner-scoped superseded terminal rows to admit one run", async () => {
   db.query.mockImplementation(async (sql: string, args: any[] = []) => {
     if (sql.startsWith("SELECT revision"))
-      return { rows: [{ revision: 0, snapshot: project }] };
+      return { rows: [{ revision: 0, snapshot: row.starting_snapshot }] };
     if (sql.startsWith("SELECT count")) return { rows: [{ count: 64 }] };
     if (sql.startsWith("SELECT id,orb_id,state"))
       return {
@@ -279,4 +284,73 @@ it("does not prune below quota", async () => {
   expect(db.query.mock.calls.some(([sql]) => sql.startsWith("DELETE"))).toBe(
     false,
   );
+});
+
+it("returns the durable finished snapshot separately from the raw checkpoint", async () => {
+  row.recovery_checkpoint = structuredClone(project);
+  const run = await readGenerationRun("owner", id);
+  expect(run.recoveryCheckpoint).toEqual(project);
+});
+
+it("retains the latest finished geometry during interrupted replacements and honors deletion", async () => {
+  const starting = { ...project, entities: [fixtureEntities()[0]] };
+  row.checkpoint = starting;
+  row.starting_snapshot = starting;
+  row.recovery_checkpoint = starting;
+  const entityId = starting.entities[0].id;
+  const appendGeometry = (
+    sequence: number,
+    kind: "tree" | "mushroom",
+    detail: "coarse" | "refined",
+  ) =>
+    appendGenerationRun("owner", {
+      runId: id,
+      envelope: {
+        ...op(sequence),
+        command: {
+          type: "set_geometry",
+          id: entityId,
+          geometry: { kind, detail },
+        },
+      },
+    });
+  const coarse = await appendGeometry(1, "mushroom", "coarse");
+  expect(coarse.checkpoint.entities[0].stage).toBe("coarse");
+  expect(coarse.recoveryCheckpoint?.entities[0]).toEqual(starting.entities[0]);
+  const ready = await appendGeometry(2, "mushroom", "refined");
+  const again = await appendGeometry(3, "tree", "coarse");
+  expect(again.recoveryCheckpoint?.entities[0]).toEqual(
+    ready.checkpoint.entities[0],
+  );
+  // Simulate an old run that has durable operations but no recovery column value.
+  row.recovery_checkpoint = null;
+  const reconstructed = await readGenerationRun("owner", id);
+  expect(reconstructed.recoveryCheckpoint).toEqual(again.recoveryCheckpoint);
+  expect(db.query).toHaveBeenCalledWith(
+    "UPDATE generation_runs SET recovery_checkpoint=$2 WHERE id=$1",
+    [id, JSON.stringify(again.recoveryCheckpoint)],
+  );
+  row.recovery_checkpoint = reconstructed.recoveryCheckpoint;
+  const removed = await appendGenerationRun("owner", {
+    runId: id,
+    envelope: { ...op(4), command: { type: "remove_entity", id: entityId } },
+  });
+  expect(removed.recoveryCheckpoint?.entities).toEqual([]);
+});
+
+it("refuses legacy reconstruction with missing operations", async () => {
+  row.recovery_checkpoint = null;
+  row.sequence = 1;
+  await expect(readGenerationRun("owner", id)).rejects.toMatchObject({
+    status: 409,
+  });
+});
+
+it("refuses an out-of-sequence legacy journal even when its length matches", async () => {
+  row.recovery_checkpoint = null;
+  row.sequence = 1;
+  operations = [op(2)];
+  await expect(readGenerationRun("owner", id)).rejects.toMatchObject({
+    status: 409,
+  });
 });

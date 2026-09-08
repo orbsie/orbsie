@@ -1,6 +1,11 @@
 import type { PoolClient } from "pg";
 import { z } from "zod";
-import { applyOperation, projectSchema, type Project } from "../protocol";
+import {
+  applyOperation,
+  committed,
+  projectSchema,
+  type Project,
+} from "../protocol";
 import {
   generationRunSchema,
   journalEnvelopeSchema,
@@ -29,6 +34,7 @@ type Row = {
   state: string;
   checkpoint: Project;
   starting_snapshot: Project;
+  recovery_checkpoint?: Project | null;
   prompt: string;
   selected: string | null;
   base_revision: number;
@@ -63,6 +69,7 @@ function view(row: Row) {
     sequence: row.sequence,
     state: row.state,
     checkpoint: row.checkpoint,
+    recoveryCheckpoint: row.recovery_checkpoint ?? undefined,
     prompt: row.prompt,
     ...(row.selected ? { selected: row.selected } : {}),
     baseRevision: row.base_revision,
@@ -118,6 +125,47 @@ async function assets(c: PoolClient, owner: string, project: Project) {
       );
   }
 }
+/** Rebuild old runs from their durable journal, preserving every finished revision. */
+async function ensureRecoveryCheckpoint(c: PoolClient, row: Row) {
+  if (row.recovery_checkpoint) return;
+  let raw = projectSchema.parse(row.starting_snapshot);
+  let recovery = committed(raw);
+  const result = await c.query(
+    "SELECT envelope FROM generation_operations WHERE run_id=$1 ORDER BY sequence LIMIT 257",
+    [row.id],
+  );
+  if (result.rows.length !== row.sequence || result.rows.length > 256)
+    throw new HttpError(409, "Generation recovery journal is incomplete.");
+  const seen = new Set<string>();
+  for (let index = 0; index < result.rows.length; index++) {
+    const envelope = journalEnvelopeSchema.parse(result.rows[index].envelope);
+    if (envelope.projectId !== row.orb_id || envelope.sequence !== index + 1)
+      throw new HttpError(
+        409,
+        "Generation recovery journal is out of sequence.",
+      );
+    raw = applyOperation(raw, envelope, {
+      runId: row.id,
+      sequence: index,
+      seen,
+    }).project;
+    seen.add(envelope.operationId);
+    recovery = committed(raw, recovery);
+    bounded(recovery);
+  }
+  if (!equal(JSON.parse(JSON.stringify(raw)), row.checkpoint))
+    throw new HttpError(
+      409,
+      "Generation recovery journal does not match its checkpoint.",
+    );
+  bounded(recovery);
+  await c.query(
+    "UPDATE generation_runs SET recovery_checkpoint=$2 WHERE id=$1",
+    [row.id, JSON.stringify(recovery)],
+  );
+  row.recovery_checkpoint = recovery;
+}
+
 async function locked(c: PoolClient, owner: string, id: string): Promise<Row> {
   const result = await c.query(
     "SELECT *, (lease_until<=now() OR created_at+interval '15 minutes'<=now()) AS expired FROM generation_runs WHERE id=$1 AND owner_id=$2 FOR UPDATE",
@@ -140,6 +188,7 @@ async function locked(c: PoolClient, owner: string, id: string): Promise<Row> {
     !!orb.rows[0] &&
     orb.rows[0].revision === row.base_revision &&
     equal(orb.rows[0].snapshot, row.starting_snapshot);
+  await ensureRecoveryCheckpoint(c, row);
   return row;
 }
 type RetentionRun = {
@@ -235,7 +284,7 @@ export async function startGenerationRun(owner: string, input: unknown) {
     }
     await assets(c, owner, value.project);
     const result = await c.query(
-      "INSERT INTO generation_runs(id,orb_id,owner_id,base_revision,sequence,state,checkpoint,starting_snapshot,prompt,selected,lease_until) VALUES($1,$2,$3,$4,0,'running',$5,$5,$6,$7,now()+interval '180 seconds') RETURNING *",
+      "INSERT INTO generation_runs(id,orb_id,owner_id,base_revision,sequence,state,checkpoint,starting_snapshot,prompt,selected,lease_until,recovery_checkpoint) VALUES($1,$2,$3,$4,0,'running',$5,$5,$6,$7,now()+interval '180 seconds',$8) RETURNING *",
       [
         value.runId,
         value.project.id,
@@ -244,6 +293,7 @@ export async function startGenerationRun(owner: string, input: unknown) {
         JSON.stringify(value.project),
         value.prompt,
         value.selected ?? null,
+        JSON.stringify(committed(value.project)),
       ],
     );
     return view(result.rows[0]);
@@ -294,6 +344,11 @@ export async function appendGenerationRun(owner: string, input: unknown) {
       );
     }
     bounded(project);
+    const recovery = committed(
+      project,
+      row.recovery_checkpoint ?? row.starting_snapshot,
+    );
+    bounded(recovery);
     await assets(c, owner, project);
     await c.query(
       "INSERT INTO generation_operations(run_id,sequence,operation_id,envelope) VALUES($1,$2,$3,$4)",
@@ -305,12 +360,13 @@ export async function appendGenerationRun(owner: string, input: unknown) {
       ],
     );
     const result = await c.query(
-      "UPDATE generation_runs SET sequence=$2,checkpoint=$3,state=$4,lease_until=LEAST(now()+interval '180 seconds',created_at+interval '15 minutes'),updated_at=now() WHERE id=$1 RETURNING *",
+      "UPDATE generation_runs SET sequence=$2,checkpoint=$3,state=$4,recovery_checkpoint=$5,lease_until=LEAST(now()+interval '180 seconds',created_at+interval '15 minutes'),updated_at=now() WHERE id=$1 RETURNING *",
       [
         runId,
         envelope.sequence,
         JSON.stringify(project),
         envelope.command.type === "commit_revision" ? "complete" : "running",
+        JSON.stringify(recovery),
       ],
     );
     return { run: view(result.rows[0]) };

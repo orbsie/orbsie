@@ -2,7 +2,9 @@ import { expect, it } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 import { fixtureEntities } from "../src/lib/fixtures";
 import {
+  generationRunSchema,
   recoveredGenerationInput,
+  recoveredGenerationProject,
   type GenerationRun,
 } from "../src/lib/generation-journal";
 
@@ -48,4 +50,35 @@ it("does not queue a new request for a completed generation", () => {
   expect(
     recoveredGenerationInput({ ...checkpoint(), state: "complete" }).prompt,
   ).toBe("");
+});
+
+it("uses the finished recovery snapshot for both installed geometry and selection", () => {
+  const run = checkpoint();
+  const ready = structuredClone(run.checkpoint);
+  run.checkpoint.entities[0].stage = "coarse";
+  run.recoveryCheckpoint = ready;
+  expect(recoveredGenerationProject(run)).toEqual(ready);
+  expect(recoveredGenerationInput(run).selected).toBe(ready.entities[0].id);
+});
+
+it("does not restore a dangling coarse selection from a legacy response", () => {
+  const run = checkpoint();
+  run.checkpoint.entities[0].stage = "coarse";
+  expect(recoveredGenerationInput(run).selected).toBeUndefined();
+});
+
+it("rejects recovery snapshots with different identity, revision or unfinished entities", () => {
+  const run = checkpoint();
+  for (const invalid of [
+    { ...run.checkpoint, id: "different" },
+    { ...run.checkpoint, revision: run.checkpoint.revision + 1 },
+    {
+      ...run.checkpoint,
+      entities: [{ ...run.checkpoint.entities[0], stage: "coarse" }],
+    },
+  ])
+    expect(
+      generationRunSchema.safeParse({ ...run, recoveryCheckpoint: invalid })
+        .success,
+    ).toBe(false);
 });

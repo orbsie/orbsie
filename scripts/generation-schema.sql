@@ -12,3 +12,5 @@ CREATE TABLE IF NOT EXISTS generation_operations (
  PRIMARY KEY(run_id,sequence),
  UNIQUE(run_id,operation_id)
 );
+
+ALTER TABLE generation_runs ADD COLUMN IF NOT EXISTS recovery_checkpoint jsonb;

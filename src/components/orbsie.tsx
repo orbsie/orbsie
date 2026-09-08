@@ -39,7 +39,10 @@ import {
   type Publication,
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
-import { recoveredGenerationInput } from "@/lib/generation-journal";
+import {
+  recoveredGenerationInput,
+  recoveredGenerationProject,
+} from "@/lib/generation-journal";
 import {
   latestCloudGenerationRun,
   settleCloudGenerationRecovery,
@@ -664,7 +667,7 @@ export default function Orbsie() {
           "Your local world is newer than this checkpoint. Export or save it before opening an older recovery.",
         );
       if (!isCurrent()) return;
-      const recovered = committed(run.checkpoint);
+      const recovered = recoveredGenerationProject(run);
       if (
         !(await useOrb.getState().loadCloud(recovered, isCurrent, isCurrent))
       ) {

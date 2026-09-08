@@ -32,7 +32,7 @@ async function readResponse(response: Response): Promise<GenerationRun> {
         break;
       }
       bytes += next.value.byteLength;
-      if (bytes > 600 * 1024)
+      if (bytes > 1100 * 1024)
         throw new GenerationJournalError(
           "Cloud recovery exceeds its response budget.",
         );

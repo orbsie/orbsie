@@ -36,3 +36,11 @@ This protects current snapshot writes. The existing `orb_revisions` table still 
 ### Browser and journal revalidation
 
 `evidence/cloud-snapshot-browser/` now records the successful account UI conflict/rebase/reload flow with same-revision content changes, plus the mobile account layout. Fixture generation used the actual journal and cloud-save paths; real provider calls were zero. `evidence/generation-journal-snapshot-cas/` records 17 actual development API checks and a signed-in browser recovery that matched the saved checkpoint in IndexedDB. This closes the pending browser regression checks for these changes, without claiming a new live-provider continuation or dedicated publication.
+
+## Finished geometry during interrupted edits
+
+Cloud journals now persist a separate `recovery_checkpoint` alongside their raw operation checkpoint, in the same transaction. Each operation carries forward the most recent ready geometry while a replacement is coarse, advances that fallback when refinement completes, and honors explicit deletion. Recovery installs this finished snapshot and restores selection only when its target exists there. Existing runs reconstruct the snapshot from their durable, ordered operation journal under the run lock; missing or inconsistent history is refused.
+
+Apply `scripts/generation-schema.sql` before deploying this change. The development migration passed. Each snapshot retains its independent 500 KiB limit; the client response allowance is 1100 KiB for both snapshots and metadata.
+
+`evidence/finished-geometry-recovery/` records an actual development PostgreSQL and browser check: original tree → coarse mushroom preserves the tree, refined mushroom → coarse tree preserves the mushroom, cancellation → account recovery installs the full finished snapshot with the original prompt and selection. Seven API setup/operation requests, zero inference requests, and no browser errors. The first browser assertion used an incorrect CSS selector; its failure report is retained. The corrected check and its screenshot passed. This is deterministic real-service evidence, not a claim of a real-provider interrupted run.
