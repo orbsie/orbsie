@@ -602,6 +602,7 @@ export const useOrb = create<State>((setState, getState) => ({
         command.type === "set_material" ||
         command.type === "set_transform" ||
         command.type === "set_behavior" ||
+        command.type === "set_game" ||
         command.type === "set_environment" ||
         command.type === "remove_entity" ||
         command.type === "commit_revision";

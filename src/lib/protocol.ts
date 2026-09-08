@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  gameProgramSchema,
+  collectGameProgramEntityIds,
+  validateGameProgramReferences,
+} from "./game-program";
 import { modelingJobSchema } from "./modeling";
 import { generatedModelMetadataSchema } from "./generated-models";
 import {
@@ -84,26 +89,47 @@ export const entitySchema = z.object({
   stage: z.enum(["seed", "coarse", "ready"]).default("seed"),
 });
 export type Entity = z.infer<typeof entitySchema>;
-export const projectSchema = z.object({
-  version: z.literal(1),
-  id: z.string().max(80),
-  title: z.string().max(100),
-  seed: z.number().int(),
-  revision: z.number().int().min(0),
-  entities: z.array(entitySchema).max(160),
-  environment: z.object({ sky: color, ground: color, water: color }),
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        text: z.string().max(5000),
-        entityId: z.string().optional(),
-      }),
-    )
-    .max(500),
-});
+export const projectSchema = z
+  .object({
+    version: z.literal(1),
+    id: z.string().max(80),
+    title: z.string().max(100),
+    seed: z.number().int(),
+    revision: z.number().int().min(0),
+    entities: z.array(entitySchema).max(160),
+    environment: z.object({ sky: color, ground: color, water: color }),
+    game: gameProgramSchema.optional(),
+    messages: z
+      .array(
+        z.object({
+          role: z.enum(["user", "assistant"]),
+          text: z.string().max(5000),
+          entityId: z.string().optional(),
+        }),
+      )
+      .max(500),
+  })
+  .superRefine((project, context) => {
+    if (!project.game) return;
+    try {
+      validateGameProgramReferences(
+        project.game,
+        project.entities
+          .filter((entity) => entity.stage === "ready")
+          .map((entity) => entity.id),
+      );
+    } catch (error) {
+      context.addIssue({
+        code: "custom",
+        path: ["game"],
+        message:
+          error instanceof Error ? error.message : "Invalid game references.",
+      });
+    }
+  });
 export type Project = z.infer<typeof projectSchema>;
 export const commandSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("set_game"), game: gameProgramSchema.nullable() }),
   z.object({ type: z.literal("reserve_entity"), entity: entitySchema }),
   z.object({
     type: z.literal("set_geometry"),
@@ -187,6 +213,7 @@ export function applyOperation(
   let entities = project.entities;
   let environment = project.environment;
   let messages = project.messages;
+  let game = project.game;
   if (c.type === "reserve_entity") {
     if (entities.some((e) => e.id === c.entity.id))
       throw Error("Object already exists.");
@@ -204,6 +231,15 @@ export function applyOperation(
       ground: c.ground ?? environment.ground,
       water: c.water ?? environment.water,
     };
+  } else if (c.type === "set_game") {
+    if (c.game)
+      validateGameProgramReferences(
+        c.game,
+        entities
+          .filter((entity) => entity.stage === "ready")
+          .map((entity) => entity.id),
+      );
+    game = c.game ?? undefined;
   } else if (c.type === "commit_revision") {
     messages = [...messages, { role: "assistant", text: c.message }];
   } else {
@@ -212,6 +248,15 @@ export function applyOperation(
     if (c.type === "remove_entity") {
       entities = entities.filter((e) => e.id !== c.id);
     } else {
+      if (
+        c.type === "set_geometry" &&
+        c.geometry.detail !== "refined" &&
+        game &&
+        collectGameProgramEntityIds(game).includes(c.id)
+      )
+        throw Error(
+          "Objects used by game rules require refined geometry. Replace the rules before using coarse geometry.",
+        );
       if (
         existing.assetPolicy === "new-only" &&
         c.assetPolicy === "catalog-allowed"
@@ -272,6 +317,7 @@ export function applyOperation(
     entities,
     environment,
     messages,
+    game,
     revision: project.revision + 1,
   };
   projectSchema.parse(next);
@@ -285,7 +331,7 @@ export function applyOperation(
   };
 }
 export function committed(project: Project, baseline?: Project): Project {
-  return {
+  const checkpoint: Project = {
     ...project,
     entities: project.entities.flatMap((e) =>
       e.stage === "ready"
@@ -297,4 +343,5 @@ export function committed(project: Project, baseline?: Project): Project {
           : [],
     ),
   };
+  return projectSchema.parse(checkpoint);
 }

@@ -237,7 +237,8 @@ export function enforceAssetPolicy(
     requireReplacementForCommit(project, context);
     return command;
   }
-  if (command.type === "set_environment") return command;
+  if (command.type === "set_environment" || command.type === "set_game")
+    return command;
 
   const entity = targetEntity(project, command.id);
   const targetNewOnly = targetIsNewOnly(context, command.id, entity);

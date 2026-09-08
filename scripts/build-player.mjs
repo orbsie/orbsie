@@ -52,6 +52,7 @@ const paths = [
   "src/lib/fixtures.ts",
   "src/lib/geometry.ts",
   "src/lib/gameplay.ts",
+  "src/lib/game-program.ts",
   "src/lib/render-budget.ts",
   "LICENSE",
 ];
