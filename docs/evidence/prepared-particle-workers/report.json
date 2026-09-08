@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "providerCalls": 0,
+  "results": [
+    {
+      "kind": "asset",
+      "positionCount": 2048,
+      "colorCount": 2048,
+      "float32": true,
+      "finite": true
+    },
+    {
+      "kind": "generated",
+      "positionCount": 2048,
+      "colorCount": 2048,
+      "float32": true,
+      "finite": true
+    }
+  ]
+}

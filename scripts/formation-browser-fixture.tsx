@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import { formationParticles } from "../src/lib/formation-particles";
+import {
+  formationParticles,
+  prepareFormationParticles,
+} from "../src/lib/formation-particles";
 /** Test-only renderer fixture; never imported by the app or standalone player. */
 import { capturePublicationThumbnail } from "../src/lib/publication-thumbnail";
 import { createRoot } from "react-dom/client";
@@ -128,6 +131,21 @@ let oldGeometries: unknown[];
         samples: 2048,
         milliseconds: times,
       };
+    });
+    prepareFormationParticles(dense);
+    const preparedTimes = [];
+    for (let repeat = 0; repeat < 5; repeat++) {
+      const started = performance.now();
+      const points = formationParticles(dense);
+      preparedTimes.push(performance.now() - started);
+      points.dispose();
+    }
+    results.push({
+      name: "dense-prepared-reuse",
+      vertices: dense.getAttribute("position").count,
+      triangles: dense.index!.count / 3,
+      samples: 2048,
+      milliseconds: preparedTimes,
     });
     dense.dispose();
     return {

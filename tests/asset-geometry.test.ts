@@ -48,8 +48,21 @@ describe("asynchronous catalog geometry loading", () => {
     const loaded = await loader.load(id);
     const position = loaded.geometry.getAttribute("position");
     const color = loaded.geometry.getAttribute("color");
+    const formationPosition = loaded.geometry.getAttribute("formationPosition");
+    const formationColor = loaded.geometry.getAttribute("formationColor");
     expect(position.count).toBeGreaterThan(0);
     expect(color.count).toBe(position.count);
+    expect(formationPosition.array).toBeInstanceOf(Float32Array);
+    expect(formationColor.array).toBeInstanceOf(Float32Array);
+    expect(formationPosition.count).toBeGreaterThan(0);
+    expect(formationPosition.count).toBeLessThanOrEqual(4096);
+    expect(formationColor.count).toBe(formationPosition.count);
+    expect(loaded.byteLength).toBe(
+      Object.values(loaded.geometry.attributes).reduce(
+        (total, attribute) => total + attribute.array.byteLength,
+        0,
+      ),
+    );
     expect(loaded.geometry.userData.sourceTransformsPreserved).toBe(true);
     expect(loaded.geometry.userData.sourceMaterialColorsPreserved).toBe(true);
 
@@ -103,6 +116,30 @@ describe("asynchronous catalog geometry loading", () => {
       const mesh = object as THREE.Mesh;
       if (mesh.isMesh) mesh.geometry.dispose();
     });
+  });
+
+  it("counts prepared formation attributes toward the geometry byte limit", async () => {
+    const id = "kenney.nature.tree-default" as const;
+    const baselineLoader = new AssetGeometryLoader({ fetchBytes: readerFor() });
+    const baseline = await baselineLoader.load(id);
+    const sampleBytes =
+      baseline.geometry.getAttribute("formationPosition").array.byteLength +
+      baseline.geometry.getAttribute("formationColor").array.byteLength;
+    const baseGeometryBytes = baseline.byteLength - sampleBytes;
+    expect(sampleBytes).toBeGreaterThan(0);
+    expect(baseGeometryBytes).toBeGreaterThan(0);
+
+    const limitedLoader = new AssetGeometryLoader({
+      fetchBytes: readerFor(),
+      maxGeometryBytes: baseGeometryBytes,
+    });
+    await expect(limitedLoader.load(id)).rejects.toMatchObject({
+      code: "too-large",
+    });
+
+    baseline.release();
+    baselineLoader.dispose();
+    limitedLoader.dispose();
   });
 
   it("shares bounded cache ownership and disposes after eviction or loader teardown", async () => {

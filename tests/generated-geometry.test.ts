@@ -74,10 +74,23 @@ it("loads an actual Blender GLB with world transforms and material colors", asyn
   const position = loaded.geometry.getAttribute("position");
   const normal = loaded.geometry.getAttribute("normal");
   const color = loaded.geometry.getAttribute("color");
+  const formationPosition = loaded.geometry.getAttribute("formationPosition");
+  const formationColor = loaded.geometry.getAttribute("formationColor");
   expect(calls).toEqual([actual.sha256]);
   expect(position.count).toBeGreaterThan(0);
   expect(normal.count).toBe(position.count);
   expect(color.count).toBe(position.count);
+  expect(formationPosition.array).toBeInstanceOf(Float32Array);
+  expect(formationColor.array).toBeInstanceOf(Float32Array);
+  expect(formationPosition.count).toBeGreaterThan(0);
+  expect(formationPosition.count).toBeLessThanOrEqual(4096);
+  expect(formationColor.count).toBe(formationPosition.count);
+  expect(loaded.byteLength).toBe(
+    Object.values(loaded.geometry.attributes).reduce(
+      (total, attribute) => total + attribute.array.byteLength,
+      0,
+    ),
+  );
   expect(loaded.geometry.userData.orbsieGeneratedHash).toBe(actual.sha256);
   expect(loaded.geometry.userData.sourceTransformsPreserved).toBe(true);
   expect(loaded.geometry.userData.sourceMaterialColorsPreserved).toBe(true);
@@ -155,6 +168,31 @@ it("loads an actual Blender GLB with world transforms and material colors", asyn
   });
   loaded.release();
   loader.dispose();
+});
+
+it("counts prepared formation attributes toward the geometry byte limit", async () => {
+  const baselineLoader = new GeneratedGeometryLoader({
+    resolveBytes: resolverFor(actual.glb),
+  });
+  const baseline = await baselineLoader.load(actual.sha256);
+  const sampleBytes =
+    baseline.geometry.getAttribute("formationPosition").array.byteLength +
+    baseline.geometry.getAttribute("formationColor").array.byteLength;
+  const baseGeometryBytes = baseline.byteLength - sampleBytes;
+  expect(sampleBytes).toBeGreaterThan(0);
+  expect(baseGeometryBytes).toBeGreaterThan(0);
+
+  const limitedLoader = new GeneratedGeometryLoader({
+    resolveBytes: resolverFor(actual.glb),
+    maxGeometryBytes: baseGeometryBytes,
+  });
+  await expect(limitedLoader.load(actual.sha256)).rejects.toMatchObject({
+    code: "too-large",
+  });
+
+  baseline.release();
+  baselineLoader.dispose();
+  limitedLoader.dispose();
 });
 
 it("reads the default IndexedDB model path and rejects content corruption", async () => {

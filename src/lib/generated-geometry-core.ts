@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { validateGeneratedGLB } from "./generated-glb";
 import { GeneratedGeometryError } from "./generated-geometry-error";
+import { prepareFormationParticles } from "./formation-particles";
 export function bytesOfGeometry(geometry: THREE.BufferGeometry): number {
   let bytes = 0;
   for (const attribute of Object.values(geometry.attributes)) {
@@ -208,6 +209,7 @@ function mergeSourceGeometry(
       );
     merged.computeBoundingBox();
     merged.computeBoundingSphere();
+    prepareFormationParticles(merged);
     const bytes = bytesOfGeometry(merged);
     if (bytes > maxGeometryBytes) {
       merged.dispose();

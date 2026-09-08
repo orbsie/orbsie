@@ -290,6 +290,12 @@ function Formation({
       for (let i = 0; i < colors.count; i++)
         colors.setXYZ(i, tint.r, tint.g, tint.b);
       colors.needsUpdate = true;
+      const sampledColors = source.getAttribute("formationColor");
+      if (sampledColors) {
+        for (let i = 0; i < sampledColors.count; i++)
+          sampledColors.setXYZ(i, tint.r, tint.g, tint.b);
+        sampledColors.needsUpdate = true;
+      }
     }
     if (!assetRecipe || asset?.geometry) {
       previousShape.current?.dispose();

@@ -188,6 +188,38 @@ export function formationParticles(
 ): THREE.BufferGeometry {
   const pointCount = boundedPointCount(maxPoints);
   if (pointCount === 0) return emptyFormationParticles();
+  const preparedPosition = geometry.getAttribute("formationPosition");
+  const preparedColor = geometry.getAttribute("formationColor");
+  if (
+    preparedPosition?.itemSize === 3 &&
+    preparedColor?.itemSize === 3 &&
+    preparedPosition.count > 0 &&
+    preparedPosition.count <= HARD_MAX_POINTS &&
+    preparedColor.count === preparedPosition.count &&
+    preparedPosition.array instanceof Float32Array &&
+    preparedColor.array instanceof Float32Array &&
+    preparedPosition.array.every(Number.isFinite) &&
+    preparedColor.array.every(Number.isFinite)
+  ) {
+    const count = Math.min(pointCount, preparedPosition.count);
+    const output = new THREE.BufferGeometry();
+    for (const [name, attribute] of [
+      ["position", preparedPosition],
+      ["color", preparedColor],
+      ["aFrom", preparedPosition],
+      ["aFromColor", preparedColor],
+    ] as const)
+      output.setAttribute(
+        name,
+        new THREE.Float32BufferAttribute(
+          attribute.array.slice(0, count * 3),
+          3,
+        ),
+      );
+    output.computeBoundingBox();
+    output.computeBoundingSphere();
+    return output;
+  }
   const triangles = collectTriangles(geometry);
   if (!triangles.length) return emptyFormationParticles();
 
@@ -247,4 +279,20 @@ export function formationParticles(
   output.computeBoundingBox();
   output.computeBoundingSphere();
   return output;
+}
+
+/** Run in the decode worker before accounting for cache/transfer byte limits. */
+export function prepareFormationParticles(
+  geometry: THREE.BufferGeometry,
+): void {
+  const particles = formationParticles(geometry);
+  geometry.setAttribute(
+    "formationPosition",
+    particles.getAttribute("position").clone(),
+  );
+  geometry.setAttribute(
+    "formationColor",
+    particles.getAttribute("color").clone(),
+  );
+  particles.dispose();
 }

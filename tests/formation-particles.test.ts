@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { formationParticles } from "../src/lib/formation-particles";
+import {
+  formationParticles,
+  prepareFormationParticles,
+} from "../src/lib/formation-particles";
 
 function triangleGeometry(): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
@@ -224,4 +227,19 @@ describe("formationParticles", () => {
     empty.dispose();
     geometry.dispose();
   });
+});
+
+it("reuses prepared surface attributes without traversing dense triangles", () => {
+  const geometry = new THREE.SphereGeometry(1, 32, 16);
+  prepareFormationParticles(geometry);
+  const expected = Array.from(geometry.getAttribute("formationPosition").array);
+  // An indexed source whose triangles cannot be read proves the prepared path.
+  geometry.index!.getX = () => {
+    throw Error("Unexpected main-thread triangle traversal");
+  };
+  const sampled = formationParticles(geometry);
+  expect(Array.from(sampled.getAttribute("position").array)).toEqual(expected);
+  expect(sampled.getAttribute("position").count).toBe(2048);
+  sampled.dispose();
+  geometry.dispose();
 });

@@ -8,6 +8,7 @@ import {
   type CatalogAsset,
 } from "./asset-catalog";
 import { AssetGeometryError } from "./asset-geometry-error";
+import { prepareFormationParticles } from "./formation-particles";
 
 /** Typed arrays are transferred to the editor thread without a JSON copy. */
 export type AssetGeometryArray =
@@ -295,6 +296,7 @@ function mergeSourceGeometry(
       );
     merged.computeBoundingBox();
     merged.computeBoundingSphere();
+    prepareFormationParticles(merged);
     const bytes = bytesOfGeometry(merged);
     if (bytes > maxGeometryBytes) {
       merged.dispose();
