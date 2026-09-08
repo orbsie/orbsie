@@ -5,6 +5,7 @@ Run the deterministic browser measurement against the fresh editor build:
 ```sh
 TEST_URL=http://localhost:3029 \
 ORBSIE_APP_SOURCE_COMMIT=f9967e2 \
+ORBSIE_REDUCED_MOTION=1 \
 node scripts/verify-input-feedback.mjs
 ```
 
@@ -15,3 +16,5 @@ The submit timestamp is captured by a document-level capture-phase listener befo
 `report.json` records the explicit app source commit (or `unverified` when the environment omits it), repository commit, browser/device/WebGL metadata, viewport, fixture request count, page and console errors, request failures, blocked off-origin traffic, entity count, and timing observations. `final.png` is one optional final editor screenshot. The fixture run makes no live model calls and does not establish production or normal-GPU performance.
 
 The reviewed run uses reduced motion and fallback fonts. It observed feedback at 32.6 ms and the next animation-frame callback at 94.8 ms, with one completed fixture request and no page/console errors. Astra added assertions for a trusted submit event, visible ancestors and viewport intersection, and required the next-frame observation to finish before reading it. These style/layout checks still do not establish pixel visibility or paint timing. The clock starts when the submit event is dispatched, not at physical input arrival. Normal-motion, varied-load and device measurements remain open. The transport's recorded `ERR_ABORTED` is retained despite successful completion; it is not hidden from the report.
+
+The harness now defaults to normal motion. Set `ORBSIE_REDUCED_MOTION=1` to reproduce this earlier reduced-motion run. Normal-motion evidence is stored separately in `../input-feedback-normal-motion/`.
