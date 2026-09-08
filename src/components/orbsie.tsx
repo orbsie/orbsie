@@ -39,6 +39,10 @@ import {
   type Publication,
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
+import {
+  readCompanionLink,
+  type GenerationConnection,
+} from "@/lib/generation-connection";
 import { committed } from "@/lib/protocol";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
@@ -49,7 +53,7 @@ const World = dynamic(() => import("./world"), {
     </div>
   ),
 });
-type Connection = { provider: string; model: string; key: string };
+type Connection = GenerationConnection;
 const tokenPrice = (value: number | null | undefined) =>
   value == null
     ? "—"
@@ -78,11 +82,16 @@ export default function Orbsie() {
   const [modal, setModal] = useState<"settings" | "share" | "account" | null>(
     null,
   );
-  const [connection, setConnection] = useState<Connection>({
+  const [connection, setConnectionState] = useState<Connection>({
     provider: "openrouter",
     model: "",
     key: "",
   });
+  const connectionVersion = useRef(0);
+  const setConnection = (next: Parameters<typeof setConnectionState>[0]) => {
+    connectionVersion.current++;
+    setConnectionState(next);
+  };
   const [trial, setTrial] = useState({ enabled: false, remaining: 0 });
   const refreshTrial = async () => {
     try {
@@ -102,6 +111,7 @@ export default function Orbsie() {
       return { enabled: false, remaining: 0 };
     }
   };
+  const pendingCompanion = useRef<ReturnType<typeof readCompanionLink>>(null);
   const [sheet, setSheet] = useState(true);
   const [shareUrl, setShareUrl] = useState("");
   const [modalError, setModalError] = useState("");
@@ -141,6 +151,7 @@ export default function Orbsie() {
     return () => inProject() && generation === accountGeneration.current;
   };
   const clearAccountState = () => {
+    connectionVersion.current++;
     accountGeneration.current++;
     setCloudBaseline(null);
     setCloudProjects([]);
@@ -199,6 +210,69 @@ export default function Orbsie() {
     else setCloudBaseline(null);
   };
   useEffect(() => {
+    const companionController = new AbortController();
+    const connectingVersion = connectionVersion.current;
+    try {
+      const link = pendingCompanion.current ?? readCompanionLink(location.hash);
+      if (link) {
+        pendingCompanion.current = link;
+        history.replaceState(null, "", location.pathname + location.search);
+        void fetch(`${link.url}/health`, {
+          headers: { Authorization: `Bearer ${link.token}` },
+          credentials: "omit",
+          mode: "cors",
+          redirect: "error",
+          cache: "no-store",
+          signal: AbortSignal.any([
+            companionController.signal,
+            AbortSignal.timeout(8000),
+          ]),
+        })
+          .then(async (response) => {
+            if (!response.ok) throw Error();
+            const health = await response.json();
+            if (
+              health.protocolVersion !== 1 ||
+              health.effort !== "low" ||
+              typeof health.model !== "string" ||
+              health.model.length > 150 ||
+              !["ready", "busy"].includes(health.status)
+            )
+              throw Error();
+            if (companionController.signal.aborted) return;
+            if (connectionVersion.current !== connectingVersion) {
+              pendingCompanion.current = null;
+              return;
+            }
+            pendingCompanion.current = null;
+            setConnection({
+              provider: "chatgpt-local",
+              model: health.model,
+              key: link.token,
+              url: link.url,
+            });
+            s.set({ notice: "ChatGPT is connected on this computer." });
+          })
+          .catch(() => {
+            if (
+              !companionController.signal.aborted &&
+              connectionVersion.current === connectingVersion
+            ) {
+              pendingCompanion.current = null;
+              s.set({
+                error:
+                  "Could not connect to local ChatGPT. Keep the companion running and open its new connection link.",
+              });
+            }
+          });
+      }
+    } catch {
+      history.replaceState(null, "", location.pathname + location.search);
+      s.set({
+        error:
+          "This local ChatGPT connection link is invalid. Open a new link from the companion.",
+      });
+    }
     void refreshTrial();
     const initialAccountGeneration = accountGeneration.current;
     if (location.hash.startsWith("#orb=")) {
@@ -233,6 +307,7 @@ export default function Orbsie() {
             .catch(() => {});
       })
       .catch(() => {});
+    return () => companionController.abort();
   }, []);
   useEffect(() => {
     chat.current?.scrollTo({
@@ -247,7 +322,12 @@ export default function Orbsie() {
     } else dialog.current?.close();
   }, [modal]);
   useEffect(() => {
-    if (!modal || modal !== "settings") return;
+    if (
+      !modal ||
+      modal !== "settings" ||
+      connection.provider === "chatgpt-local"
+    )
+      return;
     const controller = new AbortController();
     setModels([]);
     setModelSearch("");
@@ -337,11 +417,17 @@ export default function Orbsie() {
     submission.current.checking = true;
     const sequence = ++submission.current.sequence;
     const originalWorld = captureCloudRequest();
+    const selectedConnectionVersion = connectionVersion.current;
     try {
       let selectedConnection = connection;
       if (!connection.key.trim() || !connection.model) {
         const allowance = await refreshTrial();
-        if (!originalWorld() || textarea.current?.value !== text) return;
+        if (
+          !originalWorld() ||
+          textarea.current?.value !== text ||
+          connectionVersion.current !== selectedConnectionVersion
+        )
+          return;
         if (!allowance.enabled || allowance.remaining < 1) {
           setModal(user || !capabilities.accounts ? "settings" : "account");
           return;
@@ -360,6 +446,7 @@ export default function Orbsie() {
         if (
           quotaExceeded &&
           generationWorld() &&
+          connectionVersion.current === selectedConnectionVersion &&
           submission.current.sequence === sequence &&
           !textarea.current?.value
         ) {
@@ -780,9 +867,11 @@ export default function Orbsie() {
               >
                 <span className="mode-dot" />
                 {connection.key && connection.model
-                  ? connection.provider === "openrouter"
-                    ? "OpenRouter"
-                    : "AI Gateway"
+                  ? connection.provider === "chatgpt-local"
+                    ? "ChatGPT on this computer"
+                    : connection.provider === "openrouter"
+                      ? "OpenRouter"
+                      : "AI Gateway"
                   : trial.enabled && trial.remaining > 0
                     ? `${trial.remaining} free prompts`
                     : "Connect provider"}
@@ -989,168 +1078,193 @@ export default function Orbsie() {
                 <Sparkles />
               </span>
               <h2>A little creative power</h2>
-              <p>Connect your API key to create and edit your world.</p>
+              <p>
+                {connection.provider === "chatgpt-local"
+                  ? "Your ChatGPT account is connected through the companion on this computer."
+                  : "Connect your API key to create and edit your world."}
+              </p>
               {trial.enabled && trial.remaining > 0 && (
                 <button
                   className="primary full"
                   onClick={() => {
-                    setConnection({ ...connection, key: "" });
+                    setConnection({
+                      provider: "openrouter",
+                      model: "",
+                      key: "",
+                    });
                     setModal(null);
                   }}
                 >
                   Use {trial.remaining} free prompts
                 </button>
               )}
-              <label>
-                Provider
-                <select
-                  aria-label="Provider"
-                  value={connection.provider}
-                  onChange={(e) =>
-                    setConnection({
-                      ...connection,
-                      provider: e.target.value,
-                      model: "",
-                      key: "",
-                    })
-                  }
-                >
-                  <option value="openrouter">OpenRouter</option>
-                  <option value="gateway">Vercel AI Gateway</option>
-                </select>
-              </label>
-              <div
-                className="model-modes"
-                role="group"
-                aria-label="Creation quality"
-              >
-                {modelModes.map((mode) => {
-                  const available = models.some(
-                    (model) => model.id === mode.id,
-                  );
-                  return (
-                    <button
-                      key={mode.id}
-                      type="button"
-                      aria-pressed={connection.model === mode.id}
-                      disabled={!available}
-                      title={
-                        available
-                          ? mode.description
-                          : "Unavailable in this provider's catalog"
-                      }
-                      onClick={() =>
-                        setConnection({ ...connection, model: mode.id })
+              {connection.provider === "chatgpt-local" ? (
+                <p className="fine-print">
+                  ChatGPT · {connection.model} · Low reasoning. Keep the
+                  companion running. Reopen its connection link after refreshing
+                  this page.
+                </p>
+              ) : (
+                <>
+                  <label>
+                    Provider
+                    <select
+                      aria-label="Provider"
+                      value={connection.provider}
+                      onChange={(e) =>
+                        setConnection({
+                          ...connection,
+                          provider: e.target.value,
+                          model: "",
+                          key: "",
+                        })
                       }
                     >
-                      <strong>{mode.label}</strong>
-                    </button>
-                  );
-                })}
-              </div>
-              <details className="advanced-models">
-                <summary>Advanced</summary>
-                <p className="fine-print" id="model-ranking-note">
-                  Estimated 3D suitability, highest first. Ranking is a guide
-                  for Orbsie; unranked models lack comparable 3D evidence.{" "}
-                  <a
-                    className="model-ranking-source"
-                    href={modelRankingMetadata.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="gateway">Vercel AI Gateway</option>
+                    </select>
+                  </label>
+                  <div
+                    className="model-modes"
+                    role="group"
+                    aria-label="Creation quality"
                   >
-                    Ranking source
-                  </a>{" "}
-                  · {modelRankingMetadata.snapshotDate}
-                </p>
-                <label>
-                  Find a model
-                  <input
-                    type="search"
-                    value={modelSearch}
-                    onChange={(e) => setModelSearch(e.target.value)}
-                    placeholder="Search models"
-                  />
-                </label>
-                <p className="fine-print" id="model-pricing-note">
-                  Estimated USD / 1M tokens. — means unavailable. Actual
-                  provider charges can vary.
-                </p>
-                <div className="model-catalog-heading" aria-hidden="true">
-                  <span>Model</span>
-                  <span>Input</span>
-                  <span>Cached input</span>
-                  <span>Output</span>
-                </div>
-                <div
-                  className="model-catalog"
-                  role="group"
-                  aria-label="Advanced models"
-                  aria-describedby="model-ranking-note model-pricing-note"
-                >
-                  {visibleModels.map((model) => (
-                    <button
-                      key={model.id}
-                      type="button"
-                      className="model-catalog-row"
-                      aria-pressed={connection.model === model.id}
-                      data-model-id={model.id}
-                      onClick={() =>
-                        setConnection({ ...connection, model: model.id })
-                      }
+                    {modelModes.map((mode) => {
+                      const available = models.some(
+                        (model) => model.id === mode.id,
+                      );
+                      return (
+                        <button
+                          key={mode.id}
+                          type="button"
+                          aria-pressed={connection.model === mode.id}
+                          disabled={!available}
+                          title={
+                            available
+                              ? mode.description
+                              : "Unavailable in this provider's catalog"
+                          }
+                          onClick={() =>
+                            setConnection({ ...connection, model: mode.id })
+                          }
+                        >
+                          <strong>{mode.label}</strong>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <details className="advanced-models">
+                    <summary>Advanced</summary>
+                    <p className="fine-print" id="model-ranking-note">
+                      Estimated 3D suitability, highest first. Ranking is a
+                      guide for Orbsie; unranked models lack comparable 3D
+                      evidence.{" "}
+                      <a
+                        className="model-ranking-source"
+                        href={modelRankingMetadata.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Ranking source
+                      </a>{" "}
+                      · {modelRankingMetadata.snapshotDate}
+                    </p>
+                    <label>
+                      Find a model
+                      <input
+                        type="search"
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        placeholder="Search models"
+                      />
+                    </label>
+                    <p className="fine-print" id="model-pricing-note">
+                      Estimated USD / 1M tokens. — means unavailable. Actual
+                      provider charges can vary.
+                    </p>
+                    <div className="model-catalog-heading" aria-hidden="true">
+                      <span>Model</span>
+                      <span>Input</span>
+                      <span>Cached input</span>
+                      <span>Output</span>
+                    </div>
+                    <div
+                      className="model-catalog"
+                      role="group"
+                      aria-label="Advanced models"
+                      aria-describedby="model-ranking-note model-pricing-note"
                     >
-                      <span className="model-catalog-name">
-                        <span className="model-rank">
-                          {model.qualityRank == null ? "—" : model.qualityRank}
-                        </span>
-                        <span>
-                          <strong>{model.name}</strong>
-                          {model.qualityRank == null && <small>Unranked</small>}
-                        </span>
-                      </span>
-                      <span className="model-token-price">
-                        <span>Input</span>
-                        <strong>{tokenPrice(model.inputPrice)}</strong>
-                      </span>
-                      <span className="model-token-price">
-                        <span>Cached input</span>
-                        <strong>{tokenPrice(model.cachedInputPrice)}</strong>
-                      </span>
-                      <span className="model-token-price">
-                        <span>Output</span>
-                        <strong>{tokenPrice(model.outputPrice)}</strong>
-                      </span>
-                    </button>
-                  ))}
-                  {models.length > 0 && visibleModels.length === 0 && (
-                    <p className="fine-print" role="status">
-                      No models match your search.
-                    </p>
-                  )}
-                  {models.length === 0 && (
-                    <p className="fine-print" role="status">
-                      No models available yet.
-                    </p>
-                  )}
-                </div>
-              </details>
-              <label>
-                API key
-                <input
-                  type="password"
-                  autoComplete="off"
-                  value={connection.key}
-                  onChange={(e) =>
-                    setConnection({ ...connection, key: e.target.value })
-                  }
-                  placeholder="Kept in memory for this tab only"
-                />
-              </label>
-              <p className="fine-print">
-                Your key is sent through Orbsie to your selected provider and
-                kept only in this tab. Your world saves on this device. Sign in
-                when you're ready to publish.
-              </p>
+                      {visibleModels.map((model) => (
+                        <button
+                          key={model.id}
+                          type="button"
+                          className="model-catalog-row"
+                          aria-pressed={connection.model === model.id}
+                          data-model-id={model.id}
+                          onClick={() =>
+                            setConnection({ ...connection, model: model.id })
+                          }
+                        >
+                          <span className="model-catalog-name">
+                            <span className="model-rank">
+                              {model.qualityRank == null
+                                ? "—"
+                                : model.qualityRank}
+                            </span>
+                            <span>
+                              <strong>{model.name}</strong>
+                              {model.qualityRank == null && (
+                                <small>Unranked</small>
+                              )}
+                            </span>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Input</span>
+                            <strong>{tokenPrice(model.inputPrice)}</strong>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Cached input</span>
+                            <strong>
+                              {tokenPrice(model.cachedInputPrice)}
+                            </strong>
+                          </span>
+                          <span className="model-token-price">
+                            <span>Output</span>
+                            <strong>{tokenPrice(model.outputPrice)}</strong>
+                          </span>
+                        </button>
+                      ))}
+                      {models.length > 0 && visibleModels.length === 0 && (
+                        <p className="fine-print" role="status">
+                          No models match your search.
+                        </p>
+                      )}
+                      {models.length === 0 && (
+                        <p className="fine-print" role="status">
+                          No models available yet.
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                  <label>
+                    API key
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      value={connection.key}
+                      onChange={(e) =>
+                        setConnection({ ...connection, key: e.target.value })
+                      }
+                      placeholder="Kept in memory for this tab only"
+                    />
+                  </label>
+                  <p className="fine-print">
+                    Your key is sent through Orbsie to your selected provider
+                    and kept only in this tab. Your world saves on this device.
+                    Sign in when you're ready to publish.
+                  </p>
+                </>
+              )}
               <button
                 className="primary full"
                 disabled={!connection.key.trim() || !connection.model}
@@ -1163,15 +1277,22 @@ export default function Orbsie() {
                 <button
                   className="text-button"
                   onClick={() => {
-                    setConnection({ ...connection, key: "" });
+                    s.stop();
+                    setConnection({
+                      provider: "openrouter",
+                      model: "",
+                      key: "",
+                    });
                   }}
                 >
                   Disconnect and clear key
                 </button>
               )}
               <p className="fine-print">
-                ChatGPT subscription connection is being evaluated and is not
-                available in this build.
+                Use ChatGPT on this computer with the local companion: run{" "}
+                <code>node scripts/run-chatgpt-companion.mjs</code> from your
+                Orbsie checkout and open the connection link it prints. Your
+                ChatGPT sign-in stays with Codex on your computer.
               </p>
             </>
           )}
@@ -1410,7 +1531,11 @@ export default function Orbsie() {
                           throw Error("Sign-out failed. Please try again.");
                         clearAccountState();
                         setUser(null);
-                        setConnection({ ...connection, key: "" });
+                        setConnection({
+                          provider: "openrouter",
+                          model: "",
+                          key: "",
+                        });
                       } catch (e) {
                         setModalError(
                           e instanceof Error

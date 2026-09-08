@@ -1,4 +1,8 @@
 "use client";
+import {
+  generationRequest,
+  type GenerationConnection,
+} from "./generation-connection";
 import { create } from "zustand";
 import { get, update } from "idb-keyval";
 import {
@@ -65,10 +69,7 @@ interface State {
   readOnly: boolean;
   reset: number;
   set: (patch: Partial<State>) => void;
-  run: (
-    prompt: string,
-    connection?: { provider: string; model: string; key: string },
-  ) => Promise<void>;
+  run: (prompt: string, connection?: GenerationConnection) => Promise<void>;
   stop: () => void;
   undo: () => void;
   redo: () => void;
@@ -514,12 +515,12 @@ export const useOrb = create<State>((setState, getState) => ({
       await getState().save();
       if (signal.aborted || active !== controller) return;
       {
-        const response = await fetch("/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, project, selected, ...connection }),
-          signal,
+        const request = generationRequest(connection, {
+          prompt,
+          project,
+          selected,
         });
+        const response = await fetch(request.url, { ...request.init, signal });
         if (!response.ok) {
           const body = await response.json();
           if (active === controller && !signal.aborted)

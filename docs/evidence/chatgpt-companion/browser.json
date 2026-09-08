@@ -1,0 +1,11 @@
+{
+  "mode": "browser-with-mock-model-real-loopback-transport",
+  "passed": true,
+  "turns": 1,
+  "hostedGenerations": 0,
+  "realModelCalls": 0,
+  "hashRemoved": true,
+  "capabilityNotPersisted": true,
+  "disconnectVerified": true,
+  "delayedHandshakeAndAllowanceGuards": true
+}

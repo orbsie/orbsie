@@ -16,6 +16,7 @@ const paths = [
   "src/player/player.css",
   "src/components/world.tsx",
   "src/lib/store.ts",
+  "src/lib/generation-connection.ts",
   "src/lib/protocol.ts",
   "src/lib/fixtures.ts",
   "src/lib/geometry.ts",
