@@ -23,5 +23,310 @@
       "maxPositionError": 5.960464477539063e-8,
       "maxColorError": 0
     }
-  ]
+  ],
+  "realtime": {
+    "frames": 42,
+    "elapsedMs": 922,
+    "samples": [
+      {
+        "time": 9.300000000745058,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 14,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 30.600000001490116,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 48,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 64.30000000074506,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 80.69999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 97.60000000149012,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 114,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 131.30000000074506,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 147.80000000074506,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 164.19999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 181.19999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 197.69999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 214.10000000149012,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 231,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 247.5,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 264.3999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 280.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 297.30000000074506,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 314.69999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 330.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 347.80000000074506,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 364.19999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 380.69999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 397.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 414.1000000014901,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 431.19999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 447.6000000014901,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 464.19999999925494,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 481.1000000014901,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 497.6000000014901,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 513.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 530.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 547.3999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 569.8000000007451,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 615.3000000007451,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 695.6999999992549,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 701.1999999992549,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 781.6000000014901,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 797.5,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 865.8999999985099,
+        "bridges": 2,
+        "particles": 2,
+        "solids": 1,
+        "complete": false
+      },
+      {
+        "time": 922,
+        "bridges": 2,
+        "particles": 0,
+        "solids": 3,
+        "complete": true
+      }
+    ]
+  },
+  "recolor": {
+    "frames": 22,
+    "elapsedMs": 932.1000000014901,
+    "remainedSolid": true
+  }
 }

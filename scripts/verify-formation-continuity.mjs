@@ -96,6 +96,45 @@ try {
   assert.equal(png.readUInt32BE(20), 180);
   assert.ok(png.length < 200 * 1024);
   await writeFile(`${directory}/publication-thumbnail.png`, png);
+  const realtime = await page.evaluate(() =>
+    window.formationFixture.realtime(),
+  );
+  assert.ok(
+    realtime.some((sample) => sample.particles > 0 && !sample.complete),
+    "No real-time point phase observed",
+  );
+  assert.ok(
+    realtime.every(
+      (sample) => sample.complete || sample.particles === sample.bridges,
+    ),
+    "Point phase lost a bridge",
+  );
+  assert.ok(
+    realtime.every(
+      (sample) => sample.complete || sample.solids + sample.particles === 3,
+    ),
+    "Formation visibility overlap or gap",
+  );
+  const settled = realtime.at(-1);
+  assert.equal(settled.particles, 0);
+  assert.equal(settled.solids, 3);
+  report.realtime = {
+    frames: realtime.length,
+    elapsedMs: settled.time,
+    samples: realtime,
+  };
+  const recolor = await page.evaluate(() =>
+    window.formationFixture.realtime("#00aaaa"),
+  );
+  assert.ok(
+    recolor.every((sample) => sample.particles === 0 && sample.solids === 3),
+    "Recolor replaced solid geometry with points",
+  );
+  report.recolor = {
+    frames: recolor.length,
+    elapsedMs: recolor.at(-1).time,
+    remainedSolid: true,
+  };
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.externalRequests, []);
   assert.equal(report.samples.length, 3);

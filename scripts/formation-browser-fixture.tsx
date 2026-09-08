@@ -140,6 +140,67 @@ let oldGeometries: unknown[];
     render();
     return result;
   },
+  async realtime(tint?: string) {
+    const prior = meshes().map((mesh) => mesh.geometry);
+    const project = useOrb.getState().project;
+    useOrb.setState({
+      project: {
+        ...project,
+        revision: project.revision + 1,
+        entities: project.entities.map((entity) => ({
+          ...entity,
+          ...(tint ? { color: tint } : {}),
+          geometry: {
+            ...entity.geometry!,
+            detail: "coarse",
+            ...(tint ? { tint } : {}),
+          },
+        })),
+      },
+    });
+    state().setFrameloop("always");
+    const samples: {
+      time: number;
+      bridges: number;
+      particles: number;
+      solids: number;
+      complete: boolean;
+    }[] = [];
+    const started = performance.now();
+    await new Promise<void>((resolve, reject) => {
+      const observe = () => {
+        if (performance.now() - started > 5000)
+          return reject(Error("Real-time formation did not settle"));
+        const current = meshes();
+        if (current.every((mesh, index) => mesh.geometry !== prior[index])) {
+          let particles = 0;
+          state().scene.traverse((object: any) => {
+            if (
+              object.isPoints &&
+              object.material?.customProgramCacheKey?.() ===
+                "orbsie-formation-particles-v1" &&
+              object.visible
+            )
+              particles++;
+          });
+          const complete = current.every((mesh) => progress(mesh).value === 1);
+          samples.push({
+            time: performance.now() - started,
+            bridges: current.filter(
+              (mesh) => mesh.geometry.userData.particleBridge,
+            ).length,
+            particles,
+            solids: current.filter((mesh) => mesh.visible).length,
+            complete,
+          });
+          if (complete) return resolve();
+        }
+        requestAnimationFrame(observe);
+      };
+      requestAnimationFrame(observe);
+    });
+    return samples;
+  },
   frame(value: number) {
     for (const mesh of meshes()) progress(mesh).value = value;
     render();
