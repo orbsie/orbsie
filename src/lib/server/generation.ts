@@ -6,6 +6,47 @@ import {
 } from "../protocol";
 import { z } from "zod";
 import { isRecommendedModel } from "../model-modes";
+export class GenerationProviderError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+function providerFailure(status: number) {
+  const failures: Record<number, [number, string]> = {
+    400: [
+      400,
+      "The provider rejected this model or request. Check your model in Advanced.",
+    ],
+    401: [
+      401,
+      "The provider rejected your API key. Check your provider connection.",
+    ],
+    402: [
+      402,
+      "Your provider could not authorize payment. Check its credits and spending limits.",
+    ],
+    403: [
+      403,
+      "Your provider denied access to this model. Check the key permissions and provider settings.",
+    ],
+    404: [
+      400,
+      "This model is unavailable from your provider. Choose another model in Advanced.",
+    ],
+    429: [
+      429,
+      "Your provider is busy or rate limited. Wait a moment and retry.",
+    ],
+  };
+  const [code, message] = failures[status] ?? [
+    502,
+    "Your provider is temporarily unavailable. Please try again shortly.",
+  ];
+  return new GenerationProviderError(code, message);
+}
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
 export const systemPrompt = `You create playful, coherent 3D worlds for Orbsie. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. Then send set_geometry coarse and refined as separate commands. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. Never include code, URLs, credentials, scripts, or external assets. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message. You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
 export async function generateCommands({
@@ -59,15 +100,7 @@ export async function generateCommands({
   });
   if (!response.ok) {
     await response.body?.cancel();
-    throw Error(
-      response.status === 401
-        ? "The API key was rejected. Check your connection."
-        : response.status === 402
-          ? "Your provider has no available credits."
-          : response.status === 429
-            ? "Your provider is busy or rate limited. Wait a moment and retry."
-            : `The provider could not generate this world (${response.status}).`,
-    );
+    throw providerFailure(response.status);
   }
   return new ReadableStream({
     async start(controller) {

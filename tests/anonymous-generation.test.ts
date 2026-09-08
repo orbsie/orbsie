@@ -78,3 +78,29 @@ it("still requires an Orbsie account before publication", async () => {
   expect(authCheck).toHaveBeenCalledOnce();
   expect(provider).not.toHaveBeenCalled();
 });
+
+for (const [upstream, status, message] of [
+  [401, 401, "API key"],
+  [402, 402, "payment"],
+  [403, 403, "access"],
+  [404, 400, "model"],
+  [429, 429, "rate limited"],
+  [503, 502, "unavailable"],
+] as const) {
+  it(`preserves an actionable safe provider failure for HTTP ${upstream}`, async () => {
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          JSON.stringify({ error: { message: "private upstream diagnostic" } }),
+          { status: upstream },
+        ),
+    );
+    const response = await generate(request(input()));
+    expect(response.status).toBe(status);
+    const body = await response.json();
+    expect(body.error).toContain(message);
+    expect(body.error).not.toContain("private upstream diagnostic");
+    expect(authCheck).not.toHaveBeenCalled();
+  });
+}

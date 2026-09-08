@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { projectSchema } from "@/lib/protocol";
-import { generateCommands } from "@/lib/server/generation";
+import {
+  generateCommands,
+  GenerationProviderError,
+} from "@/lib/server/generation";
 import {
   checkOrigin,
   boundedJSON,
@@ -35,6 +38,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (e) {
+    if (e instanceof GenerationProviderError)
+      return apiError(new HttpError(e.status, e.message));
     return apiError(e);
   }
 }
