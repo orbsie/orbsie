@@ -200,11 +200,15 @@ Rendering, physics, geometry preparation, camera control, previews, thumbnails, 
 
 Implementation sequence and completion gates:
 
+Delivery contract: local rendering is the default for every asset source. The optional Blender companion is a downloadable client installation; it must include its verified runtime so users do not need to install or configure Blender separately. Background construction must work without opening Blender's desktop interface. A developer machine's existing Blender installation or an unpruned packaging prototype does not satisfy the shipped-runtime gate.
+
 1. Keep generated assets rendering on the browser's GPU. Move expensive decoding and geometry preparation off the UI thread where supported, and measure frame responsiveness while background construction runs.
 2. Build and validate the bounded, data-only modeling protocol and isolated Blender executor. Cover custom meshes, extrusions, surfaces of revolution and multipart models; validate exported geometry and resource limits before loading it into the scene.
 3. Package the smallest verified runtime with an installer, version/capability handshake, integrity checks and required license/source materials. Record download size, installed size, cold start and peak memory; publish a supported-platform matrix based on actual installation tests.
 4. Connect LLM modeling requests to the local job queue, show real progress and cancellation, and atomically replace previews only after a result passes validation. Preserve the previous usable model on failure. Persist the resulting GLB and provenance through reload, scoped edits, export and publication.
 5. Run the complete real-provider flow on the packaged runtime, including a request that explicitly forbids catalog reuse. Astra reviews worker changes and the acceptance evidence before marking any gate complete; Luna can implement independent executor, packaging and integration tasks in parallel.
+
+Record a repeatable baseline on declared test hardware: idle editor versus active modeling, frame-time percentiles, input latency, peak CPU/RAM/GPU memory where measurable, job duration, cancellation latency, download and installed size. Set explicit budgets from these measurements before release, and demonstrate that camera movement, selection and editing remain usable during construction. Keep runtime packaging, local rendering, background modeling, persistence/publication and responsiveness as separate tracked acceptance gates.
 
 Organize code around clear modules: app shell, planet/transition, formation renderer, scene runtime, protocol/reducer, generation adapters, persistence, export, and publishing. The runtime and project schema must be reusable in standalone game exports.
 
