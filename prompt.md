@@ -198,6 +198,14 @@ Rendering, physics, geometry preparation, camera control, previews, thumbnails, 
 - Prefer a useful mix of catalog reuse, immediate procedural geometry and locally built Blender models. Explicit requests for new models override catalog reuse. If the local builder is unavailable, show that capability honestly and retain the supported browser generation path; do not imply a Blender job ran or silently replace an explicitly requested Blender workflow.
 - Acceptance requires a real LLM-to-local-Blender-to-browser scene/edit/export round trip, installation and restart checks on each declared supported platform, cancellation/failure recovery, isolation tests, and measured editor responsiveness during background construction. Downloading Blender or rendering a prebuilt fixture alone does not satisfy this requirement.
 
+Implementation sequence and completion gates:
+
+1. Keep generated assets rendering on the browser's GPU. Move expensive decoding and geometry preparation off the UI thread where supported, and measure frame responsiveness while background construction runs.
+2. Build and validate the bounded, data-only modeling protocol and isolated Blender executor. Cover custom meshes, extrusions, surfaces of revolution and multipart models; validate exported geometry and resource limits before loading it into the scene.
+3. Package the smallest verified runtime with an installer, version/capability handshake, integrity checks and required license/source materials. Record download size, installed size, cold start and peak memory; publish a supported-platform matrix based on actual installation tests.
+4. Connect LLM modeling requests to the local job queue, show real progress and cancellation, and atomically replace previews only after a result passes validation. Preserve the previous usable model on failure. Persist the resulting GLB and provenance through reload, scoped edits, export and publication.
+5. Run the complete real-provider flow on the packaged runtime, including a request that explicitly forbids catalog reuse. Astra reviews worker changes and the acceptance evidence before marking any gate complete; Luna can implement independent executor, packaging and integration tasks in parallel.
+
 Organize code around clear modules: app shell, planet/transition, formation renderer, scene runtime, protocol/reducer, generation adapters, persistence, export, and publishing. The runtime and project schema must be reusable in standalone game exports.
 
 Three.js supports geometry attributes and morph targets; manage geometry lifecycles carefully rather than mutating already-rendered morph data indiscriminately. [Three.js BufferGeometry](https://threejs.org/docs/pages/BufferGeometry.html).
