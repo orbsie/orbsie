@@ -207,8 +207,12 @@ targets. Missing, changed and extra entries fail validation. Hashing uses fixed
 regenerated from the pinned archive; they are not silently accepted. The
 manifest remains mutable local metadata, so replacing both files and metadata
 is outside this consistency check's protection. The current
-package still depends on host glibc, X11 and related Linux libraries, and its
-1.6 GiB prototype footprint is not a minimal distribution.
+package still depends on host glibc, X11 and related Linux libraries. Preserving
+contained library symlinks reduced the latest measured package from 1.70 GB to
+1.32 GB, including removal of transient probe files. Relative link relocation
+passed real startup/restart and all 15 runtime/modeling tests after moving the
+assembled application directory. This remains a prototype, not a minimal or
+portable distribution; see `docs/evidence/packaged-companion/relocation.json`.
 The package includes Blender license notices and records the official source,
 release index, license and build links. A future distributable companion must
 reproduce the package from a pinned source artifact, publish the corresponding

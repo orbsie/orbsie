@@ -1,6 +1,10 @@
 import {
+  lstatSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
+  readlinkSync,
+  renameSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -88,6 +92,78 @@ describe("Blender packaging path boundaries", () => {
           containmentRoot: root,
         }),
       ).toThrow(/escapes/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("relocates contained links and preserves them through a bundle move", () => {
+    const root = mkdtempSync(join(tmpdir(), "orbsie-relocated-links-"));
+    const source = join(root, "source");
+    const destination = join(root, "destination");
+    const moved = join(root, "moved");
+    mkdirSync(source, { recursive: true });
+    writeFileSync(join(source, "target.txt"), "contained\n");
+    symlinkSync("target.txt", join(source, "relative"));
+    symlinkSync(join(source, "target.txt"), join(source, "absolute"));
+    try {
+      copyDirectory(source, destination, {
+        containmentRoot: source,
+        relocateSymlinks: true,
+      });
+
+      expect(lstatSync(join(destination, "relative")).isSymbolicLink()).toBe(
+        true,
+      );
+      expect(lstatSync(join(destination, "absolute")).isSymbolicLink()).toBe(
+        true,
+      );
+      expect(readlinkSync(join(destination, "relative"))).toBe("target.txt");
+      expect(readlinkSync(join(destination, "absolute"))).toBe("target.txt");
+
+      // A package may be moved as a unit; no link may point back to the
+      // temporary extraction directory.
+      rmSync(moved, { recursive: true, force: true });
+      renameSync(destination, moved);
+      expect(readFileSync(join(moved, "relative"), "utf8")).toBe("contained\n");
+      expect(readFileSync(join(moved, "absolute"), "utf8")).toBe("contained\n");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects escaped, dangling, and ancestor-cycle links during relocation", () => {
+    const root = mkdtempSync(join(tmpdir(), "orbsie-relocated-link-errors-"));
+    const source = join(root, "source");
+    const outside = join(root, "outside.txt");
+    mkdirSync(source, { recursive: true });
+    writeFileSync(outside, "outside\n");
+    try {
+      symlinkSync(outside, join(source, "escape"));
+      expect(() =>
+        copyDirectory(source, join(root, "escape-destination"), {
+          containmentRoot: source,
+          relocateSymlinks: true,
+        }),
+      ).toThrow(/escapes/);
+
+      rmSync(join(source, "escape"));
+      symlinkSync("missing.txt", join(source, "dangling"));
+      expect(() =>
+        copyDirectory(source, join(root, "dangling-destination"), {
+          containmentRoot: source,
+          relocateSymlinks: true,
+        }),
+      ).toThrow(/unresolvable/);
+
+      rmSync(join(source, "dangling"));
+      symlinkSync(".", join(source, "cycle"));
+      expect(() =>
+        copyDirectory(source, join(root, "cycle-destination"), {
+          containmentRoot: source,
+          relocateSymlinks: true,
+        }),
+      ).toThrow(/cyclic/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

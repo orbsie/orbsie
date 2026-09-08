@@ -3,29 +3,28 @@ import { spawn } from "node:child_process";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
 import assert from "node:assert/strict";
 
-if (process.argv.length !== 3 || !process.env.ORBSIE_BLENDER_RUNTIME_DIR)
-  throw Error(
-    "Set ORBSIE_BLENDER_RUNTIME_DIR and pass the packaged companion.mjs path.",
-  );
+if (process.argv.length !== 3)
+  throw Error("Pass the packaged companion.mjs path.");
 const entry = resolve(process.argv[2]);
+const runtimeOverride = process.env.ORBSIE_BLENDER_RUNTIME_DIR?.trim();
+const runtime = runtimeOverride
+  ? resolve(runtimeOverride)
+  : join(dirname(entry), "runtime");
 const cwd = await mkdtemp(join(tmpdir(), "orbsie-companion-lifecycle-"));
 const origin = "http://127.0.0.1:3017";
 const report = {
   scope:
     "Real local packaged companion preflight, restart and authorization; no inference",
   checks: [],
+  runtimeResolution: runtimeOverride ? "explicit-override" : "beside-launcher",
   launcherSha256: createHash("sha256")
     .update(await readFile(entry))
     .digest("hex"),
   runtimeManifestSha256: createHash("sha256")
-    .update(
-      await readFile(
-        join(process.env.ORBSIE_BLENDER_RUNTIME_DIR, "manifest.json"),
-      ),
-    )
+    .update(await readFile(join(runtime, "manifest.json")))
     .digest("hex"),
 };
 let child;
@@ -45,9 +44,7 @@ async function launch() {
     env: {
       PATH: process.env.PATH,
       ORBSIE_ORIGIN: origin,
-      ORBSIE_BLENDER_RUNTIME_DIR: resolve(
-        process.env.ORBSIE_BLENDER_RUNTIME_DIR,
-      ),
+      ...(runtimeOverride ? { ORBSIE_BLENDER_RUNTIME_DIR: runtime } : {}),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

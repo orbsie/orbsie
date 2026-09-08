@@ -24,6 +24,7 @@ import {
   realpathSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
@@ -301,11 +302,21 @@ function extractOfficialArchive(archive) {
 export function copyDirectory(
   source,
   destination,
-  { dereference = false, containmentRoot = source, active = new Set() } = {},
+  {
+    dereference = false,
+    relocateSymlinks = false,
+    containmentRoot = source,
+    sourceRoot = source,
+    destinationRoot = destination,
+    active = new Set(),
+  } = {},
 ) {
   const canonicalRoot = realpathSync(containmentRoot);
   const canonicalSource = realpathSync(source);
+  const canonicalSourceRoot = realpathSync(sourceRoot);
+  const resolvedDestinationRoot = resolve(destinationRoot);
   assertContainedPath(canonicalRoot, canonicalSource, "source path");
+  assertContainedPath(canonicalRoot, canonicalSourceRoot, "source root");
   if (active.has(canonicalSource))
     fail(`cyclic source symlink or directory: ${source}`);
   active.add(canonicalSource);
@@ -333,14 +344,28 @@ export function copyDirectory(
           copyDirectory(resolved, destinationPath, {
             dereference: true,
             containmentRoot: canonicalRoot,
+            sourceRoot: canonicalSourceRoot,
+            destinationRoot: resolvedDestinationRoot,
             active,
           });
         else if (dereference) copyFile(resolved, destinationPath);
-        else cpSync(sourcePath, destinationPath, { dereference: false });
+        else if (relocateSymlinks) {
+          const target = relocateContainedSymlink({
+            sourceRoot: canonicalSourceRoot,
+            destinationRoot: resolvedDestinationRoot,
+            sourcePath,
+            destinationPath,
+            target: readlinkSync(sourcePath),
+          });
+          symlinkSync(target, destinationPath);
+        } else cpSync(sourcePath, destinationPath, { dereference: false });
       } else if (entry.isDirectory()) {
         copyDirectory(sourcePath, destinationPath, {
           dereference,
+          relocateSymlinks,
           containmentRoot: canonicalRoot,
+          sourceRoot: canonicalSourceRoot,
+          destinationRoot: resolvedDestinationRoot,
           active,
         });
       } else if (entry.isFile()) {
@@ -357,6 +382,66 @@ export function copyDirectory(
   } finally {
     active.delete(canonicalSource);
   }
+}
+
+/**
+ * Relocate a symlink while copying a source tree to a different destination.
+ * The archive may contain absolute links, so preserving the literal target
+ * would point back at the temporary extraction directory. Every target must
+ * be both lexically and canonically contained in the copied source root; the
+ * returned relative link then remains valid if the completed bundle moves.
+ */
+export function relocateContainedSymlink({
+  sourceRoot,
+  destinationRoot,
+  sourcePath,
+  destinationPath,
+  target,
+}) {
+  const canonicalSourceRoot = realpathSync(sourceRoot);
+  const canonicalSourcePath = resolve(sourcePath);
+  assertContainedPath(
+    canonicalSourceRoot,
+    canonicalSourcePath,
+    "source symlink",
+  );
+  const lexicalTarget = assertArchiveLinkTarget(
+    canonicalSourceRoot,
+    canonicalSourcePath,
+    target,
+  );
+  const resolvedTarget = realpathSync(canonicalSourcePath);
+  assertContainedPath(
+    canonicalSourceRoot,
+    resolvedTarget,
+    "source symlink target",
+  );
+  assertContainedPath(
+    canonicalSourceRoot,
+    lexicalTarget,
+    "source symlink target",
+  );
+
+  // A symlink to an ancestor directory would reproduce a source-tree cycle
+  // in the relocated bundle. Reject it before writing the destination link.
+  if (
+    lstatSync(resolvedTarget).isDirectory() &&
+    isPathContained(resolvedTarget, canonicalSourcePath)
+  )
+    fail(`cyclic source symlink or directory: ${sourcePath}`);
+
+  const destinationTarget = join(
+    resolve(destinationRoot),
+    relative(canonicalSourceRoot, lexicalTarget),
+  );
+  const relocatedTarget =
+    relative(dirname(destinationPath), destinationTarget) || ".";
+  assertContainedPath(
+    resolve(destinationRoot),
+    resolve(dirname(destinationPath), relocatedTarget),
+    "relocated symlink target",
+  );
+  return relocatedTarget;
 }
 
 function copyFile(source, destination, mode = undefined) {
@@ -675,13 +760,18 @@ function main() {
   const bundle = options.output;
   copyFile(options.blender, join(bundle, "bin/blender"), 0o755);
   copyDirectory(options.data, join(bundle, "share/blender"), {
-    dereference: Boolean(extracted),
-    containmentRoot: extracted ? extracted.root : options.data,
+    // The release tarball contains many internal links. Preserve them and
+    // rewrite absolute targets against the relocated bundle tree instead of
+    // inflating the package by copying each target's bytes again.
+    dereference: false,
+    relocateSymlinks: Boolean(extracted),
+    containmentRoot: extracted ? extracted.data : options.data,
   });
   if (runtimeLib)
     copyDirectory(runtimeLib, join(bundle, "lib"), {
-      dereference: true,
-      containmentRoot: extracted ? extracted.root : runtimeLib,
+      dereference: false,
+      relocateSymlinks: Boolean(extracted),
+      containmentRoot: runtimeLib,
     });
   let distInfo = null;
   if (options.numpy) {

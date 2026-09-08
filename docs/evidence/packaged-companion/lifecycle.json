@@ -3,7 +3,7 @@
   "checks": [
     {
       "name": "preflight-startup",
-      "milliseconds": 2279
+      "milliseconds": 1862
     },
     {
       "name": "authenticated-health-and-clean-shutdown",
@@ -11,14 +11,15 @@
     },
     {
       "name": "preflight-startup",
-      "milliseconds": 2326
+      "milliseconds": 1893
     },
     {
       "name": "restart-rotates-capability-and-rejects-old-token",
       "passed": true
     }
   ],
-  "launcherSha256": "efd55e71bea0517de1097eab36c29bfc08187ee03b083be62d983c6b274d317f",
-  "runtimeManifestSha256": "bc46998db5f1e31e023fa327f4ca85735ed7fbc8a0ec1df9293c5e850e43c07a",
+  "runtimeResolution": "beside-launcher",
+  "launcherSha256": "f6255c8172a56023390febe2bcf274ed6bf8805a76a4490923df83834e938db4",
+  "runtimeManifestSha256": "995bbf086d0d7bdc3cc8043033013a3a958315b7eb81b9a9c751ef310a8680ff",
   "status": "passed"
 }
