@@ -1,3 +1,4 @@
+import { cpus, platform, release, totalmem } from "node:os";
 import { chromium } from "@playwright/test";
 import { build } from "esbuild";
 import { mkdtemp, writeFile, rm, mkdir } from "node:fs/promises";
@@ -8,6 +9,7 @@ import { pathToFileURL } from "node:url";
 // Fixture-only shared playback: no generation requests or model calls.
 const url = process.env.TEST_URL ?? "http://localhost:3001";
 const output = process.env.PERF_OUTPUT ?? "/tmp/orbsie-render";
+const recording = process.env.PERF_RECORD_VIDEO !== "0";
 await mkdir(output, { recursive: true });
 const temp = await mkdtemp(join(tmpdir(), "orbsie-perf-"));
 await build({
@@ -34,7 +36,9 @@ const browser = await chromium.launch({
 const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   deviceScaleFactor: Number(process.env.PERF_DPR ?? 1),
-  recordVideo: { dir: output, size: { width: 1440, height: 1000 } },
+  ...(recording
+    ? { recordVideo: { dir: output, size: { width: 1440, height: 1000 } } }
+    : {}),
 });
 const page = await context.newPage();
 const errors = [];
@@ -64,6 +68,7 @@ const measurements = await page.evaluate(
             medianMs: intervals[120],
             p95Ms: intervals[228],
             samples: intervals.length,
+            sortedFrameIntervalsMs: intervals,
             canvas: { width: canvas.width, height: canvas.height },
             devicePixelRatio,
             renderer: debug
@@ -78,10 +83,22 @@ const measurements = await page.evaluate(
 );
 await page.screenshot({ path: join(output, "playback.png") });
 const report = {
+  checkedAt: new Date().toISOString(),
+  sourceCommit: process.env.ORBSIE_APP_SOURCE_COMMIT ?? "unverified",
+  buildMode: process.env.ORBSIE_BUILD_MODE ?? "unverified",
+  host: {
+    platform: platform(),
+    release: release(),
+    cpu: cpus()[0]?.model ?? "unknown",
+    logicalCpus: cpus().length,
+    memoryBytes: totalmem(),
+  },
+  scope:
+    "Fixed 14-entity fixture frame scheduling; not native-GPU certification",
   url,
   fixtureEntities: 14,
   viewport: { width: 1440, height: 1000 },
-  recording: true,
+  recording,
   ...measurements,
   errors,
 };

@@ -39,3 +39,16 @@ TEST_URL=http://localhost:3007 PERF_OUTPUT=/tmp/orbsie-render-after node scripts
 - Before/after fixture playback had no page errors and used no generation calls.
 - The standalone source allowlist now includes `src/lib/render-budget.ts`; root must regenerate the player runtime/source artifacts during integration.
 - Webpack's generated `next-env.d.ts` development-path change is local server output and is restored before commit. The worktree's local `node_modules` symlink is not an artifact to ship.
+
+## Current production-build observations — 2026-09-08
+
+Source `f9967e2` was built in production mode and tested at 1440×1000 with the same 14-entity fixture, an 18-second warmup and 240 frame intervals. The host is Linux 6.8.0-139-generic, AMD EPYC 9124, 32 logical CPUs and about 64 GiB RAM. Chromium 153 reports SwiftShader, not the physical GPU. The two fixture browser runs were serialized.
+
+| Capture mode | Median | p95 | Backing canvas |
+|---|---:|---:|---|
+| Video recording | 49.9 ms | 83.2 ms | 1080×750 |
+| No video recording | 33.4 ms | 50.1 ms | 1080×750 |
+
+The unrecorded sample is approximately 30 fps at the median, with slower tail frames. These single observations show why recording state must be reported; they do not establish sustained 30 fps, normal-laptop 60 fps, a controlled statistical improvement or native-GPU acceptance. The geometry and visual quality were not reduced for these checks. Both runs had no page errors and submitted no generation request. The recorded scene screenshot was visually inspected.
+
+Raw sorted intervals, browser/device information and screenshots are checked in under `docs/evidence/render-performance-current/` and `docs/evidence/render-performance-no-recording/`. Use `ORBSIE_BUILD_MODE=production ORBSIE_APP_SOURCE_COMMIT=<tested-source> PERF_RECORD_VIDEO=0` with the measurement command to run without capture. `PERF_RECORD_VIDEO` defaults to recording for compatibility with prior runs.
