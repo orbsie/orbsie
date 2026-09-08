@@ -68,6 +68,7 @@ function generatedFiles(
     { file: "project.json", data: JSON.stringify(project) },
     { file: "runtime.js", data: "console.log('runtime');" },
     { file: "runtime.css", data: "body{}" },
+    { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
     {
       file: `models/generated/${metadata.sha256}.glb`,
       data: model,
@@ -124,6 +125,18 @@ describe("generated publication artifacts", () => {
     const value = deployment(generatedFiles());
     installFetch(value.responses);
     await expect(verify(value)).resolves.toBeUndefined();
+  });
+
+  it("requires the geometry worker in new publication manifests", () => {
+    expect(() =>
+      makePublicationManifest(
+        "orb",
+        2,
+        generatedFiles().filter(
+          (file) => file.file !== "generated-geometry-worker.js",
+        ),
+      ),
+    ).toThrow(/missing.*geometry worker/);
   });
 
   it("rejects incomplete generated projects before creating a manifest", () => {
@@ -208,10 +221,12 @@ describe("generated publication artifacts", () => {
       },
       { file: "runtime.js", data: "console.log('legacy');" },
       { file: "runtime.css", data: "body{}" },
+      { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
     ];
     const modern = deployment(files);
     const legacyManifest = JSON.stringify({
       ...modern.artifact.manifest,
+      files: modern.artifact.manifest.files.slice(0, 4),
       version: 1,
     });
     modern.responses.set(

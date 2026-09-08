@@ -2,13 +2,23 @@ import { build } from "esbuild";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 await mkdir("public/player", { recursive: true });
 await build({
+  entryPoints: ["src/lib/generated-geometry-worker.ts"],
+  bundle: true,
+  minify: true,
+  format: "esm",
+  outfile: "public/player/generated-geometry-worker.js",
+});
+await build({
   entryPoints: ["src/player/main.tsx"],
   bundle: true,
   minify: true,
   jsx: "automatic",
   format: "esm",
   outfile: "public/player/runtime.js",
-  define: { "process.env.NODE_ENV": '"production"' },
+  define: {
+    "process.env.NODE_ENV": '"production"',
+    ORBSIE_STANDALONE_WORKER: JSON.stringify("./generated-geometry-worker.js"),
+  },
   alias: { "@": "./src" },
 });
 const paths = [
@@ -24,6 +34,10 @@ const paths = [
   "src/lib/cloud-generated-models.ts",
   "src/lib/generated-glb.ts",
   "src/lib/generated-geometry.ts",
+  "src/lib/generated-geometry-core.ts",
+  "src/lib/generated-geometry-error.ts",
+  "src/lib/generated-geometry-queue.ts",
+  "src/lib/generated-geometry-worker.ts",
   "src/lib/use-generated-geometry.ts",
   "src/lib/asset-catalog.ts",
   "src/lib/asset-policy.ts",
@@ -41,5 +55,5 @@ const paths = [
 const sources = {};
 for (const path of paths) sources[path] = await readFile(path, "utf8");
 sources["build-source.mjs"] =
-  `import {build} from 'esbuild';await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,jsx:'automatic',format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"'},alias:{'@':'./src'}});`;
+  `import {build} from 'esbuild';await build({entryPoints:['src/lib/generated-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'generated-geometry-worker.js'});await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,jsx:'automatic',format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"',ORBSIE_STANDALONE_WORKER:JSON.stringify('./generated-geometry-worker.js')},alias:{'@':'./src'}});`;
 await writeFile("public/player/source.json", JSON.stringify(sources));

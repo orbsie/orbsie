@@ -1,0 +1,21 @@
+{
+  "scope": "Existing real Astra-generated vase snapshot played using current standalone runtime and geometry worker; no new inference. Screenshot requires visual inspection.",
+  "results": [
+    {
+      "error": null,
+      "hash": "f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4",
+      "vertices": 3024
+    }
+  ],
+  "responses": [
+    {
+      "path": "/models/generated/f78108643e2ef106bb22c6e2d80e4033b9c5b05506a1771107d16c75b6add3c4.glb",
+      "status": 200
+    },
+    {
+      "path": "/generated-geometry-worker.js",
+      "status": 200
+    }
+  ],
+  "errors": []
+}

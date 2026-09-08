@@ -1,0 +1,22 @@
+{
+  "target": "http://127.0.0.1:3021",
+  "fixture": "docs/evidence/local-modeling/model.glb",
+  "elapsedMs": 57.100000001490116,
+  "mainThreadTicks": 5,
+  "vertices": 354,
+  "box": {
+    "isBox3": true,
+    "min": {
+      "x": -0.699999988079071,
+      "y": 0,
+      "z": -0.699999988079071
+    },
+    "max": {
+      "x": 2,
+      "y": 2.299999952316284,
+      "z": 0.699999988079071
+    }
+  },
+  "hash": "eacfa6805a0223f12db810489c967ad9681e68f9025ebe415d734c680a882d04",
+  "scope": "Single real browser worker decode; not a workload performance benchmark."
+}

@@ -5,6 +5,7 @@ const config: NextConfig = {
     "/api/publish": [
       "./public/player/runtime.js",
       "./public/player/runtime.css",
+      "./public/player/generated-geometry-worker.js",
       "./public/models/**/*.glb",
       "./assets/catalog/licenses/**/*",
     ],

@@ -179,6 +179,30 @@ converts to Blender coordinates and exports Y-up GLB results. Input budgets,
 process limits, cancellation and output validation apply before results can be
 accepted by the editor.
 
+For the packaged-runtime prototype, set `ORBSIE_BLENDER_RUNTIME_DIR` to the
+root produced by `scripts/package-blender-runtime.mjs`, for example
+`/tmp/orbsie-blender-runtime-official-4.0.2`. The runner verifies the
+`orbsie.blender-runtime/v1` manifest, official-release provenance and pinned
+4.0.2 archive digest, executable SHA-256, executable capability fields, bundled
+Python and NumPy paths, clean-environment probe, and bundled GPL notice before
+starting a job. Bubblewrap mounts that root read-only at
+`/opt/orbsie-blender-runtime`, selects its `share/blender/python` and native
+`lib` directories explicitly, and does not use the host NumPy path. The
+system-install path remains the default when this variable is unset.
+
+The manifest check establishes consistency with the package metadata generated
+by the local packaging probe; it is not a signature, full extracted-tree
+measurement, or a supply-chain trust anchor. The executable digest is checked,
+but the manifest, resource files, native libraries and license files remain
+mutable local files under the configured runtime directory. The current
+package still depends on host glibc, X11 and related Linux libraries, and its
+1.6 GiB prototype footprint is not a minimal distribution.
+The package includes Blender license notices and records the official source,
+release index, license and build links. A future distributable companion must
+reproduce the package from a pinned source artifact, publish the corresponding
+source/build offer required by Blender's GPL terms, audit every bundled
+dependency license, and run this check on each supported platform.
+
 `src/lib/generated-glb.ts` checks the static, untextured triangle subset before
 loading: complete chunks, internal buffer ranges, accessor allocation budgets,
 indices, node graphs and unsupported resource/extension rejection.

@@ -39,6 +39,7 @@ function artifactFiles(projectData = project()) {
     { file: "project.json", data: projectData },
     { file: "runtime.js", data: "console.log('runtime');" },
     { file: "runtime.css", data: "body{margin:0}" },
+    { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
   ] as const;
 }
 
@@ -213,7 +214,7 @@ it("continues to verify historical four-file publication manifests", async () =>
     version: 1,
     projectId: "orb",
     revision: 2,
-    files: deployment.artifact.manifest.files,
+    files: deployment.artifact.manifest.files.slice(0, 4),
   });
   deployment.responses.set(
     PUBLICATION_MANIFEST_FILE,
@@ -527,6 +528,7 @@ it("rejects an oversized publication asset before producing a manifest", () => {
       { file: "project.json", data: project() },
       { file: "runtime.js", data: oversized },
       { file: "runtime.css", data: "style" },
+      { file: "generated-geometry-worker.js", data: "self.onmessage=()=>{}" },
     ]),
   ).toThrow("runtime.js is larger than the publication verification limit.");
 });

@@ -1,38 +1,17 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { GeneratedGeometryError } from "./generated-geometry-error";
+export { GeneratedGeometryError } from "./generated-geometry-error";
+import { prepareGeneratedGeometry } from "./generated-geometry-queue";
+
 import {
   MAX_GENERATED_MODEL_BYTES,
   readGeneratedModel,
 } from "./generated-models";
-import { validateGeneratedGLB } from "./generated-glb";
 
 const DEFAULT_MAX_CACHE_ENTRIES = 10;
 const DEFAULT_MAX_CACHE_BYTES = 12 * 1024 * 1024;
 const DEFAULT_MAX_GEOMETRY_BYTES = 24 * 1024 * 1024;
 const DEFAULT_MAX_VERTICES = 100_000;
-
-export class GeneratedGeometryError extends Error {
-  readonly code:
-    | "invalid-hash"
-    | "fetch-failed"
-    | "too-large"
-    | "parse-failed"
-    | "empty-geometry"
-    | "integrity-failed"
-    | "aborted"
-    | "disposed";
-
-  constructor(
-    code: GeneratedGeometryError["code"],
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "GeneratedGeometryError";
-    this.code = code;
-  }
-}
 
 /** Trusted application-owned bytes lookup keyed only by the validated hash. */
 export type GeneratedBytesResolver = (
@@ -116,242 +95,6 @@ function positiveBound(value: number, name: string): number {
   return Math.floor(value);
 }
 
-function bytesOfGeometry(geometry: THREE.BufferGeometry): number {
-  let bytes = 0;
-  for (const attribute of Object.values(geometry.attributes)) {
-    const array = attribute.array as ArrayBufferView;
-    bytes += array.byteLength;
-  }
-  if (geometry.index) bytes += geometry.index.array.byteLength;
-  return bytes;
-}
-
-function disposeObjectResources(root: THREE.Object3D): void {
-  root.traverse((object) => {
-    const mesh = object as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    mesh.geometry?.dispose();
-    const materials = Array.isArray(mesh.material)
-      ? mesh.material
-      : mesh.material
-        ? [mesh.material]
-        : [];
-    for (const material of materials) {
-      for (const value of Object.values(material)) {
-        if (
-          value &&
-          typeof value === "object" &&
-          (value as THREE.Texture).isTexture
-        )
-          (value as THREE.Texture).dispose();
-      }
-      material.dispose();
-    }
-  });
-}
-
-function cloneAttributeRange(
-  attribute: THREE.BufferAttribute,
-  start: number,
-  count: number,
-): THREE.BufferAttribute {
-  if (
-    "isInterleavedBufferAttribute" in attribute &&
-    attribute.isInterleavedBufferAttribute
-  )
-    throw new GeneratedGeometryError(
-      "parse-failed",
-      "Interleaved generated attributes are not supported by formation geometry.",
-    );
-  const itemSize = attribute.itemSize;
-  const values = attribute.array.slice(
-    start * itemSize,
-    (start + count) * itemSize,
-  ) as typeof attribute.array;
-  return new THREE.BufferAttribute(values, itemSize, attribute.normalized);
-}
-
-function asNonIndexedPart(
-  source: THREE.BufferGeometry,
-  start = 0,
-  count = source.index?.count ?? source.getAttribute("position")?.count ?? 0,
-): THREE.BufferGeometry {
-  const nonIndexed = source.index ? source.toNonIndexed() : source.clone();
-  const part = new THREE.BufferGeometry();
-  try {
-    for (const [name, attribute] of Object.entries(nonIndexed.attributes))
-      part.setAttribute(
-        name,
-        cloneAttributeRange(attribute as THREE.BufferAttribute, start, count),
-      );
-    return part;
-  } catch (error) {
-    part.dispose();
-    throw error;
-  } finally {
-    nonIndexed.dispose();
-  }
-}
-
-function materialColor(material: THREE.Material | undefined): THREE.Color {
-  const color = material && "color" in material ? material.color : undefined;
-  return color instanceof THREE.Color
-    ? color.clone()
-    : new THREE.Color(0xffffff);
-}
-
-function addVertexColors(
-  geometry: THREE.BufferGeometry,
-  material: THREE.Material | undefined,
-): void {
-  const position = geometry.getAttribute("position");
-  if (!position)
-    throw new GeneratedGeometryError(
-      "empty-geometry",
-      "Generated mesh has no position attribute.",
-    );
-  const source = geometry.getAttribute("color");
-  const color = materialColor(material);
-  const colors = new Float32Array(position.count * 3);
-  for (let index = 0; index < position.count; index++) {
-    if (source) {
-      colors[index * 3] = color.r * source.getX(index);
-      colors[index * 3 + 1] = color.g * source.getY(index);
-      colors[index * 3 + 2] = color.b * source.getZ(index);
-    } else {
-      colors[index * 3] = color.r;
-      colors[index * 3 + 1] = color.g;
-      colors[index * 3 + 2] = color.b;
-    }
-  }
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-}
-
-function sourceParts(mesh: THREE.Mesh): THREE.BufferGeometry[] {
-  const source = mesh.geometry;
-  const materials: THREE.Material[] = Array.isArray(mesh.material)
-    ? mesh.material
-    : [mesh.material];
-  const position = source.getAttribute("position");
-  if (!position)
-    throw new GeneratedGeometryError(
-      "empty-geometry",
-      "Generated mesh has no position attribute.",
-    );
-  const groups = source.groups.length
-    ? source.groups
-    : [
-        {
-          start: 0,
-          count: source.index?.count ?? position.count,
-          materialIndex: 0,
-        },
-      ];
-  const parts: THREE.BufferGeometry[] = [];
-  try {
-    for (const group of groups) {
-      const part = asNonIndexedPart(source, group.start, group.count);
-      for (const name of [
-        "uv",
-        "uv1",
-        "uv2",
-        "tangent",
-        "skinIndex",
-        "skinWeight",
-      ])
-        part.deleteAttribute(name);
-      if (!part.getAttribute("normal")) part.computeVertexNormals();
-      addVertexColors(
-        part,
-        materials[group.materialIndex ?? 0] ?? materials[0],
-      );
-      part.applyMatrix4(mesh.matrixWorld);
-      parts.push(part);
-    }
-    return parts;
-  } catch (error) {
-    parts.forEach((part) => part.dispose());
-    throw error;
-  }
-}
-
-function mergeSourceGeometry(
-  gltf: { scene: THREE.Group },
-  hash: string,
-  maxVertices: number,
-  maxGeometryBytes: number,
-): THREE.BufferGeometry {
-  gltf.scene.updateMatrixWorld(true);
-  const parts: THREE.BufferGeometry[] = [];
-  let vertices = 0;
-  let merged: THREE.BufferGeometry | undefined;
-  try {
-    gltf.scene.traverse((object) => {
-      const mesh = object as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      if ((mesh as THREE.SkinnedMesh).isSkinnedMesh)
-        throw new GeneratedGeometryError(
-          "parse-failed",
-          "Generated geometry cannot contain a skinned mesh.",
-        );
-      const meshParts = sourceParts(mesh);
-      vertices += meshParts.reduce(
-        (total, part) => total + part.getAttribute("position").count,
-        0,
-      );
-      if (vertices > maxVertices) {
-        meshParts.forEach((part) => part.dispose());
-        throw new GeneratedGeometryError(
-          "too-large",
-          `Generated geometry exceeds the ${maxVertices.toLocaleString()} vertex limit.`,
-        );
-      }
-      parts.push(...meshParts);
-    });
-    if (!parts.length)
-      throw new GeneratedGeometryError(
-        "empty-geometry",
-        "Generated GLB contains no mesh geometry.",
-      );
-    merged = mergeGeometries(parts, false);
-    if (!merged)
-      throw new GeneratedGeometryError(
-        "parse-failed",
-        "Could not merge generated GLB geometry.",
-      );
-    merged.computeBoundingBox();
-    merged.computeBoundingSphere();
-    const bytes = bytesOfGeometry(merged);
-    if (bytes > maxGeometryBytes) {
-      merged.dispose();
-      throw new GeneratedGeometryError(
-        "too-large",
-        `Generated geometry exceeds the ${maxGeometryBytes} byte limit.`,
-      );
-    }
-    merged.userData.orbsieGeneratedHash = hash;
-    merged.userData.sourceTransformsPreserved = true;
-    merged.userData.sourceMaterialColorsPreserved = true;
-    return merged;
-  } finally {
-    parts.forEach((part) => part.dispose());
-  }
-}
-
-async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  if (!globalThis.crypto?.subtle)
-    throw new GeneratedGeometryError(
-      "integrity-failed",
-      "This runtime cannot verify generated model integrity.",
-    );
-  const copy = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(copy).set(bytes);
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
-  return [...new Uint8Array(digest)]
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 function raceAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   if (!signal) return promise;
   if (signal.aborted) return Promise.reject(abortError());
@@ -379,7 +122,7 @@ export class GeneratedGeometryLoader {
   readonly #maxCacheBytes: number;
   readonly #maxGeometryBytes: number;
   readonly #maxVertices: number;
-  readonly #resolveBytes: GeneratedBytesResolver;
+  readonly #resolveBytes: GeneratedBytesResolver | undefined;
   readonly #cache = new Map<string, GeometryEntry>();
   readonly #pending = new Map<string, PendingEntry>();
   readonly #ephemeral = new Set<GeometryEntry>();
@@ -406,12 +149,9 @@ export class GeneratedGeometryLoader {
     );
     this.#resolveBytes =
       options.resolveBytes ??
-      (async (hash, signal) => {
-        throwIfAborted(signal);
-        const model = await readGeneratedModel(hash);
-        throwIfAborted(signal);
-        return model.glb;
-      });
+      (typeof window === "undefined"
+        ? async (hash) => (await readGeneratedModel(hash)).glb
+        : undefined);
   }
 
   get stats(): GeneratedGeometryCacheStats {
@@ -514,13 +254,12 @@ export class GeneratedGeometryLoader {
 
   #start(pending: PendingEntry): Promise<GeometryEntry> {
     const promise = (async () => {
-      let gltf: { scene: THREE.Group } | undefined;
       let geometry: THREE.BufferGeometry | undefined;
       let transferred = false;
       try {
-        let raw: ArrayBuffer | Uint8Array;
+        let raw: ArrayBuffer | Uint8Array | undefined;
         try {
-          raw = await this.#resolveBytes(
+          raw = await this.#resolveBytes?.(
             pending.hash,
             pending.controller.signal,
           );
@@ -538,56 +277,36 @@ export class GeneratedGeometryLoader {
           );
         }
         throwIfAborted(pending.controller.signal);
-        if (!(raw instanceof ArrayBuffer) && !(raw instanceof Uint8Array))
+        if (
+          (raw !== undefined || this.#resolveBytes !== undefined) &&
+          !(raw instanceof ArrayBuffer) &&
+          !(raw instanceof Uint8Array)
+        )
           throw new GeneratedGeometryError(
             "fetch-failed",
             "The generated model resolver returned invalid bytes.",
           );
-        const bytes = new Uint8Array(raw);
-        if (bytes.byteLength > MAX_GENERATED_MODEL_BYTES)
+        const bytes = raw === undefined ? undefined : new Uint8Array(raw);
+        if (bytes && bytes.byteLength > MAX_GENERATED_MODEL_BYTES)
           throw new GeneratedGeometryError(
             "too-large",
             `Generated model exceeds the ${MAX_GENERATED_MODEL_BYTES} byte limit.`,
           );
-        if ((await sha256Hex(bytes)) !== pending.hash)
-          throw new GeneratedGeometryError(
-            "integrity-failed",
-            "Generated model content does not match its requested hash.",
-          );
-        try {
-          validateGeneratedGLB(bytes);
-        } catch (error) {
-          throw new GeneratedGeometryError(
-            "parse-failed",
-            "Generated model GLB validation failed.",
-            { cause: error },
-          );
-        }
-        throwIfAborted(pending.controller.signal);
-        try {
-          const loader = new GLTFLoader();
-          const parseBuffer = new ArrayBuffer(bytes.byteLength);
-          new Uint8Array(parseBuffer).set(bytes);
-          gltf = await loader.parseAsync(parseBuffer, "");
-        } catch (error) {
-          if (error instanceof GeneratedGeometryError) throw error;
-          throw new GeneratedGeometryError(
-            "parse-failed",
-            "Could not parse generated model GLB.",
-            { cause: error },
-          );
-        }
-        geometry = mergeSourceGeometry(
-          gltf,
+        geometry = await prepareGeneratedGeometry(
+          bytes,
           pending.hash,
           this.#maxVertices,
           this.#maxGeometryBytes,
+          pending.controller.signal,
         );
         throwIfAborted(pending.controller.signal);
         const entry: GeometryEntry = {
           hash: pending.hash,
           geometry,
-          byteLength: bytesOfGeometry(geometry),
+          byteLength: Object.values(geometry.attributes).reduce(
+            (n, a) => n + a.array.byteLength,
+            0,
+          ),
           cached: false,
           refs: 0,
           released: false,
@@ -608,7 +327,7 @@ export class GeneratedGeometryLoader {
         pending.done = true;
         if (this.#pending.get(pending.hash) === pending)
           this.#pending.delete(pending.hash);
-        if (gltf) disposeObjectResources(gltf.scene);
+
         if (!transferred) geometry?.dispose();
       }
     })();

@@ -23,7 +23,9 @@ export const PUBLICATION_USED_ASSETS_FILE = "assets/catalog/used-assets.json";
 export const PUBLICATION_GENERATED_MODEL_MANIFEST =
   "models/generated/manifest.json";
 
-const MANIFEST_VERSION = 2;
+export const PUBLICATION_GEOMETRY_WORKER = "generated-geometry-worker.js";
+const MANIFEST_VERSION = 3;
+const ASSET_MANIFEST_VERSION = 2;
 const LEGACY_MANIFEST_VERSION = 1;
 const MAX_MANIFEST_BYTES = 64 * 1024;
 const MAX_ARTIFACT_BYTES = 2 * 1024 * 1024;
@@ -39,7 +41,10 @@ export type PublicationFile = {
   data: string | Uint8Array;
 };
 export type PublicationManifest = {
-  version: typeof MANIFEST_VERSION | typeof LEGACY_MANIFEST_VERSION;
+  version:
+    | typeof MANIFEST_VERSION
+    | typeof ASSET_MANIFEST_VERSION
+    | typeof LEGACY_MANIFEST_VERSION;
   projectId: string;
   revision: number;
   files: Array<{
@@ -92,6 +97,7 @@ export function isKnownPublicationPath(value: string): boolean {
   if (!isSafePublicationPath(value)) return false;
   return (
     (PUBLICATION_ARTIFACT_PATHS as readonly string[]).includes(value) ||
+    value === PUBLICATION_GEOMETRY_WORKER ||
     value === PUBLICATION_USED_ASSETS_FILE ||
     value === PUBLICATION_GENERATED_MODEL_MANIFEST ||
     GENERATED_MODEL_PATH.test(value) ||
@@ -114,6 +120,7 @@ const manifestSchema = z
   .object({
     version: z.union([
       z.literal(LEGACY_MANIFEST_VERSION),
+      z.literal(ASSET_MANIFEST_VERSION),
       z.literal(MANIFEST_VERSION),
     ]),
     projectId: z.string().min(1).max(80),
@@ -340,6 +347,8 @@ export function makePublicationManifest(
       "Publication files must contain the immutable runtime set and only known local catalog paths.",
     );
   }
+  if (!files.some((file) => file.file === PUBLICATION_GEOMETRY_WORKER))
+    throw new Error("Publication is missing its generated geometry worker.");
   const projectFile = files.find((file) => file.file === "project.json");
   if (!projectFile)
     throw new Error("Publication files must contain project.json.");
@@ -541,6 +550,13 @@ function parseManifest(bytes: Uint8Array): PublicationManifest {
       "The public deployment manifest is invalid.",
     );
   const files = parsed.data.files;
+  if (
+    parsed.data.version === MANIFEST_VERSION &&
+    !files.some((file) => file.file === PUBLICATION_GEOMETRY_WORKER)
+  )
+    throw new PublicationVerificationError(
+      "The public deployment is missing its generated geometry worker.",
+    );
   if (
     files.length < PUBLICATION_ARTIFACT_PATHS.length ||
     files.some(

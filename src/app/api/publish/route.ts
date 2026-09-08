@@ -154,6 +154,13 @@ export async function POST(request: Request) {
         ),
       },
     ];
+    files.push({
+      file: "generated-geometry-worker.js",
+      data: await readFile(
+        process.cwd() + "/public/player/generated-geometry-worker.js",
+        "utf8",
+      ),
+    });
     const catalogFiles = await bundleCatalogAssets(snapshot, async (path) => {
       if (path.startsWith("models/"))
         return new Uint8Array(

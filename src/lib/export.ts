@@ -45,12 +45,13 @@ export async function exportWorld(project: Project) {
     throw Error(
       "This world has an unfinished generated model. Finish modeling before exporting it.",
     );
-  const [js, css, source] = await Promise.all([
+  const [js, css, source, worker] = await Promise.all([
     fetch("/player/runtime.js"),
     fetch("/player/runtime.css"),
     fetch("/player/source.json"),
+    fetch("/player/generated-geometry-worker.js"),
   ]);
-  if (!js.ok || !css.ok || !source.ok)
+  if (!js.ok || !css.ok || !source.ok || !worker.ok)
     throw Error(
       "The standalone runtime is not ready. Please try again after deployment.",
     );
@@ -60,6 +61,7 @@ export async function exportWorld(project: Project) {
       JSON.stringify({ ...committed(project), messages: [] }, null, 2),
     ),
     "runtime.js": new Uint8Array(await js.arrayBuffer()),
+    "generated-geometry-worker.js": new Uint8Array(await worker.arrayBuffer()),
     "runtime.css": strToU8(await css.text()),
     "package.json": strToU8(
       JSON.stringify(

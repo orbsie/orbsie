@@ -13,9 +13,12 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { modelingJobSchema, type ModelingJob } from "../src/lib/modeling";
 import { generatedGLBBounds } from "../src/lib/generated-glb";
+import {
+  BLENDER_RUNTIME_MOUNT,
+  resolveBlenderRuntime,
+  type BlenderRuntime,
+} from "./blender-runtime";
 
-const BLENDER = process.env.ORBSIE_BLENDER_PATH || "/usr/bin/blender";
-const BWRAP = process.env.ORBSIE_BWRAP_PATH || "/usr/bin/bwrap";
 const TIMEOUT_SECONDS = 30;
 const CPU_SECONDS = 20;
 const MEMORY_BYTES = 2 * 1024 * 1024 * 1024;
@@ -101,29 +104,23 @@ function assertFiniteVector(
     throw new Error(`Blender returned invalid ${label} bounds.`);
 }
 
-function findNumpyPath() {
-  const candidate =
-    process.env.ORBSIE_BLENDER_NUMPY_PATH ||
-    join(
-      process.env.HOME || "/home/probe",
-      ".local/lib/python3.12/site-packages/numpy",
-    );
-  if (!existsSync(candidate))
-    throw new Error(
-      `Blender's GLB exporter needs numpy at a pinned local path (${candidate} was not found).`,
-    );
-  return candidate;
-}
-
-function buildBubblewrapArgs(workdir: string, numpyPath: string) {
-  const numpySite = dirname(numpyPath);
+function buildBubblewrapArgs(workdir: string, runtime: BlenderRuntime) {
+  const numpyPath = runtime.numpyPath;
+  const numpySite = runtime.numpySite;
   const numpyLibs = join(numpySite, "numpy.libs");
   const homeRoot = process.env.HOME || dirname(dirname(dirname(numpySite)));
   const homeRelative = relative("/home", homeRoot);
-  if (homeRelative.startsWith("..") || homeRelative.includes("/"))
+  if (
+    runtime.kind === "system" &&
+    (homeRelative.startsWith("..") || homeRelative.includes("/"))
+  )
     throw new Error(
       `NumPy path must be under /home for isolated Blender jobs.`,
     );
+  const blenderPath =
+    runtime.kind === "packaged"
+      ? `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.blenderPath)}`
+      : runtime.blenderPath;
   const args = [
     "--die-with-parent",
     "--new-session",
@@ -171,22 +168,6 @@ function buildBubblewrapArgs(workdir: string, numpyPath: string) {
     "/home",
     "--dir",
     "/home/probe",
-    "--dir",
-    homeRoot,
-    "--dir",
-    join(homeRoot, ".local"),
-    "--dir",
-    join(homeRoot, ".local/lib"),
-    "--dir",
-    join(homeRoot, ".local/lib/python3.12"),
-    "--dir",
-    join(homeRoot, ".local/lib/python3.12/site-packages"),
-    "--dir",
-    numpySite,
-    "--ro-bind",
-    numpyPath,
-    numpyPath,
-    ...(existsSync(numpyLibs) ? ["--ro-bind", numpyLibs, numpyLibs] : []),
     "--bind",
     workdir,
     "/work",
@@ -212,7 +193,9 @@ function buildBubblewrapArgs(workdir: string, numpyPath: string) {
     "/home/probe/extensions",
     "--setenv",
     "PYTHONPATH",
-    numpySite,
+    runtime.kind === "packaged"
+      ? `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.numpySite)}`
+      : numpySite,
     "--setenv",
     "PYTHONUNBUFFERED",
     "1",
@@ -234,7 +217,48 @@ function buildBubblewrapArgs(workdir: string, numpyPath: string) {
     "--setenv",
     "LC_ALL",
     "C.UTF-8",
-    BLENDER,
+    ...(runtime.kind === "packaged"
+      ? [
+          "--dir",
+          "/opt",
+          "--ro-bind",
+          runtime.root!,
+          BLENDER_RUNTIME_MOUNT,
+          "--setenv",
+          "BLENDER_SYSTEM_RESOURCES",
+          `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.resourcePath!)}`,
+          "--setenv",
+          "BLENDER_SYSTEM_DATAFILES",
+          `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.resourcePath!)}/datafiles`,
+          "--setenv",
+          "BLENDER_SYSTEM_SCRIPTS",
+          `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.resourcePath!)}/scripts`,
+          "--setenv",
+          "BLENDER_SYSTEM_PYTHON",
+          `${BLENDER_RUNTIME_MOUNT}/${relative(runtime.root!, runtime.resourcePath!)}/python`,
+          "--setenv",
+          "LD_LIBRARY_PATH",
+          `${BLENDER_RUNTIME_MOUNT}/lib`,
+        ]
+      : [
+          "--dir",
+          homeRoot,
+          "--dir",
+          join(homeRoot, ".local"),
+          "--dir",
+          join(homeRoot, ".local/lib"),
+          "--dir",
+          join(homeRoot, ".local/lib/python3.12"),
+          "--dir",
+          join(homeRoot, ".local/lib/python3.12/site-packages"),
+          "--dir",
+          numpySite,
+          "--ro-bind",
+          numpyPath,
+          numpyPath,
+          ...(existsSync(numpyLibs) ? ["--ro-bind", numpyLibs, numpyLibs] : []),
+        ]),
+    blenderPath,
     "--background",
     "--factory-startup",
     "--disable-autoexec",
@@ -261,13 +285,18 @@ function runIsolated(
   workdir: string,
   onProgress: BlenderModelingOptions["onProgress"],
   signal?: AbortSignal,
+  runtime: BlenderRuntime = resolveBlenderRuntime(),
 ) {
   return new Promise<{
     code: number | null;
     output: string;
     cancelled: boolean;
   }>((resolve, reject) => {
-    const numpyPath = findNumpyPath();
+    const bwrap = process.env.ORBSIE_BWRAP_PATH || "/usr/bin/bwrap";
+    if (!existsSync(bwrap)) {
+      reject(new Error(`bubblewrap was not found at ${bwrap}.`));
+      return;
+    }
     const child = spawn(
       "/usr/bin/timeout",
       [
@@ -281,8 +310,8 @@ function runIsolated(
         `--fsize=${PROCESS_FILE_BYTES}`,
         `--nproc=${PROCESS_LIMIT}`,
         "--",
-        BWRAP,
-        ...buildBubblewrapArgs(workdir, numpyPath),
+        bwrap,
+        ...buildBubblewrapArgs(workdir, runtime),
       ],
       { cwd: workdir, detached: true, stdio: ["ignore", "pipe", "pipe"] },
     );
@@ -465,11 +494,8 @@ export async function runBlenderModelingJob(
     throw new Error(
       "The isolated Blender companion currently supports Linux only.",
     );
-  if (!existsSync(BLENDER))
-    throw new Error(`Blender was not found at ${BLENDER}.`);
-  if (!existsSync(BWRAP))
-    throw new Error(`bubblewrap was not found at ${BWRAP}.`);
   if (options.signal?.aborted) throw new BlenderModelingAbortError();
+  const runtime = resolveBlenderRuntime();
   const job = modelingJobSchema.parse(input);
   const jobData = Buffer.from(JSON.stringify(job));
   if (jobData.byteLength > INPUT_BYTES)
@@ -498,6 +524,7 @@ export async function runBlenderModelingJob(
       workdir,
       options.onProgress,
       options.signal,
+      runtime,
     );
     if (processResult.cancelled || options.signal?.aborted)
       throw new BlenderModelingAbortError();
