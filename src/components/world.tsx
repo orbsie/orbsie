@@ -61,8 +61,8 @@ const reduced = () => {
   motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
   return motionPreference.matches;
 };
-function AdaptiveResolution() {
-  const { size, setDpr } = useThree();
+function AdaptiveResolution({ onChange }: { onChange: (dpr: number) => void }) {
+  const { size } = useThree();
   const budget = useRef<RenderBudget | null>(null);
   useEffect(() => {
     const maximum = maximumRenderDpr(
@@ -71,14 +71,14 @@ function AdaptiveResolution() {
       window.devicePixelRatio,
     );
     budget.current = new RenderBudget(maximum);
-    setDpr(maximum);
-  }, [size.width, size.height, setDpr]);
+    onChange(maximum);
+  }, [size.width, size.height, onChange]);
   useFrame((_, dt) => {
     const next = budget.current?.sample(
       dt,
       document.visibilityState === "visible",
     );
-    if (next !== undefined) setDpr(next);
+    if (next !== undefined) onChange(next);
   });
   return null;
 }
@@ -926,12 +926,15 @@ export default function World({
   onError,
 }: { onReady?: () => void; onError?: (message: string) => void } = {}) {
   const [rendererFailed, setRendererFailed] = useState(false);
+  // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
+  // adaptation so typing and scene revisions cannot restore full resolution.
+  const [renderDpr, setRenderDpr] = useState(1);
   if (rendererFailed) return onError ? null : <Unavailable />;
   return (
     <Boundary onError={onError}>
       <Canvas
         shadows={{ type: THREE.PCFShadowMap }}
-        dpr={[1, 1.5]}
+        dpr={renderDpr}
         camera={{ position: [0, 1.8, 10.4], fov: 43, near: 0.1, far: 250 }}
         gl={(defaults) => {
           try {
@@ -955,7 +958,7 @@ export default function World({
             useOrb.getState().set({ selected: undefined });
         }}
       >
-        <AdaptiveResolution />
+        <AdaptiveResolution onChange={setRenderDpr} />
         <Scene onReady={onReady} />
       </Canvas>
     </Boundary>

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "scope": "Artificial slow-frame stimulus verifies actual Canvas resolution survives typing and selection; this is not a performance benchmark.",
+  "pageErrors": [],
+  "initial": {
+    "width": 1280,
+    "height": 800
+  },
+  "adapted": {
+    "width": 960,
+    "height": 600
+  },
+  "afterTyping": {
+    "width": 960,
+    "height": 600
+  },
+  "afterSelection": {
+    "width": 960,
+    "height": 600
+  }
+}
