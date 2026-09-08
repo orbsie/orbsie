@@ -7,16 +7,19 @@
   "samples": [
     {
       "family": "tree",
+      "particleBridge": true,
       "maxPositionError": 5.817413351039136e-8,
       "maxColorError": 0
     },
     {
       "family": "platform",
+      "particleBridge": false,
       "maxPositionError": 2.9563903880536202e-8,
       "maxColorError": 0
     },
     {
       "family": "arch",
+      "particleBridge": true,
       "maxPositionError": 5.960464477539063e-8,
       "maxColorError": 0
     }

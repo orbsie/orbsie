@@ -58,6 +58,31 @@ const samples = (mesh: any, amount: number) => {
     );
   });
 };
+const render = () => {
+  // The fixture freezes the frame loop; apply the renderer's visibility phase
+  // explicitly while inspecting exact interpolation values.
+  for (const mesh of meshes())
+    mesh.visible =
+      !mesh.geometry.userData.particleBridge || progress(mesh).value >= 1;
+  state().scene.traverse((object: any) => {
+    if (
+      object.isPoints &&
+      object.material?.customProgramCacheKey?.() ===
+        "orbsie-formation-particles-v1"
+    ) {
+      const shader = {
+        uniforms: {},
+        vertexShader: "#include <color_vertex>\n#include <begin_vertex>",
+        fragmentShader: "#include <color_fragment>",
+      } as any;
+      object.material.onBeforeCompile(shader, state().gl);
+      object.visible =
+        !!object.geometry.userData.particleBridge &&
+        shader.uniforms.uFormation.value < 1;
+    }
+  });
+  state().gl.render(state().scene, state().camera);
+};
 let expected: number[][][];
 let oldGeometries: unknown[];
 (window as any).formationFixture = {
@@ -71,7 +96,7 @@ let oldGeometries: unknown[];
     for (const mesh of meshes()) progress(mesh).value = 0.4;
     expected = meshes().map((mesh) => samples(mesh, 0.4));
     oldGeometries = meshes().map((mesh) => mesh.geometry);
-    state().gl.render(state().scene, state().camera);
+    render();
     const project = useOrb.getState().project;
     useOrb.setState({
       project: {
@@ -107,15 +132,16 @@ let oldGeometries: unknown[];
         throw Error("Morph restarted from an endpoint");
       return {
         family: entities[entityIndex].id,
+        particleBridge: !!mesh.geometry.userData.particleBridge,
         maxPositionError,
         maxColorError,
       };
     });
-    state().gl.render(state().scene, state().camera);
+    render();
     return result;
   },
   frame(value: number) {
     for (const mesh of meshes()) progress(mesh).value = value;
-    state().gl.render(state().scene, state().camera);
+    render();
   },
 };

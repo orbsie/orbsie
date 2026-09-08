@@ -245,6 +245,7 @@ function Formation({
   session: GameSession;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
+  const particles = useRef<THREE.Points>(null);
   const group = useRef<THREE.Group>(null);
   const previous = useRef<THREE.BufferGeometry>(undefined);
   const previousShape = useRef<THREE.BufferGeometry>(undefined);
@@ -308,12 +309,30 @@ function Formation({
     return source;
   }, [entity.geometry, entity.color, asset?.geometry]);
   useLayoutEffect(() => {
+    const prior = previous.current;
+    const sameIndex =
+      prior &&
+      ((!prior.index && !geometry.index) ||
+        (prior.index &&
+          geometry.index &&
+          prior.index.count === geometry.index.count &&
+          Array.from(prior.index.array).every(
+            (value, index) => value === geometry.index!.array[index],
+          )));
+    geometry.userData.particleBridge =
+      !prior ||
+      !sameIndex ||
+      prior.getAttribute("position").count !==
+        geometry.getAttribute("position").count;
     const visible = previous.current
       ? captureFormationSnapshot(previous.current, progress.current.value)
       : undefined;
     addFormationSource(geometry, visible);
     previous.current = geometry;
     progress.current.value = 0;
+    if (mesh.current) mesh.current.visible = !geometry.userData.particleBridge;
+    if (particles.current)
+      particles.current.visible = geometry.userData.particleBridge;
   }, [geometry]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => previousShape.current?.dispose(), []);
@@ -349,12 +368,37 @@ function Formation({
     m.customProgramCacheKey = () => "orbsie-formation-v3";
     return m;
   }, []);
+  const particleMaterial = useMemo(() => {
+    const points = new THREE.PointsMaterial({
+      vertexColors: true,
+      size: 0.12,
+      sizeAttenuation: true,
+    });
+    points.onBeforeCompile = (shader, renderer) => {
+      material.onBeforeCompile(shader, renderer);
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <clipping_planes_fragment>",
+        "#include <clipping_planes_fragment>\nif (distance(gl_PointCoord, vec2(0.5)) > 0.5) discard;",
+      );
+    };
+    points.customProgramCacheKey = () => "orbsie-formation-particles-v1";
+    return points;
+  }, [material]);
+  useEffect(() => () => particleMaterial.dispose(), [particleMaterial]);
   useEffect(() => () => material.dispose(), [material]);
   useFrame(({ clock }, dt) => {
     progress.current.value = Math.min(
       1,
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
+    // Point correspondence has no triangle connectivity to tear between topologies.
+    // Solidify only when every interpolated point has reached its target.
+    if (mesh.current)
+      mesh.current.visible =
+        !geometry.userData.particleBridge || progress.current.value >= 1;
+    if (particles.current)
+      particles.current.visible =
+        !!geometry.userData.particleBridge && progress.current.value < 1;
     if (!group.current) return;
     const effective = playing ? session.effectiveEntity(entity) : entity;
     group.current.visible = effective !== null;
@@ -408,6 +452,13 @@ function Formation({
   if (collected && entity.behavior?.type === "collect") return null;
   return (
     <group ref={group} position={entity.position} scale={entity.scale}>
+      <points
+        ref={particles}
+        geometry={geometry}
+        material={particleMaterial}
+        frustumCulled={false}
+        onClick={click}
+      />
       <mesh
         ref={mesh}
         geometry={geometry}
