@@ -17,6 +17,12 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
+import {
+  markExperience,
+  markVisibleSeed,
+  hasExperienceMilestone,
+} from "@/lib/experience-metrics";
+import { collectGameProgramEntityIds } from "@/lib/game-program";
 import { formationParticles } from "@/lib/formation-particles";
 import { registerPublicationThumbnail } from "@/lib/publication-thumbnail";
 import type { Entity } from "@/lib/protocol";
@@ -256,6 +262,8 @@ function Formation({
   const gameTintEnabled = useRef({ value: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
   const targetScale = useMemo(() => new THREE.Vector3(), []);
+  const projectId = useOrb((s) => s.project.id);
+  const mainCamera = useThree((state) => state.camera);
   const selected = useOrb((s) => s.selected === entity.id);
   const collected = useOrb((s) => s.score.includes(entity.id));
   const playing = useOrb((s) => s.playing);
@@ -479,6 +487,10 @@ function Formation({
     <group ref={group} position={entity.position} scale={entity.scale}>
       <points
         ref={particles}
+        onAfterRender={(_renderer, _scene, renderCamera) => {
+          if (renderCamera === mainCamera && progress.current.value < 0.15)
+            markVisibleSeed(projectId, entity.id);
+        }}
         geometry={particleGeometry}
         material={particleMaterial}
         frustumCulled={false}
@@ -736,6 +748,40 @@ function Player({
       if (session.error && current.error !== session.error.message)
         s.set({ error: session.error.message });
     } else if (result.won && !s.won) s.set({ won: true });
+    if (inputsReady.current) {
+      markExperience(s.project.id, "controls");
+      if (
+        hasExperienceMilestone(s.project.id, "submission") &&
+        !hasExperienceMilestone(s.project.id, "objective")
+      ) {
+        const objectiveIds = s.project.game
+          ? collectGameProgramEntityIds(s.project.game)
+          : s.project.entities
+              .filter(
+                (entity) =>
+                  entity.behavior?.type === "portal" ||
+                  entity.behavior?.type === "collect",
+              )
+              .map((entity) => entity.id);
+        const hasObjective = s.project.game
+          ? s.project.game.rules.some((rule) =>
+              rule.actions.some(
+                (action) => action.type === "win" || action.type === "lose",
+              ),
+            )
+          : s.project.entities.some(
+              (entity) => entity.behavior?.type === "portal",
+            );
+        if (
+          hasObjective &&
+          !session.error &&
+          objectiveIds.every(
+            (id) => usableEntities.current.get(id)?.stage === "ready",
+          )
+        )
+          markExperience(s.project.id, "objective");
+      }
+    }
     if (inputsReady.current && !announcedReady.current) {
       announcedReady.current = true;
       onReady?.();

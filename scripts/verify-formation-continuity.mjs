@@ -138,6 +138,16 @@ try {
   report.preparation = await page.evaluate(() =>
     window.formationFixture.benchmark(),
   );
+  report.experience = await page.evaluate(() =>
+    window.formationFixture.metrics(),
+  );
+  assert.equal(report.experience.milestones.submission, 0);
+  assert.ok(report.experience.milestones.reservation !== null);
+  assert.ok(report.experience.milestones.visibleSeed !== null);
+  assert.ok(report.experience.milestones.controls !== null);
+  assert.equal(report.experience.milestones.objective, null);
+  assert.equal(report.experience.milestones.generationComplete, null);
+  assert.equal(report.experience.milestones.publishReady, null);
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.externalRequests, []);
   assert.equal(report.samples.length, 3);

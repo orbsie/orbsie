@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import { markExperience } from "@/lib/experience-metrics";
 import { capturePublicationThumbnail } from "@/lib/publication-thumbnail";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -454,6 +455,11 @@ export default function Orbsie() {
       if (data === undefined) return;
       setPublicationRecord(data ? { projectId, value: data } : null);
       if (!data) return;
+      if (
+        data.state === "READY" &&
+        data.servedRevision === useOrb.getState().project.revision
+      )
+        markExperience(projectId, "publishReady");
       if (!terminalPublicationStates.has(data.state))
         timer = setTimeout(() => void poll(), 2500);
     };

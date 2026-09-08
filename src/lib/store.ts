@@ -31,6 +31,12 @@ import {
   type Command,
   type Cursor,
 } from "./protocol";
+import {
+  beginExperience,
+  finishExperience,
+  markExperience,
+  noteReservation,
+} from "./experience-metrics";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -207,6 +213,13 @@ async function withDraftWriteLock(
 }
 let active: AbortController | undefined;
 let baseline: Project | undefined;
+let activeExperience: { projectId: string; token: string } | undefined;
+function finishActiveExperience(outcome: "success" | "error" | "cancelled") {
+  const experience = activeExperience;
+  if (!experience) return;
+  activeExperience = undefined;
+  finishExperience(experience.projectId, experience.token, outcome);
+}
 export const useOrb = create<State>((setState, getState) => ({
   project: blankProject(),
   phase: "landing",
@@ -394,6 +407,7 @@ export const useOrb = create<State>((setState, getState) => ({
     }
   },
   load(project, play = false) {
+    finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
     baseline = project;
@@ -434,6 +448,7 @@ export const useOrb = create<State>((setState, getState) => ({
     if (!s.score.includes(id)) setState({ score: [...s.score, id] });
   },
   stop() {
+    finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
     const s = getState();
@@ -480,6 +495,7 @@ export const useOrb = create<State>((setState, getState) => ({
       });
       return;
     }
+    finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
     const controller = new AbortController();
@@ -510,6 +526,18 @@ export const useOrb = create<State>((setState, getState) => ({
           ...(selected ? { entityId: selected } : {}),
         },
       ],
+    };
+    const experienceToken = beginExperience(project.id);
+    activeExperience = { projectId: project.id, token: experienceToken };
+    let experienceFinished = false;
+    const finishRunExperience = (
+      outcome: "success" | "error" | "cancelled",
+    ) => {
+      if (experienceFinished) return;
+      experienceFinished = true;
+      finishExperience(project.id, experienceToken, outcome);
+      if (activeExperience?.token === experienceToken)
+        activeExperience = undefined;
     };
     setState({
       project,
@@ -620,6 +648,8 @@ export const useOrb = create<State>((setState, getState) => ({
       cursor = result.cursor;
       lastAppliedCommand = command.type;
       setState({ project: result.project });
+      if (command.type === "reserve_entity")
+        noteReservation(project.id, command.entity.id, experienceToken);
       const checkpoint =
         (command.type === "set_geometry" &&
           command.geometry.detail === "refined") ||
@@ -695,6 +725,8 @@ export const useOrb = create<State>((setState, getState) => ({
           );
       }
       if (active === controller && !signal.aborted) {
+        markExperience(project.id, "generationComplete", experienceToken);
+        finishRunExperience("success");
         setState({
           building: false,
           notice:
@@ -706,6 +738,7 @@ export const useOrb = create<State>((setState, getState) => ({
       }
     } catch (error) {
       if (active === controller && !signal.aborted) {
+        finishRunExperience("error");
         setState({
           building: false,
           project: committed(getState().project, baseline),
@@ -721,6 +754,7 @@ export const useOrb = create<State>((setState, getState) => ({
       signal.removeEventListener("abort", cancelDurable);
       if (durableRun?.state === "running") cancelDurable();
       if (active === controller) {
+        finishRunExperience("cancelled");
         active = undefined;
         setState({ building: false });
       }

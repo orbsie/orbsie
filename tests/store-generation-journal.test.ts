@@ -23,6 +23,7 @@ vi.mock("idb-keyval", () => ({
     mocks.db.set(key, structuredClone(change(mocks.db.get(key))));
   },
 }));
+import { getExperienceMetrics } from "../src/lib/experience-metrics";
 import { useOrb, type GenerationJournalConnection } from "../src/lib/store";
 import {
   applyOperation,
@@ -126,6 +127,9 @@ it("does not apply an operation before its durable acknowledgement", async () =>
   await run;
   expect(useOrb.getState().project.entities[0].color).toBe("#ff66aa");
   expect(mocks.append).toHaveBeenCalledTimes(2);
+  const [metrics] = getExperienceMetrics(useOrb.getState().project.id);
+  expect(metrics.outcome).toBe("success");
+  expect(metrics.milestones.generationComplete).not.toBeNull();
 });
 it("keeps a lost-ACK checkpoint recoverable without applying or resending the operation", async () => {
   mocks.append.mockImplementationOnce(async (envelope: Envelope) => {
@@ -277,6 +281,9 @@ it.each(["stop", "stream error"])(
     expect(final.id).toBe(entityId);
     expect(final.stage).toBe("ready");
     expect(final.geometry?.kind).toBe("mushroom");
+    const [metrics] = getExperienceMetrics(useOrb.getState().project.id);
+    expect(metrics.outcome).toBe(ending === "stop" ? "cancelled" : "error");
+    expect(metrics.milestones.generationComplete).toBeNull();
     await useOrb.getState().save();
     expect((mocks.db.get("orbsie-draft") as any).project.entities[0]).toEqual(
       final,

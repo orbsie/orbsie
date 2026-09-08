@@ -1,3 +1,8 @@
+import {
+  beginExperience,
+  noteReservation,
+  getExperienceMetrics,
+} from "../src/lib/experience-metrics";
 import * as THREE from "three";
 import {
   formationParticles,
@@ -21,7 +26,11 @@ const entities: Entity[] = ["tree", "platform", "arch"].map((kind, index) => ({
   behavior: { type: "static" },
   geometry: { kind, detail: "coarse" } as Entity["geometry"],
 }));
-useOrb.getState().load({ ...blankProject(), entities });
+const fixtureProject = { ...blankProject(), entities };
+useOrb.getState().load(fixtureProject);
+const experienceToken = beginExperience(fixtureProject.id);
+for (const entity of entities)
+  noteReservation(fixtureProject.id, entity.id, experienceToken);
 createRoot(document.getElementById("root")!).render(<World />);
 
 const state = () =>
@@ -105,6 +114,20 @@ let expectedParticles: number[][][];
 let oldGeometries: unknown[];
 (window as any).formationFixture = {
   thumbnail: capturePublicationThumbnail,
+  async metrics() {
+    useOrb.setState({ playing: true });
+    const started = performance.now();
+    while (
+      getExperienceMetrics(fixtureProject.id)[0].milestones.controls === null
+    ) {
+      if (performance.now() - started > 2000)
+        throw Error("Usable controls milestone missing");
+      await new Promise(requestAnimationFrame);
+    }
+    const snapshot = getExperienceMetrics(fixtureProject.id)[0];
+    useOrb.setState({ playing: false });
+    return { milestones: snapshot.milestones, outcome: snapshot.outcome };
+  },
   benchmark() {
     const dense = new THREE.SphereGeometry(1, 256, 128);
     const cases = [
