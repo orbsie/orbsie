@@ -615,6 +615,8 @@ export const useOrb = create<State>((setState, getState) => ({
           );
         durableRun = acknowledged;
       }
+      // Keep the newest finished shape if a later operation is interrupted.
+      baseline = committed(result.project, baseline);
       cursor = result.cursor;
       lastAppliedCommand = command.type;
       setState({ project: result.project });
@@ -706,7 +708,7 @@ export const useOrb = create<State>((setState, getState) => ({
       if (active === controller && !signal.aborted) {
         setState({
           building: false,
-          project: committed(getState().project, before),
+          project: committed(getState().project, baseline),
           error: signal.aborted
             ? ""
             : error instanceof Error

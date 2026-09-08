@@ -170,12 +170,10 @@ it.each([false, true])(
     mocks.upload.mockImplementationOnce(() => gate.promise);
     mocks.build.mockImplementation(async (_connection, _job, options) => {
       if (restarted)
-        useOrb
-          .getState()
-          .set({
-            ruleRestartCount: useOrb.getState().ruleRestartCount + 1,
-            notice: GAME_RULES_RESTART_NOTICE,
-          });
+        useOrb.getState().set({
+          ruleRestartCount: useOrb.getState().ruleRestartCount + 1,
+          notice: GAME_RULES_RESTART_NOTICE,
+        });
       options.onProgress({ message: "Exporting geometry" });
       return {
         version: 1,
@@ -225,6 +223,63 @@ it.each([false, true])(
       restarted
         ? GAME_RULES_RESTART_NOTICE
         : "Your world is saved on this device.",
+    );
+  },
+);
+
+it.each(["stop", "stream error"])(
+  "preserves the newest finished geometry on %s during a later coarse replacement",
+  async (ending) => {
+    const entityId = useOrb.getState().project.entities[0].id;
+    let stream!: ReadableStreamDefaultController<Uint8Array>;
+    const encoder = new TextEncoder();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                stream = controller;
+                controller.enqueue(
+                  encoder.encode(
+                    [
+                      {
+                        type: "set_geometry",
+                        id: entityId,
+                        geometry: { kind: "mushroom", detail: "refined" },
+                      },
+                      {
+                        type: "set_geometry",
+                        id: entityId,
+                        geometry: { kind: "tree", detail: "coarse" },
+                      },
+                    ]
+                      .map((command) => JSON.stringify(command))
+                      .join("\n") + "\n",
+                  ),
+                );
+              },
+            }),
+          ),
+      ),
+    );
+    const run = useOrb
+      .getState()
+      .run("Refine this object", connection, journal);
+    await vi.waitFor(() =>
+      expect(useOrb.getState().project.entities[0].stage).toBe("coarse"),
+    );
+    if (ending === "stop") useOrb.getState().stop();
+    stream.close();
+    await run;
+    const final = useOrb.getState().project.entities[0];
+    expect(final.id).toBe(entityId);
+    expect(final.stage).toBe("ready");
+    expect(final.geometry?.kind).toBe("mushroom");
+    await useOrb.getState().save();
+    expect((mocks.db.get("orbsie-draft") as any).project.entities[0]).toEqual(
+      final,
     );
   },
 );
