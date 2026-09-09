@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-09T05:34:44.355104+00:00",
+  "migration": "scripts/chatgpt-host-schema.sql",
+  "databaseSource": ".env.local DATABASE_URL (value omitted)",
+  "applied": true,
+  "columns": [
+    "session_id",
+    "owner_id",
+    "attempt_id",
+    "state",
+    "sandbox_name",
+    "capability_ciphertext",
+    "expires_at",
+    "created_at"
+  ],
+  "connectorEnabled": false,
+  "note": "Additive schema applied to configured application database; no login or sandbox provisioned."
+}
