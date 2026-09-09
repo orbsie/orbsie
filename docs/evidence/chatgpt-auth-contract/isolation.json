@@ -1,6 +1,7 @@
 {
   "isolatedRuntimeStarted": true,
   "accountAbsent": true,
+  "productionAdapterAndLifecycle": true,
   "inheritedDeveloperEnvironment": false,
   "loginStarted": false,
   "inferencePerformed": false,
