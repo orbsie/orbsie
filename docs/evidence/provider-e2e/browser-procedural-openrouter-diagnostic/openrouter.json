@@ -1,0 +1,50 @@
+{
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3049",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 512,
+  "creation": {
+    "status": "blocked",
+    "operations": 0,
+    "firstReservationMs": 8030,
+    "seedObserved": true
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "geometry",
+    "selectedIdPreserved": false
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "failure.png"
+  ],
+  "error": "Generation failed before saving: The model returned an invalid scene update. Finished objects are preserved."
+}

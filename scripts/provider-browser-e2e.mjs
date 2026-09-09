@@ -2600,8 +2600,7 @@ async function run(config) {
         .click();
     }
     await prepareObserver(page);
-    if (config.requireExtrusion)
-      await installGenerationDiagnosticObserver(page);
+    await installGenerationDiagnosticObserver(page);
     projectBefore = await storageSnapshot(
       page,
       (config.key ?? config.companionToken)
@@ -3206,7 +3205,7 @@ async function run(config) {
     };
   } catch (error) {
     await Promise.allSettled(info.diagnosticReads);
-    if (config.requireExtrusion) {
+    {
       const diagnostics = await readGenerationDiagnostics(page).catch(() => []);
       info.generationDiagnostics.push(
         ...diagnostics.map((record) => ({
