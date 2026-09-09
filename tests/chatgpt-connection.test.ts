@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CHATGPT_DEVICE_URL,
   parseChatGPTChallenge,
+  parseChatGPTModels,
   parseChatGPTSnapshot,
 } from "../src/components/chatgpt-connection";
 
@@ -68,5 +69,90 @@ describe("ChatGPT connection response guards", () => {
         authStatus: "connected",
       }),
     ).toEqual({ lifecycle: "completed", authStatus: "connected" });
+  });
+
+  it("sanitizes the bounded hosted model catalog", () => {
+    expect(
+      parseChatGPTModels({
+        models: [
+          {
+            id: "catalog-1",
+            model: "gpt-5.1",
+            displayName: "GPT 5.1",
+            supportedReasoningEfforts: ["medium", "low"],
+            defaultReasoningEffort: "medium",
+            capability: "must-not-leak",
+          },
+        ],
+        providerToken: "must-not-leak",
+      }),
+    ).toEqual([
+      {
+        id: "catalog-1",
+        model: "gpt-5.1",
+        displayName: "GPT 5.1",
+        supportedReasoningEfforts: ["medium", "low"],
+        defaultReasoningEffort: "medium",
+      },
+    ]);
+  });
+
+  it("accepts an empty hosted catalog without creating a selection", () => {
+    expect(parseChatGPTModels({ models: [] })).toEqual([]);
+  });
+
+  it.each([
+    {
+      models: [
+        {
+          id: "catalog",
+          model: "gpt 5",
+          displayName: "GPT",
+          supportedReasoningEfforts: ["low"],
+          defaultReasoningEffort: "low",
+        },
+      ],
+    },
+    {
+      models: [
+        {
+          id: "catalog",
+          model: "gpt-5",
+          displayName: "GPT",
+          supportedReasoningEfforts: [],
+          defaultReasoningEffort: "low",
+        },
+      ],
+    },
+    {
+      models: [
+        {
+          id: "catalog",
+          model: "gpt-5",
+          displayName: "GPT",
+          supportedReasoningEfforts: ["low"],
+          defaultReasoningEffort: "high",
+        },
+      ],
+    },
+  ])("rejects an unusable hosted catalog %#", (value) => {
+    expect(parseChatGPTModels(value)).toBeNull();
+  });
+
+  it("rejects malformed model entries without exposing provider fields", () => {
+    expect(
+      parseChatGPTModels({
+        models: [
+          {
+            id: "catalog",
+            model: "gpt-5",
+            displayName: "GPT",
+            supportedReasoningEfforts: ["low"],
+            defaultReasoningEffort: "low",
+          },
+          { model: "gpt-unsafe", error: "provider secret" },
+        ],
+      }),
+    ).toBeNull();
   });
 });

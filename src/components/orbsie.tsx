@@ -2,7 +2,13 @@
 import dynamic from "next/dynamic";
 import { markExperience } from "@/lib/experience-metrics";
 import { capturePublicationThumbnail } from "@/lib/publication-thumbnail";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   ArrowUp,
   ArrowUpRight,
@@ -52,6 +58,7 @@ import {
 } from "@/lib/cloud-generation-journal";
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
+  isGenerationReady,
   readCompanionLink,
   type GenerationConnection,
 } from "@/lib/generation-connection";
@@ -322,6 +329,7 @@ export default function Orbsie() {
     publishing: false,
     google: false,
     chatgptHosted: false,
+    chatgptGeneration: false,
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -351,6 +359,8 @@ export default function Orbsie() {
   const clearAccountState = () => {
     connectionVersion.current++;
     accountGeneration.current++;
+    if (connection.provider === "chatgpt-hosted")
+      setConnection({ provider: "openrouter", model: "", key: "" });
     setCloudBaseline(null);
     setCloudProjects([]);
     setConflict(null);
@@ -358,6 +368,20 @@ export default function Orbsie() {
     setShareUrl("");
     setModalError("");
   };
+
+  const useChatGPT = (model: string, effort: string) => {
+    setConnection({
+      provider: "chatgpt-hosted",
+      model,
+      effort,
+      key: "",
+    });
+    setModal(null);
+  };
+  const disconnectChatGPT = useCallback(() => {
+    if (connection.provider === "chatgpt-hosted")
+      setConnection({ provider: "chatgpt-hosted", model: "", key: "" });
+  }, [connection.provider]);
   useEffect(
     () =>
       useOrb.subscribe((state) => {
@@ -529,7 +553,8 @@ export default function Orbsie() {
     if (
       !modal ||
       modal !== "settings" ||
-      connection.provider === "chatgpt-local"
+      connection.provider === "chatgpt-local" ||
+      connection.provider === "chatgpt-hosted"
     )
       return;
     const controller = new AbortController();
@@ -629,7 +654,11 @@ export default function Orbsie() {
     const selectedConnectionVersion = connectionVersion.current;
     try {
       let selectedConnection = connection;
-      if (!connection.key.trim() || !connection.model) {
+      if (!isGenerationReady(connection)) {
+        if (connection.provider === "chatgpt-hosted") {
+          setModal("settings");
+          return;
+        }
         const allowance = await refreshTrial();
         if (
           !originalWorld() ||
@@ -717,6 +746,22 @@ export default function Orbsie() {
       submission.current.checking = false;
       await generation;
       const providerFailure = useOrb.getState().generationErrorCode;
+      if (
+        selectedConnection.provider === "chatgpt-hosted" &&
+        providerFailure === "CHATGPT_CONNECTION_REQUIRED" &&
+        generationWorld() &&
+        connectionVersion.current === selectedConnectionVersion &&
+        submission.current.sequence === sequence
+      ) {
+        setConnection({
+          ...selectedConnection,
+          model: "",
+          effort: undefined,
+          key: "",
+        });
+        if (!textarea.current?.value) setPrompt(instruction);
+        setModal("settings");
+      }
       if (
         selectedConnection.provider !== "free" &&
         (providerFailure === "PROVIDER_AUTH_REJECTED" ||
@@ -1249,15 +1294,19 @@ export default function Orbsie() {
                 }}
               >
                 <span className="mode-dot" />
-                {connection.key && connection.model
+                {isGenerationReady(connection)
                   ? connection.provider === "chatgpt-local"
                     ? "ChatGPT on this computer"
-                    : connection.provider === "openrouter"
-                      ? "OpenRouter"
-                      : "AI Gateway"
-                  : trial.enabled && trial.remaining > 0
-                    ? `${trial.remaining} free prompts`
-                    : "Connect provider"}
+                    : connection.provider === "chatgpt-hosted"
+                      ? `ChatGPT · ${connection.model}`
+                      : connection.provider === "openrouter"
+                        ? "OpenRouter"
+                        : "AI Gateway"
+                  : connection.provider === "chatgpt-hosted"
+                    ? "Choose ChatGPT model"
+                    : trial.enabled && trial.remaining > 0
+                      ? `${trial.remaining} free prompts`
+                      : "Connect provider"}
                 <ChevronDown size={12} />
               </button>
               <div className="composer-actions">
@@ -1313,11 +1362,15 @@ export default function Orbsie() {
           {!landing && (
             <div className="panel-foot">
               <span className="mode-dot" />
-              {connection.key
-                ? "AI key added"
-                : trial.enabled && trial.remaining > 0
-                  ? `${trial.remaining} free prompts left`
-                  : "Connect to keep creating"}
+              {isGenerationReady(connection) && connection.provider !== "free"
+                ? connection.provider === "chatgpt-hosted"
+                  ? `ChatGPT selected · ${connection.effort} reasoning`
+                  : "AI key added"
+                : connection.provider === "chatgpt-hosted"
+                  ? "Choose ChatGPT model"
+                  : trial.enabled && trial.remaining > 0
+                    ? `${trial.remaining} free prompts left`
+                    : "Connect to keep creating"}
             </div>
           )}
         </section>
@@ -1474,7 +1527,9 @@ export default function Orbsie() {
               <p>
                 {connection.provider === "chatgpt-local"
                   ? "Your ChatGPT account is connected through the companion on this computer."
-                  : "Connect your AI account or API key to create and edit your world."}
+                  : connection.provider === "chatgpt-hosted"
+                    ? "Your ChatGPT account is connected for this browser session."
+                    : "Connect your AI account or API key to create and edit your world."}
               </p>
               <p className="fine-print">
                 Models are built and rendered in your browser. No installation
@@ -1483,7 +1538,10 @@ export default function Orbsie() {
               {capabilities.chatgptHosted ? (
                 <ChatGPTConnection
                   signedIn={Boolean(user)}
+                  generationEnabled={capabilities.chatgptGeneration}
                   onSignIn={() => setModal("account")}
+                  onUseChatGPT={useChatGPT}
+                  onDisconnect={disconnectChatGPT}
                 />
               ) : (
                 <p className="fine-print">
@@ -1514,6 +1572,28 @@ export default function Orbsie() {
                   companion running. Reopen its connection link after refreshing
                   this page.
                 </p>
+              ) : connection.provider === "chatgpt-hosted" ? (
+                <div className="setup-note">
+                  <strong>
+                    ChatGPT · {connection.model} · {connection.effort} reasoning
+                  </strong>
+                  <p className="fine-print">
+                    Use the ChatGPT subscription connection for this browser
+                    session.
+                  </p>
+                  <button
+                    className="text-button"
+                    onClick={() =>
+                      setConnection({
+                        provider: "openrouter",
+                        model: "",
+                        key: "",
+                      })
+                    }
+                  >
+                    Choose another provider
+                  </button>
+                </div>
               ) : (
                 <>
                   <label>
@@ -1528,6 +1608,7 @@ export default function Orbsie() {
                           provider: e.target.value,
                           model: "",
                           key: "",
+                          effort: undefined,
                         })
                       }
                     >
@@ -1694,17 +1775,17 @@ export default function Orbsie() {
                   </p>
                 </>
               )}
-              <button
-                className="primary full"
-                disabled={
-                  oauthBusy || !connection.key.trim() || !connection.model
-                }
-                onClick={() => setModal(null)}
-              >
-                Continue with this connection
-                <ArrowUpRight size={16} />
-              </button>
-              {connection.key && (
+              {connection.provider !== "chatgpt-hosted" && (
+                <button
+                  className="primary full"
+                  disabled={oauthBusy || !isGenerationReady(connection)}
+                  onClick={() => setModal(null)}
+                >
+                  Continue with this connection
+                  <ArrowUpRight size={16} />
+                </button>
+              )}
+              {connection.key && connection.provider !== "chatgpt-hosted" && (
                 <button
                   className="text-button"
                   disabled={oauthBusy}

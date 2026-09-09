@@ -80,10 +80,18 @@ describe("hosted ChatGPT generation route", () => {
   });
   it("requires sign-in and a preexisting owned host", async () => {
     mocks.session.mockResolvedValueOnce(null);
-    expect((await POST(request())).status).toBe(401);
+    const signedOut = await POST(request());
+    expect(signedOut.status).toBe(401);
+    expect(await signedOut.json()).toMatchObject({
+      code: "CHATGPT_CONNECTION_REQUIRED",
+    });
     expect(mocks.read).not.toHaveBeenCalled();
     mocks.read.mockResolvedValueOnce(null);
-    expect((await POST(request())).status).toBe(409);
+    const missingHost = await POST(request());
+    expect(missingHost.status).toBe(409);
+    expect(await missingHost.json()).toMatchObject({
+      code: "CHATGPT_CONNECTION_REQUIRED",
+    });
     expect(mocks.request).not.toHaveBeenCalled();
   });
   it("rejects origin failures and caller-supplied owner or capability fields", async () => {

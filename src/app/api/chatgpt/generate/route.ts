@@ -65,6 +65,9 @@ export async function POST(request: Request) {
   } catch (error) {
     return Response.json(
       {
+        ...(error instanceof HttpError && [401, 409].includes(error.status)
+          ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+          : {}),
         error:
           error instanceof HttpError
             ? error.message

@@ -25,6 +25,14 @@ export type ChatGPTSnapshot = {
   pending?: ChatGPTChallenge;
 };
 
+export type ChatGPTModelOption = {
+  id: string;
+  model: string;
+  displayName: string;
+  supportedReasoningEfforts: string[];
+  defaultReasoningEffort: string;
+};
+
 const lifecycleValues = new Set<ChatGPTSnapshot["lifecycle"]>([
   "idle",
   "pending",
@@ -46,6 +54,15 @@ function boundedText(value: unknown, max: number): value is string {
     value.length <= max &&
     value.trim() === value &&
     !/[\u0000-\u001f\u007f]/.test(value)
+  );
+}
+
+function boundedIdentifier(value: unknown, max: number): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= max &&
+    /^[A-Za-z0-9._:/-]+$/.test(value)
   );
 }
 
@@ -86,6 +103,43 @@ export function parseChatGPTSnapshot(value: unknown): ChatGPTSnapshot | null {
     authStatus: source.authStatus as ChatGPTSnapshot["authStatus"],
     ...(pending ? { pending } : {}),
   };
+}
+
+export function parseChatGPTModels(
+  value: unknown,
+): ChatGPTModelOption[] | null {
+  if (!value || typeof value !== "object") return null;
+  const models = (value as Record<string, unknown>).models;
+  if (!Array.isArray(models) || models.length > 100) return null;
+  const seen = new Set<string>();
+  const parsed: ChatGPTModelOption[] = [];
+  for (const value of models) {
+    if (!value || typeof value !== "object") return null;
+    const source = value as Record<string, unknown>;
+    const efforts = source.supportedReasoningEfforts;
+    if (
+      !boundedIdentifier(source.id, 256) ||
+      !boundedIdentifier(source.model, 256) ||
+      !boundedText(source.displayName, 160) ||
+      !Array.isArray(efforts) ||
+      efforts.length === 0 ||
+      efforts.length > 16 ||
+      !efforts.every((effort) => boundedText(effort, 32)) ||
+      !boundedText(source.defaultReasoningEffort, 32) ||
+      !efforts.includes(source.defaultReasoningEffort) ||
+      seen.has(source.model)
+    )
+      return null;
+    seen.add(source.model);
+    parsed.push({
+      id: source.id,
+      model: source.model,
+      displayName: source.displayName,
+      supportedReasoningEfforts: [...new Set(efforts as string[])],
+      defaultReasoningEffort: source.defaultReasoningEffort,
+    });
+  }
+  return parsed;
 }
 
 type View =
@@ -153,6 +207,56 @@ async function requestJSON(
   }
 }
 
+async function requestModels(signal: AbortSignal): Promise<unknown> {
+  const timeoutController = new AbortController();
+  const timeout = window.setTimeout(() => timeoutController.abort(), 45_000);
+  try {
+    const response = await fetch("/api/chatgpt/models", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.any([signal, timeoutController.signal]),
+    });
+    const reader = response.body?.getReader();
+    if (!reader) throw Error("ChatGPT model catalog is unavailable.");
+    const decoder = new TextDecoder();
+    const chunks: string[] = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const part = await reader.read();
+        if (part.done) break;
+        bytes += part.value.byteLength;
+        if (bytes > 128 * 1024)
+          throw Error("ChatGPT model catalog is too large.");
+        chunks.push(decoder.decode(part.value, { stream: true }));
+      }
+      chunks.push(decoder.decode());
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
+    const raw = chunks.join("");
+    let data: unknown;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw Error("ChatGPT model catalog is invalid.");
+    }
+    if (!response.ok) throw data;
+    return data;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function preferredEffort(model: ChatGPTModelOption): string {
+  return model.supportedReasoningEfforts.includes("low")
+    ? "low"
+    : model.defaultReasoningEffort;
+}
+
 function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
   if (snapshot.lifecycle === "pending" && snapshot.pending)
     return { phase: "pending", challenge: snapshot.pending, message };
@@ -173,11 +277,23 @@ function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
 export default function ChatGPTConnection({
   signedIn,
   onSignIn,
+  generationEnabled,
+  onUseChatGPT,
+  onDisconnect,
 }: {
   signedIn: boolean;
   onSignIn: () => void;
+  generationEnabled: boolean;
+  onUseChatGPT: (model: string, effort: string) => void;
+  onDisconnect: () => void;
 }) {
   const [view, setView] = useState<View>(initialView);
+  const [models, setModels] = useState<ChatGPTModelOption[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [selectedEffort, setSelectedEffort] = useState("");
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState("");
+  const [modelsAttempt, setModelsAttempt] = useState(0);
   const generation = useRef(0);
   const requestController = useRef<AbortController | null>(null);
   const pollController = useRef<AbortController | null>(null);
@@ -221,13 +337,14 @@ export default function ChatGPTConnection({
           return;
         }
         setView(viewFromSnapshot(snapshot));
+        if (snapshot.authStatus === "disconnected") onDisconnect();
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
           return;
         setView({ phase: "error", message: errorMessage(error) });
       });
-  }, [beginRequest, signedIn]);
+  }, [beginRequest, onDisconnect, signedIn]);
 
   useEffect(() => {
     if (!signedIn) {
@@ -276,11 +393,12 @@ export default function ChatGPTConnection({
       .then((data) => {
         if (!currentRequest(controller, current)) return;
         const snapshot = parseChatGPTSnapshot(data);
-        setView(
-          snapshot
-            ? viewFromSnapshot(snapshot)
-            : { phase: "error", message: genericError },
-        );
+        if (!snapshot) {
+          setView({ phase: "error", message: genericError });
+          return;
+        }
+        setView(viewFromSnapshot(snapshot));
+        if (snapshot.authStatus === "disconnected") onDisconnect();
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
@@ -290,7 +408,7 @@ export default function ChatGPTConnection({
           message: errorMessage(error),
         });
       });
-  }, [beginRequest, signedIn]);
+  }, [beginRequest, onDisconnect, signedIn]);
 
   const logout = useCallback(() => {
     if (!signedIn) return;
@@ -300,14 +418,12 @@ export default function ChatGPTConnection({
       .then((data) => {
         if (!currentRequest(controller, current)) return;
         const snapshot = parseChatGPTSnapshot(data);
-        setView(
-          snapshot
-            ? viewFromSnapshot(snapshot)
-            : {
-                phase: "error",
-                message: genericError,
-              },
-        );
+        if (!snapshot) {
+          setView({ phase: "error", message: genericError });
+          return;
+        }
+        setView(viewFromSnapshot(snapshot));
+        if (snapshot.authStatus === "disconnected") onDisconnect();
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
@@ -317,7 +433,7 @@ export default function ChatGPTConnection({
           message: errorMessage(error),
         });
       });
-  }, [beginRequest, signedIn]);
+  }, [beginRequest, onDisconnect, signedIn]);
 
   const pendingExpiresAt =
     view.phase === "pending" ? view.challenge.expiresAt : null;
@@ -344,7 +460,10 @@ export default function ChatGPTConnection({
                 ? { ...existing, message: "Still waiting for ChatGPT…" }
                 : existing,
             );
-          } else setView(viewFromSnapshot(snapshot));
+          } else {
+            setView(viewFromSnapshot(snapshot));
+            if (snapshot.authStatus === "disconnected") onDisconnect();
+          }
         })
         .catch(() => {
           if (!active || !currentRequest(controller, current)) return;
@@ -386,7 +505,50 @@ export default function ChatGPTConnection({
       if (pollGeneration !== null && generation.current === pollGeneration)
         generation.current++;
     };
-  }, [clearPoll, pendingExpiresAt, signedIn, view.phase]);
+  }, [clearPoll, onDisconnect, pendingExpiresAt, signedIn, view.phase]);
+
+  useEffect(() => {
+    if (!signedIn || !generationEnabled || view.phase !== "connected") {
+      setModels([]);
+      setSelectedModel("");
+      setSelectedEffort("");
+      setModelsError("");
+      setModelsLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setModelsLoading(true);
+    setModelsError("");
+    void requestModels(controller.signal)
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        const next = parseChatGPTModels(data);
+        if (!next) throw Error("invalid catalog");
+        setModels(next);
+        setSelectedModel((current) =>
+          current && next.some((model) => model.model === current)
+            ? current
+            : (next[0]?.model ?? ""),
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setModels([]);
+          setSelectedModel("");
+          setSelectedEffort("");
+          setModelsError("ChatGPT models are unavailable. Try again.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setModelsLoading(false);
+      });
+    return () => controller.abort();
+  }, [generationEnabled, modelsAttempt, signedIn, view.phase]);
+
+  const selected = models.find((model) => model.model === selectedModel);
+  useEffect(() => {
+    setSelectedEffort(selected ? preferredEffort(selected) : "");
+  }, [selected]);
 
   return (
     <section className="publish-box" aria-labelledby="chatgpt-connection-title">
@@ -410,9 +572,74 @@ export default function ChatGPTConnection({
         <div className="setup-note" role="status">
           <p>
             <CheckCircle2 size={15} aria-hidden="true" /> Signed in to ChatGPT.
-            Model access is being connected.
           </p>
           {view.message && <p className="fine-print">{view.message}</p>}
+          {generationEnabled ? (
+            modelsLoading ? (
+              <p className="fine-print" role="status">
+                <LoaderCircle size={14} className="spin" aria-hidden="true" />
+                Loading ChatGPT models…
+              </p>
+            ) : modelsError ? (
+              <div role="alert">
+                <p className="fine-print">{modelsError}</p>
+                <button
+                  className="text-button"
+                  onClick={() => setModelsAttempt((attempt) => attempt + 1)}
+                >
+                  Retry model list
+                </button>
+              </div>
+            ) : models.length ? (
+              <>
+                <p className="fine-print">
+                  Choose a model and reasoning level to create with ChatGPT.
+                </p>
+                <label htmlFor="chatgpt-model">ChatGPT model</label>
+                <select
+                  id="chatgpt-model"
+                  aria-label="ChatGPT model"
+                  value={selectedModel}
+                  onChange={(event) => setSelectedModel(event.target.value)}
+                >
+                  {models.map((model) => (
+                    <option key={model.id} value={model.model}>
+                      {model.displayName}
+                    </option>
+                  ))}
+                </select>
+                <label htmlFor="chatgpt-reasoning">ChatGPT reasoning</label>
+                <select
+                  id="chatgpt-reasoning"
+                  aria-label="ChatGPT reasoning"
+                  value={selectedEffort}
+                  onChange={(event) => setSelectedEffort(event.target.value)}
+                >
+                  {selected?.supportedReasoningEfforts.map((effort) => (
+                    <option key={effort} value={effort}>
+                      {effort}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="primary full"
+                  disabled={!selectedModel || !selectedEffort}
+                  onClick={() => onUseChatGPT(selectedModel, selectedEffort)}
+                >
+                  Use ChatGPT <ArrowUpRight size={15} aria-hidden="true" />
+                </button>
+              </>
+            ) : (
+              <p className="fine-print" role="status">
+                No ChatGPT models are available for this account.
+              </p>
+            )
+          ) : (
+            <p className="fine-print">
+              ChatGPT is connected. Generation is not available in this
+              environment yet.
+            </p>
+          )}
           <button className="text-button" onClick={logout}>
             <LogOut size={13} aria-hidden="true" /> Disconnect ChatGPT
           </button>

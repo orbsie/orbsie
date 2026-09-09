@@ -17,5 +17,11 @@ export async function GET() {
     process.env.BETTER_AUTH_SECRET
       ? { chatgptHosted: true }
       : {}),
+    ...(process.env.ORBSIE_CHATGPT_HOSTED === "1" &&
+    process.env.ORBSIE_CHATGPT_GENERATION === "1" &&
+    process.env.DATABASE_URL &&
+    process.env.BETTER_AUTH_SECRET
+      ? { chatgptGeneration: true }
+      : {}),
   });
 }

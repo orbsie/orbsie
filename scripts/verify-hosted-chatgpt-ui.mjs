@@ -167,7 +167,9 @@ try {
             timeout: 10000,
           });
           await expect(
-            section.getByText(/Model access is being connected/),
+            section.getByText(
+              /Generation is not available in this environment yet/,
+            ),
           ).toBeVisible();
           await section
             .getByRole("button", { name: "Disconnect ChatGPT" })

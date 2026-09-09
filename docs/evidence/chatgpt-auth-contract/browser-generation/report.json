@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "syntheticAuthorization": true,
+  "syntheticInference": true,
+  "syntheticCloud": true,
+  "liveLogin": false,
+  "requests": 2,
+  "freeRequests": 0,
+  "errors": [],
+  "unexpected": [],
+  "checks": {
+    "targetedGeometryEdit": true,
+    "browserGeneratedAssets": true,
+    "expiredConnectionPreservesPrompt": true,
+    "expiredRetryDoesNotUseFree": true,
+    "reload": true
+  }
+}
