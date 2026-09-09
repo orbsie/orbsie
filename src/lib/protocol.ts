@@ -152,47 +152,127 @@ export const projectSchema = z
     }
   });
 export type Project = z.infer<typeof projectSchema>;
-export const commandSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("set_game"), game: gameProgramSchema.nullable() }),
-  z.object({ type: z.literal("reserve_entity"), entity: entitySchema }),
-  z.object({
+const setGameCommandSchema = z.object({
+  type: z.literal("set_game"),
+  game: gameProgramSchema.nullable(),
+});
+const setMaterialCommandSchema = z.object({
+  type: z.literal("set_material"),
+  id: z.string(),
+  color,
+  assetPolicy: assetRequestPolicySchema.optional(),
+});
+const setTransformCommandSchema = z.object({
+  type: z.literal("set_transform"),
+  id: z.string(),
+  position: vector.optional(),
+  scale: vector.optional(),
+  assetPolicy: assetRequestPolicySchema.optional(),
+});
+const setBehaviorCommandSchema = z.object({
+  type: z.literal("set_behavior"),
+  id: z.string(),
+  behavior: behaviorSchema,
+  assetPolicy: assetRequestPolicySchema.optional(),
+});
+const removeEntityCommandSchema = z.object({
+  type: z.literal("remove_entity"),
+  id: z.string(),
+});
+const setEnvironmentCommandSchema = z.object({
+  type: z.literal("set_environment"),
+  sky: color.optional(),
+  ground: color.optional(),
+  water: color.optional(),
+});
+const commitRevisionCommandSchema = z.object({
+  type: z.literal("commit_revision"),
+  message: z.string().max(1000),
+});
+function reserveEntityCommandSchema<T extends z.ZodType>(entity: T) {
+  return z.object({ type: z.literal("reserve_entity"), entity });
+}
+function setGeometryCommandSchema<T extends z.ZodType>(
+  geometry: T,
+  strict = false,
+) {
+  const schema = z.object({
     type: z.literal("set_geometry"),
     id: z.string(),
-    geometry: geometrySchema,
+    geometry,
     assetPolicy: assetRequestPolicySchema.optional(),
-  }),
-  z.object({
-    type: z.literal("set_material"),
-    id: z.string(),
-    color,
-    assetPolicy: assetRequestPolicySchema.optional(),
-  }),
-  z.object({
-    type: z.literal("set_transform"),
-    id: z.string(),
-    position: vector.optional(),
-    scale: vector.optional(),
-    assetPolicy: assetRequestPolicySchema.optional(),
-  }),
-  z.object({
-    type: z.literal("set_behavior"),
-    id: z.string(),
-    behavior: behaviorSchema,
-    assetPolicy: assetRequestPolicySchema.optional(),
-  }),
-  z.object({ type: z.literal("remove_entity"), id: z.string() }),
-  z.object({
-    type: z.literal("set_environment"),
-    sky: color.optional(),
-    ground: color.optional(),
-    water: color.optional(),
-  }),
-  z.object({
-    type: z.literal("commit_revision"),
-    message: z.string().max(1000),
-  }),
+  });
+  return strict ? schema.strict() : schema;
+}
+export const commandSchema = z.discriminatedUnion("type", [
+  setGameCommandSchema,
+  reserveEntityCommandSchema(entitySchema),
+  setGeometryCommandSchema(geometrySchema),
+  setMaterialCommandSchema,
+  setTransformCommandSchema,
+  setBehaviorCommandSchema,
+  removeEntityCommandSchema,
+  setEnvironmentCommandSchema,
+  commitRevisionCommandSchema,
 ]);
 export type Command = z.infer<typeof commandSchema>;
+
+const modelEntityBaseSchema = entitySchema.omit({ geometry: true }).strict();
+function modelGeometrySchema(localModeling: boolean, browserModeling: boolean) {
+  const generated =
+    localModeling || browserModeling
+      ? z
+          .object({
+            kind: z.literal("generated"),
+            collision: z.enum(["none", "platform"]).default("none"),
+            job:
+              localModeling && browserModeling
+                ? z.union([modelingJobSchema, browserModelingJobSchema])
+                : localModeling
+                  ? modelingJobSchema
+                  : browserModelingJobSchema,
+            detail: z.literal("refined"),
+            tint: color.optional(),
+          })
+          .strict()
+      : null;
+  if (!generated)
+    return z.union([proceduralGeometrySchema, assetGeometrySchema]);
+  return z.union([proceduralGeometrySchema, assetGeometrySchema, generated]);
+}
+export function modelCommandSchemaForCapabilities(
+  localModeling: boolean,
+  browserModeling: boolean,
+) {
+  const geometry = modelGeometrySchema(localModeling, browserModeling);
+  const reserveEntity = reserveEntityCommandSchema(modelEntityBaseSchema);
+  const setGeometry = setGeometryCommandSchema(geometry, true);
+  return z.discriminatedUnion("type", [
+    setGameCommandSchema,
+    reserveEntity,
+    setGeometry,
+    setMaterialCommandSchema,
+    setTransformCommandSchema,
+    setBehaviorCommandSchema,
+    removeEntityCommandSchema,
+    setEnvironmentCommandSchema,
+    commitRevisionCommandSchema,
+  ]);
+}
+const modelCommandJSONSchemaCache = new Map<string, object>();
+export function modelCommandJSONSchemaForCapabilities(
+  localModeling: boolean,
+  browserModeling: boolean,
+) {
+  const key = `${localModeling ? 1 : 0}:${browserModeling ? 1 : 0}`;
+  const cached = modelCommandJSONSchemaCache.get(key);
+  if (cached) return cached;
+  const schema = z.toJSONSchema(
+    modelCommandSchemaForCapabilities(localModeling, browserModeling),
+  );
+  modelCommandJSONSchemaCache.set(key, schema);
+  return schema;
+}
 export const envelopeSchema = z.object({
   version: z.literal(1),
   projectId: z.string(),

@@ -26,3 +26,5 @@ Browser-only is a firm requirement. A supported hosted subscription integration 
 - Gateway funded live acceptance and browser-only ChatGPT subscription authorization remain unresolved. No local-install workaround satisfies the owner constraint.
 
 Browser-only Settings cleanup (aaa0d0d) is deployed at https://orbsie.com (immutable deployment https://orbsie-69tp8a1yy-grappeggias-projects.vercel.app). `TEST_URL=https://orbsie.com node scripts/verify-openrouter-oauth-draft.mjs` passed both simulated outcomes and verified that the local Blender connection-link field is absent. Production build and TypeScript passed. This uses synthetic account responses and performs no live model calls.
+
+Provider failure recovery is deployed in `35676c8` at https://orbsie-bf6lky3we-grappeggias-projects.vercel.app (https://orbsie.com). `TEST_URL=https://orbsie.com node scripts/verify-provider-reconnect.mjs` passed all four synthetic 401/403 scenarios for OpenRouter and Gateway: prompt restoration, connection settings reopened, rejected keys cleared only for 401, no live model calls. This is failure-path acceptance rather than live authorization acceptance.

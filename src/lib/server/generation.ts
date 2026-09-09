@@ -8,6 +8,7 @@ import { authoringHistory } from "../authoring-history";
 import {
   commandSchema,
   applyOperation,
+  modelCommandJSONSchemaForCapabilities,
   type Project,
   type Cursor,
 } from "../protocol";
@@ -61,7 +62,7 @@ export function systemPromptForCapabilities(
   localModeling = false,
   browserModeling = false,
 ) {
-  return `${baseSystemPrompt} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
+  return `${baseSystemPrompt} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
 }
 
 export const systemPrompt = systemPromptForCapabilities();
