@@ -14,6 +14,7 @@ import {
   generatedModelMetadataSchema,
   sameGeneratedProvenance,
 } from "../generated-models";
+import { assertBrowserProceduralIntegrity } from "./browser-procedural-integrity";
 import { database, HttpError } from "./auth";
 export const startRunSchema = z
   .object({
@@ -216,6 +217,7 @@ export function supersededGenerationRuns(
 }
 export async function startGenerationRun(owner: string, input: unknown) {
   const value = startRunSchema.parse(input);
+  assertBrowserProceduralIntegrity(value.project);
   bounded(value.project);
   return transaction(async (c) => {
     await c.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
@@ -303,6 +305,7 @@ export async function appendGenerationRun(owner: string, input: unknown) {
   const { runId, envelope } = appendRunSchema.parse(input);
   return transaction(async (c) => {
     const row = await locked(c, owner, runId);
+    assertBrowserProceduralIntegrity(row.checkpoint);
     const prior = await c.query(
       "SELECT envelope FROM generation_operations WHERE run_id=$1 AND (sequence=$2 OR operation_id=$3)",
       [runId, envelope.sequence, envelope.operationId],
@@ -343,6 +346,7 @@ export async function appendGenerationRun(owner: string, input: unknown) {
         "Generation operation does not match the saved checkpoint.",
       );
     }
+    assertBrowserProceduralIntegrity(project);
     bounded(project);
     const recovery = committed(
       project,

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { projectSchema, committed } from "@/lib/protocol";
 import { archiveProjectSnapshot } from "@/lib/server/storage";
 import { projectSnapshotToken } from "@/lib/server/project-snapshot-token";
+import { assertBrowserProceduralIntegrity } from "../../../lib/server/browser-procedural-integrity";
 import {
   requireUser,
   database,
@@ -54,6 +55,7 @@ export async function PUT(request: Request) {
       .safeParse(await boundedJSON(request));
     if (!parsed.success) throw new HttpError(400, "Invalid world data.");
     const { project, baseRevision, baseSnapshotToken } = parsed.data;
+    assertBrowserProceduralIntegrity(project);
     await requireCloudGeneratedModels(user.id, project);
     const committedSnapshot = committed(project);
     const client = await database().connect();

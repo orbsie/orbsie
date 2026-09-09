@@ -65,6 +65,24 @@ const project = {
   environment: { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" },
   messages: [],
 };
+const proceduralSource = {
+  version: 1 as const,
+  language: "quickjs" as const,
+  seed: 4,
+  code: `({version:1,revision:0,output:"box",nodes:[{id:"box",kind:"box",size:[2,2,2]}]})`,
+};
+const proceduralRecipe = {
+  version: 1 as const,
+  revision: 0,
+  output: "box",
+  nodes: [
+    {
+      id: "box",
+      kind: "box" as const,
+      size: [2, 2, 2] as [number, number, number],
+    },
+  ],
+};
 
 function row(snapshot = project, overrides: Record<string, unknown> = {}) {
   return {
@@ -239,5 +257,46 @@ describe("projects route snapshot CAS", () => {
         String(sql).startsWith("INSERT INTO orbs"),
       ),
     ).toBe(false);
+  });
+
+  it("rejects a wrong procedural source hash before opening the database", async () => {
+    const authored = {
+      ...project,
+      entities: [
+        {
+          id: "shape",
+          label: "Shape",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#6ead60",
+          stage: "ready",
+          geometry: {
+            kind: "generated",
+            collision: "none",
+            detail: "refined",
+            job: {
+              backend: "browser-manifold",
+              recipe: proceduralRecipe,
+              authoring: {
+                source: proceduralSource,
+                sourceHash: "a".repeat(64),
+              },
+            },
+          },
+        },
+      ],
+    };
+    state.boundedJSON.mockResolvedValue({
+      project: authored,
+      baseRevision: 1,
+      baseSnapshotToken: "b".repeat(64),
+    });
+    const response = await PUT(request());
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: "Browser authoring metadata failed its integrity check.",
+    });
+    expect(state.connect).not.toHaveBeenCalled();
+    expect(state.query).not.toHaveBeenCalled();
   });
 });

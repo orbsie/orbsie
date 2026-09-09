@@ -78,6 +78,24 @@ function op(sequence = 1) {
     command: { type: "set_environment", sky: "#ffffff" },
   };
 }
+const proceduralSource = {
+  version: 1 as const,
+  language: "quickjs" as const,
+  seed: 4,
+  code: `({version:1,revision:0,output:"box",nodes:[{id:"box",kind:"box",size:[2,2,2]}]})`,
+};
+const proceduralRecipe = {
+  version: 1 as const,
+  revision: 0,
+  output: "box",
+  nodes: [
+    {
+      id: "box",
+      kind: "box" as const,
+      size: [2, 2, 2] as [number, number, number],
+    },
+  ],
+};
 it("rejects cross-owner reads and appends without exposing a checkpoint", async () => {
   await expect(readGenerationRun("other", id)).rejects.toMatchObject({
     status: 404,
@@ -158,6 +176,43 @@ it("requires the exact owned cloud snapshot before run creation", async () => {
   expect(db.query.mock.calls.some(([s]) => s.startsWith("INSERT"))).toBe(false);
 });
 
+it("rejects a wrong procedural source hash before starting a journal transaction", async () => {
+  const authored = {
+    ...project,
+    entities: [
+      {
+        id: "shape",
+        label: "Shape",
+        position: [0, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#6ead60",
+        stage: "ready" as const,
+        geometry: {
+          kind: "generated" as const,
+          collision: "none" as const,
+          detail: "refined" as const,
+          job: {
+            backend: "browser-manifold" as const,
+            recipe: proceduralRecipe,
+            authoring: {
+              source: proceduralSource,
+              sourceHash: "a".repeat(64),
+            },
+          },
+        },
+      },
+    ],
+  };
+  await expect(
+    startGenerationRun("owner", {
+      runId: id,
+      project: authored,
+      prompt: "Build",
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+  expect(db.query).not.toHaveBeenCalled();
+});
+
 it("rejects append when the cloud revision changed without recording the operation", async () => {
   const implementation = db.query.getMockImplementation()!;
   db.query.mockImplementation(async (sql: string, args: any[]) =>
@@ -169,6 +224,50 @@ it("rejects append when the cloud revision changed without recording the operati
     appendGenerationRun("owner", { runId: id, envelope: op() }),
   ).rejects.toMatchObject({ status: 409 });
   expect(operations).toHaveLength(0);
+});
+it("rejects malformed retained authoring before journal admission", async () => {
+  const entity = {
+    id: "shape",
+    label: "Shape",
+    position: [0, 0, 0] as [number, number, number],
+    scale: [1, 1, 1] as [number, number, number],
+    color: "#6ead60",
+    stage: "ready" as const,
+  };
+  row.checkpoint = { ...project, entities: [entity] };
+  row.starting_snapshot = row.checkpoint;
+  row.recovery_checkpoint = row.checkpoint;
+  const before = structuredClone(row.checkpoint);
+  const envelope = {
+    ...op(),
+    command: {
+      type: "set_geometry" as const,
+      id: "shape",
+      geometry: {
+        kind: "generated" as const,
+        collision: "none" as const,
+        detail: "refined" as const,
+        job: {
+          backend: "browser-manifold" as const,
+          recipe: proceduralRecipe,
+          authoring: {
+            source: proceduralSource,
+            sourceHash: "a".repeat(64),
+          },
+        },
+      },
+    },
+  };
+  await expect(
+    appendGenerationRun("owner", { runId: id, envelope }),
+  ).rejects.toMatchObject({ status: 400 });
+  expect(row.checkpoint).toEqual(before);
+  expect(operations).toHaveLength(0);
+  expect(
+    db.query.mock.calls.some(([sql]) =>
+      String(sql).startsWith("INSERT INTO generation_operations"),
+    ),
+  ).toBe(false);
 });
 it("enforces account run quota under its advisory transaction lock", async () => {
   db.query.mockImplementation(async (sql: string) => ({
