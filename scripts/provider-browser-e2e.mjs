@@ -2644,6 +2644,20 @@ async function run(config) {
         throw new Error(
           `Generation request returned HTTP ${rejectedStatus} before the first entity reservation.`,
         );
+      const streamFailure = await page.evaluate(() => {
+        const code = window.__orbsieDiagnosticObserver?.records?.[0]?.code;
+        return [
+          "INVALID_SCENE_UPDATE",
+          "INVALID_SCENE_JSON",
+          "PROVIDER_STREAM_ERROR",
+        ].includes(code)
+          ? code
+          : null;
+      });
+      if (streamFailure)
+        throw new Error(
+          `Generation stream reported ${streamFailure} before the first entity reservation.`,
+        );
       if (Date.now() >= reservationDeadline)
         throw new Error("No entity reservation appeared within 180 seconds.");
       await page.waitForTimeout(100);
