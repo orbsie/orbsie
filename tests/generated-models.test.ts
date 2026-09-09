@@ -109,3 +109,28 @@ it("rejects metadata coordinates outside the supported scene range", async () =>
   ).rejects.toThrow();
   expect(records.size).toBe(0);
 });
+
+it("preserves browser provenance through reload and rejects backend relabeling", async () => {
+  const glb = await bytes();
+  const bounds = generatedGLBBounds(glb);
+  const metadata = await saveGeneratedModel(glb, {
+    source: "browser-manifold",
+    kernelVersion: "3.3.2",
+    bounds,
+  });
+  expect(metadata.source).toBe("browser-manifold");
+  expect(metadata.blenderVersion).toBeUndefined();
+  expect((await readGeneratedModel(metadata.sha256)).metadata).toEqual(
+    metadata,
+  );
+  await expect(
+    saveGeneratedModel(glb, {
+      source: "browser-manifold",
+      kernelVersion: "different",
+      bounds,
+    }),
+  ).rejects.toThrow(/provenance/);
+  await expect(
+    saveGeneratedModel(glb, { blenderVersion: "4.0.2", bounds }),
+  ).rejects.toThrow(/provenance/);
+});

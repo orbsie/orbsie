@@ -205,6 +205,7 @@ function sameGeneratedProvenance(
     left.bytes === right.bytes &&
     left.source === right.source &&
     left.blenderVersion === right.blenderVersion &&
+    left.kernelVersion === right.kernelVersion &&
     JSON.stringify(left.bounds) === JSON.stringify(right.bounds)
   );
 }

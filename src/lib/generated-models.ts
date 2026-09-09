@@ -9,17 +9,28 @@ const point = z.tuple([
   z.number().finite().min(-1e6).max(1e6),
   z.number().finite().min(-1e6).max(1e6),
 ]);
-export const generatedModelMetadataSchema = z
+const generatedModelMetadataBaseSchema = z
   .object({
     version: z.literal(1),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
     bytes: z.number().int().positive().max(MAX_GENERATED_MODEL_BYTES),
-    source: z.literal("local-blender"),
-    blenderVersion: z.string().min(1).max(64),
     bounds: z.object({ min: point, max: point }).strict(),
     createdAt: z.string().datetime(),
   })
-  .strict()
+  .strict();
+export const generatedModelMetadataSchema = z
+  .discriminatedUnion("source", [
+    generatedModelMetadataBaseSchema.extend({
+      source: z.literal("local-blender"),
+      blenderVersion: z.string().min(1).max(64),
+      kernelVersion: z.never().optional(),
+    }),
+    generatedModelMetadataBaseSchema.extend({
+      source: z.literal("browser-manifold"),
+      kernelVersion: z.string().min(1).max(64),
+      blenderVersion: z.never().optional(),
+    }),
+  ])
   .superRefine((value, context) => {
     if (value.bounds.min.some((min, index) => min > value.bounds.max[index]))
       context.addIssue({
@@ -49,7 +60,18 @@ const storageKey = (hash: string) => {
 
 export async function saveGeneratedModel(
   glb: Uint8Array,
-  provenance: Pick<GeneratedModelMetadata, "blenderVersion" | "bounds">,
+  provenance: { bounds: GeneratedModelMetadata["bounds"] } & (
+    | {
+        source?: "local-blender";
+        blenderVersion: string;
+        kernelVersion?: never;
+      }
+    | {
+        source: "browser-manifold";
+        kernelVersion: string;
+        blenderVersion?: never;
+      }
+  ),
 ): Promise<GeneratedModelMetadata> {
   glb = new Uint8Array(glb);
   provenance = structuredClone(provenance);
@@ -60,7 +82,7 @@ export async function saveGeneratedModel(
     version: 1,
     sha256,
     bytes: glb.byteLength,
-    source: "local-blender",
+    source: provenance.source ?? "local-blender",
     createdAt: new Date().toISOString(),
   });
   let saved = metadata;
@@ -76,6 +98,8 @@ export async function saveGeneratedModel(
     )
       throw Error("The saved generated model failed its integrity check.");
     if (
+      previous.source !== metadata.source ||
+      previous.kernelVersion !== metadata.kernelVersion ||
       previous.blenderVersion !== metadata.blenderVersion ||
       JSON.stringify(previous.bounds) !== JSON.stringify(metadata.bounds)
     )
@@ -115,6 +139,9 @@ export function sameGeneratedProvenance(
   b: GeneratedModelMetadata,
 ) {
   return (
+    a.source === b.source &&
+    a.version === b.version &&
+    a.kernelVersion === b.kernelVersion &&
     a.sha256 === b.sha256 &&
     a.bytes === b.bytes &&
     a.blenderVersion === b.blenderVersion &&

@@ -59,6 +59,7 @@ export async function bundleGeneratedAssets(
       metadata.source !== expected.source ||
       metadata.version !== expected.version ||
       metadata.blenderVersion !== expected.blenderVersion ||
+      metadata.kernelVersion !== expected.kernelVersion ||
       JSON.stringify(metadata.bounds) !== JSON.stringify(expected.bounds)
     )
       throw Error(
