@@ -714,6 +714,25 @@ export default function Orbsie() {
       const generationWorld = captureCloudRequest();
       submission.current.checking = false;
       await generation;
+      const providerFailure = useOrb.getState().generationErrorCode;
+      if (
+        selectedConnection.provider !== "free" &&
+        (providerFailure === "PROVIDER_AUTH_REJECTED" ||
+          providerFailure === "PROVIDER_ACCESS_DENIED") &&
+        generationWorld() &&
+        connectionVersion.current === selectedConnectionVersion &&
+        submission.current.sequence === sequence
+      ) {
+        setConnection({
+          ...selectedConnection,
+          ...(providerFailure === "PROVIDER_AUTH_REJECTED"
+            ? { key: "" }
+            : {}),
+        });
+        setOAuthMessage(useOrb.getState().error);
+        if (!textarea.current?.value) setPrompt(instruction);
+        setModal("settings");
+      }
       const quotaExceeded =
         useOrb.getState().generationErrorCode === "FREE_LIMIT_REACHED";
       if (selectedConnection.provider === "free") {
@@ -1295,7 +1314,7 @@ export default function Orbsie() {
             <div className="panel-foot">
               <span className="mode-dot" />
               {connection.key
-                ? "AI connected"
+                ? "AI key added"
                 : trial.enabled && trial.remaining > 0
                   ? `${trial.remaining} free prompts left`
                   : "Connect to keep creating"}

@@ -119,6 +119,16 @@ export async function POST(request: Request) {
       response.headers.set("Cache-Control", "no-store");
       return response;
     }
+    if (e instanceof GenerationProviderError && e.status === 401)
+      return Response.json(
+        { error: e.message, code: "PROVIDER_AUTH_REJECTED" },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    if (e instanceof GenerationProviderError && e.status === 403)
+      return Response.json(
+        { error: e.message, code: "PROVIDER_ACCESS_DENIED" },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      );
     if (e instanceof GenerationProviderError)
       return apiError(new HttpError(e.status, e.message));
     return apiError(e);

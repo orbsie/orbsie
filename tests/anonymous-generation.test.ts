@@ -106,13 +106,13 @@ it("still requires an Orbsie account before publication", async () => {
   expect(provider).not.toHaveBeenCalled();
 });
 
-for (const [upstream, status, message] of [
-  [401, 401, "API key"],
-  [402, 402, "payment"],
-  [403, 403, "access"],
-  [404, 400, "model"],
-  [429, 429, "rate limited"],
-  [503, 502, "unavailable"],
+for (const [upstream, status, message, code] of [
+  [401, 401, "API key", "PROVIDER_AUTH_REJECTED"],
+  [402, 402, "payment", undefined],
+  [403, 403, "access", "PROVIDER_ACCESS_DENIED"],
+  [404, 400, "model", undefined],
+  [429, 429, "rate limited", undefined],
+  [503, 502, "unavailable", undefined],
 ] as const) {
   it(`preserves an actionable safe provider failure for HTTP ${upstream}`, async () => {
     vi.stubGlobal(
@@ -128,6 +128,8 @@ for (const [upstream, status, message] of [
     const body = await response.json();
     expect(body.error).toContain(message);
     expect(body.error).not.toContain("private upstream diagnostic");
+    expect(body.code).toBe(code);
+    if (code) expect(response.headers.get("cache-control")).toBe("no-store");
     expect(authCheck).not.toHaveBeenCalled();
   });
 }
