@@ -51,3 +51,33 @@ The OpenRouter local-only authorization remains separate and unchanged:
 ChatGPT uses its own bounded server generation policy; adding the harness does
 not increase that policy or authorize model substitution. End-user model
 selection remains unrestricted among the product's supported models.
+
+## Running the hosted milestone
+
+Implementation review and synthetic harness checks are still pending. The
+command below documents the intended live invocation; it is not a record of
+successful subscription acceptance.
+
+After the owner supplies an expressly authorized, private cookies-only
+Orbsie storage-state file and completes ChatGPT consent in the product:
+
+```sh
+ORBSIE_LIVE_E2E=1 \
+ORBSIE_TEST_URL=https://orbsie.com \
+ORBSIE_EXPECTED_MODEL=gpt-5.6-luna \
+ORBSIE_SERVICE_TIER=default \
+ORBSIE_ACCOUNT_STORAGE_STATE=/absolute/private/orbsie-state.json \
+node scripts/provider-browser-e2e.mjs --provider chatgpt-hosted
+```
+
+The path is a placeholder, not an existing credential. Do not commit the state
+file or copy ChatGPT cookies into it. This invocation does not need an API key,
+local companion, or installation on the user's computer. The acceptance driver
+runs in the development environment against the browser-only product.
+
+An unavailable session, disconnected runtime, or missing Luna capability must
+produce an actual sanitized blocked report without dispatching generation.
+The report must distinguish that outcome from an attempted generation failure.
+The milestone covers create/edit/reload/export; separately record publication,
+signed-out playback and newly observed account consent before claiming the
+complete provider journey.
