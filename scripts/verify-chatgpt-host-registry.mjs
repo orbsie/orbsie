@@ -96,7 +96,13 @@ try {
   );
   assert.equal(await registry.readChatGPTHost(owner), null);
   assert.equal(await registry.claimChatGPTHost(owner), null);
+  assert.equal(await registry.readExpiredChatGPTHost(other), null);
+  assert.deepEqual(await registry.readExpiredChatGPTHost(owner), {
+    attemptId: claim.attemptId,
+    sandboxName: `orbsie-chatgpt-${claim.attemptId}`,
+  });
   assert.equal(await registry.releaseChatGPTHost(owner, claim.attemptId), true);
+  assert.ok(await registry.claimChatGPTHost(owner));
   console.log(
     JSON.stringify(
       {

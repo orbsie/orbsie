@@ -79,6 +79,22 @@ export async function readChatGPTHost(identity: Identity) {
   };
 }
 
+/** Cleanup metadata only; never decrypt an expired host capability. */
+export async function readExpiredChatGPTHost(identity: Identity) {
+  const result = await database().query(
+    `SELECT attempt_id FROM chatgpt_hosts
+     WHERE session_id=$1 AND owner_id=$2 AND expires_at<=now()`,
+    [identity.sessionId, identity.ownerId],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  // Provisioning failures may have no stored name or capability yet.
+  return {
+    attemptId: row.attempt_id as string,
+    sandboxName: `orbsie-chatgpt-${row.attempt_id}`,
+  };
+}
+
 /** Call only after runtime deletion; attempt matching protects a newer host. */
 export async function releaseChatGPTHost(
   identity: Identity,
