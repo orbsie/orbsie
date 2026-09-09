@@ -1,0 +1,16 @@
+{
+  "image": "sha256:ef91e4b15da8323a1523adb2b371998dcd3063dae8553cc2744c178ccc065bc4",
+  "tag": "ubuntu:24.04",
+  "platform": "linux/amd64",
+  "network": "none",
+  "readOnlyRoot": true,
+  "hostMounts": false,
+  "absentCommands": [
+    "blender",
+    "node",
+    "python3",
+    "bwrap"
+  ],
+  "scope": "Baseline userspace prerequisites only; no installer or construction was run",
+  "cleanHostCertified": false
+}
