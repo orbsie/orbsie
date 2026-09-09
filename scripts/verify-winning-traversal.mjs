@@ -6,23 +6,46 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const base = process.env.TEST_URL ?? "https://orbsie.com";
+const published = process.env.WIN_PUBLISHED === "1";
 const output = process.env.WIN_OUTPUT ?? "/tmp/orbsie-winning-traversal";
 await mkdir(output, { recursive: true });
 const temp = await mkdtemp(join(tmpdir(), "orbsie-win-"));
-await build({
-  stdin: {
-    contents: `import {blankProject} from './src/lib/protocol'; import {fixtureEntities} from './src/lib/fixtures'; import {encodeWorld} from './src/lib/export'; export const project={...blankProject(),entities:fixtureEntities(),revision:1}; export const world=encodeWorld(project);`,
-    resolveDir: process.cwd(),
-    loader: "ts",
-  },
-  bundle: true,
-  platform: "node",
-  format: "esm",
-  outfile: join(temp, "fixture.mjs"),
-});
-const { world, project } = await import(
-  pathToFileURL(join(temp, "fixture.mjs"))
-);
+let world, project;
+if (published) {
+  const origin = new URL(base);
+  if (
+    origin.protocol !== "https:" ||
+    origin.username ||
+    origin.password ||
+    origin.search ||
+    origin.hash
+  )
+    throw Error(
+      "Published target must be an HTTPS URL without credentials or query.",
+    );
+  const response = await fetch(new URL("project.json", origin), {
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw Error(`Published project HTTP ${response.status}`);
+  project = await response.json();
+  if (!Array.isArray(project.entities) || project.game)
+    throw Error(
+      "This traversal requires the collectible/portal game contract.",
+    );
+} else {
+  await build({
+    stdin: {
+      contents: `import {blankProject} from './src/lib/protocol'; import {fixtureEntities} from './src/lib/fixtures'; import {encodeWorld} from './src/lib/export'; export const project={...blankProject(),entities:fixtureEntities(),revision:1}; export const world=encodeWorld(project);`,
+      resolveDir: process.cwd(),
+      loader: "ts",
+    },
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    outfile: join(temp, "fixture.mjs"),
+  });
+  ({ world, project } = await import(pathToFileURL(join(temp, "fixture.mjs"))));
+}
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -34,13 +57,23 @@ const browser = await chromium.launch({
 const report = {
   url: base,
   startedAt: new Date().toISOString(),
-  fixtureEntities: project.entities.length,
+  mode: published
+    ? "published-signed-out-input-traversal"
+    : "fixture-input-traversal",
+  projectRevision: project.revision,
+  entities: project.entities.length,
   inferenceCalls: 0,
   errors: [],
   runs: [],
 };
 try {
-  for (const mobile of [false, true]) {
+  const modes =
+    process.env.WIN_INPUT === "mobile"
+      ? [true]
+      : process.env.WIN_INPUT === "desktop"
+        ? [false]
+        : [false, true];
+  for (const mobile of modes) {
     const label = mobile ? "mobile-touch" : "desktop-keyboard";
     const viewport = mobile
       ? { width: 390, height: 844 }
@@ -86,18 +119,35 @@ try {
         throw Error(`Unexpected mutation: ${path}`);
       await route.continue();
     });
-    await page.goto(`${base}/#orb=${world}`);
+    if (published) {
+      await context.route("**/*", async (route) => {
+        const request = route.request();
+        if (
+          new URL(request.url()).origin !== new URL(base).origin ||
+          !["GET", "HEAD"].includes(request.method())
+        ) {
+          report.errors.push("Unexpected external or mutating request");
+          return route.abort();
+        }
+        return route.fallback();
+      });
+    }
+    await page.goto(published ? base : `${base}/#orb=${world}`);
     await expect(
-      page.getByText("Crystals collected", { exact: true }),
-    ).toBeVisible();
+      published
+        ? page.locator('main[data-ready="true"]')
+        : page.getByText("Crystals collected", { exact: true }),
+    ).toBeVisible({ timeout: 30000 });
     await page.waitForFunction(() => window.__orbReadPlayer()?.visible);
     await page.waitForTimeout(6000);
     const read = () => page.evaluate(() => window.__orbReadPlayer());
     const score = async () =>
       Number(
-        (await page.locator(".game-hud strong").innerText()).match(
-          /^\s*(\d+)/,
-        )?.[1],
+        (
+          await page
+            .locator(published ? ".score" : ".game-hud strong")
+            .innerText()
+        ).match(/(\d+)/)?.[1],
       );
     const run = {
       label,
@@ -124,7 +174,17 @@ try {
         if (key) {
           const box = await page
             .getByRole("button", {
-              name: key === " " ? "Jump" : `Move ${key}`,
+              name: published
+                ? {
+                    w: "Forward",
+                    a: "Left",
+                    s: "Back",
+                    d: "Right",
+                    " ": "Jump",
+                  }[key]
+                : key === " "
+                  ? "Jump"
+                  : `Move ${key}`,
               exact: true,
             })
             .boundingBox();
@@ -177,31 +237,64 @@ try {
       ),
       project.entities.find((entity) => entity.behavior?.type === "portal"),
     ];
+    let expectedCollected = 0;
     for (const target of targets) {
-      let arrived = false;
-      for (let i = 0; i < 180; i++) {
-        const position = await read();
-        const dx = target.position[0] - position.x,
-          dz = target.position[2] - position.z;
-        if (Math.hypot(dx, dz) < 0.42) {
-          arrived = true;
-          break;
+      const approach = async () => {
+        let arrived = false;
+        for (let i = 0; i < 180; i++) {
+          const position = await read();
+          const dx = target.position[0] - position.x,
+            dz = target.position[2] - position.z;
+          if (Math.hypot(dx, dz) < (published ? 0.16 : 0.42)) {
+            arrived = true;
+            break;
+          }
+          // Invert the runtime's fixed camera-relative movement rotation.
+          const inputX = Math.cos(0.5) * dx - Math.sin(0.5) * dz;
+          const inputZ = Math.sin(0.5) * dx + Math.cos(0.5) * dz;
+          const best = choices.reduce((a, b) =>
+            a.x * inputX + a.z * inputZ > b.x * inputX + b.z * inputZ ? a : b,
+          );
+          await setKeys(best.keys);
+          run.inputSteps++;
+          await page.waitForTimeout(
+            published
+              ? Math.max(20, Math.min(110, Math.hypot(dx, dz) * 120))
+              : 110,
+          );
         }
-        // Invert the runtime's fixed camera-relative movement rotation.
-        const inputX = Math.cos(0.5) * dx - Math.sin(0.5) * dz;
-        const inputZ = Math.sin(0.5) * dx + Math.cos(0.5) * dz;
-        const best = choices.reduce((a, b) =>
-          a.x * inputX + a.z * inputZ > b.x * inputX + b.z * inputZ ? a : b,
-        );
-        await setKeys(best.keys);
-        run.inputSteps++;
-        await page.waitForTimeout(110);
+        await setKeys([]);
+        if (!arrived)
+          throw Error(
+            `${label} could not reach ${target.id}: ${JSON.stringify(await read())}`,
+          );
+      };
+      await approach();
+      if (published && target.behavior?.type === "collect") {
+        expectedCollected++;
+        for (
+          let attempt = 0;
+          attempt < 3 && (await score()) < expectedCollected;
+          attempt++
+        ) {
+          await page.waitForTimeout(900);
+          await approach();
+          const beforeJump = await read();
+          await setKeys([" "]);
+          await page.waitForTimeout(450);
+          const airborne = await read();
+          await setKeys([]);
+          await page.waitForTimeout(350);
+          (run.pickupJumps ??= []).push({
+            target: target.id,
+            attempt,
+            beforeJump,
+            airborne,
+            collected: await score(),
+          });
+        }
+        await expect.poll(score).toBe(expectedCollected);
       }
-      await setKeys([]);
-      if (!arrived)
-        throw Error(
-          `${label} could not reach ${target.id}: ${JSON.stringify(await read())}`,
-        );
       const checkpoint = {
         target: target.id,
         position: await read(),
@@ -211,11 +304,18 @@ try {
       console.log(label, JSON.stringify(checkpoint));
     }
     await expect(
-      page.getByText("You found every crystal and made it home.", {
-        exact: true,
-      }),
+      page.getByText(
+        published
+          ? "Adventure complete"
+          : "You found every crystal and made it home.",
+        {
+          exact: true,
+        },
+      ),
     ).toBeVisible();
-    expect(await score()).toBe(5);
+    expect(await score()).toBe(
+      project.entities.filter((e) => e.behavior?.type === "collect").length,
+    );
     run.won = true;
     run.finishedAt = new Date().toISOString();
     run.overflow = await page.evaluate(
@@ -223,6 +323,18 @@ try {
     );
     expect(run.overflow).toBe(false);
     await page.screenshot({ path: join(output, `${label}-won.png`) });
+    if (published) {
+      await page
+        .getByRole("button", { name: "↻ Restart", exact: true })
+        .click();
+      await expect.poll(score).toBe(0);
+      await expect(
+        page.getByText("Adventure complete", { exact: true }),
+      ).toHaveCount(0);
+      run.restart = true;
+      run.signedOut = (await context.cookies()).length === 0;
+      expect(run.signedOut).toBe(true);
+    }
     await context.close();
   }
 } finally {

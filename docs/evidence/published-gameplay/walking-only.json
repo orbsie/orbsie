@@ -1,0 +1,92 @@
+{
+  "url": "https://orb-112b8c73b06252e06c23-m4l2c3c18-grappeggias-projects.vercel.app",
+  "startedAt": "2026-09-09T13:36:36.639Z",
+  "mode": "published-signed-out-input-traversal",
+  "projectRevision": 64,
+  "entities": 19,
+  "inferenceCalls": 0,
+  "errors": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-09T13:36:44.033Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": 0.05288278710399988,
+            "y": 0.4392411944094758,
+            "z": 3.8000654452013185,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -0.9504534651454739,
+            "y": 0.43258321974868713,
+            "z": 0.9658454963382634,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": -0.07288367047261451,
+            "y": 0.44998298198783687,
+            "z": -0.4669292300154951,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 0.8040934440170489,
+            "y": 0.4324375215189798,
+            "z": -1.8484571603051503,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 0.02411775926136561,
+            "y": 0.4218329222027481,
+            "z": -4.434287918984866,
+            "visible": true
+          },
+          "collected": 2
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": -0.04374383140804368,
+            "y": 0.4444320757989429,
+            "z": -5.810406484537233,
+            "visible": true
+          },
+          "collected": 2
+        }
+      ],
+      "inputSteps": 36,
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.8767723500306621
+      }
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "url": "https://orb-112b8c73b06252e06c23-m4l2c3c18-grappeggias-projects.vercel.app",
+  "startedAt": "2026-09-09T13:37:11.951Z",
+  "mode": "published-signed-out-input-traversal",
+  "projectRevision": 64,
+  "entities": 19,
+  "inferenceCalls": 0,
+  "errors": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-09T13:37:18.897Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": 0.07090693139993505,
+            "y": 0.46153449883743913,
+            "z": 4.036005249669309,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -1.009315115903843,
+            "y": 1.0265351999224757,
+            "z": 0.9996907787853999,
+            "visible": true
+          },
+          "collected": 2
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": -0.10575079271149135,
+            "y": 1.2011548500176763,
+            "z": -0.31179827146671135,
+            "visible": true
+          },
+          "collected": 3
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 0.8343022370558185,
+            "y": 0.9439419777874832,
+            "z": -2.048112762428362,
+            "visible": true
+          },
+          "collected": 4
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": -0.15297018329559084,
+            "y": 0.4647774170493436,
+            "z": -4.321625139562279,
+            "visible": true
+          },
+          "collected": 5
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": 0.13902590050214897,
+            "y": 0.44593035809485804,
+            "z": -5.7186645448585045,
+            "visible": true
+          },
+          "collected": 5
+        }
+      ],
+      "inputSteps": 38,
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.9960000000000001
+      },
+      "won": true,
+      "finishedAt": "2026-09-09T13:37:25.837Z",
+      "overflow": false,
+      "restart": true,
+      "signedOut": true
+    },
+    {
+      "label": "mobile-touch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "startedAt": "2026-09-09T13:37:35.011Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": 0.06967453745322456,
+            "y": 0.458743880432381,
+            "z": 3.8051223917042907,
+            "visible": true
+          },
+          "collected": 1
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -0.9738224565785478,
+            "y": 0.8999999999999999,
+            "z": 0.797315903558045,
+            "visible": true
+          },
+          "collected": 2
+        }
+      ],
+      "inputSteps": 15,
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 1.1635503000088827
+      }
+    }
+  ]
+}
