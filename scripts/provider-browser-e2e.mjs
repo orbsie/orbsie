@@ -259,6 +259,7 @@ function readConfiguration(argv) {
     requireInputGame: process.env.ORBSIE_REQUIRE_INPUT_GAME === "1",
     requireRevolution: process.env.ORBSIE_REQUIRE_REVOLUTION === "1",
     requireGeometryEdit: process.env.ORBSIE_REQUIRE_GEOMETRY_EDIT === "1",
+    requireProcedural: process.env.ORBSIE_REQUIRE_PROCEDURAL === "1",
   };
 
   if (
@@ -284,6 +285,7 @@ function readConfiguration(argv) {
   for (const name of [
     "ORBSIE_REQUIRE_REVOLUTION",
     "ORBSIE_REQUIRE_GEOMETRY_EDIT",
+    "ORBSIE_REQUIRE_PROCEDURAL",
   ]) {
     if (
       process.env[name] !== undefined &&
@@ -302,6 +304,15 @@ function readConfiguration(argv) {
   if (config.requireGeometryEdit && !config.requireBrowserModel)
     throw new HarnessConfigurationError(
       "ORBSIE_REQUIRE_GEOMETRY_EDIT=1 requires ORBSIE_REQUIRE_BROWSER_MODEL=1.",
+    );
+  if (
+    config.requireProcedural &&
+    (!config.requireBrowserModel ||
+      !config.requireNewOnly ||
+      !config.requireGeometryEdit)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_PROCEDURAL=1 requires browser modeling, new-only creation, and a geometry edit.",
     );
   if (config.requireGeometryEdit && !process.env.ORBSIE_EDIT_PROMPT?.trim())
     throw new HarnessConfigurationError(
@@ -2756,6 +2767,19 @@ async function run(config) {
               entity.geometry?.kind === "generated" && entity.geometry.model,
           )
         : projectAfterCreation.entities[0];
+    if (config.requireProcedural) {
+      const authoring = targetBefore?.geometry?.job?.authoring;
+      assert.equal(
+        authoring?.source?.language,
+        "quickjs",
+        "The live model did not produce retained procedural source.",
+      );
+      assert.equal(authoring.source.version, 1);
+      assert.equal(typeof authoring.source.code, "string");
+      assert(authoring.source.code.length > 0);
+      assert.match(authoring.sourceHash, /^[a-f0-9]{64}$/);
+      report.creation.browserProcedural = true;
+    }
     if (config.requireExtrusion) {
       assert(
         targetBefore?.geometry?.job?.backend === "browser-manifold" &&
@@ -2876,6 +2900,26 @@ async function run(config) {
       const beforeRecipe = targetBefore.geometry?.job?.recipe;
       const afterRecipe = targetAfter.geometry?.job?.recipe;
       assert(beforeRecipe && afterRecipe, "The geometry edit lost its recipe.");
+      if (config.requireProcedural) {
+        const beforeSource = targetBefore.geometry.job.authoring;
+        const afterSource = targetAfter.geometry.job.authoring;
+        assert.equal(
+          afterSource?.source?.language,
+          "quickjs",
+          "The edit lost procedural source.",
+        );
+        assert.match(afterSource.sourceHash, /^[a-f0-9]{64}$/);
+        assert.notEqual(
+          afterSource.source.code,
+          beforeSource.source.code,
+          "The edit did not revise procedural source.",
+        );
+        assert.notEqual(
+          afterSource.sourceHash,
+          beforeSource.sourceHash,
+          "The edit did not change source provenance.",
+        );
+      }
       assert(
         afterRecipe.revision > beforeRecipe.revision,
         "The geometry edit did not increase the recipe revision.",

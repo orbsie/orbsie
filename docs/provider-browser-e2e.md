@@ -16,6 +16,17 @@ bound measured after navigation and readiness assertions, not an exact
 first-frame latency. These strengthened checks apply to subsequent runs;
 historical passing reports have not been retroactively revalidated.
 
+`ORBSIE_REQUIRE_PROCEDURAL=1` adds a procedural-authoring acceptance gate.
+It requires `ORBSIE_REQUIRE_BROWSER_MODEL=1`,
+`ORBSIE_REQUIRE_NEW_ONLY=1`, `ORBSIE_REQUIRE_GEOMETRY_EDIT=1` and the existing
+explicit creation/edit prompts. Creation must retain QuickJS source and a
+source hash; editing must change both source and hash while the existing
+geometry checks require a new recipe revision, a changed stored GLB and
+preservation of unrelated state. Ordinary browser recipes cannot satisfy
+this gate. All live-inference authorization and credential-specific token
+caps still apply. This option is prepared for the integration milestone;
+its existence is not evidence of a live procedural pass.
+
 The harness fails closed before Chromium starts unless the caller explicitly
 sets `ORBSIE_LIVE_E2E=1`, chooses `--provider openrouter`, `--provider gateway`,
 `--provider free`, or `--provider chatgpt-local`, supplies an exact
