@@ -44,7 +44,7 @@ Astra owns contracts, architecture, every diff review and integration. One Luna 
 | Babylon.js Node Geometry | Alternative ecosystem reference; retain Three.js unless a separate measured decision justifies migration |
 | JSCAD / OpenSCAD-WASM | Optional procedural asset generation behind the same SDK, not the game runtime |
 | HeyPuter Blender-WASM | Focused compatibility experiment: Python creates a mesh, required modifiers run, geometry exports/extracts, one Three.js entity updates, then repeats without runtime restart |
-| Native Blender companion | Optional advanced backend; preserve existing isolation, pinned packaging, clean-machine, license/source and restart gates before shipping |
+| Native Blender companion | Excluded from product delivery; no connection, installation or setup UI. Only already baked historical assets remain compatible. |
 | Pyodide | Consider a Python-facing `orbsie` API only after comparative generation-quality/token measurements justify another runtime; do not imply `bpy` compatibility |
 
 For Blender-WASM, inspect the exact chosen commit/build scripts and record browser requirements, cross-origin isolation, startup, download, memory and modifier/export compatibility. The owner's cited 1 GiB initial memory, 4 GiB growth and 32-thread settings are investigation leads, not measured device requirements or accepted production configuration. A working demo alone does not satisfy the editing experiment.
@@ -63,7 +63,7 @@ Track time to first reservation and recognizable object, refinement time, succes
 
 Prove create/edit and cancellation in actual browser workers; prove undo/replay/reload and preservation of unrelated play state; inspect rendered shapes; verify resource cleanup and invalid/stale result rejection. Run desktop/mobile and representative normal-GPU checks. Full provider acceptance includes independently published signed-out play; Gateway funding remains a separate configuration gate. Vercel deployment permissions were repaired and an existing saved game reached READY with signed-out rendering evidence; the new SDK publication workflow still requires its own acceptance.
 
-The native package/source acquisition already underway may finish as reusable optional-backend work. It must not delay the SDK prototype, imply native delivery is complete, or substitute for browser modeling tests.
+Do not continue native package/source acquisition for product delivery. Browser worker execution is the modeling acceptance path.
 
 ## Primary references
 
@@ -86,7 +86,7 @@ Inspection after the architecture revision identifies these integration boundari
 - `src/lib/modeling.ts` already validates bounded multipart jobs (including meshes, extrusion and lathe), but has no boolean recipe graph. Introduce a separately versioned browser recipe contract with stable node IDs, explicit output and graph validation; preserve existing version-1 Blender jobs during migration. Do not reinterpret old coordinates or silently treat an unsupported modifier as supported.
 - `src/lib/protocol.ts` already persists the modeling job on `generated` geometry and applies `reserve_entity`/`set_geometry` to stable entity IDs. Extend this established protocol for browser recipes rather than adding a second scene-state writer. Existing fixed procedural shapes in `geometry.ts` remain useful previews; they do not satisfy the general SDK requirement.
 - `src/lib/generated-models.ts` currently fixes provenance to `source: local-blender` plus `blenderVersion`. Add an explicit browser-backend provenance variant and update save/read/cloud validation together. Never label Manifold output as Blender output. Preserve content hashes, size/bounds validation and old persisted records.
-- `src/lib/modeling-connection.ts` is the native-companion transport. Keep it as a backend adapter; browser construction must not require its pairing flow. Integrate backend selection at the existing store/job boundary, with capability checks and explicit requested-backend handling.
+- `src/lib/modeling-connection.ts` is the native-companion transport. It is historical code, not a supported product backend. Current store dispatch must not invoke its pairing or execution flow.
 - `src/lib/generated-geometry-queue.ts` and `generated-geometry-core.ts` already handle bounded GLB decoding and formation geometry. Reuse this downstream path for validated baked browser output; add a separate construction worker so decoding and authoring lifecycles are not confused. The existing static player-worker bundling pattern can inform deployment, while baked public players should omit unused authoring kernels.
 
 First bounded implementation task: browser recipe schema, graph validator and focused tests for valid subtraction, targeted node revision, duplicate/missing/cyclic references and resource bounds. Then prototype the kernel adapter against that contract. Capability discovery must not advertise the new backend until actual worker execution and scene integration pass.
@@ -99,4 +99,4 @@ Store/protocol dispatch is under review. Provider prompts and request capabiliti
 
 Priority update: finish current integration review, then prioritize usable AI account/API and ChatGPT subscription connection flows before extending the modeling vocabulary.
 
-Extrusion milestone: browser recipes now support simple XY outlines (3–64 distinct vertices), centered along Z, with concave outlines and winding normalization. Invalid intersections/degeneracy are rejected before kernel execution. Real editor create→deepen→reload evidence is in `docs/evidence/browser-extrusion-worker/`; live-provider extrusion remains unverified. Standalone source dependency closure now follows actual build inputs and passes an isolated rebuild check.
+Extrusion milestone: browser recipes now support simple XY outlines (3–64 distinct vertices), centered along Z, with concave outlines and winding normalization. Invalid intersections/degeneracy are rejected before kernel execution. Real editor create→deepen→reload evidence is in `docs/evidence/browser-extrusion-worker/`; live OpenRouter Luna extrusion creation, material editing, reload and standalone playback passed in `docs/evidence/provider-e2e/browser-extrusion-output-contract/`. This does not prove a live geometry-depth edit or publication. Standalone source dependency closure now follows actual build inputs and passes an isolated rebuild check.
