@@ -1,0 +1,37 @@
+{
+  "mode": "deterministic-hierarchy-carrying-browser",
+  "provider": "fixture-intercepted",
+  "liveProvider": false,
+  "sourceCommits": {
+    "app": "b889987585ca91184de8c2747a63a903d7e6201b",
+    "appAssumedFromRootHead": true,
+    "rootHead": "b889987585ca91184de8c2747a63a903d7e6201b",
+    "runtimeGitHead": "0870f8388351418ef3afdfa7cf0ec9758edee9ba",
+    "runtimeSha256": "da0e0cc9db33b272ee6604fe30ab726180891aa6f1e4ba741c21aa79bf05260f"
+  },
+  "stableIds": {
+    "group": "carry-group-01",
+    "platform": "carry-platform-01",
+    "unrelated": "carry-unrelated-prop-01"
+  },
+  "requests": 1,
+  "requestSummaries": [
+    {
+      "request": 1,
+      "prompt": "Build a large off-center platform that carries the player with its parent",
+      "revision": 0,
+      "groupIds": [],
+      "entityIds": []
+    }
+  ],
+  "pageErrors": [],
+  "external": [],
+  "mutations": [],
+  "checks": {
+    "initialHierarchyAndPlatform": true
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: expected airborne player, got y=0.4649275322974056",
+  "transientErrors": [],
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA pocketful of sunshine\nEdit\nPlay\nYour world\n\nBuild a large off-center platform that carries the player with its parent\n\n✧\n\nThe off-center platform is ready for a carrying check.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\n◆\n0 / 0\nExplore your garden\nW\nA\nS\nD\nMove\n·\nspace\nJump\nYour world is saved on this device."
+}

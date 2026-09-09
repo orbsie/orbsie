@@ -1,0 +1,237 @@
+{
+  "mode": "deterministic-hierarchy-carrying-browser",
+  "provider": "fixture-intercepted",
+  "liveProvider": false,
+  "sourceCommits": {
+    "app": "b889987585ca91184de8c2747a63a903d7e6201b",
+    "appAssumedFromRootHead": true,
+    "rootHead": "b889987585ca91184de8c2747a63a903d7e6201b",
+    "runtimeGitHead": "0870f8388351418ef3afdfa7cf0ec9758edee9ba",
+    "runtimeSha256": "da0e0cc9db33b272ee6604fe30ab726180891aa6f1e4ba741c21aa79bf05260f"
+  },
+  "stableIds": {
+    "group": "carry-group-01",
+    "platform": "carry-platform-01",
+    "unrelated": "carry-unrelated-prop-01"
+  },
+  "requests": 2,
+  "requestSummaries": [
+    {
+      "request": 1,
+      "prompt": "Build a large off-center platform that carries the player with its parent",
+      "revision": 0,
+      "groupIds": [],
+      "entityIds": []
+    },
+    {
+      "request": 2,
+      "prompt": "Rotate the carrying group 90 degrees around Y, scale it uniformly by 1.2, and move it slightly while I am standing on the platform",
+      "revision": 6,
+      "groupIds": [
+        "carry-group-01"
+      ],
+      "entityIds": [
+        "carry-platform-01",
+        "carry-unrelated-prop-01"
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "external": [],
+  "mutations": [],
+  "checks": {
+    "initialHierarchyAndPlatform": true,
+    "keyboardJump": {
+      "movementSamples": [
+        {
+          "x": 0,
+          "y": 0.42,
+          "z": 5,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 0.45796225799807283,
+          "z": 4.8595867900975405,
+          "visible": true
+        }
+      ],
+      "moved": {
+        "x": -0.07670808617667248,
+        "y": 0.45796225799807283,
+        "z": 4.8595867900975405,
+        "visible": true
+      },
+      "airborne": {
+        "x": -0.07670808617667248,
+        "y": 0.636,
+        "z": 4.8595867900975405,
+        "visible": true
+      },
+      "movementInput": "ArrowUp",
+      "keyEvents": [
+        {
+          "type": "down",
+          "key": "ArrowUp",
+          "target": "BODY"
+        },
+        {
+          "type": "up",
+          "key": "ArrowUp",
+          "target": "BODY"
+        },
+        {
+          "type": "down",
+          "key": " ",
+          "target": "BODY"
+        },
+        {
+          "type": "up",
+          "key": " ",
+          "target": "BODY"
+        }
+      ],
+      "jumpInput": "Space"
+    },
+    "actualKeyboardLanding": {
+      "samples": [
+        {
+          "x": -0.07670808617667248,
+          "y": 1.18841264999055,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667248,
+          "y": 1.13,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667291,
+          "y": 1.13,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.0767080861766738,
+          "y": 1.13,
+          "z": 4.8595867900975405,
+          "visible": true
+        },
+        {
+          "x": -0.07670808617667424,
+          "y": 1.13,
+          "z": 4.8595867900975405,
+          "visible": true
+        }
+      ],
+      "drift": {
+        "x": 1.762479051592436e-15,
+        "y": 0.05841264999055018,
+        "z": 0
+      },
+      "supportTop": 0.71,
+      "hud": "◆\n0 / 0\nExplore your garden"
+    },
+    "parentEdit": {
+      "expectedPlayer": {
+        "x": 6.181504148117049,
+        "y": 1.322,
+        "z": 0.2920497034120104
+      },
+      "samples": [
+        {
+          "x": 6.181504148117049,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        },
+        {
+          "x": 6.181504148117046,
+          "y": 1.322,
+          "z": 0.29204970341202063,
+          "visible": true
+        }
+      ],
+      "maxDistance": 1.0555880013644902e-14,
+      "drift": {
+        "x": 2.6645352591003757e-15,
+        "y": 0,
+        "z": 0
+      },
+      "hudBefore": "◆\n0 / 0\nExplore your garden",
+      "hudAfter": "◆\n0 / 0\nExplore your garden"
+    },
+    "parentMatrixCarry": true,
+    "unrelatedEntityUnchanged": true,
+    "playStateAndScorePreserved": true
+  },
+  "status": "passed"
+}

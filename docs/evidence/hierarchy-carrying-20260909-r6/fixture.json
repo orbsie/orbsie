@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "stableIds": {
+    "group": "carry-group-01",
+    "platform": "carry-platform-01",
+    "unrelated": "carry-unrelated-prop-01"
+  },
+  "labels": {
+    "group": "Off-center carrying group",
+    "platform": "Large carrying platform",
+    "unrelated": "Unrelated tree prop"
+  },
+  "group": {
+    "id": "carry-group-01",
+    "label": "Off-center carrying group",
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ]
+  },
+  "platform": {
+    "id": "carry-platform-01",
+    "label": "Large carrying platform",
+    "parentId": "carry-group-01",
+    "position": [
+      -1.5,
+      0.45,
+      4
+    ],
+    "scale": [
+      3.4,
+      0.5,
+      2.8
+    ],
+    "color": "#efc79c",
+    "stage": "ready",
+    "geometry": {
+      "kind": "platform",
+      "detail": "refined"
+    },
+    "behavior": {
+      "type": "static"
+    }
+  },
+  "unrelated": {
+    "id": "carry-unrelated-prop-01",
+    "label": "Unrelated tree prop",
+    "position": [
+      4.4,
+      0,
+      -3.5
+    ],
+    "scale": [
+      1.1,
+      1.2,
+      1.1
+    ],
+    "color": "#77a664",
+    "stage": "ready",
+    "geometry": {
+      "kind": "tree",
+      "detail": "refined"
+    },
+    "behavior": {
+      "type": "static"
+    }
+  },
+  "editedGroup": {
+    "id": "carry-group-01",
+    "label": "Off-center carrying group",
+    "position": [
+      0.35,
+      0.05,
+      0.2
+    ],
+    "rotation": [
+      0,
+      1.5707963267948966,
+      0
+    ],
+    "scale": [
+      1.2,
+      1.2,
+      1.2
+    ]
+  }
+}
