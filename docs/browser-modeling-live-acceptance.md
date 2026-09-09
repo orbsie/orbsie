@@ -9,3 +9,5 @@ The default scoped edit preserves geometry and changes material; reload, export 
 OpenRouter retains the authorized 512-output-token test cap. Gateway funded connection and authorized test budget remain unresolved. ChatGPT tests must explicitly select Luna with regular processing. No successful live browser-modeling run is claimed by adding this gate.
 
 Owner update: ChatGPT connector support is not live and is now backlog work in `prompt.md`. Do not run ChatGPT live acceptance or block the current release on it. Earlier companion evidence remains experimental; active live acceptance targets OpenRouter and Gateway.
+
+Latest owner clarification supersedes the preceding deferral: the ChatGPT connector must connect to the owner’s subscription, and working AI account/API connections are the highest priority. Validate actual authentication and generation before claiming the subscription connector is live.
