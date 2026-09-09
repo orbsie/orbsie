@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "57218cd",
+  "productionUrl": "https://orbsie-aj7zayj44-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "vercelBuild": "passed",
+  "productionBrowserChecks": {
+    "provider": "simulated authorization and exchange",
+    "success": "passed: one exchange, unsent prompt restored, URL scrubbed, no persisted key",
+    "cancellation": "passed: zero exchanges, unsent prompt restored, URL scrubbed, no persisted key"
+  },
+  "realAccountAuthorization": "not verified",
+  "liveInferenceCalls": 0
+}
