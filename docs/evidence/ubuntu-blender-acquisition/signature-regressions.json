@@ -1,0 +1,12 @@
+[
+  {
+    "case": "changed-release",
+    "rejected": true,
+    "reason": "signature verification failed"
+  },
+  {
+    "case": "changed-binary",
+    "rejected": true,
+    "reason": "SHA-256 mismatch"
+  }
+]

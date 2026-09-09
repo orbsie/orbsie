@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "version": "4.0.2+dfsg-1ubuntu8",
+  "signer": "F6ECB3762474EDA9D21B7022871920D1991BC93C",
+  "releaseSha256": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+  "releaseDate": "Thu, 25 Apr 2024 15:10:33 UTC",
+  "indexes": [
+    {
+      "file": "Packages",
+      "bytes": 73379142,
+      "sha256": "687ffc969e7700137677b9cfe2f614ee2d638052a91a7c9bf31f3f6a3040a99a"
+    },
+    {
+      "file": "Sources.xz",
+      "bytes": 19839948,
+      "sha256": "796c4253df46fe9d0b468c5b18259f8d5172bf6c8b3b17451ba98ffc1781f682"
+    }
+  ],
+  "files": [
+    {
+      "file": "blender_4.0.2+dfsg-1ubuntu8_amd64.deb",
+      "bytes": 25580214,
+      "sha256": "c9ca6054d19684a08d992d0566c5af2fe124f18abc77d967c6175db5bb53d8a1"
+    },
+    {
+      "file": "blender-data_4.0.2+dfsg-1ubuntu8_all.deb",
+      "bytes": 35878924,
+      "sha256": "134093e5293bc599c403ec293085c1b573ea23f353a6b5078c4f7c0ce52427bd"
+    },
+    {
+      "file": "blender_4.0.2+dfsg-1ubuntu8.dsc",
+      "bytes": 3099,
+      "sha256": "18d60c0f40fd00e20b5e37f402311fea97cccbae5e8b726c97dd1a70b8b9d100"
+    },
+    {
+      "file": "blender_4.0.2+dfsg.orig.tar.xz",
+      "bytes": 60573060,
+      "sha256": "c19b65a964d93e0a57f74e789e58df1a6d78d3a6f1f3fedc9b7b4da466662a84"
+    },
+    {
+      "file": "blender_4.0.2+dfsg-1ubuntu8.debian.tar.xz",
+      "bytes": 36820,
+      "sha256": "ac8e848345ad73db8ed5628b23705b5a34156431b4652ea5251886944d365827"
+    }
+  ],
+  "scope": "Pinned Blender binary/data and matching source package only",
+  "nativeDependencyClosureVerified": false,
+  "cleanHostVerified": false
+}

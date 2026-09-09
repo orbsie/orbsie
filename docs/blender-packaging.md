@@ -160,3 +160,5 @@ Four targeted installer tests and a real companion/Node installation-and-relocat
 ### Ubuntu package acquisition alternative
 
 A legitimate Ubuntu 24.04 amd64 candidate route now has actual Blender `4.0.2+dfsg-1ubuntu8` binary/data packages and matching Blender source archives, acquired and hash-checked from Ubuntu’s public archive. See [acquisition evidence](evidence/ubuntu-blender-acquisition/README.md). These inputs are separate from the absent upstream tarball. Native dependency/source closure, signature-chain verification, a distinct package manifest/resolver branch and clean-host certification remain open. The official-tarball gate is unchanged.
+
+The Ubuntu candidate inputs now have a verified signature chain from the expected Ubuntu archive key through Noble’s signed release and binary/source indexes to the downloaded packages and matching Blender sources. `scripts/verify-ubuntu-blender-inputs.py` repeats this check offline and fails on modified metadata or binaries. See the acquisition evidence’s signature reports. Dependency locking and assembly remain the next gates.
