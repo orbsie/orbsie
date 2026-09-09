@@ -1,0 +1,40 @@
+{
+  "packageVersion": "4.0.2+dfsg-1ubuntu8",
+  "files": [
+    {
+      "file": "blender_4.0.2+dfsg-1ubuntu8_amd64.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/b/blender/blender_4.0.2+dfsg-1ubuntu8_amd64.deb",
+      "bytes": 25580214,
+      "sha256": "c9ca6054d19684a08d992d0566c5af2fe124f18abc77d967c6175db5bb53d8a1"
+    },
+    {
+      "file": "blender-data_4.0.2+dfsg-1ubuntu8_all.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/b/blender/blender-data_4.0.2+dfsg-1ubuntu8_all.deb",
+      "bytes": 35878924,
+      "sha256": "134093e5293bc599c403ec293085c1b573ea23f353a6b5078c4f7c0ce52427bd"
+    },
+    {
+      "file": "blender_4.0.2+dfsg.orig.tar.xz",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/b/blender/blender_4.0.2+dfsg.orig.tar.xz",
+      "bytes": 60573060,
+      "sha256": "c19b65a964d93e0a57f74e789e58df1a6d78d3a6f1f3fedc9b7b4da466662a84"
+    },
+    {
+      "file": "blender_4.0.2+dfsg-1ubuntu8.debian.tar.xz",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/universe/b/blender/blender_4.0.2+dfsg-1ubuntu8.debian.tar.xz",
+      "bytes": 36820,
+      "sha256": "ac8e848345ad73db8ed5628b23705b5a34156431b4652ea5251886944d365827"
+    }
+  ],
+  "binaryDigestSource": "local Ubuntu apt package index",
+  "sourceDigestSource": "HTTPS Ubuntu .dsc descriptor",
+  "repositorySignatureChainVerified": false,
+  "completeNativeDependencyClosure": false,
+  "releaseCertified": false,
+  "extractedExecutableSha256": "aab13f2e20400a7bc161813151acfe4586889aa964624f7a0bcfdfc066f9749d",
+  "matchesInstalledExecutable": true,
+  "copyrightFiles": [
+    "usr/share/doc/blender/copyright",
+    "usr/share/doc/blender-data/copyright"
+  ]
+}

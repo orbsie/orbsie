@@ -156,3 +156,7 @@ The manifest explicitly keeps portability, native dependencies, complete licensi
 The offline distribution can now be wrapped in a self-extracting Linux x64 installer with `scripts/package-modeling-installer.mjs`. It verifies a private snapshot against the complete tree manifest, checks payload integrity before extraction, preserves existing destinations, and cleans newly created partial installations, including read-only directories. See [installer instructions](modeling-installer.md).
 
 Four targeted installer tests and a real companion/Node installation-and-relocation smoke passed; see [installer evidence](evidence/modeling-installer/README.md). The latter uses a synthetic runtime placeholder and proves launcher installation only. The official Blender payload, source/native closure, downloadable certified release and clean-host construction remain open.
+
+### Ubuntu package acquisition alternative
+
+A legitimate Ubuntu 24.04 amd64 candidate route now has actual Blender `4.0.2+dfsg-1ubuntu8` binary/data packages and matching Blender source archives, acquired and hash-checked from Ubuntu’s public archive. See [acquisition evidence](evidence/ubuntu-blender-acquisition/README.md). These inputs are separate from the absent upstream tarball. Native dependency/source closure, signature-chain verification, a distinct package manifest/resolver branch and clean-host certification remain open. The official-tarball gate is unchanged.
