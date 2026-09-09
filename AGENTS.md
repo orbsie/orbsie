@@ -8,6 +8,12 @@
 - Live model-backed tests may call Luna only. This does not change the Astra lead/reviewer role or Luna worker policy. Preserve credential-specific output and spending limits. Do not apply this test restriction to users’ supported model choices.
 - Follow the development execution and quality plan in `prompt.md`.
 
+## Local Blender access
+
+- For asset construction, write a bounded typed modeling job and run `node scripts/run-blender-job.mjs JOB.json NEW_OUTPUT_DIRECTORY`. See `docs/agent-blender-runtime.md` for the schema example and runtime prerequisites.
+- Reuse this isolated executor; do not run arbitrary generated Python in a normal Blender session. The command returns `model.glb` and metadata without making model calls.
+- Installed-runtime success does not complete the separate portable Blender release requirements in `prompt.md`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

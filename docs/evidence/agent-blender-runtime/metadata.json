@@ -1,0 +1,40 @@
+{
+  "schema": "orbsie.blender-modeling-result/v1",
+  "version": 1,
+  "sha256": "0b6d9486d1b48d0bb4dde3bac942731948b2ecaebb5cdbe855fdf8f56ad757af",
+  "bounds": {
+    "min": [
+      -1,
+      -2,
+      -1
+    ],
+    "max": [
+      1,
+      2,
+      1
+    ],
+    "size": [
+      2,
+      4,
+      2
+    ]
+  },
+  "materials": [
+    {
+      "name": "orbsie_ffffff",
+      "color": "#ffffff",
+      "parts": [
+        "box"
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "box",
+      "shape": "box",
+      "triangles": 12,
+      "vertices": 8
+    }
+  ],
+  "blenderVersion": "4.0.2"
+}
