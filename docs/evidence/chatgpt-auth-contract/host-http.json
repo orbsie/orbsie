@@ -1,0 +1,16 @@
+{
+  "statusCodes": {
+    "unauthenticated": 401,
+    "browserOriginRejected": 403,
+    "signedOutStatus": 200
+  },
+  "realIsolatedAppServer": true,
+  "loginStarted": false,
+  "inferencePerformed": false,
+  "hostedDeploymentVerified": false,
+  "buildPassed": true,
+  "codexVersion": "0.153.4",
+  "missingCapabilityRejected": true,
+  "targetedTestsPassed": 37,
+  "typecheckPassed": true
+}
