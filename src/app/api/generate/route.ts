@@ -34,6 +34,7 @@ export async function POST(request: Request) {
         prompt: z.string().min(1).max(4000),
         project: projectSchema,
         localModeling: z.boolean().default(false),
+        browserModeling: z.boolean().default(false),
         selected: entitySchema.shape.id.optional(),
       })
       .safeParse(await boundedJSON(request));

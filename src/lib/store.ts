@@ -51,6 +51,9 @@ export type GenerationJournalConnection = {
 export type Phase = "landing" | "descending" | "editing";
 type LocalHistory = { project: Project; history: Project[]; future: Project[] };
 const HISTORY_LIMIT = 20;
+function browserModelingAvailable() {
+  return typeof Worker !== "undefined" && typeof WebAssembly !== "undefined";
+}
 function readLocalHistory(
   value: unknown,
   project: Project,
@@ -593,7 +596,11 @@ export const useOrb = create<State>((setState, getState) => ({
         commandSchema.parse(command),
         assetPolicy,
       );
-      assertModelingCommand(command, !!modelingConnection);
+      assertModelingCommand(
+        command,
+        !!modelingConnection,
+        browserModelingAvailable(),
+      );
       if (
         command.type === "set_geometry" &&
         command.geometry.kind === "generated"
@@ -707,6 +714,7 @@ export const useOrb = create<State>((setState, getState) => ({
           project,
           selected,
           localModeling: !!modelingConnection,
+          browserModeling: browserModelingAvailable(),
         });
         const response = await fetch(request.url, { ...request.init, signal });
         if (!response.ok) {

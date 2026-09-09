@@ -17,7 +17,7 @@ import {
   type Cursor,
   type Command,
 } from "../src/lib/protocol";
-import { systemPrompt } from "../src/lib/server/generation";
+import { systemPromptForCapabilities } from "../src/lib/server/generation";
 
 export interface CompanionClient {
   generate(
@@ -33,6 +33,7 @@ const requestSchema = z
     prompt: z.string().trim().min(1).max(5000),
     project: projectSchema,
     localModeling: z.boolean().default(false),
+    browserModeling: z.boolean().default(false),
     selected: z
       .string()
       .regex(/^[\w-]{1,80}$/)
@@ -172,7 +173,8 @@ export async function startChatGPTCompanion({
         JSON.parse(Buffer.concat(chunks).toString("utf8")),
       );
       if (!parsed.success) return send(res, 400, "Invalid generation request.");
-      const { prompt, project, selected, localModeling } = parsed.data;
+      const { prompt, project, selected, localModeling, browserModeling } =
+        parsed.data;
       const assetPolicy = deriveAssetPolicy(prompt, selected, project);
       if (
         selected &&
@@ -209,7 +211,7 @@ export async function startChatGPTCompanion({
           commandSchema.parse(JSON.parse(line)),
           assetPolicy,
         );
-        assertModelingCommand(command, localModeling);
+        assertModelingCommand(command, localModeling, browserModeling);
         const applied = applyOperation(
           working,
           {
@@ -235,11 +237,12 @@ export async function startChatGPTCompanion({
           throw Error("Client too slow.");
       }
       await client.generate(
-        systemPrompt,
+        systemPromptForCapabilities(localModeling, browserModeling),
         {
           instruction: prompt,
           recentConversation: authoringHistory(project, prompt),
           localModeling,
+          browserModeling,
           assetPolicy,
           assetCatalog: promptCatalogForPolicy(assetPolicy.requestAssetPolicy),
           selectedEntityId: selected,

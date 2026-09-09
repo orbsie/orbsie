@@ -48,7 +48,7 @@ function request(extra = {}) {
 }
 it("forces Gateway Luna and server credential despite client overrides, with bounded output", async () => {
   const upstream = vi.fn(
-    async () =>
+    async (_url: string, _options?: RequestInit) =>
       new Response(
         'data: {"choices":[{"delta":{"content":"{\\"type\\":\\"commit_revision\\",\\"message\\":\\"Ready\\"}\\n"}}]}\n\n',
       ),
@@ -75,11 +75,32 @@ it("forces Gateway Luna and server credential despite client overrides, with bou
     model: "openai/gpt-5.6-luna",
     max_tokens: 4096,
   });
+  expect(
+    JSON.parse(JSON.parse(options.body as string).messages[1].content)
+      .browserModeling,
+  ).toBe(false);
   expect(response.headers.get("X-Orbsie-Trial-Remaining")).toBe("2");
   expect(await response.text()).not.toContain("private-synthetic");
   expect(JSON.stringify([...response.headers])).not.toContain(
     "private-synthetic",
   );
+});
+it("forwards an explicitly advertised browser capability to the shared provider", async () => {
+  const upstream = vi.fn(
+    async (_url: string, _options?: RequestInit) =>
+      new Response(
+        'data: {"choices":[{"delta":{"content":"{\\"type\\":\\"commit_revision\\",\\"message\\":\\"Ready\\"}\\n"}}]}\n\n',
+      ),
+  );
+  vi.stubGlobal("fetch", upstream);
+  const response = await POST(request({ browserModeling: true }));
+  expect(response.status).toBe(200);
+  await response.text();
+  const options = upstream.mock.calls[0][1] as RequestInit;
+  expect(
+    JSON.parse(JSON.parse(options.body as string).messages[1].content)
+      .browserModeling,
+  ).toBe(true);
 });
 it("never forwards an exhausted fourth prompt", async () => {
   quota.claim.mockRejectedValueOnce(new TrialExhausted());

@@ -13,8 +13,12 @@ const headers = {
   Authorization: `Bearer ${token}`,
   "Content-Type": "application/json",
 };
-const body = () =>
-  JSON.stringify({ prompt: "Make a garden", project: blankProject() });
+const body = (extra: Record<string, unknown> = {}) =>
+  JSON.stringify({
+    prompt: "Make a garden",
+    project: blankProject(),
+    ...extra,
+  });
 const stops: Array<() => Promise<void>> = [];
 afterEach(async () => {
   await Promise.all(stops.splice(0).map((stop) => stop()));
@@ -46,6 +50,8 @@ describe("trusted local ChatGPT companion", () => {
       expect(input).toMatchObject({
         instruction: "Add a tree",
         recentConversation: [project.messages[0]],
+        localModeling: false,
+        browserModeling: false,
         project: { messages: [] },
       });
       emit('{"type":"commit_revision","message":"Ready"}\n');
@@ -71,6 +77,62 @@ describe("trusted local ChatGPT companion", () => {
       "http://localhost:3000",
     );
   });
+  it.each([false, true])(
+    "transports browser capability %s and gates browser recipes",
+    async (browserModeling) => {
+      const reserve = {
+        type: "reserve_entity",
+        entity: {
+          id: "browser-box",
+          label: "Browser box",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#6ead60",
+          stage: "seed",
+        },
+      };
+      const geometry = {
+        type: "set_geometry",
+        id: "browser-box",
+        geometry: {
+          kind: "generated",
+          detail: "refined",
+          job: {
+            backend: "browser-manifold",
+            recipe: {
+              version: 1,
+              revision: 0,
+              output: "box",
+              nodes: [{ id: "box", kind: "box", size: [2, 2, 2] }],
+            },
+          },
+        },
+      };
+      const c = await setup(async (system, input, emit) => {
+        expect(input).toMatchObject({ browserModeling });
+        expect(system).toContain(
+          browserModeling ? "browser-manifold" : "3D worlds",
+        );
+        emit(
+          [reserve, geometry, { type: "commit_revision", message: "Ready" }]
+            .map((command) => JSON.stringify(command))
+            .join("\n") + "\n",
+        );
+      });
+      const response = await fetch(c.url + "/generate", {
+        method: "POST",
+        headers,
+        body: body({ browserModeling }),
+      });
+      const text = await response.text();
+      expect(text).toContain(JSON.stringify(reserve));
+      if (browserModeling) expect(text).toContain('"commit_revision"');
+      else {
+        expect(text).toContain("Local generation failed");
+        expect(text).not.toContain('"commit_revision"');
+      }
+    },
+  );
   it("exposes only an authenticated health summary and never infers at startup", async () => {
     const c = await setup();
     expect(await (await fetch(c.url + "/health", { headers })).json()).toEqual({

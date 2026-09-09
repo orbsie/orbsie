@@ -1,6 +1,6 @@
 import {
   assertModelingCommand,
-  localModelingInstructions,
+  modelingInstructions,
 } from "../modeling-policy";
 import { deriveAssetPolicy, enforceAssetPolicy } from "../asset-policy";
 import { promptCatalogForPolicy } from "../asset-catalog";
@@ -55,7 +55,16 @@ function providerFailure(status: number) {
   return new GenerationProviderError(code, message);
 }
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
-export const systemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use recentConversation only as context for references and prior preferences; the current instruction and current project snapshot govern this turn. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. Then send set_geometry coarse and refined as separate commands, except objects referenced by project.game must receive refined replacements directly so their saved gameplay remains valid. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. For composable games use set_game with the complete data-only program: variables, ordered rules, start/click/collision/collect/input/timer triggers, conditions, and actions including score, win/lose/reset and movement paths. Finish referenced entities to ready before set_game. Replace or clear rules with set_game before removing a referenced object. game:null removes the program. Keep unrelated rules when editing; use the current project.game as the baseline. A game program owns score and outcomes; define them explicitly instead of relying on the legacy portal auto-win. Never include code, URLs, credentials, scripts, or external assets. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message. ${localModelingInstructions} You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
+const baseSystemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use recentConversation only as context for references and prior preferences; the current instruction and current project snapshot govern this turn. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. For generated geometry, reserve first, optionally provide a procedural coarse preview, then send one refined generated job; objects referenced by project.game must receive refined replacements directly so their saved gameplay remains valid. Use reusable kinds or custom parts to invent varied objects. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. For composable games use set_game with the complete data-only program: variables, ordered rules, start/click/collision/collect/input/timer triggers, conditions, and actions including score, win/lose/reset and movement paths. Finish referenced entities to ready before set_game. Replace or clear rules with set_game before removing a referenced object. game:null removes the program. Keep unrelated rules when editing; use the current project.game as the baseline. A game program owns score and outcomes; define them explicitly instead of relying on the legacy portal auto-win. Never include code, URLs, credentials, scripts, or external assets. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message.`;
+
+export function systemPromptForCapabilities(
+  localModeling = false,
+  browserModeling = false,
+) {
+  return `${baseSystemPrompt} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(commandJSONSchema)}`;
+}
+
+export const systemPrompt = systemPromptForCapabilities();
 export async function generateCommands({
   provider,
   model,
@@ -66,6 +75,7 @@ export async function generateCommands({
   signal,
   maxTokens = 10000,
   localModeling = false,
+  browserModeling = false,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -76,6 +86,7 @@ export async function generateCommands({
   signal: AbortSignal;
   maxTokens?: number;
   localModeling?: boolean;
+  browserModeling?: boolean;
 }) {
   const assetPolicy = deriveAssetPolicy(prompt, selected, project);
   const endpoint =
@@ -97,13 +108,17 @@ export async function generateCommands({
       max_tokens: maxTokens,
       ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
       messages: [
-        { role: "system", content: systemPrompt },
+        {
+          role: "system",
+          content: systemPromptForCapabilities(localModeling, browserModeling),
+        },
         {
           role: "user",
           content: JSON.stringify({
             instruction: prompt,
             recentConversation: authoringHistory(project, prompt),
             localModeling,
+            browserModeling,
             assetPolicy,
             assetCatalog: promptCatalogForPolicy(
               assetPolicy.requestAssetPolicy,
@@ -146,7 +161,7 @@ export async function generateCommands({
           commandSchema.parse(JSON.parse(line)),
           assetPolicy,
         );
-        assertModelingCommand(command, localModeling);
+        assertModelingCommand(command, localModeling, browserModeling);
         const applied = applyOperation(
           working,
           {

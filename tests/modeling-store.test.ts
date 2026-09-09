@@ -79,6 +79,7 @@ it("keeps previous geometry until the builder completes and sends no capability 
   expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
   const body = String(fetcher.mock.calls[0][1]?.body);
   expect(JSON.parse(body).localModeling).toBe(true);
+  expect(JSON.parse(body).browserModeling).toBe(false);
   expect(body).not.toContain(connection.token);
   finish(metadata);
   await running;

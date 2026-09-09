@@ -58,6 +58,7 @@ const localJob = {
 
 beforeEach(() => {
   mocks.db.clear();
+  vi.stubGlobal("Worker", class {});
   mocks.browserBuild.mockReset().mockResolvedValue(browserMetadata);
   mocks.localBuild.mockReset();
   const project = { ...blankProject(), entities: [fixtureEntities()[0]] };
@@ -91,8 +92,12 @@ function relay(job: unknown) {
 }
 
 it("accepts a browser-manifold recipe without a Blender companion", async () => {
-  relay(browserJob);
+  const fetcher = relay(browserJob);
   await useOrb.getState().run("Build this browser model");
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({
+    browserModeling: true,
+    localModeling: false,
+  });
   expect(mocks.browserBuild).toHaveBeenCalledOnce();
   expect(mocks.browserBuild.mock.calls[0][0]).toEqual(browserJob.recipe);
   expect(mocks.browserBuild.mock.calls[0][1]).toMatchObject({
@@ -224,7 +229,7 @@ it("rejects provider-supplied browser identities and coarse browser jobs", () =>
       model: browserMetadata,
     },
   });
-  expect(() => assertModelingCommand(withModel, false)).toThrow(
+  expect(() => assertModelingCommand(withModel, false, true)).toThrow(
     "browser builder",
   );
   const coarse = commandSchema.parse({
@@ -232,5 +237,6 @@ it("rejects provider-supplied browser identities and coarse browser jobs", () =>
     id: "tree-0",
     geometry: { kind: "generated", detail: "coarse", job: browserJob },
   });
-  expect(() => assertModelingCommand(coarse, false)).toThrow("refined");
+  expect(() => assertModelingCommand(coarse, false, true)).toThrow("refined");
+  expect(() => assertModelingCommand(coarse, false)).toThrow("unavailable");
 });
