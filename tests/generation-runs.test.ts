@@ -42,6 +42,13 @@ beforeEach(() => {
       return { rows: [{ revision: 0, snapshot: row.starting_snapshot }] };
     if (sql.includes("ORDER BY sequence LIMIT 257"))
       return { rows: operations.map((envelope) => ({ envelope })) };
+    if (sql.includes("ORDER BY sequence LIMIT 50"))
+      return {
+        rows: operations
+          .filter((envelope) => envelope.sequence > args[1])
+          .slice(0, 50)
+          .map((envelope) => ({ envelope })),
+      };
     if (sql.startsWith("SELECT envelope"))
       return {
         rows: operations
@@ -435,6 +442,216 @@ it("retains the latest finished geometry during interrupted replacements and hon
     envelope: { ...op(4), command: { type: "remove_entity", id: entityId } },
   });
   expect(removed.recoveryCheckpoint?.entities).toEqual([]);
+});
+
+it("replays a reparented hierarchy recovery atomically", async () => {
+  const journalOp = (sequence: number, command: any) => ({
+    ...op(sequence),
+    operationId: `hierarchy-operation-${sequence}`,
+    command,
+  });
+  const group = (id: string, position: [number, number, number]) => ({
+    id,
+    label: id,
+    position,
+    scale: [1, 1, 1] as [number, number, number],
+  });
+  const child = {
+    id: "child",
+    label: "Child",
+    position: [2, 0, 0] as [number, number, number],
+    scale: [1, 1, 1] as [number, number, number],
+    color: "#6ead60",
+    stage: "seed" as const,
+  };
+  const unrelated = {
+    id: "unrelated",
+    label: "Unrelated",
+    position: [4, 0, 0] as [number, number, number],
+    scale: [1, 1, 1] as [number, number, number],
+    color: "#6ead60",
+    stage: "seed" as const,
+  };
+  const append = (sequence: number, command: any) =>
+    appendGenerationRun("owner", {
+      runId: id,
+      envelope: journalOp(sequence, command),
+    });
+
+  await append(1, {
+    type: "create_group",
+    group: group("old-parent", [1, 0, 3]),
+  });
+  await append(2, {
+    type: "create_group",
+    group: group("current-parent", [10, 0, 0]),
+  });
+  await append(3, { type: "reserve_entity", entity: child });
+  await append(4, {
+    type: "set_parent",
+    id: "child",
+    parentId: "old-parent",
+    keepWorldTransform: false,
+  });
+  const ready = await append(5, {
+    type: "set_geometry",
+    id: "child",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+  expect(ready.checkpoint.entities[0]).toMatchObject({
+    id: "child",
+    parentId: "old-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+
+  await append(6, { type: "reserve_entity", entity: unrelated });
+  await append(7, {
+    type: "set_geometry",
+    id: "unrelated",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+  const committedTransform = await append(8, {
+    type: "set_transform",
+    id: "unrelated",
+    position: [8, 0, 0],
+    rotation: [0, 0.25, 0],
+    scale: [1.5, 1, 0.75],
+  });
+  expect(committedTransform.recoveryCheckpoint?.entities[1]).toMatchObject({
+    id: "unrelated",
+    position: [8, 0, 0],
+    rotation: [0, 0.25, 0],
+    scale: [1.5, 1, 0.75],
+    stage: "ready",
+  });
+
+  const coarse = await append(9, {
+    type: "set_geometry",
+    id: "child",
+    geometry: { kind: "tree", detail: "coarse" },
+  });
+  expect(coarse.checkpoint.entities[0]).toMatchObject({
+    parentId: "old-parent",
+    stage: "coarse",
+  });
+  expect(coarse.recoveryCheckpoint?.entities[0]).toMatchObject({
+    parentId: "old-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+
+  const reparented = await append(10, {
+    type: "set_parent",
+    id: "child",
+    parentId: "current-parent",
+    keepWorldTransform: false,
+  });
+  expect(reparented.checkpoint.entities[0]).toMatchObject({
+    parentId: "current-parent",
+    stage: "coarse",
+  });
+  expect(reparented.recoveryCheckpoint?.entities[0]).toMatchObject({
+    parentId: "current-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+
+  const removedOldParent = await append(11, {
+    type: "remove_group",
+    id: "old-parent",
+  });
+  expect(removedOldParent.checkpoint.groups?.map((entry) => entry.id)).toEqual([
+    "current-parent",
+  ]);
+  expect(
+    removedOldParent.recoveryCheckpoint?.groups?.map((entry) => entry.id),
+  ).toEqual(["current-parent"]);
+  expect(removedOldParent.recoveryCheckpoint?.entities[0]).toMatchObject({
+    id: "child",
+    parentId: "current-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+  expect(removedOldParent.recoveryCheckpoint?.entities[1]).toMatchObject({
+    id: "unrelated",
+    position: [8, 0, 0],
+    rotation: [0, 0.25, 0],
+    scale: [1.5, 1, 0.75],
+    stage: "ready",
+  });
+  expect(operations.map((envelope) => envelope.command.type)).toEqual([
+    "create_group",
+    "create_group",
+    "reserve_entity",
+    "set_parent",
+    "set_geometry",
+    "reserve_entity",
+    "set_geometry",
+    "set_transform",
+    "set_geometry",
+    "set_parent",
+    "remove_group",
+  ]);
+
+  const checkpointBeforeCycle = structuredClone(row.checkpoint);
+  const sequenceBeforeCycle = row.sequence;
+  await expect(
+    append(12, {
+      type: "set_parent",
+      id: "current-parent",
+      parentId: "current-parent",
+      keepWorldTransform: false,
+    }),
+  ).rejects.toMatchObject({ status: 409 });
+  expect(operations).toHaveLength(11);
+  expect(row.sequence).toBe(sequenceBeforeCycle);
+  expect(row.checkpoint).toEqual(checkpointBeforeCycle);
+  expect(db.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
+
+  row.expired = true;
+  row.recovery_checkpoint = null;
+  const interrupted = await readGenerationRun("owner", id);
+  expect(interrupted.state).toBe("interrupted");
+  expect(
+    interrupted.recoveryCheckpoint?.groups?.map((entry) => entry.id),
+  ).toEqual(["current-parent"]);
+  expect(interrupted.recoveryCheckpoint?.entities[0]).toMatchObject({
+    parentId: "current-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+
+  row.recovery_checkpoint = null;
+  const replay = await replayGenerationRun("owner", id, 0);
+  expect(replay.operations.map((envelope) => envelope.command.type)).toEqual(
+    operations.map((envelope) => envelope.command.type),
+  );
+  expect(replay.nextSequence).toBe(11);
+  expect(replay.run.recoveryCheckpoint?.entities[0]).toMatchObject({
+    parentId: "current-parent",
+    stage: "ready",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+  expect(replay.run.recoveryCheckpoint?.entities[1]).toMatchObject({
+    id: "unrelated",
+    position: [8, 0, 0],
+    rotation: [0, 0.25, 0],
+    scale: [1.5, 1, 0.75],
+  });
+  await expect(
+    appendGenerationRun("other", {
+      runId: id,
+      envelope: journalOp(12, {
+        type: "set_environment",
+        sky: "#ffffff",
+      }),
+    }),
+  ).rejects.toMatchObject({ status: 404 });
+  expect(operations).toHaveLength(11);
+  await expect(readGenerationRun("other", id)).rejects.toMatchObject({
+    status: 404,
+  });
 });
 
 it("refuses legacy reconstruction with missing operations", async () => {
