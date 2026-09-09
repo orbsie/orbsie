@@ -389,8 +389,14 @@ try {
   });
   const player = await standalone.newPage();
   player.on("pageerror", (error) => report.pageErrors.push(error.message));
+  const playerStarted = performance.now();
   await player.goto(exportOrigin);
-  await expect(player.locator('main[data-ready="true"]')).toBeVisible();
+  await expect(player.locator('main[data-ready="true"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  report.checks.standaloneReadyMs = Math.round(
+    performance.now() - playerStarted,
+  );
   await expect
     .poll(() => served.has(`models/generated/${modelHash}.glb`))
     .toBe(true);

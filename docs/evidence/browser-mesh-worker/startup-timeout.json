@@ -1,0 +1,19 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "shape": "mesh",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "4b1bac7bae5967676417df635c4ccf93f79ec195ade0b76365001f68de245667",
+      "after": "29028290d46af6ebd9aac58e01c989ee6777dba0288a36b88044cbfe9c13e709"
+    },
+    "customMeshBounds": true,
+    "invalidMeshPreservesFinishedObject": true,
+    "bakedExport": true
+  },
+  "status": "failed",
+  "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: locator('main[data-ready=\"true\"]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('main[data-ready=\"true\"]') with timeout 5000ms\n  - waiting for locator('main[data-ready=\"true\"]')\n",
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA pocketful of sunshine\nEdit\nPlay\nYour world\n\nBuild an original pyramid from a custom triangle mesh\n\n✧\n\nBrowser pyramid created.\n\nBrowser pyramid\n\nMake the pyramid taller\n\n✧\n\nBrowser pyramid edited.\n\nBrowser pyramid\n\nTry an invalid inverted mesh revision\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nLet your little world out.\n\nShare this playable revision, or take your world with you as a standalone game.\n\nCopy a play link\nAnyone with the link can play. No account needed.\nDownload your world\nIndependent game, source, and project data as a ZIP.\nA home of its own\n\nPublish to a dedicated Vercel project with a permanent URL.\n\nDedicated publishing needs cloud storage and deployment credentials. Play links and downloads work now."
+}
