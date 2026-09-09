@@ -60,6 +60,7 @@ function routeFor(
   request: Request,
   session: HostSession,
   models?: () => Promise<unknown>,
+  beforeDisconnect?: () => void,
 ): Route | Response {
   let url: URL;
   try {
@@ -97,6 +98,7 @@ function routeFor(
     case "POST /login/cancel":
       return {
         run: async () => {
+          beforeDisconnect?.();
           await session.cancel();
           return session.getSnapshot();
         },
@@ -104,6 +106,7 @@ function routeFor(
     case "POST /logout":
       return {
         run: async () => {
+          beforeDisconnect?.();
           await session.logout();
           return session.getSnapshot();
         },
@@ -117,10 +120,17 @@ export function createChatGPTHostHandler({
   session,
   token,
   models,
+  generate,
+  beforeDisconnect,
 }: {
   session: HostSession;
   token: string;
   models?: () => Promise<unknown>;
+  generate?: (
+    input: unknown,
+    signal: AbortSignal,
+  ) => ReadableStream<Uint8Array>;
+  beforeDisconnect?: () => void;
 }): (request: Request) => Promise<Response> {
   if (
     typeof token !== "string" ||
@@ -139,10 +149,60 @@ export function createChatGPTHostHandler({
       );
     if (!sameBearer(request.headers.get("authorization"), token))
       return response({ error: "Unauthorized." }, 401);
+    if (new URL(request.url).pathname === "/generate") {
+      if (request.method !== "POST")
+        return response({ error: "Method not allowed." }, 405);
+      if (new URL(request.url).search)
+        return response({ error: "Query parameters are not allowed." }, 400);
+      if (!generate)
+        return response({ error: "Generation is unavailable." }, 503);
+      if (
+        request.headers.get("content-type")?.split(";")[0].trim() !==
+        "application/json"
+      )
+        return response({ error: "JSON required." }, 415);
+      try {
+        const reader = request.body?.getReader();
+        if (!reader) return response({ error: "Invalid request." }, 400);
+        let bytes = 0;
+        const chunks: Uint8Array[] = [];
+        try {
+          for (;;) {
+            const part = await reader.read();
+            if (part.done) break;
+            bytes += part.value.byteLength;
+            if (bytes > 512 * 1024)
+              return response({ error: "Request too large." }, 413);
+            chunks.push(part.value);
+          }
+        } finally {
+          await reader.cancel().catch(() => undefined);
+          reader.releaseLock();
+        }
+        const raw = new Uint8Array(bytes);
+        let offset = 0;
+        for (const chunk of chunks) {
+          raw.set(chunk, offset);
+          offset += chunk.byteLength;
+        }
+        const input = JSON.parse(
+          new TextDecoder("utf-8", { fatal: true }).decode(raw),
+        );
+        return new Response(generate(input, request.signal), {
+          headers: {
+            "Content-Type": "application/x-ndjson",
+            "Cache-Control": "private, no-store",
+            "X-Accel-Buffering": "no",
+          },
+        });
+      } catch {
+        return response({ error: "Invalid generation request." }, 400);
+      }
+    }
     if (request.body !== null)
       return response({ error: "Request bodies are not allowed." }, 400);
 
-    const route = routeFor(request, session, models);
+    const route = routeFor(request, session, models, beforeDisconnect);
     if (route instanceof Response) return route;
     try {
       return response(await route.run());

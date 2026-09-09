@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-09T12:16:18.464385+00:00",
+  "targetedTests": 60,
+  "testFiles": 7,
+  "productionBuild": true,
+  "isolatedHostHttp": {
+    "signedOutGeneration": "sanitized NDJSON error; no turn started",
+    "unauthorized": 401,
+    "browserOrigin": 403
+  },
+  "productionHttpSignedOutGenerationRejected": true,
+  "loginStarted": false,
+  "inferencePerformed": false,
+  "deploymentEnabled": false
+}

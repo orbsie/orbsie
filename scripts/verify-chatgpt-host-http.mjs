@@ -11,19 +11,41 @@ let host;
 try {
   const outfile = join(directory, "server.mjs");
   await build({
-    entryPoints: ["scripts/chatgpt-host-server.ts"],
+    stdin: {
+      contents:
+        'export {startChatGPTHostServer} from "./scripts/chatgpt-host-server"; export {blankProject} from "./src/lib/protocol";',
+      resolveDir: process.cwd(),
+      loader: "ts",
+    },
     bundle: true,
     platform: "node",
     format: "esm",
     outfile,
   });
-  const { startChatGPTHostServer } = await import(pathToFileURL(outfile).href);
+  const { startChatGPTHostServer, blankProject } = await import(
+    pathToFileURL(outfile).href
+  );
   const token = randomBytes(32).toString("hex");
-  host = await startChatGPTHostServer({ token });
+  host = await startChatGPTHostServer({ token, allowGeneration: true });
   const base = `http://127.0.0.1:${host.port}`;
   const authorization = `Bearer ${token}`;
   const statusCodes = {};
   for (const [name, path, options, expected] of [
+    [
+      "signedOutGenerationRejected",
+      "/generate",
+      {
+        method: "POST",
+        headers: { authorization, "content-type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-5.6-luna",
+          effort: "low",
+          prompt: "Create an orb",
+          project: blankProject(),
+        }),
+      },
+      200,
+    ],
     ["unauthenticated", "/login/status", {}, 401],
     [
       "browserOriginRejected",
@@ -45,6 +67,10 @@ try {
       const status = await response.json();
       assert.equal(status.authStatus, "disconnected");
       assert.equal(status.lifecycle, "idle");
+    } else if (name === "signedOutGenerationRejected") {
+      const body = await response.text();
+      assert.match(body, /"error":/);
+      assert.doesNotMatch(body, /"commit_revision"/);
     } else await response.arrayBuffer();
     statusCodes[name] = response.status;
   }

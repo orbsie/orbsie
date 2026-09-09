@@ -8,6 +8,7 @@ const host = await startChatGPTHostServer({
   token: process.env.ORBSIE_CHATGPT_HOST_TOKEN ?? "",
   hostname: "0.0.0.0",
   port,
+  allowGeneration: process.env.ORBSIE_CHATGPT_GENERATION === "1",
 });
 const stop = () => {
   void host.close().catch(() => {

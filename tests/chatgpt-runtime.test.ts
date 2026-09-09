@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const spawnMock = vi.hoisted(() => vi.fn());
 vi.mock("node:child_process", () => ({ spawn: spawnMock }));
 
+import {
+  CHATGPT_GENERATION_CONFIG,
+  CHATGPT_READ_POLICY,
+} from "../src/lib/server/chatgpt-generation-policy";
 import { createIsolatedChatGPTRpc } from "../src/lib/server/chatgpt-runtime";
 
 class FakeChild extends EventEmitter {
@@ -55,11 +59,11 @@ describe("isolated ChatGPT App Server runtime", () => {
     spawnMock.mockReset();
   });
 
-  async function start(autoExit = false) {
+  async function start(autoExit = false, allowGeneration = false) {
     const child = new FakeChild();
     child.autoExit = autoExit;
     spawnMock.mockReturnValueOnce(child);
-    const runtime = await createIsolatedChatGPTRpc();
+    const runtime = await createIsolatedChatGPTRpc({ allowGeneration });
     live.push({ runtime, child });
     const call = spawnMock.mock.calls.at(-1)!;
     return { runtime, child, spawnOptions: call[2] as Record<string, unknown> };
@@ -90,6 +94,70 @@ describe("isolated ChatGPT App Server runtime", () => {
       child.line({ id: sent.id, result: { data: [], nextCursor: null } }),
     );
     await expect(pending).resolves.toEqual({ data: [], nextCursor: null });
+  });
+
+  it("tracks owned generation IDs and forwards bounded runtime notifications", async () => {
+    const { runtime, child } = await start(false, true);
+    const notices: unknown[] = [];
+    runtime.subscribe!((event) => notices.push(event));
+    const thread = runtime.request("thread/start", {
+      model: "gpt-5.6-luna",
+      serviceTier: "default",
+      ephemeral: true,
+      approvalPolicy: "never",
+      sandbox: "read-only",
+      baseInstructions: "Return commands",
+      config: CHATGPT_GENERATION_CONFIG,
+    });
+    let sent = JSON.parse(child.stdin.writes.at(-1)!);
+    child.stdout.emit(
+      "data",
+      child.line({ id: sent.id, result: { thread: { id: "thread-1" } } }),
+    );
+    await thread;
+    const params = {
+      threadId: "thread-1",
+      model: "gpt-5.6-luna",
+      effort: "low",
+      serviceTier: "default",
+      input: [{ type: "text", text: "create" }],
+      sandboxPolicy: CHATGPT_READ_POLICY,
+      approvalPolicy: "never",
+    };
+    await expect(
+      runtime.request("turn/start", { ...params, threadId: "other" }),
+    ).rejects.toThrow();
+    const turn = runtime.request("turn/start", params);
+    sent = JSON.parse(child.stdin.writes.at(-1)!);
+    child.stdout.emit(
+      "data",
+      child.line({ id: sent.id, result: { turn: { id: "turn-1" } } }),
+    );
+    await turn;
+    const event = {
+      method: "item/agentMessage/delta",
+      params: { threadId: "thread-1", turnId: "turn-1", delta: "hello" },
+    };
+    child.stdout.emit("data", child.line(event));
+    expect(notices).toEqual([event]);
+    await expect(
+      runtime.request("turn/interrupt", {
+        threadId: "thread-1",
+        turnId: "other",
+      }),
+    ).rejects.toThrow();
+    const interrupt = runtime.request("turn/interrupt", {
+      threadId: "thread-1",
+      turnId: "turn-1",
+    });
+    sent = JSON.parse(child.stdin.writes.at(-1)!);
+    child.stdout.emit("data", child.line({ id: sent.id, result: {} }));
+    await interrupt;
+    await finish(runtime, child);
+    expect(notices.at(-1)).toEqual({
+      method: "orbsie/runtime/closed",
+      params: {},
+    });
   });
 
   it("starts with a private cwd and an explicit environment and a dedicated CODEX_HOME", async () => {

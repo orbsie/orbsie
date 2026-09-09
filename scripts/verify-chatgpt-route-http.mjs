@@ -6,7 +6,11 @@ const child = spawn(
   process.execPath,
   ["node_modules/next/dist/bin/next", "start", "-p", port],
   {
-    env: { ...process.env, ORBSIE_CHATGPT_HOSTED: "1" },
+    env: {
+      ...process.env,
+      ORBSIE_CHATGPT_HOSTED: "1",
+      ORBSIE_CHATGPT_GENERATION: "1",
+    },
     stdio: "ignore",
   },
 );
@@ -33,6 +37,19 @@ try {
     headers: { origin: process.env.BETTER_AUTH_URL || base },
   });
   assert.equal(emptyPost.status, 401, "Empty POST must reach authentication");
+  const generation = await fetch(url + "generate", {
+    method: "POST",
+    headers: {
+      origin: process.env.BETTER_AUTH_URL || base,
+      "content-type": "application/json",
+    },
+    body: "{}",
+  });
+  assert.equal(
+    generation.status,
+    401,
+    "Generation must reject signed-out requests",
+  );
   const cross = await fetch(url + "start", {
     method: "POST",
     headers: { origin: "https://untrusted.example" },

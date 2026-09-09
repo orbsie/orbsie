@@ -43,6 +43,76 @@ async function body(response: Response) {
 }
 
 describe("server-only ChatGPT host handler", () => {
+  it("gates generation behind capability authorization and explicit support", async () => {
+    const { session, handler, request } = fixture();
+    const init = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: "create" }),
+    };
+    expect((await handler(request("/generate", init))).status).toBe(503);
+    const generate = vi.fn(
+      () =>
+        new ReadableStream<Uint8Array>({
+          start(c) {
+            c.enqueue(
+              new TextEncoder().encode(
+                '{"type":"commit_revision","message":"Ready"}\n',
+              ),
+            );
+            c.close();
+          },
+        }),
+    );
+    const enabled = createChatGPTHostHandler({ session, token, generate });
+    expect((await enabled(request("/generate", init, "wrong"))).status).toBe(
+      401,
+    );
+    expect(generate).not.toHaveBeenCalled();
+    const response = await enabled(request("/generate", init));
+    expect(response.headers.get("content-type")).toBe("application/x-ndjson");
+    expect(await response.text()).toContain("commit_revision");
+    expect(generate).toHaveBeenCalledWith(
+      { prompt: "create" },
+      expect.any(AbortSignal),
+    );
+  });
+  it("bounds generation bodies and rejects malformed input", async () => {
+    const { session, request } = fixture();
+    const generate = vi.fn();
+    const handler = createChatGPTHostHandler({ session, token, generate });
+    for (const [body, status] of [
+      ["x".repeat(513 * 1024), 413],
+      ["not-json", 400],
+    ] as const) {
+      expect(
+        (
+          await handler(
+            request("/generate", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body,
+            }),
+          )
+        ).status,
+      ).toBe(status);
+    }
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it("stops generation only after authenticated disconnect", async () => {
+    const { session, request } = fixture();
+    const stop = vi.fn();
+    const handler = createChatGPTHostHandler({
+      session,
+      token,
+      beforeDisconnect: stop,
+    });
+    await handler(request("/logout", { method: "POST" }, "wrong"));
+    expect(stop).not.toHaveBeenCalled();
+    await handler(request("/logout", { method: "POST" }));
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
   afterEach(() => vi.restoreAllMocks());
 
   it.each([

@@ -4,8 +4,10 @@ import { join } from "node:path";
 
 type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
-type Operation = "models" | "status" | "start" | "cancel" | "logout";
+type Operation =
+  "generate" | "models" | "status" | "start" | "cancel" | "logout";
 const routes = {
+  generate: ["POST", "/generate"],
   models: ["GET", "/models"],
   status: ["GET", "/login/status"],
   start: ["POST", "/login/start"],
@@ -28,7 +30,18 @@ export function createChatGPTSandboxBackend(options: {
       signal: AbortSignal.timeout(30_000),
     });
   }
-  async function request(host: Host, operation: Operation) {
+  async function request(
+    host: Host,
+    operation: Operation,
+    options: { input?: unknown; signal?: AbortSignal } = {},
+  ) {
+    let body: string | undefined;
+    if (operation === "generate") {
+      body = JSON.stringify(options.input);
+      if (!body || Buffer.byteLength(body) > 512 * 1024)
+        throw Error("Invalid generation request.");
+    } else if (options.input !== undefined)
+      throw Error("Unexpected request body.");
     if (host.expiresAt.getTime() <= Date.now())
       throw Error("ChatGPT host expired.");
     const sandbox = await get(host.sandboxName);
@@ -37,10 +50,17 @@ export function createChatGPTSandboxBackend(options: {
     const [method, path] = routes[operation];
     return fetch(sandbox.domain(3000) + path, {
       method,
-      headers: { authorization: `Bearer ${host.capability}` },
+      headers: {
+        authorization: `Bearer ${host.capability}`,
+        ...(body ? { "content-type": "application/json" } : {}),
+      },
+      body,
       redirect: "error",
       cache: "no-store",
-      signal: AbortSignal.timeout(35_000),
+      signal: AbortSignal.any([
+        AbortSignal.timeout(operation === "generate" ? 175_000 : 35_000),
+        ...(options.signal ? [options.signal] : []),
+      ]),
     });
   }
   return {
@@ -93,7 +113,12 @@ export function createChatGPTSandboxBackend(options: {
       await sandbox.runCommand({
         cmd: "npm",
         args: ["start"],
-        env: { ORBSIE_CHATGPT_HOST_TOKEN: input.capability, PORT: "3000" },
+        env: {
+          ORBSIE_CHATGPT_HOST_TOKEN: input.capability,
+          PORT: "3000",
+          ORBSIE_CHATGPT_GENERATION:
+            process.env.ORBSIE_CHATGPT_GENERATION === "1" ? "1" : "0",
+        },
         detached: true,
       });
       for (let attempt = 0; attempt < 10; attempt++) {
