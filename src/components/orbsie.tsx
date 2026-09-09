@@ -1591,10 +1591,9 @@ export default function Orbsie() {
                 </button>
               )}
               <p className="fine-print">
-                Use ChatGPT on this computer with the local companion: run{" "}
-                <code>node scripts/run-chatgpt-companion.mjs</code> from your
-                Orbsie checkout and open the connection link it prints. Your
-                ChatGPT sign-in stays with Codex on your computer.
+                ChatGPT subscription connection is not available in the browser
+                yet. OpenRouter and Vercel AI Gateway use their own accounts and
+                billing.
               </p>
             </>
           )}
