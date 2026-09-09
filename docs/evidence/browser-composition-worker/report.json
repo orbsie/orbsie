@@ -1,0 +1,22 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "shape": "composition",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "747bd16590b33d722b0087759c6660e6bb56c0e9eaa615c8a33b1e695c25d47e",
+      "after": "a834cad1a13d3c4b87f58f684438adb06c398cf2d2496f1c307d4aed0efe57af"
+    },
+    "compositionSpacingEdit": true,
+    "exactGeometryUndoRedo": true,
+    "invalidCompositionPreservesFinishedObject": true,
+    "bakedCompositionCopies": 12,
+    "bakedExport": true,
+    "standaloneReadyMs": 3817,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

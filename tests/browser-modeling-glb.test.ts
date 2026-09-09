@@ -40,6 +40,10 @@ describe("browser mesh baked asset bridge", () => {
       extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
       revolve: (profile, segments, degrees) =>
         wasm.Manifold.revolve(profile, segments, degrees),
+      compose: (manifolds) =>
+        wasm.Manifold.compose(
+          manifolds as unknown as ReturnType<typeof wasm.Manifold.cube>[],
+        ),
       mesh: (vertices, triangles) =>
         wasm.Manifold.ofMesh(
           new wasm.Mesh({

@@ -21,6 +21,9 @@ const MAX_COORDINATE_METERS = 100;
 const MAX_DIMENSION_METERS = 100;
 const MAX_ROTATION_RADIANS = 100;
 const MAX_SCALE = 20;
+const MAX_COMPOSE_INPUTS = 32;
+const MAX_COPY_COUNT = 32;
+const MAX_EXPANDED_LEAVES = 64;
 
 const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/);
 const coordinate = z
@@ -136,6 +139,56 @@ const tubeNodeSchema = z
   })
   .strict();
 
+const composeNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("compose"),
+    inputs: z.array(identifier).min(2).max(MAX_COMPOSE_INPUTS),
+  })
+  .strict();
+
+const mirrorNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("mirror"),
+    input: identifier,
+    normal: vector3.refine(
+      ([x, y, z]) => x * x + y * y + z * z > 1e-12,
+      "Mirror normal must be nonzero.",
+    ),
+  })
+  .strict();
+
+const linearArrayNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("linear-array"),
+    input: identifier,
+    count: z.number().int().min(2).max(MAX_COPY_COUNT),
+    offset: vector3.refine(
+      ([x, y, z]) => x * x + y * y + z * z > 1e-12,
+      "Linear array offset must be nonzero.",
+    ),
+  })
+  .strict();
+
+const instanceTransformSchema = z
+  .object({
+    position: vector3,
+    rotation: z.tuple([rotation, rotation, rotation]),
+    scale: scale3,
+  })
+  .strict();
+
+const instancesNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("instances"),
+    input: identifier,
+    transforms: z.array(instanceTransformSchema).min(1).max(MAX_COPY_COUNT),
+  })
+  .strict();
+
 const transformNodeSchema = z
   .object({
     id: identifier,
@@ -165,6 +218,10 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   revolveNodeSchema,
   meshNodeSchema,
   tubeNodeSchema,
+  composeNodeSchema,
+  mirrorNodeSchema,
+  linearArrayNodeSchema,
+  instancesNodeSchema,
   transformNodeSchema,
   booleanNodeSchema,
 ]);
@@ -334,8 +391,15 @@ export const browserModelRecipeSchema =
       );
 
     const references = (node: BrowserModelNode): string[] => {
-      if (node.kind === "transform") return [node.input];
+      if (
+        node.kind === "transform" ||
+        node.kind === "mirror" ||
+        node.kind === "linear-array" ||
+        node.kind === "instances"
+      )
+        return [node.input];
       if (node.kind === "boolean") return node.operands;
+      if (node.kind === "compose") return node.inputs;
       return [];
     };
 
@@ -395,8 +459,14 @@ export const browserModelRecipeSchema =
             graphIssue(`Browser recipe node repeats operand: ${reference}.`, [
               "nodes",
               index,
-              node.kind === "transform" ? "input" : "operands",
-              ...(node.kind === "boolean" ? [refIndex] : []),
+              node.kind === "boolean" || node.kind === "compose"
+                ? node.kind === "boolean"
+                  ? "operands"
+                  : "inputs"
+                : "input",
+              ...(node.kind === "boolean" || node.kind === "compose"
+                ? [refIndex]
+                : []),
             ]),
           );
         seenRefs.add(reference);
@@ -498,6 +568,42 @@ export const browserModelRecipeSchema =
             ["output"],
           ),
         );
+
+      const expandedLeaves = new Map<string, number>();
+      const expandedLeavesOf = (id: string): number => {
+        const cached = expandedLeaves.get(id);
+        if (cached !== undefined) return cached;
+        const node = byId.get(id);
+        if (!node) return 0;
+        let count: number;
+        if (node.kind === "compose")
+          count = node.inputs.reduce(
+            (total, reference) => total + expandedLeavesOf(reference),
+            0,
+          );
+        else if (node.kind === "boolean")
+          count = node.operands.reduce(
+            (total, reference) => total + expandedLeavesOf(reference),
+            0,
+          );
+        else if (node.kind === "linear-array")
+          count = node.count * expandedLeavesOf(node.input);
+        else if (node.kind === "instances")
+          count = node.transforms.length * expandedLeavesOf(node.input);
+        else if (node.kind === "transform" || node.kind === "mirror")
+          count = expandedLeavesOf(node.input);
+        else count = 1;
+        expandedLeaves.set(id, count);
+        return count;
+      };
+      const outputLeaves = expandedLeavesOf(recipe.output);
+      if (outputLeaves > MAX_EXPANDED_LEAVES)
+        context.addIssue(
+          graphIssue(
+            `Browser recipe expands beyond ${MAX_EXPANDED_LEAVES} geometry leaves.`,
+            ["output"],
+          ),
+        );
     }
 
     recipe.nodes.forEach((node, index) => {
@@ -564,4 +670,7 @@ export const browserModelRecipeLimits = Object.freeze({
   maxTubePathPoints: MAX_BROWSER_TUBE_PATH_POINTS,
   defaultTubeSegments: DEFAULT_BROWSER_TUBE_SEGMENTS,
   maxTubeSegments: MAX_BROWSER_TUBE_SEGMENTS,
+  maxComposeInputs: MAX_COMPOSE_INPUTS,
+  maxCopyCount: MAX_COPY_COUNT,
+  maxExpandedLeaves: MAX_EXPANDED_LEAVES,
 });

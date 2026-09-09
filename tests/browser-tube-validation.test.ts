@@ -62,6 +62,8 @@ function manifoldKernel(wasm: Awaited<ReturnType<typeof Module>>) {
       wasm.Manifold.extrude(profile, depth),
     revolve: (profile: [number, number][], segments: number, degrees: number) =>
       wasm.Manifold.revolve(profile, segments, degrees),
+    compose: (manifolds: ReturnType<typeof wasm.Manifold.cube>[]) =>
+      wasm.Manifold.compose(manifolds),
     mesh: (vertices: Float32Array, triangles: Uint32Array) =>
       wasm.Manifold.ofMesh(
         new wasm.Mesh({

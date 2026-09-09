@@ -30,7 +30,11 @@ export interface BrowserModelKernelManifold {
   scale(value: BrowserModelVec3): BrowserModelKernelManifold;
   rotate(degrees: BrowserModelVec3): BrowserModelKernelManifold;
   translate(value: BrowserModelVec3): BrowserModelKernelManifold;
+  mirror(normal: BrowserModelVec3): BrowserModelKernelManifold;
+  minGap(other: BrowserModelKernelManifold, searchLength: number): number;
+  numVert(): number;
   numTri(): number;
+  volume(): number;
   status(): string;
   boundingBox(): BrowserModelKernelBounds;
   getMesh(): BrowserModelKernelMesh;
@@ -58,6 +62,10 @@ export interface BrowserModelKernel {
     profile: [number, number][],
     segments: number,
     degrees: number,
+  ): BrowserModelKernelManifold;
+  /** Compose separated solids without boolean-merging their surfaces. */
+  compose(
+    manifolds: readonly BrowserModelKernelManifold[],
   ): BrowserModelKernelManifold;
   /** Construct a fixed-property triangle mesh after browser-side validation. */
   mesh(
@@ -89,6 +97,11 @@ export const browserModelKernelLimits = Object.freeze({
   maxVertices: 100_000,
   maxMeshBytes: 8 * 1024 * 1024,
 });
+
+const MODEL_SPACE_LIMIT = 100;
+const GEOMETRY_EPSILON = 1e-6;
+const GAP_SEARCH_LENGTH = MODEL_SPACE_LIMIT * 4;
+const MAX_SEPARATION_PAIRS = 4_096;
 
 function fail(message: string): never {
   throw new Error(`[browser-modeling-kernel] ${message}`);
@@ -140,6 +153,102 @@ function assertStatus(object: BrowserModelKernelManifold, nodeId: string) {
   );
 }
 
+function assertModelBounds(
+  object: BrowserModelKernelManifold,
+  nodeId: string,
+): BrowserModelKernelBounds {
+  const bounds = object.boundingBox();
+  for (const side of [bounds.min, bounds.max])
+    for (const value of side)
+      requireValid(
+        Number.isFinite(value) && Math.abs(value) <= MODEL_SPACE_LIMIT,
+        `node ${nodeId} exceeds the model-space coordinate budget.`,
+      );
+  return bounds;
+}
+
+function assertSolid(object: BrowserModelKernelManifold, nodeId: string) {
+  requireValid(
+    object.numTri() > 0 &&
+      object.numVert() > 0 &&
+      Number.isFinite(object.volume()) &&
+      object.volume() > GEOMETRY_EPSILON ** 3,
+    `node ${nodeId} must produce a nonempty positively oriented solid.`,
+  );
+}
+
+function geometryCost(
+  objects: readonly BrowserModelKernelManifold[],
+  nodeId: string,
+) {
+  let vertices = 0;
+  let triangles = 0;
+  for (const object of objects) {
+    const objectVertices = object.numVert();
+    const objectTriangles = object.numTri();
+    requireValid(
+      Number.isSafeInteger(objectVertices) && objectVertices >= 0,
+      `node ${nodeId} produced an invalid vertex count.`,
+    );
+    requireValid(
+      Number.isSafeInteger(objectTriangles) && objectTriangles >= 0,
+      `node ${nodeId} produced an invalid triangle count.`,
+    );
+    vertices += objectVertices;
+    triangles += objectTriangles;
+  }
+  requireValid(
+    vertices <= browserModelKernelLimits.maxVertices &&
+      triangles <= browserModelKernelLimits.maxTriangles &&
+      vertices * 3 * Float32Array.BYTES_PER_ELEMENT +
+        triangles * 3 * Uint32Array.BYTES_PER_ELEMENT <=
+        browserModelKernelLimits.maxMeshBytes,
+    `node ${nodeId} exceeds the expanded geometry budget.`,
+  );
+}
+
+function aabbGap(
+  first: BrowserModelKernelBounds,
+  second: BrowserModelKernelBounds,
+): number {
+  let squared = 0;
+  for (let axis = 0; axis < 3; axis += 1) {
+    const gap = Math.max(
+      0,
+      first.min[axis] - second.max[axis],
+      second.min[axis] - first.max[axis],
+    );
+    squared += gap * gap;
+  }
+  return Math.sqrt(squared);
+}
+
+function assertSeparated(
+  first: BrowserModelKernelManifold,
+  second: BrowserModelKernelManifold,
+  nodeId: string,
+  pairChecks: { value: number },
+): void {
+  pairChecks.value += 1;
+  requireValid(
+    pairChecks.value <= MAX_SEPARATION_PAIRS,
+    `node ${nodeId} exceeds the separation-check budget.`,
+  );
+  const firstBounds = assertModelBounds(first, nodeId);
+  const secondBounds = assertModelBounds(second, nodeId);
+  if (aabbGap(firstBounds, secondBounds) > GEOMETRY_EPSILON) return;
+  let gap: number;
+  try {
+    gap = first.minGap(second, GAP_SEARCH_LENGTH);
+  } catch {
+    fail(`node ${nodeId} separation check failed.`);
+  }
+  requireValid(
+    Number.isFinite(gap) && gap > GEOMETRY_EPSILON,
+    `node ${nodeId} contains touching or overlapping solids.`,
+  );
+}
+
 function rotateThreeEuler(
   object: BrowserModelKernelManifold,
   radians: BrowserModelVec3,
@@ -158,6 +267,74 @@ function rotateThreeEuler(
   if (y !== 0) rotated = own(rotated.rotate([0, y, 0]), nodeId);
   if (x !== 0) rotated = own(rotated.rotate([x, 0, 0]), nodeId);
   return rotated;
+}
+
+function composeSeparated(
+  objects: readonly BrowserModelKernelManifold[],
+  kernel: BrowserModelKernel,
+  nodeId: string,
+  pairChecks: { value: number },
+  own: (
+    value: BrowserModelKernelManifold,
+    nodeId: string,
+  ) => BrowserModelKernelManifold,
+): BrowserModelKernelManifold {
+  requireValid(
+    objects.length >= 2,
+    `node ${nodeId} needs at least two inputs.`,
+  );
+  for (const object of objects) {
+    assertSolid(object, nodeId);
+    assertModelBounds(object, nodeId);
+  }
+  geometryCost(objects, nodeId);
+  for (let first = 0; first < objects.length; first += 1)
+    for (let second = first + 1; second < objects.length; second += 1)
+      assertSeparated(objects[first], objects[second], nodeId, pairChecks);
+  let result: BrowserModelKernelManifold;
+  try {
+    result = kernel.compose(objects);
+  } catch {
+    fail(`node ${nodeId} composition failed.`);
+  }
+  const composed = own(result!, nodeId);
+  assertSolid(composed, nodeId);
+  assertModelBounds(composed, nodeId);
+  return composed;
+}
+
+function assertCopyBudget(
+  input: BrowserModelKernelManifold,
+  count: number,
+  nodeId: string,
+): void {
+  assertSolid(input, nodeId);
+  assertModelBounds(input, nodeId);
+  geometryCost(
+    Array.from({ length: count }, () => input),
+    nodeId,
+  );
+}
+
+function transformCopy(
+  input: BrowserModelKernelManifold,
+  transform: {
+    readonly position: BrowserModelVec3;
+    readonly rotation: BrowserModelVec3;
+    readonly scale: BrowserModelVec3;
+  },
+  nodeId: string,
+  own: (
+    value: BrowserModelKernelManifold,
+    nodeId: string,
+  ) => BrowserModelKernelManifold,
+): BrowserModelKernelManifold {
+  let copy = own(input.scale(transform.scale), nodeId);
+  copy = rotateThreeEuler(copy, transform.rotation, nodeId, own);
+  copy = own(copy.translate(transform.position), nodeId);
+  assertSolid(copy, nodeId);
+  assertModelBounds(copy, nodeId);
+  return copy;
 }
 
 function assertBounds(
@@ -256,6 +433,7 @@ export function evaluateBrowserModelRecipe(
   const byId = new Map(recipe.nodes.map((node) => [node.id, node]));
   const memo = new Map<string, BrowserModelKernelManifold>();
   const owned: BrowserModelKernelManifold[] = [];
+  const pairChecks = { value: 0 };
 
   const own = (object: BrowserModelKernelManifold, nodeId: string) => {
     if (!owned.includes(object)) owned.push(object);
@@ -348,6 +526,56 @@ export function evaluateBrowserModelRecipe(
         } catch {
           throw new Error(BROWSER_MESH_INVALID_ERROR);
         }
+        break;
+      }
+      case "compose": {
+        object = composeSeparated(
+          node.inputs.map((inputId) => evaluateNode(inputId)),
+          kernel,
+          node.id,
+          pairChecks,
+          own,
+        );
+        break;
+      }
+      case "mirror": {
+        const inputObject = evaluateNode(node.input);
+        assertCopyBudget(inputObject, 1, node.id);
+        object = own(inputObject.mirror(node.normal), node.id);
+        assertSolid(object, node.id);
+        assertModelBounds(object, node.id);
+        break;
+      }
+      case "linear-array": {
+        const inputObject = evaluateNode(node.input);
+        assertCopyBudget(inputObject, node.count, node.id);
+        const copies: BrowserModelKernelManifold[] = [inputObject];
+        for (let index = 1; index < node.count; index += 1) {
+          const copy = own(
+            inputObject.translate([
+              node.offset[0] * index,
+              node.offset[1] * index,
+              node.offset[2] * index,
+            ]),
+            node.id,
+          );
+          assertSolid(copy, node.id);
+          assertModelBounds(copy, node.id);
+          copies.push(copy);
+        }
+        object = composeSeparated(copies, kernel, node.id, pairChecks, own);
+        break;
+      }
+      case "instances": {
+        const inputObject = evaluateNode(node.input);
+        assertCopyBudget(inputObject, node.transforms.length, node.id);
+        const copies = node.transforms.map((transform) =>
+          transformCopy(inputObject, transform, node.id, own),
+        );
+        object =
+          copies.length === 1
+            ? copies[0]
+            : composeSeparated(copies, kernel, node.id, pairChecks, own);
         break;
       }
       case "transform": {

@@ -52,6 +52,10 @@ function createKernel(manifold: ManifoldModule): BrowserModelKernel {
       ),
     revolve: (profile, segments, degrees) =>
       manifold.Manifold.revolve(profile, segments, degrees),
+    compose: (manifolds) =>
+      manifold.Manifold.compose(
+        manifolds as unknown as ReturnType<typeof manifold.Manifold.cube>[],
+      ),
     mesh: (vertices, triangles) =>
       manifold.Manifold.ofMesh(
         new manifold.Mesh({

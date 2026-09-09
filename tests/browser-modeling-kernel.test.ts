@@ -94,8 +94,29 @@ class FakeManifold implements BrowserModelKernelManifold {
       this.statusValue,
     );
   }
+  mirror(value: readonly [number, number, number]) {
+    this.log.push(`mirror:${this.label}:${value.join(",")}`);
+    return new FakeManifold(
+      `${this.label}.mirror`,
+      this.log,
+      this.mesh,
+      this.statusValue,
+    );
+  }
+  minGap(other: BrowserModelKernelManifold, searchLength: number) {
+    this.log.push(
+      `minGap:${this.label}:${(other as FakeManifold).label}:${searchLength}`,
+    );
+    return 1;
+  }
+  numVert() {
+    return this.mesh.vertProperties.length / this.mesh.numProp;
+  }
   numTri() {
     return this.mesh.triVerts.length / 3;
+  }
+  volume() {
+    return 1;
   }
   status() {
     return this.statusValue;
@@ -142,6 +163,10 @@ function fakeKernel(
         `revolve:${profile.map((point) => point.join(",")).join(";")}:${segments}:${degrees}`,
       );
       return new FakeManifold("revolve", log, mesh, status);
+    },
+    compose: (manifolds) => {
+      log.push(`compose:${manifolds.length}`);
+      return new FakeManifold("compose", log, mesh, status);
     },
     mesh: (vertices, triangles) => {
       log.push(`mesh:${vertices.length}:${triangles.length}`);
@@ -468,6 +493,10 @@ describe("browser modeling kernel adapter", () => {
       extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
       revolve: (profile, segments, degrees) =>
         wasm.Manifold.revolve(profile, segments, degrees),
+      compose: (manifolds) =>
+        wasm.Manifold.compose(
+          manifolds as unknown as ReturnType<typeof wasm.Manifold.cube>[],
+        ),
       mesh: (vertices, triangles) =>
         wasm.Manifold.ofMesh(
           new wasm.Mesh({
@@ -518,6 +547,10 @@ describe("browser modeling kernel adapter", () => {
         extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
         revolve: (profile, segments, degrees) =>
           wasm.Manifold.revolve(profile, segments, degrees),
+        compose: (manifolds) =>
+          wasm.Manifold.compose(
+            manifolds as unknown as ReturnType<typeof wasm.Manifold.cube>[],
+          ),
         mesh: (vertices, triangles) =>
           wasm.Manifold.ofMesh(
             new wasm.Mesh({
@@ -577,6 +610,10 @@ describe("browser modeling kernel adapter", () => {
             wasm.Manifold.extrude(extrudeProfile, depth),
           revolve: (revolveProfile, segments, degrees) =>
             wasm.Manifold.revolve(revolveProfile, segments, degrees),
+          compose: (manifolds) =>
+            wasm.Manifold.compose(
+              manifolds as unknown as ReturnType<typeof wasm.Manifold.cube>[],
+            ),
           mesh: (vertices, triangles) =>
             wasm.Manifold.ofMesh(
               new wasm.Mesh({
