@@ -148,17 +148,6 @@ try {
   await context.route("**/*", async (route) => {
     const requestUrl = new URL(route.request().url());
     if (
-      requestUrl.origin === "https://fonts.googleapis.com" &&
-      requestUrl.pathname === "/css2"
-    ) {
-      report.fixtureFontStylesheets.push(requestUrl.href);
-      await route.fulfill({
-        contentType: "text/css",
-        body: "/* Deterministic fixture: use fallback fonts. */",
-      });
-      return;
-    }
-    if (
       (requestUrl.protocol === "http:" || requestUrl.protocol === "https:") &&
       requestUrl.origin !== testOrigin
     ) {

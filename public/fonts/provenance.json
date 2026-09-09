@@ -1,0 +1,82 @@
+{
+  "schema": "orbsie.local-fonts/v1",
+  "packages": [
+    {
+      "name": "@fontsource-variable/dm-sans",
+      "version": "5.3.0",
+      "source": "https://registry.npmjs.org/@fontsource-variable/dm-sans/-/dm-sans-5.3.0.tgz",
+      "license": "OFL-1.1",
+      "tarball": {
+        "sha256": "cea46ee690c31efea45c0fbee790c6fefefc979656e8515b12f5bdb7c5bc1876",
+        "bytes": 546109
+      }
+    },
+    {
+      "name": "@fontsource-variable/manrope",
+      "version": "5.3.0",
+      "source": "https://registry.npmjs.org/@fontsource-variable/manrope/-/manrope-5.3.0.tgz",
+      "license": "OFL-1.1",
+      "tarball": {
+        "sha256": "9629a2474e2bd73944d83392c856e268193d42c3954455bd6adb3d1ea74aa27a",
+        "bytes": 82524
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "DM-Sans-OFL.txt",
+      "sha256": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
+      "bytes": 4502
+    },
+    {
+      "path": "Manrope-OFL.txt",
+      "sha256": "d826ab6583b12c26807d8716a545bdbbb672df04f48608a364ba9efdbe501c30",
+      "bytes": 4383
+    },
+    {
+      "path": "dm-sans-latin-ext-wght-normal.woff2",
+      "sha256": "a5d38fe99f930275684999b462c7123faa063d9e44e73b4b241723d884aa0f49",
+      "bytes": 18228
+    },
+    {
+      "path": "dm-sans-latin-wght-normal.woff2",
+      "sha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+      "bytes": 36932
+    },
+    {
+      "path": "fonts.css",
+      "sha256": "b1238c8a2e644c5279e57dc7c46ae9c6db4f1cdee7fa62ab30817299748d63df",
+      "bytes": 2745
+    },
+    {
+      "path": "manrope-cyrillic-ext-wght-normal.woff2",
+      "sha256": "de37de877dc17e4577341fa68bb5cb526b53d54cb29721e674208546a3c7849d",
+      "bytes": 2552
+    },
+    {
+      "path": "manrope-cyrillic-wght-normal.woff2",
+      "sha256": "c268b459a9329e59fecf39a17618efd44c71735532048d60b12aab76a8c14914",
+      "bytes": 14500
+    },
+    {
+      "path": "manrope-greek-wght-normal.woff2",
+      "sha256": "2fb2e8cbfd52ae46179a8b6024eb162f1f9c6de3d22d6e3a30d8f395de7220be",
+      "bytes": 9444
+    },
+    {
+      "path": "manrope-latin-ext-wght-normal.woff2",
+      "sha256": "3911b66d9f2e005a4b989223405d0e5032619c668597ba467cc76a23c8fffcfb",
+      "bytes": 15120
+    },
+    {
+      "path": "manrope-latin-wght-normal.woff2",
+      "sha256": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972",
+      "bytes": 24836
+    },
+    {
+      "path": "manrope-vietnamese-wght-normal.woff2",
+      "sha256": "6bbb044ab420e07edb0a3042d2eb314b85e83a0182e945a15ab3b9092668dfd5",
+      "bytes": 8520
+    }
+  ]
+}

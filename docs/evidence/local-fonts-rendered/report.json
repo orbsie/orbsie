@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "loaded": [
+    {
+      "family": "DM Sans",
+      "count": 1,
+      "loaded": true
+    },
+    {
+      "family": "Manrope",
+      "count": 1,
+      "loaded": true
+    }
+  ],
+  "fonts": [
+    {
+      "path": "/fonts/fonts.css",
+      "status": 200
+    },
+    {
+      "path": "/fonts/dm-sans-latin-wght-normal.woff2",
+      "status": 200
+    },
+    {
+      "path": "/fonts/manrope-latin-wght-normal.woff2",
+      "status": 200
+    }
+  ],
+  "external": [],
+  "liveModelCalls": 0
+}
