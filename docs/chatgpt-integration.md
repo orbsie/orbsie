@@ -2,9 +2,11 @@
 
 # ChatGPT subscription integration decision
 
-Reviewed against the implementation and official documentation on 2026-09-08.
+Historical documentation review: 2026-09-08. Implementation status updated 2026-09-09.
 
-Current product decision: ChatGPT subscription connection must work entirely in the browser, without installation, a local companion or pasted connection links. The connector is not live. [The current connection plan](ai-connection-priority.md) tracks hosted device authorization, runtime isolation and the remaining acceptance gates. Geometry and rendering execute locally in the browser regardless of inference hosting.
+Current product decision: ChatGPT subscription connection must work entirely in the browser, without installation, a local companion or pasted connection links. The browser-only connector is deployed; production device-challenge issuance and cancellation passed. Actual subscription consent, model discovery after consent, and hosted generation remain unverified. [The current connection plan](ai-connection-priority.md) tracks hosted device authorization, runtime isolation and the remaining acceptance gates. Geometry and rendering execute locally in the browser regardless of inference hosting.
+
+Local change `267b975` adds cleanup before Orbsie session deletion, including sign-out and revocation. It reads cleanup metadata for ready, expired, and provisioning hosts without decrypting their capability, destroys the runtime, and then releases its claim. Cleanup failure does not prevent app-session revocation; the independently enforced ten-minute runtime lifetime remains the fallback. Eighteen targeted tests and TypeScript checks passed. This cleanup change is not yet deployed.
 
 The following records the historical local experiment, not the supported product connection. It used managed Codex App Server over child-process stdio on the user's computer. The hosted Orbsie server did not receive subscription credentials or relay those requests. This experiment does not satisfy the latest browser-only requirement.
 
@@ -34,4 +36,4 @@ The original `scripts/run-local-chatgpt.mjs` remains an opt-in CLI integration c
 - [Live reload-recovery report](evidence/provider-e2e/chatgpt-reload-recovery/chatgpt-local.json): interruption by document reload, recovery of a durable checkpoint, explicit continuation, scoped edit, export and input-rule gameplay. Fresh-context cloud recovery requires no new generation. This is checkpoint continuation, not resumption of the original provider stream.
 - [Scope audit](scope-audit.md): remaining full-plan acceptance gates. Current live development tests use Luna only; native Blender delivery is superseded. Historical local ChatGPT evidence does not prove browser-only subscription access or the complete provider/publication matrix.
 
-That experiment requires a compatible managed account, available model access, a running local companion, and a browser that permits the loopback connection. Those requirements exclude it from the browser-only product workflow. Hosted multitenant subscription execution remains unimplemented. OpenRouter offers a PKCE connection flow as well as API-key access; real OAuth consent remains unverified. Gateway uses its own credentials and requires separate live validation.
+That experiment requires a compatible managed account, available model access, a running local companion, and a browser that permits the loopback connection. Those requirements exclude it from the browser-only product workflow. The replacement hosted implementation is deployed with per-session isolated runtimes; full subscription acceptance remains pending. OpenRouter offers a PKCE connection flow as well as API-key access; real OAuth consent remains unverified. Gateway uses its own credentials and requires separate live validation.
