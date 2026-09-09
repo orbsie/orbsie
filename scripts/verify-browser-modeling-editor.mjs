@@ -16,7 +16,8 @@ const revolution = process.env.ORBSIE_MODELING_SHAPE === "revolution";
 const mesh = process.env.ORBSIE_MODELING_SHAPE === "mesh";
 const tube = process.env.ORBSIE_MODELING_SHAPE === "tube";
 const composition = process.env.ORBSIE_MODELING_SHAPE === "composition";
-const rejectedEdit = mesh || tube || composition;
+const procedural = process.env.ORBSIE_PROCEDURAL === "1";
+const rejectedEdit = mesh || tube || composition || procedural;
 const label = composition
   ? "Browser colonnade"
   : tube
@@ -177,6 +178,7 @@ const geometry = (revision, radius) => ({
 });
 const report = {
   mode: "fixture-provider-real-editor-worker",
+  procedural,
   shape: composition
     ? "composition"
     : tube
@@ -251,6 +253,20 @@ try {
           b,
         ]);
     }
+    if (procedural) {
+      const emitted = nextGeometry.job.recipe;
+      nextGeometry.job = {
+        backend: "browser-procedural",
+        source: {
+          version: 1,
+          language: "quickjs",
+          seed: 73,
+          code: invalidMeshEdit
+            ? '({version:1,revision:2,output:"missing",nodes:[]})'
+            : `(()=>{const recipe=${JSON.stringify(emitted)}; if(orb.seed!==73)throw Error("Wrong seed"); recipe.nodes=recipe.nodes.map(node=>({...node})); return recipe;})()`,
+        },
+      };
+    }
     const commands = [
       ...(initial
         ? [
@@ -297,6 +313,18 @@ try {
       characterData: true,
     });
   });
+  if (procedural)
+    await context.addInitScript(() => {
+      const OriginalWorker = window.Worker;
+      window.__proceduralWorkerStarts = 0;
+      window.Worker = class extends OriginalWorker {
+        constructor(...args) {
+          super(...args);
+          if (String(args[0]).includes("procedural-worker.js"))
+            window.__proceduralWorkerStarts++;
+        }
+      };
+    });
   page = await context.newPage();
   page.on("pageerror", (e) => report.pageErrors.push(e.message));
   page.setDefaultTimeout(30000);
@@ -369,6 +397,19 @@ try {
     before: first.entities[0].geometry.model.sha256,
     after: edited.entities[0].geometry.model.sha256,
   };
+  if (procedural) {
+    const a = first.entities[0].geometry.job;
+    const b = edited.entities[0].geometry.job;
+    assert.equal(a.backend, "browser-manifold");
+    assert.equal(b.backend, "browser-manifold");
+    assert.equal(a.authoring.source.language, "quickjs");
+    assert.equal(a.authoring.source.seed, 73);
+    assert.match(a.authoring.sourceHash, /^[a-f0-9]{64}$/);
+    assert.match(b.authoring.sourceHash, /^[a-f0-9]{64}$/);
+    assert.notEqual(a.authoring.sourceHash, b.authoring.sourceHash);
+    assert.notEqual(a.authoring.source.code, b.authoring.source.code);
+    report.checks.editableProceduralSource = true;
+  }
   if (mesh) {
     const before = first.entities[0].geometry.model.bounds;
     const after = edited.entities[0].geometry.model.bounds;
@@ -442,11 +483,13 @@ try {
     await page
       .locator("#prompt")
       .fill(
-        composition
-          ? "Make the column copies overlap"
-          : tube
-            ? "Try an invalid reversing tube path"
-            : "Try an invalid inverted mesh revision",
+        procedural
+          ? "Try an invalid procedural recipe"
+          : composition
+            ? "Make the column copies overlap"
+            : tube
+              ? "Try an invalid reversing tube path"
+              : "Try an invalid inverted mesh revision",
       );
     await page
       .getByRole("button", { name: "Change this", exact: true })
@@ -455,11 +498,13 @@ try {
     const afterFailure = (await storageSnapshot(page)).project;
     assert.deepEqual(afterFailure.entities, edited.entities);
     report.checks[
-      composition
-        ? "invalidCompositionPreservesFinishedObject"
-        : tube
-          ? "invalidTubePreservesFinishedObject"
-          : "invalidMeshPreservesFinishedObject"
+      procedural
+        ? "invalidProceduralSourcePreservesFinishedObject"
+        : composition
+          ? "invalidCompositionPreservesFinishedObject"
+          : tube
+            ? "invalidTubePreservesFinishedObject"
+            : "invalidMeshPreservesFinishedObject"
     ] = true;
     await page.screenshot({ path: `${output}/invalid-edit.png` });
   }
@@ -477,6 +522,14 @@ try {
   assert.deepEqual(reopened.entities, edited.entities);
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/reloaded.png` });
+  if (procedural) {
+    assert.equal(
+      await page.evaluate(() => window.__proceduralWorkerStarts),
+      0,
+      "Reload must use cached geometry without executing source",
+    );
+    report.checks.reloadWithoutInterpreter = true;
+  }
   await page.getByRole("button", { name: "Share Orb", exact: true }).click();
   const downloading = page.waitForEvent("download");
   await page.getByRole("button", { name: /^Download your world/ }).click();
@@ -486,6 +539,15 @@ try {
     new Uint8Array(await readFile(`${output}/world.zip`)),
   );
   const exported = JSON.parse(strFromU8(files["project.json"]));
+  if (procedural) {
+    assert(
+      !Object.keys(files).some((name) =>
+        /quickjs|procedural-worker|emscripten-module/.test(name),
+      ),
+      "Standalone must not contain the authoring interpreter",
+    );
+    report.checks.noExportedInterpreter = true;
+  }
   assert.deepEqual(
     exported.entities,
     JSON.parse(JSON.stringify(reopened.entities)),
