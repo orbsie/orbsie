@@ -1,3 +1,6 @@
+import { Matrix4 } from "three";
+import { transformBounds } from "./scene-transform";
+import { carrySupportContact, supportSurfaceHeight } from "./scene-support";
 import { entityGeometry } from "./geometry";
 import type { Entity } from "./protocol";
 import { requireCatalogAsset } from "./asset-catalog";
@@ -10,6 +13,7 @@ export type PlayerState = {
   groundedOn?: string;
   supportPosition?: Vec3;
   supportTop?: number;
+  supportMatrix?: number[];
 };
 
 export type PlayerInput = {
@@ -54,7 +58,13 @@ export function isTextEntryTarget(target: EventTarget | null) {
   );
 }
 
-function platformTop(entity: Entity, time: number, positionOverride?: Vec3) {
+function platformTop(
+  entity: Entity,
+  time: number,
+  positionOverride?: Vec3,
+  matrix?: Matrix4,
+  query?: Vec3,
+) {
   const position = positionOverride ?? movingEntityPosition(entity, time);
   const bounds =
     entity.geometry?.kind === "asset"
@@ -62,6 +72,25 @@ function platformTop(entity: Entity, time: number, positionOverride?: Vec3) {
       : entity.geometry?.kind === "generated"
         ? entity.geometry.model?.bounds
         : undefined;
+  if (matrix && query) {
+    const local = bounds
+      ? normalizeContactBounds(bounds)
+      : {
+          min: [-0.55, -0.025, -0.55] as const,
+          max: [0.55, 0.52, 0.55] as const,
+        };
+    const height = supportSurfaceHeight(matrix, local, query[0], query[2]);
+    const world = transformBounds(matrix, local);
+    return {
+      id: entity.id,
+      x: (world.min[0] + world.max[0]) / 2,
+      z: (world.min[2] + world.max[2]) / 2,
+      y: height === undefined ? -Infinity : height + PLAYER_HALF_HEIGHT,
+      halfX: (world.max[0] - world.min[0]) / 2,
+      halfZ: (world.max[2] - world.min[2]) / 2,
+      bounce: entity.behavior?.type === "bounce",
+    };
+  }
   if (bounds) {
     const { min, max } = bounds;
     const low = min.map((value, i) =>
@@ -100,6 +129,7 @@ function isInsidePlatform(
   position: Vec3,
 ) {
   return (
+    Number.isFinite(platform.y) &&
     Math.abs(position[0] - platform.x) <= platform.halfX &&
     Math.abs(position[2] - platform.z) <= platform.halfZ
   );
@@ -149,6 +179,7 @@ export function touchesEntity(
   entity: Entity,
   player: Vec3,
   time: number,
+  matrix?: Matrix4,
 ): boolean {
   const recipe = entity.geometry;
   if (entity.stage !== "ready" || !recipe) return false;
@@ -176,20 +207,23 @@ export function touchesEntity(
     if (!bounds) return false;
     contactBounds.set(recipe, bounds);
   }
+  const worldBounds = matrix ? transformBounds(matrix, bounds) : undefined;
   const origin = movingEntityPosition(entity, time);
   return [0, 1, 2].every((axis) => {
     const low =
+      worldBounds?.min[axis] ??
       origin[axis] +
-      Math.min(
-        bounds!.min[axis] * entity.scale[axis],
-        bounds!.max[axis] * entity.scale[axis],
-      );
+        Math.min(
+          bounds!.min[axis] * entity.scale[axis],
+          bounds!.max[axis] * entity.scale[axis],
+        );
     const high =
+      worldBounds?.max[axis] ??
       origin[axis] +
-      Math.max(
-        bounds!.min[axis] * entity.scale[axis],
-        bounds!.max[axis] * entity.scale[axis],
-      );
+        Math.max(
+          bounds!.min[axis] * entity.scale[axis],
+          bounds!.max[axis] * entity.scale[axis],
+        );
     const radius =
       (axis === 1 ? PLAYER_HALF_HEIGHT : CONTACT_HORIZONTAL_TOLERANCE) + 1e-5;
     return player[axis] + radius >= low && player[axis] - radius <= high;
@@ -204,6 +238,7 @@ export function stepGameplay(
   time: number,
   delta: number,
   collisionTargets?: ReadonlySet<string>,
+  worldMatrices?: ReadonlyMap<string, Matrix4>,
 ): GameplayStep {
   const dt = Math.min(Math.max(delta, 0), 0.04);
   const position: Vec3 = [...state.position];
@@ -225,22 +260,46 @@ export function stepGameplay(
   const support = state.groundedOn
     ? readyPlatforms.find((entity) => entity.id === state.groundedOn)
     : undefined;
+  const supportPose = support ? worldMatrices?.get(support.id) : undefined;
+  const previousSupportPose =
+    supportPose && state.supportMatrix?.length === 16
+      ? new Matrix4().fromArray(state.supportMatrix)
+      : supportPose;
   const beforePosition = support
     ? (state.supportPosition ?? movingEntityPosition(support, time - dt))
     : undefined;
   const supportedBeforeDisplacement = Boolean(
     support &&
     beforePosition &&
-    isInsidePlatform(platformTop(support, time, beforePosition), position),
+    isInsidePlatform(
+      platformTop(support, time, beforePosition, previousSupportPose, position),
+      position,
+    ),
   );
   if (support && beforePosition && supportedBeforeDisplacement) {
-    const before = beforePosition;
-    const after = movingEntityPosition(support, time);
-    position[0] += after[0] - before[0];
-    const afterTop = platformTop(support, time).y;
-    const beforeTop = state.supportTop ?? platformTop(support, time, before).y;
-    position[1] += afterTop - beforeTop;
-    position[2] += after[2] - before[2];
+    const contact: Vec3 = [
+      position[0],
+      position[1] - PLAYER_HALF_HEIGHT,
+      position[2],
+    ];
+    const carried =
+      supportPose && previousSupportPose
+        ? carrySupportContact(previousSupportPose, supportPose, contact)
+        : undefined;
+    if (carried) {
+      position[0] = carried[0];
+      position[1] = carried[1] + PLAYER_HALF_HEIGHT;
+      position[2] = carried[2];
+    } else if (!supportPose) {
+      const before = beforePosition;
+      const after = movingEntityPosition(support, time);
+      position[0] += after[0] - before[0];
+      const afterTop = platformTop(support, time).y;
+      const beforeTop =
+        state.supportTop ?? platformTop(support, time, before).y;
+      position[1] += afterTop - beforeTop;
+      position[2] += after[2] - before[2];
+    }
   }
 
   const magnitude = Math.hypot(input.x, input.z);
@@ -253,7 +312,10 @@ export function stepGameplay(
   const supportedAfterDisplacement = Boolean(
     support &&
     supportedBeforeDisplacement &&
-    isInsidePlatform(platformTop(support, time), position),
+    isInsidePlatform(
+      platformTop(support, time, undefined, supportPose, position),
+      position,
+    ),
   );
   let groundedOn = supportedAfterDisplacement ? support?.id : undefined;
   let supportPosition = supportedAfterDisplacement
@@ -269,6 +331,14 @@ export function stepGameplay(
     supportTop = undefined;
   }
   velocityY -= GRAVITY * dt;
+  if (supportedAfterDisplacement && supportPose && support && !input.jump)
+    position[1] = platformTop(
+      support,
+      time,
+      undefined,
+      supportPose,
+      position,
+    ).y;
   const previousY = position[1];
   position[1] += velocityY * dt;
 
@@ -276,7 +346,13 @@ export function stepGameplay(
   let floorId: string | undefined;
   let bounce = false;
   for (const entity of readyPlatforms) {
-    const platform = platformTop(entity, time);
+    const platform = platformTop(
+      entity,
+      time,
+      undefined,
+      worldMatrices?.get(entity.id),
+      position,
+    );
     const inside = isInsidePlatform(platform, position);
     // Only land while descending and crossing a top surface. This avoids
     // teleporting onto a platform when walking below or beside it.
@@ -319,7 +395,7 @@ export function stepGameplay(
   for (const entity of entities) {
     if (
       entity.behavior?.type === "collect" &&
-      touchesEntity(entity, position, time) &&
+      touchesEntity(entity, position, time, worldMatrices?.get(entity.id)) &&
       !collected.includes(entity.id)
     )
       collected.push(entity.id);
@@ -335,7 +411,7 @@ export function stepGameplay(
       return false;
     return (
       collectibleIds.every((id) => collected.includes(id)) &&
-      touchesEntity(entity, position, time)
+      touchesEntity(entity, position, time, worldMatrices?.get(entity.id))
     );
   });
   return {
@@ -344,13 +420,16 @@ export function stepGameplay(
     groundedOn,
     supportPosition,
     supportTop,
+    supportMatrix: groundedOn
+      ? worldMatrices?.get(groundedOn)?.toArray()
+      : undefined,
     collected,
     contacts: entities
       .filter(
         (entity) =>
           (collisionTargets === undefined || collisionTargets.has(entity.id)) &&
           !collectedBefore.includes(entity.id) &&
-          touchesEntity(entity, position, time),
+          touchesEntity(entity, position, time, worldMatrices?.get(entity.id)),
       )
       .map((entity) => entity.id),
     won,
