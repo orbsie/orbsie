@@ -156,3 +156,38 @@ verify interrupted reparenting recovery and owner isolation. Full deterministic
 regression at `fd1382a` passed 822 tests, with seven skipped. Neither establishes
 live provider E2E, deployed database acceptance, publication of a newly authored
 hierarchical game, or representative-device frame-time performance.
+
+
+## Deformation and seeded variation acceptance milestone
+
+Implementation is pending. The next contract should support bounded, explicit
+shape deformation in the existing recipe graph, with axes, units and parameter
+ranges specified before exposing new nodes to providers. Begin with twist and
+taper if the installed geometry kernel can produce validated output within the
+existing worker limits. Seeded variation must be deterministic and geometrically
+useful; a random material choice alone does not meet this modeling requirement.
+
+Required evidence:
+
+- A non-symmetric input makes twist observable; a multi-level shape makes taper
+  observable. Compare vertices and bounds against independently computed
+  expected coordinates, including neutral parameters and negative coordinates.
+- Identical recipe and seed produce identical geometry. Different seeds produce
+  a measurable shape change. Existing node/depth/mesh/runtime limits remain in
+  force, including chained deformations and composition.
+- Reject unsupported, nonfinite, collapsed or invalid output before replacing
+  the last good object. Verify WASM cleanup on success and failure. Do not claim
+  smooth surfaces from sparse topology or infer non-self-intersection solely
+  from a kernel success status.
+- The actual browser worker creates and revises the shape while the scene
+  remains mounted. Selected ID, transform, unrelated objects and play state
+  persist; undo/redo restore exact retained geometry and recipe.
+- Reload and independent ZIP playback retain the baked mesh and editable source
+  without running an authoring kernel in the published player. Record fixture
+  evidence separately from live Luna acceptance and representative-device
+  performance. Do not advertise the new recipe operations before integration
+  and browser verification pass.
+
+This milestone does not replace the outstanding ChatGPT subscription, Gateway
+BYOK or full OpenRouter acceptance journeys. Those remain higher priority when
+required account access is available.
