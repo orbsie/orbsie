@@ -16,7 +16,7 @@ const signal = AbortSignal.timeout(360000);
 let project = blankProject();
 const evidence: unknown[] = [];
 try {
-  const model = await client.connect();
+  const model = await client.connect("gpt-5.6-luna");
   console.log(`Discovered ${model}; all turns use low reasoning.`);
   for (const edit of [false, true]) {
     const before = structuredClone(project);

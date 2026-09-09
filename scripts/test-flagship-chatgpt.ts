@@ -39,7 +39,7 @@ if (resume) {
     "Clarified system prompt: existing IDs use setters and must not be reserved again.";
 }
 try {
-  evidence.model = await client.connect();
+  evidence.model = await client.connect("gpt-5.6-luna");
   for (const edit of resume ? [true] : [false, true]) {
     const before = structuredClone(project);
     const selected = project.entities.find(
