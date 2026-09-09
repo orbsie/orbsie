@@ -22,14 +22,21 @@ const client = await build({
     resolveDir: process.cwd(),
     contents: `
 import {bakeBrowserModelGLB} from './src/lib/browser-modeling-glb';
+import {evaluateBrowserModelRecipeInWorker} from './src/lib/browser-modeling-queue';
 import {saveGeneratedModel,readGeneratedModel} from './src/lib/generated-models';
 import {generatedGLBBounds} from './src/lib/generated-glb';
 window.run=async()=>{
 const recipe={version:1,revision:4,output:'arch',nodes:[{id:'box',kind:'box',size:[6,4,1.5]},{id:'cut',kind:'cylinder',radius:1.8,depth:2,axis:'z'},{id:'placed',kind:'transform',input:'cut',position:[0,-1,0],rotation:[0,0,0],scale:[1,1,1]},{id:'arch',kind:'boolean',operation:'subtract',operands:['box','placed']}]};
-const mesh=await new Promise((resolve,reject)=>{const w=new Worker('/modeling/worker.js',{type:'module'});const timer=setTimeout(()=>{w.terminate();reject(Error('timeout'));},15000);w.onerror=e=>{clearTimeout(timer);w.terminate();reject(Error(e.message));};w.onmessage=({data})=>{clearTimeout(timer);w.terminate();if(data.type!=='result'||data.jobId!=='storage-test'||data.revision!==4)reject(Error('invalid worker response'));else resolve(data);};w.postMessage({type:'evaluate',jobId:'storage-test',recipe});});
+const activeAbort=new AbortController(),queuedAbort=new AbortController();
+const cancelledActive=evaluateBrowserModelRecipeInWorker(recipe,activeAbort.signal).then(()=>{throw Error('Active job unexpectedly completed');},error=>error.code);
+const cancelledQueued=evaluateBrowserModelRecipeInWorker(recipe,queuedAbort.signal).then(()=>{throw Error('Queued job unexpectedly completed');},error=>error.code);
+queuedAbort.abort();activeAbort.abort();
+const cancellations=await Promise.all([cancelledActive,cancelledQueued]);
+if(cancellations.some(code=>code!=='aborted'))throw Error('Cancellation contract failed');
+const mesh=await evaluateBrowserModelRecipeInWorker(recipe,new AbortController().signal);
 const glb=bakeBrowserModelGLB(mesh,{color:'#E4C79B',roughness:.9});
 const metadata=await saveGeneratedModel(glb,{source:'browser-manifold',kernelVersion:'3.3.2',bounds:mesh.bounds});
-return {metadata,statistics:mesh.statistics};
+return {metadata,statistics:mesh.statistics,cancellations};
 };
 window.reopen=async hash=>{const record=await readGeneratedModel(hash);return {metadata:record.metadata,bounds:generatedGLBBounds(record.glb),bytes:record.glb.length};};
 `,
@@ -113,7 +120,7 @@ try {
       {
         status: "passed",
         scope:
-          "Actual worker → GLB → IndexedDB → page reload; no editor/provider integration",
+          "Actual queue cancellation/recovery → worker → GLB → IndexedDB → page reload; no editor/provider integration",
         built,
         reopened,
         errors,
