@@ -1,0 +1,9 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "requests": 1,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {},
+  "status": "failed",
+  "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Browser arch', exact: true })\u001b[22m\n"
+}

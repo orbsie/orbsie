@@ -1,0 +1,9 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "requests": 1,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {},
+  "status": "failed",
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 0\nReceived: undefined\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate"
+}
