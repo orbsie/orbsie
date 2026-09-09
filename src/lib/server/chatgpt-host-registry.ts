@@ -95,6 +95,22 @@ export async function readExpiredChatGPTHost(identity: Identity) {
   };
 }
 
+/** Session teardown also covers provisioning and expired hosts without decrypting credentials. */
+export async function readSessionChatGPTHost(identity: Identity) {
+  const result = await database().query(
+    `SELECT attempt_id FROM chatgpt_hosts WHERE session_id=$1 AND owner_id=$2`,
+    [identity.sessionId, identity.ownerId],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  if (!/^[a-z0-9-]{1,80}$/.test(row.attempt_id))
+    throw new Error("Invalid ChatGPT cleanup metadata.");
+  return {
+    attemptId: row.attempt_id as string,
+    sandboxName: `orbsie-chatgpt-${row.attempt_id}`,
+  };
+}
+
 /** Call only after runtime deletion; attempt matching protects a newer host. */
 export async function releaseChatGPTHost(
   identity: Identity,

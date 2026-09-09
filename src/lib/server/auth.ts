@@ -17,6 +17,32 @@ export function getAuth() {
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
     emailAndPassword: { enabled: true, minPasswordLength: 8 },
+    databaseHooks: {
+      session: {
+        delete: {
+          before: async (session) => {
+            // Run before the session FK cascades away the runtime cleanup metadata.
+            // Logout must still revoke the app session when the host API is unavailable.
+            if (process.env.ORBSIE_CHATGPT_HOSTED !== "1") return;
+            try {
+              const { createChatGPTHostManager } =
+                await import("./chatgpt-host-manager");
+              await createChatGPTHostManager({
+                artifactDirectory: `${process.cwd()}/.orbsie/chatgpt-host`,
+              }).teardownSession({
+                ownerId: session.userId,
+                sessionId: session.id,
+              });
+            } catch {
+              // Sandbox lifetime is bounded independently; never log host credentials.
+              console.warn(
+                "ChatGPT session cleanup failed; runtime expiry remains enforced.",
+              );
+            }
+          },
+        },
+      },
+    },
     socialProviders:
       process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
         ? {

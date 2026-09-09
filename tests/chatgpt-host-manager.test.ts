@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   expired: vi.fn(),
+  sessionHost: vi.fn(),
   release: vi.fn(),
   destroy: vi.fn(),
   ensure: vi.fn(),
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../src/lib/server/chatgpt-host-registry", () => ({
   readExpiredChatGPTHost: mocks.expired,
+  readSessionChatGPTHost: mocks.sessionHost,
   releaseChatGPTHost: mocks.release,
   claimChatGPTHost: vi.fn(),
   completeChatGPTHost: vi.fn(),
@@ -69,4 +71,43 @@ test("disconnect cleans an expired host without reading its capability", async (
     ),
   ).resolves.toBe(true);
   expect(mocks.disconnect).not.toHaveBeenCalled();
+});
+
+test("session teardown destroys provisioning or expired runtime before releasing its claim", async () => {
+  mocks.sessionHost.mockResolvedValue({
+    attemptId: "pending",
+    sandboxName: "orbsie-chatgpt-pending",
+  });
+  const events: string[] = [];
+  mocks.destroy.mockImplementation(async () => {
+    events.push("destroy");
+  });
+  mocks.release.mockImplementation(async () => {
+    events.push("release");
+    return true;
+  });
+  await expect(
+    createChatGPTHostManager({ artifactDirectory: "unused" }).teardownSession(
+      identity,
+    ),
+  ).resolves.toBe(true);
+  expect(mocks.sessionHost).toHaveBeenCalledWith(identity);
+  expect(mocks.destroy).toHaveBeenCalledWith("orbsie-chatgpt-pending");
+  expect(mocks.release).toHaveBeenCalledWith(identity, "pending");
+  expect(events).toEqual(["destroy", "release"]);
+});
+test("session teardown is a no-op without a host and retains metadata on API failure", async () => {
+  mocks.sessionHost.mockResolvedValue(null);
+  const manager = createChatGPTHostManager({ artifactDirectory: "unused" });
+  await expect(manager.teardownSession(identity)).resolves.toBe(false);
+  expect(mocks.destroy).not.toHaveBeenCalled();
+  mocks.sessionHost.mockResolvedValue({
+    attemptId: "pending",
+    sandboxName: "orbsie-chatgpt-pending",
+  });
+  mocks.destroy.mockRejectedValue(Error("unavailable"));
+  await expect(manager.teardownSession(identity)).rejects.toThrow(
+    "unavailable",
+  );
+  expect(mocks.release).not.toHaveBeenCalled();
 });

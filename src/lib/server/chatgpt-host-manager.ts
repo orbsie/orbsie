@@ -5,6 +5,7 @@ import {
   completeChatGPTHost,
   readChatGPTHost,
   readExpiredChatGPTHost,
+  readSessionChatGPTHost,
   releaseChatGPTHost,
 } from "./chatgpt-host-registry";
 
@@ -29,6 +30,12 @@ export function createChatGPTHostManager(
     return releaseChatGPTHost(identity, expired.attemptId);
   }
   return {
+    async teardownSession(identity: Parameters<typeof readChatGPTHost>[0]) {
+      const host = await readSessionChatGPTHost(identity);
+      if (!host) return false;
+      await backend.destroy(host.sandboxName);
+      return releaseChatGPTHost(identity, host.attemptId);
+    },
     async ensure(identity: Parameters<typeof readChatGPTHost>[0]) {
       await cleanupExpired(identity);
       return service.ensure(identity);
