@@ -1,3 +1,5 @@
+> **Archived historical experiment.** The local companion material below is retained for provenance only. Current Orbsie product delivery is browser-only and does not accept companion links or require local installation.
+
 # ChatGPT subscription integration decision
 
 Reviewed against the implementation and official documentation on 2026-09-08.

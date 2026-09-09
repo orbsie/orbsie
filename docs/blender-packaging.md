@@ -1,3 +1,5 @@
+> **Archived historical experiment.** This Blender companion packaging material is retained for provenance only. Current Orbsie product delivery is browser-only and does not accept Blender connection links or require local installation.
+
 # Blender companion packaging feasibility
 
 The repository now has a repeatable local packaging prototype at

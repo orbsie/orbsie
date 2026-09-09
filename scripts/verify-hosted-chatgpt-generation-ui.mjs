@@ -250,7 +250,9 @@ try {
   page = await context.newPage();
   page.on("pageerror", (e) => report.errors.push(e.message));
   page.setDefaultTimeout(30000);
-  await page.goto(base);
+  const legacyLink = new URL(base);
+  legacyLink.hash = `chatgpt=${encodeURIComponent(JSON.stringify({ url: "http://127.0.0.1:41000", token: "a".repeat(64) }))}`;
+  await page.goto(legacyLink.href);
   await page.getByRole("button", { name: "Connections", exact: true }).click();
   await page
     .getByLabel("ChatGPT model", { exact: true })
@@ -321,6 +323,7 @@ try {
   assert.equal(report.requests, 2);
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.unexpected, []);
+  report.checks.legacyLinkDoesNotContactCompanion = true;
   report.passed = true;
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {

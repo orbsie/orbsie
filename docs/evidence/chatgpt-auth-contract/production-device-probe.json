@@ -1,0 +1,36 @@
+{
+  "target": "https://orbsie-aldgc97us-grappeggias-projects.vercel.app",
+  "startedAt": "2026-09-09T12:37:47.701Z",
+  "passed": true,
+  "liveLogin": false,
+  "inference": false,
+  "checks": [
+    {
+      "method": "get",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/chatgpt/start",
+      "status": 200
+    },
+    {
+      "method": "get",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "method": "post",
+      "path": "/api/chatgpt/cancel",
+      "status": 200
+    }
+  ],
+  "deviceChallengeReceived": true,
+  "cleanup": true
+}

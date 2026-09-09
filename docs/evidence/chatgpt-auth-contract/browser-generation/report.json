@@ -13,6 +13,7 @@
     "browserGeneratedAssets": true,
     "expiredConnectionPreservesPrompt": true,
     "expiredRetryDoesNotUseFree": true,
-    "reload": true
+    "reload": true,
+    "legacyLinkDoesNotContactCompanion": true
   }
 }

@@ -1,3 +1,5 @@
+> **Archived historical experiment.** This local companion is not part of current Orbsie product delivery. The browser app no longer accepts companion links or requires local installation. Do not follow these instructions for current use.
+
 # Local ChatGPT companion
 
 The foreground companion connects the Orbsie browser to a managed local Codex App Server over stdio. It runs on your computer. The hosted Orbsie service does not receive ChatGPT credentials or relay subscription requests.

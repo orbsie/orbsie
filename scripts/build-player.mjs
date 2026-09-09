@@ -43,7 +43,6 @@ const paths = [
   "src/lib/generation-connection.ts",
   "src/lib/modeling.ts",
   "src/lib/modeling-policy.ts",
-  "src/lib/modeling-connection.ts",
   "src/lib/browser-modeling.ts",
   "src/lib/browser-modeling-connection.ts",
   "src/lib/browser-modeling-kernel.ts",

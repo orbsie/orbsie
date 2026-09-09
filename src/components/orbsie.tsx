@@ -59,7 +59,6 @@ import {
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
   isGenerationReady,
-  readCompanionLink,
   type GenerationConnection,
 } from "@/lib/generation-connection";
 import { committed } from "@/lib/protocol";
@@ -312,7 +311,6 @@ export default function Orbsie() {
       return { enabled: false, remaining: 0 };
     }
   };
-  const pendingCompanion = useRef<ReturnType<typeof readCompanionLink>>(null);
   const [sheet, setSheet] = useState(true);
   const [shareUrl, setShareUrl] = useState("");
   const [modalError, setModalError] = useState("");
@@ -438,69 +436,6 @@ export default function Orbsie() {
     else setCloudBaseline(null);
   };
   useEffect(() => {
-    const companionController = new AbortController();
-    const connectingVersion = connectionVersion.current;
-    try {
-      const link = pendingCompanion.current ?? readCompanionLink(location.hash);
-      if (link) {
-        pendingCompanion.current = link;
-        history.replaceState(null, "", location.pathname + location.search);
-        void fetch(`${link.url}/health`, {
-          headers: { Authorization: `Bearer ${link.token}` },
-          credentials: "omit",
-          mode: "cors",
-          redirect: "error",
-          cache: "no-store",
-          signal: AbortSignal.any([
-            companionController.signal,
-            AbortSignal.timeout(8000),
-          ]),
-        })
-          .then(async (response) => {
-            if (!response.ok) throw Error();
-            const health = await response.json();
-            if (
-              health.protocolVersion !== 1 ||
-              health.effort !== "low" ||
-              typeof health.model !== "string" ||
-              health.model.length > 150 ||
-              !["ready", "busy"].includes(health.status)
-            )
-              throw Error();
-            if (companionController.signal.aborted) return;
-            if (connectionVersion.current !== connectingVersion) {
-              pendingCompanion.current = null;
-              return;
-            }
-            pendingCompanion.current = null;
-            setConnection({
-              provider: "chatgpt-local",
-              model: health.model,
-              key: link.token,
-              url: link.url,
-            });
-            s.set({ notice: "ChatGPT is connected on this computer." });
-          })
-          .catch(() => {
-            if (
-              !companionController.signal.aborted &&
-              connectionVersion.current === connectingVersion
-            ) {
-              pendingCompanion.current = null;
-              s.set({
-                error:
-                  "Could not connect to local ChatGPT. Keep the companion running and open its new connection link.",
-              });
-            }
-          });
-      }
-    } catch {
-      history.replaceState(null, "", location.pathname + location.search);
-      s.set({
-        error:
-          "This local ChatGPT connection link is invalid. Open a new link from the companion.",
-      });
-    }
     void refreshTrial();
     const initialAccountGeneration = accountGeneration.current;
     if (location.hash.startsWith("#orb=")) {
@@ -535,7 +470,6 @@ export default function Orbsie() {
             .catch(() => {});
       })
       .catch(() => {});
-    return () => companionController.abort();
   }, []);
   useEffect(() => {
     chat.current?.scrollTo({
@@ -553,7 +487,6 @@ export default function Orbsie() {
     if (
       !modal ||
       modal !== "settings" ||
-      connection.provider === "chatgpt-local" ||
       connection.provider === "chatgpt-hosted"
     )
       return;
@@ -1295,13 +1228,11 @@ export default function Orbsie() {
               >
                 <span className="mode-dot" />
                 {isGenerationReady(connection)
-                  ? connection.provider === "chatgpt-local"
-                    ? "ChatGPT on this computer"
-                    : connection.provider === "chatgpt-hosted"
-                      ? `ChatGPT · ${connection.model}`
-                      : connection.provider === "openrouter"
-                        ? "OpenRouter"
-                        : "AI Gateway"
+                  ? connection.provider === "chatgpt-hosted"
+                    ? `ChatGPT · ${connection.model}`
+                    : connection.provider === "openrouter"
+                      ? "OpenRouter"
+                      : "AI Gateway"
                   : connection.provider === "chatgpt-hosted"
                     ? "Choose ChatGPT model"
                     : trial.enabled && trial.remaining > 0
@@ -1525,11 +1456,9 @@ export default function Orbsie() {
               </span>
               <h2>A little creative power</h2>
               <p>
-                {connection.provider === "chatgpt-local"
-                  ? "Your ChatGPT account is connected through the companion on this computer."
-                  : connection.provider === "chatgpt-hosted"
-                    ? "Your ChatGPT account is connected for this browser session."
-                    : "Connect your AI account or API key to create and edit your world."}
+                {connection.provider === "chatgpt-hosted"
+                  ? "Your ChatGPT account is connected for this browser session."
+                  : "Connect your AI account or API key to create and edit your world."}
               </p>
               <p className="fine-print">
                 Models are built and rendered in your browser. No installation
@@ -1566,13 +1495,7 @@ export default function Orbsie() {
                   Use {trial.remaining} free prompts
                 </button>
               )}
-              {connection.provider === "chatgpt-local" ? (
-                <p className="fine-print">
-                  ChatGPT · {connection.model} · Low reasoning. Keep the
-                  companion running. Reopen its connection link after refreshing
-                  this page.
-                </p>
-              ) : connection.provider === "chatgpt-hosted" ? (
+              {connection.provider === "chatgpt-hosted" ? (
                 <div className="setup-note">
                   <strong>
                     ChatGPT · {connection.model} · {connection.effort} reasoning

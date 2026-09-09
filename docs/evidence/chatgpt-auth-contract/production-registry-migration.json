@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-09",
+  "environment": "Vercel production environment DATABASE_URL",
+  "schema": "scripts/chatgpt-host-schema.sql",
+  "before": "chatgpt_hosts absent",
+  "applied": true,
+  "verifiedColumns": [
+    "session_id",
+    "owner_id",
+    "attempt_id",
+    "state",
+    "sandbox_name",
+    "capability_ciphertext",
+    "expires_at",
+    "created_at"
+  ],
+  "existingDataDeleted": false,
+  "note": "Earlier local-environment migration did not prove production schema readiness. This check used freshly retrieved production configuration without logging its values."
+}

@@ -1,3 +1,5 @@
+> **Archived historical experiment.** This local Blender companion material is retained for provenance only. Current Orbsie product delivery is browser-only and does not accept Blender connection links or require local installation.
+
 # Local Blender runtime probe
 
 ## Bundled application component

@@ -3,17 +3,7 @@ import {
   companionOrigin,
   generationRequest,
   isGenerationReady,
-  readCompanionLink,
 } from "../src/lib/generation-connection";
-const token = "a".repeat(64);
-it("consumes only the local companion link format", () => {
-  expect(readCompanionLink("#orb=project")).toBeNull();
-  expect(
-    readCompanionLink(
-      `#chatgpt=${encodeURIComponent(JSON.stringify({ url: "http://127.0.0.1:41000", token }))}`,
-    ),
-  ).toEqual({ url: "http://127.0.0.1:41000", token });
-});
 it.each([
   "https://example.com",
   "http://localhost:41000",
@@ -23,39 +13,13 @@ it.each([
   "http://127.0.0.1",
 ])("rejects a companion outside its exact loopback origin: %s", (url) => {
   expect(() => companionOrigin(url)).toThrow();
-  expect(() =>
-    readCompanionLink(
-      `#chatgpt=${encodeURIComponent(JSON.stringify({ url, token }))}`,
-    ),
-  ).toThrow("invalid");
 });
-it("sends the temporary capability only to the companion, never in model input", () => {
-  const payload = { prompt: "A little garden", project: { id: "world" } };
-  const request = generationRequest(
-    {
-      provider: "chatgpt-local",
-      url: "http://127.0.0.1:41000",
-      model: "gpt-6-astra",
-      key: token,
-    },
-    payload,
-  );
-  expect(request.url).toBe("http://127.0.0.1:41000/generate");
-  expect(request.init.credentials).toBe("omit");
-  expect(request.init.redirect).toBe("error");
-  expect(request.init.headers).toMatchObject({
-    Authorization: `Bearer ${token}`,
-  });
-  expect(JSON.parse(request.init.body as string)).toEqual(payload);
-  expect(request.init.body).not.toContain(token);
-});
-it("keeps API-provider keys on the hosted provider route and omits stale companion addresses", () => {
+it("keeps API-provider keys on the hosted provider route", () => {
   const request = generationRequest(
     {
       provider: "gateway",
       model: "test-model",
       key: "test-api-key",
-      url: "http://127.0.0.1:41000",
     },
     { prompt: "test" },
   );
@@ -67,6 +31,21 @@ it("keeps API-provider keys on the hosted provider route and omits stale compani
     key: "test-api-key",
     prompt: "test",
   });
+});
+it("rejects the removed local ChatGPT provider before constructing a request", () => {
+  expect(() =>
+    generationRequest(
+      { provider: "chatgpt-local", model: "gpt-6-astra", key: "a".repeat(64) },
+      { prompt: "test" },
+    ),
+  ).toThrow("supported");
+  expect(
+    isGenerationReady({
+      provider: "chatgpt-local",
+      model: "gpt-6-astra",
+      key: "a".repeat(64),
+    }),
+  ).toBe(false);
 });
 it("never falls back to free generation for unknown connections", () => {
   expect(() =>
@@ -108,7 +87,6 @@ describe("hosted ChatGPT generation", () => {
         model: "gpt-5.1",
         effort: "low",
         key: "should-not-send",
-        url: "https://evil.example/generate",
       },
       {
         prompt: "Make a garden",
