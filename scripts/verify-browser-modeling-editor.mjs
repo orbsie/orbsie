@@ -15,21 +15,41 @@ const extrusion = process.env.ORBSIE_MODELING_SHAPE === "extrusion";
 const revolution = process.env.ORBSIE_MODELING_SHAPE === "revolution";
 const mesh = process.env.ORBSIE_MODELING_SHAPE === "mesh";
 const tube = process.env.ORBSIE_MODELING_SHAPE === "tube";
+const deformation = process.env.ORBSIE_MODELING_SHAPE === "deformation";
 const composition = process.env.ORBSIE_MODELING_SHAPE === "composition";
 const procedural = process.env.ORBSIE_PROCEDURAL === "1";
-const rejectedEdit = mesh || tube || composition || procedural;
-const label = composition
-  ? "Browser colonnade"
-  : tube
-    ? "Browser pipe"
-    : mesh
-      ? "Browser pyramid"
-      : revolution
-        ? "Browser vase"
-        : extrusion
-          ? "Browser prism"
-          : "Browser arch";
+const rejectedEdit = mesh || tube || composition || procedural || deformation;
+const label = deformation
+  ? "Browser twisted column"
+  : composition
+    ? "Browser colonnade"
+    : tube
+      ? "Browser pipe"
+      : mesh
+        ? "Browser pyramid"
+        : revolution
+          ? "Browser vase"
+          : extrusion
+            ? "Browser prism"
+            : "Browser arch";
 const recipe = (revision, radius) => {
+  if (deformation)
+    return {
+      version: 1,
+      revision,
+      output: "tapered",
+      nodes: [
+        { id: "column", kind: "box", size: [1, 3, 2] },
+        { id: "twisted", kind: "twist", input: "column", angle: 0.35 },
+        {
+          id: "tapered",
+          kind: "taper",
+          input: "twisted",
+          bottomScale: 1,
+          topScale: radius,
+        },
+      ],
+    };
   if (composition)
     return {
       version: 1,
@@ -179,17 +199,19 @@ const geometry = (revision, radius) => ({
 const report = {
   mode: "fixture-provider-real-editor-worker",
   procedural,
-  shape: composition
-    ? "composition"
-    : tube
-      ? "tube"
-      : mesh
-        ? "mesh"
-        : revolution
-          ? "revolution"
-          : extrusion
-            ? "extrusion"
-            : "arch",
+  shape: deformation
+    ? "deformation"
+    : composition
+      ? "composition"
+      : tube
+        ? "tube"
+        : mesh
+          ? "mesh"
+          : revolution
+            ? "revolution"
+            : extrusion
+              ? "extrusion"
+              : "arch",
   requests: 0,
   pageErrors: [],
   blocked: [],
@@ -235,6 +257,10 @@ try {
       initial ? 0 : invalidMeshEdit ? 2 : 1,
       initial ? 1.25 : 1.6,
     );
+    if (invalidMeshEdit && deformation)
+      nextGeometry.job.recipe.nodes.find(
+        (node) => node.id === "tapered",
+      ).topScale = 0;
     if (invalidMeshEdit && composition)
       nextGeometry.job.recipe.nodes.find((node) => node.id === "array").offset =
         [0.1, 0, 0];
@@ -335,17 +361,19 @@ try {
   await page
     .getByPlaceholder("What experience to build?")
     .fill(
-      composition
-        ? "Build two rows of mirrored columns using arrays and instances"
-        : tube
-          ? "Build a bent capped pipe along a 3D path"
-          : mesh
-            ? "Build an original pyramid from a custom triangle mesh"
-            : revolution
-              ? "Build a new vase by revolving a profile"
-              : extrusion
-                ? "Build a triangular prism from an outline"
-                : "Build a new stone arch",
+      deformation
+        ? "Build a twisted column with a flared top"
+        : composition
+          ? "Build two rows of mirrored columns using arrays and instances"
+          : tube
+            ? "Build a bent capped pipe along a 3D path"
+            : mesh
+              ? "Build an original pyramid from a custom triangle mesh"
+              : revolution
+                ? "Build a new vase by revolving a profile"
+                : extrusion
+                  ? "Build a triangular prism from an outline"
+                  : "Build a new stone arch",
     );
   await page.getByRole("button", { name: "Create", exact: true }).click();
   const saved = async (revision) => {
@@ -373,17 +401,19 @@ try {
   await page
     .locator("#prompt")
     .fill(
-      composition
-        ? "Increase the spacing between columns"
-        : tube
-          ? "Make the pipe thicker without changing its path"
-          : mesh
-            ? "Make the pyramid taller"
-            : revolution
-              ? "Make the vase wider"
-              : extrusion
-                ? "Make the extrusion deeper"
-                : "Make the opening wider",
+      deformation
+        ? "Widen the top taper without changing the twist"
+        : composition
+          ? "Increase the spacing between columns"
+          : tube
+            ? "Make the pipe thicker without changing its path"
+            : mesh
+              ? "Make the pyramid taller"
+              : revolution
+                ? "Make the vase wider"
+                : extrusion
+                  ? "Make the extrusion deeper"
+                  : "Make the opening wider",
     );
   await page.getByRole("button", { name: "Change this", exact: true }).click();
   const edited = await saved(1);
@@ -437,6 +467,22 @@ try {
       [before.min[0], before.max[0], before.min[2], before.max[2]],
     );
     report.checks.customMeshBounds = true;
+  }
+  if (deformation) {
+    const a = first.entities[0].geometry,
+      b = edited.entities[0].geometry;
+    assert.deepEqual(
+      a.job.recipe.nodes.slice(0, 2),
+      b.job.recipe.nodes.slice(0, 2),
+    );
+    assert.equal(b.job.recipe.nodes[2].topScale, 1.6);
+    assert.equal(a.job.recipe.nodes[2].topScale, 1.25);
+    for (const bounds of [a.model.bounds, b.model.bounds]) {
+      assert(Math.abs(bounds.min[1] + 1.5) < 1e-5);
+      assert(Math.abs(bounds.max[1] - 1.5) < 1e-5);
+    }
+    assert(b.model.bounds.max[0] > a.model.bounds.max[0]);
+    report.checks.twistPreservedAndTaperWidened = true;
   }
   if (composition) {
     const a = first.entities[0].geometry,
@@ -497,13 +543,15 @@ try {
     await page
       .locator("#prompt")
       .fill(
-        procedural
-          ? "Try an invalid procedural recipe"
-          : composition
-            ? "Make the column copies overlap"
-            : tube
-              ? "Try an invalid reversing tube path"
-              : "Try an invalid inverted mesh revision",
+        deformation
+          ? "Collapse the top taper to zero"
+          : procedural
+            ? "Try an invalid procedural recipe"
+            : composition
+              ? "Make the column copies overlap"
+              : tube
+                ? "Try an invalid reversing tube path"
+                : "Try an invalid inverted mesh revision",
       );
     await page
       .getByRole("button", { name: "Change this", exact: true })
@@ -512,13 +560,15 @@ try {
     const afterFailure = (await storageSnapshot(page)).project;
     assert.deepEqual(afterFailure.entities, edited.entities);
     report.checks[
-      procedural
-        ? "invalidProceduralSourcePreservesFinishedObject"
-        : composition
-          ? "invalidCompositionPreservesFinishedObject"
-          : tube
-            ? "invalidTubePreservesFinishedObject"
-            : "invalidMeshPreservesFinishedObject"
+      deformation
+        ? "invalidTaperPreservesFinishedObject"
+        : procedural
+          ? "invalidProceduralSourcePreservesFinishedObject"
+          : composition
+            ? "invalidCompositionPreservesFinishedObject"
+            : tube
+              ? "invalidTubePreservesFinishedObject"
+              : "invalidMeshPreservesFinishedObject"
     ] = true;
     await page.screenshot({ path: `${output}/invalid-edit.png` });
   }
