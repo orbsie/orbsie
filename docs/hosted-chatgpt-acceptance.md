@@ -54,9 +54,11 @@ selection remains unrestricted among the product's supported models.
 
 ## Running the hosted milestone
 
-The hosted mode is implemented and reviewed. Seven focused synthetic tests
-pass, including CLI blocked-report creation, request boundaries and stream
-completion checks; syntax checks also pass. These checks do not prove real
+The hosted mode is implemented and reviewed. Ten focused synthetic tests
+pass, including CLI blocked-report creation, request boundaries, stream
+completion and canonical project-schema rejection before dispatch. The schema
+is bundled from the application protocol after private account-state checks;
+the temporary bundle is removed after import. Syntax checks also pass. These checks do not prove real
 subscription consent or inference. The command below is the live invocation,
 not a record of successful subscription acceptance.
 

@@ -643,7 +643,12 @@ function storageKeyDigest(key) {
   return createHash("sha256").update(key).digest("hex");
 }
 
-async function installTrafficGuard(context, config, approvedOrigins, info) {
+export async function installTrafficGuard(
+  context,
+  config,
+  approvedOrigins,
+  info,
+) {
   await context.route("**/*", async (route) => {
     const requestURL = new URL(route.request().url());
     if (config.provider === HOSTED_PROVIDER) {
@@ -674,6 +679,15 @@ async function installTrafficGuard(context, config, approvedOrigins, info) {
       });
       if (decision.action === "abort") {
         info.hostedViolations.push(decision.reason);
+        await route.abort("blockedbyclient");
+        return;
+      }
+      if (
+        isHostedGeneration &&
+        (!info.hostedProjectValidator ||
+          !info.hostedProjectValidator(payload?.project))
+      ) {
+        info.hostedViolations.push("invalid-hosted-project");
         await route.abort("blockedbyclient");
         return;
       }
@@ -2906,6 +2920,7 @@ async function run(config) {
     hostedPayloadErrors: [],
     hostedNDJSON: [],
     ndjsonReads: [],
+    hostedProjectValidator: null,
   };
   let storageState;
   try {
@@ -2913,6 +2928,11 @@ async function run(config) {
       config.provider === HOSTED_PROVIDER
         ? await readHostedAccountStorageState(config)
         : await readExplicitCloudStorageState(config);
+    if (config.provider === HOSTED_PROVIDER) {
+      const { loadHostedProjectValidator } =
+        await import("./lib/hosted-project-validator.mjs");
+      info.hostedProjectValidator = await loadHostedProjectValidator();
+    }
   } catch (error) {
     report.error = sanitizedError(error, config);
     report.traffic = {
