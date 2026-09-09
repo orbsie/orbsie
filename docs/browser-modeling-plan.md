@@ -38,6 +38,18 @@ Astra owns contracts, architecture, every diff review and integration. One Luna 
 
 ## Optional backend decisions
 
+### Restricted procedural authoring implementation contract
+
+Status: foundation implementation in progress; not advertised to providers or accepted as complete. The first interpreter emits existing `BrowserModelRecipe` JSON, including bounded custom mesh nodes. It never receives scene handles, credentials or geometry-kernel objects. The editor retains versioned source, its seed and a host-computed source hash alongside the validated derived recipe. Successful geometry baking must precede committing a replacement; failure leaves the previous source, recipe and mesh intact.
+
+Use a fresh QuickJS runtime per request inside a dedicated authoring worker. Generated JavaScript executes only in the guest interpreter, never through host `eval`, `Function`, module import or injected worker scripts. Expose deterministic seeded helpers and replace guest randomness; remove time access. Do not bridge network, storage, DOM, filesystem, timers, module loading, editor state or account APIs. QuickJS is one layer of isolation, not evidence that an arbitrary worker is safe.
+
+Initial bounds are 32 KiB UTF-8 source, 256 KiB serialized recipe output, 8 MiB guest heap, 512 KiB guest stack and a two-second execution deadline. Run one authoring job at a time with a bounded waiting queue. Guest interruption is supplemented by main-thread worker termination on timeout or cancellation, followed by a fresh worker for later work. Geometry expansion, validation, memory and build deadlines remain independently enforced by the existing modeling worker. Initialization time must be reported separately from guest execution time.
+
+Keep the interpreter and its WASM assets locally served with dependency licenses. Standalone games consume baked geometry and must not load or execute the authoring interpreter. Reload and export use retained recipes/assets without implicitly rerunning source. Provider capability discovery stays off until protocol/store integration and real browser acceptance pass.
+
+Acceptance must prove deterministic output, unavailable host capabilities, loop/recursion/allocation/output limits, malformed-output rejection before geometry work, cancellation followed by a successful job, failed-edit preservation, source/recipe persistence and interpreter-free standalone playback. Follow with live Luna creation and targeted editing at the provider milestone; fixture output does not establish model-authored success.
+
 | Candidate | Role and acceptance condition |
 | --- | --- |
 | Replicad / OpenCascade.js | Lazy-loaded precision modeling for supported extrusions, cuts, fillets and chamfers; license/dependency review before distribution |
@@ -108,7 +120,7 @@ Custom mesh milestone (deployed source `cfa9901`): recipes accept strict nodes `
 
 The worker checks geometric intersections beyond shared features, including coplanar overlaps. Positional tolerance is 1e-6 meters; features at that tolerance and dense broadphase workloads may be conservatively rejected. Broadphase work is capped at 500,000 grid assignments, 250,000 unique candidate pairs and 500,000 total pair visits. Tests specifically distinguish budget exhaustion from geometric rejection, and demonstrate a connected positive-volume self-intersection accepted by raw Manifold but rejected by Orbsie. Model-facing failures remain generic; no arbitrary code, URLs or raw kernel properties are accepted.
 
-Real editor/worker fixtures prove pyramid creation, height editing, rejected inversion preserving the last finished object, reload and exact-GLB standalone export (`docs/evidence/browser-mesh-worker/`). These tests do not prove live model-authored mesh quality or performance targets. One standalone start exceeded five seconds; a measured retry took 3518 ms. Remaining modeling work includes paths, composition/mirroring/arrays/instances, seeded deformation and the restricted procedural interpreter, plus the full provider/gameplay acceptance matrix.
+Real editor/worker fixtures prove pyramid creation, height editing, rejected inversion preserving the last finished object, reload and exact-GLB standalone export (`docs/evidence/browser-mesh-worker/`). These tests do not prove live model-authored mesh quality or performance targets. One standalone start exceeded five seconds; a measured retry took 3518 ms. Subsequent tube and composition milestones below cover bounded paths, mirroring, arrays and baked instances. Seeded deformation, the restricted procedural interpreter and the full provider/gameplay acceptance matrix remain open.
 
 Capped tube milestone (deployed source `1d08574`): strict `tube` nodes accept `path` (2–63 unique 3D points), `radius` (>0.0001 and ≤50 meters), and `segments` (3–64, default16). Deterministic parallel-transport frames build a closed solid with planar caps at the open path endpoints. Path and generated coordinates stay within ±100 meters; derived tube vertices/triangles count toward the shared recipe mesh budget. The existing geometric validator rejects self-overlap, degeneracy and exhausted work budgets before Manifold construction. Closed loops, variable radius, twist controls and custom sweep profiles remain unsupported.
 
