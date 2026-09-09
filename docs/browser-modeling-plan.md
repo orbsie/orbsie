@@ -107,7 +107,7 @@ First bounded implementation task: browser recipe schema, graph validator and fo
 
 The recipe graph validator, direct Manifold evaluator, cancellable single-worker queue, GLB baker, and browser provenance variant are implemented. Real Chromium evidence covers worker evaluation, immediate queue cancellation/recovery, GLB persistence/reload and rendered arch inspection. Hard-edge shading was corrected and verified in commit `ce272a8`.
 
-Store/protocol dispatch, provider capability transport, browser worker execution and baked export are integrated. Live OpenRouter Luna creation and targeted geometry editing passed; Gateway BYOK and browser-only ChatGPT subscription generation remain acceptance gates. The general procedural vocabulary, restricted interpreter, representative performance and full provider/publication milestone remain open.
+Store/protocol dispatch, provider capability transport, browser worker execution and baked export are integrated. Live OpenRouter Luna creation and targeted geometry editing passed; Gateway BYOK and browser-only ChatGPT subscription generation remain acceptance gates. The restricted interpreter and additional procedural vocabulary are implemented as described in the later milestones. Live procedural authoring, remaining vocabulary, representative performance and the full provider/publication milestone remain open.
 
 Priority update: AI account/API connection remains the top priority. The browser-only ChatGPT connector is deployed with device challenge issuance/cancellation verified; actual user consent and generation remain pending. Modeling work continues while those account-dependent checks are unavailable.
 
@@ -120,7 +120,7 @@ Custom mesh milestone (deployed source `cfa9901`): recipes accept strict nodes `
 
 The worker checks geometric intersections beyond shared features, including coplanar overlaps. Positional tolerance is 1e-6 meters; features at that tolerance and dense broadphase workloads may be conservatively rejected. Broadphase work is capped at 500,000 grid assignments, 250,000 unique candidate pairs and 500,000 total pair visits. Tests specifically distinguish budget exhaustion from geometric rejection, and demonstrate a connected positive-volume self-intersection accepted by raw Manifold but rejected by Orbsie. Model-facing failures remain generic; no arbitrary code, URLs or raw kernel properties are accepted.
 
-Real editor/worker fixtures prove pyramid creation, height editing, rejected inversion preserving the last finished object, reload and exact-GLB standalone export (`docs/evidence/browser-mesh-worker/`). These tests do not prove live model-authored mesh quality or performance targets. One standalone start exceeded five seconds; a measured retry took 3518 ms. Subsequent tube and composition milestones below cover bounded paths, mirroring, arrays and baked instances. Seeded deformation, the restricted procedural interpreter and the full provider/gameplay acceptance matrix remain open.
+Real editor/worker fixtures prove pyramid creation, height editing, rejected inversion preserving the last finished object, reload and exact-GLB standalone export (`docs/evidence/browser-mesh-worker/`). These tests do not prove live model-authored mesh quality or performance targets. One standalone start exceeded five seconds; a measured retry took 3518 ms. Subsequent tube and composition milestones below cover bounded paths, mirroring, arrays and baked instances. Seeded deformation and the full provider/gameplay acceptance matrix remain open. The restricted procedural interpreter was subsequently implemented; see its status above.
 
 Capped tube milestone (deployed source `1d08574`): strict `tube` nodes accept `path` (2–63 unique 3D points), `radius` (>0.0001 and ≤50 meters), and `segments` (3–64, default16). Deterministic parallel-transport frames build a closed solid with planar caps at the open path endpoints. Path and generated coordinates stay within ±100 meters; derived tube vertices/triangles count toward the shared recipe mesh budget. The existing geometric validator rejects self-overlap, degeneracy and exhausted work budgets before Manifold construction. Closed loops, variable radius, twist controls and custom sweep profiles remain unsupported.
 
@@ -129,3 +129,30 @@ Fixture editor create→radius edit→failed reversal preserving last good objec
 Composition milestone (deployed source `71134b4`): strict `compose` nodes join 2–32 separated inputs; `mirror` reflects an input through the origin plane defined by a nonzero normal; `linear-array` makes 2–32 copies at `i * offset`; `instances` accepts 1–32 explicit positive-scale XYZ transforms. Output is one baked mesh. These operations do not implement scene parenting, independent child entity IDs/materials, or GPU instancing.
 
 Expanded geometry leaves are capped at64 per output, including nested/shared graph references. Actual child geometry is checked before copying, transformed output remains within ±100 meters, and separation checks are bounded across the recipe. Touching, intersecting and fully nested solids are rejected; intentional merging uses boolean union. Browser fixture evidence for all four operations, targeted spacing edits, exact undo/redo, failed overlap preservation and twelve-copy export is in `docs/evidence/browser-composition-worker/`. Full provider authoring remains unverified for these operations.
+
+
+## Scene hierarchy milestone (local, not deployed)
+
+Source `caeb0c6` integrates persistent groups and entity parenting with the
+renderer and gameplay. Group IDs share the entity namespace, graph depth and
+size are bounded, transforms compose as exact matrices, and unsupported
+keep-world shear is rejected before commit. Platform support queries use
+transformed surfaces and contacts carry through support pose changes. The
+flat-world path remains compatible. `fb541d2` checkpoints group operations;
+`5e5217f` exposes their model schemas and local/world coordinate instructions.
+
+Reviewed acceptance in `3aae803` covers a group containing a baked prop,
+collectible and platform, group translation/rotation while Play remains active,
+a UI-selected recipe-only child edit, unchanged unrelated authored state,
+undo/redo, reload, ZIP hierarchy and GLB integrity, and independent player
+readiness. Evidence is in `docs/evidence/scene-hierarchy-editor-20260909-r4/`.
+This is deterministic intercepted-provider evidence, not live inference.
+The test submits a key and preserves the HUD; it does not prove avatar motion
+or platform riding. Direct read-only browser observation of a player riding a
+rotated/scaled platform is the next gate.
+
+Journal regression `8113663` uses real service operations with a mocked DB to
+verify interrupted reparenting recovery and owner isolation. Full deterministic
+regression at `fd1382a` passed 822 tests, with seven skipped. Neither establishes
+live provider E2E, deployed database acceptance, publication of a newly authored
+hierarchical game, or representative-device frame-time performance.
