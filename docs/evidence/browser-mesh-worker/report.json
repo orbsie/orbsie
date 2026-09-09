@@ -1,0 +1,19 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "shape": "mesh",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "4b1bac7bae5967676417df635c4ccf93f79ec195ade0b76365001f68de245667",
+      "after": "29028290d46af6ebd9aac58e01c989ee6777dba0288a36b88044cbfe9c13e709"
+    },
+    "customMeshBounds": true,
+    "invalidMeshPreservesFinishedObject": true,
+    "bakedExport": true,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

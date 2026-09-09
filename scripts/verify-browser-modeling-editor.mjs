@@ -13,13 +13,40 @@ if (!output) throw Error("Provide a new evidence directory.");
 await mkdir(output, { recursive: false });
 const extrusion = process.env.ORBSIE_MODELING_SHAPE === "extrusion";
 const revolution = process.env.ORBSIE_MODELING_SHAPE === "revolution";
-const label = revolution
-  ? "Browser vase"
-  : extrusion
-    ? "Browser prism"
-    : "Browser arch";
-const recipe = (revision, radius) =>
-  revolution
+const mesh = process.env.ORBSIE_MODELING_SHAPE === "mesh";
+const label = mesh
+  ? "Browser pyramid"
+  : revolution
+    ? "Browser vase"
+    : extrusion
+      ? "Browser prism"
+      : "Browser arch";
+const recipe = (revision, radius) => {
+  if (mesh)
+    return {
+      version: 1,
+      revision,
+      output: "pyramid",
+      nodes: [
+        {
+          id: "pyramid",
+          kind: "mesh",
+          vertices: [
+            [-1, 0, -1],
+            [1, 0, -1],
+            [0, 0, 1],
+            [0, radius, 0],
+          ],
+          triangles: [
+            [0, 1, 2],
+            [0, 3, 1],
+            [1, 3, 2],
+            [2, 3, 0],
+          ],
+        },
+      ],
+    };
+  return revolution
     ? {
         version: 1,
         revision,
@@ -81,6 +108,7 @@ const recipe = (revision, radius) =>
             },
           ],
         };
+};
 const geometry = (revision, radius) => ({
   kind: "generated",
   detail: "refined",
@@ -88,7 +116,13 @@ const geometry = (revision, radius) => ({
 });
 const report = {
   mode: "fixture-provider-real-editor-worker",
-  shape: revolution ? "revolution" : extrusion ? "extrusion" : "arch",
+  shape: mesh
+    ? "mesh"
+    : revolution
+      ? "revolution"
+      : extrusion
+        ? "extrusion"
+        : "arch",
   requests: 0,
   pageErrors: [],
   blocked: [],
@@ -129,6 +163,19 @@ try {
     assert.equal(request.localModeling, false);
     assert.equal(request.browserModeling, true);
     const initial = report.requests === 1;
+    const invalidMeshEdit = mesh && report.requests === 3;
+    const nextGeometry = geometry(
+      initial ? 0 : invalidMeshEdit ? 2 : 1,
+      initial ? 1.25 : 1.6,
+    );
+    if (invalidMeshEdit) {
+      nextGeometry.job.recipe.nodes[0].triangles =
+        nextGeometry.job.recipe.nodes[0].triangles.map(([a, b, c]) => [
+          a,
+          c,
+          b,
+        ]);
+    }
     const commands = [
       ...(initial
         ? [
@@ -137,7 +184,7 @@ try {
               entity: {
                 id: "arch",
                 label,
-                position: [0, 1.5, 0],
+                position: mesh ? [0, 0, 0] : [0, 1.5, 0],
                 scale: [1, 1, 1],
                 color: "#E4C79B",
                 stage: "seed",
@@ -148,7 +195,7 @@ try {
       {
         type: "set_geometry",
         id: "arch",
-        geometry: geometry(initial ? 0 : 1, initial ? 1.25 : 1.6),
+        geometry: nextGeometry,
       },
       {
         type: "commit_revision",
@@ -170,11 +217,13 @@ try {
   await page
     .getByPlaceholder("What experience to build?")
     .fill(
-      revolution
-        ? "Build a new vase by revolving a profile"
-        : extrusion
-          ? "Build a triangular prism from an outline"
-          : "Build a new stone arch",
+      mesh
+        ? "Build an original pyramid from a custom triangle mesh"
+        : revolution
+          ? "Build a new vase by revolving a profile"
+          : extrusion
+            ? "Build a triangular prism from an outline"
+            : "Build a new stone arch",
     );
   await page.getByRole("button", { name: "Create", exact: true }).click();
   const saved = async (revision) => {
@@ -202,11 +251,13 @@ try {
   await page
     .locator("#prompt")
     .fill(
-      revolution
-        ? "Make the vase wider"
-        : extrusion
-          ? "Make the extrusion deeper"
-          : "Make the opening wider",
+      mesh
+        ? "Make the pyramid taller"
+        : revolution
+          ? "Make the vase wider"
+          : extrusion
+            ? "Make the extrusion deeper"
+            : "Make the opening wider",
     );
   await page.getByRole("button", { name: "Change this", exact: true }).click();
   const edited = await saved(1);
@@ -220,6 +271,20 @@ try {
     before: first.entities[0].geometry.model.sha256,
     after: edited.entities[0].geometry.model.sha256,
   };
+  if (mesh) {
+    const before = first.entities[0].geometry.model.bounds;
+    const after = edited.entities[0].geometry.model.bounds;
+    assert(
+      after.max[1] > before.max[1],
+      "The vertex edit must increase actual mesh height",
+    );
+    assert.equal(after.min[1], before.min[1]);
+    assert.deepEqual(
+      [after.min[0], after.max[0], after.min[2], after.max[2]],
+      [before.min[0], before.max[0], before.min[2], before.max[2]],
+    );
+    report.checks.customMeshBounds = true;
+  }
   if (revolution) {
     const before = first.entities[0].geometry.model.bounds;
     const after = edited.entities[0].geometry.model.bounds;
@@ -239,6 +304,17 @@ try {
   }
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/edited.png` });
+  if (mesh) {
+    await page.locator("#prompt").fill("Try an invalid inverted mesh revision");
+    await page
+      .getByRole("button", { name: "Change this", exact: true })
+      .click();
+    await expect(page.locator(".toast.error")).toBeVisible({ timeout: 45000 });
+    const afterFailure = (await storageSnapshot(page)).project;
+    assert.deepEqual(afterFailure.entities, edited.entities);
+    report.checks.invalidMeshPreservesFinishedObject = true;
+    await page.screenshot({ path: `${output}/invalid-edit.png` });
+  }
   await page.reload();
   const resume = page.getByRole("button", {
     name: "Continue your saved world",
@@ -327,7 +403,7 @@ try {
   await player.screenshot({ path: `${output}/standalone.png` });
   await standalone.close();
   report.checks.standaloneRendering = true;
-  assert.equal(report.requests, 2);
+  assert.equal(report.requests, mesh ? 3 : 2);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.blocked, []);
   report.checks.reload = true;
