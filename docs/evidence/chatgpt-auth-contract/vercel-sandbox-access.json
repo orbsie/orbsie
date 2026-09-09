@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-08",
+  "method": "GET",
+  "endpoint": "https://api.vercel.com/v2/sandboxes",
+  "scope": "linked Orbsie project and team",
+  "credentialSource": "existing-cli-login",
+  "status": 200,
+  "listShapeValid": true,
+  "returnedCount": 0,
+  "requestedLimit": 1,
+  "createdResources": 0,
+  "creationPermissionVerified": false,
+  "productionCredentialVerified": false,
+  "subscriptionAuthenticationVerified": false
+}
