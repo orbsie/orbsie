@@ -66,6 +66,12 @@ import {
   consumeOpenRouterOAuthCallback,
   exchangeOpenRouterCode,
 } from "@/lib/openrouter-oauth";
+import {
+  encodeOAuthDraft,
+  decodeOAuthDraft,
+  type OAuthDraft,
+} from "@/lib/oauth-draft";
+const OAUTH_DRAFT_KEY = "orbsie-openrouter-draft";
 const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
 const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
@@ -154,6 +160,7 @@ export default function Orbsie() {
   const [oauthBusy, setOAuthBusy] = useState(false);
   const [oauthMessage, setOAuthMessage] = useState("");
   const oauthCompletion = useRef<Promise<string> | null>(null);
+  const oauthDraft = useRef<OAuthDraft | null>(null);
   const oauthController = useRef<AbortController | null>(null);
   const oauthEffectInstance = useRef(0);
   async function connectOpenRouter() {
@@ -171,6 +178,17 @@ export default function Orbsie() {
       }
       const { authorizationUrl, transaction } = await startOpenRouterOAuth(
         location.origin,
+      );
+      sessionStorage.setItem(
+        OAUTH_DRAFT_KEY,
+        encodeOAuthDraft({
+          version: 1,
+          state: transaction.state,
+          createdAt: transaction.createdAt,
+          prompt,
+          projectId: current.project.id,
+          selectedId: current.selected,
+        }),
       );
       sessionStorage.setItem(OAUTH_PENDING_KEY, JSON.stringify(transaction));
       location.assign(authorizationUrl);
@@ -196,6 +214,13 @@ export default function Orbsie() {
       try {
         pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        const draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
+        sessionStorage.removeItem(OAUTH_DRAFT_KEY);
+        oauthDraft.current = decodeOAuthDraft(
+          draft,
+          callbackUrl.searchParams.get("state") ?? "",
+        );
+        if (oauthDraft.current) setPrompt(oauthDraft.current.prompt);
       } catch {
         storageBlocked = true;
       }
@@ -288,6 +313,16 @@ export default function Orbsie() {
       });
     };
   }, []);
+  useEffect(() => {
+    const draft = oauthDraft.current;
+    if (!draft || draft.projectId !== s.project.id) return;
+    if (
+      draft.selectedId &&
+      s.project.entities.some((entity) => entity.id === draft.selectedId)
+    )
+      s.set({ selected: draft.selectedId });
+    oauthDraft.current = null;
+  }, [s.project.id]);
   const [trial, setTrial] = useState({ enabled: false, remaining: 0 });
   const refreshTrial = async () => {
     try {
