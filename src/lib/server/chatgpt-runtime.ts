@@ -1,3 +1,4 @@
+import { validChatGPTGenerationRequest } from "./chatgpt-generation-policy";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -52,13 +53,15 @@ function writeJson(stdin: NodeJS.WritableStream, value: unknown) {
  * resulting RPC and must close it; no developer CODEX_HOME or credentials are
  * inherited by the child.
  */
-export async function createIsolatedChatGPTRpc(): Promise<
-  ChatGPTDeviceRpc & { close(): Promise<void> }
-> {
+export async function createIsolatedChatGPTRpc(
+  options: { allowGeneration?: boolean } = {},
+): Promise<ChatGPTDeviceRpc & { close(): Promise<void> }> {
   let root: string | undefined;
   let child: ChildProcess | undefined;
   let closePromise: Promise<void> | undefined;
   const pending = new Map<number, Pending>();
+  const threads = new Set<string>();
+  const turns = new Map<string, Set<string>>();
   const listeners = new Set<(notification: unknown) => void>();
   const decoder = new TextDecoder("utf-8", { fatal: true });
   let buffered = new Uint8Array(0);
@@ -83,6 +86,14 @@ export async function createIsolatedChatGPTRpc(): Promise<
   const close = async () => {
     if (closePromise) return closePromise;
     closed = true;
+    const closingListeners = [...listeners];
+    queueMicrotask(() => {
+      for (const listener of closingListeners) {
+        try {
+          listener({ method: "orbsie/runtime/closed", params: {} });
+        } catch {}
+      }
+    });
     rejectPending(failure("ChatGPT App Server was closed."));
     const current = child;
     closePromise = (async () => {
@@ -117,7 +128,13 @@ export async function createIsolatedChatGPTRpc(): Promise<
   const request = (method: string, params?: unknown): Promise<unknown> => {
     if (closed)
       return Promise.reject(failure("ChatGPT App Server was closed."));
-    if (!ALLOWED_METHODS.has(method))
+    if (
+      !ALLOWED_METHODS.has(method) &&
+      !(
+        options.allowGeneration &&
+        validChatGPTGenerationRequest(method, params, threads, turns)
+      )
+    )
       return Promise.reject(
         failure("This ChatGPT operation is not supported."),
       );
@@ -150,7 +167,50 @@ export async function createIsolatedChatGPTRpc(): Promise<
         reject(failure("ChatGPT App Server request timed out."));
         void close();
       }, RPC_TIMEOUT_MS);
-      pending.set(id, { resolve, reject, timer });
+      pending.set(id, {
+        resolve: (value) => {
+          if (options.allowGeneration && method === "thread/start") {
+            const thread =
+              isRecord(value) && isRecord(value.thread)
+                ? value.thread
+                : undefined;
+            if (
+              !thread ||
+              typeof thread.id !== "string" ||
+              !/^[A-Za-z0-9._:/-]{1,256}$/.test(thread.id)
+            ) {
+              reject(failure("Invalid ChatGPT thread."));
+              void close();
+              return;
+            }
+            threads.add(thread.id);
+          }
+          if (
+            options.allowGeneration &&
+            method === "turn/start" &&
+            isRecord(params)
+          ) {
+            const turn =
+              isRecord(value) && isRecord(value.turn) ? value.turn : undefined;
+            if (
+              !turn ||
+              typeof turn.id !== "string" ||
+              !/^[A-Za-z0-9._:/-]{1,256}$/.test(turn.id)
+            ) {
+              reject(failure("Invalid ChatGPT turn."));
+              void close();
+              return;
+            }
+            const set =
+              turns.get(params.threadId as string) ?? new Set<string>();
+            set.add(turn.id);
+            turns.set(params.threadId as string, set);
+          }
+          resolve(value);
+        },
+        reject,
+        timer,
+      });
       try {
         writeJson(child!.stdin!, {
           id,
@@ -258,10 +318,14 @@ export async function createIsolatedChatGPTRpc(): Promise<
             } catch {
               void close();
             }
-          } else if (message.method === COMPLETED) {
+          } else if (message.method === COMPLETED || options.allowGeneration) {
             for (const listener of listeners) {
               try {
-                listener(message.params);
+                listener(
+                  message.method === COMPLETED
+                    ? message.params
+                    : { method: message.method, params: message.params },
+                );
               } catch {
                 // Observers cannot turn a notification into a provider error.
               }
