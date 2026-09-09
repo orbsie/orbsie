@@ -78,3 +78,15 @@ Reviewed entry points; pin versions and recheck exact APIs/licenses during imple
 - [Worker APIs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API), [GLTFExporter](https://threejs.org/docs/pages/GLTFExporter.html), [model function calling](https://developers.openai.com/api/docs/guides/function-calling).
 
 License approval must cover wrappers, kernels, workers, WASM assets and transitive dependencies. Do not infer one uniform license from a wrapper's repository license.
+
+## Current-code integration map
+
+Inspection after the architecture revision identifies these integration boundaries:
+
+- `src/lib/modeling.ts` already validates bounded multipart jobs (including meshes, extrusion and lathe), but has no boolean recipe graph. Introduce a separately versioned browser recipe contract with stable node IDs, explicit output and graph validation; preserve existing version-1 Blender jobs during migration. Do not reinterpret old coordinates or silently treat an unsupported modifier as supported.
+- `src/lib/protocol.ts` already persists the modeling job on `generated` geometry and applies `reserve_entity`/`set_geometry` to stable entity IDs. Extend this established protocol for browser recipes rather than adding a second scene-state writer. Existing fixed procedural shapes in `geometry.ts` remain useful previews; they do not satisfy the general SDK requirement.
+- `src/lib/generated-models.ts` currently fixes provenance to `source: local-blender` plus `blenderVersion`. Add an explicit browser-backend provenance variant and update save/read/cloud validation together. Never label Manifold output as Blender output. Preserve content hashes, size/bounds validation and old persisted records.
+- `src/lib/modeling-connection.ts` is the native-companion transport. Keep it as a backend adapter; browser construction must not require its pairing flow. Integrate backend selection at the existing store/job boundary, with capability checks and explicit requested-backend handling.
+- `src/lib/generated-geometry-queue.ts` and `generated-geometry-core.ts` already handle bounded GLB decoding and formation geometry. Reuse this downstream path for validated baked browser output; add a separate construction worker so decoding and authoring lifecycles are not confused. The existing static player-worker bundling pattern can inform deployment, while baked public players should omit unused authoring kernels.
+
+First bounded implementation task: browser recipe schema, graph validator and focused tests for valid subtraction, targeted node revision, duplicate/missing/cyclic references and resource bounds. Then prototype the kernel adapter against that contract. Capability discovery must not advertise the new backend until actual worker execution and scene integration pass.
