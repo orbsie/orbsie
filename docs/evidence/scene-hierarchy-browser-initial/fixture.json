@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "id": "hierarchy-browser",
+  "title": "Parented crystal",
+  "seed": 42,
+  "revision": 1,
+  "groups": [
+    {
+      "id": "parent",
+      "label": "Translated parent",
+      "position": [
+        -10,
+        0,
+        5
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "crystal",
+      "label": "Parented crystal",
+      "parentId": "parent",
+      "position": [
+        10,
+        0.5,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#e5bd49",
+      "stage": "ready",
+      "geometry": {
+        "kind": "crystal",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "collect"
+      }
+    },
+    {
+      "id": "portal",
+      "label": "Home",
+      "position": [
+        0,
+        0,
+        5
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#63bdb1",
+      "stage": "ready",
+      "geometry": {
+        "kind": "arch",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "portal"
+      }
+    }
+  ],
+  "environment": {
+    "sky": "#dceee9",
+    "ground": "#91b977",
+    "water": "#59bdbb"
+  },
+  "messages": []
+}

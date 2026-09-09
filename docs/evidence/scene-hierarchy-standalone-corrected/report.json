@@ -1,0 +1,11 @@
+{
+  "mode": "deterministic-standalone-hierarchy",
+  "passed": true,
+  "pageErrors": [],
+  "external": [],
+  "mutations": [],
+  "checks": {
+    "parentedCollectionAtWorldSpawn": true,
+    "reloadHierarchy": true
+  }
+}

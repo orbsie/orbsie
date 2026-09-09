@@ -1,0 +1,10 @@
+{
+  "mode": "deterministic-shared-world-hierarchy",
+  "passed": true,
+  "pageErrors": [],
+  "external": [],
+  "mutations": [],
+  "checks": {
+    "parentedCollectionAtWorldSpawn": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "mode": "deterministic-standalone-hierarchy",
+  "passed": false,
+  "pageErrors": [],
+  "external": [],
+  "mutations": [],
+  "checks": {},
+  "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('canvas')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('canvas') with timeout 30000ms\n  - waiting for locator('canvas')\n"
+}
