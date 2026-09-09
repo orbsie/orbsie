@@ -3,6 +3,7 @@ import {
   BROWSER_PROCEDURAL_OUTPUT_MAX_BYTES,
   BROWSER_PROCEDURAL_SOURCE_MAX_BYTES,
   BrowserProceduralError,
+  browserProceduralSourceSchema,
   canonicalBrowserProceduralSource,
   hashBrowserProceduralSource,
   parseBrowserProceduralSource,
@@ -25,6 +26,19 @@ const sourceFor = (recipe: unknown) => ({
 });
 
 describe("browser procedural QuickJS evaluator", () => {
+  it("rejects oversized UTF-8 source in the schema while retaining source-limit diagnostics", () => {
+    const source = {
+      version: 1,
+      language: "quickjs",
+      seed: 1,
+      code: "é".repeat(Math.ceil(BROWSER_PROCEDURAL_SOURCE_MAX_BYTES / 2) + 1),
+    };
+    expect(browserProceduralSourceSchema.safeParse(source).success).toBe(false);
+    expect(() => parseBrowserProceduralSource(source)).toThrowError(
+      expect.objectContaining({ code: "source-limit" }),
+    );
+  });
+
   it("canonicalizes and hashes the retained source deterministically", async () => {
     const source = sourceFor(box());
     expect(canonicalBrowserProceduralSource({ ...source })).toEqual(source);

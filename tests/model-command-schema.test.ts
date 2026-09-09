@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
 import {
+  BROWSER_PROCEDURAL_SOURCE_MAX_BYTES,
+  browserProceduralSourceSchema,
+} from "../src/lib/browser-procedural";
+import {
   blankProject,
   applyModelOperation,
   modelCommandJSONSchemaForCapabilities,
@@ -36,6 +40,12 @@ const proceduralSource = {
   language: "quickjs" as const,
   seed: 3,
   code: `({version:1,revision:0,output:"box",nodes:[{id:"box",kind:"box",size:[2,2,2]}]})`,
+};
+const oversizedProceduralSource = {
+  version: 1 as const,
+  language: "quickjs" as const,
+  seed: 3,
+  code: "é".repeat(Math.ceil(BROWSER_PROCEDURAL_SOURCE_MAX_BYTES / 2) + 1),
 };
 
 function setGeometry(geometry: unknown) {
@@ -151,6 +161,54 @@ it("keeps procedural source out of canonical commands and rejects provider metad
           authoring: { source: proceduralSource, sourceHash: "a".repeat(64) },
         },
       },
+    }).success,
+  ).toBe(false);
+});
+
+it("rejects oversized procedural source at raw, model-output, and canonical-project boundaries", () => {
+  expect(
+    browserProceduralSourceSchema.safeParse(oversizedProceduralSource).success,
+  ).toBe(false);
+  expect(
+    modelCommandSchemaForCapabilities(false, true).safeParse({
+      type: "set_geometry",
+      id: "tree-0",
+      geometry: {
+        kind: "generated",
+        detail: "refined",
+        job: {
+          backend: "browser-procedural",
+          source: oversizedProceduralSource,
+        },
+      },
+    }).success,
+  ).toBe(false);
+  expect(
+    projectSchema.safeParse({
+      ...blankProject(),
+      entities: [
+        {
+          id: "tree-0",
+          label: "Tree",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#6d9d58",
+          stage: "ready",
+          geometry: {
+            kind: "generated",
+            collision: "none",
+            detail: "refined",
+            job: {
+              backend: "browser-manifold",
+              recipe: browserJob.recipe,
+              authoring: {
+                source: oversizedProceduralSource,
+                sourceHash: "a".repeat(64),
+              },
+            },
+          },
+        },
+      ],
     }).success,
   ).toBe(false);
 });

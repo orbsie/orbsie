@@ -11,7 +11,7 @@ export const BROWSER_PROCEDURAL_STACK_LIMIT_BYTES = 512 * 1024;
 export const BROWSER_PROCEDURAL_DEADLINE_MS = 2_000;
 export const BROWSER_PROCEDURAL_WORKER_DEADLINE_MS = 10_000;
 
-export const browserProceduralSourceSchema = z
+const rawBrowserProceduralSourceSchema = z
   .object({
     version: z.literal(1),
     language: z.literal("quickjs"),
@@ -19,6 +19,18 @@ export const browserProceduralSourceSchema = z
     seed: z.number().int().min(0).max(0xffffffff),
   })
   .strict();
+export const browserProceduralSourceSchema =
+  rawBrowserProceduralSourceSchema.superRefine((source, context) => {
+    if (
+      new TextEncoder().encode(source.code).byteLength >
+      BROWSER_PROCEDURAL_SOURCE_MAX_BYTES
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["code"],
+        message: "Procedural source exceeds its byte limit.",
+      });
+  });
 
 export type BrowserProceduralSource = z.infer<
   typeof browserProceduralSourceSchema
@@ -47,7 +59,9 @@ export class BrowserProceduralError extends Error {
 export function parseBrowserProceduralSource(
   input: unknown,
 ): BrowserProceduralSource {
-  const parsed = browserProceduralSourceSchema.safeParse(input);
+  // Keep the parser's source-limit diagnostic distinct from ordinary schema
+  // errors; exported schemas still reject the same oversized value.
+  const parsed = rawBrowserProceduralSourceSchema.safeParse(input);
   if (!parsed.success) throw new BrowserProceduralError("invalid-source");
   const bytes = new TextEncoder().encode(parsed.data.code).byteLength;
   if (bytes > BROWSER_PROCEDURAL_SOURCE_MAX_BYTES)
