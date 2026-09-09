@@ -1,5 +1,7 @@
 # Provider browser E2E harness
 
+Hosted ChatGPT acceptance is being added under [the browser-only contract](hosted-chatgpt-acceptance.md). The `chatgpt-local` branch and companion instructions below are historical and do not satisfy the current product requirement. Do not run them as a substitute for hosted subscription consent or generation. The new hosted mode must verify an already-consented owner session before any inference; its existence will not itself establish live acceptance.
+
 Current owner authorization: live tests call Luna only. The harness requires `gpt-5.6-luna` for ChatGPT or `openai/gpt-5.6-luna` for remote providers and rejects other IDs before browser/provider startup. This restriction does not apply to end users. Existing credential-specific caps remain in force. Historical Astra reports below describe past runs.
 
 `scripts/provider-browser-e2e.mjs` is the opt-in acceptance harness for a real
