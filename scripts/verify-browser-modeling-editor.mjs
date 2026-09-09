@@ -483,6 +483,32 @@ try {
     files["runtime.js"] && files["index.html"],
     "Export must include the player",
   );
+  if (composition) {
+    const header = new DataView(
+      baked.buffer,
+      baked.byteOffset,
+      baked.byteLength,
+    );
+    assert.equal(header.getUint32(16, true), 0x4e4f534a);
+    const gltf = JSON.parse(
+      new TextDecoder().decode(
+        baked.subarray(20, 20 + header.getUint32(12, true)),
+      ),
+    );
+    assert.equal(gltf.meshes.length, 1, "Composition exports one baked mesh");
+    assert.equal(
+      gltf.nodes.filter((node) => node.mesh !== undefined).length,
+      1,
+    );
+    assert.equal(gltf.meshes[0].primitives.length, 1);
+    const primitive = gltf.meshes[0].primitives[0];
+    assert.equal(
+      gltf.accessors[primitive.indices].count,
+      12 * 12 * 3,
+      "All twelve disjoint boxes must survive export",
+    );
+    report.checks.bakedCompositionCopies = 12;
+  }
   report.checks.bakedExport = true;
   const served = new Set();
   exportServer = createServer((request, response) => {
