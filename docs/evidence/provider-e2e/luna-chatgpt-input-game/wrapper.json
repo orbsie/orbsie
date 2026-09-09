@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "model": "gpt-5.6-luna",
+  "effort": "low",
+  "serviceTier": "default",
+  "actualGenerateCalls": 2,
+  "cloudRecoveryRequested": false,
+  "interruptedRecoveryRequested": false,
+  "childExitCode": 0,
+  "childSignal": null
+}

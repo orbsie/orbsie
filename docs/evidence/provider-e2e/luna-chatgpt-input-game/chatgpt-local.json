@@ -1,0 +1,87 @@
+{
+  "provider": "chatgpt-local",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3031",
+  "model": "gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": null,
+  "creation": {
+    "status": "passed",
+    "operations": 9,
+    "firstReservationMs": 7132,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 2,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "blockedExternalRequests": 2,
+    "blockedExternalOrigins": [
+      "https://fonts.googleapis.com"
+    ],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-chatgpt-local.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-input-ready.png",
+    "standalone-input-right.png",
+    "standalone-input-win.png",
+    "standalone-input-loss.png",
+    "standalone-playback.png"
+  ],
+  "inputGame": {
+    "status": "passed",
+    "entityCount": 2,
+    "treeAndMushroom": true,
+    "refinedGeometry": true,
+    "exactRuleCount": true,
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "noTimersOrCollectionScoring": true,
+    "preservedAcrossEdit": true,
+    "preservedAcrossReload": true,
+    "preservedInZip": true
+  },
+  "standalone": {
+    "status": "passed",
+    "pageErrors": [],
+    "inputGame": {
+      "ready": true,
+      "rightAdds7": true,
+      "heldRightDeduplicated": true,
+      "upWins": true,
+      "restartResetsScore": true,
+      "leftLoses": true
+    }
+  }
+}

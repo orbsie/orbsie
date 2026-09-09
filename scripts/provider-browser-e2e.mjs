@@ -176,6 +176,12 @@ function readConfiguration(argv) {
     throw new HarnessConfigurationError(
       "Set ORBSIE_EXPECTED_MODEL to the exact authorized model ID; no model fallback is allowed.",
     );
+  const authorizedTestModel =
+    provider === "chatgpt-local" ? "gpt-5.6-luna" : "openai/gpt-5.6-luna";
+  if (expectedModel !== authorizedTestModel)
+    throw new HarnessConfigurationError(
+      "Live tests are authorized for Luna only; user model selection is unaffected.",
+    );
   const outputCap =
     provider === "chatgpt-local"
       ? process.env.ORBSIE_OUTPUT_CAP_TOKENS

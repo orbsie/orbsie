@@ -29,6 +29,8 @@ Publication recovery follow-up: the retry path now searches bounded Vercel v7 pa
 
 Garden interaction follow-up: `docs/evidence/garden-interaction/` proves the current no-demo editor creates the distinct garden via one test-only fixture response, reloads the authored world, and exports its 15 entities including 12 bloom behaviors. Stable rendered flower pixels expand after a real pointer click and return near their original area/position on a second click, in both editor and independent ZIP player. Astra reviewed the source/screenshots and strengthened the initial evidence with baseline and reversible-toggle checks. Normal-motion SwiftShader desktop checks passed with no live provider calls or page errors; this is not live-provider, mobile, or dedicated-publication evidence.
 
+Current test authorization and follow-up: owner restricts new live model tests to Luna, while end users retain supported model choice. `docs/evidence/provider-e2e/luna-chatgpt-input-game/` passes real managed ChatGPT Luna low/default creation, scoped edit, reload, export and standalone input-rule win/loss/reset in exactly two calls with no fallback. This supersedes the Astra-only test requirement in historical audit rows, but does not prove the full flagship, OpenRouter/Gateway matrix or dedicated publication. `docs/evidence/agent-blender-runtime/` separately verifies real installed-Blender GLB construction through the new agent CLI; portable delivery remains open.
+
 ## Historical audit and supporting evidence
 
 The sections below retain earlier findings as a requirement backlog. Their older test counts and missing/unverified claims must be reconciled with the checkpoint above and relevant evidence before use; they are not a current completion certificate.

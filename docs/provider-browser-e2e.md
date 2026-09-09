@@ -1,5 +1,7 @@
 # Provider browser E2E harness
 
+Current owner authorization: live tests call Luna only. The harness requires `gpt-5.6-luna` for ChatGPT or `openai/gpt-5.6-luna` for remote providers and rejects other IDs before browser/provider startup. This restriction does not apply to end users. Existing credential-specific caps remain in force. Historical Astra reports below describe past runs.
+
 `scripts/provider-browser-e2e.mjs` is the opt-in acceptance harness for a real
 browser session. It is separate from `scripts/verify-provider-ui.mjs` and the
 other fixture checks: it never installs a route that fulfills `/api/generate`,

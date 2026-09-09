@@ -27,7 +27,11 @@ import { LocalChatGPT } from "./local-chatgpt.mjs";
 
 const BASE_ORIGIN = process.env.ORBSIE_TEST_URL ?? "http://127.0.0.1:3024";
 assert(
-  ["http://127.0.0.1:3017", "http://127.0.0.1:3024"].includes(BASE_ORIGIN),
+  [
+    "http://127.0.0.1:3017",
+    "http://127.0.0.1:3024",
+    "http://127.0.0.1:3031",
+  ].includes(BASE_ORIGIN),
   "Only the known local test origins are allowed.",
 );
 const VERIFY_CLOUD = process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1";
@@ -90,7 +94,7 @@ async function writeWrapperReport() {
       {
         status:
           !wrapperFailure && harnessResult?.code === 0 ? "passed" : "failed",
-        model: selectedModel ?? "gpt-6-astra",
+        model: selectedModel ?? "gpt-5.6-luna",
         effort: "low",
         serviceTier: "default",
         actualGenerateCalls,
@@ -183,9 +187,13 @@ try {
   );
 
   client = new LocalChatGPT(workDirectory);
-  const model = await client.connect();
+  const model = await client.connect("gpt-5.6-luna");
   selectedModel = model;
-  assert.equal(model, "gpt-6-astra", "Astra with low reasoning is required.");
+  assert.equal(
+    model,
+    "gpt-5.6-luna",
+    "Luna with low reasoning is required for live tests.",
+  );
   companion = await startChatGPTCompanion({
     client: {
       generate: (...args) => {
@@ -205,7 +213,7 @@ try {
   Object.assign(childEnvironment, {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_TEST_URL: BASE_ORIGIN,
-    ORBSIE_EXPECTED_MODEL: "gpt-6-astra",
+    ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
     ORBSIE_KEY_SCOPE: "local-only",
     ORBSIE_REQUIRE_NEW_ONLY: "1",
     ORBSIE_REQUIRE_INPUT_GAME: "1",
