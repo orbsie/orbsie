@@ -3,6 +3,7 @@ import {
   assertPinkOnlyEdit,
   LocalChatGPT,
   selectAstra,
+  selectChatGPTModel,
 } from "../scripts/local-chatgpt.mjs";
 test("uses exact Astra catalog model identifier with low support", () => {
   expect(
@@ -131,4 +132,34 @@ test("Orbsie generation explicitly uses standard processing and retains low reas
     expect(params.model).toBe("gpt-6-astra");
   }
   expect(calls[1].params.effort).toBe("low");
+});
+
+test("explicit ChatGPT model choice accepts Luna and other compatible account models", () => {
+  const models = ["gpt-5.6-luna", "another-supported-model"].map((model) => ({
+    id: `catalog-${model}`,
+    model,
+    supportedReasoningEfforts: [{ reasoningEffort: "low" }],
+  }));
+  expect(selectChatGPTModel(models, "gpt-5.6-luna")).toBe("gpt-5.6-luna");
+  expect(selectChatGPTModel(models, "another-supported-model")).toBe(
+    "another-supported-model",
+  );
+  for (const requested of [
+    "",
+    "catalog-gpt-5.6-luna",
+    "missing",
+    " gpt-5.6-luna",
+  ])
+    expect(() => selectChatGPTModel(models, requested)).toThrow("no fallback");
+  expect(() =>
+    selectChatGPTModel(
+      [
+        {
+          model: "high-only",
+          supportedReasoningEfforts: [{ reasoningEffort: "high" }],
+        },
+      ],
+      "high-only",
+    ),
+  ).toThrow("no fallback");
 });

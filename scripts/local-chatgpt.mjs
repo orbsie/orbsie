@@ -15,6 +15,26 @@ export function selectAstra(models) {
   return model.model;
 }
 
+// Explicit selection permits user choice and Luna-only live testing without
+// changing the default or silently substituting a catalog entry.
+export function selectChatGPTModel(models, requestedModel) {
+  if (requestedModel === undefined) return selectAstra(models);
+  if (typeof requestedModel !== "string" || !requestedModel.trim())
+    throw Error(
+      "An explicit ChatGPT model identifier is required; no fallback is permitted.",
+    );
+  const model = models.find((entry) => entry.model === requestedModel);
+  if (
+    !model?.supportedReasoningEfforts?.some(
+      (effort) => effort.reasoningEffort === "low",
+    )
+  )
+    throw Error(
+      "The selected ChatGPT model is unavailable or lacks low reasoning support; no fallback is permitted.",
+    );
+  return model.model;
+}
+
 function withoutColors(value) {
   if (Array.isArray(value)) return value.map(withoutColors);
   if (!value || typeof value !== "object") return value;
@@ -122,7 +142,7 @@ export class LocalChatGPT {
       this.process.stdin.write(JSON.stringify({ id, method, params }) + "\n");
     });
   }
-  async connect() {
+  async connect(requestedModel) {
     await this.request("initialize", {
       clientInfo: { name: "orbsie_local_test", version: "0.1.0" },
     });
@@ -145,7 +165,7 @@ export class LocalChatGPT {
       models.push(...page.data);
       cursor = page.nextCursor;
     } while (cursor);
-    this.model = selectAstra(models);
+    this.model = selectChatGPTModel(models, requestedModel);
     return this.model;
   }
   async generate(instructions, input, onText, signal) {

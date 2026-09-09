@@ -45,7 +45,7 @@ try {
     );
     void stop().then(() => process.exit(1));
   });
-  const model = await client.connect();
+  const model = await client.connect(process.env.ORBSIE_CHATGPT_MODEL);
   companion = await startChatGPTCompanion({ client, model, origin });
   const connection = encodeURIComponent(
     JSON.stringify({ url: companion.url, token: companion.token }),

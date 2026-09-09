@@ -9,7 +9,13 @@ npm install
 node scripts/run-chatgpt-companion.mjs
 ```
 
-Startup discovers an available Astra model supporting low reasoning; it fails without a fallback. Startup does not run inference. Open the private link printed in the terminal and keep that terminal open while creating. Stop it with Ctrl+C to revoke the connection. The process installs no daemon.
+Startup defaults to an available Astra model supporting low reasoning. Set `ORBSIE_CHATGPT_MODEL` to an exact model identifier from your managed account catalog to select another compatible model; the current companion requires low reasoning support and fails without fallback. For authorized Luna-only live tests, explicitly select Luna:
+
+```sh
+ORBSIE_CHATGPT_MODEL=gpt-5.6-luna node scripts/run-chatgpt-companion.mjs
+```
+
+The example works only if that exact model is available to the account. Startup does not run inference. Open the private link printed in the terminal and keep that terminal open while creating. Stop it with Ctrl+C to revoke the connection. The process installs no daemon.
 
 The link contains an ephemeral random 256-bit companion capability, **not a ChatGPT credential**. Treat the link as private. The browser consumes its fragment once, removes it from the address bar, and retains the capability only in memory. Reconnect after a reload or companion restart. Browser permission to reach the local network may be required; support depends on browser policy.
 
