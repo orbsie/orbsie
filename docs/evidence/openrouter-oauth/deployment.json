@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "cfe0009",
+  "productionUrl": "https://orbsie-39ard6mkg-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "aliasHttpStatus": 200,
+  "simulatedOAuthBrowserFlow": "passed before deployment",
+  "realAccountAuthorization": "not verified: regular Chrome unavailable to computer use",
+  "scope": "Deployment and HTTP response only; not live provider generation"
+}
