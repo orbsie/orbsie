@@ -1,0 +1,8 @@
+{
+  "source": "cfa9901",
+  "deployment": "https://orbsie-bw7y0xfk8-grappeggias-projects.vercel.app",
+  "passed": true,
+  "workerSHA256": "ed641c1045881474e173ba81df4a595d1c9389791f10b5eec5833d0b7c75251d",
+  "chatgptFlags": true,
+  "liveInference": false
+}
