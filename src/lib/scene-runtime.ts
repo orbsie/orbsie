@@ -10,6 +10,20 @@ import {
 // Project snapshots are immutable. Sharing their resolved graph avoids resolving
 // every ancestor separately for each rendered entity and each collision query.
 const resolvedSnapshots = new WeakMap<SceneGraphInput, ResolvedScene>();
+const hierarchySnapshots = new WeakMap<SceneGraphInput, boolean>();
+/** Cache feature detection too: Formation calls this once per entity/frame. */
+export function usesSceneHierarchy(snapshot: SceneGraphInput): boolean {
+  const cached = hierarchySnapshots.get(snapshot);
+  if (cached !== undefined) return cached;
+  const enabled =
+    !!snapshot.groups?.length ||
+    snapshot.entities.some(
+      (entity) => !!entity.parentId || entity.rotation !== undefined,
+    );
+  hierarchySnapshots.set(snapshot, enabled);
+  return enabled;
+}
+
 export function resolveRuntimeScene(snapshot: SceneGraphInput): ResolvedScene {
   let scene = resolvedSnapshots.get(snapshot);
   if (!scene) {

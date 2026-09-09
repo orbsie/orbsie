@@ -17,7 +17,11 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
-import { resolveRuntimeScene, runtimeEntityMatrix } from "@/lib/scene-runtime";
+import {
+  resolveRuntimeScene,
+  runtimeEntityMatrix,
+  usesSceneHierarchy,
+} from "@/lib/scene-runtime";
 import {
   markExperience,
   markVisibleSeed,
@@ -442,9 +446,7 @@ function Formation({
     gameTintEnabled.current.value = override?.color ? 1 : 0;
     if (override?.color) gameTint.value.set(override.color);
     const snapshot = useOrb.getState().project;
-    const hierarchical =
-      !!snapshot.groups?.length ||
-      snapshot.entities.some((e) => e.parentId || e.rotation);
+    const hierarchical = usesSceneHierarchy(snapshot);
     group.current.matrixAutoUpdate = !hierarchical;
     if (hierarchical) {
       const pose = runtimeEntityMatrix(
@@ -719,11 +721,9 @@ function Player({
     const didReset = resetAvatar();
     direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
-    const hierarchyScene =
-      s.project.groups?.length ||
-      s.project.entities.some((e) => e.parentId || e.rotation)
-        ? resolveRuntimeScene(s.project)
-        : undefined;
+    const hierarchyScene = usesSceneHierarchy(s.project)
+      ? resolveRuntimeScene(s.project)
+      : undefined;
     const worldMatrices = hierarchyScene
       ? new Map(
           s.project.entities.map((entity) => [
