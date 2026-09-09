@@ -2,11 +2,15 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   browserBuild: vi.fn(),
+  proceduralEvaluate: vi.fn(),
   db: new Map<string, unknown>(),
 }));
 
 vi.mock("../src/lib/browser-modeling-connection", () => ({
   buildBrowserModel: mocks.browserBuild,
+}));
+vi.mock("../src/lib/browser-procedural-queue", () => ({
+  evaluateBrowserProceduralInWorker: mocks.proceduralEvaluate,
 }));
 vi.mock("idb-keyval", () => ({
   get: async (key: string) => structuredClone(mocks.db.get(key)),
@@ -56,6 +60,7 @@ beforeEach(() => {
   mocks.db.clear();
   vi.stubGlobal("Worker", class {});
   mocks.browserBuild.mockReset().mockResolvedValue(browserMetadata);
+  mocks.proceduralEvaluate.mockReset();
   const project = { ...blankProject(), entities: [fixtureEntities()[0]] };
   useOrb.getState().load(project);
   useOrb.getState().set({
@@ -85,6 +90,35 @@ function relay(job: unknown) {
   return fetcher;
 }
 
+const proceduralSource = {
+  version: 1 as const,
+  language: "quickjs" as const,
+  seed: 7,
+  code: `({version:1,revision:0,output:"box",nodes:[{id:"box",kind:"box",size:[2,2,2]}]})`,
+};
+const proceduralRecipe = browserJob.recipe;
+
+function relayProcedural(source = proceduralSource) {
+  const command = {
+    type: "set_geometry" as const,
+    id: useOrb.getState().project.entities[0].id,
+    geometry: {
+      kind: "generated" as const,
+      detail: "refined" as const,
+      job: { backend: "browser-procedural" as const, source },
+    },
+  };
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        JSON.stringify(command) +
+          '\n{"type":"commit_revision","message":"Built procedurally"}\n',
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  return fetcher;
+}
+
 it("accepts a browser-manifold recipe without a Blender companion", async () => {
   const fetcher = relay(browserJob);
   await useOrb.getState().run("Build this browser model");
@@ -101,6 +135,97 @@ it("accepts a browser-manifold recipe without a Blender companion", async () => 
     kind: "generated",
     model: browserMetadata,
   });
+});
+
+it("executes procedural source, hashes it, and commits only the canonical browser job", async () => {
+  mocks.proceduralEvaluate.mockResolvedValue(proceduralRecipe);
+  const fetcher = relayProcedural();
+  await useOrb.getState().run("Build this procedural browser model");
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(mocks.proceduralEvaluate).toHaveBeenCalledWith(
+    proceduralSource,
+    expect.objectContaining({ signal: expect.any(AbortSignal) }),
+  );
+  expect(mocks.browserBuild).toHaveBeenCalledWith(
+    proceduralRecipe,
+    expect.objectContaining({ color: "#6d9d58" }),
+  );
+  const geometry = useOrb.getState().project.entities[0].geometry;
+  expect(geometry).toMatchObject({
+    kind: "generated",
+    job: {
+      backend: "browser-manifold",
+      recipe: proceduralRecipe,
+      authoring: {
+        source: proceduralSource,
+        sourceHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
+    },
+    model: browserMetadata,
+  });
+  expect(JSON.stringify(geometry)).not.toContain("browser-procedural");
+});
+
+it("preserves the last good geometry when procedural evaluation rejects", async () => {
+  mocks.proceduralEvaluate.mockRejectedValue(new Error("invalid recipe"));
+  const original = structuredClone(
+    useOrb.getState().project.entities[0].geometry,
+  );
+  relayProcedural();
+  await useOrb.getState().run("Try a malformed procedural model");
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
+  expect(mocks.browserBuild).not.toHaveBeenCalled();
+});
+
+it("loads retained procedural authoring metadata without re-running QuickJS", () => {
+  const saved = structuredClone(useOrb.getState().project);
+  saved.entities[0] = {
+    ...saved.entities[0],
+    stage: "ready",
+    geometry: {
+      kind: "generated",
+      collision: "none",
+      detail: "refined",
+      job: {
+        backend: "browser-manifold",
+        recipe: proceduralRecipe,
+        authoring: {
+          source: proceduralSource,
+          sourceHash: "a".repeat(64),
+        },
+      },
+      model: { ...browserMetadata, version: 1 as const },
+    },
+  };
+  useOrb.getState().load(saved);
+  expect(useOrb.getState().project.entities[0].geometry).toMatchObject({
+    job: {
+      backend: "browser-manifold",
+      authoring: { source: proceduralSource },
+    },
+  });
+  expect(mocks.proceduralEvaluate).not.toHaveBeenCalled();
+  expect(mocks.browserBuild).not.toHaveBeenCalled();
+});
+
+it("cancels procedural evaluation without committing a partial source job", async () => {
+  let finish!: (recipe: typeof proceduralRecipe) => void;
+  mocks.proceduralEvaluate.mockImplementation(
+    () => new Promise((resolve) => (finish = resolve)),
+  );
+  const original = structuredClone(
+    useOrb.getState().project.entities[0].geometry,
+  );
+  relayProcedural();
+  const running = useOrb.getState().run("Start a slow procedural model");
+  await vi.waitFor(() =>
+    expect(mocks.proceduralEvaluate).toHaveBeenCalledOnce(),
+  );
+  useOrb.getState().stop();
+  finish(proceduralRecipe);
+  await running;
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
+  expect(mocks.browserBuild).not.toHaveBeenCalled();
 });
 
 it("keeps the previous geometry when a browser build resolves after cancellation", async () => {

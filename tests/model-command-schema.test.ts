@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   blankProject,
+  applyModelOperation,
   modelCommandJSONSchemaForCapabilities,
   modelCommandSchemaForCapabilities,
   projectSchema,
@@ -30,6 +31,12 @@ const browserGeometry = {
   detail: "refined" as const,
   job: browserJob,
 };
+const proceduralSource = {
+  version: 1 as const,
+  language: "quickjs" as const,
+  seed: 3,
+  code: `({version:1,revision:0,output:"box",nodes:[{id:"box",kind:"box",size:[2,2,2]}]})`,
+};
 
 function setGeometry(geometry: unknown) {
   return {
@@ -42,6 +49,15 @@ function setGeometry(geometry: unknown) {
 it("advertises and accepts only browser recipes for browser capability", () => {
   const schema = modelCommandSchemaForCapabilities(false, true);
   expect(schema.safeParse(setGeometry(browserGeometry)).success).toBe(true);
+  expect(
+    schema.safeParse(
+      setGeometry({
+        kind: "generated",
+        detail: "refined",
+        job: { backend: "browser-procedural", source: proceduralSource },
+      }),
+    ).success,
+  ).toBe(true);
   expect(
     schema.safeParse(
       setGeometry({
@@ -85,6 +101,58 @@ it("advertises and accepts only browser recipes for browser capability", () => {
       },
     }).success,
   ).toBe(true);
+});
+
+it("keeps procedural source out of canonical commands and rejects provider metadata", () => {
+  const procedural = setGeometry({
+    kind: "generated",
+    detail: "refined",
+    job: { backend: "browser-procedural", source: proceduralSource },
+  });
+  expect(() =>
+    projectSchema.parse({ ...blankProject(), entities: [] }),
+  ).not.toThrow();
+  expect(() =>
+    projectSchema.parse({
+      ...blankProject(),
+      entities: [
+        {
+          id: "tree-0",
+          label: "Tree",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#6d9d58",
+          stage: "ready",
+          geometry: {
+            ...browserGeometry,
+            job: {
+              backend: "browser-manifold",
+              recipe: browserJob.recipe,
+              authoring: {
+                source: proceduralSource,
+                sourceHash: "a".repeat(64),
+              },
+            },
+          },
+        },
+      ],
+    }),
+  ).not.toThrow();
+  expect(
+    modelCommandSchemaForCapabilities(false, true).safeParse({
+      type: "set_geometry",
+      id: "tree-0",
+      geometry: {
+        kind: "generated",
+        detail: "refined",
+        job: {
+          backend: "browser-procedural",
+          source: proceduralSource,
+          authoring: { source: proceduralSource, sourceHash: "a".repeat(64) },
+        },
+      },
+    }).success,
+  ).toBe(false);
 });
 
 it("omits generated jobs when no modeling capability is available", () => {
@@ -146,4 +214,135 @@ it("caches each capability JSON schema and excludes trusted metadata", () => {
   expect(noneJSON).not.toContain("browser-manifold");
   expect(noneJSON).not.toContain("local-blender");
   expect(noneJSON).not.toContain('"model"');
+});
+
+it("projects a procedural command for later references without persisting its source", () => {
+  const project = {
+    ...blankProject(),
+    entities: [
+      {
+        id: "tree-0",
+        label: "Tree",
+        position: [0, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#6d9d58",
+        stage: "seed" as const,
+      },
+    ],
+  };
+  const command = {
+    type: "set_geometry" as const,
+    id: "tree-0",
+    geometry: {
+      kind: "generated" as const,
+      collision: "none" as const,
+      detail: "refined" as const,
+      job: { backend: "browser-procedural" as const, source: proceduralSource },
+    },
+    assetPolicy: "new-only" as const,
+  };
+  const cursor = { runId: "run", sequence: 0, seen: new Set<string>() };
+  const shadow = applyModelOperation(
+    project,
+    {
+      version: 1,
+      projectId: project.id,
+      runId: "run",
+      operationId: "op-1",
+      sequence: 1,
+      baseRevision: 0,
+      command,
+    },
+    cursor,
+  );
+  expect(shadow.project.entities[0]).toMatchObject({
+    id: "tree-0",
+    stage: "ready",
+    assetPolicy: "new-only",
+  });
+  expect(JSON.stringify(shadow.project)).not.toContain("browser-procedural");
+  const next = applyModelOperation(
+    shadow.project,
+    {
+      version: 1,
+      projectId: project.id,
+      runId: "run",
+      operationId: "op-2",
+      sequence: 2,
+      baseRevision: 1,
+      command: {
+        type: "set_game",
+        game: {
+          variables: [],
+          rules: [],
+        },
+      },
+    },
+    shadow.cursor,
+  );
+  expect(next.project.revision).toBe(2);
+});
+
+it("does not let a replaced catalog mesh poison later shadow updates", () => {
+  const project = {
+    ...blankProject(),
+    entities: [
+      {
+        id: "tree-0",
+        label: "Catalog tree",
+        position: [0, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#6d9d58",
+        geometry: {
+          kind: "asset" as const,
+          assetId: "kenney.nature.tree-default" as const,
+          detail: "refined" as const,
+        },
+        stage: "ready" as const,
+        assetPolicy: "catalog-allowed" as const,
+      },
+    ],
+  };
+  const cursor = { runId: "run", sequence: 0, seen: new Set<string>() };
+  const shadow = applyModelOperation(
+    project,
+    {
+      version: 1,
+      projectId: project.id,
+      runId: "run",
+      operationId: "replace",
+      sequence: 1,
+      baseRevision: 0,
+      command: {
+        type: "set_geometry",
+        id: "tree-0",
+        assetPolicy: "new-only",
+        geometry: {
+          kind: "generated",
+          collision: "none",
+          detail: "refined",
+          job: { backend: "browser-procedural", source: proceduralSource },
+        },
+      },
+    },
+    cursor,
+  );
+  expect(shadow.project.entities[0].geometry).toBeUndefined();
+  const afterMaterial = applyModelOperation(
+    shadow.project,
+    {
+      version: 1,
+      projectId: project.id,
+      runId: "run",
+      operationId: "material",
+      sequence: 2,
+      baseRevision: 1,
+      command: { type: "set_material", id: "tree-0", color: "#ff0000" },
+    },
+    shadow.cursor,
+  );
+  expect(afterMaterial.project.entities[0]).toMatchObject({
+    color: "#ff0000",
+    assetPolicy: "new-only",
+  });
 });

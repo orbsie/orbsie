@@ -1,0 +1,24 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "procedural": true,
+  "shape": "arch",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "eb114a071ffe3950ddac31cfcad071715d3ff924d0c9180494c62c3794ad73f4",
+      "after": "aed8db91b0ac0451b9ad9ff2d42a6aa381b8bacff43c28d8bdfb3ded26e8abf2"
+    },
+    "editableProceduralSource": true,
+    "exactGeometryUndoRedo": true,
+    "invalidProceduralSourcePreservesFinishedObject": true,
+    "reloadWithoutInterpreter": true,
+    "noExportedInterpreter": true,
+    "bakedExport": true,
+    "standaloneReadyMs": 4130,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

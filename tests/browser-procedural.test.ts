@@ -3,6 +3,8 @@ import {
   BROWSER_PROCEDURAL_OUTPUT_MAX_BYTES,
   BROWSER_PROCEDURAL_SOURCE_MAX_BYTES,
   BrowserProceduralError,
+  canonicalBrowserProceduralSource,
+  hashBrowserProceduralSource,
   parseBrowserProceduralSource,
 } from "../src/lib/browser-procedural";
 import { evaluateBrowserProceduralSource } from "../src/lib/browser-procedural-evaluator";
@@ -23,6 +25,17 @@ const sourceFor = (recipe: unknown) => ({
 });
 
 describe("browser procedural QuickJS evaluator", () => {
+  it("canonicalizes and hashes the retained source deterministically", async () => {
+    const source = sourceFor(box());
+    expect(canonicalBrowserProceduralSource({ ...source })).toEqual(source);
+    const first = await hashBrowserProceduralSource(source);
+    const second = await hashBrowserProceduralSource({ ...source });
+    const changed = await hashBrowserProceduralSource({ ...source, seed: 2 });
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
+    expect(second).toBe(first);
+    expect(changed).not.toBe(first);
+  });
+
   it("runs deterministically with the seeded orb and Math.random helpers", async () => {
     const source = {
       version: 1 as const,

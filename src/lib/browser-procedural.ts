@@ -55,6 +55,29 @@ export function parseBrowserProceduralSource(
   return Object.freeze(parsed.data);
 }
 
+export function canonicalBrowserProceduralSource(
+  input: unknown,
+): BrowserProceduralSource {
+  const source = parseBrowserProceduralSource(input);
+  return {
+    version: 1,
+    language: "quickjs",
+    code: source.code,
+    seed: source.seed,
+  };
+}
+
+export async function hashBrowserProceduralSource(
+  input: unknown,
+): Promise<string> {
+  const source = canonicalBrowserProceduralSource(input);
+  const bytes = new TextEncoder().encode(JSON.stringify(source));
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)),
+  );
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export interface BrowserProceduralEvaluationOptions {
   readonly signal?: AbortSignal;
   readonly deadlineMs?: number;

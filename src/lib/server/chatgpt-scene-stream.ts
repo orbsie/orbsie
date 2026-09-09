@@ -2,10 +2,10 @@ import { z } from "zod";
 import {
   projectSchema,
   entitySchema,
-  commandSchema,
-  applyOperation,
+  applyModelOperation,
+  parseModelCommandForProcessing,
   type Cursor,
-  type Command,
+  type ModelCommand,
 } from "../protocol";
 import { deriveAssetPolicy, enforceAssetPolicy } from "../asset-policy";
 import { promptCatalogForPolicy } from "../asset-catalog";
@@ -65,7 +65,7 @@ export function createChatGPTSceneStream(
         let working = input.project,
           buffer = "",
           count = 0,
-          pendingCommit: Command | undefined;
+          pendingCommit: ModelCommand | undefined;
         let cursor: Cursor = {
           runId: crypto.randomUUID(),
           sequence: 0,
@@ -82,11 +82,15 @@ export function createChatGPTSceneStream(
           if (++count > 250) throw Error("Too many scene commands.");
           const command = enforceAssetPolicy(
             working,
-            commandSchema.parse(JSON.parse(line)),
+            parseModelCommandForProcessing(
+              JSON.parse(line),
+              false,
+              input.browserModeling,
+            ),
             policy,
           );
           assertModelingCommand(command, false, input.browserModeling);
-          const applied = applyOperation(
+          const applied = applyModelOperation(
             working,
             {
               version: 1,

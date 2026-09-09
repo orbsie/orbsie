@@ -11,6 +11,12 @@ import {
 } from "./cloud-generated-models";
 import { assertModelingCommand } from "./modeling-policy";
 import { buildBrowserModel } from "./browser-modeling-connection";
+import {
+  canonicalBrowserProceduralSource,
+  hashBrowserProceduralSource,
+} from "./browser-procedural";
+import { evaluateBrowserProceduralInWorker } from "./browser-procedural-queue";
+import type { BrowserModelRecipe } from "./browser-modeling";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import { GAME_RULES_RESTART_NOTICE } from "./game-session";
 import {
@@ -25,8 +31,10 @@ import {
   committed,
   projectSchema,
   applyOperation,
+  parseModelCommandForProcessing,
   type Project,
   type Command,
+  type ModelCommand,
   type Cursor,
 } from "./protocol";
 import {
@@ -583,35 +591,70 @@ export const useOrb = create<State>((setState, getState) => ({
     };
     signal.addEventListener("abort", cancelDurable, { once: true });
     let lastAppliedCommand: Command["type"] | undefined;
-    const apply = async (command: Command) => {
+    const apply = async (input: ModelCommand) => {
       if (signal.aborted || active !== controller) return false;
       let s = getState();
-      command = enforceAssetPolicy(
+      let modelCommand = enforceAssetPolicy(
         s.project,
-        commandSchema.parse(command),
+        parseModelCommandForProcessing(
+          input,
+          false,
+          browserModelingAvailable(),
+        ),
         assetPolicy,
       );
-      assertModelingCommand(command, false, browserModelingAvailable());
+      assertModelingCommand(modelCommand, false, browserModelingAvailable());
+      let command: Command;
       if (
-        command.type === "set_geometry" &&
-        command.geometry.kind === "generated"
+        modelCommand.type === "set_geometry" &&
+        modelCommand.geometry.kind === "generated"
       ) {
-        const entityId = command.id;
-        const job = command.geometry.job;
+        const entityId = modelCommand.id;
+        const job = modelCommand.geometry.job;
         if (!("backend" in job))
           throw Error(
             "This modeling job is unsupported. Request a browser-manifold recipe instead.",
           );
-        const model = await buildBrowserModel(job.recipe, {
+        let recipe: BrowserModelRecipe;
+        let authoring:
+          | {
+              source: ReturnType<typeof canonicalBrowserProceduralSource>;
+              sourceHash: string;
+            }
+          | undefined;
+        if (job.backend === "browser-procedural") {
+          const source = canonicalBrowserProceduralSource(job.source);
+          const sourceHash = await hashBrowserProceduralSource(source);
+          recipe = await evaluateBrowserProceduralInWorker(source, { signal });
+          if (signal.aborted || active !== controller) return false;
+          authoring = { source, sourceHash };
+        } else {
+          recipe = job.recipe;
+        }
+        const model = await buildBrowserModel(recipe, {
           signal,
           color:
             s.project.entities.find((entity) => entity.id === entityId)
               ?.color ?? "#6ead60",
         });
         if (signal.aborted || active !== controller) return false;
-        command = { ...command, geometry: { ...command.geometry, model } };
+        command = commandSchema.parse({
+          ...modelCommand,
+          geometry: {
+            ...modelCommand.geometry,
+            job:
+              authoring === undefined
+                ? { backend: "browser-manifold", recipe }
+                : {
+                    backend: "browser-manifold",
+                    recipe,
+                    authoring,
+                  },
+            model,
+          },
+        });
         s = getState();
-      }
+      } else command = commandSchema.parse(modelCommand);
       const envelope = {
         version: 1 as const,
         projectId: s.project.id,

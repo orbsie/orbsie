@@ -7,6 +7,7 @@ import {
 import { modelingJobSchema } from "./modeling";
 import { generatedModelMetadataSchema } from "./generated-models";
 import { browserModelRecipeSchema } from "./browser-modeling";
+import { browserProceduralSourceSchema } from "./browser-procedural";
 import {
   catalogAssetIds,
   isAssetId,
@@ -51,17 +52,37 @@ export const assetGeometrySchema = z.object({
   detail: geometryDetail,
   tint: color.optional(),
 });
-export const browserModelingJobSchema = z
+const browserAuthoringMetadataSchema = z
+  .object({
+    source: browserProceduralSourceSchema,
+    sourceHash: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+
+export const browserProceduralModelingJobSchema = z
+  .object({
+    backend: z.literal("browser-procedural"),
+    source: browserProceduralSourceSchema,
+  })
+  .strict();
+
+const browserModelingInputJobSchema = z
   .object({
     backend: z.literal("browser-manifold"),
     recipe: browserModelRecipeSchema,
   })
+  .strict();
+export const browserModelingJobSchema = browserModelingInputJobSchema
+  .extend({ authoring: browserAuthoringMetadataSchema.optional() })
   .strict();
 const generatedModelingJobSchema = z.union([
   modelingJobSchema,
   browserModelingJobSchema,
 ]);
 export type BrowserModelingJob = z.infer<typeof browserModelingJobSchema>;
+export type BrowserProceduralModelingJob = z.infer<
+  typeof browserProceduralModelingJobSchema
+>;
 export const generatedGeometrySchema = z
   .object({
     kind: z.literal("generated"),
@@ -227,10 +248,17 @@ function modelGeometrySchema(localModeling: boolean, browserModeling: boolean) {
             collision: z.enum(["none", "platform"]).default("none"),
             job:
               localModeling && browserModeling
-                ? z.union([modelingJobSchema, browserModelingJobSchema])
+                ? z.union([
+                    modelingJobSchema,
+                    browserProceduralModelingJobSchema,
+                    browserModelingInputJobSchema,
+                  ])
                 : localModeling
                   ? modelingJobSchema
-                  : browserModelingJobSchema,
+                  : z.union([
+                      browserProceduralModelingJobSchema,
+                      browserModelingInputJobSchema,
+                    ]),
             detail: z.literal("refined"),
             tint: color.optional(),
           })
@@ -258,6 +286,45 @@ export function modelCommandSchemaForCapabilities(
     setEnvironmentCommandSchema,
     commitRevisionCommandSchema,
   ]);
+}
+type BrowserProceduralGeneratedGeometry = {
+  kind: "generated";
+  collision: "none" | "platform";
+  job: BrowserProceduralModelingJob;
+  detail: "refined";
+  tint?: string;
+};
+type BrowserProceduralSetGeometryCommand = Omit<
+  Extract<Command, { type: "set_geometry" }>,
+  "geometry"
+> & { geometry: BrowserProceduralGeneratedGeometry };
+/** The model stream is canonical commands plus one browser-only source command. */
+export type ModelCommand = Command | BrowserProceduralSetGeometryCommand;
+/** Parse advertised model output while preserving capability-specific errors. */
+export function parseModelCommandForProcessing(
+  input: unknown,
+  localModeling: boolean,
+  browserModeling: boolean,
+): ModelCommand {
+  const advertised = modelCommandSchemaForCapabilities(
+    localModeling,
+    browserModeling,
+  ).safeParse(input);
+  if (advertised.success) return advertised.data as ModelCommand;
+  // Let the modeling policy produce its stable unavailable/unsupported error
+  // for a job sent outside the advertised capability. Trusted model metadata
+  // and canonical authoring metadata remain rejected by this fallback.
+  const capabilityProbe = modelCommandSchemaForCapabilities(true, true).safeParse(
+    input,
+  );
+  if (
+    capabilityProbe.success &&
+    capabilityProbe.data.type === "set_geometry" &&
+    capabilityProbe.data.geometry.kind === "generated" &&
+    !("model" in capabilityProbe.data.geometry)
+  )
+    return capabilityProbe.data as ModelCommand;
+  throw advertised.error;
 }
 const modelCommandJSONSchemaCache = new Map<string, object>();
 export function modelCommandJSONSchemaForCapabilities(
@@ -432,6 +499,93 @@ export function applyOperation(
     },
   };
 }
+
+/**
+ * Validate a model command stream without executing a browser-only source.
+ * Procedural jobs advance the server shadow revision and mark their target
+ * ready for subsequent command-reference checks; the browser store executes
+ * and normalizes the source before applying the canonical operation.
+ */
+export function applyModelOperation(
+  project: Project,
+  input: unknown,
+  cursor: Cursor,
+): { project: Project; cursor: Cursor } {
+  const raw = z
+    .object({
+      version: z.literal(1),
+      projectId: z.string(),
+      runId: z.string(),
+      operationId: z.string(),
+      sequence: z.number().int().min(1),
+      baseRevision: z.number().int().min(0),
+      command: z.unknown(),
+    })
+    .parse(input);
+  const command = parseModelCommandForProcessing(raw.command, true, true);
+  if (cursor.seen.has(raw.operationId)) return { project, cursor };
+  if (raw.projectId !== project.id || raw.runId !== cursor.runId)
+    throw Error("This change belongs to another world or an expired run.");
+  if (raw.sequence !== cursor.sequence + 1)
+    throw Error(
+      "A scene update arrived out of order. Retry from the saved world.",
+    );
+  if (raw.baseRevision !== project.revision)
+    throw Error(
+      "Your world has a newer revision. This change was not applied.",
+    );
+  if (
+    command.type === "set_geometry" &&
+    command.geometry.kind === "generated" &&
+    "backend" in command.geometry.job &&
+    command.geometry.job.backend === "browser-procedural"
+  ) {
+    const existing = project.entities.find(
+      (entity) => entity.id === command.id,
+    );
+    if (!existing) throw Error("That object no longer exists.");
+    if (
+      existing.assetPolicy === "new-only" &&
+      command.assetPolicy === "catalog-allowed"
+    )
+      throw Error("A new-only object cannot be downgraded.");
+    const nextAssetPolicy =
+      existing.assetPolicy === "new-only" || command.assetPolicy === "new-only"
+        ? "new-only"
+        : (command.assetPolicy ?? existing.assetPolicy);
+    const next: Project = {
+      ...project,
+      entities: project.entities.map((entity) =>
+        entity.id === command.id
+          ? {
+              ...entity,
+              // The server shadow must not retain a replaced catalog mesh or
+              // pretend that an unresolved source already produced a GLB.
+              geometry: undefined,
+              assetPolicy: nextAssetPolicy,
+              stage: "ready" as const,
+            }
+          : entity,
+      ),
+      revision: project.revision + 1,
+    };
+    projectSchema.parse(next);
+    return {
+      project: next,
+      cursor: {
+        runId: cursor.runId,
+        sequence: raw.sequence,
+        seen: new Set([...cursor.seen, raw.operationId]),
+      },
+    };
+  }
+  return applyOperation(
+    project,
+    { ...raw, command: commandSchema.parse(command) },
+    cursor,
+  );
+}
+
 export function committed(project: Project, baseline?: Project): Project {
   const checkpoint: Project = {
     ...project,

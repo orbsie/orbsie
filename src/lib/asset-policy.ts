@@ -1,5 +1,5 @@
 import { type AssetRequestPolicy, isAssetId } from "./asset-catalog";
-import type { Command, Entity, Project } from "./protocol";
+import type { Entity, ModelCommand, Project } from "./protocol";
 
 export type AssetPolicyScope = "selected" | "project";
 
@@ -149,7 +149,9 @@ function targetIsNewOnly(
   );
 }
 
-function requestedPolicy(command: Command): AssetRequestPolicy | undefined {
+function requestedPolicy(
+  command: ModelCommand,
+): AssetRequestPolicy | undefined {
   if (command.type === "set_geometry" || command.type === "set_material")
     return command.assetPolicy;
   if (command.type === "set_transform" || command.type === "set_behavior")
@@ -157,7 +159,10 @@ function requestedPolicy(command: Command): AssetRequestPolicy | undefined {
   return undefined;
 }
 
-function withPolicy(command: Command, policy: AssetRequestPolicy): Command {
+function withPolicy(
+  command: ModelCommand,
+  policy: AssetRequestPolicy,
+): ModelCommand {
   if (command.type === "set_geometry")
     return { ...command, assetPolicy: policy };
   if (command.type === "reserve_entity")
@@ -210,9 +215,9 @@ function rejectCatalogAsset(id: string): never {
  */
 export function enforceAssetPolicy(
   project: Pick<Project, "entities">,
-  command: Command,
+  command: ModelCommand,
   context: AssetPolicyContext,
-): Command {
+): ModelCommand {
   if (command.type === "reserve_entity") {
     if (
       context.requestAssetPolicy === "new-only" &&
