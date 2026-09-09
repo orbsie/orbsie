@@ -10,6 +10,15 @@ describe("browser modeling policy", () => {
     expect(browserModelingInstructions).toContain(
       "full 360-degree sweep around Y",
     );
+    expect(browserModelingInstructions).toContain(
+      "preserving the explicit heights without automatic centering",
+    );
+    expect(browserModelingInstructions).toContain(
+      "segments default to 32 (maximum 64)",
+    );
+    expect(browserModelingInstructions).toContain(
+      "centered from -depth/2 to +depth/2",
+    );
     expect(browserModelingInstructions).toContain("partial sweep");
     expect(browserModelingInstructions).toContain("custom meshes");
     expect(browserModelingInstructions).not.toContain("lathe");

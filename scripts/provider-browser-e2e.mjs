@@ -75,6 +75,7 @@ function parseArgs(argv) {
           "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> \\",
           "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local",
           "",
+          "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
           "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1 for authenticated chatgpt-local recovery.",
           "Set ORBSIE_INTERRUPTION_METHOD=reload for the page-reload interruption variant; stop is the default.",
@@ -255,6 +256,8 @@ function readConfiguration(argv) {
     requireBrowserModel: process.env.ORBSIE_REQUIRE_BROWSER_MODEL === "1",
     requireExtrusion: process.env.ORBSIE_REQUIRE_EXTRUSION === "1",
     requireInputGame: process.env.ORBSIE_REQUIRE_INPUT_GAME === "1",
+    requireRevolution: process.env.ORBSIE_REQUIRE_REVOLUTION === "1",
+    requireGeometryEdit: process.env.ORBSIE_REQUIRE_GEOMETRY_EDIT === "1",
   };
 
   if (
@@ -275,6 +278,37 @@ function readConfiguration(argv) {
   if (config.requireNewOnly && !explicitlyRequestsNew(config.prompt))
     throw new HarnessConfigurationError(
       "ORBSIE_REQUIRE_NEW_ONLY=1 requires an explicit original/new creation prompt.",
+    );
+
+  for (const name of [
+    "ORBSIE_REQUIRE_REVOLUTION",
+    "ORBSIE_REQUIRE_GEOMETRY_EDIT",
+  ]) {
+    if (
+      process.env[name] !== undefined &&
+      !["0", "1"].includes(process.env[name])
+    )
+      throw new HarnessConfigurationError(`${name} must be 0 or 1.`);
+  }
+  if (config.requireRevolution && !config.requireBrowserModel)
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_REVOLUTION=1 requires ORBSIE_REQUIRE_BROWSER_MODEL=1.",
+    );
+  if (config.requireRevolution && !config.requireNewOnly)
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_REVOLUTION=1 requires ORBSIE_REQUIRE_NEW_ONLY=1.",
+    );
+  if (config.requireGeometryEdit && !config.requireBrowserModel)
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_GEOMETRY_EDIT=1 requires ORBSIE_REQUIRE_BROWSER_MODEL=1.",
+    );
+  if (config.requireGeometryEdit && !process.env.ORBSIE_EDIT_PROMPT?.trim())
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_GEOMETRY_EDIT=1 requires an explicit ORBSIE_EDIT_PROMPT.",
+    );
+  if (config.requireGeometryEdit && config.requireInputGame)
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_GEOMETRY_EDIT=1 cannot be combined with ORBSIE_REQUIRE_INPUT_GAME=1.",
     );
 
   if (
@@ -457,7 +491,11 @@ function emptyReport(config) {
       firstReservationMs: null,
       seedObserved: false,
     },
-    edit: { status: "blocked", selectedIdPreserved: false },
+    edit: {
+      status: "blocked",
+      type: config.requireGeometryEdit ? "geometry" : "material",
+      selectedIdPreserved: false,
+    },
     freeTrial: config.provider === "free" ? { status: "blocked" } : null,
     localRecovery: "blocked",
     export: "blocked",
@@ -748,6 +786,91 @@ async function waitForSavedProject(page, minRevision, assistantCount = 0) {
     "The provider committed no entities.",
   );
   assert(snapshot.project.revision >= minRevision);
+  return snapshot.project;
+}
+
+async function readStoredGeneratedModelDigest(page, hash) {
+  return page.evaluate(async (storageKey) => {
+    const record = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("keyval-store");
+      request.onupgradeneeded = () => request.transaction?.abort();
+      request.onerror = () =>
+        reject(request.error || Error("IndexedDB open failed"));
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("keyval")) {
+          db.close();
+          resolve(null);
+          return;
+        }
+        const transaction = db.transaction("keyval", "readonly");
+        const getRequest = transaction.objectStore("keyval").get(storageKey);
+        getRequest.onerror = () =>
+          reject(getRequest.error || Error("IndexedDB read failed"));
+        getRequest.onsuccess = () => {
+          const value = getRequest.result;
+          db.close();
+          resolve(value ?? null);
+        };
+      };
+    });
+    const value = record && typeof record === "object" ? record.glb : null;
+    if (!value) return null;
+    const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    return {
+      bytes: bytes.byteLength,
+      sha256: [...digest]
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join(""),
+    };
+  }, `orbsie-model:${hash}`);
+}
+
+async function waitForTrustedBrowserBake(page, entityId) {
+  await expect
+    .poll(
+      async () => {
+        const snapshot = await storageSnapshot(page);
+        const entity = snapshot.project?.entities.find(
+          (candidate) => candidate.id === entityId,
+        );
+        const model = entity?.geometry?.model;
+        return Boolean(
+          entity?.stage === "ready" &&
+          entity.geometry?.kind === "generated" &&
+          entity.geometry.job?.backend === "browser-manifold" &&
+          model?.source === "browser-manifold" &&
+          typeof model.sha256 === "string" &&
+          /^[a-f0-9]{64}$/.test(model.sha256) &&
+          Number.isInteger(model.bytes) &&
+          model.bytes > 0,
+        );
+      },
+      { timeout: 180000, intervals: [250, 500, 1000, 2500] },
+    )
+    .toBe(true);
+  const snapshot = await storageSnapshot(page);
+  const entity = snapshot.project?.entities.find(
+    (candidate) => candidate.id === entityId,
+  );
+  const model = entity?.geometry?.model;
+  assert(
+    entity && model,
+    "The trusted browser bake did not produce model metadata.",
+  );
+  const stored = await readStoredGeneratedModelDigest(page, model.sha256);
+  assert(stored, "The trusted browser GLB was not found in IndexedDB.");
+  assert.equal(
+    stored.sha256,
+    model.sha256,
+    "The trusted browser GLB hash does not match its saved metadata.",
+  );
+  assert.equal(
+    stored.bytes,
+    model.bytes,
+    "The trusted browser GLB byte count does not match its saved metadata.",
+  );
   return snapshot.project;
 }
 
@@ -2515,6 +2638,21 @@ async function run(config) {
       interrupted ? interrupted.checkpoint.revision + 1 : 1,
       1,
     );
+    if (config.requireBrowserModel) {
+      const bakedEntity = projectAfterCreation.entities.find(
+        (entity) =>
+          entity.geometry?.kind === "generated" &&
+          entity.geometry.job?.backend === "browser-manifold",
+      );
+      assert(
+        bakedEntity,
+        "The committed project did not expose a browser-manifold entity to bake.",
+      );
+      projectAfterCreation = await waitForTrustedBrowserBake(
+        page,
+        bakedEntity.id,
+      );
+    }
     if (interrupted) {
       for (const finished of readyCheckpointEntities(interrupted.checkpoint)) {
         assert.deepEqual(
@@ -2610,6 +2748,16 @@ async function run(config) {
       targetBefore,
       "The visible object list did not map to a committed entity.",
     );
+    if (config.requireRevolution) {
+      assert(
+        targetBefore.geometry?.job?.backend === "browser-manifold" &&
+          targetBefore.geometry.job.recipe.nodes.some(
+            (node) => node.kind === "revolve",
+          ),
+        "The selected browser model did not use a revolve recipe.",
+      );
+      report.creation.browserRevolution = true;
+    }
     if (config.builderURL)
       assert.equal(
         targetBefore.geometry?.kind,
@@ -2653,6 +2801,8 @@ async function run(config) {
       projectAfterCreation.revision + 1,
       2,
     );
+    if (config.requireBrowserModel)
+      projectAfterEdit = await waitForTrustedBrowserBake(page, targetBefore.id);
     if (config.requireInputGame) {
       assert.deepEqual(
         projectAfterEdit.game,
@@ -2683,46 +2833,170 @@ async function run(config) {
       (entity) => entity.id === targetBefore.id,
     );
     assert(targetAfter, "The provider edit removed the selected entity.");
-    if (config.builderURL) {
+    assert.equal(targetAfter.id, targetBefore.id);
+    if (config.requireGeometryEdit) {
       assert.equal(targetAfter.geometry?.kind, "generated");
       assert.equal(
+        targetAfter.geometry?.job?.backend,
+        "browser-manifold",
+        "The geometry edit lost browser-manifold job provenance.",
+      );
+      assert.equal(
+        targetAfter.geometry?.model?.source,
+        "browser-manifold",
+        "The geometry edit lost browser-manifold model provenance.",
+      );
+      assert.equal(
+        targetAfter.geometry?.model?.kernelVersion,
+        targetBefore.geometry?.model?.kernelVersion,
+        "The geometry edit changed the browser kernel provenance.",
+      );
+      const beforeRecipe = targetBefore.geometry?.job?.recipe;
+      const afterRecipe = targetAfter.geometry?.job?.recipe;
+      assert(beforeRecipe && afterRecipe, "The geometry edit lost its recipe.");
+      assert(
+        afterRecipe.revision > beforeRecipe.revision,
+        "The geometry edit did not increase the recipe revision.",
+      );
+      assert.notEqual(
         targetAfter.geometry.model?.sha256,
-        targetBefore.geometry.model?.sha256,
-        "The scoped edit replaced the generated Blender model.",
+        targetBefore.geometry?.model?.sha256,
+        "The geometry edit did not change the trusted GLB hash.",
+      );
+      const afterModel = targetAfter.geometry.model;
+      assert(
+        afterModel,
+        "The geometry edit did not produce trusted model metadata.",
+      );
+      const storedAfter = await readStoredGeneratedModelDigest(
+        page,
+        afterModel.sha256,
+      );
+      assert(storedAfter, "The edited trusted browser GLB was not stored.");
+      assert.equal(storedAfter.sha256, afterModel.sha256);
+      assert.equal(storedAfter.bytes, afterModel.bytes);
+      const { geometry: beforeGeometry, ...beforeEntity } = targetBefore;
+      const { geometry: afterGeometry, ...afterEntity } = targetAfter;
+      const {
+        job: beforeJob,
+        model: beforeModel,
+        ...beforeProperties
+      } = beforeGeometry;
+      const {
+        job: afterJob,
+        model: afterMetadata,
+        ...afterProperties
+      } = afterGeometry;
+      assert.deepEqual(
+        afterProperties,
+        beforeProperties,
+        "The recipe edit changed appearance or collision properties.",
+      );
+      assert.deepEqual(
+        afterEntity,
+        beforeEntity,
+        "The geometry edit changed a non-geometry entity field.",
+      );
+      const {
+        job: _beforeJob,
+        model: _beforeModel,
+        ...beforeGeometryProperties
+      } = beforeGeometry ?? {};
+      const {
+        job: _afterJob,
+        model: _afterModel,
+        ...afterGeometryProperties
+      } = afterGeometry ?? {};
+      assert.deepEqual(
+        afterGeometryProperties,
+        beforeGeometryProperties,
+        "The geometry edit changed appearance or collision properties.",
+      );
+      if (config.requireRevolution) {
+        const beforeRevolve = beforeRecipe.nodes.find(
+          (node) => node.kind === "revolve",
+        );
+        const afterRevolve = afterRecipe.nodes.find(
+          (node) => node.kind === "revolve",
+        );
+        assert(
+          beforeRevolve && afterRevolve,
+          "The geometry edit lost the revolve recipe.",
+        );
+        const beforeRadius = Math.max(
+          ...beforeRevolve.profile.map((point) => point[0]),
+        );
+        const afterRadius = Math.max(
+          ...afterRevolve.profile.map((point) => point[0]),
+        );
+        assert(
+          afterRadius > beforeRadius,
+          "The revolve geometry edit did not increase profile width.",
+        );
+        const beforeBounds = beforeGeometry?.model?.bounds;
+        const afterBounds = afterGeometry?.model?.bounds;
+        assert(
+          beforeBounds && afterBounds,
+          "The revolve edit lost model bounds.",
+        );
+        assert(
+          afterBounds.max[0] - afterBounds.min[0] >
+            beforeBounds.max[0] - beforeBounds.min[0],
+          "The revolve geometry edit did not increase X width.",
+        );
+        assert.equal(
+          afterBounds.min[1],
+          beforeBounds.min[1],
+          "The revolve edit changed the explicit minimum Y height.",
+        );
+        assert.equal(
+          afterBounds.max[1],
+          beforeBounds.max[1],
+          "The revolve edit changed the explicit maximum Y height.",
+        );
+      }
+    } else {
+      if (config.builderURL) {
+        assert.equal(targetAfter.geometry?.kind, "generated");
+        assert.equal(
+          targetAfter.geometry.model?.sha256,
+          targetBefore.geometry.model?.sha256,
+          "The scoped edit replaced the generated Blender model.",
+        );
+      }
+      assert.equal(
+        targetAfter.color.toLowerCase(),
+        "#ff44aa",
+        "The scoped recolor did not use the requested color.",
+      );
+      const { color: beforeColor, ...beforeShape } = targetBefore;
+      const { color: afterColor, ...afterShape } = targetAfter;
+      assert.notEqual(
+        afterColor.toLowerCase(),
+        beforeColor.toLowerCase(),
+        "The scoped recolor did not change the selected entity color.",
+      );
+      if (
+        beforeShape.geometry &&
+        afterShape.geometry?.kind === beforeShape.geometry.kind
+      ) {
+        assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
+        const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;
+        const { tint: afterTint, ...afterGeometry } = afterShape.geometry;
+        beforeShape.geometry = beforeGeometry;
+        afterShape.geometry = afterGeometry;
+      }
+      assert.deepEqual(
+        afterShape,
+        beforeShape,
+        "The scoped edit changed the selected object beyond its color.",
+      );
+      assert.deepEqual(
+        targetAfter.position,
+        targetBefore.position,
+        "The scoped edit changed the selected position.",
       );
     }
-    assert.equal(
-      targetAfter.color.toLowerCase(),
-      "#ff44aa",
-      "The scoped recolor did not use the requested color.",
-    );
-    const { color: beforeColor, ...beforeShape } = targetBefore;
-    const { color: afterColor, ...afterShape } = targetAfter;
-    assert.notEqual(
-      afterColor.toLowerCase(),
-      beforeColor.toLowerCase(),
-      "The scoped recolor did not change the selected entity color.",
-    );
-    if (
-      beforeShape.geometry &&
-      afterShape.geometry?.kind === beforeShape.geometry.kind
-    ) {
-      assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
-      const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;
-      const { tint: afterTint, ...afterGeometry } = afterShape.geometry;
-      beforeShape.geometry = beforeGeometry;
-      afterShape.geometry = afterGeometry;
-    }
-    assert.deepEqual(
-      afterShape,
-      beforeShape,
-      "The scoped edit changed the selected object beyond its color.",
-    );
-    assert.deepEqual(
-      targetAfter.position,
-      targetBefore.position,
-      "The scoped edit changed the selected position.",
-    );
     assert.deepEqual(
       projectAfterEdit.entities.filter(
         (entity) => entity.id !== targetBefore.id,
@@ -2737,7 +3011,11 @@ async function run(config) {
       projectAfterCreation.environment,
       "The scoped edit changed the environment.",
     );
-    report.edit = { status: "passed", selectedIdPreserved: true };
+    report.edit = {
+      status: "passed",
+      type: config.requireGeometryEdit ? "geometry" : "material",
+      selectedIdPreserved: true,
+    };
     await page.screenshot({
       path: join(evidenceDir, "edit.png"),
       fullPage: true,

@@ -1,0 +1,10 @@
+{
+  "applicationSource": "13b6602",
+  "completedAt": "2026-09-09T13:05:06.078795+00:00",
+  "serverOutputCap": 512,
+  "liveCalls": 2,
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "scope": "Explicit full-revolve profile creation and radius-only edit; no publication, cloud recovery, gameplay objective or general freeform asset-quality claim."
+}

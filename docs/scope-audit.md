@@ -300,13 +300,15 @@ The typed modeling protocol, isolated Linux executor, authenticated local connec
 | Final handoff with actual URLs, run instructions, measured limits, and missing external config. | **partial** | `README.md`, `docs/infrastructure.md`, `docs/verification.md`, production/domain evidence. | Reissue after successful dedicated publication or clearly retain the token-permission blocker. |
 | Success criterion: nontechnical person describes, lands, watches forms grow, plays during development, changes an object by talking, and shares a real playable Orb. | **partial** | Local fixture/Astra protocol and public hash player cover most behaviors; dedicated public publishing, required live API-key proof, curated assets, and richer runtime remain open. | Close the mandatory blockers above and run one end-to-end signed-out acceptance story. |
 
-## Current mandatory blockers
+## Current remaining acceptance gates
 
-1. Produce successful compliant Astra-low/standard live evidence for both OpenRouter and Vercel AI Gateway API-key paths; no fallback IDs or Luna-only historical evidence.
-2. Build the curated 3D asset catalog, provenance/license gate, typed asset references, explicit-new override, mixed formation path, and export/public bundling.
-3. Fix Vercel team-token project/deployment permissions and verify first publish, republish, immutable revision, artifact integrity, `/o/{slug}`, and signed-out playback.
-4. Complete the behavior/asset IR and durable generation-run/checkpoint/reconnect path required by the vertical slice.
-5. Replace the prototype globe-to-parcel interpolation with the stable parcel/tangent transition and complete the required timing/performance instrumentation.
-6. Refresh stale documentation/evidence: avatar upload is complete at `a6b59b3`; old pending-avatar text, old demo-mode UI captures, and stale Sol recommendation text must not be treated as current.
+The rows above are historical inventory, not a current completion checklist. Latest owner requirements and source-specific evidence take precedence.
 
-The trusted local ChatGPT companion is an explicitly allowed conditional boundary and is documented; it does not substitute for the two required public API-key provider paths. Tailwind/Motion, Drizzle, Rapier, AI SDK, and similar section-8 choices are optional stack suggestions and are not blockers by themselves.
+1. Complete live Luna workflows for every required connection: OpenRouter targeted browser-recipe editing and broader acceptance story; Gateway BYOK (test credential pending); ChatGPT subscription consent and generation (production device issuance/cancellation proved, actual consent pending). No fallback model, quota bypass, or funding increase is authorized by a failed test.
+2. Finish the general browser modeling vocabulary and restricted procedural interpreter. Full revolution joins the existing primitives, extrusion and booleans at `13b6602`; arbitrary meshes, other requested composition/deformation operations, and the restricted-code runtime remain open.
+3. Complete catalog-only, mixed and explicit-new real-provider workflows, asset quality review and comparative responsiveness evidence. Existing catalog and license work is not proof of all these paths.
+4. Exercise the complete required game story—including play during construction, targeted revisions, undo, save/reload, export and independent signed-out publication—across the specified providers. A published canvas alone does not establish playable completion or republishing recovery.
+5. Verify the timing and frame-time targets on representative hardware. Existing SwiftShader measurements and deterministic interaction checks do not establish native GPU/mobile performance.
+6. Reconcile every original requirement and deliverable against current artifacts before final acceptance. Preserve the full scope; do not use the accumulated historical pass counts as a substitute for current workflow evidence.
+
+All active modeling and rendering run with browser resources. Native Blender and local ChatGPT companions are historical prototypes and must not be required or surfaced. Suggested libraries in section 8 are implementation options; the required capabilities and behavior remain the acceptance criteria.
