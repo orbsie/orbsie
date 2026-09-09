@@ -1,5 +1,6 @@
 import { build } from "esbuild";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+await import("./build-modeling-worker.mjs");
 await mkdir("public/player", { recursive: true });
 await build({
   entryPoints: ["src/lib/generated-geometry-worker.ts"],
