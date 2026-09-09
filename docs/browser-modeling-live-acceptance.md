@@ -7,3 +7,5 @@ Set `ORBSIE_CREATION_PROMPT` to explicitly request a new browser-manifold model,
 The default scoped edit preserves geometry and changes material; reload, export and optional publication retain the harness's existing checks. Separately exercise a recipe/topology edit and gameplay during construction before claiming the full SDK milestone. Fixture editor evidence in `docs/evidence/browser-modeling-editor-resume` proves local creation/edit/reload, not live model behavior.
 
 OpenRouter retains the authorized 512-output-token test cap. Gateway funded connection and authorized test budget remain unresolved. ChatGPT tests must explicitly select Luna with regular processing. No successful live browser-modeling run is claimed by adding this gate.
+
+Owner update: ChatGPT connector support is not live and is now backlog work in `prompt.md`. Do not run ChatGPT live acceptance or block the current release on it. Earlier companion evidence remains experimental; active live acceptance targets OpenRouter and Gateway.

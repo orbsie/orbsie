@@ -212,7 +212,7 @@ Implementation order: SDK/recipe contract → bounded Bitbybit-Manifold versus d
 Core release gates (all require evidence; none are closed by the plan change):
 
 - [ ] Browser-only new-model creation and targeted recipe edits work without installing Blender, Node or Python.
-- [ ] Real OpenRouter, Vercel AI Gateway and ChatGPT workflows reserve, construct, revise, recover and preserve the persistent playable scene.
+- [ ] Real OpenRouter and Vercel AI Gateway workflows reserve, construct, revise, recover and preserve the persistent playable scene. ChatGPT connector support is deferred to the backlog per the latest owner instruction.
 - [ ] Recipe undo/replay/reload and stale-result rejection preserve the last good object and unrelated play state.
 - [ ] Geometry budgets, cancellation, failures and procedural-code isolation are verified; credentials and editor storage are inaccessible to generated programs.
 - [ ] Coarse/refined formation, camera, selection and typing remain usable during construction on representative hardware, with time-to-recognizable-object, frame-time percentiles, memory, revision success and token use measured.
@@ -327,3 +327,11 @@ Deliver:
 - A final handoff listing actual repository/preview/deployment URLs, how to run locally, measured limitations, and any specific missing external configuration.
 
 The success criterion is simple: a nontechnical person describes a small experience, lands on their parcel, watches objects grow from orbs, plays while the world develops, changes an object by talking to it, and shares a real playable Orb.
+
+## Backlog — ChatGPT connector (owner update)
+
+- [ ] Deliver a live, supported ChatGPT connector. The connector is not currently live; existing local-companion experiments are not product availability. Preserve the adapter work for later evaluation, but do not treat ChatGPT live E2E as a current release gate.
+- [ ] Validate supported authentication, credential lifecycle, isolation and deployment requirements; provide a usable connection flow before enabling it for users.
+- [ ] Once live, validate browser-model creation, targeted editing, cancellation/recovery, play, reload, export and signed-out publication with an explicitly selected test model.
+
+Current live-provider delivery and acceptance focus on OpenRouter and Vercel AI Gateway. This update supersedes earlier simultaneous three-provider milestone wording.
