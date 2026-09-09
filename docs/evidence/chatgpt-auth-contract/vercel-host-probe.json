@@ -1,0 +1,19 @@
+{
+  "name": "orbsie-auth-probe-1788931007548",
+  "startedAt": "2026-09-09T05:16:47.548Z",
+  "timeoutMs": 300000,
+  "persistent": false,
+  "vcpus": 1,
+  "loginStarted": false,
+  "inferencePerformed": false,
+  "created": true,
+  "deleted": true,
+  "installExitCode": 0,
+  "statusUrl": "https://sb-6d1rgpn7cixd.vercel.run/login/status",
+  "status": 200,
+  "authStatus": "disconnected",
+  "lifecycle": "idle",
+  "unauthenticatedStatus": 401,
+  "passed": true,
+  "finishedAt": "2026-09-09T05:17:01.549Z"
+}
