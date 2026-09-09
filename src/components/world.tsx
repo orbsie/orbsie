@@ -17,6 +17,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
+import { resolveRuntimeScene, runtimeEntityMatrix } from "@/lib/scene-runtime";
 import {
   markExperience,
   markVisibleSeed,
@@ -440,18 +441,38 @@ function Formation({
       : undefined;
     gameTintEnabled.current.value = override?.color ? 1 : 0;
     if (override?.color) gameTint.value.set(override.color);
-    target.set(...movingEntityPosition(effective, clock.elapsedTime));
-    if (!playing && entity.geometry?.kind === "crystal")
-      target.y += Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
-    if (
-      playing ||
-      (entity.behavior?.type === "move" && entity.stage === "ready")
-    )
-      group.current.position.copy(target);
-    else group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
-    targetScale.set(...entity.scale).multiplyScalar(bloom ? 1.35 : 1);
-    if (playing) group.current.scale.copy(targetScale);
-    else group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
+    const snapshot = useOrb.getState().project;
+    const hierarchical =
+      !!snapshot.groups?.length ||
+      snapshot.entities.some((e) => e.parentId || e.rotation);
+    group.current.matrixAutoUpdate = !hierarchical;
+    if (hierarchical) {
+      const pose = runtimeEntityMatrix(
+        resolveRuntimeScene(snapshot),
+        entity,
+        clock.elapsedTime,
+        override?.position,
+      );
+      if (!playing && entity.geometry?.kind === "crystal")
+        pose.elements[13] +=
+          Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
+      if (bloom) pose.scale(new THREE.Vector3(1.35, 1.35, 1.35));
+      group.current.matrix.copy(pose);
+      group.current.matrixWorldNeedsUpdate = true;
+    } else {
+      target.set(...movingEntityPosition(effective, clock.elapsedTime));
+      if (!playing && entity.geometry?.kind === "crystal")
+        target.y += Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
+      if (
+        playing ||
+        (entity.behavior?.type === "move" && entity.stage === "ready")
+      )
+        group.current.position.copy(target);
+      else group.current.position.lerp(target, 1 - Math.exp(-dt * 12));
+      targetScale.set(...entity.scale).multiplyScalar(bloom ? 1.35 : 1);
+      if (playing) group.current.scale.copy(targetScale);
+      else group.current.scale.lerp(targetScale, 1 - Math.exp(-dt * 5));
+    }
     if (mesh.current && entity.geometry?.kind === "crystal")
       mesh.current.rotation.y += dt * 0.6;
     if (particles.current && mesh.current)
@@ -698,6 +719,24 @@ function Player({
     const didReset = resetAvatar();
     direction.applyAxisAngle(up, 0.5);
     if (direction.length()) direction.normalize();
+    const hierarchyScene =
+      s.project.groups?.length ||
+      s.project.entities.some((e) => e.parentId || e.rotation)
+        ? resolveRuntimeScene(s.project)
+        : undefined;
+    const worldMatrices = hierarchyScene
+      ? new Map(
+          s.project.entities.map((entity) => [
+            entity.id,
+            runtimeEntityMatrix(
+              hierarchyScene,
+              entity,
+              clock.elapsedTime,
+              session.state?.entityOverrides[entity.id]?.position,
+            ),
+          ]),
+        )
+      : undefined;
     const result = stepGameplay(
       state.current,
       {
@@ -730,6 +769,7 @@ function Player({
       clock.elapsedTime,
       session.state && session.state.status !== "playing" ? 0 : dt,
       session.collisionTargets,
+      worldMatrices,
     );
     state.current = result;
     const beforeContacts = session.resetGeneration;

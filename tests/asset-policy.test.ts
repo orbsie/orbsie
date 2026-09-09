@@ -290,3 +290,39 @@ describe("request-scoped asset policy", () => {
     expect(applied.project.entities[0].assetPolicy).toBeUndefined();
   });
 });
+
+it("keeps group edits outside selected original-geometry scope", () => {
+  const project = { ...blankProject(), entities: [entity("tree")] };
+  const selected = deriveAssetPolicy(
+    "Make this an original mushroom",
+    "tree",
+    project,
+  );
+  const commands: Command[] = [
+    {
+      type: "create_group",
+      group: { id: "g", label: "Group", position: [0, 0, 0], scale: [1, 1, 1] },
+    },
+    { type: "set_group_transform", id: "g", position: [1, 0, 0] },
+    { type: "remove_group", id: "g" },
+    { type: "set_parent", id: "g", parentId: null, keepWorldTransform: true },
+  ];
+  for (const command of commands) {
+    expect(() => enforceAssetPolicy(project, command, selected)).toThrow(
+      "scene groups",
+    );
+    const whole = deriveAssetPolicy(
+      "Build a brand-new world from scratch",
+      undefined,
+      project,
+    );
+    expect(enforceAssetPolicy(project, command, whole)).toEqual(command);
+  }
+  expect(() =>
+    enforceAssetPolicy(
+      project,
+      { type: "commit_revision", message: "done" },
+      selected,
+    ),
+  ).toThrow();
+});

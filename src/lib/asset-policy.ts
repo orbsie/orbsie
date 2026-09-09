@@ -245,6 +245,22 @@ export function enforceAssetPolicy(
   if (command.type === "set_environment" || command.type === "set_game")
     return command;
 
+  const groupOperation =
+    command.type === "create_group" ||
+    command.type === "remove_group" ||
+    command.type === "set_group_transform" ||
+    (command.type === "set_parent" && !targetEntity(project, command.id));
+  if (groupOperation) {
+    if (
+      context.requestAssetPolicy === "new-only" &&
+      context.scope === "selected"
+    )
+      throw new AssetPolicyError(
+        "scope-violation",
+        "Original-geometry edits cannot change scene groups.",
+      );
+    return command;
+  }
   const entity = targetEntity(project, command.id);
   const targetNewOnly = targetIsNewOnly(context, command.id, entity);
   const suppliedPolicy = requestedPolicy(command);

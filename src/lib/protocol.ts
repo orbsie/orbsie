@@ -13,6 +13,16 @@ import {
   isAssetId,
   type AssetRequestPolicy,
 } from "./asset-catalog";
+import {
+  computeKeepWorldLocalTRS,
+  MAX_SCENE_GROUPS,
+  resolveSceneTransforms,
+} from "./scene-transform";
+function mutableVector(
+  value: readonly [number, number, number],
+): [number, number, number] {
+  return [value[0], value[1], value[2]];
+}
 export const vector = z.tuple([
   z.number().finite().min(-100).max(100),
   z.number().finite().min(-100).max(100),
@@ -127,6 +137,12 @@ export const entitySchema = z.object({
   label: z.string().max(100),
   position: vector,
   scale: vector.default([1, 1, 1]),
+  rotation: vector.optional(),
+  parentId: z
+    .string()
+    .regex(/^[\w-]{1,80}$/)
+    .nullable()
+    .optional(),
   color: color.default("#6ead60"),
   geometry: geometrySchema.optional(),
   behavior: behaviorSchema.optional(),
@@ -134,6 +150,25 @@ export const entitySchema = z.object({
   stage: z.enum(["seed", "coarse", "ready"]).default("seed"),
 });
 export type Entity = z.infer<typeof entitySchema>;
+export const groupSchema = z.object({
+  id: z.string().regex(/^[\w-]{1,80}$/),
+  label: z.string().max(100),
+  position: vector,
+  rotation: vector.optional(),
+  scale: vector.default([1, 1, 1]).superRefine((scale, context) => {
+    if (scale.some((component) => component <= 0))
+      context.addIssue({
+        code: "custom",
+        message: "Group scale must be positive and finite.",
+      });
+  }),
+  parentId: z
+    .string()
+    .regex(/^[\w-]{1,80}$/)
+    .nullable()
+    .optional(),
+});
+export type Group = z.infer<typeof groupSchema>;
 export const projectSchema = z
   .object({
     version: z.literal(1),
@@ -142,6 +177,7 @@ export const projectSchema = z
     seed: z.number().int(),
     revision: z.number().int().min(0),
     entities: z.array(entitySchema).max(160),
+    groups: z.array(groupSchema).max(MAX_SCENE_GROUPS).optional(),
     environment: z.object({ sky: color, ground: color, water: color }),
     game: gameProgramSchema.optional(),
     messages: z
@@ -155,6 +191,20 @@ export const projectSchema = z
       .max(500),
   })
   .superRefine((project, context) => {
+    try {
+      resolveSceneTransforms({
+        groups: project.groups,
+        entities: project.entities,
+      });
+    } catch (error) {
+      context.addIssue({
+        code: "custom",
+        path: ["groups"],
+        message:
+          error instanceof Error ? error.message : "Invalid scene hierarchy.",
+      });
+      return;
+    }
     if (!project.game) return;
     try {
       validateGameProgramReferences(
@@ -187,8 +237,33 @@ const setTransformCommandSchema = z.object({
   type: z.literal("set_transform"),
   id: z.string(),
   position: vector.optional(),
+  rotation: vector.optional(),
   scale: vector.optional(),
   assetPolicy: assetRequestPolicySchema.optional(),
+});
+const createGroupCommandSchema = z.object({
+  type: z.literal("create_group"),
+  group: groupSchema,
+});
+const removeGroupCommandSchema = z.object({
+  type: z.literal("remove_group"),
+  id: z.string(),
+});
+const setGroupTransformCommandSchema = z.object({
+  type: z.literal("set_group_transform"),
+  id: z.string(),
+  position: vector.optional(),
+  rotation: vector.optional(),
+  scale: vector.optional(),
+});
+const setParentCommandSchema = z.object({
+  type: z.literal("set_parent"),
+  id: z.string(),
+  parentId: z
+    .string()
+    .regex(/^[\w-]{1,80}$/)
+    .nullable(),
+  keepWorldTransform: z.boolean(),
 });
 const setBehaviorCommandSchema = z.object({
   type: z.literal("set_behavior"),
@@ -231,6 +306,10 @@ export const commandSchema = z.discriminatedUnion("type", [
   setGeometryCommandSchema(geometrySchema),
   setMaterialCommandSchema,
   setTransformCommandSchema,
+  createGroupCommandSchema,
+  removeGroupCommandSchema,
+  setGroupTransformCommandSchema,
+  setParentCommandSchema,
   setBehaviorCommandSchema,
   removeEntityCommandSchema,
   setEnvironmentCommandSchema,
@@ -238,7 +317,18 @@ export const commandSchema = z.discriminatedUnion("type", [
 ]);
 export type Command = z.infer<typeof commandSchema>;
 
-const modelEntityBaseSchema = entitySchema.omit({ geometry: true }).strict();
+const modelEntityBaseSchema = entitySchema
+  .omit({ geometry: true, rotation: true, parentId: true })
+  .strict();
+const modelSetTransformCommandSchema = z
+  .object({
+    type: z.literal("set_transform"),
+    id: z.string(),
+    position: vector.optional(),
+    scale: vector.optional(),
+    assetPolicy: assetRequestPolicySchema.optional(),
+  })
+  .strict();
 function modelGeometrySchema(localModeling: boolean, browserModeling: boolean) {
   const generated =
     localModeling || browserModeling
@@ -280,7 +370,7 @@ export function modelCommandSchemaForCapabilities(
     reserveEntity,
     setGeometry,
     setMaterialCommandSchema,
-    setTransformCommandSchema,
+    modelSetTransformCommandSchema,
     setBehaviorCommandSchema,
     removeEntityCommandSchema,
     setEnvironmentCommandSchema,
@@ -314,9 +404,10 @@ export function parseModelCommandForProcessing(
   // Let the modeling policy produce its stable unavailable/unsupported error
   // for a job sent outside the advertised capability. Trusted model metadata
   // and canonical authoring metadata remain rejected by this fallback.
-  const capabilityProbe = modelCommandSchemaForCapabilities(true, true).safeParse(
-    input,
-  );
+  const capabilityProbe = modelCommandSchemaForCapabilities(
+    true,
+    true,
+  ).safeParse(input);
   if (
     capabilityProbe.success &&
     capabilityProbe.data.type === "set_geometry" &&
@@ -382,11 +473,15 @@ export function applyOperation(
     );
   const c = op.command;
   let entities = project.entities;
+  let groups = project.groups;
   let environment = project.environment;
   let messages = project.messages;
   let game = project.game;
   if (c.type === "reserve_entity") {
-    if (entities.some((e) => e.id === c.entity.id))
+    if (
+      entities.some((e) => e.id === c.entity.id) ||
+      groups?.some((group) => group.id === c.entity.id)
+    )
       throw Error("Object already exists.");
     if (entities.length >= 160)
       throw Error("This world reached its 160-object limit.");
@@ -396,6 +491,24 @@ export function applyOperation(
     )
       throw Error("A new-only object cannot use a catalog asset.");
     entities = [...entities, { ...c.entity, stage: "seed" }];
+  } else if (c.type === "create_group") {
+    if (
+      entities.some((e) => e.id === c.group.id) ||
+      groups?.some((group) => group.id === c.group.id)
+    )
+      throw Error("Object already exists.");
+    if ((groups?.length ?? 0) >= MAX_SCENE_GROUPS)
+      throw Error(`This world reached its ${MAX_SCENE_GROUPS}-group limit.`);
+    groups = [...(groups ?? []), c.group];
+  } else if (c.type === "remove_group") {
+    const existingGroup = groups?.find((group) => group.id === c.id);
+    if (!existingGroup) throw Error("That group no longer exists.");
+    if (
+      groups?.some((group) => group.parentId === c.id) ||
+      entities.some((entity) => entity.parentId === c.id)
+    )
+      throw Error("A group with children cannot be removed.");
+    groups = groups!.filter((group) => group.id !== c.id);
   } else if (c.type === "set_environment") {
     environment = {
       sky: c.sky ?? environment.sky,
@@ -413,6 +526,81 @@ export function applyOperation(
     game = c.game ?? undefined;
   } else if (c.type === "commit_revision") {
     messages = [...messages, { role: "assistant", text: c.message }];
+  } else if (c.type === "set_group_transform") {
+    const existingGroup = groups?.find((group) => group.id === c.id);
+    if (!existingGroup) throw Error("That group no longer exists.");
+    groups = groups!.map((group) =>
+      group.id !== c.id
+        ? group
+        : {
+            ...group,
+            position: c.position ?? group.position,
+            rotation: c.rotation ?? group.rotation,
+            scale: c.scale ?? group.scale,
+          },
+    );
+  } else if (c.type === "set_parent") {
+    const existingGroup = groups?.find((group) => group.id === c.id);
+    const existingEntity = entities.find((entity) => entity.id === c.id);
+    if (!existingGroup && !existingEntity)
+      throw Error("That scene object no longer exists.");
+
+    const candidateGroups = existingGroup
+      ? groups!.map((group) =>
+          group.id === c.id ? { ...group, parentId: c.parentId } : group,
+        )
+      : groups;
+    const candidateEntities = existingEntity
+      ? entities.map((entity) =>
+          entity.id === c.id ? { ...entity, parentId: c.parentId } : entity,
+        )
+      : entities;
+    const currentScene = resolveSceneTransforms({
+      groups,
+      entities,
+    });
+    // Validate parent namespace, cycles, and depth before doing any matrix
+    // work. The candidate is still private, so every failure is atomic.
+    const candidateScene = resolveSceneTransforms({
+      groups: candidateGroups,
+      entities: candidateEntities,
+    });
+    let nextGroups = candidateGroups;
+    let nextEntities = candidateEntities;
+    if (c.keepWorldTransform) {
+      const oldWorld = currentScene.get(c.id)!.worldMatrix;
+      const parentWorld =
+        c.parentId === null
+          ? undefined
+          : candidateScene.groups.get(c.parentId)!.worldMatrix;
+      const local = computeKeepWorldLocalTRS(oldWorld, parentWorld);
+      if (existingGroup)
+        nextGroups = candidateGroups!.map((group) =>
+          group.id !== c.id
+            ? group
+            : {
+                ...group,
+                position: mutableVector(local.position),
+                rotation: mutableVector(local.rotation),
+                scale: mutableVector(local.scale),
+                parentId: c.parentId,
+              },
+        );
+      else
+        nextEntities = candidateEntities.map((entity) =>
+          entity.id !== c.id
+            ? entity
+            : {
+                ...entity,
+                position: mutableVector(local.position),
+                rotation: mutableVector(local.rotation),
+                scale: mutableVector(local.scale),
+                parentId: c.parentId,
+              },
+        );
+    }
+    groups = nextGroups;
+    entities = nextEntities;
   } else {
     const existing = entities.find((e) => e.id === c.id);
     if (!existing) throw Error("That object no longer exists.");
@@ -475,6 +663,9 @@ export function applyOperation(
                 : {
                     ...e,
                     position: c.position ?? e.position,
+                    ...(c.rotation !== undefined
+                      ? { rotation: c.rotation }
+                      : {}),
                     scale: c.scale ?? e.scale,
                     assetPolicy: nextAssetPolicy,
                   },
@@ -483,6 +674,7 @@ export function applyOperation(
   }
   const next: Project = {
     ...project,
+    ...(groups === undefined ? {} : { groups }),
     entities,
     environment,
     messages,
@@ -587,16 +779,43 @@ export function applyModelOperation(
 }
 
 export function committed(project: Project, baseline?: Project): Project {
+  const hierarchyPresent =
+    project.groups !== undefined ||
+    baseline?.groups !== undefined ||
+    project.entities.some(
+      (entity) =>
+        entity.parentId !== undefined || entity.rotation !== undefined,
+    ) ||
+    baseline?.entities.some(
+      (entity) =>
+        entity.parentId !== undefined || entity.rotation !== undefined,
+    ) === true;
   const checkpoint: Project = {
     ...project,
     entities: project.entities.flatMap((e) =>
       e.stage === "ready"
         ? [e]
-        : baseline?.entities.find(
-              (old) => old.id === e.id && old.stage === "ready",
-            )
-          ? [baseline.entities.find((old) => old.id === e.id)!]
-          : [],
+        : (() => {
+            const old = baseline?.entities.find(
+              (candidate) =>
+                candidate.id === e.id && candidate.stage === "ready",
+            );
+            if (!old) return [];
+            if (!hierarchyPresent) return [old];
+            // A hierarchy checkpoint keeps the current local transform and
+            // parent relationship. Restoring a baseline entity wholesale
+            // could point at an ancestor that was removed during the run.
+            const restored: Entity = {
+              ...old,
+              position: e.position,
+              scale: e.scale,
+            };
+            if (e.rotation === undefined) delete restored.rotation;
+            else restored.rotation = e.rotation;
+            if (e.parentId === undefined) delete restored.parentId;
+            else restored.parentId = e.parentId;
+            return [restored];
+          })(),
     ),
   };
   return projectSchema.parse(checkpoint);
