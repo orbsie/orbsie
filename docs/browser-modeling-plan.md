@@ -191,3 +191,18 @@ Required evidence:
 This milestone does not replace the outstanding ChatGPT subscription, Gateway
 BYOK or full OpenRouter acceptance journeys. Those remain higher priority when
 required account access is available.
+
+
+Initial implementation contract (not yet advertised): `twist` has an input
+node and angle in radians within ±π/2; `taper` has an input node and positive
+bottom/top scales in [0.25, 4]. Both use the input bounds' Y axis and XZ center.
+Let t=(y-centerY)/height. Twist uses theta=angle*t and the same right-handed
+Y rotation as Three.js: x'=centerX+cos(theta)*dx+sin(theta)*dz,
+z'=centerZ-sin(theta)*dx+cos(theta)*dz. Taper uses
+s=bottomScale*(0.5-t)+topScale*(0.5+t) on dx and dz. Y is unchanged.
+
+Reject zero height and bound deformation inputs/outputs to the existing custom
+mesh validator's 4,096 vertices and 8,192 triangles. Validate deformed topology,
+intersection and positive volume before passing it to downstream recipe nodes;
+Manifold warp success alone is insufficient. No implicit refinement or smoothing
+is promised. Seeded smooth variation remains a separate implementation step.
