@@ -25,6 +25,14 @@ model, low effort, project, prompt, selected entity and browser modeling fields;
 they carry no API key, provider credential or companion capability. Any fallback
 to `/api/generate`, another model, or a loopback companion fails acceptance.
 
+Enforce these boundaries before network dispatch, not only by inspecting
+completed requests. The hosted traffic guard blocks generation until the
+session, consent and model checks pass; rejects invalid generation payloads;
+and blocks a third generation request. It also blocks account start, cancel
+and logout mutations and provider fallback routes. Record any rejected attempt
+as an acceptance failure. A successful HTTP response containing a stream error
+is not successful inference.
+
 Run exactly two authorized generation requests: creation and a selected-object
 edit. Preserve existing visible reservation, scoped-state, reload, secret-scan,
 ZIP export and independent-player assertions. Hosted interruption recovery and
