@@ -10,7 +10,7 @@
 - Continue implementation with Astra owning planning, integration, and quality, strategically delegating bounded work to Luna xhigh under the execution plan below. Use at most one Luna worker at a time with concise task context, with frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
 - Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. Put the full compatible model catalog under Advanced.
 - Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.
-- All live model-backed tests must use Luna only. This test-only authorization does not change Astra’s development lead/reviewer role. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
+- All live model-backed tests must use Luna only. This test-only authorization does not change Astra’s development lead/reviewer role and must not restrict end users: users can select any model supported by their connected provider and the application protocol. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
 - Initial delivery is approximately 30 minutes of implementation, with frequent GitHub pushes and deployment to the Orbsie Vercel app.
 - The entrance planet should occupy roughly 80% of the viewport. Use a dark, space-like background.
 - Remove approximately 80% of visible text and interface clutter. Focus on the planet and essential creation controls; omit landing branding, early-access labels, marketing headings and taglines.
