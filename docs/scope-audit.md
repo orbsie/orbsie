@@ -1,6 +1,17 @@
 # Orbsie full scope audit
 
-## Current evidence checkpoint — 2026-09-08
+## Latest constraints and evidence — supersedes the older checkpoint
+
+- Live inference acceptance uses Luna only. End users remain free to select supported provider models; older references below to required Astra live tests are superseded.
+- Product modeling is browser-only (`d17feb6`): no native Blender connection, execution, or controls. Real browser worker creation, geometry revision and reload passed in `docs/evidence/browser-only-modeling/`. Native package/companion deliverables below are historical and no longer required.
+- Publication permissions were resolved. `docs/evidence/publication-new-token-*` and commit `6665798` record a ready independent deployment and signed-out rendering; older permission-blocked entries below are stale. Gameplay on that public deployment was not exercised.
+- Live OpenRouter Luna browser-model creation, material edit, reload and standalone export passed in `docs/evidence/provider-e2e/browser-manifold-openrouter-origin/` (`7ec1bad`). This used an API key, not OAuth consent.
+- OpenRouter browser PKCE is deployed; simulated callback success/cancellation preserve existing-world selection and unsent prompt. Real consent is still unverified. Browser-only ChatGPT subscription authorization and funded Gateway live acceptance remain unresolved. Local ChatGPT companion evidence does not meet the browser-only requirement.
+- Provider authorization recovery (`35676c8`) passes thirteen targeted tests and four synthetic browser cases. HTTP 401 clears rejected credentials; HTTP 403 retains credentials and reopens settings; both preserve the prompt. This does not prove successful live account authorization.
+
+The full objective remains incomplete. Historical rows below are useful requirement inventory, but their old status claims must be read with these corrections and the source-specific evidence above.
+
+## Historical evidence checkpoint — 2026-09-08
 
 This checkpoint supersedes conflicting historical statements below. The full plan remains incomplete. Evidence records a particular run and source revision; it is not a fresh observation of production.
 
