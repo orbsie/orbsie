@@ -12,7 +12,7 @@
     "prebuild": "node scripts/build-player.mjs",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "format": "prettier --write src scripts tests next.config.ts",
-    "predev": "node scripts/build-modeling-worker.mjs"
+    "predev": "node scripts/build-player.mjs"
   },
   "engines": {
     "node": "22.x"
