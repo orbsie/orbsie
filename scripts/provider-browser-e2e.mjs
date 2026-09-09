@@ -3,6 +3,19 @@ import {
   installGenerationDiagnosticObserver,
   readGenerationDiagnostics,
 } from "./lib/generation-diagnostic-observer.mjs";
+import {
+  HOSTED_EFFORT,
+  HOSTED_MODEL,
+  HOSTED_PROVIDER,
+  HostedAcceptanceBlockedError,
+  assertHostedGenerationPayload,
+  assertHostedModelCatalog,
+  assertHostedPreflight,
+  filterHostedStorageState,
+  hostedRouteDecision,
+  statusFirstHostedGate,
+  validateHostedNDJSON,
+} from "./lib/hosted-chatgpt-acceptance.mjs";
 
 /**
  * Opt-in, provider-backed browser acceptance harness.
@@ -26,7 +39,13 @@ import { pathToFileURL } from "node:url";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 
-const PROVIDERS = new Set(["openrouter", "gateway", "free", "chatgpt-local"]);
+const PROVIDERS = new Set([
+  "openrouter",
+  "gateway",
+  "free",
+  "chatgpt-local",
+  HOSTED_PROVIDER,
+]);
 const KEY_SCOPES = new Set(["local-only", "cloud-authorized"]);
 const DEFAULT_PROMPT =
   "Build a tiny island with one tree and one crystal. Keep it simple and commit the world.";
@@ -57,6 +76,13 @@ class HarnessBlockedError extends Error {
   }
 }
 
+function isBlockedError(error) {
+  return (
+    error instanceof HarnessBlockedError ||
+    error instanceof HostedAcceptanceBlockedError
+  );
+}
+
 function parseArgs(argv) {
   const result = { provider: undefined, publication: false };
   for (let i = 0; i < argv.length; i += 1) {
@@ -74,7 +100,8 @@ function parseArgs(argv) {
           "  ORBSIE_EXPECTED_MODEL=<exact-catalog-id> \\",
           "  ORBSIE_KEY_SCOPE=local-only|cloud-authorized \\",
           "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> \\",
-          "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local",
+          "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local|chatgpt-hosted",
+          "Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state> and an exact HTTPS ORBSIE_TEST_URL.",
           "",
           "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
@@ -137,7 +164,7 @@ function readConfiguration(argv) {
   const provider = args.provider;
   if (!PROVIDERS.has(provider))
     throw new HarnessConfigurationError(
-      "--provider is required and must be openrouter, gateway, free, or chatgpt-local.",
+      "--provider is required and must be openrouter, gateway, free, chatgpt-local, or chatgpt-hosted.",
     );
   const baseValue = process.env.ORBSIE_TEST_URL ?? process.env.TEST_URL;
   if (!baseValue)
@@ -163,33 +190,61 @@ function readConfiguration(argv) {
       "ORBSIE_TEST_URL must be an origin URL without a path, query, or hash.",
     );
 
-  const keyScope = process.env.ORBSIE_KEY_SCOPE;
-  if (!KEY_SCOPES.has(keyScope))
-    throw new HarnessConfigurationError(
-      "Set ORBSIE_KEY_SCOPE to local-only or cloud-authorized; the harness never infers key scope.",
-    );
-  if (keyScope === "local-only" && !isLoopbackHostname(baseURL.hostname))
-    throw new HarnessConfigurationError(
-      "A local-only key may only be used against a loopback ORBSIE_TEST_URL.",
-    );
-  if (provider === "chatgpt-local" && keyScope !== "local-only")
-    throw new HarnessConfigurationError(
-      "chatgpt-local uses a loopback companion and requires ORBSIE_KEY_SCOPE=local-only.",
-    );
+  const hosted = provider === HOSTED_PROVIDER;
+  const keyScope = hosted ? "account-session" : process.env.ORBSIE_KEY_SCOPE;
+  if (!hosted) {
+    if (!KEY_SCOPES.has(keyScope))
+      throw new HarnessConfigurationError(
+        "Set ORBSIE_KEY_SCOPE to local-only or cloud-authorized; the harness never infers key scope.",
+      );
+    if (keyScope === "local-only" && !isLoopbackHostname(baseURL.hostname))
+      throw new HarnessConfigurationError(
+        "A local-only key may only be used against a loopback ORBSIE_TEST_URL.",
+      );
+    if (provider === "chatgpt-local" && keyScope !== "local-only")
+      throw new HarnessConfigurationError(
+        "chatgpt-local uses a loopback companion and requires ORBSIE_KEY_SCOPE=local-only.",
+      );
+  }
 
   const expectedModel = process.env.ORBSIE_EXPECTED_MODEL;
   if (!validModelId(expectedModel))
     throw new HarnessConfigurationError(
       "Set ORBSIE_EXPECTED_MODEL to the exact authorized model ID; no model fallback is allowed.",
     );
-  const authorizedTestModel =
-    provider === "chatgpt-local" ? "gpt-5.6-luna" : "openai/gpt-5.6-luna";
+  const authorizedTestModel = hosted
+    ? HOSTED_MODEL
+    : provider === "chatgpt-local"
+      ? "gpt-5.6-luna"
+      : "openai/gpt-5.6-luna";
   if (expectedModel !== authorizedTestModel)
     throw new HarnessConfigurationError(
       "Live tests are authorized for Luna only; user model selection is unaffected.",
     );
-  const outputCap =
-    provider === "chatgpt-local"
+  if (hosted) {
+    try {
+      assertHostedPreflight({
+        liveE2E: process.env.ORBSIE_LIVE_E2E,
+        baseOrigin: baseURL.origin,
+        expectedModel,
+        serviceTier: process.env.ORBSIE_SERVICE_TIER ?? "default",
+        accountStorageStatePath: process.env.ORBSIE_ACCOUNT_STORAGE_STATE,
+        interruptedRecovery:
+          process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
+        interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD,
+        companionConfigured:
+          process.env.ORBSIE_CHATGPT_COMPANION_URL !== undefined ||
+          process.env.ORBSIE_CHATGPT_COMPANION_TOKEN !== undefined,
+      });
+    } catch (error) {
+      if (error instanceof HostedAcceptanceBlockedError)
+        throw new HarnessConfigurationError(error.message);
+      throw error;
+    }
+  }
+  const outputCap = hosted
+    ? null
+    : provider === "chatgpt-local"
       ? process.env.ORBSIE_OUTPUT_CAP_TOKENS
         ? parsePositiveInteger(
             process.env.ORBSIE_OUTPUT_CAP_TOKENS,
@@ -247,6 +302,9 @@ function readConfiguration(argv) {
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
+    accountStorageStatePath: hosted
+      ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
+      : undefined,
     keyEnv:
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
@@ -368,6 +426,7 @@ function readConfiguration(argv) {
 
   if (
     (config.publication || config.cloudRecovery) &&
+    provider !== HOSTED_PROVIDER &&
     !process.env.ORBSIE_CLOUD_TEST_STATE
   )
     throw new HarnessConfigurationError(
@@ -407,7 +466,7 @@ function readConfiguration(argv) {
         "ORBSIE_CHATGPT_COMPANION_TOKEN must be the 256-bit capability printed by the companion.",
       );
     config.companionURL = companion.origin;
-  } else if (provider !== "free") {
+  } else if (provider !== "free" && provider !== HOSTED_PROVIDER) {
     // This is the only point where an API credential is read, and it is
     // unreachable unless the explicit live flag and all safety gates passed.
     const keyEnvironments = Array.isArray(config.keyEnv)
@@ -497,6 +556,22 @@ function emptyReport(config) {
     serviceTier: "default",
     keyScope: config.keyScope,
     outputCapTokens: config.outputCap,
+    ...(config.provider === HOSTED_PROVIDER
+      ? {
+          reusedConsent: false,
+          liveLogin: false,
+          liveInference: false,
+          syntheticAuthorization: false,
+          syntheticInference: false,
+          hosted: {
+            status: "blocked",
+            authStatus: "unknown",
+            lifecycle: "unknown",
+            modelsStatus: "not-started",
+            generationStatus: "not-started",
+          },
+        }
+      : {}),
     creation: {
       status: "blocked",
       operations: 0,
@@ -535,6 +610,18 @@ function emptyReport(config) {
       generationRequests: 0,
       blockedExternalRequests: 0,
       interceptedGeneration: false,
+      ...(config.provider === HOSTED_PROVIDER
+        ? {
+            hostedGenerationRequests: 0,
+            hostedGenerationAttempts: 0,
+            apiGenerationRequests: 0,
+            companionGenerationRequests: 0,
+            loopbackGenerationRequests: 0,
+            hostedPayloadErrors: [],
+            hostedViolations: [],
+            hostedNDJSON: [],
+          }
+        : {}),
     },
     evidence: [],
     error: undefined,
@@ -559,6 +646,38 @@ function storageKeyDigest(key) {
 async function installTrafficGuard(context, config, approvedOrigins, info) {
   await context.route("**/*", async (route) => {
     const requestURL = new URL(route.request().url());
+    if (config.provider === HOSTED_PROVIDER) {
+      info.hostedViolations ||= [];
+      let payload;
+      const isHostedGeneration =
+        requestURL.origin === config.baseOrigin &&
+        requestURL.pathname === "/api/chatgpt/generate" &&
+        route.request().method() === "POST";
+      if (isHostedGeneration) {
+        const generationCount = info.hostedGenerationAttempts ?? 0;
+        info.hostedGenerationAttempts = generationCount + 1;
+        try {
+          payload = route.request().postDataJSON();
+        } catch {
+          payload = undefined;
+        }
+      }
+      const decision = hostedRouteDecision({
+        url: route.request().url(),
+        method: route.request().method(),
+        generationCount: isHostedGeneration
+          ? info.hostedGenerationAttempts - 1
+          : (info.hostedGenerationRequests ?? 0),
+        consentReady: info.hostedConsentReady,
+        catalogReady: info.hostedCatalogReady,
+        payload,
+      });
+      if (decision.action === "abort") {
+        info.hostedViolations.push(decision.reason);
+        await route.abort("blockedbyclient");
+        return;
+      }
+    }
     if (
       requestURL.protocol === "data:" ||
       requestURL.protocol === "blob:" ||
@@ -580,13 +699,29 @@ function attachRequestEvidence(page, config, info) {
       requestURL.origin === config.baseOrigin &&
       requestURL.pathname === "/api/generate" &&
       request.method() === "POST";
+    const isHostedGeneration =
+      config.provider === HOSTED_PROVIDER &&
+      requestURL.origin === config.baseOrigin &&
+      requestURL.pathname === "/api/chatgpt/generate" &&
+      request.method() === "POST";
     const isCompanionGeneration =
       config.provider === "chatgpt-local" &&
       requestURL.origin === config.companionURL &&
       requestURL.pathname === "/generate" &&
       request.method() === "POST";
-    if (!isApiGeneration && !isCompanionGeneration) return;
+    if (
+      config.provider === HOSTED_PROVIDER &&
+      request.method() === "POST" &&
+      requestURL.pathname === "/generate" &&
+      isLoopbackHostname(requestURL.hostname)
+    )
+      info.loopbackGenerationRequests += 1;
+    if (!isApiGeneration && !isHostedGeneration && !isCompanionGeneration)
+      return;
     info.generationRequests += 1;
+    if (isApiGeneration) info.apiGenerationRequests += 1;
+    if (isHostedGeneration) info.hostedGenerationRequests += 1;
+    if (isCompanionGeneration) info.companionGenerationRequests += 1;
     let payload;
     try {
       payload = request.postDataJSON();
@@ -610,6 +745,30 @@ function attachRequestEvidence(page, config, info) {
         projectId: payload.project?.id ?? null,
         projectRevision: payload.project?.revision ?? null,
         selected: typeof payload.selected === "string" ? true : false,
+        selectedId:
+          typeof payload.selected === "string" ? payload.selected : null,
+      });
+    } else if (isHostedGeneration) {
+      let payloadShape;
+      try {
+        payloadShape = assertHostedGenerationPayload(payload, {
+          browserModeling: true,
+        });
+      } catch (error) {
+        info.hostedPayloadErrors.push(
+          sanitizeMessage(
+            error instanceof Error ? error.message : error,
+            config,
+          ),
+        );
+      }
+      info.generationBodies.push({
+        transport: "same-origin-hosted-chatgpt",
+        ...(payloadShape ?? { valid: false }),
+        projectSnapshot: payload.project,
+        projectId: payload.project?.id ?? null,
+        projectRevision: payload.project?.revision ?? null,
+        selected: typeof payload.selected === "string",
         selectedId:
           typeof payload.selected === "string" ? payload.selected : null,
       });
@@ -656,41 +815,60 @@ function attachRequestEvidence(page, config, info) {
     if (
       (responseURL.pathname === "/api/generate" &&
         responseURL.origin === config.baseOrigin) ||
+      (responseURL.pathname === "/api/chatgpt/generate" &&
+        responseURL.origin === config.baseOrigin) ||
       (responseURL.pathname === "/generate" &&
         responseURL.origin === config.companionURL)
     ) {
       if (response.request().method() !== "POST") return;
       info.generationStatuses.push(response.status());
-      info.diagnosticReads.push(
-        response
-          .text()
-          .then((body) => {
-            if (body.length > 1000000) return;
-            for (const line of body.split("\n")) {
-              let record;
-              try {
-                record = JSON.parse(line);
-              } catch {
-                continue;
-              }
-              if (
-                !["INVALID_SCENE_UPDATE", "INVALID_SCENE_JSON"].includes(
-                  record.code,
+      const bodyRead = response.text();
+      if (
+        config.provider === HOSTED_PROVIDER &&
+        responseURL.pathname === "/api/chatgpt/generate"
+      ) {
+        info.ndjsonReads.push(
+          bodyRead.then((body) => {
+            const contentType = response.headers()["content-type"] || "";
+            const ndjson = validateHostedNDJSON(body);
+            info.hostedNDJSON.push({
+              status: response.status(),
+              contentType: contentType.split(";", 1)[0],
+              ...ndjson,
+            });
+          }),
+        );
+      } else {
+        info.diagnosticReads.push(
+          bodyRead
+            .then((body) => {
+              if (body.length > 1000000) return;
+              for (const line of body.split("\n")) {
+                let record;
+                try {
+                  record = JSON.parse(line);
+                } catch {
+                  continue;
+                }
+                if (
+                  !["INVALID_SCENE_UPDATE", "INVALID_SCENE_JSON"].includes(
+                    record.code,
+                  )
                 )
-              )
-                continue;
-              if (info.generationDiagnostics.length >= 8) break;
-              info.generationDiagnostics.push({
-                code: record.code,
-                diagnostic: sanitizeMessage(
-                  JSON.stringify(record.diagnostic ?? {}).slice(0, 4000),
-                  config,
-                ),
-              });
-            }
-          })
-          .catch(() => {}),
-      );
+                  continue;
+                if (info.generationDiagnostics.length >= 8) break;
+                info.generationDiagnostics.push({
+                  code: record.code,
+                  diagnostic: sanitizeMessage(
+                    JSON.stringify(record.diagnostic ?? {}).slice(0, 4000),
+                    config,
+                  ),
+                });
+              }
+            })
+            .catch(() => {}),
+        );
+      }
     }
   });
 }
@@ -887,7 +1065,11 @@ async function waitForTrustedBrowserBake(page, entityId) {
 }
 
 async function setupOutputCap(page, config) {
-  if (config.provider === "chatgpt-local" || config.provider === "free")
+  if (
+    config.provider === "chatgpt-local" ||
+    config.provider === "free" ||
+    config.provider === HOSTED_PROVIDER
+  )
     return null;
   const response = await page.request.get(`${config.baseOrigin}/api/config`, {
     headers: { Origin: config.baseOrigin },
@@ -1089,7 +1271,154 @@ async function configureChatGPTLocal(page, config, report, info, evidenceDir) {
   info.catalogModel = health.model;
 }
 
+async function configureChatGPTHosted(page, config, report, info, evidenceDir) {
+  const consent = await statusFirstHostedGate({
+    readHostedStatus: async () => {
+      const result = await sameOriginJSON(page, "/api/chatgpt/status");
+      if (result.status !== 200)
+        throw new HarnessBlockedError(
+          `The hosted ChatGPT status check returned HTTP ${result.status}; sign in to Orbsie and complete ChatGPT device consent before rerunning. No generation was attempted.`,
+        );
+      return result.body;
+    },
+    readOrbsieSession: async () => {
+      const result = await sameOriginJSON(page, "/api/auth/get-session");
+      if (result.status !== 200) return null;
+      return result.body;
+    },
+  });
+  report.reusedConsent = consent.reusedConsent;
+  report.hosted.status = "connected";
+  report.hosted.authStatus = consent.authStatus;
+  report.hosted.lifecycle = consent.lifecycle;
+  info.reusedConsent = true;
+  info.hostedConsentReady = true;
+
+  const modelsResponse = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return (
+        url.origin === config.baseOrigin &&
+        url.pathname === "/api/chatgpt/models" &&
+        response.request().method() === "GET"
+      );
+    },
+    { timeout: 30000 },
+  );
+  const connections = page
+    .getByRole("button", { name: "Connections", exact: true })
+    .first();
+  await expect(connections).toBeVisible({ timeout: 30000 });
+  await connections.click();
+  const response = await modelsResponse;
+  if (!response.ok())
+    throw new HarnessBlockedError(
+      `The hosted ChatGPT model catalog returned HTTP ${response.status()}; no fallback was selected and no generation was attempted.`,
+    );
+  let catalog;
+  try {
+    catalog = await response.json();
+  } catch {
+    throw new HarnessBlockedError(
+      "The hosted ChatGPT model catalog was not JSON; no generation was attempted.",
+    );
+  }
+  let expected;
+  try {
+    expected = assertHostedModelCatalog(catalog);
+  } catch (error) {
+    if (error instanceof HostedAcceptanceBlockedError)
+      throw new HarnessBlockedError(error.message);
+    throw error;
+  }
+  const modelSelect = page.getByLabel("ChatGPT model", { exact: true });
+  await expect(modelSelect).toBeVisible({ timeout: 30000 });
+  await modelSelect.selectOption(config.expectedModel);
+  await expect(modelSelect).toHaveValue(config.expectedModel);
+  const effortSelect = page.getByLabel("ChatGPT reasoning", { exact: true });
+  await effortSelect.selectOption(HOSTED_EFFORT);
+  await expect(effortSelect).toHaveValue(HOSTED_EFFORT);
+  info.hostedCatalogReady = true;
+  await expect(
+    page.getByRole("button", { name: "Use ChatGPT", exact: false }),
+  ).toBeEnabled();
+  await page.screenshot({
+    path: join(evidenceDir, "connection-chatgpt-hosted.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Use ChatGPT", exact: false }).click();
+  await expect(page.locator(".mode-button")).toContainText(
+    `ChatGPT · ${config.expectedModel}`,
+  );
+  await assertNoStoredKey(page, config);
+  report.hosted.modelsStatus = "passed";
+  report.hosted.catalogModel = expected.model;
+  report.hosted.catalogEffort = expected.effort;
+  report.evidence.push("connection-chatgpt-hosted.png");
+  info.catalogModel = expected.model;
+  info.catalogEffort = expected.effort;
+}
+
 function assertGenerationRequests(config, info) {
+  if (config.provider === HOSTED_PROVIDER) {
+    assert.equal(
+      info.hostedGenerationRequests,
+      2,
+      `Expected exactly two hosted ChatGPT generation requests (creation and edit), observed ${info.hostedGenerationRequests}.`,
+    );
+    assert.equal(
+      info.hostedGenerationAttempts,
+      2,
+      `Expected exactly two hosted ChatGPT generation attempts (creation and edit), observed ${info.hostedGenerationAttempts}.`,
+    );
+    assert.equal(
+      info.apiGenerationRequests,
+      0,
+      "Hosted ChatGPT acceptance made an unexpected /api/generate request.",
+    );
+    assert.equal(
+      info.companionGenerationRequests,
+      0,
+      "Hosted ChatGPT acceptance made an unexpected companion generation request.",
+    );
+    assert.equal(
+      info.loopbackGenerationRequests,
+      0,
+      "Hosted ChatGPT acceptance made an unexpected loopback generation request.",
+    );
+    assert.deepEqual(
+      info.hostedViolations,
+      [],
+      "Hosted ChatGPT acceptance blocked a forbidden request.",
+    );
+    assert.equal(
+      info.interceptedGeneration,
+      false,
+      "A hosted ChatGPT generation request was not a complete live request.",
+    );
+    assert.deepEqual(
+      info.generationStatuses,
+      [200, 200],
+      "Hosted ChatGPT generation did not return two successful responses.",
+    );
+    assert.deepEqual(
+      info.hostedPayloadErrors,
+      [],
+      "A hosted ChatGPT generation payload violated the browser-only contract.",
+    );
+    assert.equal(
+      info.hostedNDJSON.length,
+      2,
+      "Hosted ChatGPT did not produce two observed NDJSON responses.",
+    );
+    for (const response of info.hostedNDJSON) {
+      assert.equal(response.status, 200);
+      assert.equal(response.contentType, "application/x-ndjson");
+      assert.equal(response.valid, true);
+      assert(response.recordCount > 0);
+    }
+    return;
+  }
   const expectedCount = config.interruptedRecovery ? 3 : 2;
   assert.equal(
     info.generationRequests,
@@ -1507,6 +1836,36 @@ async function readExplicitCloudStorageState(config) {
       "Interrupted recovery requires an authenticated cloud storageState with session cookies; no inference was attempted.",
     );
   return storageState;
+}
+
+async function readHostedAccountStorageState(config) {
+  let mode;
+  try {
+    mode = await stat(config.accountStorageStatePath);
+  } catch {
+    throw new HarnessBlockedError(
+      "ORBSIE_ACCOUNT_STORAGE_STATE could not be opened; supply the private authenticated Orbsie storage state and rerun. No generation was attempted.",
+    );
+  }
+  if (!mode.isFile() || (mode.mode & 0o077) !== 0)
+    throw new HarnessBlockedError(
+      "ORBSIE_ACCOUNT_STORAGE_STATE must be a regular mode 0600-or-stricter file; no generation was attempted.",
+    );
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(config.accountStorageStatePath, "utf8"));
+  } catch {
+    throw new HarnessBlockedError(
+      "ORBSIE_ACCOUNT_STORAGE_STATE was not valid JSON; no generation was attempted.",
+    );
+  }
+  try {
+    return filterHostedStorageState(parsed, config.baseOrigin);
+  } catch (error) {
+    if (error instanceof HostedAcceptanceBlockedError)
+      throw new HarnessBlockedError(error.message);
+    throw error;
+  }
 }
 
 async function sameOriginJSON(page, path) {
@@ -2524,8 +2883,48 @@ async function run(config) {
     blockedExternalOrigins: new Set(),
     interceptedGeneration: false,
     catalogModel: null,
+    catalogEffort: null,
+    reusedConsent: false,
+    hostedConsentReady: false,
+    hostedCatalogReady: false,
+    hostedViolations: [],
+    hostedGenerationRequests: 0,
+    hostedGenerationAttempts: 0,
+    apiGenerationRequests: 0,
+    companionGenerationRequests: 0,
+    loopbackGenerationRequests: 0,
+    hostedPayloadErrors: [],
+    hostedNDJSON: [],
+    ndjsonReads: [],
   };
-  const storageState = await readExplicitCloudStorageState(config);
+  let storageState;
+  try {
+    storageState =
+      config.provider === HOSTED_PROVIDER
+        ? await readHostedAccountStorageState(config)
+        : await readExplicitCloudStorageState(config);
+  } catch (error) {
+    report.error = sanitizedError(error, config);
+    report.traffic = {
+      generationRequests: 0,
+      blockedExternalRequests: 0,
+      interceptedGeneration: false,
+      ...(config.provider === HOSTED_PROVIDER
+        ? {
+            hostedGenerationRequests: 0,
+            hostedGenerationAttempts: 0,
+            apiGenerationRequests: 0,
+            companionGenerationRequests: 0,
+            loopbackGenerationRequests: 0,
+            hostedPayloadErrors: [],
+            hostedViolations: [],
+            hostedNDJSON: [],
+          }
+        : {}),
+    };
+    await writeReport(report, config);
+    throw error;
+  }
   const browser = await chromium.launch({
     headless: process.env.ORBSIE_HEADLESS !== "0",
     args: [
@@ -2551,6 +2950,8 @@ async function run(config) {
     await setupOutputCap(page, config);
     if (config.provider === "chatgpt-local")
       await configureChatGPTLocal(page, config, report, info, evidenceDir);
+    else if (config.provider === HOSTED_PROVIDER)
+      await configureChatGPTHosted(page, config, report, info, evidenceDir);
     else if (config.provider === "free")
       await setupFreeTrial(page, config, report);
     else await configureApiProvider(page, config, report, info, evidenceDir);
@@ -3102,6 +3503,13 @@ async function run(config) {
     report.evidence.push("edit.png");
     await assertNoStoredKey(page, config);
 
+    if (config.provider === HOSTED_PROVIDER) {
+      await Promise.allSettled(info.ndjsonReads);
+      assertGenerationRequests(config, info);
+      report.liveInference = true;
+      report.hosted.generationStatus = "passed";
+    }
+
     const expectedRevision = projectAfterEdit.revision;
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(
@@ -3194,9 +3602,26 @@ async function run(config) {
       throw new HarnessBlockedError(
         `The explicit publication phase was blocked: ${report.publication.status}.`,
       );
+    await Promise.allSettled(info.ndjsonReads);
     assertGenerationRequests(config, info);
+    if (config.provider === HOSTED_PROVIDER) {
+      report.liveInference = true;
+      report.hosted.generationStatus = "passed";
+    }
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...(config.provider === HOSTED_PROVIDER
+        ? {
+            hostedGenerationRequests: info.hostedGenerationRequests,
+            hostedGenerationAttempts: info.hostedGenerationAttempts,
+            apiGenerationRequests: info.apiGenerationRequests,
+            companionGenerationRequests: info.companionGenerationRequests,
+            loopbackGenerationRequests: info.loopbackGenerationRequests,
+            hostedPayloadErrors: info.hostedPayloadErrors,
+            hostedViolations: info.hostedViolations,
+            hostedNDJSON: info.hostedNDJSON,
+          }
+        : {}),
       generationStatuses: info.generationStatuses,
       generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
@@ -3231,8 +3656,7 @@ async function run(config) {
     )
       report.cloudRecovery.interruptedRecovery.status = "failed";
     if (report.publication.status === "not-started" && config.publication)
-      report.publication.status =
-        error instanceof HarnessBlockedError ? "blocked" : "failed";
+      report.publication.status = isBlockedError(error) ? "blocked" : "failed";
     try {
       await page.screenshot({
         path: join(evidenceDir, "failure.png"),
@@ -3244,6 +3668,18 @@ async function run(config) {
     }
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...(config.provider === HOSTED_PROVIDER
+        ? {
+            hostedGenerationRequests: info.hostedGenerationRequests,
+            hostedGenerationAttempts: info.hostedGenerationAttempts,
+            apiGenerationRequests: info.apiGenerationRequests,
+            companionGenerationRequests: info.companionGenerationRequests,
+            loopbackGenerationRequests: info.loopbackGenerationRequests,
+            hostedPayloadErrors: info.hostedPayloadErrors,
+            hostedViolations: info.hostedViolations,
+            hostedNDJSON: info.hostedNDJSON,
+          }
+        : {}),
       generationStatuses: info.generationStatuses,
       generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
@@ -3254,6 +3690,18 @@ async function run(config) {
   } finally {
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...(config.provider === HOSTED_PROVIDER
+        ? {
+            hostedGenerationRequests: info.hostedGenerationRequests,
+            hostedGenerationAttempts: info.hostedGenerationAttempts,
+            apiGenerationRequests: info.apiGenerationRequests,
+            companionGenerationRequests: info.companionGenerationRequests,
+            loopbackGenerationRequests: info.loopbackGenerationRequests,
+            hostedPayloadErrors: info.hostedPayloadErrors,
+            hostedViolations: info.hostedViolations,
+            hostedNDJSON: info.hostedNDJSON,
+          }
+        : {}),
       generationStatuses: info.generationStatuses,
       generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
@@ -3282,10 +3730,9 @@ async function main() {
     if (config) {
       report ||= emptyReport(config);
       report.error = sanitizedError(error, config);
+      const blocked = isBlockedError(error);
       report.publication.status =
-        config.publication && error instanceof HarnessBlockedError
-          ? "blocked"
-          : report.publication.status;
+        config.publication && blocked ? "blocked" : report.publication.status;
       // run() writes its progress and sanitized failure evidence before
       // rethrowing. Configuration failures occur before run() starts and need
       // their initial report written here.
@@ -3293,7 +3740,7 @@ async function main() {
         ? join(REPORT_DIR, `${config.provider}.json`)
         : await writeReport(report, config);
       console.error(
-        `Provider browser E2E ${error instanceof HarnessBlockedError ? "blocked" : "failed"}; sanitized report: ${reportPath}`,
+        `Provider browser E2E ${blocked ? "blocked" : "failed"}; sanitized report: ${reportPath}`,
       );
       console.error(report.error);
     } else {

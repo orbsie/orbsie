@@ -54,9 +54,11 @@ selection remains unrestricted among the product's supported models.
 
 ## Running the hosted milestone
 
-Implementation review and synthetic harness checks are still pending. The
-command below documents the intended live invocation; it is not a record of
-successful subscription acceptance.
+The hosted mode is implemented and reviewed. Seven focused synthetic tests
+pass, including CLI blocked-report creation, request boundaries and stream
+completion checks; syntax checks also pass. These checks do not prove real
+subscription consent or inference. The command below is the live invocation,
+not a record of successful subscription acceptance.
 
 After the owner supplies an expressly authorized, private cookies-only
 Orbsie storage-state file and completes ChatGPT consent in the product:
