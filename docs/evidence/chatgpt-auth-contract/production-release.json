@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "source": "b8cc648",
+  "deployment": "dpl_6UPQyCvoKeYTceJCwxY11YxzdRzV",
+  "url": "https://orbsie.com",
+  "hostedEnabled": true,
+  "generationEnabled": true,
+  "signedOutGate": true,
+  "errors": [],
+  "liveLogin": false,
+  "inference": false
+}
