@@ -32,6 +32,10 @@ for (const route of ["[action]", "generate"]) {
       !relative.startsWith("docs/"),
       "Deployment must not trace project evidence",
     );
+    assert(
+      !/^(test-results|playwright-report)\//.test(relative),
+      "Deployment must not trace browser test output",
+    );
   }
 }
 const manifest = JSON.parse(

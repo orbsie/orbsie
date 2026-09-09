@@ -2,6 +2,8 @@ docs/
 .env*
 .vercel/
 tests/
+test-results/
+playwright-report/
 .superpowers/
 .codex/
 scripts/verify-*
