@@ -249,6 +249,7 @@ function readConfiguration(argv) {
           : undefined,
     requireNewOnly: process.env.ORBSIE_REQUIRE_NEW_ONLY === "1",
     requireBrowserModel: process.env.ORBSIE_REQUIRE_BROWSER_MODEL === "1",
+    requireExtrusion: process.env.ORBSIE_REQUIRE_EXTRUSION === "1",
     requireInputGame: process.env.ORBSIE_REQUIRE_INPUT_GAME === "1",
   };
 
@@ -656,19 +657,23 @@ async function observerEvidence(page) {
 }
 
 async function waitForSavedProject(page, minRevision, assistantCount = 0) {
-  await expect
-    .poll(
-      async () => {
-        const snapshot = await storageSnapshot(page);
-        return (
-          snapshot.project?.messages.filter(
-            (message) => message.role === "assistant",
-          ).length ?? 0
-        );
-      },
-      { timeout: 180000 },
-    )
-    .toBeGreaterThanOrEqual(assistantCount);
+  const deadline = Date.now() + 180000;
+  while (true) {
+    const failure = page.locator(".toast.error");
+    if (await failure.isVisible())
+      throw new Error(
+        `Generation failed before saving: ${await failure.innerText()}`,
+      );
+    const snapshot = await storageSnapshot(page);
+    const replies =
+      snapshot.project?.messages.filter(
+        (message) => message.role === "assistant",
+      ).length ?? 0;
+    if (replies >= assistantCount) break;
+    if (Date.now() >= deadline)
+      throw new Error("Generation did not save a reply within 180 seconds.");
+    await page.waitForTimeout(250);
+  }
   await expect(
     page.getByRole("button", { name: "Stop", exact: true }),
   ).toHaveCount(0, { timeout: 180000 });
@@ -2535,6 +2540,16 @@ async function run(config) {
               entity.geometry?.kind === "generated" && entity.geometry.model,
           )
         : projectAfterCreation.entities[0];
+    if (config.requireExtrusion) {
+      assert(
+        targetBefore?.geometry?.job?.backend === "browser-manifold" &&
+          targetBefore.geometry.job.recipe.nodes.some(
+            (node) => node.kind === "extrude",
+          ),
+        "The live model did not produce the required browser extrusion.",
+      );
+      report.creation.browserExtrusion = true;
+    }
     assert(
       targetBefore,
       "The visible object list did not map to a committed entity.",
