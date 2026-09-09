@@ -56,7 +56,13 @@ export function createChatGPTSandboxBackend(options: {
       const files = await Promise.all(
         ["server.mjs", "package.json"].map(async (path) => ({
           path,
-          content: await readFile(join(options.artifactDirectory, path)),
+          // Deployment files are explicitly traced in next.config.ts.
+          content: await readFile(
+            /* turbopackIgnore: true */ join(
+              /* turbopackIgnore: true */ options.artifactDirectory,
+              path,
+            ),
+          ),
         })),
       );
       const sandbox = await Sandbox.create({
