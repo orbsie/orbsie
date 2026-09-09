@@ -61,7 +61,7 @@ Bake static assets to validated GLB or equivalent retained mesh assets with mate
 
 Track time to first reservation and recognizable object, refinement time, successful targeted revisions, visual correctness, model token use, cancellation latency, frame-time percentiles, input latency, CPU/RAM and GPU memory where measurable. Record cold/warm kernels, idle versus active construction, hardware/browser and software-rendering limitations. Set budgets before claiming release readiness.
 
-Prove create/edit and cancellation in actual browser workers; prove undo/replay/reload and preservation of unrelated play state; inspect rendered shapes; verify resource cleanup and invalid/stale result rejection. Run desktop/mobile and representative normal-GPU checks. Full provider acceptance includes independently published signed-out play; token permissions and Gateway funding remain separate configuration gates.
+Prove create/edit and cancellation in actual browser workers; prove undo/replay/reload and preservation of unrelated play state; inspect rendered shapes; verify resource cleanup and invalid/stale result rejection. Run desktop/mobile and representative normal-GPU checks. Full provider acceptance includes independently published signed-out play; Gateway funding remains a separate configuration gate. Vercel deployment permissions were repaired and an existing saved game reached READY with signed-out rendering evidence; the new SDK publication workflow still requires its own acceptance.
 
 The native package/source acquisition already underway may finish as reusable optional-backend work. It must not delay the SDK prototype, imply native delivery is complete, or substitute for browser modeling tests.
 
@@ -79,7 +79,7 @@ Reviewed entry points; pin versions and recheck exact APIs/licenses during imple
 
 License approval must cover wrappers, kernels, workers, WASM assets and transitive dependencies. Do not infer one uniform license from a wrapper's repository license.
 
-## Current-code integration map
+## Initial integration map (historical baseline)
 
 Inspection after the architecture revision identifies these integration boundaries:
 
@@ -90,3 +90,9 @@ Inspection after the architecture revision identifies these integration boundari
 - `src/lib/generated-geometry-queue.ts` and `generated-geometry-core.ts` already handle bounded GLB decoding and formation geometry. Reuse this downstream path for validated baked browser output; add a separate construction worker so decoding and authoring lifecycles are not confused. The existing static player-worker bundling pattern can inform deployment, while baked public players should omit unused authoring kernels.
 
 First bounded implementation task: browser recipe schema, graph validator and focused tests for valid subtraction, targeted node revision, duplicate/missing/cyclic references and resource bounds. Then prototype the kernel adapter against that contract. Capability discovery must not advertise the new backend until actual worker execution and scene integration pass.
+
+## Implementation checkpoint
+
+The recipe graph validator, direct Manifold evaluator, cancellable single-worker queue, GLB baker, and browser provenance variant are implemented. Real Chromium evidence covers worker evaluation, immediate queue cancellation/recovery, GLB persistence/reload and rendered arch inspection. Hard-edge shading was corrected and verified in commit `ce272a8`.
+
+Store/protocol dispatch is under review. Provider prompts and request capabilities have not yet been connected, so browser modeling is not advertised as an accepted end-to-end feature. Next gate: complete store cancellation/provenance tests, connect capability transport consistently across OpenRouter/Gateway/ChatGPT, then exercise the real editor before live-provider acceptance. The general procedural vocabulary, restricted interpreter, representative performance and full provider/publication milestone remain open.
