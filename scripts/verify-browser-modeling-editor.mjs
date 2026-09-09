@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Real editor/worker/storage acceptance with deterministic provider responses.
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { createServer } from "node:http";
+import { unzipSync, strFromU8 } from "fflate";
 import { chromium, expect } from "@playwright/test";
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 const url = process.env.TEST_URL ?? "http://localhost:3047";
@@ -9,49 +12,75 @@ const output = process.argv[2];
 if (!output) throw Error("Provide a new evidence directory.");
 await mkdir(output, { recursive: false });
 const extrusion = process.env.ORBSIE_MODELING_SHAPE === "extrusion";
-const label = extrusion ? "Browser prism" : "Browser arch";
+const revolution = process.env.ORBSIE_MODELING_SHAPE === "revolution";
+const label = revolution
+  ? "Browser vase"
+  : extrusion
+    ? "Browser prism"
+    : "Browser arch";
 const recipe = (revision, radius) =>
-  extrusion
+  revolution
     ? {
         version: 1,
         revision,
-        output: "prism",
+        output: "vase",
         nodes: [
           {
-            id: "prism",
-            kind: "extrude",
+            id: "vase",
+            kind: "revolve",
             profile: [
-              [-1.5, -1],
-              [1.5, -1],
-              [0, 1.5],
+              [0, -1],
+              [0.5, -1],
+              [radius, -0.4],
+              [radius, 0.3],
+              [0.6, 1],
+              [0, 1],
             ],
-            depth: radius,
+            segments: 32,
           },
         ],
       }
-    : {
-        version: 1,
-        revision,
-        output: "arch",
-        nodes: [
-          { id: "body", kind: "box", size: [4, 3, 1] },
-          { id: "hole", kind: "cylinder", radius, depth: 2, axis: "z" },
-          {
-            id: "placed",
-            kind: "transform",
-            input: "hole",
-            position: [0, -1, 0],
-            rotation: [0, 0, 0],
-            scale: [1, 1, 1],
-          },
-          {
-            id: "arch",
-            kind: "boolean",
-            operation: "subtract",
-            operands: ["body", "placed"],
-          },
-        ],
-      };
+    : extrusion
+      ? {
+          version: 1,
+          revision,
+          output: "prism",
+          nodes: [
+            {
+              id: "prism",
+              kind: "extrude",
+              profile: [
+                [-1.5, -1],
+                [1.5, -1],
+                [0, 1.5],
+              ],
+              depth: radius,
+            },
+          ],
+        }
+      : {
+          version: 1,
+          revision,
+          output: "arch",
+          nodes: [
+            { id: "body", kind: "box", size: [4, 3, 1] },
+            { id: "hole", kind: "cylinder", radius, depth: 2, axis: "z" },
+            {
+              id: "placed",
+              kind: "transform",
+              input: "hole",
+              position: [0, -1, 0],
+              rotation: [0, 0, 0],
+              scale: [1, 1, 1],
+            },
+            {
+              id: "arch",
+              kind: "boolean",
+              operation: "subtract",
+              operands: ["body", "placed"],
+            },
+          ],
+        };
 const geometry = (revision, radius) => ({
   kind: "generated",
   detail: "refined",
@@ -59,6 +88,7 @@ const geometry = (revision, radius) => ({
 });
 const report = {
   mode: "fixture-provider-real-editor-worker",
+  shape: revolution ? "revolution" : extrusion ? "extrusion" : "arch",
   requests: 0,
   pageErrors: [],
   blocked: [],
@@ -73,6 +103,7 @@ const browser = await chromium.launch({
   ],
 });
 let page;
+let exportServer;
 try {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
@@ -80,8 +111,6 @@ try {
   });
   await context.route("**/*", async (route) => {
     const target = new URL(route.request().url());
-    if (target.hostname === "fonts.googleapis.com")
-      return route.fulfill({ contentType: "text/css", body: "" });
     if (
       target.origin !== new URL(url).origin &&
       /^https?:$/.test(target.protocol)
@@ -141,9 +170,11 @@ try {
   await page
     .getByPlaceholder("What experience to build?")
     .fill(
-      extrusion
-        ? "Build a triangular prism from an outline"
-        : "Build a new stone arch",
+      revolution
+        ? "Build a new vase by revolving a profile"
+        : extrusion
+          ? "Build a triangular prism from an outline"
+          : "Build a new stone arch",
     );
   await page.getByRole("button", { name: "Create", exact: true }).click();
   const saved = async (revision) => {
@@ -170,7 +201,13 @@ try {
   await page.getByRole("button", { name: label }).click();
   await page
     .locator("#prompt")
-    .fill(extrusion ? "Make the extrusion deeper" : "Make the opening wider");
+    .fill(
+      revolution
+        ? "Make the vase wider"
+        : extrusion
+          ? "Make the extrusion deeper"
+          : "Make the opening wider",
+    );
   await page.getByRole("button", { name: "Change this", exact: true }).click();
   const edited = await saved(1);
   assert.equal(edited.entities.length, 1);
@@ -183,6 +220,23 @@ try {
     before: first.entities[0].geometry.model.sha256,
     after: edited.entities[0].geometry.model.sha256,
   };
+  if (revolution) {
+    const before = first.entities[0].geometry.model.bounds;
+    const after = edited.entities[0].geometry.model.bounds;
+    assert(
+      Math.abs(after.min[1] + 1) < 1e-5 && Math.abs(after.max[1] - 1) < 1e-5,
+      "Revolution must preserve explicit Y heights",
+    );
+    assert(
+      after.max[0] - after.min[0] > before.max[0] - before.min[0],
+      "The radius edit must widen the actual mesh",
+    );
+    assert(
+      Math.abs(after.max[0] - after.max[2]) < 1e-5,
+      "Revolution radial axes must be X/Z",
+    );
+    report.checks.yUpRevolutionBounds = true;
+  }
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/edited.png` });
   await page.reload();
@@ -199,6 +253,80 @@ try {
   assert.deepEqual(reopened.entities, edited.entities);
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/reloaded.png` });
+  await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: /^Download your world/ }).click();
+  const download = await downloading;
+  await download.saveAs(`${output}/world.zip`);
+  const files = unzipSync(
+    new Uint8Array(await readFile(`${output}/world.zip`)),
+  );
+  const exported = JSON.parse(strFromU8(files["project.json"]));
+  assert.deepEqual(
+    exported.entities,
+    JSON.parse(JSON.stringify(reopened.entities)),
+  );
+  const modelHash = reopened.entities[0].geometry.model.sha256;
+  const baked = files[`models/generated/${modelHash}.glb`];
+  assert(baked, "Export must include the generated mesh");
+  assert.equal(createHash("sha256").update(baked).digest("hex"), modelHash);
+  assert(
+    files["runtime.js"] && files["index.html"],
+    "Export must include the player",
+  );
+  report.checks.bakedExport = true;
+  const served = new Set();
+  exportServer = createServer((request, response) => {
+    const name =
+      new URL(request.url, "http://localhost").pathname.slice(1) ||
+      "index.html";
+    const content = files[name];
+    if (!content) {
+      response.writeHead(404).end();
+      return;
+    }
+    served.add(name);
+    const extension = name.split(".").pop();
+    const types = {
+      html: "text/html",
+      js: "text/javascript",
+      css: "text/css",
+      json: "application/json",
+      wasm: "application/wasm",
+      glb: "model/gltf-binary",
+      png: "image/png",
+    };
+    response.writeHead(200, {
+      "Content-Type": types[extension] || "application/octet-stream",
+    });
+    response.end(content);
+  });
+  await new Promise((resolve) => exportServer.listen(0, "127.0.0.1", resolve));
+  const exportOrigin = `http://127.0.0.1:${exportServer.address().port}`;
+  const standalone = await browser.newContext();
+  await standalone.route("**/*", (route) => {
+    if (new URL(route.request().url()).origin !== exportOrigin) {
+      report.blocked.push(route.request().url());
+      return route.abort();
+    }
+    return route.continue();
+  });
+  const player = await standalone.newPage();
+  player.on("pageerror", (error) => report.pageErrors.push(error.message));
+  await player.goto(exportOrigin);
+  await expect(player.locator('main[data-ready="true"]')).toBeVisible();
+  await expect
+    .poll(() => served.has(`models/generated/${modelHash}.glb`))
+    .toBe(true);
+  // The player-ready marker precedes asset decoding and the bounded formation.
+  // Capture after that transition, then inspect the rendered artifact separately.
+  await player.waitForTimeout(2000);
+  await expect(
+    player.getByText(/could not be loaded|could not open/i),
+  ).toHaveCount(0);
+  await player.screenshot({ path: `${output}/standalone.png` });
+  await standalone.close();
+  report.checks.standaloneRendering = true;
   assert.equal(report.requests, 2);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.blocked, []);
@@ -220,4 +348,5 @@ try {
 } finally {
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));
   await browser.close();
+  if (exportServer) await new Promise((resolve) => exportServer.close(resolve));
 }

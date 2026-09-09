@@ -47,6 +47,12 @@ export interface BrowserModelKernel {
     profile: [number, number][],
     depth: number,
   ): BrowserModelKernelManifold;
+  /** Construct a full Z-axis revolve from a radius/height profile. */
+  revolve(
+    profile: [number, number][],
+    segments: number,
+    degrees: number,
+  ): BrowserModelKernelManifold;
 }
 
 export interface BrowserModelMeshBounds {
@@ -283,6 +289,14 @@ export function evaluateBrowserModelRecipe(
           node.id,
         );
         object = own(extruded.translate([0, 0, -node.depth / 2]), node.id);
+        break;
+      }
+      case "revolve": {
+        const revolved = own(
+          kernel.revolve(normalizedProfile(node.profile), node.segments, 360),
+          node.id,
+        );
+        object = own(revolved.rotate([-90, 0, 0]), node.id);
         break;
       }
       case "transform": {

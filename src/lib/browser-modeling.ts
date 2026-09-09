@@ -66,6 +66,26 @@ const extrudeNodeSchema = z
   })
   .strict();
 
+const revolveRadius = z
+  .number()
+  .finite()
+  .max(MAX_COORDINATE_METERS)
+  .refine((value) => value >= 0, {
+    message: "Revolve profile radius must be nonnegative.",
+  });
+
+const revolveNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("revolve"),
+    profile: z
+      .array(z.tuple([revolveRadius, coordinate]))
+      .min(3)
+      .max(64),
+    segments: segments.default(32),
+  })
+  .strict();
+
 const transformNodeSchema = z
   .object({
     id: identifier,
@@ -92,6 +112,7 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   sphereNodeSchema,
   cylinderNodeSchema,
   extrudeNodeSchema,
+  revolveNodeSchema,
   transformNodeSchema,
   booleanNodeSchema,
 ]);
@@ -112,7 +133,7 @@ function graphIssue(message: string, path: (string | number)[] = []) {
   return { code: "custom" as const, message, path };
 }
 
-type ExtrudeProfile = readonly (readonly [number, number])[];
+type PolygonProfile = readonly (readonly [number, number])[];
 
 function cross(ax: number, ay: number, bx: number, by: number): number {
   return ax * by - ay * bx;
@@ -175,7 +196,10 @@ function segmentsIntersect(
   );
 }
 
-function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
+function polygonProfileIssue(
+  profile: PolygonProfile,
+  profileName: string,
+): string | undefined {
   const epsilon = 1e-10;
   const points = profile;
   for (let first = 0; first < points.length; first += 1) {
@@ -184,7 +208,7 @@ function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
         points[first][0] === points[second][0] &&
         points[first][1] === points[second][1]
       )
-        return "Extrude profile vertices must be distinct.";
+        return `${profileName} vertices must be distinct.`;
     }
   }
 
@@ -195,7 +219,7 @@ function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
     const edgeX = next[0] - points[index][0];
     const edgeY = next[1] - points[index][1];
     if (edgeX * edgeX + edgeY * edgeY <= epsilon)
-      return "Extrude profile edges must have nonzero length.";
+      return `${profileName} edges must have nonzero length.`;
 
     const previous = points[(index + points.length - 1) % points.length];
     const previousX = points[index][0] - previous[0];
@@ -204,10 +228,10 @@ function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
       Math.abs(cross(previousX, previousY, edgeX, edgeY)) <= epsilon &&
       previousX * edgeX + previousY * edgeY < -epsilon
     )
-      return "Extrude profile must not backtrack along an edge.";
+      return `${profileName} must not backtrack along an edge.`;
   }
   if (Math.abs(twiceArea) <= epsilon)
-    return "Extrude profile must enclose a nonzero area.";
+    return `${profileName} must enclose a nonzero area.`;
 
   for (let first = 0; first < points.length; first += 1) {
     const firstEnd = (first + 1) % points.length;
@@ -224,7 +248,7 @@ function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
           points[secondEnd],
         )
       )
-        return "Extrude profile edges must not intersect.";
+        return `${profileName} edges must not intersect.`;
     }
   }
   return undefined;
@@ -264,8 +288,11 @@ export const browserModelRecipeSchema =
     };
 
     recipe.nodes.forEach((node, index) => {
-      if (node.kind === "extrude") {
-        const issue = extrudeProfileIssue(node.profile);
+      if (node.kind === "extrude" || node.kind === "revolve") {
+        const issue = polygonProfileIssue(
+          node.profile,
+          node.kind === "extrude" ? "Extrude profile" : "Revolve profile",
+        );
         if (issue)
           context.addIssue(graphIssue(issue, ["nodes", index, "profile"]));
       }

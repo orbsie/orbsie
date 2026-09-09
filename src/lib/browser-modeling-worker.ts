@@ -50,6 +50,8 @@ function createKernel(manifold: ManifoldModule): BrowserModelKernel {
         segments,
         center,
       ),
+    revolve: (profile, segments, degrees) =>
+      manifold.Manifold.revolve(profile, segments, degrees),
   };
 }
 

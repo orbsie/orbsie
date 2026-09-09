@@ -1,0 +1,18 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "shape": "revolution",
+  "requests": 2,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "45c0a53e3ae0e6a62e4ebd7dfb5bcb67313a0663067b2ca16e4188ef0c623411",
+      "after": "660ee7a63afd1e9607532f113b2e871745fb762cf68f3505dc6a2f385767b627"
+    },
+    "yUpRevolutionBounds": true,
+    "bakedExport": true,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

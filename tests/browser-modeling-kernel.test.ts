@@ -137,6 +137,12 @@ function fakeKernel(
       );
       return new FakeManifold("extrude", log, mesh, status);
     },
+    revolve: (profile, segments, degrees) => {
+      log.push(
+        `revolve:${profile.map((point) => point.join(",")).join(";")}:${segments}:${degrees}`,
+      );
+      return new FakeManifold("revolve", log, mesh, status);
+    },
   };
 }
 
@@ -264,6 +270,39 @@ describe("browser modeling kernel adapter", () => {
     expect(log).toContain("translate:extrude:0,0,-1");
   });
 
+  it("normalizes revolve winding, rotates Z-up output to Y-up, and cleans both outputs", () => {
+    const log: string[] = [];
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "profile",
+      nodes: [
+        {
+          id: "profile",
+          kind: "revolve",
+          profile: [
+            [0, -1],
+            [1, -1],
+            [1, 1],
+            [0, 1],
+          ],
+          segments: 24,
+        },
+      ],
+    });
+    evaluateBrowserModelRecipe(recipe, fakeKernel(log));
+    expect(log).toContain("revolve:0,-1;1,-1;1,1;0,1:24:360");
+    expect(log).toContain("rotate:revolve:-90,0,0");
+    const creates = log.filter((entry) => entry.startsWith("create:"));
+    const deletes = log.filter((entry) => entry.startsWith("delete:"));
+    expect(deletes).toEqual(
+      creates
+        .slice()
+        .reverse()
+        .map((entry) => entry.replace("create:", "delete:")),
+    );
+  });
+
   it("deletes every owned backend object when the backend reports an error", () => {
     const log: string[] = [];
     const recipe = parseBrowserModelRecipe({
@@ -387,6 +426,8 @@ describe("browser modeling kernel adapter", () => {
       cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
         wasm.Manifold.cylinder(depth, radiusLow, radiusHigh, segments, center),
       extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
+      revolve: (profile, segments, degrees) =>
+        wasm.Manifold.revolve(profile, segments, degrees),
     });
     for (let axis = 0; axis < 3; axis += 1) {
       expect(result.bounds.min[axis]).toBeCloseTo(expectedMin[axis], 6);
@@ -425,5 +466,61 @@ describe("browser modeling kernel adapter", () => {
         5,
       );
     }
+  });
+
+  it("revolves the vase profile around Y with equivalent winding and bounded width", async () => {
+    const [{ default: Module }] = await Promise.all([import("manifold-3d")]);
+    const wasm = await Module();
+    wasm.setup();
+    const counterClockwise = [
+      [0, -1],
+      [0.5, -1],
+      [1.25, -0.4],
+      [1.25, 0.3],
+      [0.6, 1],
+      [0, 1],
+    ] as [number, number][];
+    const evaluations = [];
+    for (const profile of [
+      counterClockwise,
+      counterClockwise.slice().reverse(),
+    ]) {
+      const recipe = parseBrowserModelRecipe({
+        version: 1,
+        revision: 7,
+        output: "vase",
+        nodes: [{ id: "vase", kind: "revolve", profile }],
+      });
+      evaluations.push(
+        evaluateBrowserModelRecipe(recipe, {
+          cube: (size, center) => wasm.Manifold.cube(size, center),
+          sphere: (radius, segments) => wasm.Manifold.sphere(radius, segments),
+          cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
+            wasm.Manifold.cylinder(
+              depth,
+              radiusLow,
+              radiusHigh,
+              segments,
+              center,
+            ),
+          extrude: (extrudeProfile, depth) =>
+            wasm.Manifold.extrude(extrudeProfile, depth),
+          revolve: (revolveProfile, segments, degrees) =>
+            wasm.Manifold.revolve(revolveProfile, segments, degrees),
+        }),
+      );
+    }
+    for (const result of evaluations) {
+      expect(result.bounds.min).toEqual([-1.25, -1, -1.25]);
+      expect(result.bounds.max).toEqual([1.25, 1, 1.25]);
+      expect(result.statistics.triangles).toBeGreaterThan(0);
+    }
+    expect(evaluations[0].statistics).toEqual(evaluations[1].statistics);
+    expect(
+      absoluteMeshVolume(evaluations[0].vertices, evaluations[0].indices),
+    ).toBeCloseTo(
+      absoluteMeshVolume(evaluations[1].vertices, evaluations[1].indices),
+      5,
+    );
   });
 });

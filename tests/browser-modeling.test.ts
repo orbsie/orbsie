@@ -75,6 +75,147 @@ describe("browser modeling recipe contract", () => {
     }
   });
 
+  it("accepts a full revolve profile with a default segment count", () => {
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "vase",
+      nodes: [
+        {
+          id: "vase",
+          kind: "revolve",
+          profile: [
+            [0, -1],
+            [0.5, -1],
+            [1.25, -0.4],
+            [1.25, 0.3],
+            [0.6, 1],
+            [0, 1],
+          ],
+        },
+      ],
+    });
+    expect(recipe.nodes[0]).toMatchObject({
+      kind: "revolve",
+      segments: 32,
+    });
+  });
+
+  it("revises a revolve profile while preserving its stable node ID", () => {
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 4,
+      output: "vase",
+      nodes: [
+        {
+          id: "vase",
+          kind: "revolve",
+          profile: [
+            [0, -1],
+            [0.5, -1],
+            [1, 0],
+            [0, 1],
+          ],
+        },
+      ],
+    });
+    const revised = replaceBrowserModelRecipeNode(
+      recipe,
+      "vase",
+      {
+        ...recipe.nodes[0],
+        profile: [
+          [0, -1],
+          [0.75, -1],
+          [1.5, 0],
+          [0, 1],
+        ],
+      },
+      recipe.revision,
+    );
+    expect(revised.revision).toBe(5);
+    expect(revised.nodes[0]).toMatchObject({
+      id: "vase",
+      kind: "revolve",
+      profile: [
+        [0, -1],
+        [0.75, -1],
+        [1.5, 0],
+        [0, 1],
+      ],
+    });
+  });
+
+  it("rejects negative radii and invalid revolve polygons with precise issues", () => {
+    expect(() =>
+      parseBrowserModelRecipe({
+        version: 1,
+        revision: 0,
+        output: "profile",
+        nodes: [
+          {
+            id: "profile",
+            kind: "revolve",
+            profile: [
+              [-0.1, -1],
+              [1, -1],
+              [1, 1],
+              [0, 1],
+            ],
+          },
+        ],
+      }),
+    ).toThrow("Revolve profile radius must be nonnegative");
+
+    const invalidProfiles = [
+      {
+        profile: [
+          [0, -1],
+          [1, -1],
+          [1, -1],
+          [0, 1],
+        ],
+        message: "Revolve profile vertices must be distinct",
+      },
+      {
+        profile: [
+          [0, 0],
+          [4, 3],
+          [0, 4],
+          [4, 0],
+        ],
+        message: "Revolve profile must enclose a nonzero area",
+      },
+      {
+        profile: [
+          [0, 0],
+          [2, 0],
+          [1, 0],
+          [1, 1],
+        ],
+        message: "Revolve profile must not backtrack",
+      },
+      {
+        profile: [
+          [0, -1],
+          [4, 3],
+          [0, 4],
+          [3, 0],
+        ],
+        message: "Revolve profile edges must not intersect",
+      },
+    ];
+    for (const { profile, message } of invalidProfiles)
+      expect(() =>
+        parseBrowserModelRecipe({
+          version: 1,
+          revision: 0,
+          output: "profile",
+          nodes: [{ id: "profile", kind: "revolve", profile }],
+        }),
+      ).toThrow(message);
+  });
+
   it("rejects duplicate, degenerate, self-intersecting, and oversized profiles", () => {
     const invalidProfiles = [
       [
