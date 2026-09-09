@@ -61,6 +61,12 @@ import {
   type GenerationConnection,
 } from "@/lib/generation-connection";
 import { committed } from "@/lib/protocol";
+import {
+  startOpenRouterOAuth,
+  consumeOpenRouterOAuthCallback,
+  exchangeOpenRouterCode,
+} from "@/lib/openrouter-oauth";
+const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
   ssr: false,
@@ -143,6 +149,93 @@ export default function Orbsie() {
     connectionVersion.current++;
     setConnectionState(next);
   };
+  const [oauthBusy, setOAuthBusy] = useState(false);
+  const [oauthMessage, setOAuthMessage] = useState("");
+  const oauthCompletion = useRef<Promise<string> | null>(null);
+  async function connectOpenRouter() {
+    setOAuthBusy(true);
+    setOAuthMessage("");
+    try {
+      const current = useOrb.getState();
+      if (current.building)
+        throw Error("Finish or stop generation before connecting.");
+      if (current.project.entities.length) {
+        current.set({ saved: false });
+        await current.save();
+        if (!useOrb.getState().saved)
+          throw Error("Save your world before connecting.");
+      }
+      const { authorizationUrl, transaction } = await startOpenRouterOAuth(
+        location.origin,
+      );
+      sessionStorage.setItem(OAUTH_PENDING_KEY, JSON.stringify(transaction));
+      location.assign(authorizationUrl);
+    } catch {
+      setOAuthBusy(false);
+      setOAuthMessage(
+        "Could not start sign-in. Check that your world can be saved and try again.",
+      );
+    }
+  }
+  useEffect(() => {
+    let current = true;
+    const version = connectionVersion.current;
+    const callbackUrl = new URL(location.href);
+    if (
+      !oauthCompletion.current &&
+      callbackUrl.searchParams.get("orbsie_oauth") === "openrouter"
+    ) {
+      // Consume synchronously so Strict Mode and reload cannot exchange twice.
+      const pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
+      sessionStorage.removeItem(OAUTH_PENDING_KEY);
+      for (const key of [
+        "orbsie_oauth",
+        "state",
+        "code",
+        "error",
+        "error_description",
+      ])
+        callbackUrl.searchParams.delete(key);
+      const original = location.href;
+      history.replaceState(
+        history.state,
+        "",
+        callbackUrl.pathname + callbackUrl.search + callbackUrl.hash,
+      );
+      oauthCompletion.current = Promise.resolve().then(() => {
+        if (!pending) throw Error("Missing sign-in attempt.");
+        return exchangeOpenRouterCode({
+          callback: consumeOpenRouterOAuthCallback(
+            original,
+            JSON.parse(pending),
+          ),
+        });
+      });
+    }
+    if (oauthCompletion.current) {
+      setOAuthBusy(true);
+      void oauthCompletion.current
+        .then((key) => {
+          if (!current || connectionVersion.current !== version) return;
+          setConnection({ provider: "openrouter", key, model: "" });
+          setOAuthMessage("OpenRouter connected. Choose a model to continue.");
+          setModal("settings");
+        })
+        .catch(() => {
+          if (!current) return;
+          setOAuthMessage(
+            "OpenRouter sign-in expired or could not be completed. Try connecting again.",
+          );
+          setModal("settings");
+        })
+        .finally(() => {
+          if (current) setOAuthBusy(false);
+        });
+    }
+    return () => {
+      current = false;
+    };
+  }, []);
   const [trial, setTrial] = useState({ enabled: false, remaining: 0 });
   const refreshTrial = async () => {
     try {
@@ -1327,7 +1420,7 @@ export default function Orbsie() {
               <p>
                 {connection.provider === "chatgpt-local"
                   ? "Your ChatGPT account is connected through the companion on this computer."
-                  : "Connect your API key to create and edit your world."}
+                  : "Connect your AI account or API key to create and edit your world."}
               </p>
               <p className="fine-print">
                 {s.modelingConnection
@@ -1426,6 +1519,21 @@ export default function Orbsie() {
                       <option value="gateway">Vercel AI Gateway</option>
                     </select>
                   </label>
+                  {connection.provider === "openrouter" && (
+                    <button
+                      type="button"
+                      className="primary full"
+                      disabled={oauthBusy || s.building}
+                      onClick={() => void connectOpenRouter()}
+                    >
+                      {oauthBusy ? "Connecting…" : "Connect with OpenRouter"}
+                    </button>
+                  )}
+                  {oauthMessage && (
+                    <p className="fine-print" role="status">
+                      {oauthMessage}
+                    </p>
+                  )}
                   <div
                     className="model-modes"
                     role="group"
