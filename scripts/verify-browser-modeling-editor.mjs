@@ -406,6 +406,20 @@ try {
     assert.equal(a.authoring.source.seed, 73);
     assert.match(a.authoring.sourceHash, /^[a-f0-9]{64}$/);
     assert.match(b.authoring.sourceHash, /^[a-f0-9]{64}$/);
+    for (const job of [a, b]) {
+      const source = job.authoring.source;
+      const canonical = {
+        version: 1,
+        language: "quickjs",
+        code: source.code,
+        seed: source.seed,
+      };
+      assert.equal(
+        job.authoring.sourceHash,
+        createHash("sha256").update(JSON.stringify(canonical)).digest("hex"),
+        "Source hash must match independently canonicalized retained source",
+      );
+    }
     assert.notEqual(a.authoring.sourceHash, b.authoring.sourceHash);
     assert.notEqual(a.authoring.source.code, b.authoring.source.code);
     report.checks.editableProceduralSource = true;
