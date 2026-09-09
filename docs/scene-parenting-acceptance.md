@@ -99,6 +99,16 @@ visible object positions, collectible interaction, platform contact/carrying
 behavior, preserved player/score state, and unchanged unrelated objects.
 Follow with hierarchy undo/redo, reload, export and signed-out playback.
 
+Exercise checkpoint recovery independently from operation validation: start
+with a ready child under group A, begin a coarse replacement, reparent it to
+group B, then remove the now-empty A and interrupt generation. The existing
+flat-world checkpoint restores the entire baseline entity, which would refer
+to the removed A. The hierarchy implementation must recover a valid ancestor
+closure and handle namespace conflicts explicitly, preserving the last good
+geometry and unrelated committed changes. Repeat through cloud journal replay
+as well as local cancellation. A valid sequence of raw operations is not
+proof that its recovered checkpoint is valid.
+
 Keep fixture evidence separate from live provider evidence. Once the
 contract and browser path pass, exercise model-authored grouping and targeted
 edits at the next authorized provider milestone. Existing procedural-source
