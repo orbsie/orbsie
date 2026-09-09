@@ -282,6 +282,21 @@ try {
       body: commands.map((c) => JSON.stringify(c)).join("\n") + "\n",
     });
   });
+  await context.addInitScript(() => {
+    const errors = [];
+    window.__orbsieFixtureErrors = errors;
+    new MutationObserver(() => {
+      const message = document
+        .querySelector(".toast.error")
+        ?.textContent?.trim();
+      if (message && errors.length < 8 && errors.at(-1) !== message)
+        errors.push(message.slice(0, 1000));
+    }).observe(document, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+  });
   page = await context.newPage();
   page.on("pageerror", (e) => report.pageErrors.push(e.message));
   page.setDefaultTimeout(30000);
@@ -577,6 +592,20 @@ try {
   report.status = "failed";
   report.error = String(error);
   if (page) {
+    report.transientErrors = await page
+      .evaluate(() => window.__orbsieFixtureErrors ?? [])
+      .catch(() => []);
+    const snapshot = await storageSnapshot(page).catch(() => null);
+    report.savedState = snapshot?.project
+      ? {
+          revision: snapshot.project.revision,
+          entities: snapshot.project.entities.map((e) => ({
+            id: e.id,
+            stage: e.stage,
+            recipeRevision: e.geometry?.job?.recipe?.revision,
+          })),
+        }
+      : null;
     report.visibleText = await page
       .locator("body")
       .innerText()
