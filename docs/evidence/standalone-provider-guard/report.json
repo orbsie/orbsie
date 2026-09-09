@@ -1,0 +1,14 @@
+{
+  "mode": "offline-existing-export",
+  "sourceSHA256": "7e5e15ea913cce6c9cd0c33852844e6ddde33e9c8c0d4d76fb67b6cdfd10a007",
+  "evidence": [
+    "standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 1336.7999999970198,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  }
+}

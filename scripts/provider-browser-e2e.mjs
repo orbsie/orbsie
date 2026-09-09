@@ -22,6 +22,7 @@ import { createServer } from "node:http";
 import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
 import { join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
+import { pathToFileURL } from "node:url";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 
@@ -1308,7 +1309,13 @@ async function serveStaticDirectory(directory) {
   return { server, origin: `http://127.0.0.1:${address.port}` };
 }
 
-async function verifyStandalone(browser, zip, config, report, evidenceDir) {
+export async function verifyStandalone(
+  browser,
+  zip,
+  config,
+  report,
+  evidenceDir,
+) {
   // The ZIP has already been validated. Extract once through fflate for the
   // static playback server, keeping all output in the temporary directory.
   const bytes = await readFile(join(zip.tempDir, "world.zip"));
@@ -3241,4 +3248,8 @@ async function main() {
   }
 }
 
-await main();
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+)
+  await main();
