@@ -8,6 +8,14 @@ other fixture checks: it never installs a route that fulfills `/api/generate`,
 never imports the fixture transport, and never treats a snapshot as provider
 evidence.
 
+Standalone acceptance requires `main[data-ready=true]` for every scenario,
+not only the input-rule fixture. Its network allowlist contains only the
+temporary export origin: requests back to the editor also fail the check.
+Reports retain the blocked request count and `readyObservedMs`, an upper
+bound measured after navigation and readiness assertions, not an exact
+first-frame latency. These strengthened checks apply to subsequent runs;
+historical passing reports have not been retroactively revalidated.
+
 The harness fails closed before Chromium starts unless the caller explicitly
 sets `ORBSIE_LIVE_E2E=1`, chooses `--provider openrouter`, `--provider gateway`,
 `--provider free`, or `--provider chatgpt-local`, supplies an exact

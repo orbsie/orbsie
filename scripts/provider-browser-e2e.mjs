@@ -1326,6 +1326,8 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
   const served = await serveStaticDirectory(zip.tempDir);
   const standaloneReport = {
     status: "running",
+    readyObservedMs: null,
+    blockedExternalRequests: 0,
     pageErrors: [],
     inputGame: config.requireInputGame
       ? {
@@ -1340,18 +1342,19 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
   };
   report.standalone = standaloneReport;
   let context;
+  const info = {
+    generationRequests: 0,
+    blockedExternalRequests: 0,
+    blockedExternalOrigins: new Set(),
+    interceptedGeneration: false,
+  };
   try {
-    const approved = new Set([config.baseOrigin, served.origin]);
+    // Exported games must stand alone: even the originating editor is external.
+    const approved = new Set([served.origin]);
     context = await browser.newContext({
       viewport: { width: 1280, height: 800 },
       reducedMotion: "reduce",
     });
-    const info = {
-      generationRequests: 0,
-      blockedExternalRequests: 0,
-      blockedExternalOrigins: new Set(),
-      interceptedGeneration: false,
-    };
     await installTrafficGuard(context, config, approved, info);
     const page = await context.newPage();
     const unexpected = [];
@@ -1375,10 +1378,15 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
     await expect(page.locator(".message")).toHaveCount(0, {
       timeout: 30000,
     });
+    await expect(page.locator("main[data-ready=true]")).toBeVisible({
+      timeout: 30000,
+    });
+    // Observation includes navigation and the preceding assertions; this is an
+    // upper bound on readiness, not an exact first-frame performance metric.
+    standaloneReport.readyObservedMs = await page.evaluate(() =>
+      performance.now(),
+    );
     if (config.requireInputGame) {
-      await expect(page.locator("main[data-ready=true]")).toBeVisible({
-        timeout: 30000,
-      });
       await expect(page.locator(".score")).toHaveText("Score: 0");
       standaloneReport.inputGame.ready = true;
       await page.screenshot({
@@ -1422,6 +1430,12 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
     }
     // Capture the loaded scene after its initial formation frames, not the globe.
     await page.waitForTimeout(2000);
+    standaloneReport.blockedExternalRequests = info.blockedExternalRequests;
+    assert.equal(
+      info.blockedExternalRequests,
+      0,
+      "Standalone playback attempted an external request.",
+    );
     assert.deepEqual(
       unexpected,
       [],
@@ -1441,6 +1455,7 @@ async function verifyStandalone(browser, zip, config, report, evidenceDir) {
     standaloneReport.status = "failed";
     throw error;
   } finally {
+    standaloneReport.blockedExternalRequests = info.blockedExternalRequests;
     await context?.close().catch(() => undefined);
     await new Promise((resolveServer) => {
       try {
