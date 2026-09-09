@@ -96,6 +96,12 @@ try {
       JSON.stringify(a) === JSON.stringify(c)
     )
       throw Error("Seed determinism failed");
+    await run(
+      source(
+        `(()=>{if(orb.seed!==0 || orb.random()===orb.random())throw Error("Degenerate zero seed");return ${code};})()`,
+        0,
+      ),
+    );
     const absent =
       '["fetch","XMLHttpRequest","WebSocket","indexedDB","localStorage","document","process","require","Date"].every(k=>typeof globalThis[k]==="undefined")';
     await run(
@@ -112,7 +118,13 @@ try {
       throw Error("Unexpected acceptance");
     };
     const malformed = await reject("({version:1,nodes:[]})");
+    const oversized = await reject('"x".repeat(300000)');
+    const oversizedWithOverride = await reject(
+      '(()=>{String.prototype.charCodeAt=()=>0;return "é".repeat(150000);})()',
+    );
+    const loopStarted = performance.now();
     const loop = await reject("(()=>{while(true){} })()");
+    const loopObservedMs = performance.now() - loopStarted;
     const controller = new AbortController();
     const pending = run(source("(()=>{while(true){} })()"), {
       signal: controller.signal,
@@ -132,9 +144,13 @@ try {
     return {
       deterministic: true,
       seedVariation: true,
+      zeroSeedVaries: true,
       hostAPIsAbsent: true,
       malformed,
+      oversized,
+      oversizedWithOverride,
       loop,
+      loopObservedMs,
       cancellation,
       recovered: true,
     };
@@ -144,6 +160,8 @@ try {
   assert(served.includes("/modeling/emscripten-module.wasm"));
   assert.equal(report.cases.loop, "timeout");
   assert.equal(report.cases.malformed, "invalid-recipe");
+  assert.equal(report.cases.oversized, "output-limit");
+  assert.equal(report.cases.oversizedWithOverride, "output-limit");
   report.status = "passed";
 } catch (error) {
   report.status = "failed";

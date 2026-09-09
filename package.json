@@ -9,16 +9,18 @@
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prebuild": "node scripts/build-player.mjs && npm run build:chatgpt-host",
+    "prebuild": "node scripts/build-player.mjs && npm run build:procedural-worker && npm run build:chatgpt-host",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "format": "prettier --write src scripts tests next.config.ts",
-    "predev": "node scripts/build-player.mjs && npm run build:chatgpt-host",
+    "predev": "node scripts/build-player.mjs && npm run build:procedural-worker && npm run build:chatgpt-host",
+    "build:procedural-worker": "node scripts/build-procedural-worker.mjs",
     "build:chatgpt-host": "node scripts/build-chatgpt-host.mjs .orbsie/chatgpt-host"
   },
   "engines": {
     "node": "22.x"
   },
   "dependencies": {
+    "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
     "@react-three/drei": "10.7.8",
     "@react-three/fiber": "9.7.0",
     "@vercel/oidc": "3.8.5",
@@ -32,6 +34,7 @@
     "next": "16.3.4",
     "pg": "8.23.0",
     "postgres": "3.4.9",
+    "quickjs-emscripten-core": "0.32.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "three": "0.185.1",
