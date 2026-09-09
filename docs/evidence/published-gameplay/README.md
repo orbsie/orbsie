@@ -9,3 +9,5 @@ Earlier evidence is preserved: walking alone collected only ground-level crystal
 Command: `WIN_PUBLISHED=1 WIN_INPUT=mobile TEST_URL=https://orb-112b8c73b06252e06c23-m4l2c3c18-grappeggias-projects.vercel.app WIN_OUTPUT=test-results/published-winning-mobile-aligned node scripts/verify-winning-traversal.mjs`. Omit WIN_INPUT for both input modes; use desktop for keyboard only. The default without WIN_PUBLISHED retains the existing fixture test.
 
 This proves this previously published collectible game's signed-out keyboard/touch win and reset. It does not prove fresh provider generation, play during construction, every interaction, republishing recovery, current-source publication, native mobile performance, or the complete OpenRouter/Gateway/ChatGPT matrix.
+
+Final keyboard check: the improved driver also passed an independent desktop-only invocation (`desktop-pass.json`) at 2026-09-09T13:41Z. Reports now record explicit overall passed/failed status and bounded failure text, so a completed desktop sub-run cannot conceal a later failed mobile sub-run. This rerun exercised the updated navigation driver and required no model calls.

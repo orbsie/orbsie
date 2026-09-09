@@ -55,6 +55,7 @@ const browser = await chromium.launch({
   ],
 });
 const report = {
+  status: "running",
   url: base,
   startedAt: new Date().toISOString(),
   mode: published
@@ -337,11 +338,16 @@ try {
     }
     await context.close();
   }
+  expect(report.errors).toEqual([]);
+  expect(report.inferenceCalls).toBe(0);
+  report.status = "passed";
+} catch (error) {
+  report.status = "failed";
+  report.failure = String(error).slice(0, 2000);
+  throw error;
 } finally {
   await browser.close();
   await rm(temp, { recursive: true, force: true });
   await writeFile(join(output, "report.json"), JSON.stringify(report, null, 2));
 }
-expect(report.errors).toEqual([]);
-expect(report.inferenceCalls).toBe(0);
 console.log(JSON.stringify(report, null, 2));
