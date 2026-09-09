@@ -134,7 +134,7 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         model: HOSTED_MODEL,
         effort: HOSTED_EFFORT,
         prompt: "Create a small island.",
-        project: { id: "project", revision: 0 },
+        project: { id: "project", revision: 0, entities: [{ id: "entity-1" }] },
         selected: "entity-1",
         browserModeling: true,
         localModeling: false,
@@ -206,6 +206,15 @@ describe("hosted ChatGPT acceptance boundaries", () => {
       payload: request,
     };
     expect(hostedRouteDecision(ready)).toMatchObject({ action: "continue" });
+    for (const change of [
+      { prompt: "   " },
+      { prompt: "x".repeat(4001) },
+      { selected: "missing" },
+      { selected: "invalid/id" },
+    ]) {
+      expect(hostedRouteDecision({ ...ready, payload: { ...request, ...change } }))
+        .toMatchObject({ action: "abort", reason: "invalid-hosted-payload" });
+    }
     expect(hostedRouteDecision({ ...ready, catalogReady: false })).toMatchObject({
       action: "abort",
       reason: "generation-before-catalog",

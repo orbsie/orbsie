@@ -288,10 +288,18 @@ export function assertHostedGenerationPayload(
     value.model !== HOSTED_MODEL ||
     value.effort !== HOSTED_EFFORT ||
     typeof value.prompt !== "string" ||
+    value.prompt.trim().length === 0 ||
+    value.prompt.trim().length > 4000 ||
     !record(value.project) ||
     value.browserModeling !== browserModeling ||
     value.localModeling !== false ||
-    (value.selected !== undefined && typeof value.selected !== "string")
+    (value.selected !== undefined &&
+      (typeof value.selected !== "string" ||
+        !/^[\w-]{1,80}$/.test(value.selected) ||
+        !Array.isArray(value.project.entities) ||
+        !value.project.entities.some(
+          (entity) => record(entity) && entity.id === value.selected,
+        )))
   )
     throw new HostedAcceptanceBlockedError(
       "Hosted ChatGPT generation payload did not match the exact Luna low/browser-only contract.",
