@@ -14,14 +14,36 @@ await mkdir(output, { recursive: false });
 const extrusion = process.env.ORBSIE_MODELING_SHAPE === "extrusion";
 const revolution = process.env.ORBSIE_MODELING_SHAPE === "revolution";
 const mesh = process.env.ORBSIE_MODELING_SHAPE === "mesh";
-const label = mesh
-  ? "Browser pyramid"
-  : revolution
-    ? "Browser vase"
-    : extrusion
-      ? "Browser prism"
-      : "Browser arch";
+const tube = process.env.ORBSIE_MODELING_SHAPE === "tube";
+const label = tube
+  ? "Browser pipe"
+  : mesh
+    ? "Browser pyramid"
+    : revolution
+      ? "Browser vase"
+      : extrusion
+        ? "Browser prism"
+        : "Browser arch";
 const recipe = (revision, radius) => {
+  if (tube)
+    return {
+      version: 1,
+      revision,
+      output: "pipe",
+      nodes: [
+        {
+          id: "pipe",
+          kind: "tube",
+          path: [
+            [-2, 0, 0],
+            [0, 1, 0],
+            [2, 1, 1],
+          ],
+          radius: radius * 0.12,
+          segments: 16,
+        },
+      ],
+    };
   if (mesh)
     return {
       version: 1,
@@ -116,13 +138,15 @@ const geometry = (revision, radius) => ({
 });
 const report = {
   mode: "fixture-provider-real-editor-worker",
-  shape: mesh
-    ? "mesh"
-    : revolution
-      ? "revolution"
-      : extrusion
-        ? "extrusion"
-        : "arch",
+  shape: tube
+    ? "tube"
+    : mesh
+      ? "mesh"
+      : revolution
+        ? "revolution"
+        : extrusion
+          ? "extrusion"
+          : "arch",
   requests: 0,
   pageErrors: [],
   blocked: [],
@@ -163,12 +187,19 @@ try {
     assert.equal(request.localModeling, false);
     assert.equal(request.browserModeling, true);
     const initial = report.requests === 1;
-    const invalidMeshEdit = mesh && report.requests === 3;
+    const invalidMeshEdit = (mesh || tube) && report.requests === 3;
     const nextGeometry = geometry(
       initial ? 0 : invalidMeshEdit ? 2 : 1,
       initial ? 1.25 : 1.6,
     );
-    if (invalidMeshEdit) {
+    if (invalidMeshEdit && tube) {
+      nextGeometry.job.recipe.nodes[0].path = [
+        [-1, 0, 0],
+        [0, 0, 0],
+        [-0.5, 0, 0],
+      ];
+    }
+    if (invalidMeshEdit && mesh) {
       nextGeometry.job.recipe.nodes[0].triangles =
         nextGeometry.job.recipe.nodes[0].triangles.map(([a, b, c]) => [
           a,
@@ -217,13 +248,15 @@ try {
   await page
     .getByPlaceholder("What experience to build?")
     .fill(
-      mesh
-        ? "Build an original pyramid from a custom triangle mesh"
-        : revolution
-          ? "Build a new vase by revolving a profile"
-          : extrusion
-            ? "Build a triangular prism from an outline"
-            : "Build a new stone arch",
+      tube
+        ? "Build a bent capped pipe along a 3D path"
+        : mesh
+          ? "Build an original pyramid from a custom triangle mesh"
+          : revolution
+            ? "Build a new vase by revolving a profile"
+            : extrusion
+              ? "Build a triangular prism from an outline"
+              : "Build a new stone arch",
     );
   await page.getByRole("button", { name: "Create", exact: true }).click();
   const saved = async (revision) => {
@@ -251,13 +284,15 @@ try {
   await page
     .locator("#prompt")
     .fill(
-      mesh
-        ? "Make the pyramid taller"
-        : revolution
-          ? "Make the vase wider"
-          : extrusion
-            ? "Make the extrusion deeper"
-            : "Make the opening wider",
+      tube
+        ? "Make the pipe thicker without changing its path"
+        : mesh
+          ? "Make the pyramid taller"
+          : revolution
+            ? "Make the vase wider"
+            : extrusion
+              ? "Make the extrusion deeper"
+              : "Make the opening wider",
     );
   await page.getByRole("button", { name: "Change this", exact: true }).click();
   const edited = await saved(1);
@@ -285,6 +320,17 @@ try {
     );
     report.checks.customMeshBounds = true;
   }
+  if (tube) {
+    const a = first.entities[0].geometry,
+      b = edited.entities[0].geometry;
+    assert.deepEqual(a.job.recipe.nodes[0].path, b.job.recipe.nodes[0].path);
+    assert(b.job.recipe.nodes[0].radius > a.job.recipe.nodes[0].radius);
+    assert(
+      b.model.bounds.max[1] - b.model.bounds.min[1] >
+        a.model.bounds.max[1] - a.model.bounds.min[1],
+    );
+    report.checks.tubeRadiusEdit = true;
+  }
   if (revolution) {
     const before = first.entities[0].geometry.model.bounds;
     const after = edited.entities[0].geometry.model.bounds;
@@ -304,15 +350,25 @@ try {
   }
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/edited.png` });
-  if (mesh) {
-    await page.locator("#prompt").fill("Try an invalid inverted mesh revision");
+  if (mesh || tube) {
+    await page
+      .locator("#prompt")
+      .fill(
+        tube
+          ? "Try an invalid reversing tube path"
+          : "Try an invalid inverted mesh revision",
+      );
     await page
       .getByRole("button", { name: "Change this", exact: true })
       .click();
     await expect(page.locator(".toast.error")).toBeVisible({ timeout: 45000 });
     const afterFailure = (await storageSnapshot(page)).project;
     assert.deepEqual(afterFailure.entities, edited.entities);
-    report.checks.invalidMeshPreservesFinishedObject = true;
+    report.checks[
+      tube
+        ? "invalidTubePreservesFinishedObject"
+        : "invalidMeshPreservesFinishedObject"
+    ] = true;
     await page.screenshot({ path: `${output}/invalid-edit.png` });
   }
   await page.reload();
@@ -409,7 +465,7 @@ try {
   await player.screenshot({ path: `${output}/standalone.png` });
   await standalone.close();
   report.checks.standaloneRendering = true;
-  assert.equal(report.requests, mesh ? 3 : 2);
+  assert.equal(report.requests, mesh || tube ? 3 : 2);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.blocked, []);
   report.checks.reload = true;
