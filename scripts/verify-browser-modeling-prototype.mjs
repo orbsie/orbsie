@@ -4,11 +4,17 @@ import { createServer } from "node:http";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import assert from "node:assert/strict";
+import { gzipSync } from "node:zlib";
 
-const [project, reportPath] = process.argv.slice(2);
-if (!project || !reportPath || process.argv.length !== 4)
+const [project, reportPath, backend = "bitbybit"] = process.argv.slice(2);
+if (
+  !project ||
+  !reportPath ||
+  process.argv.length > 5 ||
+  !["bitbybit", "direct"].includes(backend)
+)
   throw Error(
-    "Usage: node scripts/verify-browser-modeling-prototype.mjs PROTOTYPE_NPM_DIRECTORY NEW_REPORT.json",
+    "Usage: node scripts/verify-browser-modeling-prototype.mjs PROTOTYPE_NPM_DIRECTORY NEW_REPORT.json [bitbybit|direct]",
   );
 const root = resolve(project);
 for (const [name, version] of [
@@ -22,7 +28,7 @@ for (const [name, version] of [
 }
 const source = await readFile(
   new URL(
-    "../docs/evidence/browser-modeling-prototype/browser-worker.mjs",
+    `../docs/evidence/browser-modeling-prototype/${backend === "direct" ? "direct-browser-worker" : "browser-worker"}.mjs`,
     import.meta.url,
   ),
   "utf8",
@@ -153,7 +159,10 @@ try {
         errors,
         blocked,
         served,
+        backend,
         bundleBytes: bundle.outputFiles[0].contents.length,
+        bundleGzipBytes: gzipSync(bundle.outputFiles[0].contents).length,
+        wasmGzipBytes: gzipSync(wasm).length,
         wasmBytes: wasm.length,
         inferenceCalls: 0,
       },

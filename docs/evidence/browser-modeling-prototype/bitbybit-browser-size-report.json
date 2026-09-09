@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "scope": "Real Chromium module Worker; repeated geometry only, no app integration",
+  "browser": "153.0.8010.12",
+  "runs": [
+    {
+      "scope": "Browser Worker geometry and repeated jobs; no app integration",
+      "versions": {
+        "bitbybit": "1.1.1",
+        "manifold": "3.3.2"
+      },
+      "initializationMs": 20.399999998509884,
+      "constructionAndInspectionMs": 9.200000002980232,
+      "arch": {
+        "numTri": 152,
+        "volume": 23.288210523297796,
+        "boundingBox": [
+          [
+            -3,
+            -2,
+            -0.75
+          ],
+          [
+            3,
+            2,
+            0.75
+          ]
+        ],
+        "status": "NoError"
+      },
+      "edited": {
+        "numTri": 136,
+        "volume": 22.65263264294031,
+        "boundingBox": [
+          [
+            -3,
+            -2,
+            -0.75
+          ],
+          [
+            3,
+            2,
+            0.75
+          ]
+        ],
+        "status": "NoError"
+      },
+      "inferenceCalls": 0
+    },
+    {
+      "scope": "Browser Worker geometry and repeated jobs; no app integration",
+      "versions": {
+        "bitbybit": "1.1.1",
+        "manifold": "3.3.2"
+      },
+      "initializationMs": 20.399999998509884,
+      "constructionAndInspectionMs": 2.600000001490116,
+      "arch": {
+        "numTri": 152,
+        "volume": 23.288210523297796,
+        "boundingBox": [
+          [
+            -3,
+            -2,
+            -0.75
+          ],
+          [
+            3,
+            2,
+            0.75
+          ]
+        ],
+        "status": "NoError"
+      },
+      "edited": {
+        "numTri": 136,
+        "volume": 22.65263264294031,
+        "boundingBox": [
+          [
+            -3,
+            -2,
+            -0.75
+          ],
+          [
+            3,
+            2,
+            0.75
+          ]
+        ],
+        "status": "NoError"
+      },
+      "inferenceCalls": 0
+    }
+  ],
+  "errors": [],
+  "blocked": [],
+  "served": [
+    "/",
+    "/worker.js",
+    "/manifold.wasm"
+  ],
+  "backend": "bitbybit",
+  "bundleBytes": 460237,
+  "bundleGzipBytes": 85225,
+  "wasmGzipBytes": 192312,
+  "wasmBytes": 476297,
+  "inferenceCalls": 0
+}
