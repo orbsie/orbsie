@@ -67,6 +67,8 @@ import {
   exchangeOpenRouterCode,
 } from "@/lib/openrouter-oauth";
 const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
+const OAUTH_STORAGE_MESSAGE =
+  "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 const World = dynamic(() => import("./world"), {
   ssr: false,
@@ -152,6 +154,8 @@ export default function Orbsie() {
   const [oauthBusy, setOAuthBusy] = useState(false);
   const [oauthMessage, setOAuthMessage] = useState("");
   const oauthCompletion = useRef<Promise<string> | null>(null);
+  const oauthController = useRef<AbortController | null>(null);
+  const oauthEffectInstance = useRef(0);
   async function connectOpenRouter() {
     setOAuthBusy(true);
     setOAuthMessage("");
@@ -179,6 +183,7 @@ export default function Orbsie() {
   }
   useEffect(() => {
     let current = true;
+    const effectInstance = ++oauthEffectInstance.current;
     const version = connectionVersion.current;
     const callbackUrl = new URL(location.href);
     if (
@@ -186,8 +191,14 @@ export default function Orbsie() {
       callbackUrl.searchParams.get("orbsie_oauth") === "openrouter"
     ) {
       // Consume synchronously so Strict Mode and reload cannot exchange twice.
-      const pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
-      sessionStorage.removeItem(OAUTH_PENDING_KEY);
+      let pending: string | null = null;
+      let storageBlocked = false;
+      try {
+        pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+      } catch {
+        storageBlocked = true;
+      }
       for (const key of [
         "orbsie_oauth",
         "state",
@@ -202,15 +213,22 @@ export default function Orbsie() {
         "",
         callbackUrl.pathname + callbackUrl.search + callbackUrl.hash,
       );
-      oauthCompletion.current = Promise.resolve().then(() => {
-        if (!pending) throw Error("Missing sign-in attempt.");
-        return exchangeOpenRouterCode({
-          callback: consumeOpenRouterOAuthCallback(
-            original,
-            JSON.parse(pending),
-          ),
+      if (storageBlocked)
+        oauthCompletion.current = Promise.reject(Error(OAUTH_STORAGE_MESSAGE));
+      else {
+        const controller = new AbortController();
+        oauthController.current = controller;
+        oauthCompletion.current = Promise.resolve().then(() => {
+          if (!pending) throw Error("Missing sign-in attempt.");
+          return exchangeOpenRouterCode({
+            callback: consumeOpenRouterOAuthCallback(
+              original,
+              JSON.parse(pending),
+            ),
+            signal: controller.signal,
+          });
         });
-      });
+      }
     }
     if (oauthCompletion.current) {
       setOAuthBusy(true);
@@ -221,19 +239,53 @@ export default function Orbsie() {
           setOAuthMessage("OpenRouter connected. Choose a model to continue.");
           setModal("settings");
         })
-        .catch(() => {
+        .catch((error) => {
           if (!current) return;
           setOAuthMessage(
-            "OpenRouter sign-in expired or could not be completed. Try connecting again.",
+            error instanceof Error && error.message === OAUTH_STORAGE_MESSAGE
+              ? OAUTH_STORAGE_MESSAGE
+              : "OpenRouter sign-in expired or could not be completed. Try connecting again.",
           );
           setModal("settings");
         })
         .finally(() => {
-          if (current) setOAuthBusy(false);
+          if (current) {
+            setOAuthBusy(false);
+            oauthController.current = null;
+            oauthCompletion.current = null;
+          }
         });
     }
+    const abortOnPageHide = () => {
+      current = false;
+      oauthController.current?.abort();
+    };
+    const recoverFromPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted || !oauthController.current) return;
+      // A callback has already been consumed before this exchange began. If
+      // the page entered BFCache, let the user start a fresh transaction
+      // rather than leaving the controls locked or retrying the old code.
+      current = false;
+      oauthController.current?.abort();
+      oauthController.current = null;
+      oauthCompletion.current = null;
+      setOAuthBusy(false);
+      setOAuthMessage("OpenRouter sign-in was interrupted. Try again.");
+      setModal("settings");
+    };
+    window.addEventListener("pagehide", abortOnPageHide);
+    window.addEventListener("pageshow", recoverFromPageShow);
     return () => {
       current = false;
+      window.removeEventListener("pagehide", abortOnPageHide);
+      window.removeEventListener("pageshow", recoverFromPageShow);
+      // Strict Mode rehearses an effect with cleanup followed immediately by
+      // a second setup. Defer cancellation so rehearsal does not abort the
+      // consumed callback; a real unmount has no replacement setup.
+      queueMicrotask(() => {
+        if (oauthEffectInstance.current === effectInstance)
+          oauthController.current?.abort();
+      });
     };
   }, []);
   const [trial, setTrial] = useState({ enabled: false, remaining: 0 });
@@ -509,7 +561,7 @@ export default function Orbsie() {
       .then((d) => {
         if (controller.signal.aborted) return;
         setModels(d.models ?? []);
-        setConnection((current) => ({
+        setConnectionState((current) => ({
           ...current,
           model:
             current.model ||
@@ -1481,6 +1533,7 @@ export default function Orbsie() {
               {trial.enabled && trial.remaining > 0 && (
                 <button
                   className="primary full"
+                  disabled={oauthBusy}
                   onClick={() => {
                     setConnection({
                       provider: "openrouter",
@@ -1506,6 +1559,7 @@ export default function Orbsie() {
                     <select
                       aria-label="Provider"
                       value={connection.provider}
+                      disabled={oauthBusy}
                       onChange={(e) =>
                         setConnection({
                           ...connection,
@@ -1548,7 +1602,7 @@ export default function Orbsie() {
                           key={mode.id}
                           type="button"
                           aria-pressed={connection.model === mode.id}
-                          disabled={!available}
+                          disabled={!available || oauthBusy}
                           title={
                             available
                               ? mode.description
@@ -1584,6 +1638,7 @@ export default function Orbsie() {
                       <input
                         type="search"
                         value={modelSearch}
+                        disabled={oauthBusy}
                         onChange={(e) => setModelSearch(e.target.value)}
                         placeholder="Search models"
                       />
@@ -1610,6 +1665,7 @@ export default function Orbsie() {
                           type="button"
                           className="model-catalog-row"
                           aria-pressed={connection.model === model.id}
+                          disabled={oauthBusy}
                           data-model-id={model.id}
                           onClick={() =>
                             setConnection({ ...connection, model: model.id })
@@ -1662,6 +1718,7 @@ export default function Orbsie() {
                       type="password"
                       autoComplete="off"
                       value={connection.key}
+                      disabled={oauthBusy}
                       onChange={(e) =>
                         setConnection({ ...connection, key: e.target.value })
                       }
@@ -1677,7 +1734,9 @@ export default function Orbsie() {
               )}
               <button
                 className="primary full"
-                disabled={!connection.key.trim() || !connection.model}
+                disabled={
+                  oauthBusy || !connection.key.trim() || !connection.model
+                }
                 onClick={() => setModal(null)}
               >
                 Continue with this connection
@@ -1686,6 +1745,7 @@ export default function Orbsie() {
               {connection.key && (
                 <button
                   className="text-button"
+                  disabled={oauthBusy}
                   onClick={() => {
                     s.stop();
                     setConnection({
