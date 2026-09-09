@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-09T16:04:45.861Z",
+  "sourceCommit": "d92421e",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": null,
+    "environment": null,
+    "url": "https://orbsie-f9n99xuzt-grappeggias-projects.vercel.app"
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "da0e0cc9db33b272ee6604fe30ab726180891aa6f1e4ba741c21aa79bf05260f",
+      "observedSha256": "da0e0cc9db33b272ee6604fe30ab726180891aa6f1e4ba741c21aa79bf05260f",
+      "bytes": 1769828
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": []
+    },
+    "geometryWorkers": [
+      {
+        "file": "player/generated-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "63e639d8983fcffb7cbf288db761582ee04509d5791404d8d4054e99228f296d",
+        "bytes": 843445
+      },
+      {
+        "file": "player/asset-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "b0c7e5516af5b3fee0cee8119987d50cc218f5cadefa87c1404ad464735ab3d0",
+        "bytes": 413743
+      },
+      {
+        "file": "modeling/worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "1bff46a71609ed17033d2e2956a68453cd35ef31eba3de51cf4f24fd8ae82856",
+        "bytes": 502004
+      },
+      {
+        "file": "modeling/procedural-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "c89dda1bb29ffd1b9e9f2409a1c7a950e09ea26153a93f87852d8bb86a478f31",
+        "bytes": 498052
+      },
+      {
+        "file": "modeling/emscripten-module.wasm",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "105c3bed22d457e43e3d1c3c1c6959fda62a8fe06f0fc8a985303c3a2be72232",
+        "bytes": 503134
+      }
+    ]
+  },
+  "screenshot": "docs/evidence/scene-hierarchy-release/landing.png"
+}
