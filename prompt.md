@@ -190,9 +190,9 @@ Rendering, physics, geometry preparation, camera control, previews, thumbnails, 
 
 ### Browser-first local modeling — revised owner direction
 
-The default authoring backend is a small Orbsie SDK over the existing Three.js scene and a worker-backed Manifold geometry kernel. Prototype Bitbybit's Manifold integration first, compare it with direct Manifold, and choose from measured integration complexity, loading cost, targeted-edit quality and responsiveness. Preserve the renderer, animation loop and incremental scene contract. Full Blender is an optional advanced authoring backend, not the default runtime or a prerequisite for core browser delivery.
+The default authoring backend is a small Orbsie SDK over the existing Three.js scene and a worker-backed Manifold geometry kernel. Prototype Bitbybit's Manifold integration first, compare it with direct Manifold, and choose from measured integration complexity, loading cost, targeted-edit quality and responsiveness. Preserve the renderer, animation loop and incremental scene contract. A browser-contained Blender-WASM experiment may be evaluated as an optional advanced backend; it must not introduce a Blender connection, companion setup or installation.
 
-The detailed implementation and acceptance plan is [browser-modeling-plan.md](docs/browser-modeling-plan.md). This revision supersedes the earlier requirement that client-side construction must go through a native Blender companion. Existing native packaging work remains reusable optional-backend work, not evidence of browser modeling completion. Keep its separate delivery gates open; do not silently claim it shipped or discard its license obligations.
+The detailed implementation and acceptance plan is [browser-modeling-plan.md](docs/browser-modeling-plan.md). This revision supersedes the earlier requirement that client-side construction must go through a native Blender companion. Native packaging and companion work is archived, superseded for product delivery. Preserve its historical evidence and license obligations, and retain compatibility with already baked saved assets. It is not an outstanding product-delivery requirement.
 
 - Run rendering, feasible physics and modeling on the user's device. The selected model may remain hosted; end users retain their supported provider/model choices. Only development live-model tests are restricted to Luna by the execution policy.
 - Persist versioned editable recipes as the authoring source of truth, with stable entity/component IDs, parameters, materials, behaviors and revisions. Meshes are derived assets. Normalize meters, Y-up, radians and centered primitives at the SDK boundary.
@@ -204,14 +204,14 @@ The detailed implementation and acceptance plan is [browser-modeling-plan.md](do
 - Preserve the licensed catalog/procedural mix; explicit requests for new models override catalog reuse. Explicit backend requests must succeed through that backend or report its unavailable capability honestly.
 - Bake geometry, materials and behavior snapshots into standalone exports/publication. Public play must not require geometry kernels, an authoring interpreter, model credentials, an editor service or Blender unless the experience explicitly requires runtime regeneration.
 - Evaluate Replicad/OpenCascade only as an optional precision backend for supported fillets/chamfers and CAD-like shapes; do not promise a universal bevel operation. Babylon Node Geometry is an alternative ecosystem, not a reason to replace Three.js. JSCAD/OpenSCAD-WASM remain optional asset-generation candidates.
-- Evaluate HeyPuter Blender-WASM separately using Python mesh creation, required modifiers, export/extraction, targeted Three.js updates and repeated edits without restarting Blender. Verify actual build settings, browser isolation requirements, compatibility, memory and latency before making claims. Keep any native Blender companion optional, isolated and self-contained with preserved GPL/dependency notices, corresponding source and launcher dependencies.
+- Evaluate HeyPuter Blender-WASM separately using Python mesh creation, required modifiers, export/extraction, targeted Three.js updates and repeated edits without restarting Blender. Verify actual build settings, browser isolation requirements, compatibility, memory and latency before making claims. Do not introduce or surface a native companion. Preserve GPL/dependency notices and corresponding source obligations for any retained or distributed Blender artifacts.
 - Add a Python-facing `orbsie` API only if comparative tests justify it. Pyodide support does not establish `bpy` compatibility.
 
 Implementation order: SDK/recipe contract → bounded Bitbybit-Manifold versus direct-Manifold prototype → worker/scene integration → real-provider targeted-edit acceptance and baked export/publication → restricted procedural interpreter → optional precision/Blender backends. Use one Luna xhigh worker at a time; Astra reviews every diff and integration without repeating the worker's investigation. Run targeted tests per change and full E2E/live Luna calls at meaningful milestones.
 
 Core release gates (all require evidence; none are closed by the plan change):
 
-- [ ] Browser-only new-model creation and targeted recipe edits work without installing Blender, Node or Python.
+- [x] Browser-only new-model creation and targeted recipe edits work without installing Blender, Node or Python. Evidence: live OpenRouter revolve creation/radius edit (`docs/evidence/provider-e2e/browser-revolution-openrouter/`) and real-browser mesh/tube fixture editing/export (`docs/evidence/browser-mesh-worker/`, `docs/evidence/browser-tube-worker/`). This gate does not close the separate provider matrix below.
 - [ ] Real OpenRouter and Vercel AI Gateway workflows reserve, construct, revise, recover and preserve the persistent playable scene. ChatGPT subscription connection is also a top-priority live workflow per the latest owner clarification.
 - [ ] Recipe undo/replay/reload and stale-result rejection preserve the last good object and unrelated play state.
 - [ ] Geometry budgets, cancellation, failures and procedural-code isolation are verified; credentials and editor storage are inaccessible to generated programs.
@@ -219,7 +219,7 @@ Core release gates (all require evidence; none are closed by the plan change):
 - [ ] Baked assets survive export and independent signed-out publication without authoring services or provider credentials.
 - [ ] Selected kernels/worker assets are pinned, license-reviewed, locally hosted where appropriate, and retained with required notices.
 
-Optional-backend acceptance remains tracked in [local-blender-runtime.md](docs/local-blender-runtime.md) and [blender-packaging.md](docs/blender-packaging.md). Native package acquisition is not a core SDK prerequisite; a working desktop installation or browser Blender demo does not prove the Orbsie editing loop.
+Historical native experiments remain recorded in [local-blender-runtime.md](docs/local-blender-runtime.md) and [blender-packaging.md](docs/blender-packaging.md); their native acquisition/setup gates are superseded by the browser-only requirement. Any optional browser-WASM experiment must prove the Orbsie editing loop without external runtime connections or installation.
 
 Organize code around clear modules: app shell, planet/transition, formation renderer, scene runtime, protocol/reducer, generation adapters, persistence, export, and publishing. The runtime and project schema must be reusable in standalone game exports.
 
