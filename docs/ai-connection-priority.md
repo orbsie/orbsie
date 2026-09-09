@@ -22,5 +22,5 @@ Browser-only is a firm requirement. A supported hosted subscription integration 
 
 - OpenRouter PKCE and Settings callback shipped in 1ec0591 and are deployed. Ten core tests and a simulated browser redirect/callback passed; real OAuth consent remains unverified because regular Chrome is unavailable to computer use.
 - Live Luna OpenRouter model creation, material edit, reload and standalone export passed (7ec1bad). This used the existing API key, not an OAuth-issued credential.
-- OAuth blocked-storage, cancellation and pending-control fixes are under review. Also preserve the unsent composer prompt across redirect: saving only committed worlds does not meet the original prompt-preservation requirement.
+- OAuth blocked-storage, cancellation and pending-control fixes are reviewed and deployed, along with unsent composer prompt preservation (57218cd). Simulated production success and cancellation passed; existing-world selection recovery is undergoing targeted acceptance. These checks do not prove real provider consent.
 - Gateway funded live acceptance and browser-only ChatGPT subscription authorization remain unresolved. No local-install workaround satisfies the owner constraint.
