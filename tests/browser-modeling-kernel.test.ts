@@ -143,6 +143,10 @@ function fakeKernel(
       );
       return new FakeManifold("revolve", log, mesh, status);
     },
+    mesh: (vertices, triangles) => {
+      log.push(`mesh:${vertices.length}:${triangles.length}`);
+      return new FakeManifold("mesh", log, mesh, status);
+    },
   };
 }
 
@@ -348,6 +352,42 @@ describe("browser modeling kernel adapter", () => {
     );
   });
 
+  it("redacts mesh backend failures and deletes the returned object", () => {
+    const log: string[] = [];
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "mesh",
+      nodes: [
+        {
+          id: "mesh",
+          kind: "mesh",
+          vertices: [
+            [-1, 0, -1],
+            [1, 0, -1],
+            [0, 0, 1],
+            [0, 1, 0],
+          ],
+          triangles: [
+            [0, 1, 2],
+            [0, 3, 1],
+            [1, 3, 2],
+            [2, 3, 0],
+          ],
+        },
+      ],
+    });
+    expect(() =>
+      evaluateBrowserModelRecipe(
+        recipe,
+        fakeKernel(log, triangleMesh, "NotManifold"),
+      ),
+    ).toThrow("Browser mesh is invalid.");
+    expect(log.filter((entry) => entry.startsWith("delete:")).length).toBe(
+      log.filter((entry) => entry.startsWith("create:")).length,
+    );
+  });
+
   it("enforces the declared output budgets", () => {
     expect(browserModelKernelLimits.maxTriangles).toBe(100_000);
     expect(browserModelKernelLimits.maxMeshBytes).toBe(8 * 1024 * 1024);
@@ -428,6 +468,14 @@ describe("browser modeling kernel adapter", () => {
       extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
       revolve: (profile, segments, degrees) =>
         wasm.Manifold.revolve(profile, segments, degrees),
+      mesh: (vertices, triangles) =>
+        wasm.Manifold.ofMesh(
+          new wasm.Mesh({
+            numProp: 3,
+            vertProperties: vertices,
+            triVerts: triangles,
+          }),
+        ),
     });
     for (let axis = 0; axis < 3; axis += 1) {
       expect(result.bounds.min[axis]).toBeCloseTo(expectedMin[axis], 6);
@@ -456,7 +504,29 @@ describe("browser modeling kernel adapter", () => {
         output: "profile",
         nodes: [{ id: "profile", kind: "extrude", profile, depth: 1 }],
       });
-      const result = evaluateBrowserModelRecipe(recipe, wasm.Manifold);
+      const result = evaluateBrowserModelRecipe(recipe, {
+        cube: (size, center) => wasm.Manifold.cube(size, center),
+        sphere: (radius, segments) => wasm.Manifold.sphere(radius, segments),
+        cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
+          wasm.Manifold.cylinder(
+            depth,
+            radiusLow,
+            radiusHigh,
+            segments,
+            center,
+          ),
+        extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
+        revolve: (profile, segments, degrees) =>
+          wasm.Manifold.revolve(profile, segments, degrees),
+        mesh: (vertices, triangles) =>
+          wasm.Manifold.ofMesh(
+            new wasm.Mesh({
+              numProp: 3,
+              vertProperties: vertices,
+              triVerts: triangles,
+            }),
+          ),
+      });
       expect(result.statistics.triangles).toBeGreaterThan(0);
       expect(result.bounds.min).toEqual([-1, -1, -0.5]);
       expect(result.bounds.max).toEqual([1, 1, 0.5]);
@@ -507,6 +577,14 @@ describe("browser modeling kernel adapter", () => {
             wasm.Manifold.extrude(extrudeProfile, depth),
           revolve: (revolveProfile, segments, degrees) =>
             wasm.Manifold.revolve(revolveProfile, segments, degrees),
+          mesh: (vertices, triangles) =>
+            wasm.Manifold.ofMesh(
+              new wasm.Mesh({
+                numProp: 3,
+                vertProperties: vertices,
+                triVerts: triangles,
+              }),
+            ),
         }),
       );
     }

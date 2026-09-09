@@ -32,7 +32,23 @@ describe("browser mesh baked asset bridge", () => {
         },
       ],
     });
-    const mesh = evaluateBrowserModelRecipe(recipe, wasm.Manifold);
+    const mesh = evaluateBrowserModelRecipe(recipe, {
+      cube: (size, center) => wasm.Manifold.cube(size, center),
+      sphere: (radius, segments) => wasm.Manifold.sphere(radius, segments),
+      cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
+        wasm.Manifold.cylinder(depth, radiusLow, radiusHigh, segments, center),
+      extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
+      revolve: (profile, segments, degrees) =>
+        wasm.Manifold.revolve(profile, segments, degrees),
+      mesh: (vertices, triangles) =>
+        wasm.Manifold.ofMesh(
+          new wasm.Mesh({
+            numProp: 3,
+            vertProperties: vertices,
+            triVerts: triangles,
+          }),
+        ),
+    });
     const before = new Float32Array(mesh.vertices);
     const bytes = bakeBrowserModelGLB(mesh, {
       color: "#E4C79B",

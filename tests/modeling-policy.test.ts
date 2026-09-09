@@ -20,7 +20,12 @@ describe("browser modeling policy", () => {
       "centered from -depth/2 to +depth/2",
     );
     expect(browserModelingInstructions).toContain("partial sweep");
-    expect(browserModelingInstructions).toContain("custom meshes");
+    expect(browserModelingInstructions).toContain(
+      "bounded closed triangle mesh",
+    );
+    expect(browserModelingInstructions).toContain(
+      "self-intersecting triangles",
+    );
     expect(browserModelingInstructions).not.toContain("lathe");
     expect(modelingInstructions(false, true)).toBe(browserModelingInstructions);
   });

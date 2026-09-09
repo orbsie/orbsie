@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  MAX_BROWSER_MESH_RECIPE_TRIANGLES,
+  MAX_BROWSER_MESH_RECIPE_VERTICES,
+  MAX_BROWSER_MESH_TRIANGLES,
+  MAX_BROWSER_MESH_VERTICES,
+} from "./browser-mesh-validation";
 
 const MAX_NODES = 64;
 const MAX_DEPTH = 16;
@@ -86,6 +92,23 @@ const revolveNodeSchema = z
   })
   .strict();
 
+const meshIndex = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(MAX_BROWSER_MESH_VERTICES - 1);
+const meshNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("mesh"),
+    vertices: z.array(vector3).min(4).max(MAX_BROWSER_MESH_VERTICES),
+    triangles: z
+      .array(z.tuple([meshIndex, meshIndex, meshIndex]))
+      .min(4)
+      .max(MAX_BROWSER_MESH_TRIANGLES),
+  })
+  .strict();
+
 const transformNodeSchema = z
   .object({
     id: identifier,
@@ -113,6 +136,7 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   cylinderNodeSchema,
   extrudeNodeSchema,
   revolveNodeSchema,
+  meshNodeSchema,
   transformNodeSchema,
   booleanNodeSchema,
 ]);
@@ -288,6 +312,45 @@ export const browserModelRecipeSchema =
     };
 
     recipe.nodes.forEach((node, index) => {
+      if (node.kind === "mesh") {
+        const meshVertices = new Set<number>();
+        node.triangles.forEach((triangle, triangleIndex) => {
+          const [a, b, c] = triangle;
+          if (
+            a >= node.vertices.length ||
+            b >= node.vertices.length ||
+            c >= node.vertices.length
+          )
+            context.addIssue(
+              graphIssue("Browser mesh triangle index is out of range.", [
+                "nodes",
+                index,
+                "triangles",
+                triangleIndex,
+              ]),
+            );
+          if (a === b || b === c || c === a)
+            context.addIssue(
+              graphIssue("Browser mesh triangles must use distinct vertices.", [
+                "nodes",
+                index,
+                "triangles",
+                triangleIndex,
+              ]),
+            );
+          meshVertices.add(a);
+          meshVertices.add(b);
+          meshVertices.add(c);
+        });
+        if (meshVertices.size !== node.vertices.length)
+          context.addIssue(
+            graphIssue("Browser mesh vertices must all be referenced.", [
+              "nodes",
+              index,
+              "vertices",
+            ]),
+          );
+      }
       if (node.kind === "extrude" || node.kind === "revolve") {
         const issue = polygonProfileIssue(
           node.profile,
@@ -323,6 +386,31 @@ export const browserModelRecipeSchema =
           );
       });
     });
+
+    const meshVertices = recipe.nodes.reduce(
+      (total, node) =>
+        node.kind === "mesh" ? total + node.vertices.length : total,
+      0,
+    );
+    const meshTriangles = recipe.nodes.reduce(
+      (total, node) =>
+        node.kind === "mesh" ? total + node.triangles.length : total,
+      0,
+    );
+    if (meshVertices > MAX_BROWSER_MESH_RECIPE_VERTICES)
+      context.addIssue(
+        graphIssue(
+          `Browser recipe mesh vertices exceed ${MAX_BROWSER_MESH_RECIPE_VERTICES}.`,
+          ["nodes"],
+        ),
+      );
+    if (meshTriangles > MAX_BROWSER_MESH_RECIPE_TRIANGLES)
+      context.addIssue(
+        graphIssue(
+          `Browser recipe mesh triangles exceed ${MAX_BROWSER_MESH_RECIPE_TRIANGLES}.`,
+          ["nodes"],
+        ),
+      );
 
     const state = new Map<string, "visiting" | "visited">();
     const reachable = new Set<string>();
@@ -431,4 +519,8 @@ export const browserModelRecipeLimits = Object.freeze({
   maxDimensionMeters: MAX_DIMENSION_METERS,
   maxRotationRadians: MAX_ROTATION_RADIANS,
   maxScale: MAX_SCALE,
+  maxMeshVertices: MAX_BROWSER_MESH_VERTICES,
+  maxMeshTriangles: MAX_BROWSER_MESH_TRIANGLES,
+  maxMeshRecipeVertices: MAX_BROWSER_MESH_RECIPE_VERTICES,
+  maxMeshRecipeTriangles: MAX_BROWSER_MESH_RECIPE_TRIANGLES,
 });

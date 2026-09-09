@@ -2,6 +2,11 @@ import {
   browserModelRecipeSchema,
   type BrowserModelRecipe,
 } from "./browser-modeling";
+import {
+  BROWSER_MESH_INVALID_ERROR,
+  BrowserMeshValidationBudgetError,
+  validateBrowserMesh,
+} from "./browser-mesh-validation";
 
 export type BrowserModelVec3 = readonly [number, number, number];
 
@@ -52,6 +57,11 @@ export interface BrowserModelKernel {
     profile: [number, number][],
     segments: number,
     degrees: number,
+  ): BrowserModelKernelManifold;
+  /** Construct a fixed-property triangle mesh after browser-side validation. */
+  mesh(
+    vertices: Float32Array,
+    triangles: Uint32Array,
   ): BrowserModelKernelManifold;
 }
 
@@ -297,6 +307,25 @@ export function evaluateBrowserModelRecipe(
           node.id,
         );
         object = own(revolved.rotate([-90, 0, 0]), node.id);
+        break;
+      }
+      case "mesh": {
+        let validated;
+        try {
+          validated = validateBrowserMesh(node.vertices, node.triangles);
+        } catch (error) {
+          if (error instanceof BrowserMeshValidationBudgetError)
+            throw new Error(BROWSER_MESH_INVALID_ERROR);
+          throw error;
+        }
+        try {
+          object = own(
+            kernel.mesh(validated.vertices, validated.triangles),
+            node.id,
+          );
+        } catch {
+          throw new Error(BROWSER_MESH_INVALID_ERROR);
+        }
         break;
       }
       case "transform": {
