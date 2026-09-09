@@ -70,6 +70,9 @@ it("rejects legacy modeling jobs without invoking an external builder", async ()
 });
 
 it("rejects provider-supplied legacy model identity before any builder call", async () => {
+  const original = structuredClone(
+    useOrb.getState().project.entities[0].geometry,
+  );
   const fetcher = relay({
     version: 1,
     sha256: "a".repeat(64),
@@ -80,6 +83,7 @@ it("rejects provider-supplied legacy model identity before any builder call", as
     createdAt: "2026-09-08T00:00:00.000Z",
   });
   await useOrb.getState().run("Build this model");
-  expect(useOrb.getState().error).toContain("browser-manifold");
+  expect(useOrb.getState().error).toContain("invalid scene change");
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
   expect(fetcher).toHaveBeenCalledOnce();
 });
