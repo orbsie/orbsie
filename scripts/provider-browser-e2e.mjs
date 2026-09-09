@@ -249,7 +249,7 @@ function readConfiguration(argv) {
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
         : provider === "gateway"
-          ? "AI_GATEWAY_API_KEY"
+          ? ["AI_GATEWAY_TEST_KEY", "AI_GATEWAY_API_KEY"]
           : undefined,
     requireNewOnly: process.env.ORBSIE_REQUIRE_NEW_ONLY === "1",
     requireBrowserModel: process.env.ORBSIE_REQUIRE_BROWSER_MODEL === "1",
@@ -364,11 +364,29 @@ function readConfiguration(argv) {
   } else if (provider !== "free") {
     // This is the only point where an API credential is read, and it is
     // unreachable unless the explicit live flag and all safety gates passed.
-    config.key = process.env[config.keyEnv];
-    if (typeof config.key !== "string" || config.key.length < 10)
+    const keyEnvironments = Array.isArray(config.keyEnv)
+      ? config.keyEnv
+      : [config.keyEnv];
+    const selectedKeyEnvironment = keyEnvironments.find(
+      (name) =>
+        typeof name === "string" &&
+        typeof process.env[name] === "string" &&
+        process.env[name].length > 0,
+    );
+    if (
+      !selectedKeyEnvironment ||
+      typeof process.env[selectedKeyEnvironment] !== "string" ||
+      process.env[selectedKeyEnvironment].length < 10
+    )
       throw new HarnessConfigurationError(
-        `Set ${config.keyEnv} for the explicitly scoped live run. The value is never printed or written to evidence.`,
+        `Set ${
+          provider === "gateway"
+            ? "AI_GATEWAY_TEST_KEY (preferred) or AI_GATEWAY_API_KEY"
+            : config.keyEnv
+        } for the explicitly scoped live run. The value is never printed or written to evidence.`,
       );
+    config.keyEnv = selectedKeyEnvironment;
+    config.key = process.env[selectedKeyEnvironment];
   }
 
   if (process.env.ORBSIE_BUILDER_URL || process.env.ORBSIE_BUILDER_TOKEN) {

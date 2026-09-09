@@ -27,8 +27,14 @@ settings control, and verifies the two generation requests (creation and
 edit) carry the selected provider/model. It does not choose another model when
 the expected one is absent. The supplied local-only OpenRouter exception is
 enforced as `openai/gpt-5.6-luna` with a maximum explicit cap of 512 output
-tokens; use a separately authorized key and an explicit expected model for an
-Astra-low run.
+tokens; use an explicitly authorized Luna key and the exact expected model for
+the live run.
+
+For Gateway BYOK runs, the harness prefers `AI_GATEWAY_TEST_KEY` and accepts
+`AI_GATEWAY_API_KEY` as a backwards-compatible fallback. It never reads
+`AI_GATEWAY_API_KEY_FREE` or `VERCEL_DEPLOY_TOKEN`: the former is the
+server-owned free path and the latter is deployment access, not an inference
+credential.
 
 Before the first prompt, API-key runs query `/api/config` and require one of
 `generationMaxTokens`, `outputCapTokens`, or `maxOutputTokens` to equal
