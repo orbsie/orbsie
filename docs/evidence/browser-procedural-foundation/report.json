@@ -1,0 +1,36 @@
+{
+  "mode": "actual-browser-worker-no-inference",
+  "status": "failed",
+  "blocked": [],
+  "pageErrors": [],
+  "served": [
+    "/",
+    "/queue.js",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm",
+    "/modeling/procedural-worker.js",
+    "/modeling/emscripten-module.wasm"
+  ],
+  "cases": {
+    "deterministic": true,
+    "seedVariation": true,
+    "hostAPIsAbsent": true,
+    "malformed": "worker",
+    "loop": "worker",
+    "cancellation": "aborted",
+    "recovered": true
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'worker'\n- 'timeout'\n"
+}
