@@ -1,0 +1,18 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "shape": "tube",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "3c35e424ca1710b2b91e46489c7577669e6c24c87df18984f468ce593e0f8359",
+      "after": "72effd6dbe39ac0e92bb864c53b6fbc884036fd90a0658b05384f2bd7003e9d5"
+    },
+    "tubeRadiusEdit": true,
+    "invalidTubePreservesFinishedObject": true
+  },
+  "status": "failed",
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 0\nReceived: 1\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate",
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA pocketful of sunshine\nEdit\nPlay\nYour world\n\nBuild a bent capped pipe along a 3D path\n\n✧\n\nBrowser pipe created.\n\nBrowser pipe\n\nMake the pipe thicker without changing its path\n\n✧\n\nBrowser pipe edited.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nBrowser mesh is invalid."
+}

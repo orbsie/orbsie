@@ -350,6 +350,17 @@ try {
   }
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/edited.png` });
+  await page
+    .getByRole("button", { name: "Undo last change", exact: true })
+    .click();
+  const undone = await saved(0);
+  assert.deepEqual(undone.entities, first.entities);
+  await page
+    .getByRole("button", { name: "Redo last change", exact: true })
+    .click();
+  const redone = await saved(1);
+  assert.deepEqual(redone.entities, edited.entities);
+  report.checks.exactGeometryUndoRedo = true;
   if (mesh || tube) {
     await page
       .locator("#prompt")
