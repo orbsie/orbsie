@@ -18,6 +18,11 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+vi.mock(
+  "@/lib/server/chatgpt-models",
+  () => import("../src/lib/server/chatgpt-models"),
+);
+
 vi.mock("@/lib/server/auth", () => ({
   getAuth: mocks.getAuth,
   checkOrigin: mocks.checkOrigin,
@@ -135,6 +140,13 @@ describe("authenticated ChatGPT routes", () => {
       expect(mocks.ensure).not.toHaveBeenCalled();
     },
   );
+
+  it("does not provision when model access is requested without a host", async () => {
+    const response = await GET(request("models"), context("models"));
+    expect(response.status).toBe(409);
+    expect(mocks.ensure).not.toHaveBeenCalled();
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
 
   it("starts through one private host and returns only a validated challenge", async () => {
     mocks.request.mockResolvedValueOnce(

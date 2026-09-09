@@ -1,3 +1,4 @@
+import { validateChatGPTModels } from "@/lib/server/chatgpt-models";
 import { resolve } from "node:path";
 import { checkOrigin, getAuth, HttpError } from "@/lib/server/auth";
 import { readChatGPTHost } from "@/lib/server/chatgpt-host-registry";
@@ -17,7 +18,7 @@ const lifecycleValues = new Set([
   "expired",
 ]);
 const authStatusValues = new Set(["unknown", "connected", "disconnected"]);
-const actions = new Set(["start", "status", "cancel", "logout"]);
+const actions = new Set(["start", "status", "cancel", "logout", "models"]);
 
 type Identity = { ownerId: string; sessionId: string };
 type Host = Awaited<ReturnType<typeof readChatGPTHost>>;
@@ -181,7 +182,7 @@ function disconnected() {
 async function hostResponse(
   manager: ReturnType<typeof createChatGPTHostManager>,
   host: NonNullable<Host>,
-  operation: "status" | "start" | "cancel" | "logout",
+  operation: "models" | "status" | "start" | "cancel" | "logout",
 ) {
   return readResponse(await manager.request(host, operation));
 }
@@ -229,7 +230,7 @@ async function run(
     return json({ error: "Not found." }, 404);
   }
   if (!actions.has(action)) return json({ error: "Not found." }, 404);
-  const expected = action === "status" ? "GET" : "POST";
+  const expected = ["status", "models"].includes(action) ? "GET" : "POST";
   if (method !== expected) return json({ error: "Method not allowed." }, 405);
 
   let url: URL;
@@ -251,6 +252,17 @@ async function run(
     artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
   });
 
+  if (action === "models") {
+    const host = await readChatGPTHost(identity);
+    if (!host) failure(409, "Connect your ChatGPT account first.");
+    const value = await hostResponse(manager, host, "models");
+    const models = validateChatGPTModels(
+      value && typeof value === "object"
+        ? (value as { models?: unknown }).models
+        : undefined,
+    );
+    return json({ models });
+  }
   if (action === "status") {
     const host = await readChatGPTHost(identity);
     if (!host) return json(disconnected());

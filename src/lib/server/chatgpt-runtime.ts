@@ -10,6 +10,7 @@ const MAX_LINE_BYTES = 64 * 1024;
 const SHUTDOWN_GRACE_MS = 2_000;
 const ALLOWED_METHODS = new Set([
   "account/read",
+  "model/list",
   "account/login/start",
   "account/login/cancel",
   "account/logout",
@@ -120,6 +121,20 @@ export async function createIsolatedChatGPTRpc(): Promise<
       return Promise.reject(
         failure("This ChatGPT operation is not supported."),
       );
+    if (
+      method === "model/list" &&
+      (!isRecord(params) ||
+        params.limit !== 20 ||
+        params.includeHidden !== false ||
+        Object.keys(params).some(
+          (key) => !["limit", "includeHidden", "cursor"].includes(key),
+        ) ||
+        (params.cursor !== undefined &&
+          (typeof params.cursor !== "string" ||
+            !params.cursor.length ||
+            params.cursor.length > 4096)))
+    )
+      return Promise.reject(failure("Invalid ChatGPT model request."));
     if (method === "account/login/start") {
       if (!isRecord(params) || params.type !== "chatgptDeviceCode")
         return Promise.reject(

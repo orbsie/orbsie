@@ -71,6 +71,27 @@ describe("isolated ChatGPT App Server runtime", () => {
     await closing;
   }
 
+  it("allows only bounded catalog requests and still rejects execution methods", async () => {
+    const { runtime, child } = await start();
+    await expect(
+      runtime.request("model/list", { limit: 1000, includeHidden: true }),
+    ).rejects.toThrow();
+    await expect(
+      runtime.request("command/exec", { command: "id" }),
+    ).rejects.toThrow();
+    const pending = runtime.request("model/list", {
+      limit: 20,
+      includeHidden: false,
+    });
+    const sent = JSON.parse(child.stdin.writes.at(-1)!);
+    expect(sent.method).toBe("model/list");
+    child.stdout.emit(
+      "data",
+      child.line({ id: sent.id, result: { data: [], nextCursor: null } }),
+    );
+    await expect(pending).resolves.toEqual({ data: [], nextCursor: null });
+  });
+
   it("starts with a private cwd and an explicit environment and a dedicated CODEX_HOME", async () => {
     const { runtime, child, spawnOptions } = await start();
     const cwd = String(spawnOptions.cwd);

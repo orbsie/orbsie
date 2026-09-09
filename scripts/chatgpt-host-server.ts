@@ -1,3 +1,4 @@
+import { listChatGPTModels } from "../src/lib/server/chatgpt-models";
 import { createServer } from "node:http";
 import { createIsolatedChatGPTRpc } from "../src/lib/server/chatgpt-runtime";
 import { ChatGPTDeviceSession } from "../src/lib/server/chatgpt-device-session";
@@ -22,7 +23,11 @@ export async function startChatGPTHostServer(options: {
     sessionId: crypto.randomUUID(),
     rpc,
   });
-  const handle = createChatGPTHostHandler({ session, token: options.token });
+  const handle = createChatGPTHostHandler({
+    session,
+    token: options.token,
+    models: () => listChatGPTModels(rpc, session),
+  });
   const server = createServer(async (incoming, outgoing) => {
     try {
       // Auth endpoints accept no payload. Reject without buffering input.

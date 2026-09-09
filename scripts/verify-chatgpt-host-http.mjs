@@ -31,6 +31,7 @@ try {
       { headers: { authorization, origin: "https://orbsie.com" } },
       403,
     ],
+    ["signedOutModelsRejected", "/models", { headers: { authorization } }, 502],
     ["signedOutStatus", "/login/status", { headers: { authorization } }, 200],
   ]) {
     const response = await fetch(base + path, {

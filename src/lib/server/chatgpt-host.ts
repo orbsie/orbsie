@@ -56,7 +56,11 @@ function sessionFailure(error: unknown): Response {
   return response({ error: "ChatGPT connection could not be completed." }, 502);
 }
 
-function routeFor(request: Request, session: HostSession): Route | Response {
+function routeFor(
+  request: Request,
+  session: HostSession,
+  models?: () => Promise<unknown>,
+): Route | Response {
   let url: URL;
   try {
     url = new URL(request.url);
@@ -67,6 +71,7 @@ function routeFor(request: Request, session: HostSession): Route | Response {
     return response({ error: "Query parameters are not allowed." }, 400);
   const expectedMethod = {
     "/login/start": "POST",
+    "/models": "GET",
     "/login/status": "GET",
     "/login/cancel": "POST",
     "/logout": "POST",
@@ -76,6 +81,10 @@ function routeFor(request: Request, session: HostSession): Route | Response {
     return response({ error: "Method not allowed." }, 405);
   const key = `${request.method} ${url.pathname}`;
   switch (key) {
+    case "GET /models":
+      return models
+        ? { run: async () => ({ models: await models() }) }
+        : response({ error: "Model access is unavailable." }, 503);
     case "POST /login/start":
       return { run: () => session.start() };
     case "GET /login/status":
@@ -107,9 +116,11 @@ function routeFor(request: Request, session: HostSession): Route | Response {
 export function createChatGPTHostHandler({
   session,
   token,
+  models,
 }: {
   session: HostSession;
   token: string;
+  models?: () => Promise<unknown>;
 }): (request: Request) => Promise<Response> {
   if (
     typeof token !== "string" ||
@@ -131,7 +142,7 @@ export function createChatGPTHostHandler({
     if (request.body !== null)
       return response({ error: "Request bodies are not allowed." }, 400);
 
-    const route = routeFor(request, session);
+    const route = routeFor(request, session, models);
     if (route instanceof Response) return route;
     try {
       return response(await route.run());

@@ -4,8 +4,9 @@ import { join } from "node:path";
 
 type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
-type Operation = "status" | "start" | "cancel" | "logout";
+type Operation = "models" | "status" | "start" | "cancel" | "logout";
 const routes = {
+  models: ["GET", "/models"],
   status: ["GET", "/login/status"],
   start: ["POST", "/login/start"],
   cancel: ["POST", "/login/cancel"],
