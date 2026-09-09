@@ -705,6 +705,27 @@ export const useOrb = create<State>((setState, getState) => ({
         : undefined;
       if (updatedEntity)
         noteSceneUpdate(project.id, updatedEntity, experienceToken);
+      if (
+        command.type === "set_group_transform" ||
+        command.type === "set_parent"
+      ) {
+        // Parent edits redraw stable child entities without replacing geometry.
+        const groups = new Map(
+          (result.project.groups ?? []).map((group) => [group.id, group]),
+        );
+        for (const entity of result.project.entities) {
+          let parentId = entity.parentId;
+          let affected = entity.id === command.id;
+          for (let depth = 0; parentId && depth < 32; depth++) {
+            if (parentId === command.id) {
+              affected = true;
+              break;
+            }
+            parentId = groups.get(parentId)?.parentId;
+          }
+          if (affected) noteSceneUpdate(project.id, entity, experienceToken);
+        }
+      }
       setState({ project: result.project });
       if (command.type === "reserve_entity")
         noteReservation(project.id, command.entity.id, experienceToken);
@@ -717,6 +738,10 @@ export const useOrb = create<State>((setState, getState) => ({
         command.type === "set_game" ||
         command.type === "set_environment" ||
         command.type === "remove_entity" ||
+        command.type === "create_group" ||
+        command.type === "set_group_transform" ||
+        command.type === "remove_group" ||
+        command.type === "set_parent" ||
         command.type === "commit_revision";
       if (checkpoint) await getState().save();
       return !signal.aborted && active === controller;
