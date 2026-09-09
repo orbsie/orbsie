@@ -38,6 +38,15 @@ a rotated platform. This collision integration is a release gate, including
 parent changes while the player stands on a platform. Do not advertise model
 parenting tools after only the schema or matrix foundation is implemented.
 
+The current support state retains an origin and top height. Hierarchy
+integration must additionally retain the player's support-local contact point
+or equivalent previous support matrix: translation deltas alone cannot carry
+a player correctly when a parent rotates or scales. Transform that contact
+through the old and new support poses before applying player input. Test an
+off-center standing player under a 90-degree Y rotation, not just a player at
+the group's origin. A removed, singular or no-longer-supporting surface must
+release support safely rather than preserve an invalid grounded state.
+
 Delivery sequence: pure matrix foundation; atomic protocol operations;
 shared renderer/gameplay integration; model tool exposure and history/export
 acceptance; then the authorized live-provider milestone. Each intermediate
