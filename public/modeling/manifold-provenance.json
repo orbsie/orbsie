@@ -1,0 +1,22 @@
+{
+  "package": "manifold-3d",
+  "version": "3.3.2",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/elalish/manifold",
+  "npmIntegrity": "sha512-Xx+S7kkbqlZxSPfBKH5yVKDO6k/eW7JRvnG1dKCFO0D4zjifOV5GM18TR0sREDcbKAzglHZ5OoxxpZRkxg6U5A==",
+  "files": {
+    "manifold.js": {
+      "bytes": 77401,
+      "sha256": "9392f8e3b7f9d3cae83c0e7c5a17acaaf017230b8931b3739fb21ea4c852a0b5"
+    },
+    "manifold.wasm": {
+      "bytes": 476297,
+      "sha256": "8f8cb69137af5dd87950b60aa88d7613cde48e4af45b43b8464473191cc9dbe6"
+    },
+    "LICENSE": {
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  },
+  "scope": "Pinned runtime inputs. Browser evaluator and scene integration not yet shipped."
+}

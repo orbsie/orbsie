@@ -25,6 +25,7 @@
     "fflate": "0.8.3",
     "idb-keyval": "6.3.0",
     "lucide-react": "1.42.0",
+    "manifold-3d": "3.3.2",
     "next": "16.3.4",
     "pg": "8.23.0",
     "postgres": "3.4.9",
