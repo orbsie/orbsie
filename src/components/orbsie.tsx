@@ -119,8 +119,6 @@ export default function Orbsie() {
     model: "",
     key: "",
   });
-  const [builderLink, setBuilderLink] = useState("");
-  const [builderConnecting, setBuilderConnecting] = useState(false);
   const builderVersion = useRef(0);
   const pendingBuilder = useRef<ModelingConnection | null>(null);
   async function connectBuilder(
@@ -128,12 +126,10 @@ export default function Orbsie() {
     signal?: AbortSignal,
   ) {
     const version = ++builderVersion.current;
-    setBuilderConnecting(true);
     try {
       await checkModelingConnection(link, signal);
       if (signal?.aborted || version !== builderVersion.current) return;
       pendingBuilder.current = null;
-      setBuilderLink("");
       s.set({
         modelingConnection: link,
         notice: "Local Blender is connected.",
@@ -147,9 +143,6 @@ export default function Orbsie() {
         s.set({ error: message });
         setModalError(message);
       }
-    } finally {
-      if (!signal?.aborted && version === builderVersion.current)
-        setBuilderConnecting(false);
     }
   }
   const connectionVersion = useRef(0);
@@ -1510,11 +1503,10 @@ export default function Orbsie() {
                   : "Connect your AI account or API key to create and edit your world."}
               </p>
               <p className="fine-print">
-                {s.modelingConnection
-                  ? "Blender is ready to build models on this computer."
-                  : "For local Blender modeling, start the companion and connect its private link. Your world renders on this device."}
+                Models are built and rendered in your browser. No installation
+                is required.
               </p>
-              {s.modelingConnection ? (
+              {s.modelingConnection && (
                 <button
                   className="secondary full"
                   onClick={() => {
@@ -1529,41 +1521,6 @@ export default function Orbsie() {
                 >
                   Disconnect local Blender
                 </button>
-              ) : (
-                <>
-                  <label>
-                    Local Blender connection link
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      value={builderLink}
-                      onChange={(event) => setBuilderLink(event.target.value)}
-                      placeholder="Paste the companion link"
-                    />
-                  </label>
-                  <button
-                    className="secondary full"
-                    disabled={builderConnecting || !builderLink.trim()}
-                    onClick={() => {
-                      try {
-                        const link = readModelingLink(
-                          new URL(builderLink.trim()).hash,
-                        );
-                        if (!link) throw Error();
-                        void connectBuilder(link);
-                      } catch {
-                        s.set({
-                          error:
-                            "Paste the complete connection link from the local Blender companion.",
-                        });
-                      }
-                    }}
-                  >
-                    {builderConnecting
-                      ? "Connecting Blender…"
-                      : "Connect local Blender"}
-                  </button>
-                </>
               )}
               {trial.enabled && trial.remaining > 0 && (
                 <button
