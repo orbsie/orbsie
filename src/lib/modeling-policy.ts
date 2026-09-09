@@ -13,6 +13,18 @@ export function assertModelingCommand(command: Command, available: boolean) {
     );
   if (command.type !== "set_geometry" || command.geometry.kind !== "generated")
     return;
+  const browserBackend = "backend" in command.geometry.job;
+  if (browserBackend) {
+    if (command.geometry.model)
+      throw Error(
+        "Generated model identities must come from the browser builder.",
+      );
+    if (command.geometry.detail !== "refined")
+      throw Error(
+        "Browser modeling jobs must provide refined geometry; use a procedural preview first.",
+      );
+    return;
+  }
   if (!available)
     throw Error(
       "Connect the local Blender companion before building this model.",

@@ -307,7 +307,9 @@ it("accepts unresolved generated jobs for validation projection and resolved met
   });
   expect(unresolved.detail).toBe("refined");
   expect(unresolved.model).toBeUndefined();
-  expect(unresolved.job.parts[0].scale).toEqual([1, 1, 1]);
+  expect("parts" in unresolved.job).toBe(true);
+  if ("parts" in unresolved.job)
+    expect(unresolved.job.parts[0].scale).toEqual([1, 1, 1]);
   const resolved = generatedGeometrySchema.parse({
     ...unresolved,
     model: generatedMetadata,

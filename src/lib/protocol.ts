@@ -6,6 +6,7 @@ import {
 } from "./game-program";
 import { modelingJobSchema } from "./modeling";
 import { generatedModelMetadataSchema } from "./generated-models";
+import { browserModelRecipeSchema } from "./browser-modeling";
 import {
   catalogAssetIds,
   isAssetId,
@@ -50,16 +51,38 @@ export const assetGeometrySchema = z.object({
   detail: geometryDetail,
   tint: color.optional(),
 });
+export const browserModelingJobSchema = z
+  .object({
+    backend: z.literal("browser-manifold"),
+    recipe: browserModelRecipeSchema,
+  })
+  .strict();
+const generatedModelingJobSchema = z.union([
+  modelingJobSchema,
+  browserModelingJobSchema,
+]);
+export type BrowserModelingJob = z.infer<typeof browserModelingJobSchema>;
 export const generatedGeometrySchema = z
   .object({
     kind: z.literal("generated"),
     collision: z.enum(["none", "platform"]).default("none"),
-    job: modelingJobSchema,
+    job: generatedModelingJobSchema,
     model: generatedModelMetadataSchema.optional(),
     detail: geometryDetail,
     tint: color.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((geometry, context) => {
+    if (!geometry.model) return;
+    const expectedSource =
+      "backend" in geometry.job ? "browser-manifold" : "local-blender";
+    if (geometry.model.source !== expectedSource)
+      context.addIssue({
+        code: "custom",
+        path: ["model", "source"],
+        message: `Generated model metadata must use ${expectedSource} for this job.`,
+      });
+  });
 export type GeneratedGeometryRecipe = z.infer<typeof generatedGeometrySchema>;
 export const geometrySchema = z.union([
   proceduralGeometrySchema,

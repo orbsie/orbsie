@@ -13,6 +13,7 @@ import {
   buildLocalModel,
   type ModelingConnection,
 } from "./modeling-connection";
+import { buildBrowserModel } from "./browser-modeling-connection";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import { GAME_RULES_RESTART_NOTICE } from "./game-session";
 import {
@@ -597,17 +598,23 @@ export const useOrb = create<State>((setState, getState) => ({
         command.type === "set_geometry" &&
         command.geometry.kind === "generated"
       ) {
-        const model = await buildLocalModel(
-          modelingConnection!,
-          command.geometry.job,
-          {
-            signal,
-            onProgress: (event) => {
-              if (!signal.aborted && active === controller)
-                setState({ notice: `Building locally: ${event.message}` });
-            },
-          },
-        );
+        const entityId = command.id;
+        const job = command.geometry.job;
+        const model =
+          "backend" in job
+            ? await buildBrowserModel(job.recipe, {
+                signal,
+                color:
+                  s.project.entities.find((entity) => entity.id === entityId)
+                    ?.color ?? "#6ead60",
+              })
+            : await buildLocalModel(modelingConnection!, job, {
+                signal,
+                onProgress: (event) => {
+                  if (!signal.aborted && active === controller)
+                    setState({ notice: `Building locally: ${event.message}` });
+                },
+              });
         if (signal.aborted || active !== controller) return false;
         command = { ...command, geometry: { ...command.geometry, model } };
         s = getState();
