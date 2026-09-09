@@ -2,23 +2,26 @@ import { build } from "esbuild";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 await import("./build-modeling-worker.mjs");
 await mkdir("public/player", { recursive: true });
-await build({
+const generatedWorker = await build({
   entryPoints: ["src/lib/generated-geometry-worker.ts"],
   bundle: true,
+  metafile: true,
   minify: true,
   format: "esm",
   outfile: "public/player/generated-geometry-worker.js",
 });
-await build({
+const assetWorker = await build({
   entryPoints: ["src/lib/asset-geometry-worker.ts"],
   bundle: true,
+  metafile: true,
   minify: true,
   format: "esm",
   outfile: "public/player/asset-geometry-worker.js",
 });
-await build({
+const player = await build({
   entryPoints: ["src/player/main.tsx"],
   bundle: true,
+  metafile: true,
   minify: true,
   jsx: "automatic",
   format: "esm",
@@ -41,6 +44,12 @@ const paths = [
   "src/lib/modeling.ts",
   "src/lib/modeling-policy.ts",
   "src/lib/modeling-connection.ts",
+  "src/lib/browser-modeling.ts",
+  "src/lib/browser-modeling-connection.ts",
+  "src/lib/browser-modeling-kernel.ts",
+  "src/lib/browser-modeling-glb.ts",
+  "src/lib/browser-modeling-queue.ts",
+  "src/lib/browser-modeling-worker.ts",
   "src/lib/generated-models.ts",
   "src/lib/cloud-generated-models.ts",
   "src/lib/cloud-generation-journal.ts",
@@ -73,7 +82,14 @@ const paths = [
   "LICENSE",
 ];
 const sources = {};
-for (const path of paths) sources[path] = await readFile(path, "utf8");
+const bundledSources = [generatedWorker, assetWorker, player].flatMap(
+  (result) =>
+    Object.keys(result.metafile.inputs).filter(
+      (path) => path.startsWith("src/") || path.startsWith("assets/"),
+    ),
+);
+for (const path of new Set([...paths, ...bundledSources]))
+  sources[path] = await readFile(path, "utf8");
 sources["build-source.mjs"] =
   `import {build} from 'esbuild';await build({entryPoints:['src/lib/generated-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'generated-geometry-worker.js'});await build({entryPoints:['src/lib/asset-geometry-worker.ts'],bundle:true,minify:true,format:'esm',outfile:'asset-geometry-worker.js'});await build({entryPoints:['src/player/main.tsx'],bundle:true,minify:true,jsx:'automatic',format:'esm',outfile:'runtime.js',define:{'process.env.NODE_ENV':'"production"',ORBSIE_STANDALONE_WORKER:JSON.stringify('./generated-geometry-worker.js'),ORBSIE_STANDALONE_ASSET_WORKER:JSON.stringify('./asset-geometry-worker.js')},alias:{'@':'./src'}});`;
 await writeFile("public/player/source.json", JSON.stringify(sources));
