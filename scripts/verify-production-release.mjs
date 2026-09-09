@@ -237,6 +237,8 @@ async function main() {
       "player/generated-geometry-worker.js",
       "player/asset-geometry-worker.js",
       "modeling/worker.js",
+      "modeling/procedural-worker.js",
+      "modeling/emscripten-module.wasm",
     ]) {
       const expected = createHash("sha256")
         .update(await readFile(`public/${file}`))
