@@ -289,7 +289,7 @@ describe("scene hierarchy protocol", () => {
     expect(cursor).toEqual(cursorBeforeShear);
   });
 
-  it("keeps canonical hierarchy out of the advertised model schema", () => {
+  it("advertises integrated hierarchy through the model schema", () => {
     expect(
       commandSchema.safeParse({
         type: "set_transform",
@@ -298,25 +298,27 @@ describe("scene hierarchy protocol", () => {
       }).success,
     ).toBe(true);
     const advertised = modelCommandSchemaForCapabilities(false, false);
+    const reservation = entity("leaf", { rotation: [0, 0.5, 0] });
+    delete reservation.geometry;
     expect(
       advertised.safeParse({
         type: "set_transform",
         id: "leaf",
         rotation: [0, 0.5, 0],
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       advertised.safeParse({
         type: "reserve_entity",
-        entity: entity("leaf", { rotation: [0, 0.5, 0] }),
+        entity: reservation,
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       advertised.safeParse({
         type: "create_group",
         group: group("g"),
       }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("recovers ready geometry while retaining the current valid hierarchy", () => {

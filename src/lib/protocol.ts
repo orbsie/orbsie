@@ -317,18 +317,8 @@ export const commandSchema = z.discriminatedUnion("type", [
 ]);
 export type Command = z.infer<typeof commandSchema>;
 
-const modelEntityBaseSchema = entitySchema
-  .omit({ geometry: true, rotation: true, parentId: true })
-  .strict();
-const modelSetTransformCommandSchema = z
-  .object({
-    type: z.literal("set_transform"),
-    id: z.string(),
-    position: vector.optional(),
-    scale: vector.optional(),
-    assetPolicy: assetRequestPolicySchema.optional(),
-  })
-  .strict();
+const modelEntityBaseSchema = entitySchema.omit({ geometry: true }).strict();
+const modelSetTransformCommandSchema = setTransformCommandSchema.strict();
 function modelGeometrySchema(localModeling: boolean, browserModeling: boolean) {
   const generated =
     localModeling || browserModeling
@@ -371,6 +361,10 @@ export function modelCommandSchemaForCapabilities(
     setGeometry,
     setMaterialCommandSchema,
     modelSetTransformCommandSchema,
+    createGroupCommandSchema,
+    removeGroupCommandSchema,
+    setGroupTransformCommandSchema,
+    setParentCommandSchema,
     setBehaviorCommandSchema,
     removeEntityCommandSchema,
     setEnvironmentCommandSchema,
