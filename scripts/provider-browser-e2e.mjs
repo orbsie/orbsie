@@ -2415,9 +2415,22 @@ async function run(config) {
           evidenceDir,
         )
       : null;
-    await expect(page.locator(".object-list button").first()).toBeVisible({
-      timeout: 180000,
-    });
+    // A rejected request cannot reserve an entity. Surface that response now
+    // instead of spending the entire first-object timeout on an empty scene.
+    const firstObject = page.locator(".object-list button").first();
+    const reservationDeadline = Date.now() + 180000;
+    while (!(await firstObject.isVisible())) {
+      const rejectedStatus = info.generationStatuses.find(
+        (status) => status >= 400,
+      );
+      if (rejectedStatus)
+        throw new Error(
+          `Generation request returned HTTP ${rejectedStatus} before the first entity reservation.`,
+        );
+      if (Date.now() >= reservationDeadline)
+        throw new Error("No entity reservation appeared within 180 seconds.");
+      await page.waitForTimeout(100);
+    }
     const firstEvidence =
       interrupted?.observerEvidence ?? (await observerEvidence(page));
     const seedObserved = Boolean(
