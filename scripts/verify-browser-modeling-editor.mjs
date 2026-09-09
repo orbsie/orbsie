@@ -8,29 +8,50 @@ const url = process.env.TEST_URL ?? "http://localhost:3047";
 const output = process.argv[2];
 if (!output) throw Error("Provide a new evidence directory.");
 await mkdir(output, { recursive: false });
-const recipe = (revision, radius) => ({
-  version: 1,
-  revision,
-  output: "arch",
-  nodes: [
-    { id: "body", kind: "box", size: [4, 3, 1] },
-    { id: "hole", kind: "cylinder", radius, depth: 2, axis: "z" },
-    {
-      id: "placed",
-      kind: "transform",
-      input: "hole",
-      position: [0, -1, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
-    },
-    {
-      id: "arch",
-      kind: "boolean",
-      operation: "subtract",
-      operands: ["body", "placed"],
-    },
-  ],
-});
+const extrusion = process.env.ORBSIE_MODELING_SHAPE === "extrusion";
+const label = extrusion ? "Browser prism" : "Browser arch";
+const recipe = (revision, radius) =>
+  extrusion
+    ? {
+        version: 1,
+        revision,
+        output: "prism",
+        nodes: [
+          {
+            id: "prism",
+            kind: "extrude",
+            profile: [
+              [-1.5, -1],
+              [1.5, -1],
+              [0, 1.5],
+            ],
+            depth: radius,
+          },
+        ],
+      }
+    : {
+        version: 1,
+        revision,
+        output: "arch",
+        nodes: [
+          { id: "body", kind: "box", size: [4, 3, 1] },
+          { id: "hole", kind: "cylinder", radius, depth: 2, axis: "z" },
+          {
+            id: "placed",
+            kind: "transform",
+            input: "hole",
+            position: [0, -1, 0],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+          },
+          {
+            id: "arch",
+            kind: "boolean",
+            operation: "subtract",
+            operands: ["body", "placed"],
+          },
+        ],
+      };
 const geometry = (revision, radius) => ({
   kind: "generated",
   detail: "refined",
@@ -86,7 +107,7 @@ try {
               type: "reserve_entity",
               entity: {
                 id: "arch",
-                label: "Browser arch",
+                label,
                 position: [0, 1.5, 0],
                 scale: [1, 1, 1],
                 color: "#E4C79B",
@@ -102,7 +123,7 @@ try {
       },
       {
         type: "commit_revision",
-        message: initial ? "Browser arch created." : "Browser opening widened.",
+        message: initial ? `${label} created.` : `${label} edited.`,
       },
     ];
     await route.fulfill({
@@ -119,7 +140,11 @@ try {
   await expect(page.locator("canvas")).toBeVisible();
   await page
     .getByPlaceholder("What experience to build?")
-    .fill("Build a new stone arch");
+    .fill(
+      extrusion
+        ? "Build a triangular prism from an outline"
+        : "Build a new stone arch",
+    );
   await page.getByRole("button", { name: "Create", exact: true }).click();
   const saved = async (revision) => {
     let project;
@@ -142,8 +167,10 @@ try {
   await page.waitForTimeout(1500); // Allow the bounded formation transition to settle for visual inspection.
   await page.screenshot({ path: `${output}/created.png` });
   await page.getByRole("button", { name: "Show objects", exact: true }).click();
-  await page.getByRole("button", { name: "Browser arch" }).click();
-  await page.locator("#prompt").fill("Make the opening wider");
+  await page.getByRole("button", { name: label }).click();
+  await page
+    .locator("#prompt")
+    .fill(extrusion ? "Make the extrusion deeper" : "Make the opening wider");
   await page.getByRole("button", { name: "Change this", exact: true }).click();
   const edited = await saved(1);
   assert.equal(edited.entities.length, 1);

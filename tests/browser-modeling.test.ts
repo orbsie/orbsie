@@ -53,6 +53,66 @@ describe("browser modeling recipe contract", () => {
     });
   });
 
+  it("accepts a simple concave extrusion profile in either winding", () => {
+    const counterClockwise = [
+      [-1, -1],
+      [1, -1],
+      [1, 0],
+      [0, 0],
+      [0, 1],
+      [-1, 1],
+    ];
+    const clockwise = counterClockwise.slice().reverse();
+    for (const profile of [counterClockwise, clockwise]) {
+      expect(
+        browserModelRecipeSchema.safeParse({
+          version: 1,
+          revision: 0,
+          output: "profile",
+          nodes: [{ id: "profile", kind: "extrude", profile, depth: 1.25 }],
+        }).success,
+      ).toBe(true);
+    }
+  });
+
+  it("rejects duplicate, degenerate, self-intersecting, and oversized profiles", () => {
+    const invalidProfiles = [
+      [
+        [-1, -1],
+        [1, -1],
+        [1, -1],
+        [-1, 1],
+      ],
+      [
+        [-1, 0],
+        [0, 0],
+        [1, 0],
+      ],
+      [
+        [-2, -1],
+        [2, 2],
+        [-2, 2],
+        [2, -1],
+        [0, 1],
+      ],
+      Array.from({ length: 65 }, (_, index) => [index, 0]),
+      [
+        [-browserModelRecipeLimits.maxCoordinateMeters - 1, 0],
+        [0, 1],
+        [1, 0],
+      ],
+    ];
+    for (const profile of invalidProfiles)
+      expect(
+        browserModelRecipeSchema.safeParse({
+          version: 1,
+          revision: 0,
+          output: "profile",
+          nodes: [{ id: "profile", kind: "extrude", profile, depth: 1 }],
+        }).success,
+      ).toBe(false);
+  });
+
   it("replaces one cutter dimension and then its transform immutably", () => {
     const original = parseBrowserModelRecipe(archRecipe);
     const resized = replaceBrowserModelRecipeNode(

@@ -54,6 +54,18 @@ const cylinderNodeSchema = z
   })
   .strict();
 
+const extrudeNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("extrude"),
+    profile: z
+      .array(z.tuple([coordinate, coordinate]))
+      .min(3)
+      .max(64),
+    depth: dimension,
+  })
+  .strict();
+
 const transformNodeSchema = z
   .object({
     id: identifier,
@@ -79,6 +91,7 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   boxNodeSchema,
   sphereNodeSchema,
   cylinderNodeSchema,
+  extrudeNodeSchema,
   transformNodeSchema,
   booleanNodeSchema,
 ]);
@@ -97,6 +110,124 @@ export type BrowserModelRecipe = z.infer<typeof browserModelRecipeBaseSchema>;
 
 function graphIssue(message: string, path: (string | number)[] = []) {
   return { code: "custom" as const, message, path };
+}
+
+type ExtrudeProfile = readonly (readonly [number, number])[];
+
+function cross(ax: number, ay: number, bx: number, by: number): number {
+  return ax * by - ay * bx;
+}
+
+function orientation(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  c: readonly [number, number],
+): number {
+  return cross(b[0] - a[0], b[1] - a[1], c[0] - a[0], c[1] - a[1]);
+}
+
+function onSegment(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  point: readonly [number, number],
+): boolean {
+  const epsilon = 1e-10;
+  return (
+    point[0] >= Math.min(a[0], b[0]) - epsilon &&
+    point[0] <= Math.max(a[0], b[0]) + epsilon &&
+    point[1] >= Math.min(a[1], b[1]) - epsilon &&
+    point[1] <= Math.max(a[1], b[1]) + epsilon
+  );
+}
+
+function segmentsIntersect(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  c: readonly [number, number],
+  d: readonly [number, number],
+): boolean {
+  const epsilon = 1e-10;
+  const abC = orientation(a, b, c);
+  const abD = orientation(a, b, d);
+  const cdA = orientation(c, d, a);
+  const cdB = orientation(c, d, b);
+  if (
+    Math.abs(abC) <= epsilon &&
+    Math.abs(abD) <= epsilon &&
+    Math.abs(cdA) <= epsilon &&
+    Math.abs(cdB) <= epsilon
+  )
+    return (
+      onSegment(a, b, c) ||
+      onSegment(a, b, d) ||
+      onSegment(c, d, a) ||
+      onSegment(c, d, b)
+    );
+  return (
+    ((abC > epsilon && abD < -epsilon) ||
+      (abC < -epsilon && abD > epsilon) ||
+      (Math.abs(abC) <= epsilon && onSegment(a, b, c)) ||
+      (Math.abs(abD) <= epsilon && onSegment(a, b, d))) &&
+    ((cdA > epsilon && cdB < -epsilon) ||
+      (cdA < -epsilon && cdB > epsilon) ||
+      (Math.abs(cdA) <= epsilon && onSegment(c, d, a)) ||
+      (Math.abs(cdB) <= epsilon && onSegment(c, d, b)))
+  );
+}
+
+function extrudeProfileIssue(profile: ExtrudeProfile): string | undefined {
+  const epsilon = 1e-10;
+  const points = profile;
+  for (let first = 0; first < points.length; first += 1) {
+    for (let second = first + 1; second < points.length; second += 1) {
+      if (
+        points[first][0] === points[second][0] &&
+        points[first][1] === points[second][1]
+      )
+        return "Extrude profile vertices must be distinct.";
+    }
+  }
+
+  let twiceArea = 0;
+  for (let index = 0; index < points.length; index += 1) {
+    const next = points[(index + 1) % points.length];
+    twiceArea += points[index][0] * next[1] - next[0] * points[index][1];
+    const edgeX = next[0] - points[index][0];
+    const edgeY = next[1] - points[index][1];
+    if (edgeX * edgeX + edgeY * edgeY <= epsilon)
+      return "Extrude profile edges must have nonzero length.";
+
+    const previous = points[(index + points.length - 1) % points.length];
+    const previousX = points[index][0] - previous[0];
+    const previousY = points[index][1] - previous[1];
+    if (
+      Math.abs(cross(previousX, previousY, edgeX, edgeY)) <= epsilon &&
+      previousX * edgeX + previousY * edgeY < -epsilon
+    )
+      return "Extrude profile must not backtrack along an edge.";
+  }
+  if (Math.abs(twiceArea) <= epsilon)
+    return "Extrude profile must enclose a nonzero area.";
+
+  for (let first = 0; first < points.length; first += 1) {
+    const firstEnd = (first + 1) % points.length;
+    for (let second = first + 1; second < points.length; second += 1) {
+      const secondEnd = (second + 1) % points.length;
+      const adjacent =
+        first === second || firstEnd === second || secondEnd === first;
+      if (
+        !adjacent &&
+        segmentsIntersect(
+          points[first],
+          points[firstEnd],
+          points[second],
+          points[secondEnd],
+        )
+      )
+        return "Extrude profile edges must not intersect.";
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -133,6 +264,11 @@ export const browserModelRecipeSchema =
     };
 
     recipe.nodes.forEach((node, index) => {
+      if (node.kind === "extrude") {
+        const issue = extrudeProfileIssue(node.profile);
+        if (issue)
+          context.addIssue(graphIssue(issue, ["nodes", index, "profile"]));
+      }
       const refs = references(node);
       const seenRefs = new Set<string>();
       refs.forEach((reference, refIndex) => {

@@ -14,6 +14,25 @@ const triangleMesh = {
   triVerts: new Uint32Array([0, 1, 2]),
 };
 
+function absoluteMeshVolume(vertices: Float32Array, indices: Uint32Array) {
+  let volume = 0;
+  for (let index = 0; index < indices.length; index += 3) {
+    const a = indices[index] * 3;
+    const b = indices[index + 1] * 3;
+    const c = indices[index + 2] * 3;
+    volume +=
+      (vertices[a] *
+        (vertices[b + 1] * vertices[c + 2] -
+          vertices[b + 2] * vertices[c + 1]) +
+        vertices[a + 1] *
+          (vertices[b + 2] * vertices[c] - vertices[b] * vertices[c + 2]) +
+        vertices[a + 2] *
+          (vertices[b] * vertices[c + 1] - vertices[b + 1] * vertices[c])) /
+      6;
+  }
+  return Math.abs(volume);
+}
+
 class FakeManifold implements BrowserModelKernelManifold {
   static nextId = 0;
   readonly id = FakeManifold.nextId++;
@@ -111,6 +130,12 @@ function fakeKernel(
         `cylinder:${depth}:${radiusLow}:${radiusHigh}:${segments}:${center}`,
       );
       return new FakeManifold("cylinder", log, mesh, status);
+    },
+    extrude: (profile, depth) => {
+      log.push(
+        `extrude:${profile.map((point) => point.join(",")).join(";")}:${depth}`,
+      );
+      return new FakeManifold("extrude", log, mesh, status);
     },
   };
 }
@@ -212,6 +237,31 @@ describe("browser modeling kernel adapter", () => {
     expect(log.filter((entry) => entry.startsWith("delete:")).length).toBe(
       log.filter((entry) => entry.startsWith("create:")).length,
     );
+  });
+
+  it("normalizes extrusion winding and centers the Z extent", () => {
+    const log: string[] = [];
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "profile",
+      nodes: [
+        {
+          id: "profile",
+          kind: "extrude",
+          profile: [
+            [-1, -1],
+            [-1, 1],
+            [1, 1],
+            [1, -1],
+          ],
+          depth: 2,
+        },
+      ],
+    });
+    evaluateBrowserModelRecipe(recipe, fakeKernel(log));
+    expect(log).toContain("extrude:1,-1;1,1;-1,1;-1,-1:2");
+    expect(log).toContain("translate:extrude:0,0,-1");
   });
 
   it("deletes every owned backend object when the backend reports an error", () => {
@@ -336,10 +386,44 @@ describe("browser modeling kernel adapter", () => {
       sphere: (radius, segments) => wasm.Manifold.sphere(radius, segments),
       cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
         wasm.Manifold.cylinder(depth, radiusLow, radiusHigh, segments, center),
+      extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
     });
     for (let axis = 0; axis < 3; axis += 1) {
       expect(result.bounds.min[axis]).toBeCloseTo(expectedMin[axis], 6);
       expect(result.bounds.max[axis]).toBeCloseTo(expectedMax[axis], 6);
+    }
+  });
+
+  it("evaluates a concave extrusion as a centered solid for both windings", async () => {
+    const [{ default: Module }] = await Promise.all([import("manifold-3d")]);
+    const wasm = await Module();
+    wasm.setup();
+    const counterClockwise = [
+      [-1, -1],
+      [1, -1],
+      [1, 0],
+      [0, 0],
+      [0, 1],
+      [-1, 1],
+    ] as [number, number][];
+    const clockwise = counterClockwise.slice().reverse();
+
+    for (const profile of [counterClockwise, clockwise]) {
+      const recipe = parseBrowserModelRecipe({
+        version: 1,
+        revision: 0,
+        output: "profile",
+        nodes: [{ id: "profile", kind: "extrude", profile, depth: 1 }],
+      });
+      const result = evaluateBrowserModelRecipe(recipe, wasm.Manifold);
+      expect(result.statistics.triangles).toBeGreaterThan(0);
+      expect(result.bounds.min).toEqual([-1, -1, -0.5]);
+      expect(result.bounds.max).toEqual([1, 1, 0.5]);
+      expect(result.indices.length % 3).toBe(0);
+      expect(absoluteMeshVolume(result.vertices, result.indices)).toBeCloseTo(
+        3,
+        5,
+      );
     }
   });
 });

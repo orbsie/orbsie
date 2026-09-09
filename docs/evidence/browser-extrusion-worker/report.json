@@ -1,0 +1,14 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "requests": 2,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "915cbbec07ea81467f5d408fa8743b82fa462ded232beefe4e1ad80a286efc6f",
+      "after": "010d46b9fcbb6c4ff601c3ed959e92ca5da23a72eba17fc6e22f8194a4e6228b"
+    },
+    "reload": true
+  },
+  "status": "passed"
+}

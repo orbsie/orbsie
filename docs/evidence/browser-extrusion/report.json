@@ -1,0 +1,10 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "requests": 1,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {},
+  "status": "failed",
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 0\nReceived: undefined\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate",
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA pocketful of sunshine\nEdit\nPlay\nYour world\n\nBuild a triangular prism from an outline\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nr.extrude is not a function"
+}

@@ -42,6 +42,11 @@ export interface BrowserModelKernel {
     segments: number,
     center: boolean,
   ): BrowserModelKernelManifold;
+  /** Construct an uncentered Z extrusion; the evaluator centers it explicitly. */
+  extrude(
+    profile: [number, number][],
+    depth: number,
+  ): BrowserModelKernelManifold;
 }
 
 export interface BrowserModelMeshBounds {
@@ -85,6 +90,22 @@ function axisDegrees(axis: "x" | "y" | "z"): [number, number, number] {
   if (axis === "x") return [0, 90, 0];
   if (axis === "y") return [-90, 0, 0];
   return [0, 0, 0];
+}
+
+function signedProfileArea(profile: readonly [number, number][]): number {
+  let twiceArea = 0;
+  for (let index = 0; index < profile.length; index += 1) {
+    const next = profile[(index + 1) % profile.length];
+    twiceArea += profile[index][0] * next[1] - next[0] * profile[index][1];
+  }
+  return twiceArea / 2;
+}
+
+function normalizedProfile(
+  profile: readonly [number, number][],
+): [number, number][] {
+  const points = profile.map(([x, y]) => [x, y] as [number, number]);
+  return signedProfileArea(points) < 0 ? points.reverse() : points;
 }
 
 function assertStatus(object: BrowserModelKernelManifold, nodeId: string) {
@@ -254,6 +275,14 @@ export function evaluateBrowserModelRecipe(
         object = rotation.every((value) => value === 0)
           ? cylinder
           : own(cylinder.rotate(rotation), node.id);
+        break;
+      }
+      case "extrude": {
+        const extruded = own(
+          kernel.extrude(normalizedProfile(node.profile), node.depth),
+          node.id,
+        );
+        object = own(extruded.translate([0, 0, -node.depth / 2]), node.id);
         break;
       }
       case "transform": {

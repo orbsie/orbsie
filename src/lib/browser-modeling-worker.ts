@@ -41,6 +41,7 @@ function createKernel(manifold: ManifoldModule): BrowserModelKernel {
   return {
     cube: (size, center) => manifold.Manifold.cube(size, center),
     sphere: (radius, segments) => manifold.Manifold.sphere(radius, segments),
+    extrude: (profile, depth) => manifold.Manifold.extrude(profile, depth),
     cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
       manifold.Manifold.cylinder(
         depth,
