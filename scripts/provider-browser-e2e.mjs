@@ -1272,6 +1272,16 @@ async function configureChatGPTLocal(page, config, report, info, evidenceDir) {
 }
 
 async function configureChatGPTHosted(page, config, report, info, evidenceDir) {
+  const capabilities = await sameOriginJSON(page, "/api/config");
+  if (
+    capabilities.status !== 200 ||
+    capabilities.body?.accounts !== true ||
+    capabilities.body?.chatgptHosted !== true ||
+    capabilities.body?.chatgptGeneration !== true
+  )
+    throw new HarnessBlockedError(
+      "Hosted ChatGPT generation is unavailable on this deployment; no generation was attempted.",
+    );
   const consent = await statusFirstHostedGate({
     readHostedStatus: async () => {
       const result = await sameOriginJSON(page, "/api/chatgpt/status");
@@ -3507,7 +3517,7 @@ async function run(config) {
       await Promise.allSettled(info.ndjsonReads);
       assertGenerationRequests(config, info);
       report.liveInference = true;
-      report.hosted.generationStatus = "passed";
+      report.hosted.generationStatus = "inference-observed";
     }
 
     const expectedRevision = projectAfterEdit.revision;
