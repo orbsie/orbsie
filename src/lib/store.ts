@@ -1,4 +1,5 @@
 "use client";
+import { ZodError } from "zod";
 import {
   appendCloudGenerationOperation,
   cancelCloudGenerationRun,
@@ -759,9 +760,11 @@ export const useOrb = create<State>((setState, getState) => ({
           project: committed(getState().project, baseline),
           error: signal.aborted
             ? ""
-            : error instanceof Error
-              ? error.message
-              : "Something went wrong. Your finished world is safe.",
+            : error instanceof ZodError
+              ? "The model returned an invalid scene change. Try a simpler edit. Your finished world is safe."
+              : error instanceof Error
+                ? error.message
+                : "Something went wrong. Your finished world is safe.",
         });
         await getState().save();
       }

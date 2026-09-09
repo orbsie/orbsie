@@ -320,3 +320,37 @@ it.each(["stop", "stream error"])(
     );
   },
 );
+
+it("keeps schema internals out of failed model updates and preserves finished entities", async () => {
+  const before = structuredClone(useOrb.getState().project.entities);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            type: "set_geometry",
+            id: before[0].id,
+            geometry: {
+              kind: "generated",
+              job: {
+                backend: "browser-manifold",
+                recipe: {
+                  version: 1,
+                  revision: 0,
+                  output: "invalid",
+                  nodes: [{ id: "invalid", kind: "unsupported-internal-node" }],
+                },
+              },
+            },
+          }) + "\n",
+        ),
+    ),
+  );
+  await useOrb.getState().run("Change the shape", connection);
+  expect(useOrb.getState().error).toBe(
+    "The model returned an invalid scene change. Try a simpler edit. Your finished world is safe.",
+  );
+  expect(useOrb.getState().project.entities).toEqual(before);
+  expect(useOrb.getState().building).toBe(false);
+});
