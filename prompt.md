@@ -337,3 +337,5 @@ The success criterion is simple: a nontechnical person describes a small experie
 The latest owner clarification supersedes the backlog deferral: prioritize a working AI account/API connection, including the requested ChatGPT subscription. Keep OpenRouter and Vercel AI Gateway connection paths working while validating the supported subscription route.
 
 Latest connection UX requirement: Connect → authorize/sign in → return connected. Terminal commands and pasted companion links do not fulfill this requirement. Implement the documented OpenRouter OAuth PKCE path; resolve supported ChatGPT subscription sign-in without implying that an ordinary hosted subscription OAuth client is already available.
+
+Firm owner constraint: all AI connection workflows must work entirely in the browser, with no installation, local companion, terminal commands or pasted connection links. Existing local ChatGPT experiments do not satisfy the subscription connector requirement.
