@@ -1,0 +1,93 @@
+{
+  "mode": "deterministic-scene-hierarchy-editor",
+  "provider": "fixture-intercepted",
+  "liveProvider": false,
+  "sourceCommits": {
+    "app": "d8b07c5d311318e9af8af086e2097650886fac7b",
+    "appAssumedFromRootHead": true,
+    "rootHead": "d8b07c5d311318e9af8af086e2097650886fac7b",
+    "runtimeAsset": "runtime0870f83"
+  },
+  "stableIds": {
+    "group": "hierarchy5e5217f",
+    "prop": "runtimecaeb0c6",
+    "collectible": "checkpointfb541d2",
+    "platform": "platform-scene-01",
+    "unrelated": "unrelated-entity-01"
+  },
+  "requests": 3,
+  "requestSummaries": [
+    {
+      "request": 1,
+      "prompt": "Build a playable display group with a box prop and a collectible",
+      "revision": 0,
+      "groupIds": [],
+      "entityIds": []
+    },
+    {
+      "request": 2,
+      "prompt": "Move the display group while I play, preserving its box prop and collectible",
+      "revision": 10,
+      "groupIds": [
+        "hierarchy5e5217f"
+      ],
+      "entityIds": [
+        "runtimecaeb0c6",
+        "checkpointfb541d2",
+        "platform-scene-01",
+        "unrelated-entity-01"
+      ]
+    },
+    {
+      "request": 3,
+      "prompt": "Widen this selected box prop while preserving every other object and the group pose",
+      "selected": "runtimecaeb0c6",
+      "revision": 12,
+      "groupIds": [
+        "hierarchy5e5217f"
+      ],
+      "entityIds": [
+        "runtimecaeb0c6",
+        "checkpointfb541d2",
+        "platform-scene-01",
+        "unrelated-entity-01"
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "external": [],
+  "standaloneExternal": [],
+  "standaloneEditorRequests": [],
+  "checks": {
+    "scenario1CreatedHierarchy": true,
+    "persistedGroupsAndEntities": true,
+    "playModeAndInputSubmitted": {
+      "input": "ArrowRight",
+      "hud": "◆\n0 / 1\nCrystals collected",
+      "caption": "Your world. Your little adventure."
+    },
+    "playHudPreservedDuringGroupEdit": {
+      "before": "◆\n0 / 1\nCrystals collected",
+      "after": "◆\n0 / 1\nCrystals collected"
+    },
+    "playSceneCaptionPreservedDuringGroupEdit": {
+      "before": "Your world. Your little adventure.",
+      "after": "Your world. Your little adventure."
+    },
+    "scenario2PlayGroupPosePreservesEntities": true,
+    "scenario3UiSelectedRecipeOnly": true,
+    "selectedRequest": "runtimecaeb0c6",
+    "exactUndoSnapshot": true,
+    "exactRedoSnapshot": true,
+    "reloadPersistence": true,
+    "exportProjectHierarchy": true,
+    "bakedGlbIntegrity": {
+      "path": "models/generated/5af8867363d1c7af4faa5acfc3a50c66e873905ecf0efbdab8e0eecc0372c7fc.glb",
+      "sha256": "5af8867363d1c7af4faa5acfc3a50c66e873905ecf0efbdab8e0eecc0372c7fc",
+      "bytes": 1856
+    },
+    "standaloneReady": true,
+    "standaloneNoEditorOrExternalRequests": true
+  },
+  "status": "passed"
+}

@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "stableIds": {
+    "group": "hierarchy5e5217f",
+    "prop": "runtimecaeb0c6",
+    "collectible": "checkpointfb541d2",
+    "platform": "platform-scene-01",
+    "unrelated": "unrelated-entity-01"
+  },
+  "labels": {
+    "prop": "Baked box prop",
+    "collectible": "Play collectible",
+    "platform": "Moving platform",
+    "unrelated": "Unrelated tree"
+  },
+  "group": {
+    "id": "hierarchy5e5217f",
+    "label": "Display group",
+    "position": [
+      -1,
+      0,
+      -2
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ]
+  },
+  "scenario2Group": {
+    "id": "hierarchy5e5217f",
+    "position": [
+      1.25,
+      0,
+      -1.25
+    ],
+    "rotation": [
+      0,
+      0.4,
+      0
+    ]
+  },
+  "propRecipe": {
+    "version": 1,
+    "revision": 0,
+    "output": "box",
+    "nodes": [
+      {
+        "id": "box",
+        "kind": "box",
+        "size": [
+          2,
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  "editedPropRecipe": {
+    "version": 1,
+    "revision": 1,
+    "output": "box",
+    "nodes": [
+      {
+        "id": "box",
+        "kind": "box",
+        "size": [
+          3,
+          1,
+          1
+        ]
+      }
+    ]
+  }
+}

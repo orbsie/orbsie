@@ -1,0 +1,94 @@
+{
+  "mode": "deterministic-scene-hierarchy-editor",
+  "provider": "fixture-intercepted",
+  "liveProvider": false,
+  "stableIds": {
+    "group": "hierarchy5e5217f",
+    "prop": "runtimecaeb0c6",
+    "collectible": "checkpointfb541d2",
+    "platform": "platform-scene-01",
+    "unrelated": "unrelated-entity-01"
+  },
+  "requests": 2,
+  "requestSummaries": [
+    {
+      "request": 1,
+      "prompt": "Build a playable display group with a box prop and a collectible",
+      "revision": 0,
+      "groupIds": [],
+      "entityIds": []
+    },
+    {
+      "request": 2,
+      "prompt": "Move the display group while I play, preserving its box prop and collectible",
+      "revision": 10,
+      "groupIds": [
+        "hierarchy5e5217f"
+      ],
+      "entityIds": [
+        "runtimecaeb0c6",
+        "checkpointfb541d2",
+        "platform-scene-01",
+        "unrelated-entity-01"
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "external": [],
+  "standaloneExternal": [],
+  "standaloneEditorRequests": [],
+  "checks": {
+    "scenario1CreatedHierarchy": true,
+    "persistedGroupsAndEntities": true,
+    "playVisibleInputEvidence": true
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   assetPolicy: undefined,\n    behavior: {\n      type: 'static'\n    },\n    color: '#77a664',\n    geometry: {\n",
+  "transientErrors": [],
+  "savedState": {
+    "revision": 12,
+    "groups": [
+      {
+        "id": "hierarchy5e5217f",
+        "label": "Display group",
+        "position": [
+          1.25,
+          0,
+          -1.25
+        ],
+        "rotation": [
+          0,
+          0.4,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      }
+    ],
+    "entities": [
+      {
+        "id": "runtimecaeb0c6",
+        "parentId": "hierarchy5e5217f",
+        "stage": "ready",
+        "recipeRevision": 0
+      },
+      {
+        "id": "checkpointfb541d2",
+        "parentId": "hierarchy5e5217f",
+        "stage": "ready"
+      },
+      {
+        "id": "platform-scene-01",
+        "stage": "ready"
+      },
+      {
+        "id": "unrelated-entity-01",
+        "stage": "ready"
+      }
+    ]
+  },
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA pocketful of sunshine\nEdit\nPlay\nYour world\n\nBuild a playable display group with a box prop and a collectible\n\n✧\n\nThe display group and its playable objects are ready.\n\nMove the display group while I play, preserving its box prop and collectible\n\n✧\n\nMoved the display group while preserving its objects.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\n◆\n0 / 1\nCrystals collected\nW\nA\nS\nD\nMove\n·\nspace\nJump\nYour world is saved on this device."
+}
