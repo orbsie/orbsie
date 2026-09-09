@@ -335,3 +335,5 @@ The success criterion is simple: a nontechnical person describes a small experie
 - [ ] Once live, validate browser-model creation, targeted editing, cancellation/recovery, play, reload, export and signed-out publication with an explicitly selected test model.
 
 The latest owner clarification supersedes the backlog deferral: prioritize a working AI account/API connection, including the requested ChatGPT subscription. Keep OpenRouter and Vercel AI Gateway connection paths working while validating the supported subscription route.
+
+Latest connection UX requirement: Connect → authorize/sign in → return connected. Terminal commands and pasted companion links do not fulfill this requirement. Implement the documented OpenRouter OAuth PKCE path; resolve supported ChatGPT subscription sign-in without implying that an ordinary hosted subscription OAuth client is already available.
