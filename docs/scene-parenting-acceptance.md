@@ -5,6 +5,15 @@ It supplements the grouping/parenting requirement in
 `browser-modeling-plan.md`. Baked recipe composition and repeated mesh copies
 remain distinct from relationships between editable scene entities.
 
+Foundation checkpoint: `f0c857e` adds the shared bounded matrix resolver,
+exact world transforms, eight-corner bounds and validated keep-world TRS
+recovery. `02bd067` adds transformed platform-box surface queries and contact
+carrying. Their combined targeted run passed 16 tests. Astra review corrected
+a determinant threshold that rejected valid millimeter-scale transforms and
+required affine inputs plus reconstructed world-matrix validation. These
+helpers are not yet connected to the project protocol or live runtime; no
+browser parenting or provider acceptance is established by these tests.
+
 ## Architecture contract
 
 Keep project version 1 and make `groups`, entity `parentId`, and entity
