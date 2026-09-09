@@ -26,6 +26,8 @@ describe("browser modeling policy", () => {
     expect(browserModelingInstructions).toContain(
       "self-intersecting triangles",
     );
+    expect(browserModelingInstructions).toContain("capped open tube");
+    expect(browserModelingInstructions).toContain("closed loops");
     expect(browserModelingInstructions).not.toContain("lathe");
     expect(modelingInstructions(false, true)).toBe(browserModelingInstructions);
   });

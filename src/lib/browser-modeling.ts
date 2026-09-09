@@ -5,6 +5,14 @@ import {
   MAX_BROWSER_MESH_TRIANGLES,
   MAX_BROWSER_MESH_VERTICES,
 } from "./browser-mesh-validation";
+import {
+  DEFAULT_BROWSER_TUBE_SEGMENTS,
+  MAX_BROWSER_TUBE_PATH_POINTS,
+  MAX_BROWSER_TUBE_RADIUS,
+  MAX_BROWSER_TUBE_SEGMENTS,
+  MIN_BROWSER_TUBE_RADIUS,
+  browserTubeMeshCounts,
+} from "./browser-tube-validation";
 
 const MAX_NODES = 64;
 const MAX_DEPTH = 16;
@@ -109,6 +117,25 @@ const meshNodeSchema = z
   })
   .strict();
 
+const tubeNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("tube"),
+    path: z.array(vector3).min(2).max(MAX_BROWSER_TUBE_PATH_POINTS),
+    radius: z
+      .number()
+      .finite()
+      .gt(MIN_BROWSER_TUBE_RADIUS)
+      .max(MAX_BROWSER_TUBE_RADIUS),
+    segments: z
+      .number()
+      .int()
+      .min(3)
+      .max(MAX_BROWSER_TUBE_SEGMENTS)
+      .default(DEFAULT_BROWSER_TUBE_SEGMENTS),
+  })
+  .strict();
+
 const transformNodeSchema = z
   .object({
     id: identifier,
@@ -137,6 +164,7 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   extrudeNodeSchema,
   revolveNodeSchema,
   meshNodeSchema,
+  tubeNodeSchema,
   transformNodeSchema,
   booleanNodeSchema,
 ]);
@@ -387,16 +415,24 @@ export const browserModelRecipeSchema =
       });
     });
 
-    const meshVertices = recipe.nodes.reduce(
-      (total, node) =>
-        node.kind === "mesh" ? total + node.vertices.length : total,
-      0,
-    );
-    const meshTriangles = recipe.nodes.reduce(
-      (total, node) =>
-        node.kind === "mesh" ? total + node.triangles.length : total,
-      0,
-    );
+    const meshVertices = recipe.nodes.reduce((total, node) => {
+      if (node.kind === "mesh") return total + node.vertices.length;
+      if (node.kind === "tube")
+        return (
+          total +
+          browserTubeMeshCounts(node.path.length, node.segments).vertices
+        );
+      return total;
+    }, 0);
+    const meshTriangles = recipe.nodes.reduce((total, node) => {
+      if (node.kind === "mesh") return total + node.triangles.length;
+      if (node.kind === "tube")
+        return (
+          total +
+          browserTubeMeshCounts(node.path.length, node.segments).triangles
+        );
+      return total;
+    }, 0);
     if (meshVertices > MAX_BROWSER_MESH_RECIPE_VERTICES)
       context.addIssue(
         graphIssue(
@@ -523,4 +559,9 @@ export const browserModelRecipeLimits = Object.freeze({
   maxMeshTriangles: MAX_BROWSER_MESH_TRIANGLES,
   maxMeshRecipeVertices: MAX_BROWSER_MESH_RECIPE_VERTICES,
   maxMeshRecipeTriangles: MAX_BROWSER_MESH_RECIPE_TRIANGLES,
+  minTubeRadius: MIN_BROWSER_TUBE_RADIUS,
+  maxTubeRadius: MAX_BROWSER_TUBE_RADIUS,
+  maxTubePathPoints: MAX_BROWSER_TUBE_PATH_POINTS,
+  defaultTubeSegments: DEFAULT_BROWSER_TUBE_SEGMENTS,
+  maxTubeSegments: MAX_BROWSER_TUBE_SEGMENTS,
 });

@@ -7,6 +7,7 @@ import {
   BrowserMeshValidationBudgetError,
   validateBrowserMesh,
 } from "./browser-mesh-validation";
+import { validateBrowserTube } from "./browser-tube-validation";
 
 export type BrowserModelVec3 = readonly [number, number, number];
 
@@ -321,6 +322,27 @@ export function evaluateBrowserModelRecipe(
         try {
           object = own(
             kernel.mesh(validated.vertices, validated.triangles),
+            node.id,
+          );
+        } catch {
+          throw new Error(BROWSER_MESH_INVALID_ERROR);
+        }
+        break;
+      }
+      case "tube": {
+        let generated;
+        try {
+          generated = validateBrowserTube(
+            node.path,
+            node.radius,
+            node.segments,
+          );
+        } catch {
+          throw new Error(BROWSER_MESH_INVALID_ERROR);
+        }
+        try {
+          object = own(
+            kernel.mesh(generated.vertices, generated.triangles),
             node.id,
           );
         } catch {
