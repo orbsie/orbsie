@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+import {
+  installGenerationDiagnosticObserver,
+  readGenerationDiagnostics,
+} from "./lib/generation-diagnostic-observer.mjs";
 
 /**
  * Opt-in, provider-backed browser acceptance harness.
@@ -2422,6 +2426,8 @@ async function run(config) {
         .click();
     }
     await prepareObserver(page);
+    if (config.requireExtrusion)
+      await installGenerationDiagnosticObserver(page);
     projectBefore = await storageSnapshot(
       page,
       (config.key ?? config.companionToken)
@@ -2824,6 +2830,23 @@ async function run(config) {
     };
   } catch (error) {
     await Promise.allSettled(info.diagnosticReads);
+    if (config.requireExtrusion) {
+      const diagnostics = await readGenerationDiagnostics(page).catch(() => []);
+      info.generationDiagnostics.push(
+        ...diagnostics.map((record) => ({
+          code: record.code,
+          diagnostic: sanitizeMessage(record.diagnostic, config),
+        })),
+      );
+    }
+    info.generationDiagnostics = [
+      ...new Map(
+        info.generationDiagnostics.map((record) => [
+          JSON.stringify(record),
+          record,
+        ]),
+      ).values(),
+    ].slice(0, 8);
     report.error = sanitizedError(error, config);
     if (config.cloudRecovery && report.cloudRecovery.status !== "passed")
       report.cloudRecovery.status = "failed";

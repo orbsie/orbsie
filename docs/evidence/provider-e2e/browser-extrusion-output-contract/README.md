@@ -1,0 +1,7 @@
+# Live browser extrusion acceptance
+
+Exact OpenRouter openai/gpt-5.6-luna, regular/default processing, existing local-only credential and 512 output-token cap. Production build ran on loopback with matching BETTER_AUTH_URL. Two live HTTP200 generation calls, no interception/substitution/fallback: create one new extrusion then recolor it pink while preserving its ID and geometry. Reload, standalone export and standalone playback passed; Astra visually inspected the pink prism in the standalone screenshot. No input-rule game, cloud save, publication or OAuth consent was tested.
+
+The preceding clone-observer run diagnosed operation 2 with invalid recipe output and unreachable node paths. The provider policy now explicitly requires recipe.output to match a node ID and includes a consistent one-node example. Geometry validation remains strict. The final run emitted three creation operations and its first seed appeared after 4023ms (single observation, not a benchmark).
+
+Diagnostic capture was reproduced without inference against a local production server with a synthetic provider response: DevTools response.text failed while the page received the diagnostic. The test-only cloned-response observer captured it successfully; it does not replace commands or provider responses and is used only for extrusion acceptance, not interruption tests. Google Fonts requests were blocked by the harness and recorded.
