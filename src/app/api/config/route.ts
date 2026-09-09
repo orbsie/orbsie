@@ -12,5 +12,10 @@ export async function GET() {
     google: !!(
       process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
     ),
+    ...(process.env.ORBSIE_CHATGPT_HOSTED === "1" &&
+    process.env.DATABASE_URL &&
+    process.env.BETTER_AUTH_SECRET
+      ? { chatgptHosted: true }
+      : {}),
   });
 }

@@ -1,0 +1,3 @@
+Browser authorization UI verification
+
+Reproduce with `TEST_URL=http://localhost:3047 node scripts/verify-hosted-chatgpt-ui.mjs`. All nine scenarios passed against the rendered app with synthetic API responses and zero external requests. No real subscription login or inference occurred. Covers disabled/signed-out gates, explicit start, cancellation, authenticated status, logout, local code expiry, malformed start/logout recovery, close/reopen without duplicate provisioning, and narrow-screen layout. The root reviewed the mobile screenshot. Production build, deployment artifact tracing and TypeScript passed. Real consent and generation remain unverified.

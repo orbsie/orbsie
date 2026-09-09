@@ -71,6 +71,7 @@ const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
 const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
+import ChatGPTConnection from "./chatgpt-connection";
 const World = dynamic(() => import("./world"), {
   ssr: false,
   loading: () => (
@@ -320,6 +321,7 @@ export default function Orbsie() {
     accounts: false,
     publishing: false,
     google: false,
+    chatgptHosted: false,
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -725,9 +727,7 @@ export default function Orbsie() {
       ) {
         setConnection({
           ...selectedConnection,
-          ...(providerFailure === "PROVIDER_AUTH_REJECTED"
-            ? { key: "" }
-            : {}),
+          ...(providerFailure === "PROVIDER_AUTH_REJECTED" ? { key: "" } : {}),
         });
         setOAuthMessage(useOrb.getState().error);
         if (!textarea.current?.value) setPrompt(instruction);
@@ -1480,6 +1480,18 @@ export default function Orbsie() {
                 Models are built and rendered in your browser. No installation
                 is required.
               </p>
+              {capabilities.chatgptHosted ? (
+                <ChatGPTConnection
+                  signedIn={Boolean(user)}
+                  onSignIn={() => setModal("account")}
+                />
+              ) : (
+                <p className="fine-print">
+                  ChatGPT subscription connection is not available right now.
+                  OpenRouter and Vercel AI Gateway use their own accounts and
+                  billing.
+                </p>
+              )}
               {trial.enabled && trial.remaining > 0 && (
                 <button
                   className="primary full"
@@ -1708,11 +1720,6 @@ export default function Orbsie() {
                   Disconnect and clear key
                 </button>
               )}
-              <p className="fine-print">
-                ChatGPT subscription connection is not available in the browser
-                yet. OpenRouter and Vercel AI Gateway use their own accounts and
-                billing.
-              </p>
             </>
           )}
           {modal === "share" && (

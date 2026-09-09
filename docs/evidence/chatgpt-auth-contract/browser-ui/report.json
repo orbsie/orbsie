@@ -1,0 +1,83 @@
+[
+  {
+    "scenario": "disabled",
+    "passed": true,
+    "starts": 0,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 0,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "signed-out",
+    "passed": true,
+    "starts": 0,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 0,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "cancel",
+    "passed": true,
+    "starts": 1,
+    "cancels": 1,
+    "logouts": 0,
+    "polls": 2,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "connected",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 1,
+    "polls": 3,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "expired",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 3,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "malformed",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 2,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "malformed-logout",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 1,
+    "polls": 3,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "reopen",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 4,
+    "externalRequests": 0
+  },
+  {
+    "scenario": "mobile",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 1,
+    "polls": 3,
+    "externalRequests": 0
+  }
+]
