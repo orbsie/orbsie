@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { blankProject, commandSchema } from "../src/lib/protocol";
-import { generationDiagnostic } from "../src/lib/generation-diagnostics";
+import {
+  generationDiagnostic,
+  ProviderStreamError,
+} from "../src/lib/generation-diagnostics";
 import { generateCommands } from "../src/lib/server/generation";
 
 const allowedCodes = new Set([
@@ -19,6 +22,44 @@ const allowedCodes = new Set([
 ]);
 
 describe("generation diagnostics", () => {
+  it("bounds provider status and discards arbitrary messages and metadata", () => {
+    for (const code of ["private-secret", 200, 600, 429.5, null]) {
+      const error = new ProviderStreamError({
+        code,
+        message: "private-secret",
+        metadata: { token: "private-secret" },
+      });
+      expect(generationDiagnostic(error)?.diagnostic.providerStatus).toBeNull();
+      expect(JSON.stringify(error)).not.toContain("private-secret");
+    }
+  });
+
+  it("records a provider stream status without exposing upstream payloads", async () => {
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          `data: ${JSON.stringify({ error: { code: 429, message: "private-secret", metadata: { raw: "private-secret" } } })}\n\n`,
+          { headers: { "Content-Type": "text/event-stream" } },
+        ),
+    );
+    const stream = await generateCommands({
+      provider: "openrouter",
+      model: "test-model",
+      key: "test-key",
+      prompt: "make a shape",
+      project: blankProject(),
+      signal: new AbortController().signal,
+    });
+    const record = JSON.parse(await new Response(stream).text());
+    expect(record.code).toBe("PROVIDER_STREAM_ERROR");
+    expect(record.diagnostic).toEqual({
+      operation: 0,
+      issues: [],
+      providerStatus: 429,
+    });
+    expect(JSON.stringify(record)).not.toContain("private-secret");
+  });
   afterEach(() => vi.unstubAllGlobals());
 
   it("reports bounded schema paths for a malformed nested recipe", () => {

@@ -107,7 +107,27 @@ const knownIssueCodes = new Set([
   "custom",
 ]);
 
-type DiagnosticCode = "INVALID_SCENE_UPDATE" | "INVALID_SCENE_JSON";
+type DiagnosticCode =
+  "INVALID_SCENE_UPDATE" | "INVALID_SCENE_JSON" | "PROVIDER_STREAM_ERROR";
+
+/** Retain only a bounded status code, never provider messages or metadata. */
+export class ProviderStreamError extends Error {
+  readonly providerStatus: number | null;
+  constructor(value: unknown) {
+    super("The provider interrupted this generation. Please retry.");
+    const code =
+      value && typeof value === "object" && "code" in value
+        ? value.code
+        : undefined;
+    this.providerStatus =
+      typeof code === "number" &&
+      Number.isInteger(code) &&
+      code >= 400 &&
+      code <= 599
+        ? code
+        : null;
+  }
+}
 type DiagnosticPathSegment = string | number;
 
 export interface GenerationDiagnosticIssue {
@@ -120,6 +140,7 @@ export interface GenerationDiagnostic {
   readonly diagnostic: {
     readonly operation: number;
     readonly issues: readonly GenerationDiagnosticIssue[];
+    readonly providerStatus?: number | null;
   };
 }
 
@@ -215,6 +236,15 @@ export function generationDiagnostic(
   const operation = Number.isFinite(operationCount)
     ? Math.min(MAX_OPERATION_COUNT, Math.max(0, Math.trunc(operationCount)))
     : 0;
+  if (error instanceof ProviderStreamError)
+    return {
+      code: "PROVIDER_STREAM_ERROR",
+      diagnostic: {
+        operation,
+        issues: [],
+        providerStatus: error.providerStatus,
+      },
+    };
   if (error instanceof z.ZodError) {
     const issues = zodIssues(error);
     return {

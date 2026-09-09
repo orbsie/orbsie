@@ -16,7 +16,10 @@ import {
 } from "../protocol";
 import { z } from "zod";
 import { isRecommendedModel } from "../model-modes";
-import { generationDiagnostic } from "../generation-diagnostics";
+import {
+  generationDiagnostic,
+  ProviderStreamError,
+} from "../generation-diagnostics";
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
@@ -202,10 +205,7 @@ export async function generateCommands({
             const text = line.slice(5).trim();
             if (!text || text === "[DONE]") continue;
             const event = JSON.parse(text);
-            if (event.error)
-              throw Error(
-                "The provider interrupted this generation. Please retry.",
-              );
+            if (event.error) throw new ProviderStreamError(event.error);
             const delta = event.choices?.[0]?.delta?.content;
             if (typeof delta !== "string") continue;
             records += delta;

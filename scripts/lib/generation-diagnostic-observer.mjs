@@ -32,9 +32,11 @@ export async function installGenerationDiagnosticObserver(page) {
                   continue;
                 }
                 if (
-                  !["INVALID_SCENE_UPDATE", "INVALID_SCENE_JSON"].includes(
-                    record.code,
-                  )
+                  ![
+                    "INVALID_SCENE_UPDATE",
+                    "INVALID_SCENE_JSON",
+                    "PROVIDER_STREAM_ERROR",
+                  ].includes(record.code)
                 )
                   continue;
                 if (state.records.length < 8)
