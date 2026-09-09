@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "realPostgres": true,
+  "temporaryTablesOnly": true,
+  "ownerIsolation": true,
+  "duplicateClaimRejected": true,
+  "encryptedCapabilityRoundTrip": true,
+  "expiredHostRejected": true,
+  "staleReleaseRejected": true,
+  "productionMigrationApplied": false
+}
