@@ -9,10 +9,11 @@
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prebuild": "node scripts/build-player.mjs",
+    "prebuild": "node scripts/build-player.mjs && npm run build:chatgpt-host",
     "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "format": "prettier --write src scripts tests next.config.ts",
-    "predev": "node scripts/build-player.mjs"
+    "predev": "node scripts/build-player.mjs && npm run build:chatgpt-host",
+    "build:chatgpt-host": "node scripts/build-chatgpt-host.mjs .orbsie/chatgpt-host"
   },
   "engines": {
     "node": "22.x"

@@ -8,3 +8,6 @@ test-results/
 playwright-report/
 .vercel
 .env*.local
+
+# Generated isolated ChatGPT host deployment bundle
+.orbsie/chatgpt-host/
