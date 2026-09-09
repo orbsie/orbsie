@@ -35,7 +35,7 @@ export function assertModelingCommand(
   if (browserBackend) {
     if (!browserAvailable)
       throw Error(
-        "Browser modeling is unavailable in this client; use a supported modeling connection.",
+        "Browser modeling is unavailable. Use a browser with Web Workers and WebAssembly support.",
       );
     if (command.geometry.model)
       throw Error(
@@ -49,7 +49,7 @@ export function assertModelingCommand(
   }
   if (!available)
     throw Error(
-      "Connect the local Blender companion before building this model.",
+      "This modeling job is unsupported. Request a browser-manifold recipe instead.",
     );
   if (command.geometry.model)
     throw Error("Generated model identities must come from the local builder.");

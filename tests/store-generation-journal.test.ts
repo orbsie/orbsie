@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({
   append: vi.fn(),
   cancel: vi.fn(),
   upload: vi.fn(),
-  build: vi.fn(),
+  browserBuild: vi.fn(),
   db: new Map<string, unknown>(),
 }));
 vi.mock("../src/lib/cloud-generation-journal", () => ({
@@ -14,8 +14,8 @@ vi.mock("../src/lib/cloud-generated-models", () => ({
   uploadCloudGeneratedModels: mocks.upload,
   downloadCloudGeneratedModels: async () => true,
 }));
-vi.mock("../src/lib/modeling-connection", () => ({
-  buildLocalModel: mocks.build,
+vi.mock("../src/lib/browser-modeling-connection", () => ({
+  buildBrowserModel: mocks.browserBuild,
 }));
 vi.mock("idb-keyval", () => ({
   get: async (key: string) => structuredClone(mocks.db.get(key)),
@@ -33,7 +33,6 @@ import {
   type Envelope,
 } from "../src/lib/protocol";
 import { fixtureEntities } from "../src/lib/fixtures";
-import { GAME_RULES_RESTART_NOTICE } from "../src/lib/game-session";
 import type { GenerationRun } from "../src/lib/generation-journal";
 let durable: GenerationRun;
 let current: boolean;
@@ -53,6 +52,30 @@ const journal: GenerationJournalConnection = {
     }),
 };
 const connection = { provider: "free" as const, model: "", key: "" };
+const browserMetadata = {
+  version: 1,
+  sha256: "a".repeat(64),
+  bytes: 32,
+  source: "browser-manifold" as const,
+  kernelVersion: "3.3.2",
+  bounds: { min: [0, 0, 0], max: [1, 1, 1] },
+  createdAt: "2026-09-08T00:00:00.000Z",
+};
+const browserJob = {
+  backend: "browser-manifold" as const,
+  recipe: {
+    version: 1 as const,
+    revision: 0,
+    output: "box" as const,
+    nodes: [
+      {
+        id: "box",
+        kind: "box" as const,
+        size: [2, 2, 2] as [number, number, number],
+      },
+    ],
+  },
+};
 function accept(envelope: Envelope) {
   durable = {
     ...durable,
@@ -76,16 +99,15 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 function relay(command: Command) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
-      async () =>
-        new Response(
-          JSON.stringify(command) +
-            '\n{"type":"commit_revision","message":"Done"}\n',
-        ),
-    ),
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        JSON.stringify(command) +
+          '\n{"type":"commit_revision","message":"Done"}\n',
+      ),
   );
+  vi.stubGlobal("fetch", fetcher);
+  return fetcher;
 }
 function change(): Command {
   return {
@@ -100,7 +122,8 @@ beforeEach(() => {
   mocks.append.mockReset();
   mocks.cancel.mockReset().mockResolvedValue(undefined);
   mocks.upload.mockReset().mockResolvedValue(true);
-  mocks.build.mockReset();
+  mocks.browserBuild.mockReset();
+  vi.stubGlobal("Worker", class {});
   useOrb
     .getState()
     .load({ ...blankProject(), entities: [fixtureEntities()[0]] });
@@ -175,69 +198,68 @@ it.each(["cancel", "account change"])(
     expect(useOrb.getState().building).toBe(false);
   },
 );
-it.each([false, true])(
-  "uploads model bytes before acknowledgement and retains restart=%s through progress",
-  async (restarted) => {
-    const gate = deferred<boolean>();
-    mocks.upload.mockImplementationOnce(() => gate.promise);
-    mocks.build.mockImplementation(async (_connection, _job, options) => {
-      if (restarted)
-        useOrb.getState().set({
-          ruleRestartCount: useOrb.getState().ruleRestartCount + 1,
-          notice: GAME_RULES_RESTART_NOTICE,
-        });
-      options.onProgress({ message: "Exporting geometry" });
-      return {
+it("rejects a legacy modeling job before cloud acknowledgement or model upload", async () => {
+  const legacyCommand = commandSchema.parse({
+    type: "set_geometry",
+    id: useOrb.getState().project.entities[0].id,
+    geometry: {
+      kind: "generated",
+      detail: "refined",
+      collision: "none",
+      job: {
         version: 1,
-        sha256: "a".repeat(64),
-        bytes: 32,
-        source: "local-blender",
-        blenderVersion: "test",
-        bounds: { min: [0, 0, 0], max: [1, 1, 1] },
-        createdAt: "2026-09-08T00:00:00.000Z",
-      };
-    });
-    useOrb.getState().set({
-      modelingConnection: {
-        url: "http://127.0.0.1:1234",
-        token: "a".repeat(43),
+        parts: [{ id: "box", shape: "box", color: "#ffffff" }],
       },
-    });
-    const before = useOrb.getState().project.entities[0].geometry;
-    relay(
-      commandSchema.parse({
-        type: "set_geometry",
-        id: useOrb.getState().project.entities[0].id,
-        geometry: {
-          kind: "generated",
-          detail: "refined",
-          collision: "none",
-          job: {
-            version: 1,
-            parts: [{ id: "box", shape: "box", color: "#ffffff" }],
-          },
-        },
-      }),
-    );
-    const run = useOrb.getState().run("Build a box", connection, journal);
-    await vi.waitFor(() => expect(mocks.upload).toHaveBeenCalledOnce());
-    expect(mocks.append).not.toHaveBeenCalled();
-    expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
-    gate.resolve(true);
-    await run;
-    expect(mocks.append.mock.calls[0][0].command.geometry.model.sha256).toBe(
-      "a".repeat(64),
-    );
-    expect(mocks.upload.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.append.mock.invocationCallOrder[0],
-    );
-    expect(useOrb.getState().notice).toBe(
-      restarted
-        ? GAME_RULES_RESTART_NOTICE
-        : "Your world is saved on this device.",
-    );
-  },
-);
+    },
+  });
+  const fetcher = relay(legacyCommand);
+  const before = useOrb.getState().project.entities[0].geometry;
+  await useOrb.getState().run("Build a box", connection, journal);
+  expect(useOrb.getState().error).toContain("browser-manifold");
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
+  expect(mocks.append).not.toHaveBeenCalled();
+  expect(mocks.upload).not.toHaveBeenCalled();
+  expect(mocks.cancel).toHaveBeenCalled();
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({
+    localModeling: false,
+    browserModeling: true,
+  });
+});
+
+it("uploads browser model bytes before durable acknowledgement", async () => {
+  const gate = deferred<boolean>();
+  mocks.upload.mockImplementationOnce(() => gate.promise);
+  mocks.browserBuild.mockResolvedValueOnce(browserMetadata);
+  const browserCommand = commandSchema.parse({
+    type: "set_geometry",
+    id: useOrb.getState().project.entities[0].id,
+    geometry: {
+      kind: "generated",
+      detail: "refined",
+      collision: "none",
+      job: browserJob,
+    },
+  });
+  const fetcher = relay(browserCommand);
+  const before = useOrb.getState().project.entities[0].geometry;
+  const run = useOrb.getState().run("Build a browser box", connection, journal);
+  await vi.waitFor(() => expect(mocks.upload).toHaveBeenCalledOnce());
+  expect(mocks.append).not.toHaveBeenCalled();
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
+  gate.resolve(true);
+  await run;
+  expect(mocks.browserBuild).toHaveBeenCalledOnce();
+  expect(mocks.append.mock.calls[0][0].command.geometry.model).toEqual(
+    browserMetadata,
+  );
+  expect(mocks.upload.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.append.mock.invocationCallOrder[0],
+  );
+  expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({
+    localModeling: false,
+    browserModeling: true,
+  });
+});
 
 it.each(["stop", "stream error"])(
   "preserves the newest finished geometry on %s during a later coarse replacement",

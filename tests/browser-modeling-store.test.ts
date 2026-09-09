@@ -2,15 +2,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   browserBuild: vi.fn(),
-  localBuild: vi.fn(),
   db: new Map<string, unknown>(),
 }));
 
 vi.mock("../src/lib/browser-modeling-connection", () => ({
   buildBrowserModel: mocks.browserBuild,
-}));
-vi.mock("../src/lib/modeling-connection", () => ({
-  buildLocalModel: mocks.localBuild,
 }));
 vi.mock("idb-keyval", () => ({
   get: async (key: string) => structuredClone(mocks.db.get(key)),
@@ -60,11 +56,9 @@ beforeEach(() => {
   mocks.db.clear();
   vi.stubGlobal("Worker", class {});
   mocks.browserBuild.mockReset().mockResolvedValue(browserMetadata);
-  mocks.localBuild.mockReset();
   const project = { ...blankProject(), entities: [fixtureEntities()[0]] };
   useOrb.getState().load(project);
   useOrb.getState().set({
-    modelingConnection: undefined,
     selected: project.entities[0].id,
   });
 });
@@ -103,7 +97,6 @@ it("accepts a browser-manifold recipe without a Blender companion", async () => 
   expect(mocks.browserBuild.mock.calls[0][1]).toMatchObject({
     color: "#6d9d58",
   });
-  expect(mocks.localBuild).not.toHaveBeenCalled();
   expect(useOrb.getState().project.entities[0].geometry).toMatchObject({
     kind: "generated",
     model: browserMetadata,
@@ -178,11 +171,10 @@ it("keeps the newer run when an older browser build resolves late", async () => 
   });
 });
 
-it("continues to gate legacy jobs on the Blender companion", async () => {
+it("rejects legacy jobs without invoking an external builder", async () => {
   relay(localJob);
   await useOrb.getState().run("Build this local model");
-  expect(useOrb.getState().error).toContain("Connect the local Blender");
-  expect(mocks.localBuild).not.toHaveBeenCalled();
+  expect(useOrb.getState().error).toContain("browser-manifold");
   expect(mocks.browserBuild).not.toHaveBeenCalled();
 });
 

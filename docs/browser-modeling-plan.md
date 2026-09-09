@@ -1,6 +1,6 @@
 # Browser-first modeling delivery plan
 
-Owner direction incorporated September 2026. This is an implementation plan, not a completion report. `prompt.md` remains the overall product contract. Existing native Blender prototypes are optional-backend evidence only.
+Owner direction incorporated September 2026. This is an implementation plan, not a completion report. `prompt.md` remains the overall product contract. Latest owner requirement: modeling runs only with local browser resources; no Blender connection or companion may be required or surfaced. Native Blender prototypes are historical experiments and are excluded from product delivery. Any optional backend described below must execute within the browser.
 
 ## Architecture and ownership
 

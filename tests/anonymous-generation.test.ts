@@ -70,6 +70,14 @@ it("requires a provider key even when generation is anonymous", async () => {
   expect((await generate(request({ ...input(), key: "" }))).status).toBe(400);
   expect(provider).not.toHaveBeenCalled();
 });
+it("rejects native modeling capability before contacting a provider", async () => {
+  const provider = vi.fn();
+  vi.stubGlobal("fetch", provider);
+  expect(
+    (await generate(request({ ...input(), localModeling: true }))).status,
+  ).toBe(400);
+  expect(provider).not.toHaveBeenCalled();
+});
 it("enforces the server output cap despite a larger client-supplied value", async () => {
   vi.stubEnv("ORBSIE_GENERATION_MAX_TOKENS", "512");
   let sent: { max_tokens?: number } = {};

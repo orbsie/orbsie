@@ -9,10 +9,6 @@ import {
   downloadCloudGeneratedModels,
 } from "./cloud-generated-models";
 import { assertModelingCommand } from "./modeling-policy";
-import {
-  buildLocalModel,
-  type ModelingConnection,
-} from "./modeling-connection";
 import { buildBrowserModel } from "./browser-modeling-connection";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import { GAME_RULES_RESTART_NOTICE } from "./game-session";
@@ -92,7 +88,6 @@ interface State {
   playing: boolean;
   building: boolean;
   selected?: string;
-  modelingConnection?: ModelingConnection;
   history: Project[];
   future: Project[];
   score: string[];
@@ -506,7 +501,6 @@ export const useOrb = create<State>((setState, getState) => ({
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
-    const modelingConnection = getState().modelingConnection;
     const before =
       getState().phase === "landing"
         ? blankProject()
@@ -596,32 +590,23 @@ export const useOrb = create<State>((setState, getState) => ({
         commandSchema.parse(command),
         assetPolicy,
       );
-      assertModelingCommand(
-        command,
-        !!modelingConnection,
-        browserModelingAvailable(),
-      );
+      assertModelingCommand(command, false, browserModelingAvailable());
       if (
         command.type === "set_geometry" &&
         command.geometry.kind === "generated"
       ) {
         const entityId = command.id;
         const job = command.geometry.job;
-        const model =
-          "backend" in job
-            ? await buildBrowserModel(job.recipe, {
-                signal,
-                color:
-                  s.project.entities.find((entity) => entity.id === entityId)
-                    ?.color ?? "#6ead60",
-              })
-            : await buildLocalModel(modelingConnection!, job, {
-                signal,
-                onProgress: (event) => {
-                  if (!signal.aborted && active === controller)
-                    setState({ notice: `Building locally: ${event.message}` });
-                },
-              });
+        if (!("backend" in job))
+          throw Error(
+            "This modeling job is unsupported. Request a browser-manifold recipe instead.",
+          );
+        const model = await buildBrowserModel(job.recipe, {
+          signal,
+          color:
+            s.project.entities.find((entity) => entity.id === entityId)
+              ?.color ?? "#6ead60",
+        });
         if (signal.aborted || active !== controller) return false;
         command = { ...command, geometry: { ...command.geometry, model } };
         s = getState();
@@ -713,7 +698,7 @@ export const useOrb = create<State>((setState, getState) => ({
           prompt,
           project,
           selected,
-          localModeling: !!modelingConnection,
+          localModeling: false,
           browserModeling: browserModelingAvailable(),
         });
         const response = await fetch(request.url, { ...request.init, signal });

@@ -75,6 +75,9 @@ try {
   );
   await context.route("**/api/generate", async (route) => {
     report.requests++;
+    const request = route.request().postDataJSON();
+    assert.equal(request.localModeling, false);
+    assert.equal(request.browserModeling, true);
     const initial = report.requests === 1;
     const commands = [
       ...(initial
@@ -110,7 +113,9 @@ try {
   page = await context.newPage();
   page.on("pageerror", (e) => report.pageErrors.push(e.message));
   page.setDefaultTimeout(30000);
-  await page.goto(url);
+  const entry = new URL(url);
+  entry.hash = `builder=${encodeURIComponent(JSON.stringify({ url: "http://127.0.0.1:9999", token: "a".repeat(43) }))}`;
+  await page.goto(entry.href);
   await expect(page.locator("canvas")).toBeVisible();
   await page
     .getByPlaceholder("What experience to build?")

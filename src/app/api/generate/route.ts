@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         key: z.string().max(1024).optional(),
         prompt: z.string().min(1).max(4000),
         project: projectSchema,
-        localModeling: z.boolean().default(false),
+        localModeling: z.literal(false).default(false),
         browserModeling: z.boolean().default(false),
         selected: entitySchema.shape.id.optional(),
       })

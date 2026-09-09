@@ -339,3 +339,5 @@ The latest owner clarification supersedes the backlog deferral: prioritize a wor
 Latest connection UX requirement: Connect → authorize/sign in → return connected. Terminal commands and pasted companion links do not fulfill this requirement. Implement the documented OpenRouter OAuth PKCE path; resolve supported ChatGPT subscription sign-in without implying that an ordinary hosted subscription OAuth client is already available.
 
 Firm owner constraint: all AI connection workflows must work entirely in the browser, with no installation, local companion, terminal commands or pasted connection links. Existing local ChatGPT experiments do not satisfy the subscription connector requirement.
+
+Latest modeling requirement: no Blender connection, companion setup, or installation may be required or surfaced. New geometry must execute with resources in the local browser through the browser modeling worker. Native Blender runtime/package work is superseded for product delivery; retain only compatibility with already baked saved assets.

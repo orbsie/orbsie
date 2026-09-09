@@ -52,11 +52,6 @@ import {
 } from "@/lib/cloud-generation-journal";
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
-  checkModelingConnection,
-  readModelingLink,
-  type ModelingConnection,
-} from "@/lib/modeling-connection";
-import {
   readCompanionLink,
   type GenerationConnection,
 } from "@/lib/generation-connection";
@@ -119,32 +114,6 @@ export default function Orbsie() {
     model: "",
     key: "",
   });
-  const builderVersion = useRef(0);
-  const pendingBuilder = useRef<ModelingConnection | null>(null);
-  async function connectBuilder(
-    link: ModelingConnection,
-    signal?: AbortSignal,
-  ) {
-    const version = ++builderVersion.current;
-    try {
-      await checkModelingConnection(link, signal);
-      if (signal?.aborted || version !== builderVersion.current) return;
-      pendingBuilder.current = null;
-      s.set({
-        modelingConnection: link,
-        notice: "Local Blender is connected.",
-        error: "",
-      });
-    } catch {
-      if (!signal?.aborted && version === builderVersion.current) {
-        pendingBuilder.current = null;
-        const message =
-          "Could not connect to local Blender. Keep the companion running and use its new connection link.";
-        s.set({ error: message });
-        setModalError(message);
-      }
-    }
-  }
   const connectionVersion = useRef(0);
   const setConnection = (next: Parameters<typeof setConnectionState>[0]) => {
     connectionVersion.current++;
@@ -445,20 +414,6 @@ export default function Orbsie() {
   useEffect(() => {
     const companionController = new AbortController();
     const connectingVersion = connectionVersion.current;
-    try {
-      const builder = pendingBuilder.current ?? readModelingLink(location.hash);
-      if (builder) {
-        pendingBuilder.current = builder;
-        history.replaceState(null, "", location.pathname + location.search);
-        void connectBuilder(builder, companionController.signal);
-      }
-    } catch {
-      history.replaceState(null, "", location.pathname + location.search);
-      s.set({
-        error:
-          "This Blender connection link is invalid. Open a new link from the companion.",
-      });
-    }
     try {
       const link = pendingCompanion.current ?? readCompanionLink(location.hash);
       if (link) {
@@ -1506,22 +1461,6 @@ export default function Orbsie() {
                 Models are built and rendered in your browser. No installation
                 is required.
               </p>
-              {s.modelingConnection && (
-                <button
-                  className="secondary full"
-                  onClick={() => {
-                    builderVersion.current++;
-                    pendingBuilder.current = null;
-                    s.stop();
-                    s.set({
-                      modelingConnection: undefined,
-                      notice: "Local Blender disconnected.",
-                    });
-                  }}
-                >
-                  Disconnect local Blender
-                </button>
-              )}
               {trial.enabled && trial.remaining > 0 && (
                 <button
                   className="primary full"
