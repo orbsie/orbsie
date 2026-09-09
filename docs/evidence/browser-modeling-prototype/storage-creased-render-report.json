@@ -1,0 +1,73 @@
+{
+  "status": "passed",
+  "scope": "Actual queue cancellation/recovery → worker → GLB → IndexedDB → page reload; no editor/provider integration",
+  "built": {
+    "metadata": {
+      "version": 1,
+      "sha256": "a13b6f33837aa6ff3c2405af040586191921edca0ef782f138ca8f8ea3f3fe53",
+      "bytes": 9588,
+      "bounds": {
+        "min": [
+          -3,
+          -2,
+          -0.75
+        ],
+        "max": [
+          3,
+          2,
+          0.75
+        ]
+      },
+      "createdAt": "2026-09-09T03:00:47.226Z",
+      "source": "browser-manifold",
+      "kernelVersion": "3.3.2"
+    },
+    "statistics": {
+      "triangles": 104,
+      "vertices": 54,
+      "bytes": 1896
+    },
+    "cancellations": [
+      "aborted",
+      "aborted"
+    ]
+  },
+  "reopened": {
+    "metadata": {
+      "version": 1,
+      "sha256": "a13b6f33837aa6ff3c2405af040586191921edca0ef782f138ca8f8ea3f3fe53",
+      "bytes": 9588,
+      "bounds": {
+        "min": [
+          -3,
+          -2,
+          -0.75
+        ],
+        "max": [
+          3,
+          2,
+          0.75
+        ]
+      },
+      "createdAt": "2026-09-09T03:00:47.226Z",
+      "source": "browser-manifold",
+      "kernelVersion": "3.3.2"
+    },
+    "bounds": {
+      "min": [
+        -3,
+        -2,
+        -0.75
+      ],
+      "max": [
+        3,
+        2,
+        0.75
+      ]
+    },
+    "bytes": 9588
+  },
+  "errors": [],
+  "blocked": [],
+  "inferenceCalls": 0
+}

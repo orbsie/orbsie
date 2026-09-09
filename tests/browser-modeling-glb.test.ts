@@ -44,6 +44,35 @@ describe("browser mesh baked asset bridge", () => {
     const doc = JSON.parse(
       new TextDecoder().decode(bytes.slice(20, 20 + jsonSize)),
     );
+    const binaryStart = 20 + jsonSize + 8;
+    const positions = new Float32Array(
+      bytes.buffer,
+      binaryStart + doc.bufferViews[0].byteOffset,
+      doc.accessors[0].count * 3,
+    );
+    const normals = new Float32Array(
+      bytes.buffer,
+      binaryStart + doc.bufferViews[1].byteOffset,
+      doc.accessors[1].count * 3,
+    );
+    const indices = new Uint32Array(
+      bytes.buffer,
+      binaryStart + doc.bufferViews[2].byteOffset,
+      doc.accessors[2].count,
+    );
+    let frontFaces = 0;
+    for (let i = 0; i < indices.length; i += 3) {
+      const face = Array.from(indices.slice(i, i + 3));
+      if (face.every((index) => positions[index * 3 + 2] === 0.75)) {
+        frontFaces++;
+        for (const index of face) {
+          expect(normals[index * 3]).toBeCloseTo(0, 5);
+          expect(normals[index * 3 + 1]).toBeCloseTo(0, 5);
+          expect(normals[index * 3 + 2]).toBeCloseTo(1, 5);
+        }
+      }
+    }
+    expect(frontFaces).toBeGreaterThan(0);
     expect(doc.buffers[0].uri).toBeUndefined();
     expect(doc.meshes[0].primitives[0].attributes.NORMAL).toBe(1);
     expect(doc.materials[0].pbrMetallicRoughness.roughnessFactor).toBe(0.9);

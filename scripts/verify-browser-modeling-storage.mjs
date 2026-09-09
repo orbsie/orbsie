@@ -25,6 +25,8 @@ import {bakeBrowserModelGLB} from './src/lib/browser-modeling-glb';
 import {evaluateBrowserModelRecipeInWorker} from './src/lib/browser-modeling-queue';
 import {saveGeneratedModel,readGeneratedModel} from './src/lib/generated-models';
 import {generatedGLBBounds} from './src/lib/generated-glb';
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 window.run=async()=>{
 const recipe={version:1,revision:4,output:'arch',nodes:[{id:'box',kind:'box',size:[6,4,1.5]},{id:'cut',kind:'cylinder',radius:1.8,depth:2,axis:'z'},{id:'placed',kind:'transform',input:'cut',position:[0,-1,0],rotation:[0,0,0],scale:[1,1,1]},{id:'arch',kind:'boolean',operation:'subtract',operands:['box','placed']}]};
 const activeAbort=new AbortController(),queuedAbort=new AbortController();
@@ -37,6 +39,14 @@ const mesh=await evaluateBrowserModelRecipeInWorker(recipe,new AbortController()
 const glb=bakeBrowserModelGLB(mesh,{color:'#E4C79B',roughness:.9});
 const metadata=await saveGeneratedModel(glb,{source:'browser-manifold',kernelVersion:'3.3.2',bounds:mesh.bounds});
 return {metadata,statistics:mesh.statistics,cancellations};
+};
+window.render=async hash=>{
+const record=await readGeneratedModel(hash);const gltf=await new GLTFLoader().parseAsync(record.glb.buffer,'');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#e8efe4');scene.add(gltf.scene);
+scene.add(new THREE.HemisphereLight(0xffffff,0x586d53,2));const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(4,8,6);scene.add(light);
+const camera=new THREE.PerspectiveCamera(40,1.5,.1,100);camera.position.set(7,4,10);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(900,600);document.body.appendChild(renderer.domElement);renderer.render(scene,camera);
+return {canvas:true};
 };
 window.reopen=async hash=>{const record=await readGeneratedModel(hash);return {metadata:record.metadata,bounds:generatedGLBBounds(record.glb),bytes:record.glb.length};};
 `,
@@ -107,6 +117,8 @@ try {
     (hash) => window.reopen(hash),
     built.metadata.sha256,
   );
+  await page.evaluate((hash) => window.render(hash), built.metadata.sha256);
+  await page.locator("canvas").screenshot({ path: resolve(output) + ".png" });
   assert.deepEqual(reopened.metadata, built.metadata);
   assert.deepEqual(reopened.bounds, built.metadata.bounds);
   assert.equal(reopened.bytes, built.metadata.bytes);

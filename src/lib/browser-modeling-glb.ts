@@ -1,5 +1,6 @@
 import { BufferAttribute, BufferGeometry, Color } from "three";
 import { z } from "zod";
+import { toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { BrowserModelEvaluation } from "./browser-modeling-kernel";
 import { validateGeneratedGLB } from "./generated-glb";
 
@@ -30,12 +31,19 @@ export function bakeBrowserModelGLB(
   )
     throw Error("Invalid browser mesh for GLB export.");
   const geometry = new BufferGeometry();
+  let shaded: BufferGeometry | undefined;
   try {
     geometry.setAttribute("position", new BufferAttribute(mesh.vertices, 3));
     geometry.setIndex(new BufferAttribute(mesh.indices, 1));
-    geometry.computeVertexNormals();
-    const normals = geometry.getAttribute("normal").array as Float32Array;
-    const arrays = [mesh.vertices, normals, mesh.indices];
+    // Split hard edges while preserving smooth curved surfaces.
+    shaded = toCreasedNormals(geometry, Math.PI / 3);
+    const vertices = shaded.getAttribute("position").array as Float32Array;
+    const normals = shaded.getAttribute("normal").array as Float32Array;
+    const indices = Uint32Array.from(
+      { length: vertices.length / 3 },
+      (_, i) => i,
+    );
+    const arrays = [vertices, normals, indices];
     const binaryLength = arrays.reduce(
       (sum, array) => sum + array.byteLength,
       0,
@@ -61,7 +69,7 @@ export function bakeBrowserModelGLB(
         {
           bufferView: 0,
           componentType: 5126,
-          count: mesh.vertices.length / 3,
+          count: vertices.length / 3,
           type: "VEC3",
           min: mesh.bounds.min,
           max: mesh.bounds.max,
@@ -75,7 +83,7 @@ export function bakeBrowserModelGLB(
         {
           bufferView: 2,
           componentType: 5125,
-          count: mesh.indices.length,
+          count: indices.length,
           type: "SCALAR",
         },
       ],
@@ -129,6 +137,7 @@ export function bakeBrowserModelGLB(
     validateGeneratedGLB(bytes, mesh.bounds);
     return bytes;
   } finally {
+    shaded?.dispose();
     geometry.dispose();
   }
 }
