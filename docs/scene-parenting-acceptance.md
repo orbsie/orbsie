@@ -5,6 +5,44 @@ It supplements the grouping/parenting requirement in
 `browser-modeling-plan.md`. Baked recipe composition and repeated mesh copies
 remain distinct from relationships between editable scene entities.
 
+## Architecture contract
+
+Keep project version 1 and make `groups`, entity `parentId`, and entity
+`rotation` optional. Omission retains the current flat world. Groups have
+stable IDs in the same namespace as entities, local position/XYZ Euler
+rotation/scale, and an optional parent group. Parents initially reference
+groups; entities remain independently selectable leaves. Bound the graph to
+128 groups, 160 entities and 32 group levels. Group scales must be positive
+and finite; existing zero and negative entity scales remain readable.
+
+Compose exact `T * R * S` matrices from ancestors in a shared pure resolver.
+Do not flatten a sheared world matrix into approximate position/rotation/scale.
+Renderer and gameplay integration must consume that same resolved transform.
+The visual planet/parcel transform remains outside gameplay coordinates.
+Root-space game path overrides replace the world origin while preserving the
+matrix's linear part. Local authoring transforms remain local to their parent.
+
+Expose explicit group creation/removal and `set_parent` operations through
+the existing revision/sequence/idempotency envelope. Require an explicit
+`keepWorldTransform` boolean in model-authored reparenting. Preserving world
+placement computes the inverse parent transform and rejects a result that
+cannot be represented as local TRS within documented numerical tolerance.
+Reject removal of a group with children. Removing or editing a leaf keeps
+the existing game-reference checks. Validate the resulting graph before any
+commit or journal write.
+
+Transform all eight local bounding-box corners for broad-phase contacts.
+Platform landing must test the transformed support surface and footprint;
+the top of a world axis-aligned bounding box is not a valid replacement for
+a rotated platform. This collision integration is a release gate, including
+parent changes while the player stands on a platform. Do not advertise model
+parenting tools after only the schema or matrix foundation is implemented.
+
+Delivery sequence: pure matrix foundation; atomic protocol operations;
+shared renderer/gameplay integration; model tool exposure and history/export
+acceptance; then the authorized live-provider milestone. Each intermediate
+commit is implementation progress, not evidence of the complete feature.
+
 ## Required behavior
 
 - Existing flat projects retain their positions, appearance, gameplay and
