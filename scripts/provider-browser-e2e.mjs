@@ -589,6 +589,36 @@ function attachRequestEvidence(page, config, info) {
     ) {
       if (response.request().method() !== "POST") return;
       info.generationStatuses.push(response.status());
+      info.diagnosticReads.push(
+        response
+          .text()
+          .then((body) => {
+            if (body.length > 1000000) return;
+            for (const line of body.split("\n")) {
+              let record;
+              try {
+                record = JSON.parse(line);
+              } catch {
+                continue;
+              }
+              if (
+                !["INVALID_SCENE_UPDATE", "INVALID_SCENE_JSON"].includes(
+                  record.code,
+                )
+              )
+                continue;
+              if (info.generationDiagnostics.length >= 8) break;
+              info.generationDiagnostics.push({
+                code: record.code,
+                diagnostic: sanitizeMessage(
+                  JSON.stringify(record.diagnostic ?? {}).slice(0, 4000),
+                  config,
+                ),
+              });
+            }
+          })
+          .catch(() => {}),
+      );
     }
   });
 }
@@ -2310,6 +2340,8 @@ async function run(config) {
     generationRequests: 0,
     generationBodies: [],
     generationStatuses: [],
+    generationDiagnostics: [],
+    diagnosticReads: [],
     blockedExternalRequests: 0,
     blockedExternalOrigins: new Set(),
     interceptedGeneration: false,
@@ -2785,11 +2817,13 @@ async function run(config) {
     report.traffic = {
       generationRequests: info.generationRequests,
       generationStatuses: info.generationStatuses,
+      generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
       interceptedGeneration: info.interceptedGeneration,
     };
   } catch (error) {
+    await Promise.allSettled(info.diagnosticReads);
     report.error = sanitizedError(error, config);
     if (config.cloudRecovery && report.cloudRecovery.status !== "passed")
       report.cloudRecovery.status = "failed";
@@ -2813,6 +2847,7 @@ async function run(config) {
     report.traffic = {
       generationRequests: info.generationRequests,
       generationStatuses: info.generationStatuses,
+      generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
       interceptedGeneration: info.interceptedGeneration,
     };
@@ -2822,6 +2857,7 @@ async function run(config) {
     report.traffic = {
       generationRequests: info.generationRequests,
       generationStatuses: info.generationStatuses,
+      generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
       interceptedGeneration: info.interceptedGeneration,

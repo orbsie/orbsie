@@ -14,6 +14,7 @@ import {
 } from "../protocol";
 import { z } from "zod";
 import { isRecommendedModel } from "../model-modes";
+import { generationDiagnostic } from "../generation-diagnostics";
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
@@ -219,6 +220,7 @@ export async function generateCommands({
             "Generation ended before committing this turn. Finished objects are preserved; retry to continue.",
           );
       } catch (error) {
+        const diagnostic = generationDiagnostic(error, count);
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
@@ -228,6 +230,7 @@ export async function generateCommands({
                 !(error instanceof SyntaxError)
                   ? error.message
                   : "The model returned an invalid scene update. Finished objects are preserved.",
+              ...(diagnostic ?? {}),
             }) + "\n",
           ),
         );
