@@ -248,8 +248,17 @@ function readConfiguration(argv) {
           ? "AI_GATEWAY_API_KEY"
           : undefined,
     requireNewOnly: process.env.ORBSIE_REQUIRE_NEW_ONLY === "1",
+    requireBrowserModel: process.env.ORBSIE_REQUIRE_BROWSER_MODEL === "1",
     requireInputGame: process.env.ORBSIE_REQUIRE_INPUT_GAME === "1",
   };
+
+  if (
+    process.env.ORBSIE_REQUIRE_BROWSER_MODEL !== undefined &&
+    !["0", "1"].includes(process.env.ORBSIE_REQUIRE_BROWSER_MODEL)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_REQUIRE_BROWSER_MODEL must be 0 or 1.",
+    );
 
   if (
     process.env.ORBSIE_REQUIRE_NEW_ONLY !== undefined &&
@@ -2492,12 +2501,27 @@ async function run(config) {
         "The live model did not build a local Blender asset.",
       );
 
-    const targetBefore = config.builderURL
-      ? projectAfterCreation.entities.find(
-          (entity) =>
-            entity.geometry?.kind === "generated" && entity.geometry.model,
-        )
-      : projectAfterCreation.entities[0];
+    const browserEntities = projectAfterCreation.entities.filter(
+      (entity) =>
+        entity.geometry?.kind === "generated" &&
+        entity.geometry.job?.backend === "browser-manifold" &&
+        entity.geometry.model?.source === "browser-manifold",
+    );
+    if (config.requireBrowserModel) {
+      assert(
+        browserEntities.length > 0,
+        "The live model did not produce a browser-manifold asset.",
+      );
+      report.creation.browserGeneratedEntities = browserEntities.length;
+    }
+    const targetBefore = config.requireBrowserModel
+      ? browserEntities[0]
+      : config.builderURL
+        ? projectAfterCreation.entities.find(
+            (entity) =>
+              entity.geometry?.kind === "generated" && entity.geometry.model,
+          )
+        : projectAfterCreation.entities[0];
     assert(
       targetBefore,
       "The visible object list did not map to a committed entity.",
