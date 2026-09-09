@@ -1,0 +1,47 @@
+{
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3048",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 512,
+  "creation": {
+    "status": "blocked",
+    "operations": 0,
+    "firstReservationMs": null,
+    "seedObserved": false
+  },
+  "edit": {
+    "status": "blocked",
+    "selectedIdPreserved": false
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      403
+    ],
+    "blockedExternalRequests": 1,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "failure.png"
+  ],
+  "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('.object-list button').first()\nExpected: visible\nTimeout: 180000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('.object-list button').first() with timeout 180000ms\n  - waiting for locator('.object-list button').first()\n"
+}
