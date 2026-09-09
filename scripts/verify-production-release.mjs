@@ -234,13 +234,14 @@ async function main() {
     report.checks.playerRuntime.status = "passed";
     report.checks.geometryWorkers = [];
     for (const file of [
-      "generated-geometry-worker.js",
-      "asset-geometry-worker.js",
+      "player/generated-geometry-worker.js",
+      "player/asset-geometry-worker.js",
+      "modeling/worker.js",
     ]) {
       const expected = createHash("sha256")
-        .update(await readFile(`public/player/${file}`))
+        .update(await readFile(`public/${file}`))
         .digest("hex");
-      const observed = await readRuntime(`${origin}/player/${file}`);
+      const observed = await readRuntime(`${origin}/${file}`);
       const digest = createHash("sha256").update(observed.bytes).digest("hex");
       assert.equal(
         digest,
