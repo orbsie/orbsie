@@ -1,0 +1,65 @@
+{
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://localhost:3058",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 512,
+  "creation": {
+    "status": "passed",
+    "operations": 3,
+    "firstReservationMs": 5930,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 0,
+    "generatedEntities": 1,
+    "browserGeneratedEntities": 1
+  },
+  "edit": {
+    "status": "passed",
+    "type": "geometry",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 5517.0999999940395,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  }
+}
