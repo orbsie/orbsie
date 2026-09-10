@@ -197,7 +197,10 @@ export function* fixtureEdit(
         [0.6, 0.6, 0.6],
         { type: "collect" },
       );
-      yield { type: "reserve_entity", entity };
+      yield {
+        type: "reserve_entity",
+        entity: { ...entity, geometry: undefined, stage: "seed" },
+      };
       yield { type: "set_geometry", id: entity.id, geometry: entity.geometry! };
     }
     changed = true;

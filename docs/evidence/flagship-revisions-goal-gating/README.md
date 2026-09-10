@@ -1,0 +1,7 @@
+# Flagship goal-reconciliation playthrough acceptance
+
+Run `TEST_URL=http://localhost:3058 ORBSIE_APP_SOURCE_COMMIT=$(git rev-parse HEAD) ORBSIE_FLAGSHIP_EVIDENCE_DIR=docs/evidence/flagship-revisions-goal-gating node scripts/verify-flagship-revisions.mjs` against the production build. The harness creates a new evidence directory per run.
+
+This run extends the flagship revision acceptance with real gameplay through the actual editor and game runtime. Three deterministic intercepted provider responses created the island fixture, turned the selected tree into a giant pink mushroom, and slowed the middle platform while adding two crystals. Assertions verify the saved revisions (7 unique collectibles, unrelated entities preserved), the goal-7 HUD, then an actual playthrough: walking to the portal with one crystal collected does not complete the goal, collecting all seven crystals and returning to the portal completes the adventure, the win card appears with score 7, "One more adventure" resets, and exact undo restores the preceding revision (goal 5) with reload recovery. No live inference was called; the run intercepted no external requests.
+
+The run also caught and fixed a fixture drift: `fixtureEdit` reserved added crystals with geometry attached, which the tightened model-command schema rejects; reserves are now geometry-less with a following `set_geometry`, matching the base creation path. This is deterministic fixture evidence, not live-provider or publication evidence.

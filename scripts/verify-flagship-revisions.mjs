@@ -160,10 +160,35 @@ try {
     }
     await route.fallback();
   });
-  await installFixtureGeneration(context);
+  await   installFixtureGeneration(context);
   page = await context.newPage();
   page.setDefaultTimeout(15000);
   page.setDefaultNavigationTimeout(20000);
+  // Three's existing devtools observation hook exposes scene references for
+  // read-only telemetry. No store import, score injection or transform writes.
+  await page.addInitScript(() => {
+    const observed = [];
+    window.__THREE_DEVTOOLS__ = new EventTarget();
+    window.__THREE_DEVTOOLS__.addEventListener("observe", (event) => {
+      if (event.detail?.isScene) observed.push(event.detail);
+    });
+    window.__orbReadPlayer = () => {
+      let player;
+      for (const scene of observed)
+        scene.traverse((object) => {
+          if (object.geometry?.type === "CapsuleGeometry")
+            player = object.parent;
+        });
+      return player
+        ? {
+            x: player.position.x,
+            y: player.position.y,
+            z: player.position.z,
+            visible: player.visible,
+          }
+        : null;
+    };
+  });
   page.on("pageerror", (error) => report.pageErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") report.consoleErrors.push(message.text());
@@ -325,6 +350,117 @@ try {
   await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
   await page.screenshot({ path: `${EVIDENCE_DIR}/revised-goal-7.png` });
   report.checks.playGoal7 = true;
+
+  const readPlayer = () => page.evaluate(() => window.__orbReadPlayer());
+  const score = async () =>
+    Number(
+      (await page.locator(".game-hud strong").innerText()).match(/(\d+)/)?.[1],
+    );
+  const held = new Set();
+  const setKeys = async (keys) => {
+    for (const key of held)
+      if (!keys.includes(key)) {
+        await page.keyboard.up(key);
+        held.delete(key);
+      }
+    for (const key of keys)
+      if (!held.has(key)) {
+        await page.keyboard.down(key);
+        held.add(key);
+      }
+  };
+  const approach = async (target, tolerance = 0.42) => {
+    for (let step = 0; step < 180; step += 1) {
+      const position = await readPlayer();
+      const dx = target.position[0] - position.x;
+      const dz = target.position[2] - position.z;
+      if (Math.hypot(dx, dz) < tolerance) {
+        await setKeys([]);
+        return true;
+      }
+      const inputX = Math.cos(0.5) * dx - Math.sin(0.5) * dz;
+      const inputZ = Math.sin(0.5) * dx + Math.cos(0.5) * dz;
+      const choices = [
+        { x: 1, z: 0, keys: ["d"] },
+        { x: -1, z: 0, keys: ["a"] },
+        { x: 0, z: 1, keys: ["s"] },
+        { x: 0, z: -1, keys: ["w"] },
+        { x: Math.SQRT1_2, z: Math.SQRT1_2, keys: ["d", "s"] },
+        { x: Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["d", "w"] },
+        { x: -Math.SQRT1_2, z: Math.SQRT1_2, keys: ["a", "s"] },
+        { x: -Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["a", "w"] },
+      ];
+      const best = choices.reduce((a, b) =>
+        a.x * inputX + a.z * inputZ > b.x * inputX + b.z * inputZ ? a : b,
+      );
+      await setKeys(best.keys);
+      await page.waitForTimeout(110);
+    }
+    await setKeys([]);
+    return false;
+  };
+  await page.mouse.click(1100, 850);
+  await page.waitForFunction(() => window.__orbReadPlayer()?.visible, {
+    timeout: WAIT_TIMEOUT,
+  });
+  await page.waitForTimeout(6000);
+
+  const portal = revised.entities.find(
+    (entity) => entity.behavior?.type === "portal",
+  );
+  const gatedPortal = await approach(portal);
+  assert.ok(gatedPortal, "player reached the portal before collecting");
+  await page.waitForTimeout(1200);
+  assert.equal(
+    await page.locator(".win-card").count(),
+    0,
+    "the portal must not complete the goal before every crystal is collected",
+  );
+  const gatedScore = await score();
+  assert.ok(gatedScore < 7, "the early portal visit must not win");
+  report.checks.portalGating = { collected: gatedScore, won: false };
+
+  const revisedCollectables = collectables(revised);
+  for (
+    let pass = 0;
+    (await score()) < 7 && pass < 3;
+    pass += 1
+  ) {
+    for (const target of revisedCollectables) {
+      if ((await score()) >= 7) break;
+      await approach(target);
+      const before = await score();
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        if ((await score()) !== before) break;
+        await approach(target);
+        await setKeys([" "]);
+        await page.waitForTimeout(450);
+        await setKeys([]);
+        await page.waitForTimeout(400);
+      }
+    }
+  }
+  await expect.poll(score).toBe(7, { timeout: WAIT_TIMEOUT });
+  assert.equal(
+    revisedCollectables.length,
+    7,
+    "every revised crystal was collected",
+  );
+  const winArrived = await approach(portal);
+  assert.ok(winArrived, "player returned to the portal with every crystal");
+  await expect(page.locator(".win-card")).toBeVisible({ timeout: WAIT_TIMEOUT });
+  await expect(
+    page.getByText("You found every crystal and made it home.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  assert.equal(await score(), 7);
+  await page.screenshot({ path: `${EVIDENCE_DIR}/won-goal-7.png` });
+  report.checks.winGoal7 = { collected: 7, won: true };
+  await page.getByRole("button", { name: "One more adventure" }).click();
+  await expect(page.locator(".win-card")).toHaveCount(0);
+  await expect.poll(score).toBe(0);
+  report.checks.playReset = true;
 
   await page
     .getByRole("button", { name: "Undo last change", exact: true })
