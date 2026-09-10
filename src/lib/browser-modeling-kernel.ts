@@ -337,6 +337,28 @@ function transformCopy(
   return copy;
 }
 
+function varyLatticeValue(seed: number, iy: number): number {
+  let hash = Math.imul(seed + 0x9e3779b9, 0x85ebca6b);
+  hash ^= Math.imul(iy, 0x27d4eb2f);
+  hash >>>= 0;
+  hash ^= hash >>> 15;
+  hash = Math.imul(hash, 0x2545f491);
+  hash ^= hash >>> 13;
+  return ((hash >>> 0) / 4294967296) * 2 - 1;
+}
+
+function smoothWeight(t: number): number {
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+function varyNoise(seed: number, y: number, cell: number): number {
+  const fy = y / cell;
+  const iy = Math.floor(fy);
+  const ty = smoothWeight(fy - iy);
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  return lerp(varyLatticeValue(seed, iy), varyLatticeValue(seed, iy + 1), ty);
+}
+
 function deformedSolid(
   inputObject: BrowserModelKernelManifold,
   kernel: BrowserModelKernel,
@@ -345,13 +367,14 @@ function deformedSolid(
     value: BrowserModelKernelManifold,
     nodeId: string,
   ) => BrowserModelKernelManifold,
-  deformVertex: (
+  makeDeformer: (bounds: BrowserModelMeshBounds) => (
     x: number,
     y: number,
     z: number,
     t: number,
     centerX: number,
     centerZ: number,
+    index: number,
   ) => [number, number, number],
 ): BrowserModelKernelManifold {
   const input = readMesh(inputObject, nodeId);
@@ -364,6 +387,7 @@ function deformedSolid(
   const centerZ = (input.bounds.min[2] + input.bounds.max[2]) / 2;
   const vertexCount = input.vertices.length / 3;
   const vertices: [number, number, number][] = new Array(vertexCount);
+  const deformVertex = makeDeformer(input.bounds);
   for (let index = 0; index < vertexCount; index += 1) {
     const y = input.vertices[index * 3 + 1];
     vertices[index] = deformVertex(
@@ -373,6 +397,7 @@ function deformedSolid(
       (y - (input.bounds.min[1] + height / 2)) / height,
       centerX,
       centerZ,
+      index,
     );
   }
   const triangles: [number, number, number][] = [];
@@ -650,13 +675,10 @@ export function evaluateBrowserModelRecipe(
       }
       case "twist": {
         const inputObject = evaluateNode(node.input);
-        object = deformedSolid(
-          inputObject,
-          kernel,
-          node.id,
-          own,
-          (x, y, z, t, centerX, centerZ) => {
-            const theta = node.angle * t;
+        object = deformedSolid(inputObject, kernel, node.id, own, () => {
+          const angle = node.angle;
+          return (x, y, z, t, centerX, centerZ) => {
+            const theta = angle * t;
             const dx = x - centerX;
             const dz = z - centerZ;
             const cosine = Math.cos(theta);
@@ -666,27 +688,49 @@ export function evaluateBrowserModelRecipe(
               y,
               centerZ - sine * dx + cosine * dz,
             ];
-          },
-        );
+          };
+        });
         break;
       }
       case "taper": {
         const inputObject = evaluateNode(node.input);
-        object = deformedSolid(
-          inputObject,
-          kernel,
-          node.id,
-          own,
-          (x, y, z, t, centerX, centerZ) => {
+        object = deformedSolid(inputObject, kernel, node.id, own, () => {
+          const bottomScale = node.bottomScale;
+          const topScale = node.topScale;
+          return (x, y, z, t, centerX, centerZ) => {
             const scale =
-              node.bottomScale * (0.5 - t) + node.topScale * (0.5 + t);
+              bottomScale * (0.5 - t) + topScale * (0.5 + t);
             return [
               centerX + (x - centerX) * scale,
               y,
               centerZ + (z - centerZ) * scale,
             ];
-          },
-        );
+          };
+        });
+        break;
+      }
+      case "vary": {
+        const inputObject = evaluateNode(node.input);
+        object = deformedSolid(inputObject, kernel, node.id, own, (bounds) => {
+          const seed = node.seed;
+          const amplitude = node.amplitude;
+          const cell = Math.max(
+            Math.max(
+              bounds.max[0] - bounds.min[0],
+              bounds.max[1] - bounds.min[1],
+              bounds.max[2] - bounds.min[2],
+            ) / 4,
+            0.25,
+          );
+          return (x, y, z, _t, centerX, centerZ) => {
+            const scale = 1 + varyNoise(seed, y, cell) * amplitude;
+            return [
+              centerX + (x - centerX) * scale,
+              y,
+              centerZ + (z - centerZ) * scale,
+            ];
+          };
+        });
         break;
       }
       case "boolean": {

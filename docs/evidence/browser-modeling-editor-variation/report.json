@@ -1,0 +1,22 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "procedural": false,
+  "shape": "variation",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "b6dc57c4a8815d2650c0fa591eff6ad89dc42a1abc85b2b4714745871c9330ed",
+      "after": "c51ae060ba10bba4af35159a7cd2df257d1387fb6ad447bd76a07c04b7b8a858"
+    },
+    "variationProfileChanged": true,
+    "exactGeometryUndoRedo": true,
+    "invalidVariationPreservesFinishedObject": true,
+    "bakedExport": true,
+    "standaloneReadyMs": 4088,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

@@ -26,6 +26,8 @@ const MAX_COPY_COUNT = 32;
 const MAX_EXPANDED_LEAVES = 64;
 const MIN_DEFORMATION_SCALE = 0.25;
 const MAX_DEFORMATION_SCALE = 4;
+const MAX_VARY_SEED = 1023;
+const MAX_VARY_AMPLITUDE = 0.5;
 
 const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/);
 const coordinate = z
@@ -232,6 +234,16 @@ const taperNodeSchema = z
   })
   .strict();
 
+const varyNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("vary"),
+    input: identifier,
+    seed: z.number().int().min(0).max(MAX_VARY_SEED),
+    amplitude: z.number().finite().gt(0).max(MAX_VARY_AMPLITUDE),
+  })
+  .strict();
+
 const booleanNodeSchema = z
   .object({
     id: identifier,
@@ -257,6 +269,7 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   transformNodeSchema,
   twistNodeSchema,
   taperNodeSchema,
+  varyNodeSchema,
   booleanNodeSchema,
 ]);
 
@@ -431,7 +444,8 @@ export const browserModelRecipeSchema =
         node.kind === "linear-array" ||
         node.kind === "instances" ||
         node.kind === "twist" ||
-        node.kind === "taper"
+        node.kind === "taper" ||
+        node.kind === "vary"
       )
         return [node.input];
       if (node.kind === "boolean") return node.operands;
@@ -634,7 +648,8 @@ export const browserModelRecipeSchema =
           node.kind === "transform" ||
           node.kind === "mirror" ||
           node.kind === "twist" ||
-          node.kind === "taper"
+          node.kind === "taper" ||
+          node.kind === "vary"
         )
           count = expandedLeavesOf(node.input);
         else count = 1;
@@ -722,4 +737,6 @@ export const browserModelRecipeLimits = Object.freeze({
   maxDeformationScale: MAX_DEFORMATION_SCALE,
   minTwistAngle: -Math.PI / 2,
   maxTwistAngle: Math.PI / 2,
+  maxVarySeed: MAX_VARY_SEED,
+  maxVaryAmplitude: MAX_VARY_AMPLITUDE,
 });

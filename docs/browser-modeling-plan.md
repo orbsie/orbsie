@@ -201,6 +201,16 @@ Y rotation as Three.js: x'=centerX+cos(theta)*dx+sin(theta)*dz,
 z'=centerZ-sin(theta)*dx+cos(theta)*dz. Taper uses
 s=bottomScale*(0.5-t)+topScale*(0.5+t) on dx and dz. Y is unchanged.
 
+`vary` has an input node, integer seed in [0, 1023], and amplitude in (0, 0.5].
+It applies a seeded coherent radial scale about the input bounds' XZ center:
+s(y)=1+amplitude*n(seed,y), leaving Y unchanged. n is quintic-smooth
+one-dimensional lattice value noise over Y with lattice cell
+max(input extent/4, 0.25) and pure-integer hashing, so identical recipe and
+seed reproduce identical geometry regardless of mesh tessellation. Per-slice
+homothetic scaling keeps cap fans valid; the same mesh-validator checks apply
+as for twist/taper, and out-of-range or collapsing parameters are rejected
+before replacing the last good object.
+
 Reject zero height and bound deformation inputs/outputs to the existing custom
 mesh validator's 4,096 vertices and 8,192 triangles. Validate deformed topology,
 intersection and positive volume before passing it to downstream recipe nodes;

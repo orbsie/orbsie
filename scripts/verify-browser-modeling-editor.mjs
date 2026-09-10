@@ -17,22 +17,43 @@ const mesh = process.env.ORBSIE_MODELING_SHAPE === "mesh";
 const tube = process.env.ORBSIE_MODELING_SHAPE === "tube";
 const deformation = process.env.ORBSIE_MODELING_SHAPE === "deformation";
 const composition = process.env.ORBSIE_MODELING_SHAPE === "composition";
+const variation = process.env.ORBSIE_MODELING_SHAPE === "variation";
 const procedural = process.env.ORBSIE_PROCEDURAL === "1";
-const rejectedEdit = mesh || tube || composition || procedural || deformation;
-const label = deformation
-  ? "Browser twisted column"
-  : composition
-    ? "Browser colonnade"
-    : tube
-      ? "Browser pipe"
-      : mesh
-        ? "Browser pyramid"
-        : revolution
-          ? "Browser vase"
-          : extrusion
-            ? "Browser prism"
-            : "Browser arch";
+const rejectedEdit =
+  mesh || tube || composition || procedural || deformation || variation;
+const label = variation
+  ? "Browser boulder"
+  : deformation
+    ? "Browser twisted column"
+    : composition
+      ? "Browser colonnade"
+      : tube
+        ? "Browser pipe"
+        : mesh
+          ? "Browser pyramid"
+          : revolution
+            ? "Browser vase"
+            : extrusion
+              ? "Browser prism"
+              : "Browser arch";
 const recipe = (revision, radius) => {
+  if (variation)
+    return {
+      version: 1,
+      revision,
+      output: "boulder",
+      nodes: [
+        {
+          id: "core",
+          kind: "cylinder",
+          radius: 1,
+          depth: 3,
+          axis: "y",
+          segments: 32,
+        },
+        { id: "boulder", kind: "vary", input: "core", seed: 7, amplitude: radius },
+      ],
+    };
   if (deformation)
     return {
       version: 1,
@@ -199,19 +220,21 @@ const geometry = (revision, radius) => ({
 const report = {
   mode: "fixture-provider-real-editor-worker",
   procedural,
-  shape: deformation
-    ? "deformation"
-    : composition
-      ? "composition"
-      : tube
-        ? "tube"
-        : mesh
-          ? "mesh"
-          : revolution
-            ? "revolution"
-            : extrusion
-              ? "extrusion"
-              : "arch",
+  shape: variation
+    ? "variation"
+    : deformation
+      ? "deformation"
+      : composition
+        ? "composition"
+        : tube
+          ? "tube"
+          : mesh
+            ? "mesh"
+            : revolution
+              ? "revolution"
+              : extrusion
+                ? "extrusion"
+                : "arch",
   requests: 0,
   pageErrors: [],
   blocked: [],
@@ -255,12 +278,22 @@ try {
     const invalidMeshEdit = rejectedEdit && report.requests === 3;
     const nextGeometry = geometry(
       initial ? 0 : invalidMeshEdit ? 2 : 1,
-      initial ? 1.25 : 1.6,
+      initial
+        ? variation
+          ? 0.3
+          : 1.25
+        : variation
+          ? 0.45
+          : 1.6,
     );
     if (invalidMeshEdit && deformation)
       nextGeometry.job.recipe.nodes.find(
         (node) => node.id === "tapered",
       ).topScale = 0;
+    if (invalidMeshEdit && variation)
+      nextGeometry.job.recipe.nodes.find(
+        (node) => node.id === "boulder",
+      ).amplitude = 0;
     if (invalidMeshEdit && composition)
       nextGeometry.job.recipe.nodes.find((node) => node.id === "array").offset =
         [0.1, 0, 0];
@@ -403,7 +436,9 @@ try {
     .fill(
       deformation
         ? "Widen the top taper without changing the twist"
-        : composition
+        : variation
+          ? "Make the boulder more lumpy"
+          : composition
           ? "Increase the spacing between columns"
           : tube
             ? "Make the pipe thicker without changing its path"
@@ -484,6 +519,24 @@ try {
     assert(b.model.bounds.max[0] > a.model.bounds.max[0]);
     report.checks.twistPreservedAndTaperWidened = true;
   }
+  if (variation) {
+    const a = first.entities[0].geometry,
+      b = edited.entities[0].geometry;
+    assert.deepEqual(
+      a.job.recipe.nodes.slice(0, 1),
+      b.job.recipe.nodes.slice(0, 1),
+    );
+    assert.equal(a.job.recipe.nodes[1].seed, 7);
+    assert.equal(b.job.recipe.nodes[1].seed, 7);
+    assert.equal(b.job.recipe.nodes[1].amplitude, 0.45);
+    assert.equal(a.job.recipe.nodes[1].amplitude, 0.3);
+    for (const bounds of [a.model.bounds, b.model.bounds]) {
+      assert(Math.abs(bounds.min[1] + 1.5) < 1e-5);
+      assert(Math.abs(bounds.max[1] - 1.5) < 1e-5);
+    }
+    assert.notDeepEqual(b.model.bounds, a.model.bounds);
+    report.checks.variationProfileChanged = true;
+  }
   if (composition) {
     const a = first.entities[0].geometry,
       b = edited.entities[0].geometry;
@@ -545,13 +598,15 @@ try {
       .fill(
         deformation
           ? "Collapse the top taper to zero"
-          : procedural
-            ? "Try an invalid procedural recipe"
-            : composition
-              ? "Make the column copies overlap"
-              : tube
-                ? "Try an invalid reversing tube path"
-                : "Try an invalid inverted mesh revision",
+          : variation
+            ? "Try an invalid variation"
+            : procedural
+              ? "Try an invalid procedural recipe"
+              : composition
+                ? "Make the column copies overlap"
+                : tube
+                  ? "Try an invalid reversing tube path"
+                  : "Try an invalid inverted mesh revision",
       );
     await page
       .getByRole("button", { name: "Change this", exact: true })
@@ -562,13 +617,15 @@ try {
     report.checks[
       deformation
         ? "invalidTaperPreservesFinishedObject"
-        : procedural
-          ? "invalidProceduralSourcePreservesFinishedObject"
-          : composition
-            ? "invalidCompositionPreservesFinishedObject"
-            : tube
-              ? "invalidTubePreservesFinishedObject"
-              : "invalidMeshPreservesFinishedObject"
+        : variation
+          ? "invalidVariationPreservesFinishedObject"
+          : procedural
+            ? "invalidProceduralSourcePreservesFinishedObject"
+            : composition
+              ? "invalidCompositionPreservesFinishedObject"
+              : tube
+                ? "invalidTubePreservesFinishedObject"
+                : "invalidMeshPreservesFinishedObject"
     ] = true;
     await page.screenshot({ path: `${output}/invalid-edit.png` });
   }

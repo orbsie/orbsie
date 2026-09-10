@@ -548,6 +548,81 @@ describe("browser modeling recipe contract", () => {
       expect(browserModelRecipeSchema.safeParse(recipe).success).toBe(false);
   });
 
+  it("accepts bounded seeded variation and rejects out-of-range values", () => {
+    const variationRecipe = {
+      version: 1,
+      revision: 0,
+      output: "varied",
+      nodes: [
+        { id: "cyl", kind: "cylinder", radius: 1, depth: 3, axis: "y", segments: 48 },
+        { id: "varied", kind: "vary", input: "cyl", seed: 7, amplitude: 0.3 },
+      ],
+    };
+    const parsed = parseBrowserModelRecipe(variationRecipe);
+    expect(parsed.nodes[1]).toMatchObject({
+      kind: "vary",
+      seed: 7,
+      amplitude: 0.3,
+    });
+    expect(
+      browserModelRecipeSchema.safeParse({
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied"
+            ? {
+                ...node,
+                seed: browserModelRecipeLimits.maxVarySeed,
+                amplitude: browserModelRecipeLimits.maxVaryAmplitude,
+              }
+            : node,
+        ),
+      }).success,
+    ).toBe(true);
+
+    const invalidRecipes = [
+      {
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied" ? { ...node, seed: -1 } : node,
+        ),
+      },
+      {
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied"
+            ? { ...node, seed: browserModelRecipeLimits.maxVarySeed + 1 }
+            : node,
+        ),
+      },
+      {
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied" ? { ...node, amplitude: 0 } : node,
+        ),
+      },
+      {
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied"
+            ? {
+                ...node,
+                amplitude:
+                  browserModelRecipeLimits.maxVaryAmplitude + 0.01,
+              }
+            : node,
+        ),
+      },
+      {
+        ...variationRecipe,
+        nodes: variationRecipe.nodes.map((node) =>
+          node.id === "varied" ? { ...node, input: "missing" } : node,
+        ),
+      },
+    ];
+    for (const recipe of invalidRecipes)
+      expect(browserModelRecipeSchema.safeParse(recipe).success).toBe(false);
+  });
+
   it("rejects stale revisions and replacements that change the stable ID", () => {
     const recipe = parseBrowserModelRecipe(archRecipe);
     expect(() =>

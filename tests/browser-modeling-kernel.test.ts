@@ -575,6 +575,70 @@ describe("browser modeling kernel adapter", () => {
     );
   });
 
+  it("deforms a solid with a deterministic seeded Y profile through vary", () => {
+    const log: string[] = [];
+    const tetraMesh = {
+      numProp: 3,
+      vertProperties: new Float32Array([
+        -1, -1, -1, 1, -1, -1, 0, -1, 1, 0, 1, 0,
+      ]),
+      triVerts: new Uint32Array([0, 1, 2, 0, 3, 1, 1, 3, 2, 2, 3, 0]),
+    };
+    const captured: { vertices: Float32Array; triangles: Uint32Array }[] = [];
+    const kernel = {
+      ...fakeKernel(log, tetraMesh),
+      mesh: (vertices: Float32Array, triangles: Uint32Array) => {
+        log.push(`mesh:${vertices.length}:${triangles.length}`);
+        captured.push({ vertices, triangles });
+        return new FakeManifold("mesh", log, tetraMesh, "NoError");
+      },
+    };
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "varied",
+      nodes: [
+        { id: "column", kind: "box", size: [1, 3, 2] },
+        { id: "varied", kind: "vary", input: "column", seed: 7, amplitude: 0.3 },
+      ],
+    });
+    evaluateBrowserModelRecipe(recipe, kernel);
+    expect(captured).toHaveLength(1);
+    const firstRun = [...captured[0].vertices];
+    captured.length = 0;
+    evaluateBrowserModelRecipe(recipe, kernel);
+    expect(captured).toHaveLength(1);
+    expect([...captured[0].vertices]).toEqual(firstRun);
+    const other = parseBrowserModelRecipe({
+      ...recipe,
+      revision: 1,
+      nodes: recipe.nodes.map((node) =>
+        node.id === "varied" ? { ...node, seed: 300 } : node,
+      ),
+    });
+    captured.length = 0;
+    evaluateBrowserModelRecipe(other, kernel);
+    expect(captured).toHaveLength(1);
+    expect([...captured[0].vertices]).not.toEqual(firstRun);
+    const deformed = captured[0].vertices;
+    const source = tetraMesh.vertProperties;
+    for (let index = 0; index < 4; index += 1) {
+      const x = source[index * 3];
+      const y = source[index * 3 + 1];
+      const z = source[index * 3 + 2];
+      expect(deformed[index * 3 + 1]).toBe(y);
+      const radius = Math.hypot(x, z);
+      if (radius <= 1e-6) continue;
+      const ratio = Math.hypot(deformed[index * 3], deformed[index * 3 + 2]) / radius;
+      expect(ratio).toBeGreaterThanOrEqual(1 - 0.3 - 1e-6);
+      expect(ratio).toBeLessThanOrEqual(1 + 0.3 + 1e-6);
+    }
+    const deletes = log.filter((entry) => entry.startsWith("delete:"));
+    expect(deletes.length).toBe(
+      log.filter((entry) => entry.startsWith("create:")).length,
+    );
+  });
+
   it("matches Three.js Euler XYZ bounds with the installed Manifold backend", async () => {
     const [{ default: Module }, THREE] = await Promise.all([
       import("manifold-3d"),
@@ -769,6 +833,80 @@ describe("browser modeling kernel adapter", () => {
     ).toBeCloseTo(
       absoluteMeshVolume(evaluations[1].vertices, evaluations[1].indices),
       5,
+    );
+  });
+
+  it("applies deterministic seeded Y-profile variation to a real Manifold solid", async () => {
+    const [{ default: Module }] = await Promise.all([import("manifold-3d")]);
+    const wasm = await Module();
+    wasm.setup();
+    const kernel: BrowserModelKernel = {
+      cube: (size, center) => wasm.Manifold.cube(size, center),
+      sphere: (radius, segments) => wasm.Manifold.sphere(radius, segments),
+      cylinder: (depth, radiusLow, radiusHigh, segments, center) =>
+        wasm.Manifold.cylinder(
+          depth,
+          radiusLow,
+          radiusHigh,
+          segments,
+          center,
+        ),
+      extrude: (profile, depth) => wasm.Manifold.extrude(profile, depth),
+      revolve: (profile, segments, degrees) =>
+        wasm.Manifold.revolve(profile, segments, degrees),
+      compose: (manifolds) =>
+        wasm.Manifold.compose(
+          manifolds as unknown as ReturnType<typeof wasm.Manifold.cube>[],
+        ),
+      mesh: (vertices, triangles) =>
+        wasm.Manifold.ofMesh(
+          new wasm.Mesh({
+            numProp: 3,
+            vertProperties: vertices,
+            triVerts: triangles,
+          }),
+        ),
+    };
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "varied",
+      nodes: [
+        {
+          id: "cyl",
+          kind: "cylinder",
+          radius: 1,
+          depth: 3,
+          axis: "y",
+          segments: 48,
+        },
+        { id: "varied", kind: "vary", input: "cyl", seed: 7, amplitude: 0.3 },
+      ],
+    });
+    const first = evaluateBrowserModelRecipe(recipe, kernel);
+    expect(first.bounds.min[1]).toBeCloseTo(-1.5, 5);
+    expect(first.bounds.max[1]).toBeCloseTo(1.5, 5);
+    expect(first.bounds.max[0]).toBeGreaterThan(1);
+    expect(first.bounds.max[0]).toBeLessThanOrEqual(1.3 + 1e-6);
+    for (let index = 0; index < first.vertices.length; index += 3) {
+      expect(Math.abs(first.vertices[index + 1])).toBeCloseTo(1.5, 5);
+    }
+    const repeat = evaluateBrowserModelRecipe(recipe, kernel);
+    expect(Buffer.from(repeat.vertices.buffer).equals(Buffer.from(first.vertices.buffer))).toBe(
+      true,
+    );
+    const reseeded = evaluateBrowserModelRecipe(
+      parseBrowserModelRecipe({
+        ...recipe,
+        revision: 1,
+        nodes: recipe.nodes.map((node) =>
+          node.id === "varied" ? { ...node, seed: 300 } : node,
+        ),
+      }),
+      kernel,
+    );
+    expect(Buffer.from(reseeded.vertices.buffer).equals(Buffer.from(first.vertices.buffer))).toBe(
+      false,
     );
   });
 });
