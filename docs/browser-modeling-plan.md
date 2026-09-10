@@ -193,7 +193,9 @@ BYOK or full OpenRouter acceptance journeys. Those remain higher priority when
 required account access is available.
 
 
-Initial implementation contract (not yet advertised): `twist` has an input
+Initial implementation contract (advertised to providers via
+`browserModelingInstructions` after integration and browser verification
+passed; live-provider acceptance remains pending): `twist` has an input
 node and angle in radians within ±π/2; `taper` has an input node and positive
 bottom/top scales in [0.25, 4]. Both use the input bounds' Y axis and XZ center.
 Let t=(y-centerY)/height. Twist uses theta=angle*t and the same right-handed
