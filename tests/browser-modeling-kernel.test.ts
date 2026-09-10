@@ -442,6 +442,139 @@ describe("browser modeling kernel adapter", () => {
     expect(log.filter((entry) => entry.startsWith("delete:"))).toHaveLength(1);
   });
 
+  it("deforms a solid with bounded Y-axis twist through the mesh validator", () => {
+    const log: string[] = [];
+    const tetraMesh = {
+      numProp: 3,
+      vertProperties: new Float32Array([
+        -1, -1, -1, 1, -1, -1, 0, -1, 1, 0, 1, 0,
+      ]),
+      triVerts: new Uint32Array([0, 1, 2, 0, 3, 1, 1, 3, 2, 2, 3, 0]),
+    };
+    const captured: { vertices: Float32Array; triangles: Uint32Array }[] = [];
+    const kernel = {
+      ...fakeKernel(log, tetraMesh),
+      mesh: (vertices: Float32Array, triangles: Uint32Array) => {
+        log.push(`mesh:${vertices.length}:${triangles.length}`);
+        captured.push({ vertices, triangles });
+        return new FakeManifold("mesh", log, tetraMesh, "NoError");
+      },
+    };
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "twisted",
+      nodes: [
+        { id: "column", kind: "box", size: [1, 3, 2] },
+        { id: "twisted", kind: "twist", input: "column", angle: 0.35 },
+      ],
+    });
+    const result = evaluateBrowserModelRecipe(recipe, kernel);
+    expect(log).toContain("mesh:12:12");
+    expect(captured).toHaveLength(1);
+    const deformed = captured[0].vertices;
+    const source = tetraMesh.vertProperties;
+    for (let index = 0; index < 4; index += 1) {
+      const x = source[index * 3];
+      const y = source[index * 3 + 1];
+      const z = source[index * 3 + 2];
+      const theta = (0.35 * y) / 2;
+      expect(deformed[index * 3]).toBeCloseTo(
+        Math.cos(theta) * x + Math.sin(theta) * z,
+        5,
+      );
+      expect(deformed[index * 3 + 1]).toBe(y);
+      expect(deformed[index * 3 + 2]).toBeCloseTo(
+        -Math.sin(theta) * x + Math.cos(theta) * z,
+        5,
+      );
+    }
+    expect(result.bounds.min[1]).toBe(-1);
+    expect(result.bounds.max[1]).toBe(1);
+    const deletes = log.filter((entry) => entry.startsWith("delete:"));
+    expect(deletes.length).toBe(
+      log.filter((entry) => entry.startsWith("create:")).length,
+    );
+  });
+
+  it("scales XZ per Y slice for taper and rejects zero-height inputs", () => {
+    const log: string[] = [];
+    const tetraMesh = {
+      numProp: 3,
+      vertProperties: new Float32Array([
+        -1, -1, -1, 1, -1, -1, 0, -1, 1, 0, 1, 0,
+      ]),
+      triVerts: new Uint32Array([0, 1, 2, 0, 3, 1, 1, 3, 2, 2, 3, 0]),
+    };
+    const captured: { vertices: Float32Array; triangles: Uint32Array }[] = [];
+    const kernel = {
+      ...fakeKernel(log, tetraMesh),
+      mesh: (vertices: Float32Array, triangles: Uint32Array) => {
+        log.push(`mesh:${vertices.length}:${triangles.length}`);
+        captured.push({ vertices, triangles });
+        return new FakeManifold("mesh", log, tetraMesh, "NoError");
+      },
+    };
+    const recipe = parseBrowserModelRecipe({
+      version: 1,
+      revision: 0,
+      output: "tapered",
+      nodes: [
+        { id: "column", kind: "box", size: [1, 3, 2] },
+        {
+          id: "tapered",
+          kind: "taper",
+          input: "column",
+          bottomScale: 0.25,
+          topScale: 4,
+        },
+      ],
+    });
+    evaluateBrowserModelRecipe(recipe, kernel);
+    expect(captured).toHaveLength(1);
+    const deformed = captured[0].vertices;
+    const source = tetraMesh.vertProperties;
+    for (let index = 0; index < 4; index += 1) {
+      const x = source[index * 3];
+      const y = source[index * 3 + 1];
+      const z = source[index * 3 + 2];
+      const scale = y < 0 ? 0.25 : 4;
+      expect(deformed[index * 3]).toBeCloseTo(x * scale, 5);
+      expect(deformed[index * 3 + 1]).toBe(y);
+      expect(deformed[index * 3 + 2]).toBeCloseTo(z * scale, 5);
+    }
+    class FlatManifold extends FakeManifold {
+      constructor() {
+        super("flat", log, tetraMesh, "NoError");
+      }
+      boundingBox(): BrowserModelKernelBounds {
+        return { min: [-1, 0, -1], max: [1, 0, 1] };
+      }
+    }
+    const flatKernel = {
+      ...kernel,
+      cube: () => new FlatManifold(),
+    };
+    expect(() =>
+      evaluateBrowserModelRecipe(
+        parseBrowserModelRecipe({
+          version: 1,
+          revision: 0,
+          output: "twisted",
+          nodes: [
+            { id: "column", kind: "box", size: [1, 3, 2] },
+            { id: "twisted", kind: "twist", input: "column", angle: 0.35 },
+          ],
+        }),
+        flatKernel,
+      ),
+    ).toThrow(/no extent along Y/);
+    const deletes = log.filter((entry) => entry.startsWith("delete:"));
+    expect(deletes.length).toBe(
+      log.filter((entry) => entry.startsWith("create:")).length,
+    );
+  });
+
   it("matches Three.js Euler XYZ bounds with the installed Manifold backend", async () => {
     const [{ default: Module }, THREE] = await Promise.all([
       import("manifold-3d"),

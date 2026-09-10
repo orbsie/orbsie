@@ -337,6 +337,69 @@ function transformCopy(
   return copy;
 }
 
+function deformedSolid(
+  inputObject: BrowserModelKernelManifold,
+  kernel: BrowserModelKernel,
+  nodeId: string,
+  own: (
+    value: BrowserModelKernelManifold,
+    nodeId: string,
+  ) => BrowserModelKernelManifold,
+  deformVertex: (
+    x: number,
+    y: number,
+    z: number,
+    t: number,
+    centerX: number,
+    centerZ: number,
+  ) => [number, number, number],
+): BrowserModelKernelManifold {
+  const input = readMesh(inputObject, nodeId);
+  const height = input.bounds.max[1] - input.bounds.min[1];
+  requireValid(
+    height > GEOMETRY_EPSILON,
+    `node ${nodeId} deformation input has no extent along Y.`,
+  );
+  const centerX = (input.bounds.min[0] + input.bounds.max[0]) / 2;
+  const centerZ = (input.bounds.min[2] + input.bounds.max[2]) / 2;
+  const vertexCount = input.vertices.length / 3;
+  const vertices: [number, number, number][] = new Array(vertexCount);
+  for (let index = 0; index < vertexCount; index += 1) {
+    const y = input.vertices[index * 3 + 1];
+    vertices[index] = deformVertex(
+      input.vertices[index * 3],
+      y,
+      input.vertices[index * 3 + 2],
+      (y - (input.bounds.min[1] + height / 2)) / height,
+      centerX,
+      centerZ,
+    );
+  }
+  const triangles: [number, number, number][] = [];
+  for (let index = 0; index < input.indices.length; index += 3)
+    triangles.push([
+      input.indices[index],
+      input.indices[index + 1],
+      input.indices[index + 2],
+    ]);
+  let validated;
+  try {
+    validated = validateBrowserMesh(vertices, triangles);
+  } catch {
+    throw new Error(BROWSER_MESH_INVALID_ERROR);
+  }
+  let built;
+  try {
+    built = kernel.mesh(validated.vertices, validated.triangles);
+  } catch {
+    throw new Error(BROWSER_MESH_INVALID_ERROR);
+  }
+  const deformed = own(built, nodeId);
+  assertSolid(deformed, nodeId);
+  assertModelBounds(deformed, nodeId);
+  return deformed;
+}
+
 function assertBounds(
   bounds: BrowserModelKernelBounds,
 ): BrowserModelMeshBounds {
@@ -583,6 +646,47 @@ export function evaluateBrowserModelRecipe(
         const scaled = own(inputObject.scale(node.scale), node.id);
         const rotated = rotateThreeEuler(scaled, node.rotation, node.id, own);
         object = own(rotated.translate(node.position), node.id);
+        break;
+      }
+      case "twist": {
+        const inputObject = evaluateNode(node.input);
+        object = deformedSolid(
+          inputObject,
+          kernel,
+          node.id,
+          own,
+          (x, y, z, t, centerX, centerZ) => {
+            const theta = node.angle * t;
+            const dx = x - centerX;
+            const dz = z - centerZ;
+            const cosine = Math.cos(theta);
+            const sine = Math.sin(theta);
+            return [
+              centerX + cosine * dx + sine * dz,
+              y,
+              centerZ - sine * dx + cosine * dz,
+            ];
+          },
+        );
+        break;
+      }
+      case "taper": {
+        const inputObject = evaluateNode(node.input);
+        object = deformedSolid(
+          inputObject,
+          kernel,
+          node.id,
+          own,
+          (x, y, z, t, centerX, centerZ) => {
+            const scale =
+              node.bottomScale * (0.5 - t) + node.topScale * (0.5 + t);
+            return [
+              centerX + (x - centerX) * scale,
+              y,
+              centerZ + (z - centerZ) * scale,
+            ];
+          },
+        );
         break;
       }
       case "boolean": {

@@ -1,0 +1,22 @@
+{
+  "mode": "fixture-provider-real-editor-worker",
+  "procedural": false,
+  "shape": "deformation",
+  "requests": 3,
+  "pageErrors": [],
+  "blocked": [],
+  "checks": {
+    "targetedEdit": {
+      "before": "0cb9a203976cb9307b6e434294bbf7216bca4fb1d615b8853153b63024eeb74b",
+      "after": "3af2f1b4b297024116d230940fef4a8f262c6846b87e60400a4ba6958c73c9cf"
+    },
+    "twistPreservedAndTaperWidened": true,
+    "exactGeometryUndoRedo": true,
+    "invalidTaperPreservesFinishedObject": true,
+    "bakedExport": true,
+    "standaloneReadyMs": 4469,
+    "standaloneRendering": true,
+    "reload": true
+  },
+  "status": "passed"
+}

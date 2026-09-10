@@ -471,6 +471,83 @@ describe("browser modeling recipe contract", () => {
     ).toBe(false);
   });
 
+  it("accepts bounded twist and taper deformations and rejects out-of-range values", () => {
+    const deformationRecipe = {
+      version: 1,
+      revision: 0,
+      output: "tapered",
+      nodes: [
+        { id: "column", kind: "box", size: [1, 3, 2] },
+        { id: "twisted", kind: "twist", input: "column", angle: 0.35 },
+        {
+          id: "tapered",
+          kind: "taper",
+          input: "twisted",
+          bottomScale: 1,
+          topScale: 1.25,
+        },
+      ],
+    };
+    const parsed = parseBrowserModelRecipe(deformationRecipe);
+    expect(parsed.nodes[1]).toMatchObject({ kind: "twist", angle: 0.35 });
+    expect(parsed.nodes[2]).toMatchObject({
+      kind: "taper",
+      bottomScale: 1,
+      topScale: 1.25,
+    });
+    expect(
+      browserModelRecipeSchema.safeParse({
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "twisted"
+            ? { ...node, angle: browserModelRecipeLimits.maxTwistAngle }
+            : node.id === "tapered"
+              ? {
+                  ...node,
+                  bottomScale: browserModelRecipeLimits.minDeformationScale,
+                  topScale: browserModelRecipeLimits.maxDeformationScale,
+                }
+              : node,
+        ),
+      }).success,
+    ).toBe(true);
+
+    const invalidRecipes = [
+      {
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "twisted" ? { ...node, angle: 1.6 } : node,
+        ),
+      },
+      {
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "twisted" ? { ...node, angle: -1.6 } : node,
+        ),
+      },
+      {
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "tapered" ? { ...node, topScale: 0 } : node,
+        ),
+      },
+      {
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "tapered" ? { ...node, bottomScale: 4.1 } : node,
+        ),
+      },
+      {
+        ...deformationRecipe,
+        nodes: deformationRecipe.nodes.map((node) =>
+          node.id === "tapered" ? { ...node, input: "missing" } : node,
+        ),
+      },
+    ];
+    for (const recipe of invalidRecipes)
+      expect(browserModelRecipeSchema.safeParse(recipe).success).toBe(false);
+  });
+
   it("rejects stale revisions and replacements that change the stable ID", () => {
     const recipe = parseBrowserModelRecipe(archRecipe);
     expect(() =>

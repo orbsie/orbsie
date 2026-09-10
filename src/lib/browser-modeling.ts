@@ -24,6 +24,8 @@ const MAX_SCALE = 20;
 const MAX_COMPOSE_INPUTS = 32;
 const MAX_COPY_COUNT = 32;
 const MAX_EXPANDED_LEAVES = 64;
+const MIN_DEFORMATION_SCALE = 0.25;
+const MAX_DEFORMATION_SCALE = 4;
 
 const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/);
 const coordinate = z
@@ -200,6 +202,36 @@ const transformNodeSchema = z
   })
   .strict();
 
+const deformationAngle = z
+  .number()
+  .finite()
+  .min(-Math.PI / 2)
+  .max(Math.PI / 2);
+const deformationScale = z
+  .number()
+  .finite()
+  .min(MIN_DEFORMATION_SCALE)
+  .max(MAX_DEFORMATION_SCALE);
+
+const twistNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("twist"),
+    input: identifier,
+    angle: deformationAngle,
+  })
+  .strict();
+
+const taperNodeSchema = z
+  .object({
+    id: identifier,
+    kind: z.literal("taper"),
+    input: identifier,
+    bottomScale: deformationScale,
+    topScale: deformationScale,
+  })
+  .strict();
+
 const booleanNodeSchema = z
   .object({
     id: identifier,
@@ -223,6 +255,8 @@ export const browserModelNodeSchema = z.discriminatedUnion("kind", [
   linearArrayNodeSchema,
   instancesNodeSchema,
   transformNodeSchema,
+  twistNodeSchema,
+  taperNodeSchema,
   booleanNodeSchema,
 ]);
 
@@ -395,7 +429,9 @@ export const browserModelRecipeSchema =
         node.kind === "transform" ||
         node.kind === "mirror" ||
         node.kind === "linear-array" ||
-        node.kind === "instances"
+        node.kind === "instances" ||
+        node.kind === "twist" ||
+        node.kind === "taper"
       )
         return [node.input];
       if (node.kind === "boolean") return node.operands;
@@ -453,17 +489,19 @@ export const browserModelRecipeSchema =
       }
       const refs = references(node);
       const seenRefs = new Set<string>();
+      const referenceField =
+        node.kind === "boolean"
+          ? "operands"
+          : node.kind === "compose"
+            ? "inputs"
+            : "input";
       refs.forEach((reference, refIndex) => {
         if (seenRefs.has(reference))
           context.addIssue(
             graphIssue(`Browser recipe node repeats operand: ${reference}.`, [
               "nodes",
               index,
-              node.kind === "boolean" || node.kind === "compose"
-                ? node.kind === "boolean"
-                  ? "operands"
-                  : "inputs"
-                : "input",
+              referenceField,
               ...(node.kind === "boolean" || node.kind === "compose"
                 ? [refIndex]
                 : []),
@@ -477,8 +515,10 @@ export const browserModelRecipeSchema =
               [
                 "nodes",
                 index,
-                node.kind === "transform" ? "input" : "operands",
-                ...(node.kind === "boolean" ? [refIndex] : []),
+                referenceField,
+                ...(node.kind === "boolean" || node.kind === "compose"
+                  ? [refIndex]
+                  : []),
               ],
             ),
           );
@@ -590,7 +630,12 @@ export const browserModelRecipeSchema =
           count = node.count * expandedLeavesOf(node.input);
         else if (node.kind === "instances")
           count = node.transforms.length * expandedLeavesOf(node.input);
-        else if (node.kind === "transform" || node.kind === "mirror")
+        else if (
+          node.kind === "transform" ||
+          node.kind === "mirror" ||
+          node.kind === "twist" ||
+          node.kind === "taper"
+        )
           count = expandedLeavesOf(node.input);
         else count = 1;
         expandedLeaves.set(id, count);
@@ -673,4 +718,8 @@ export const browserModelRecipeLimits = Object.freeze({
   maxComposeInputs: MAX_COMPOSE_INPUTS,
   maxCopyCount: MAX_COPY_COUNT,
   maxExpandedLeaves: MAX_EXPANDED_LEAVES,
+  minDeformationScale: MIN_DEFORMATION_SCALE,
+  maxDeformationScale: MAX_DEFORMATION_SCALE,
+  minTwistAngle: -Math.PI / 2,
+  maxTwistAngle: Math.PI / 2,
 });
