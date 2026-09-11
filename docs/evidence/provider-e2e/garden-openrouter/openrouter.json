@@ -8,20 +8,23 @@
   "keyScope": "local-only",
   "outputCapTokens": 4096,
   "creation": {
-    "status": "blocked",
-    "operations": 0,
-    "firstReservationMs": 6519,
-    "seedObserved": true
+    "status": "passed",
+    "operations": 18,
+    "firstReservationMs": 3983,
+    "seedObserved": true,
+    "catalogEntities": 2,
+    "proceduralEntities": 6,
+    "generatedEntities": 0
   },
   "edit": {
-    "status": "blocked",
+    "status": "passed",
     "type": "material",
-    "selectedIdPreserved": false
+    "selectedIdPreserved": true
   },
   "freeTrial": null,
-  "localRecovery": "blocked",
-  "export": "blocked",
-  "standalonePlayback": "blocked",
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
   "publication": {
     "mode": "blocked",
     "status": "not-requested"
@@ -33,23 +36,29 @@
   },
   "fallbackUsed": false,
   "traffic": {
-    "generationRequests": 1,
+    "generationRequests": 2,
     "generationStatuses": [
+      200,
       200
     ],
-    "generationDiagnostics": [
-      {
-        "code": "INVALID_SCENE_JSON",
-        "diagnostic": "{\"operation\":10,\"issues\":[]}"
-      }
-    ],
+    "generationDiagnostics": [],
     "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
     "interceptedGeneration": false
   },
   "evidence": [
     "connection-model.png",
     "intermediate-seed.png",
-    "failure.png"
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
   ],
-  "error": "Generation failed before saving: The model returned an invalid scene update. Finished objects are preserved."
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 8668.299999982119,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  }
 }
