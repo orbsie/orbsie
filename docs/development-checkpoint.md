@@ -5,19 +5,28 @@ is a resume point, not a transcript: omit secrets, credentials, raw prompts,
 large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
-  Vercel AI Gateway and ChatGPT journeys.
-- Current source: f88bcc9 deployed to orbsie.com; verify HEAD on resume.
-- Active task: Recovery race fix completed by Luna and reviewed by Astra.
-- Files changed: src/lib/store.ts and tests/history-recovery.test.ts.
-- Evidence completed: Four original race reproductions failed before the fix;
-  35 recovery tests and type checking passed afterward. Review added cloud-scope
-  cancellation coverage and confirmed rejection before installation/save.
-- Release evidence: docs/evidence/stale-load-browser/ and stale-load-release/;
-  browser storage flow, production build, host package and live smoke passed.
-- Next action: Resume remaining provider gates from prompt.md; do not equate
-  mocked recovery tests or a production smoke with live E2E acceptance.
-- Blockers: Live provider acceptance is incomplete. Revalidate authorized account
-  access and test credentials without exposing their values before a live milestone.
+  Vercel AI Gateway and browser ChatGPT journeys.
+- Current source: `f88bcc9` is deployed to `https://orbsie.com`; `39710bd` records
+  the release smoke. Verify `HEAD` on resume.
+- Active task: Provider evidence reconciliation is complete for Astra review.
+- Files changed: `docs/scope-audit.md` and this checkpoint only.
+- Recovery evidence: stale-load browser/release checks passed; 35 targeted
+  recovery tests, type checking, production build and host-package verification
+  passed. Journal/checkpoint replay and completed-run recovery are implemented;
+  this is not provider-stream resumption.
+- Live OpenRouter evidence: Luna `openai/gpt-5.6-luna`, low/default,
+  local-only key; deformation/vary passed at 512 tokens, flagship/garden/
+  procedural passed at owner-authorized 4096 raised cap. Input-game attempts
+  failed recipe validation at 4096; no fallback or new cap is inferred.
+- Publication evidence: `2632a40` records live account/cloud/per-Orb deployment
+  and signed-out playback of a deterministic protocol world; it made no model call.
+- External gaps: Gateway BYOK key/cap absent; browser ChatGPT consent and live
+  subscription inference absent. Root also revalidated empty CUA surfaces and
+  absent `AI_GATEWAY_TEST_KEY`/`AI_GATEWAY_API_KEY` without inspecting secrets.
+- Next action: obtain owner-authorized Gateway BYOK credentials and cap, then run
+  one bounded Luna browser create/edit/recovery/export/standalone acceptance.
+- Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
+  deterministic publication or production smoke with provider E2E acceptance.
 
 Coordination follows the repository policy:
 
