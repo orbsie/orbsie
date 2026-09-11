@@ -11,10 +11,12 @@ large logs, and copied diffs.
 - Input-game acceptance correction committed as `2c8db05`.
 - Experience reconciliation reviewed: parcel frame, desktop composer focus and
   narrow play-during-stream paths already have deterministic browser evidence.
-- Next implementation investigation: coordinate renderer/UI descent progress;
-  source still has a separate 4.2-second phase timer. Measure whether this
-  affects readiness before claiming or fixing an artificial content hold.
-- No active worker; live-provider authorization request remains pending.
+- Active worker: Luna `coordinate_descent` implements shared camera/UI transition
+  control with targeted tests. Owns transition/store/World/editor/CSS and tests;
+  root owns docs. Preserve canvas/focus, independent generation and reduced motion.
+- Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
+  its .995 camera handoff at about 5.58s. This does not prove content is blocked.
+- Live-provider authorization request remains pending.
 - Harness evidence: canonical project validation accepts baked browser geometry;
   actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
   tests, syntax and safety-gate checks passed. No new live inference was run.
