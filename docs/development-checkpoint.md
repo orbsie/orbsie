@@ -6,14 +6,15 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and ChatGPT journeys.
-- Current source: main at ee4464c when task started; verify pending changes on resume.
-- Active task: Luna fix_stale_project_load reproduces and fixes asynchronous
-  history loading that can overwrite a newer selected world.
-- Files in scope: src/lib/store.ts and focused recovery tests; Astra owns this checkpoint.
-- Evidence completed: Review of e204bde/ee4464c; 41 targeted recovery/store tests
-  passed but did not cover out-of-order load completion. Worktree was clean.
-- Next action: Review the worker's reproduction, stale-load guards and targeted
-  evidence when its completion notification arrives. Do not poll unchanged status.
+- Current source: main; stale-project-load fix follows fed066b. Verify HEAD on resume.
+- Active task: Recovery race fix completed by Luna and reviewed by Astra.
+- Files changed: src/lib/store.ts and tests/history-recovery.test.ts.
+- Evidence completed: Four original race reproductions failed before the fix;
+  35 recovery tests and type checking passed afterward. Review added cloud-scope
+  cancellation coverage and confirmed rejection before installation/save.
+- Next action: At the next integration milestone, verify recovery in the browser
+  and rebuild shipped assets before deployment. Resume remaining provider gates
+  from prompt.md; do not equate mocked recovery tests with live E2E acceptance.
 - Blockers: Live provider acceptance is incomplete. Revalidate authorized account
   access and test credentials without exposing their values before a live milestone.
 

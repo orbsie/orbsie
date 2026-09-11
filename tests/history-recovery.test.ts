@@ -13,6 +13,9 @@ vi.mock("idb-keyval", () => ({
   set: async (key: string, value: unknown) => {
     db.values.set(key, structuredClone(value));
   },
+  clear: async () => {
+    db.values.clear();
+  },
   update: (key: string, change: (value: any) => any) => {
     db.queue = db.queue.then(() => {
       db.values.set(key, structuredClone(change(db.values.get(key))));
@@ -102,6 +105,173 @@ it("does not replace recovered metadata when a different project opens during re
   expect(orb.getState().project).toEqual(next);
   expect(orb.getState().history).toEqual([]);
   expect(orb.getState().recovered).toBeUndefined();
+});
+it("keeps the latest selected world when history reads finish out of order", async () => {
+  const first = { ...blankProject(), title: "First" };
+  const latest = { ...blankProject(), title: "Latest" };
+  db.values.set("orbsie-history", {
+    [first.id]: {
+      project: first,
+      history: [{ ...first, revision: 0 }],
+      future: [],
+    },
+    [latest.id]: {
+      project: latest,
+      history: [{ ...latest, revision: 0 }],
+      future: [],
+    },
+  });
+  let releaseFirst!: () => void;
+  let releaseLatest!: () => void;
+  let firstRead!: () => void;
+  let latestRead!: () => void;
+  const firstGate = new Promise<void>((resolve) => {
+    releaseFirst = resolve;
+  });
+  const latestGate = new Promise<void>((resolve) => {
+    releaseLatest = resolve;
+  });
+  const firstStarted = new Promise<void>((resolve) => {
+    firstRead = resolve;
+  });
+  const latestStarted = new Promise<void>((resolve) => {
+    latestRead = resolve;
+  });
+  let reads = 0;
+  db.beforeGet = async () => {
+    if (++reads === 1) {
+      firstRead();
+      await firstGate;
+    } else if (reads === 2) {
+      latestRead();
+      await latestGate;
+    }
+  };
+  const openingFirst = orb.getState().load(first);
+  await firstStarted;
+  const openingLatest = orb.getState().load(latest);
+  await latestStarted;
+  releaseLatest();
+  await openingLatest;
+  releaseFirst();
+  await openingFirst;
+  expect(orb.getState().project).toEqual(latest);
+  expect(orb.getState().history).toEqual([{ ...latest, revision: 0 }]);
+});
+it("does not install stale history after a synchronous play load", async () => {
+  const editing = { ...blankProject(), title: "Editing" };
+  const playing = { ...blankProject(), title: "Playing" };
+  db.values.set("orbsie-history", {
+    [editing.id]: {
+      project: editing,
+      history: [{ ...editing, revision: 0 }],
+      future: [],
+    },
+  });
+  let release!: () => void;
+  let started!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const readStarted = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  db.beforeGet = async () => {
+    started();
+    await gate;
+  };
+  const opening = orb.getState().load(editing);
+  await readStarted;
+  await orb.getState().load(playing, true);
+  release();
+  await opening;
+  expect(orb.getState().project).toEqual(playing);
+  expect(orb.getState().history).toEqual([]);
+});
+it("does not install or save a cloud world cancelled during history recovery", async () => {
+  const current = { ...blankProject(), title: "Current" };
+  const cloud = { ...blankProject(), title: "Cloud" };
+  const next = { ...blankProject(), title: "Next" };
+  await orb.getState().load(current);
+  await orb.getState().save();
+  db.values.set("orbsie-history", {
+    [cloud.id]: { project: cloud, history: [], future: [] },
+  });
+  let release!: () => void;
+  let started!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const readStarted = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  db.beforeGet = async () => {
+    started();
+    await gate;
+  };
+  const opening = orb.getState().loadCloud(cloud);
+  await readStarted;
+  orb.getState().set({ project: next });
+  await orb.getState().save();
+  release();
+  expect(await opening).toBe(false);
+  expect(orb.getState().project).toEqual(next);
+  expect(db.values.get("orbsie-draft").project).toEqual(next);
+});
+it("cancels cloud recovery when its scope expires during history recovery", async () => {
+  const current = { ...blankProject(), title: "Current" };
+  const cloud = { ...blankProject(), title: "Cloud" };
+  await orb.getState().load(current);
+  await orb.getState().save();
+  db.values.set("orbsie-history", {
+    [cloud.id]: { project: cloud, history: [], future: [] },
+  });
+  let release!: () => void;
+  let started!: () => void;
+  let inScope = true;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const readStarted = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  db.beforeGet = async () => {
+    started();
+    await gate;
+  };
+  const opening = orb.getState().loadCloud(cloud, () => inScope);
+  await readStarted;
+  inScope = false;
+  release();
+  expect(await opening).toBe(false);
+  expect(orb.getState().project).toEqual(current);
+  expect(db.values.get("orbsie-draft").project).toEqual(current);
+});
+it("invalidates a pending history read when local data is reset", async () => {
+  const current = orb.getState().project;
+  const openingProject = { ...blankProject(), title: "Opening" };
+  db.values.set("orbsie-history", {
+    [openingProject.id]: { project: openingProject, history: [], future: [] },
+  });
+  let release!: () => void;
+  let started!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const readStarted = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  db.beforeGet = async () => {
+    started();
+    await gate;
+  };
+  const opening = orb.getState().load(openingProject);
+  await readStarted;
+  const reset = orb.getState().resetLocalData();
+  release();
+  await Promise.all([opening, reset]);
+  expect(orb.getState().project).toEqual(current);
+  expect(orb.getState().history).toEqual([]);
 });
 it("does not persist history for a rejected stale library save", async () => {
   const project = { ...blankProject(), revision: 3 };

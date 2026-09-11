@@ -133,7 +133,11 @@ interface State {
     isCurrent?: () => boolean,
     isInstalledCurrent?: () => boolean,
   ) => Promise<boolean>;
-  load: (p: Project, play?: boolean) => Promise<void>;
+  load: (
+    p: Project,
+    play?: boolean,
+    isCurrent?: () => boolean,
+  ) => Promise<boolean>;
   collect: (id: string) => void;
 }
 type LeaseStorage = Pick<Storage, "getItem" | "setItem">;
@@ -230,7 +234,11 @@ function draftTitleFromPrompt(prompt: string): string {
 }
 let active: AbortController | undefined;
 let baseline: Project | undefined;
+let loadEpoch = 0;
 let activeExperience: { projectId: string; token: string } | undefined;
+function invalidatePendingLoad() {
+  return ++loadEpoch;
+}
 function finishActiveExperience(outcome: "success" | "error" | "cancelled") {
   const experience = activeExperience;
   if (!experience) return;
@@ -256,7 +264,10 @@ export const useOrb = create<State>((setState, getState) => ({
   draftHistory: {},
   readOnly: false,
   reset: 0,
-  set: setState,
+  set(patch) {
+    if ("project" in patch || "reset" in patch) invalidatePendingLoad();
+    setState(patch);
+  },
   async save() {
     const captured = getState();
     const capturedProject = captured.project;
@@ -371,8 +382,9 @@ export const useOrb = create<State>((setState, getState) => ({
     });
     if (!canInstall()) return false;
     if (recovered) setState({ drafts: [recovered, ...getState().drafts] });
-    await getState().load(project);
+    if (!(await getState().load(project, false, canInstall))) return false;
     const opened = getState().project;
+    if (!isInstalledCurrent()) return false;
     await getState().save();
     return isInstalledCurrent() && getState().project === opened;
   },
@@ -465,27 +477,37 @@ export const useOrb = create<State>((setState, getState) => ({
     return undefined;
   },
   async resetLocalData() {
+    invalidatePendingLoad();
     await clear();
     setState({ drafts: [], draftHistory: {}, recovered: undefined });
   },
-  async load(project, play = false) {
+  async load(project, play = false, isCurrent = () => true) {
+    const epoch = invalidatePendingLoad();
+    const startingProject = getState().project;
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
-    baseline = project;
-    const writer = play || activateWriter(project.id);
     let history: LocalHistory | undefined;
     if (!play) {
       history = readLocalHistory(getState().draftHistory[project.id], project);
       if (!history) history = await getState().readHistoryFor(project);
     }
+    if (
+      epoch !== loadEpoch ||
+      getState().project !== startingProject ||
+      !isCurrent()
+    )
+      return false;
+    const parsedProject = projectSchema.parse(project);
+    const writer = play || activateWriter(project.id);
     const saved = getState().drafts.some(
       (draft) =>
         draft.id === project.id &&
         JSON.stringify(draft) === JSON.stringify(project),
     );
+    baseline = parsedProject;
     setState({
-      project: projectSchema.parse(project),
+      project: parsedProject,
       saved,
       phase: "editing",
       playing: play,
@@ -506,6 +528,7 @@ export const useOrb = create<State>((setState, getState) => ({
           }
         : { error: "" }),
     });
+    return true;
   },
   collect(id) {
     const s = getState();
