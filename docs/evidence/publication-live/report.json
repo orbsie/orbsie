@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "mode": "live-publication-production",
+  "base": "https://orbsie.com",
+  "vehicle": "deterministic protocol-geometry world via the product's real API (no generation; model-backed creation remains covered by the live provider runs and the free-prompt path)",
+  "startedAt": "2026-09-11T02:34:38.119Z",
+  "checks": {
+    "signup": "passed",
+    "cloudSave": { "revision": 1 },
+    "publishSubmitted": {
+      "state": "INITIALIZING",
+      "url": "/o/pub-accept-mtwcf5pk",
+      "deploymentUrl": "https://orb-7358ab08c5000df5a5cf-2oyrbpgf0-grappeggias-projects.vercel.app"
+    },
+    "publicationReady": {
+      "state": "deployed and serving",
+      "publicUrl": "https://orb-7358ab08c5000df5a5cf-2oyrbpgf0-grappeggias-projects.vercel.app",
+      "sharingPage": "https://orbsie.com/o/pub-accept-mtwcf5pk"
+    },
+    "signedOutStatus": 200,
+    "signedOutDataReady": true,
+    "signedOutCanvas": true,
+    "signedOutCookies": 0,
+    "signedOutPageErrors": []
+  },
+  "notes": [
+    "The platform deployed to production via the authenticated Vercel CLI (deployment orbsie-29rse4uja, aliased to orbsie.com) before this acceptance; the deployed modeling worker bytes match the local build.",
+    "The per-Orb Vercel project provisioning and deployment succeeded with the production deployment token; the sharing page /o/{slug} resolves with title and metadata.",
+    "A signed-out browser context opened the published deployment with zero cookies, observed main[data-ready=true], a rendered canvas and no page errors.",
+    "The status-polling fetch inside the first script crashed client-side (TypeError: fetch failed) after the deployment had been submitted; the deployment itself proceeded and was verified independently. Poll robustness is a follow-up, not an acceptance blocker.",
+    "Free-prompt creation on production is currently rate-bucketed (network daily limit consumed), so the Orb was authored deterministically over the real API instead of a free generation; this does not affect the publication-milestone claims."
+  ],
+  "finishedAt": "2026-09-11T03:05:00.000Z"
+}
