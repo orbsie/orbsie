@@ -1,0 +1,262 @@
+{
+  "status": "passed",
+  "url": "http://127.0.0.1:35637",
+  "startedAt": "2026-09-11T23:36:01.659Z",
+  "mode": "flagship-project-game-standalone-traversal",
+  "projectRevision": 30,
+  "entities": 13,
+  "inferenceCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-11T23:36:08.583Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": -3.865766911849211,
+            "y": 0.4219792871366097,
+            "z": 4.007830354220416,
+            "visible": true
+          },
+          "collected": 1,
+          "hud": "Score: 1"
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -2.125011063317479,
+            "y": 0.42,
+            "z": 1.0134846125265402,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": 0.8276559951432002,
+            "y": 0.4646355651362577,
+            "z": 2.8142292992098623,
+            "visible": true
+          },
+          "collected": 3,
+          "hud": "Score: 3"
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 3.293544210255374,
+            "y": 0.45024551939355734,
+            "z": 0.09412085095266062,
+            "visible": true
+          },
+          "collected": 4,
+          "hud": "Score: 4"
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 5.0072028552593535,
+            "y": 0.42,
+            "z": 3.230951959838838,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": 5.547127372024918,
+            "y": 0.46498397560831073,
+            "z": 5.027524706916536,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        }
+      ],
+      "inputSteps": 57,
+      "collectedIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "platformSupport": {
+        "directSupportObserved": false,
+        "method": "read-only player position telemetry",
+        "nearMovingPlatformHeightSamples": 0,
+        "maximumProximityCandidateStreak": 0,
+        "note": "Player position alone cannot distinguish a platform landing/carry from a jump-through trajectory. No support state or transform was injected.",
+        "disposition": "direct-support-not-observed; proximity samples are non-proof"
+      },
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.8280000000000001
+      },
+      "won": true,
+      "finishedAt": "2026-09-11T23:36:15.554Z",
+      "overflow": false,
+      "restart": {
+        "score": 0,
+        "winStatusVisible": false
+      },
+      "signedOut": true
+    },
+    {
+      "label": "mobile-touch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "startedAt": "2026-09-11T23:36:24.421Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": -3.834439965141893,
+            "y": 0.4241425395789861,
+            "z": 3.902357913429767,
+            "visible": true
+          },
+          "collected": 1,
+          "hud": "Score: 1"
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -1.971071579558178,
+            "y": 0.4575754317452387,
+            "z": 0.9622967680607879,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": 0.9941512240681202,
+            "y": 0.46258185261395574,
+            "z": 3.0302463139999984,
+            "visible": true
+          },
+          "collected": 3,
+          "hud": "Score: 3"
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 3.331990443187161,
+            "y": 0.43766944273319913,
+            "z": 0.029252514538561272,
+            "visible": true
+          },
+          "collected": 4,
+          "hud": "Score: 4"
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 5.2257213206737605,
+            "y": 0.462800568908832,
+            "z": 3.4957036340055336,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": 5.7190186382815345,
+            "y": 0.4627331659465848,
+            "z": 4.936822364917093,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        }
+      ],
+      "inputSteps": 94,
+      "collectedIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "platformSupport": {
+        "directSupportObserved": false,
+        "method": "read-only player position telemetry",
+        "nearMovingPlatformHeightSamples": 0,
+        "maximumProximityCandidateStreak": 0,
+        "note": "Player position alone cannot distinguish a platform landing/carry from a jump-through trajectory. No support state or transform was injected.",
+        "disposition": "direct-support-not-observed; proximity samples are non-proof"
+      },
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 1.2441061500025747
+      },
+      "won": true,
+      "finishedAt": "2026-09-11T23:36:33.378Z",
+      "overflow": false,
+      "restart": {
+        "score": 0,
+        "winStatusVisible": false
+      },
+      "signedOut": true
+    }
+  ],
+  "snapshot": {
+    "zipPath": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+    "zipSha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
+    "projectSha256": "fdaabbd42a80478b3395e9220d5385706d646f457e523e2a7010ece3d47837a0",
+    "runtimeSha256": "3d2fa966dc49a46eee64bd453e4db5861f57b565d71ec953f26b05c8ae4c7742",
+    "runtimeCssSha256": "0174f4a45f76e1adaa103d5f1275bdbe1ae1c5e4fe710849428b16940b152e76",
+    "projectRevision": 30,
+    "projectId": "7ae95eba-aeca-4474-87d4-342d0dc33aa6",
+    "title": "A pocketful of sunshine",
+    "contract": {
+      "collectibleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "collectRuleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "portalId": "portal",
+      "ruleCount": 6
+    }
+  }
+}

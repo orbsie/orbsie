@@ -1,0 +1,27 @@
+{
+  "status": "failed",
+  "scope": "Earlier combined desktop plus touch snapshot replay before near-target touch steering adjustment",
+  "snapshot": "docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+  "zipSha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
+  "projectRevision": 30,
+  "mode": "mobile-touch",
+  "completedBeforeFailure": [
+    "crystal-1",
+    "crystal-2",
+    "crystal-3",
+    "crystal-4",
+    "crystal-5"
+  ],
+  "hudBeforeFailure": "Score: 5",
+  "lastPlayerPosition": {
+    "x": 5.776308819352431,
+    "y": 0.4607532237601987,
+    "z": 4.966601471293741
+  },
+  "target": "portal",
+  "adventureCompleteVisible": false,
+  "failure": "mobile-touch could not reach portal under the original cardinal touch steering loop",
+  "sourceMechanicsChanged": false,
+  "snapshotRewritten": false,
+  "inferenceCalls": 0
+}
