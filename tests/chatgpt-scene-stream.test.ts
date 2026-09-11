@@ -66,6 +66,43 @@ describe("hosted ChatGPT scene stream", () => {
     expect(result).not.toContain('"commit_revision"');
     expect(result).not.toContain("secret");
   });
+  it("forwards bounded browser modeling feedback to hosted ChatGPT", async () => {
+    const feedback = {
+      version: 1 as const,
+      projectId: "project-a",
+      entityId: "tree-0",
+      backend: "browser-manifold" as const,
+      nodeId: "compose",
+      error:
+        "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+      recipe: {
+        version: 1 as const,
+        revision: 0,
+        output: "box",
+        nodes: [
+          {
+            id: "box",
+            kind: "box" as const,
+            size: [2, 2, 2] as [number, number, number],
+          },
+        ],
+      },
+    };
+    let input: Input | undefined;
+    const result = await output(
+      createChatGPTSceneStream(
+        { ...request(), modelingFeedback: feedback },
+        {
+          generate: async (value) => {
+            input = value;
+            value.onText(commit + "\n");
+          },
+        },
+      ),
+    );
+    expect(result).toContain('"commit_revision"');
+    expect(JSON.parse(input!.input).modelingFeedback).toEqual(feedback);
+  });
   it("rejects invalid scene commands and missing commits", async () => {
     for (const text of [
       '{"type":"execute_shell","command":"id"}',

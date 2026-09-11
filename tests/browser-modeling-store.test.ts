@@ -14,6 +14,7 @@ vi.mock("../src/lib/browser-procedural-queue", () => ({
 }));
 vi.mock("idb-keyval", () => ({
   get: async (key: string) => structuredClone(mocks.db.get(key)),
+  clear: async () => mocks.db.clear(),
   update: async (key: string, change: (value: unknown) => unknown) => {
     mocks.db.set(key, structuredClone(change(mocks.db.get(key))));
   },
@@ -135,6 +136,83 @@ it("accepts a browser-manifold recipe without a Blender companion", async () => 
     kind: "generated",
     model: browserMetadata,
   });
+});
+
+it("carries a bounded browser build rejection into the next correction request", async () => {
+  const original = structuredClone(
+    useOrb.getState().project.entities[0].geometry,
+  );
+  mocks.browserBuild.mockRejectedValueOnce(
+    new Error(
+      "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+    ),
+  );
+  relay(browserJob);
+  await useOrb.getState().run("Build the selected shape");
+
+  expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
+  expect(useOrb.getState().modelingFeedback).toEqual({
+    version: 1,
+    projectId: useOrb.getState().project.id,
+    entityId: useOrb.getState().project.entities[0].id,
+    backend: "browser-manifold",
+    nodeId: "compose",
+    error:
+      "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+    recipe: browserJob.recipe,
+  });
+
+  const corrected = relay(browserJob);
+  await useOrb.getState().run("Fix the rejected shape and continue");
+  expect(
+    JSON.parse(String(corrected.mock.calls[0][1]?.body)).modelingFeedback,
+  ).toEqual({
+    version: 1,
+    projectId: useOrb.getState().project.id,
+    entityId: useOrb.getState().project.entities[0].id,
+    backend: "browser-manifold",
+    nodeId: "compose",
+    error:
+      "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+    recipe: browserJob.recipe,
+  });
+  expect(useOrb.getState().modelingFeedback).toBeUndefined();
+});
+
+it("does not leak feedback when loading another project or resetting local data", async () => {
+  mocks.browserBuild.mockRejectedValueOnce(new Error("node box failed"));
+  relay(browserJob);
+  await useOrb.getState().run("Fail in project A");
+  expect(useOrb.getState().modelingFeedback?.projectId).toBe(
+    useOrb.getState().project.id,
+  );
+
+  const projectB = {
+    ...blankProject(),
+    id: "project-b",
+    entities: [fixtureEntities()[1]],
+  };
+  await useOrb.getState().load(projectB);
+  expect(useOrb.getState().modelingFeedback).toBeUndefined();
+
+  mocks.browserBuild.mockRejectedValueOnce(new Error("node box failed"));
+  relay(browserJob);
+  await useOrb.getState().run("Fail in project B");
+  expect(useOrb.getState().modelingFeedback?.projectId).toBe("project-b");
+  await useOrb.getState().resetLocalData();
+  expect(useOrb.getState().modelingFeedback).toBeUndefined();
+});
+
+it("clears feedback when the current project is replaced or its failed entity is removed", async () => {
+  mocks.browserBuild.mockRejectedValueOnce(new Error("node box failed"));
+  relay(browserJob);
+  await useOrb.getState().run("Fail before replacing the entity");
+  const project = useOrb.getState().project;
+  expect(useOrb.getState().modelingFeedback).toBeDefined();
+  useOrb.getState().set({
+    project: { ...project, entities: [] },
+  });
+  expect(useOrb.getState().modelingFeedback).toBeUndefined();
 });
 
 it("executes procedural source, hashes it, and commits only the canonical browser job", async () => {

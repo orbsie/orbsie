@@ -13,6 +13,7 @@ import { authoringHistory } from "../authoring-history";
 import { assertModelingCommand } from "../modeling-policy";
 import { systemPromptForCapabilities } from "./generation";
 import type { createChatGPTGeneration } from "./chatgpt-generation";
+import { modelingFeedbackSchema } from "../modeling-feedback";
 
 export const chatGPTSceneRequestSchema = z
   .object({
@@ -23,6 +24,7 @@ export const chatGPTSceneRequestSchema = z
     selected: entitySchema.shape.id.optional(),
     browserModeling: z.boolean().default(false),
     localModeling: z.literal(false).default(false),
+    modelingFeedback: modelingFeedbackSchema.optional(),
   })
   .strict();
 
@@ -49,6 +51,9 @@ export function createChatGPTSceneStream(
     assetPolicy: policy,
     assetCatalog: promptCatalogForPolicy(policy.requestAssetPolicy),
     selectedEntityId: input.selected,
+    ...(input.modelingFeedback
+      ? { modelingFeedback: input.modelingFeedback }
+      : {}),
     project: { ...input.project, messages: [] },
   });
   if (Buffer.byteLength(modelInput) > 256 * 1024)

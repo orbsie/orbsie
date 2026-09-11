@@ -211,6 +211,55 @@ for (const provider of ["openrouter", "gateway"] as const) {
   );
 }
 
+for (const provider of ["openrouter", "gateway"] as const) {
+  it(`${provider} forwards browser modeling feedback to the model`, async () => {
+    const feedback = {
+      version: 1 as const,
+      projectId: "project-a",
+      entityId: "tree-0",
+      backend: "browser-manifold" as const,
+      nodeId: "compose",
+      error:
+        "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+      recipe: {
+        version: 1 as const,
+        revision: 0,
+        output: "box",
+        nodes: [
+          {
+            id: "box",
+            kind: "box" as const,
+            size: [2, 2, 2] as [number, number, number],
+          },
+        ],
+      },
+    };
+    const fetcher = vi.fn(
+      async (_url: string, _options?: RequestInit) =>
+        new Response(
+          `data: ${JSON.stringify({ choices: [{ delta: { content: JSON.stringify({ type: "commit_revision", message: "Ready." }) + "\n" } }] })}\n\ndata: [DONE]\n\n`,
+          { headers: { "Content-Type": "text/event-stream" } },
+        ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const stream = await generateCommands({
+      provider,
+      model: "catalog-model",
+      key: "test-key",
+      prompt: "Fix the rejected shape",
+      project: blankProject(),
+      browserModeling: true,
+      modelingFeedback: feedback,
+      signal: new AbortController().signal,
+    });
+    await new Response(stream).text();
+    const request = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    expect(JSON.parse(request.messages[1].content).modelingFeedback).toEqual(
+      feedback,
+    );
+  });
+}
+
 it("invalid generated operations fail closed without executing code", async () => {
   vi.stubGlobal(
     "fetch",

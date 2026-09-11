@@ -2,6 +2,7 @@ import { requireGenerationModel } from "../../../lib/server/model-preflight";
 import { z } from "zod";
 import { generationMaxTokens } from "@/lib/server/generation-limits";
 import { projectSchema, entitySchema } from "@/lib/protocol";
+import { modelingFeedbackSchema } from "@/lib/modeling-feedback";
 import {
   generateCommands,
   GenerationProviderError,
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
         localModeling: z.literal(false).default(false),
         browserModeling: z.boolean().default(false),
         selected: entitySchema.shape.id.optional(),
+        modelingFeedback: modelingFeedbackSchema.optional(),
       })
       .safeParse(await boundedJSON(request));
     if (!parsed.success)

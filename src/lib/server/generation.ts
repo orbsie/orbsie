@@ -15,14 +15,15 @@ import {
   type ModelCommand,
 } from "../protocol";
 import { z } from "zod";
-import {
-  isRecommendedModel,
-  openrouterProviderRouting,
-} from "../model-modes";
+import { isRecommendedModel, openrouterProviderRouting } from "../model-modes";
 import {
   generationDiagnostic,
   ProviderStreamError,
 } from "../generation-diagnostics";
+import {
+  modelingFeedbackSchema,
+  type ModelingFeedback,
+} from "../modeling-feedback";
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
@@ -67,11 +68,14 @@ function providerFailure(status: number) {
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
 const baseSystemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use recentConversation only as context for references and prior preferences; the current instruction and current project snapshot govern this turn. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. For generated geometry, reserve first, optionally provide a procedural coarse preview, then send one refined generated job; objects referenced by project.game must receive refined replacements directly so their saved gameplay remains valid. Use reusable kinds or custom parts to invent varied objects. Scene hierarchy: create_group creates a stable non-rendered group (id,label,position,scale, optional rotation and parentId). Parents must be existing group IDs. Reserve child entities with parentId to group them while retaining their individual IDs and geometry. set_group_transform edits a group; set_transform edits one entity. These authoring transforms are parent-local, in meters with XYZ Euler rotation in radians and Y up. Group scales must be positive. set_parent targets an entity or group and requires parentId (group ID or null) and explicit keepWorldTransform: true preserves placement if representable as local TRS, false preserves local coordinates. Unsupported shear reparenting, cycles, and nonempty group removal are rejected atomically. Use remove_group only after explicitly moving or removing its children. Legacy move axes and game path positions remain root/world-space. Keep descendant world positions on the island and preserve unrelated groups and entities during targeted edits. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. For composable games use set_game with the complete data-only program: variables, ordered rules, start/click/collision/collect/input/timer triggers, conditions, and actions including score, win/lose/reset and movement paths. Finish referenced entities to ready before set_game. Replace or clear rules with set_game before removing a referenced object. game:null removes the program. Keep unrelated rules when editing; use the current project.game as the baseline. A game program owns score and outcomes; define them explicitly instead of relying on the legacy portal auto-win. Never include arbitrary code, URLs, credentials, scripts, or external assets. The only code-like output permitted is the typed browser-procedural source object when browserModeling is true and its capability instructions explicitly permit it. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message.`;
 
+const modelingFeedbackInstruction =
+  "If modelingFeedback is present, it is a bounded browser-side rejection report. Repair the reported entity or node in response to the current instruction, preserve stable IDs and unrelated finished geometry, and change the rejected recipe instead of repeating it.";
+
 export function systemPromptForCapabilities(
   localModeling = false,
   browserModeling = false,
 ) {
-  return `${baseSystemPrompt} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+  return `${baseSystemPrompt} ${modelingFeedbackInstruction} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
 }
 
 export const systemPrompt = systemPromptForCapabilities();
@@ -86,6 +90,7 @@ export async function generateCommands({
   maxTokens = 10000,
   localModeling = false,
   browserModeling = false,
+  modelingFeedback,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -97,6 +102,7 @@ export async function generateCommands({
   maxTokens?: number;
   localModeling?: boolean;
   browserModeling?: boolean;
+  modelingFeedback?: ModelingFeedback;
 }) {
   const assetPolicy = deriveAssetPolicy(prompt, selected, project);
   const endpoint =
@@ -137,6 +143,12 @@ export async function generateCommands({
               assetPolicy.requestAssetPolicy,
             ),
             selectedEntityId: selected,
+            ...(modelingFeedback
+              ? {
+                  modelingFeedback:
+                    modelingFeedbackSchema.parse(modelingFeedback),
+                }
+              : {}),
             project: { ...project, messages: [] },
           }),
         },

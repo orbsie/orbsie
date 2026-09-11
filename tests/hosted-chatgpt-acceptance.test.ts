@@ -138,6 +138,14 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         selected: "entity-1",
         browserModeling: true,
         localModeling: false,
+        modelingFeedback: {
+          version: 1,
+          projectId: "project",
+          entityId: "entity-1",
+          backend: "browser-manifold",
+          nodeId: "compose",
+          error: "node compose failed",
+        },
       }),
     ).toMatchObject({
       model: HOSTED_MODEL,

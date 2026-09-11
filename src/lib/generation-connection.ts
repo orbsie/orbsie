@@ -1,3 +1,5 @@
+import type { ModelingFeedback } from "./modeling-feedback";
+
 export type GenerationConnection = {
   provider: string;
   model: string;
@@ -51,6 +53,9 @@ export function generationRequest(
       project: source.project,
       ...(typeof source.selected === "string"
         ? { selected: source.selected }
+        : {}),
+      ...(source.modelingFeedback
+        ? { modelingFeedback: source.modelingFeedback as ModelingFeedback }
         : {}),
       browserModeling: source.browserModeling === true,
       localModeling: false,

@@ -17,9 +17,12 @@ large logs, and copied diffs.
 - Provider report attribution reviewed: harness repository SHA/dirty status,
   timestamp and optional operator-supplied app SHA; no remote verification claim.
   Four focused tests/typecheck passed.
-- Active Luna worker: `modeling_failure_feedback` traces and reproduces whether
-  rejected browser recipes reach an explicit follow-up correction request.
-  Preserve validation/last-good world; no automatic inference or live retries.
+- Modeling failure feedback reviewed: typed project-scoped diagnostics and
+  optional 32KiB recipe reach explicit follow-up requests across provider paths.
+  Last-good geometry preserved; no automatic inference. 67 focused tests and
+  typecheck passed. Feedback is transient and does not survive reload.
+- No active worker. Next: production build and package integration checks for
+  feedback transport, then a deterministic browser correction milestone.
 - Production/player build and host-package verification passed; deployment and
   production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches

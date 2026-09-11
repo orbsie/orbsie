@@ -26,6 +26,16 @@ const HOSTED_REQUEST_KEYS = new Set([
   "selected",
   "browserModeling",
   "localModeling",
+  "modelingFeedback",
+]);
+const MODELING_FEEDBACK_KEYS = new Set([
+  "version",
+  "projectId",
+  "entityId",
+  "backend",
+  "nodeId",
+  "error",
+  "recipe",
 ]);
 const HOSTED_COMMAND_TYPES = new Set([
   "set_game",
@@ -66,6 +76,46 @@ function boundedText(value, max) {
 
 function boundedIdentifier(value, max) {
   return boundedText(value, max) && /^[A-Za-z0-9._:/-]+$/.test(value);
+}
+
+function validModelingFeedback(value) {
+  if (!record(value)) return false;
+  if (
+    ![...MODELING_FEEDBACK_KEYS].every((key) =>
+      Object.hasOwn(value, key) || key === "nodeId" || key === "recipe",
+    )
+  )
+    return false;
+  for (const key of Object.keys(value))
+    if (!MODELING_FEEDBACK_KEYS.has(key)) return false;
+  if (
+    value.version !== 1 ||
+    !boundedIdentifier(value.projectId, 80) ||
+    !boundedIdentifier(value.entityId, 80) ||
+    !["browser-manifold", "browser-procedural"].includes(value.backend) ||
+    !boundedText(value.error, 320)
+  )
+    return false;
+  if (
+    value.nodeId !== undefined &&
+    (!boundedIdentifier(value.nodeId, 64) || !/^[A-Za-z0-9_-]+$/.test(value.nodeId))
+  )
+    return false;
+  if (value.backend === "browser-procedural" && value.recipe !== undefined)
+    return false;
+  if (value.recipe !== undefined) {
+    if (!record(value.recipe)) return false;
+    try {
+      if (
+        new TextEncoder().encode(JSON.stringify(value.recipe)).byteLength >
+        32 * 1024
+      )
+        return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function assertHostedPreflight({
@@ -293,6 +343,8 @@ export function assertHostedGenerationPayload(
     !record(value.project) ||
     value.browserModeling !== browserModeling ||
     value.localModeling !== false ||
+    (value.modelingFeedback !== undefined &&
+      !validModelingFeedback(value.modelingFeedback)) ||
     (value.selected !== undefined &&
       (typeof value.selected !== "string" ||
         !/^[\w-]{1,80}$/.test(value.selected) ||

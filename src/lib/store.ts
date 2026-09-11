@@ -45,6 +45,10 @@ import {
   noteSceneUpdate,
 } from "./experience-metrics";
 import { parcelTransitionController } from "./parcel-transition";
+import {
+  modelingFeedbackForFailure,
+  type ModelingFeedback,
+} from "./modeling-feedback";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -108,6 +112,7 @@ interface State {
   notice: string;
   error: string;
   generationErrorCode?: string;
+  modelingFeedback?: ModelingFeedback;
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
@@ -267,6 +272,7 @@ export const useOrb = create<State>((setState, getState) => ({
   reset: 0,
   set(patch) {
     if ("project" in patch || "reset" in patch) invalidatePendingLoad();
+    if ("project" in patch) patch = { ...patch, modelingFeedback: undefined };
     setState(patch);
   },
   async save() {
@@ -480,7 +486,12 @@ export const useOrb = create<State>((setState, getState) => ({
   async resetLocalData() {
     invalidatePendingLoad();
     await clear();
-    setState({ drafts: [], draftHistory: {}, recovered: undefined });
+    setState({
+      drafts: [],
+      draftHistory: {},
+      recovered: undefined,
+      modelingFeedback: undefined,
+    });
   },
   async load(project, play = false, isCurrent = () => true) {
     const epoch = invalidatePendingLoad();
@@ -521,6 +532,7 @@ export const useOrb = create<State>((setState, getState) => ({
       history: history?.history ?? [],
       future: history?.future ?? [],
       recovered: undefined,
+      modelingFeedback: undefined,
       readOnly: !writer,
       ...(!writer
         ? {
@@ -705,21 +717,40 @@ export const useOrb = create<State>((setState, getState) => ({
               sourceHash: string;
             }
           | undefined;
-        if (job.backend === "browser-procedural") {
-          const source = canonicalBrowserProceduralSource(job.source);
-          const sourceHash = await hashBrowserProceduralSource(source);
-          recipe = await evaluateBrowserProceduralInWorker(source, { signal });
-          if (signal.aborted || active !== controller) return false;
-          authoring = { source, sourceHash };
-        } else {
-          recipe = job.recipe;
+        let model: Awaited<ReturnType<typeof buildBrowserModel>>;
+        try {
+          if (job.backend === "browser-procedural") {
+            const source = canonicalBrowserProceduralSource(job.source);
+            const sourceHash = await hashBrowserProceduralSource(source);
+            recipe = await evaluateBrowserProceduralInWorker(source, {
+              signal,
+            });
+            if (signal.aborted || active !== controller) return false;
+            authoring = { source, sourceHash };
+          } else {
+            recipe = job.recipe;
+          }
+          model = await buildBrowserModel(recipe, {
+            signal,
+            color:
+              s.project.entities.find((entity) => entity.id === entityId)
+                ?.color ?? "#6ead60",
+          });
+        } catch (error) {
+          if (!signal.aborted && active === controller)
+            setState({
+              modelingFeedback: modelingFeedbackForFailure({
+                projectId: project.id,
+                entityId,
+                backend: job.backend,
+                ...(job.backend === "browser-manifold"
+                  ? { recipe: job.recipe }
+                  : {}),
+                error,
+              }),
+            });
+          throw error;
         }
-        const model = await buildBrowserModel(recipe, {
-          signal,
-          color:
-            s.project.entities.find((entity) => entity.id === entityId)
-              ?.color ?? "#6ead60",
-        });
         if (signal.aborted || active !== controller) return false;
         command = commandSchema.parse({
           ...modelCommand,
@@ -852,6 +883,10 @@ export const useOrb = create<State>((setState, getState) => ({
           selected,
           localModeling: false,
           browserModeling: browserModelingAvailable(),
+          modelingFeedback:
+            getState().modelingFeedback?.projectId === project.id
+              ? getState().modelingFeedback
+              : undefined,
         });
         const response = await fetch(request.url, { ...request.init, signal });
         if (!response.ok) {
@@ -900,6 +935,7 @@ export const useOrb = create<State>((setState, getState) => ({
             getState().ruleRestartCount !== ruleRestartsBeforeGeneration
               ? GAME_RULES_RESTART_NOTICE
               : "Your world is saved on this device.",
+          modelingFeedback: undefined,
         });
         await getState().save();
         settleWithoutRenderer();

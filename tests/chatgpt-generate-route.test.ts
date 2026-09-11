@@ -129,6 +129,26 @@ describe("hosted ChatGPT generation route", () => {
     );
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
+  it("retains modeling feedback through the hosted route", async () => {
+    const modelingFeedback = {
+      version: 1 as const,
+      projectId: "project-a",
+      entityId: "tree-0",
+      backend: "browser-manifold" as const,
+      nodeId: "compose",
+      error:
+        "[browser-modeling-kernel] node compose contains touching or overlapping solids.",
+    };
+    const response = await POST(request({ ...payload(), modelingFeedback }));
+    expect(response.status).toBe(200);
+    expect(mocks.request).toHaveBeenCalledWith(
+      expect.objectContaining({ capability: "private-token" }),
+      "generate",
+      expect.objectContaining({
+        input: expect.objectContaining({ modelingFeedback }),
+      }),
+    );
+  });
   it("redacts non-stream host failures", async () => {
     mocks.request.mockResolvedValueOnce(
       new Response("private provider diagnostic", { status: 500 }),
