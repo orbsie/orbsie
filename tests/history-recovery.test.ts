@@ -36,7 +36,7 @@ beforeEach(async () => {
 it("bounds saved stacks and discards malformed, cross-project, and impossible future revisions", async () => {
   const project = { ...blankProject(), revision: 100 };
   const before = { ...project, title: "Valid before", revision: 99 };
-  orb.getState().load(project);
+  await orb.getState().load(project);
   orb.setState({
     history: Array.from({ length: 30 }, (_, i) => ({
       ...project,
@@ -49,7 +49,7 @@ it("bounds saved stacks and discards malformed, cross-project, and impossible fu
   });
   await orb.getState().save();
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().history).toHaveLength(20);
   expect(orb.getState().history[0].revision).toBe(10);
   expect(orb.getState().future).toHaveLength(20);
@@ -63,7 +63,7 @@ it("bounds saved stacks and discards malformed, cross-project, and impossible fu
     wrongKey: before,
   });
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().history).toEqual([before]);
   expect(orb.getState().future).toEqual([]);
   expect(orb.getState().drafts).toHaveLength(1);
@@ -71,14 +71,14 @@ it("bounds saved stacks and discards malformed, cross-project, and impossible fu
 it("does not restore history onto a different snapshot with the same project ID and revision", async () => {
   const project = { ...blankProject(), revision: 2 };
   const before = { ...project, revision: 1 };
-  orb.getState().load(project);
+  await orb.getState().load(project);
   orb.setState({ history: [before] });
   await orb.getState().save();
   const cloud = { ...project, title: "Different cloud content" };
   db.values.set("orbsie-library", { [cloud.id]: cloud });
   db.values.set("orbsie-draft", { project: cloud });
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().project).toEqual(cloud);
   expect(orb.getState().history).toEqual([]);
   expect(orb.getState().future).toEqual([]);
@@ -96,20 +96,20 @@ it("does not replace recovered metadata when a different project opens during re
   db.beforeGet = () => gate;
   const recovery = orb.getState().recover();
   const next = { ...blankProject(), title: "Selected while loading" };
-  orb.getState().load(next);
+  const opening = orb.getState().load(next);
   release();
-  await recovery;
+  await Promise.all([recovery, opening]);
   expect(orb.getState().project).toEqual(next);
   expect(orb.getState().history).toEqual([]);
   expect(orb.getState().recovered).toBeUndefined();
 });
 it("does not persist history for a rejected stale library save", async () => {
   const project = { ...blankProject(), revision: 3 };
-  orb.getState().load(project);
+  await orb.getState().load(project);
   orb.setState({ history: [{ ...project, revision: 2 }] });
   await orb.getState().save();
   const record = structuredClone(db.values.get("orbsie-history")[project.id]);
-  orb.getState().load({ ...project, revision: 1 });
+  await orb.getState().load({ ...project, revision: 1 });
   orb.setState({ history: [{ ...project, revision: 0 }] });
   await orb.getState().save();
   expect(orb.getState().readOnly).toBe(true);
@@ -118,11 +118,11 @@ it("does not persist history for a rejected stale library save", async () => {
 it("restores undo and redo across fresh module reloads while revisions keep increasing", async () => {
   const before = { ...blankProject(), title: "Before", revision: 1 };
   const current = { ...before, title: "After", revision: 2 };
-  orb.getState().load(current);
+  await orb.getState().load(current);
   orb.setState({ history: [before] });
   await orb.getState().save();
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().history).toEqual([before]);
   orb.getState().undo();
   await orb.getState().save();
@@ -131,7 +131,7 @@ it("restores undo and redo across fresh module reloads while revisions keep incr
     revision: 3,
   });
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().future).toEqual([current]);
   orb.getState().redo();
   await orb.getState().save();
@@ -142,18 +142,19 @@ it("recovers each project's own history when opening a saved library world", asy
   const a = { ...blankProject(), title: "A", revision: 2 };
   const b = { ...blankProject(), title: "B", revision: 2 };
   for (const project of [a, b]) {
-    orb.getState().load(project);
+    await orb.getState().load(project);
     orb.setState({
       history: [{ ...project, title: `${project.title} before`, revision: 1 }],
     });
     await orb.getState().save();
   }
   await reload();
-  orb
+  await orb.getState().loadDrafts();
+  await orb
     .getState()
     .load(orb.getState().drafts.find((project) => project.id === a.id)!);
   expect(orb.getState().history[0]?.title).toBe("A before");
-  orb
+  await orb
     .getState()
     .load(orb.getState().drafts.find((project) => project.id === b.id)!);
   expect(orb.getState().history[0]?.title).toBe("B before");
@@ -163,7 +164,7 @@ it("retains history from the older single-draft record format", async () => {
   const before = { ...project, revision: 1 };
   db.values.set("orbsie-draft", { project, history: [before] });
   await reload();
-  orb.getState().load(orb.getState().recovered!);
+  await orb.getState().load(orb.getState().recovered!);
   expect(orb.getState().history).toEqual([before]);
   expect(orb.getState().future).toEqual([]);
 });

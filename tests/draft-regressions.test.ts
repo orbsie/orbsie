@@ -26,12 +26,12 @@ beforeEach(() => {
   db.beforeUpdate = undefined;
   useOrb.setState({ readOnly: false, history: [], future: [] });
 });
-it("reports a recovered exact local revision as saved and clears that status for a changed copy", () => {
+it("reports a recovered exact local revision as saved and clears that status for a changed copy", async () => {
   const project = blankProject();
   useOrb.setState({ drafts: [structuredClone(project)], saved: false });
-  useOrb.getState().load(project);
+  await useOrb.getState().load(project);
   expect(useOrb.getState().saved).toBe(true);
-  useOrb.getState().load({ ...project, title: "Unsaved change" });
+  await useOrb.getState().load({ ...project, title: "Unsaved change" });
   expect(useOrb.getState().saved).toBe(false);
 });
 it.each([1, 2])(
@@ -44,7 +44,7 @@ it.each([1, 2])(
     };
     const cloud = { ...local, title: "Previous account cloud", revision: 2 };
     const next = { ...blankProject(), title: "Current draft", revision: 3 };
-    useOrb.getState().load(local);
+    await useOrb.getState().load(local);
     await useOrb.getState().save();
     let release!: () => void, entered!: () => void;
     const gate = new Promise<void>((resolve) => {
@@ -64,7 +64,7 @@ it.each([1, 2])(
     const opening = useOrb.getState().loadCloud(cloud, () => valid);
     await waiting;
     valid = false;
-    useOrb.getState().load(next);
+    await useOrb.getState().load(next);
     const saving = useOrb.getState().save();
     release();
     await opening;
@@ -77,9 +77,9 @@ it.each([1, 2])(
 it("retains simultaneous saves of distinct worlds", async () => {
   const a = blankProject(),
     b = blankProject();
-  useOrb.getState().load(a);
+  await useOrb.getState().load(a);
   const first = useOrb.getState().save();
-  useOrb.getState().load(b);
+  await useOrb.getState().load(b);
   const second = useOrb.getState().save();
   await Promise.all([first, second]);
   expect(Object.keys(db.values.get("orbsie-library")).sort()).toEqual(
@@ -108,10 +108,10 @@ it("persists undo and redo as newer revisions without making the writer read-onl
 });
 it("keeps a divergent local branch after loading and saving the same cloud ID", async () => {
   const local = { ...blankProject(), title: "Local branch", revision: 3 };
-  useOrb.getState().load(local);
+  await useOrb.getState().load(local);
   await useOrb.getState().save();
   await useOrb.getState().preserveLocalCopy();
-  useOrb.getState().load({ ...local, title: "Cloud branch", revision: 4 });
+  await useOrb.getState().load({ ...local, title: "Cloud branch", revision: 4 });
   await useOrb.getState().save();
   const copies = Object.values(
     db.values.get("orbsie-library"),

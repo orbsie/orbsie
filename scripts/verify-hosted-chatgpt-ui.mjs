@@ -31,6 +31,9 @@ try {
           ? { width: 390, height: 844 }
           : { width: 1280, height: 900 },
     });
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin,
+    });
     let phase = "idle",
       starts = 0,
       cancels = 0,
@@ -150,6 +153,20 @@ try {
         await expect(
           section.getByRole("link", { name: "Open ChatGPT sign-in" }),
         ).toHaveAttribute("href", "https://auth.openai.com/codex/device");
+        await section
+          .getByRole("button", { name: "Copy one-time code" })
+          .click();
+        await expect
+          .poll(
+            () =>
+              page.evaluate(() =>
+                navigator.clipboard
+                  .readText()
+                  .catch(() => "clipboard-unavailable"),
+              ),
+            { timeout: 3000 },
+          )
+          .toBe("SYNTH-CODE");
         await page.screenshot({ path: `${out}/${scenario}.png` });
         if (scenario === "cancel") {
           await section.getByRole("button", { name: "Cancel sign-in" }).click();

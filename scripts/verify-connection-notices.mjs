@@ -14,6 +14,10 @@ const report = {
   checks: {},
 };
 await mkdir(OUTPUT, { recursive: true });
+const capabilitiesChatgptHosted = await fetch(`${BASE}/api/config`)
+  .then((response) => response.json())
+  .then((config) => config.chatgptHosted === true)
+  .catch(() => false);
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -66,6 +70,37 @@ try {
   }
   const promptValue = await page.locator("#prompt").inputValue();
   assert.equal(promptValue, "A farm full of pigs");
+  const providerOptions = page.locator(".connection-choice button");
+  await expect(providerOptions.filter({ hasText: "Connect with ChatGPT" })).toHaveCount(
+    capabilitiesChatgptHosted === false ? 0 : 1,
+  );
+  await expect(
+    providerOptions.filter({ hasText: "Connect with OpenRouter" }),
+  ).toHaveCount(1);
+  await expect(
+    providerOptions.filter({ hasText: "Connect Vercel AI Gateway" }),
+  ).toHaveCount(1);
+  await providerOptions
+    .filter({ hasText: "Connect with ChatGPT" })
+    .first()
+    .click();
+  await expect(
+    page.getByText(/Sign in first — ChatGPT connects right after/, {
+      exact: false,
+    }),
+  ).toBeVisible();
+  assert.equal(
+    page.url().startsWith(BASE),
+    true,
+    "ChatGPT option must not navigate away",
+  );
+  await providerOptions
+    .filter({ hasText: "Connect Vercel AI Gateway" })
+    .first()
+    .click();
+  await expect(page.getByLabel("Provider", { exact: true })).toHaveValue(
+    "gateway",
+  );
   report.checks.exhaustedModal = "passed";
   report.checks.promptPreserved = "passed";
   await page.screenshot({ path: `${OUTPUT}/exhausted-modal.png` });

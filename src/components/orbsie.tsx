@@ -17,6 +17,7 @@ import {
   Download,
   Globe2,
   Leaf,
+  KeyRound,
   LoaderCircle,
   Play,
   Plus,
@@ -136,7 +137,7 @@ export default function Orbsie() {
   const oauthDraft = useRef<OAuthDraft | null>(null);
   const oauthController = useRef<AbortController | null>(null);
   const oauthEffectInstance = useRef(0);
-  async function connectOpenRouter() {
+  async function connectOpenRouter(): Promise<boolean> {
     setOAuthBusy(true);
     setOAuthMessage("");
     try {
@@ -165,13 +166,36 @@ export default function Orbsie() {
       );
       sessionStorage.setItem(OAUTH_PENDING_KEY, JSON.stringify(transaction));
       location.assign(authorizationUrl);
+      return true;
     } catch {
       setOAuthBusy(false);
       setOAuthMessage(
         "Could not start sign-in. Check that your world can be saved and try again.",
       );
+      return false;
     }
   }
+  useEffect(() => {
+    if (modal !== "account") {
+      setSignInHint("");
+      setPostSignInIntent("");
+      setResetArmed(false);
+      return;
+    }
+    void s.loadDrafts();
+    navigator.storage
+      ?.estimate?.()
+      .then(({ usage }) =>
+        setStorageUsage(
+          usage && usage > 0
+            ? usage >= 1048576
+              ? `${Math.round(usage / 1048576)} MB`
+              : `${Math.max(1, Math.round(usage / 1024))} KB`
+            : "",
+        ),
+      )
+      .catch(() => undefined);
+  }, [modal, s.loadDrafts]);
   useEffect(() => {
     let current = true;
     const effectInstance = ++oauthEffectInstance.current;
@@ -342,6 +366,10 @@ export default function Orbsie() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [signup, setSignup] = useState(false);
+  const [postSignInIntent, setPostSignInIntent] = useState<"" | "chatgpt">("");
+  const [signInHint, setSignInHint] = useState("");
+  const [storageUsage, setStorageUsage] = useState("");
+  const [resetArmed, setResetArmed] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [cloudBaseline, setCloudBaseline] = useState<ProjectValue<{
     revision: number;
@@ -987,7 +1015,10 @@ export default function Orbsie() {
       setUser(data.user);
       await refreshCloud();
       setPassword("");
-      setModal(null);
+      if (postSignInIntent === "chatgpt") {
+        setPostSignInIntent("");
+        setModal("settings");
+      } else setModal(null);
     } catch (e) {
       setModalError(e instanceof Error ? e.message : "Sign-in failed.");
     } finally {
@@ -2088,6 +2119,7 @@ export default function Orbsie() {
                   <label>
                     Email
                     <input
+                      id="account-email"
                       type="email"
                       required
                       value={email}
@@ -2122,6 +2154,113 @@ export default function Orbsie() {
                   </button>
                 </form>
               )}
+              {!user && (
+                <>
+                  <p className="fine-print">
+                    Or connect a provider to keep creating
+                  </p>
+                  <div className="connection-choice">
+                    {capabilities.chatgptHosted && (
+                      <button
+                        type="button"
+                        disabled={oauthBusy || busy}
+                        onClick={() => {
+                          setPostSignInIntent("chatgpt");
+                          setSignInHint(
+                            "Sign in first — ChatGPT connects right after your sign-in.",
+                          );
+                          document
+                            .getElementById("account-email")
+                            ?.focus();
+                        }}
+                      >
+                        <Sparkles />
+                        <strong>Connect with ChatGPT</strong>
+                        <span>Uses your ChatGPT subscription.</span>
+                        <ArrowUpRight />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={oauthBusy || busy}
+                      onClick={() => {
+                        void connectOpenRouter().then((started) => {
+                          if (!started)
+                            setSignInHint(
+                              "Could not start sign-in. Check that your world can be saved and try again.",
+                            );
+                        });
+                      }}
+                    >
+                      <KeyRound />
+                      <strong>Connect with OpenRouter</strong>
+                      <span>OpenRouter OAuth — their billing.</span>
+                      <ArrowUpRight />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={oauthBusy || busy}
+                      onClick={() => {
+                        setConnection({
+                          ...connection,
+                          provider: "gateway",
+                          model: "",
+                          key: "",
+                          effort: undefined,
+                        });
+                        setModal("settings");
+                      }}
+                    >
+                      <Globe2 />
+                      <strong>Connect Vercel AI Gateway</strong>
+                      <span>Bring your Vercel AI Gateway API key.</span>
+                      <ArrowUpRight />
+                    </button>
+                  </div>
+                  {signInHint && (
+                    <p className="fine-print" role="status">
+                      {signInHint}
+                    </p>
+                  )}
+                </>
+              )}
+              <div className="local-data-row">
+                {storageUsage && (
+                  <span className="fine-print">
+                    Saved data: ~{storageUsage}
+                  </span>
+                )}
+                {resetArmed ? (
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={busy}
+                    onClick={() => {
+                      setResetArmed(false);
+                      void (async () => {
+                        setBusy(true);
+                        try {
+                          await s.resetLocalData();
+                          location.reload();
+                        } finally {
+                          setBusy(false);
+                        }
+                      })();
+                    }}
+                  >
+                    Really delete? Tap again to erase local drafts
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={busy}
+                    onClick={() => setResetArmed(true)}
+                  >
+                    Reset saved data on this device
+                  </button>
+                )}
+              </div>
             </>
           )}
           {modalError && (

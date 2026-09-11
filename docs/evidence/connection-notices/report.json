@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "base": "http://localhost:3055",
-  "startedAt": "2026-09-11T03:34:25.784Z",
+  "startedAt": "2026-09-11T04:11:17.179Z",
   "checks": {
     "exhaustedModal": "passed",
     "promptPreserved": "passed",
@@ -9,5 +9,5 @@
     "adminResetAction": "passed",
     "noAdminControl": "passed"
   },
-  "finishedAt": "2026-09-11T03:34:48.014Z"
+  "finishedAt": "2026-09-11T04:11:40.385Z"
 }

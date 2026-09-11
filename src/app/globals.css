@@ -830,6 +830,16 @@ kbd {
   grid-column: 3;
   grid-row: 1;
 }
+.local-data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+.local-data-row .text-button {
+  margin: 0;
+}
 .modal p.fine-print {
   font-size: 10px;
   line-height: 1.7;
@@ -895,6 +905,24 @@ kbd {
   background: #eef1e3;
   color: #7b876a;
   margin-top: 12px;
+}
+.chatgpt-code-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+}
+.chatgpt-code-row code {
+  flex: 1;
+}
+.chatgpt-code-row .icon-button {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  background: #fffef7;
+  border: 1px solid #d8e2cc;
+  border-radius: 8px;
+  color: var(--ink);
 }
 .win-card {
   position: absolute;

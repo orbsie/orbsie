@@ -177,7 +177,7 @@ it("preserves the last good geometry when procedural evaluation rejects", async 
   expect(mocks.browserBuild).not.toHaveBeenCalled();
 });
 
-it("loads retained procedural authoring metadata without re-running QuickJS", () => {
+it("loads retained procedural authoring metadata without re-running QuickJS", async () => {
   const saved = structuredClone(useOrb.getState().project);
   saved.entities[0] = {
     ...saved.entities[0],
@@ -197,7 +197,7 @@ it("loads retained procedural authoring metadata without re-running QuickJS", ()
       model: { ...browserMetadata, version: 1 as const },
     },
   };
-  useOrb.getState().load(saved);
+  await useOrb.getState().load(saved);
   expect(useOrb.getState().project.entities[0].geometry).toMatchObject({
     job: {
       backend: "browser-manifold",

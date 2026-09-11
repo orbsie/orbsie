@@ -24,7 +24,7 @@ import {
   type GenerationConnection,
 } from "./generation-connection";
 import { create } from "zustand";
-import { get, update } from "idb-keyval";
+import { clear, get, update } from "idb-keyval";
 import {
   blankProject,
   commandSchema,
@@ -124,13 +124,16 @@ interface State {
   redo: () => void;
   save: () => Promise<void>;
   recover: () => Promise<void>;
+  loadDrafts: () => Promise<void>;
+  readHistoryFor: (p: Project) => Promise<LocalHistory | undefined>;
+  resetLocalData: () => Promise<void>;
   preserveLocalCopy: () => Promise<void>;
   loadCloud: (
     project: Project,
     isCurrent?: () => boolean,
     isInstalledCurrent?: () => boolean,
   ) => Promise<boolean>;
-  load: (p: Project, play?: boolean) => void;
+  load: (p: Project, play?: boolean) => Promise<void>;
   collect: (id: string) => void;
 }
 type LeaseStorage = Pick<Storage, "getItem" | "setItem">;
@@ -368,7 +371,7 @@ export const useOrb = create<State>((setState, getState) => ({
     });
     if (!canInstall()) return false;
     if (recovered) setState({ drafts: [recovered, ...getState().drafts] });
-    getState().load(project);
+    await getState().load(project);
     const opened = getState().project;
     await getState().save();
     return isInstalledCurrent() && getState().project === opened;
@@ -387,31 +390,19 @@ export const useOrb = create<State>((setState, getState) => ({
     setState({ drafts: [copy, ...getState().drafts] });
   },
   async recover() {
+    // Mount reads only the single current draft record. The full library and
+    // history stores load on demand (loadDrafts / readHistoryFor) so heavy
+    // local data cannot exhaust low-memory devices at page load.
     const currentProject = getState().project;
     try {
       const draft = await get("orbsie-draft");
-      const library = await get<Record<string, Project>>("orbsie-library");
-      const records = await get<Record<string, unknown>>("orbsie-history");
       if (getState().project !== currentProject) return;
-      const drafts = Object.entries(library ?? {}).flatMap(([id, value]) => {
-        const parsed = projectSchema.safeParse(value);
-        return parsed.success && parsed.data.id === id ? [parsed.data] : [];
-      });
       const saved = projectSchema.safeParse(draft?.project);
-      const recovered = saved.success
-        ? (drafts.find((p) => p.id === saved.data.id) ?? saved.data)
-        : undefined;
-      if (recovered && !drafts.some((p) => p.id === recovered.id))
-        drafts.push(recovered);
-      const draftHistory = Object.fromEntries(
-        drafts.flatMap((project) => {
-          const history =
-            readLocalHistory(records?.[project.id], project) ??
-            readLocalHistory(draft, project);
-          return history ? [[project.id, history]] : [];
-        }),
-      );
-      setState({ recovered, drafts, draftHistory });
+      const recovered = saved.success ? saved.data : undefined;
+      setState({
+        recovered,
+        drafts: recovered ? [recovered] : getState().drafts,
+      });
     } catch {
       if (getState().project === currentProject)
         setState({
@@ -420,15 +411,74 @@ export const useOrb = create<State>((setState, getState) => ({
         });
     }
   },
-  load(project, play = false) {
+  async loadDrafts() {
+    const currentProject = getState().project;
+    try {
+      const draft = await get("orbsie-draft");
+      const library = await get<Record<string, Project>>("orbsie-library");
+      if (getState().project !== currentProject) return;
+      const libraryDrafts = Object.entries(library ?? {}).flatMap(
+        ([id, value]) => {
+          const parsed = projectSchema.safeParse(value);
+          return parsed.success && parsed.data.id === id ? [parsed.data] : [];
+        },
+      );
+      const saved = projectSchema.safeParse(draft?.project);
+      const current = saved.success ? saved.data : undefined;
+      const preferred = current
+        ? (libraryDrafts.find((p) => p.id === current.id) ?? current)
+        : undefined;
+      setState({
+        drafts: [
+          ...(preferred ? [preferred] : []),
+          ...libraryDrafts.filter((p) => p.id !== preferred?.id),
+        ],
+      });
+    } catch {
+      // Keep any existing drafts list; the account modal remains usable.
+    }
+  },
+  async readHistoryFor(project: Project) {
+    try {
+      const records = await get<Record<string, unknown>>("orbsie-history");
+      const history = readLocalHistory(records?.[project.id], project);
+      if (history) {
+        setState({
+          draftHistory: { ...getState().draftHistory, [project.id]: history },
+        });
+        return history;
+      }
+    } catch {
+      return undefined;
+    }
+    // The older single-draft record format keeps history on the draft itself.
+    try {
+      const draft = await get("orbsie-draft");
+      const history = readLocalHistory(draft, project);
+      if (history) {
+        setState({
+          draftHistory: { ...getState().draftHistory, [project.id]: history },
+        });
+        return history;
+      }
+    } catch {}
+    return undefined;
+  },
+  async resetLocalData() {
+    await clear();
+    setState({ drafts: [], draftHistory: {}, recovered: undefined });
+  },
+  async load(project, play = false) {
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
     baseline = project;
     const writer = play || activateWriter(project.id);
-    const history = play
-      ? undefined
-      : readLocalHistory(getState().draftHistory[project.id], project);
+    let history: LocalHistory | undefined;
+    if (!play) {
+      history = readLocalHistory(getState().draftHistory[project.id], project);
+      if (!history) history = await getState().readHistoryFor(project);
+    }
     const saved = getState().drafts.some(
       (draft) =>
         draft.id === project.id &&

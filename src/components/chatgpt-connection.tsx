@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   CheckCircle2,
+  Copy,
   LoaderCircle,
   LogOut,
   Sparkles,
@@ -288,6 +289,7 @@ export default function ChatGPTConnection({
   onDisconnect: () => void;
 }) {
   const [view, setView] = useState<View>(initialView);
+  const [copied, setCopied] = useState<"" | "ok" | "fail">("");
   const [models, setModels] = useState<ChatGPTModelOption[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedEffort, setSelectedEffort] = useState("");
@@ -323,6 +325,25 @@ export default function ChatGPTConnection({
 
   const currentRequest = (controller: AbortController, current: number) =>
     generation.current === current && !controller.signal.aborted;
+
+  const copyCode = useCallback(() => {
+    if (view.phase !== "pending") return;
+    const clipboard = navigator.clipboard;
+    if (!clipboard?.writeText) {
+      setCopied("fail");
+      return;
+    }
+    clipboard
+      .writeText(view.challenge.userCode)
+      .then(() => setCopied("ok"))
+      .catch(() => setCopied("fail"));
+  }, [view]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(""), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
@@ -648,9 +669,26 @@ export default function ChatGPTConnection({
         <div className="setup-note" role="status" aria-live="polite">
           <strong>Finish connecting ChatGPT</strong>
           <p>Open the sign-in page and enter this one-time code:</p>
-          <p>
+          <p className="chatgpt-code-row">
             <code>{view.challenge.userCode}</code>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Copy one-time code"
+              onClick={copyCode}
+            >
+              {copied === "ok" ? (
+                <CheckCircle2 size={15} aria-hidden="true" />
+              ) : (
+                <Copy size={15} aria-hidden="true" />
+              )}
+            </button>
           </p>
+          {copied === "fail" && (
+            <p className="fine-print">
+              Copy failed — select the code and copy it manually.
+            </p>
+          )}
           <a
             className="primary full"
             href={view.challenge.verificationUrl}

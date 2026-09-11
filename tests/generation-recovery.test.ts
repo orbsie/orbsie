@@ -78,7 +78,7 @@ beforeEach(async () => {
 
 it("ignores an old stream EOF after switching to a different world", async () => {
   const original = readyProject();
-  orb.getState().load(original);
+  await orb.getState().load(original);
   const release = blockedRelay({
     type: "set_geometry",
     id: original.entities[0].id,
@@ -99,7 +99,7 @@ it("ignores an old stream EOF after switching to a different world", async () =>
       },
     ],
   });
-  orb.getState().load(next);
+  await orb.getState().load(next);
   await orb.getState().save();
   release();
   await generation;
@@ -140,7 +140,7 @@ it.each([
   "checkpoints a committed $name edit before a blocked stream commits",
   async ({ command, changed }) => {
     const project = readyProject();
-    orb.getState().load(project);
+    await orb.getState().load(project);
     const release = blockedRelay(command);
     const generation = orb.getState().run("Edit this object");
     await waitFor(() => {
@@ -162,7 +162,7 @@ it.each([
 
 it("keeps unfinished reservations out of an interrupted checkpoint", async () => {
   const project = readyProject();
-  orb.getState().load(project);
+  await orb.getState().load(project);
   const commands: Command[] = [
     {
       type: "reserve_entity",
@@ -238,7 +238,7 @@ it("does not let a delayed old save mark a switched world or draft pointer", asy
     id: crypto.randomUUID(),
     title: "New world",
   });
-  orb.getState().load(oldProject);
+  await orb.getState().load(oldProject);
   let release!: () => void;
   let entered!: () => void;
   const gate = new Promise<void>((resolve) => {
@@ -254,7 +254,7 @@ it("does not let a delayed old save mark a switched world or draft pointer", asy
   };
   const saving = orb.getState().save();
   await enteredGate;
-  orb.getState().load(nextProject);
+  await orb.getState().load(nextProject);
   const newerPointer = {
     project: nextProject,
     history: [],
@@ -333,7 +333,7 @@ it("finishes the landing transition after a fast initial generation", async () =
 
 it("preserves a same-project edit arriving while cloud recovery saves its local copy", async () => {
   const original = readyProject();
-  orb.getState().load(original);
+  await orb.getState().load(original);
   const recovery = { ...original, title: "Cloud checkpoint" };
   const edited = { ...original, title: "New local edit" };
   db.beforeUpdate = async () => {
@@ -346,7 +346,7 @@ it("preserves a same-project edit arriving while cloud recovery saves its local 
 
 it("reports cloud open as stale if its account scope changes during final save", async () => {
   const original = readyProject();
-  orb.getState().load(original);
+  await orb.getState().load(original);
   let current = true;
   db.beforeDraftUpdate = async () => {
     db.beforeDraftUpdate = undefined;
@@ -363,7 +363,7 @@ it("reports cloud open as stale if its account scope changes during final save",
 
 it("accepts its own cross-project installation after the old project scope expires", async () => {
   const original = readyProject();
-  orb.getState().load(original);
+  await orb.getState().load(original);
   const next = readyProject({ id: crypto.randomUUID() });
   expect(
     await orb
