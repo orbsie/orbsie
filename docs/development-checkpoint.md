@@ -14,6 +14,10 @@ large logs, and copied diffs.
 - Active worker: Luna `coordinate_descent` implements shared camera/UI transition
   control with targeted tests. Owns transition/store/World/editor/CSS and tests;
   root owns docs. Preserve canvas/focus, independent generation and reduced motion.
+- Review returned for fixes: initial editing mount, smooth same-project return,
+  clean composer destination measurements and interrupted/resize transitions.
+  Worker reports initial typecheck/15 tests/9 parcel scenarios passed, but
+  acceptance requires these fixes plus composer browser evidence. Not deployed.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
   its .995 camera handoff at about 5.58s. This does not prove content is blocked.
 - Live-provider authorization request remains pending.
