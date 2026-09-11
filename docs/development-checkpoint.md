@@ -6,16 +6,16 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and browser ChatGPT journeys.
-- Current source: `f88bcc9` is deployed to `https://orbsie.com`; `39710bd` records
-  the release smoke. Verify `HEAD` on resume.
+- Current source: `1c09907` is deployed to `https://orbsie.com`; production smoke
+  passed in `docs/evidence/coordinated-descent-release`. Verify `HEAD` on resume.
 - Input-game acceptance correction committed as `2c8db05`.
 - Experience reconciliation reviewed: parcel frame, desktop composer focus and
   narrow play-during-stream paths already have deterministic browser evidence.
 - Shared transition reviewed: direct mount, reversal, resize/interruption and
   CSS centering corrected. 19 tests/typecheck passed; final nine-scenario parcel
   run retained in `docs/evidence/coordinated-descent`. No active worker.
-- Next: rebuild and validate the integrated production/player artifacts before
-  deployment. Local browser evidence does not close live provider acceptance.
+- Production/player build and host-package verification passed; deployment and
+  production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
   its .995 camera handoff at about 5.58s. This does not prove content is blocked.
 - Live-provider authorization request remains pending.
