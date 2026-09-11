@@ -114,3 +114,27 @@ export async function claimTrial(identity: TrialIdentity) {
     client.release();
   }
 }
+/** Clear visitor/network usage rows last claimed within the fixed 5-minute window. */
+export async function resetRecentTrialUsage() {
+  const client = await database().connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{ bucket: string }>(
+      "DELETE FROM orbsie_trial_usage WHERE (bucket LIKE 'visitor:%' OR bucket LIKE 'network:%') AND updated_at >= now() - interval '5 minutes' RETURNING bucket",
+    );
+    await client.query("COMMIT");
+    const cleared = result.rows.map((row) => row.bucket);
+    return {
+      cleared: cleared.length,
+      visitors: cleared.filter((bucket) => bucket.startsWith("visitor:"))
+        .length,
+      networks: cleared.filter((bucket) => bucket.startsWith("network:"))
+        .length,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}

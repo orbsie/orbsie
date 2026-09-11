@@ -1,11 +1,13 @@
 {
   "status": "passed",
   "base": "http://localhost:3058",
-  "startedAt": "2026-09-11T03:02:32.331Z",
+  "startedAt": "2026-09-11T03:24:24.071Z",
   "checks": {
     "exhaustedModal": "passed",
     "promptPreserved": "passed",
-    "offlineToast": "passed"
+    "offlineToast": "passed",
+    "adminResetAction": "passed",
+    "noAdminControl": "passed"
   },
-  "finishedAt": "2026-09-11T03:02:40.568Z"
+  "finishedAt": "2026-09-11T03:24:47.627Z"
 }

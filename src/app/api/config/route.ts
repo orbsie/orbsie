@@ -1,6 +1,17 @@
 import { generationMaxTokens } from "@/lib/server/generation-limits";
+import { getAuth, isAdminEmail } from "@/lib/server/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
+  let admin = false;
+  const auth = getAuth();
+  if (auth) {
+    try {
+      const session = await auth.api.getSession({ headers: request.headers });
+      admin = isAdminEmail(session?.user.email);
+    } catch {
+      admin = false;
+    }
+  }
   return Response.json({
     generationMaxTokens: generationMaxTokens(),
     accounts: !!(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET),
@@ -12,6 +23,7 @@ export async function GET() {
     google: !!(
       process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
     ),
+    isAdmin: admin,
     ...(process.env.ORBSIE_CHATGPT_HOSTED === "1" &&
     process.env.DATABASE_URL &&
     process.env.BETTER_AUTH_SECRET

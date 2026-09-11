@@ -70,6 +70,15 @@ export async function requireUser(request: Request) {
     );
   return session.user;
 }
+export function isAdminEmail(email: string | null | undefined) {
+  const configured = process.env.ORBSIE_ADMIN_EMAILS ?? "";
+  if (!email || configured.trim() === "") return false;
+  const list = configured
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
+  return list.includes(email.trim().toLowerCase());
+}
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");
   const allowed = process.env.BETTER_AUTH_URL ?? new URL(request.url).origin;

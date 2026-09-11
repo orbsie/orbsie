@@ -50,12 +50,20 @@ try {
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
   await expect(page.locator("dialog.modal")).toBeVisible({ timeout: 30000 });
-  await expect(
-    page.getByText(/You've used today's free prompts/, { exact: false }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "New here? Create an account" }),
-  ).toBeVisible();
+  try {
+    await expect(
+      page.getByText(/You've used today's free prompts/, { exact: false }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "New here? Create an account" }),
+    ).toBeVisible();
+  } catch (error) {
+    report.modalState = {
+      text: (await page.locator("dialog.modal").innerText().catch(() => "x")).slice(0, 400),
+    };
+    await page.screenshot({ path: `${OUTPUT}/modal-state.png` }).catch(() => undefined);
+    throw error;
+  }
   const promptValue = await page.locator("#prompt").inputValue();
   assert.equal(promptValue, "A farm full of pigs");
   report.checks.exhaustedModal = "passed";
@@ -87,6 +95,107 @@ try {
   );
   report.checks.offlineToast = "passed";
   await offlinePage.screenshot({ path: `${OUTPUT}/offline-toast.png` });
+
+  const adminContext = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    reducedMotion: "reduce",
+  });
+  await adminContext.route("**/api/config", (route) =>
+    route.fulfill({
+      json: {
+        generationMaxTokens: 10000,
+        accounts: true,
+        publishing: false,
+        google: false,
+        isAdmin: true,
+      },
+    }),
+  );
+  let resetCalls = 0;
+  await adminContext.route("**/api/trial/reset-recent", (route) => {
+    resetCalls += 1;
+    route.fulfill({ json: { cleared: 2, visitors: 1, networks: 1 } });
+  });
+  await adminContext.route("**/api/trial", (route) =>
+    route.fulfill({ json: { enabled: true, remaining: 0, limit: 3 } }),
+  );
+  await adminContext.route("**/api/generate", (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Generation must not run in this check." }),
+    }),
+  );
+  await adminContext.route("**/api/auth/get-session", (route) =>
+    route.fulfill({ json: { user: { name: "Owner" } } }),
+  );
+  await adminContext.route("**/api/projects", (route) =>
+    route.fulfill({ json: { projects: [] } }),
+  );
+  const adminPage = await adminContext.newPage();
+  await adminPage.goto(BASE, { waitUntil: "domcontentloaded" });
+  await expect(adminPage.locator("canvas")).toBeVisible();
+  await adminPage
+    .getByPlaceholder("What experience to build?")
+    .fill("A farm full of pigs");
+  await adminPage.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(adminPage.locator("dialog.modal")).toBeVisible({ timeout: 30000 });
+  const resetButton = adminPage.getByRole("button", {
+    name: /Reset free-prompt limits for visitors active in the last 5/,
+  });
+  await expect(resetButton).toBeVisible({ timeout: 15000 });
+  await resetButton.click();
+  await expect(
+    adminPage.getByText(/Cleared 2 visitor limit rows/, { exact: false }),
+  ).toBeVisible({ timeout: 15000 });
+  assert.equal(resetCalls, 1);
+  report.checks.adminResetAction = "passed";
+  await adminPage.screenshot({ path: `${OUTPUT}/admin-reset.png` });
+
+  const plainContext = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    reducedMotion: "reduce",
+  });
+  await plainContext.route("**/api/config", (route) =>
+    route.fulfill({
+      json: {
+        generationMaxTokens: 10000,
+        accounts: true,
+        publishing: false,
+        google: false,
+        isAdmin: false,
+      },
+    }),
+  );
+  await plainContext.route("**/api/trial", (route) =>
+    route.fulfill({ json: { enabled: true, remaining: 0, limit: 3 } }),
+  );
+  await plainContext.route("**/api/generate", (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Generation must not run in this check." }),
+    }),
+  );
+  const plainPage = await plainContext.newPage();
+  await plainPage.goto(BASE, { waitUntil: "domcontentloaded" });
+  await expect(plainPage.locator("canvas")).toBeVisible();
+  await plainPage
+    .getByPlaceholder("What experience to build?")
+    .fill("A farm full of pigs");
+  await plainPage.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(plainPage.locator("dialog.modal")).toBeVisible({
+    timeout: 30000,
+  });
+  assert.equal(
+    await plainPage
+      .getByRole("button", {
+        name: /Reset free-prompt limits/,
+      })
+      .count(),
+    0,
+  );
+  report.checks.noAdminControl = "passed";
 
   assert.deepEqual(pageErrors, []);
   report.status = "passed";

@@ -334,6 +334,7 @@ export default function Orbsie() {
     accounts: false,
     publishing: false,
     google: false,
+    isAdmin: false,
     chatgptHosted: false,
     chatgptGeneration: false,
   });
@@ -943,6 +944,26 @@ export default function Orbsie() {
       if (isCurrent()) setBusy(false);
     }
   };
+  const adminReset = async () => {
+    setBusy(true);
+    setModalError("");
+    try {
+      const response = await fetch("/api/trial/reset-recent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error ?? "Reset unavailable.");
+      setModalError(
+        `Cleared ${data.cleared} visitor limit rows. Visitors active in the last 5 minutes can claim free prompts again.`,
+      );
+      await refreshTrial();
+    } catch (e) {
+      setModalError(e instanceof Error ? e.message : "Reset failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
   const authenticate = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -1501,10 +1522,6 @@ export default function Orbsie() {
                   {modalNotice}
                 </div>
               )}
-              <p className="fine-print">
-                Models are built and rendered in your browser. No installation
-                is required.
-              </p>
               {capabilities.chatgptHosted ? (
                 <ChatGPTConnection
                   signedIn={Boolean(user)}
@@ -1515,9 +1532,8 @@ export default function Orbsie() {
                 />
               ) : (
                 <p className="fine-print">
-                  ChatGPT subscription connection is not available right now.
-                  OpenRouter and Vercel AI Gateway use their own accounts and
-                  billing.
+                  ChatGPT connection is unavailable here — OpenRouter and
+                  Gateway use their own billing.
                 </p>
               )}
               {trial.enabled && trial.remaining > 0 && (
@@ -1536,15 +1552,21 @@ export default function Orbsie() {
                   Use {trial.remaining} free prompts
                 </button>
               )}
+              {capabilities.isAdmin && (
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  onClick={() => void adminReset()}
+                >
+                  Reset free-prompt limits for visitors active in the last 5
+                  minutes
+                </button>
+              )}
               {connection.provider === "chatgpt-hosted" ? (
                 <div className="setup-note">
                   <strong>
                     ChatGPT · {connection.model} · {connection.effort} reasoning
                   </strong>
-                  <p className="fine-print">
-                    Use the ChatGPT subscription connection for this browser
-                    session.
-                  </p>
                   <button
                     className="text-button"
                     onClick={() =>
@@ -1627,9 +1649,8 @@ export default function Orbsie() {
                   <details className="advanced-models">
                     <summary>Advanced</summary>
                     <p className="fine-print" id="model-ranking-note">
-                      Estimated 3D suitability, highest first. Ranking is a
-                      guide for Orbsie; unranked models lack comparable 3D
-                      evidence.{" "}
+                      Estimated 3D suitability, highest first; unranked models
+                      lack comparable evidence.{" "}
                       <a
                         className="model-ranking-source"
                         href={modelRankingMetadata.sourceUrl}
@@ -1733,9 +1754,8 @@ export default function Orbsie() {
                     />
                   </label>
                   <p className="fine-print">
-                    Your key is sent through Orbsie to your selected provider
-                    and kept only in this tab. Your world saves on this device.
-                    Sign in when you're ready to publish.
+                    Your key stays in this tab only and is sent through Orbsie
+                    to your provider.
                   </p>
                 </>
               )}
@@ -1967,6 +1987,16 @@ export default function Orbsie() {
                   >
                     <RotateCcw size={18} /> Recover latest generation
                   </button>
+                  {capabilities.isAdmin && (
+                    <button
+                      className="text-button"
+                      disabled={busy}
+                      onClick={() => void adminReset()}
+                    >
+                      Reset free-prompt limits for visitors active in the last 5
+                      minutes
+                    </button>
+                  )}
                   {conflict && (
                     <div className="setup-note" role="alert">
                       A newer cloud copy exists at revision {conflict.revision}.
