@@ -6,15 +6,16 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and ChatGPT journeys.
-- Current source: main; stale-project-load fix follows fed066b. Verify HEAD on resume.
+- Current source: f88bcc9 deployed to orbsie.com; verify HEAD on resume.
 - Active task: Recovery race fix completed by Luna and reviewed by Astra.
 - Files changed: src/lib/store.ts and tests/history-recovery.test.ts.
 - Evidence completed: Four original race reproductions failed before the fix;
   35 recovery tests and type checking passed afterward. Review added cloud-scope
   cancellation coverage and confirmed rejection before installation/save.
-- Next action: At the next integration milestone, verify recovery in the browser
-  and rebuild shipped assets before deployment. Resume remaining provider gates
-  from prompt.md; do not equate mocked recovery tests with live E2E acceptance.
+- Release evidence: docs/evidence/stale-load-browser/ and stale-load-release/;
+  browser storage flow, production build, host package and live smoke passed.
+- Next action: Resume remaining provider gates from prompt.md; do not equate
+  mocked recovery tests or a production smoke with live E2E acceptance.
 - Blockers: Live provider acceptance is incomplete. Revalidate authorized account
   access and test credentials without exposing their values before a live milestone.
 
