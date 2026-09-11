@@ -61,13 +61,11 @@ import {
   type PlayerState,
 } from "@/lib/gameplay";
 import {
-  createParcelTransition,
   globeOffsetY,
   globeScale,
   parcelFrame,
   patchBlend,
-  planetSpinRate,
-  stepParcelTransition,
+  parcelTransitionController,
   type ParcelFrame,
 } from "@/lib/parcel-transition";
 let motionPreference: MediaQueryList | undefined;
@@ -929,7 +927,6 @@ function Scene({ onReady }: { onReady?: () => void }) {
     [gl, scene, camera],
   );
   const progress = useRef(0);
-  const transition = useRef(createParcelTransition());
   const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
   const initialized = useRef(false);
@@ -960,22 +957,41 @@ function Scene({ onReady }: { onReady?: () => void }) {
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
   const cameraLook = useMemo(() => new THREE.Vector3(), []);
-  useEffect(() => {
-    transition.current = createParcelTransition(phase === "landing" ? 0 : 1);
-    spin.current = 0;
-    progress.current = transition.current.progress;
+  const initializedScene = useRef(false);
+  const previousProjectId = useRef(projectId);
+  const previousPhase = useRef(phase);
+  useLayoutEffect(() => {
+    const firstMount = !initializedScene.current;
+    const projectChanged = previousProjectId.current !== projectId;
+    const directWorkspace =
+      phase === "editing" &&
+      previousPhase.current === "landing" &&
+      !projectChanged;
+    if (firstMount)
+      parcelTransitionController.reset(
+        phase === "landing" || phase === "descending" ? 0 : 1,
+      );
+    else if (phase === "landing")
+      projectChanged
+        ? parcelTransitionController.reset(0)
+        : parcelTransitionController.setTarget(0);
+    else if (projectChanged || directWorkspace)
+      parcelTransitionController.reset(phase === "descending" ? 0 : 1);
+    else parcelTransitionController.setTarget(1);
+    initializedScene.current = true;
+    previousProjectId.current = projectId;
+    previousPhase.current = phase;
+    spin.current = parcelTransitionController.snapshot.spin;
+    progress.current = parcelTransitionController.snapshot.progress;
     initialized.current = false;
-  }, [projectId]);
+  }, [phase, projectId]);
+  useEffect(() => parcelTransitionController.attachRenderer(), []);
   useFrame((_, dt) => {
     const target = phase === "landing" ? 0 : 1;
-    transition.current = stepParcelTransition(
-      transition.current,
-      target,
-      dt,
-      reduced(),
-    );
-    progress.current = transition.current.progress;
-    spin.current = transition.current.spin;
+    parcelTransitionController.setTarget(target);
+    const snapshot = parcelTransitionController.step(dt, reduced());
+    progress.current = snapshot.progress;
+    spin.current = snapshot.spin;
     const t = progress.current;
     if (phase === "landing" || t < 0.995 || !initialized.current) {
       const mobile = size.width < 700;
@@ -992,11 +1008,16 @@ function Scene({ onReady }: { onReady?: () => void }) {
       if (controls.current) controls.current.target.copy(look);
       initialized.current = t > 0.99;
     }
+    if (target === 1 && snapshot.settled) {
+      const current = useOrb.getState();
+      if (current.project.id === projectId && current.phase === "descending")
+        current.set({ phase: "editing" });
+    }
     if (island.current) {
       const blend = patchBlend(t);
       spinQuaternion.setFromAxisAngle(
         localNormal,
-        frame.spinPhase + transition.current.spin,
+        frame.spinPhase + snapshot.spin,
       );
       surfaceOrientation.copy(alignment).multiply(spinQuaternion);
       surfaceNormal.set(...frame.normal).applyQuaternion(surfaceOrientation);

@@ -44,6 +44,7 @@ import {
   noteReservation,
   noteSceneUpdate,
 } from "./experience-metrics";
+import { parcelTransitionController } from "./parcel-transition";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -626,6 +627,23 @@ export const useOrb = create<State>((setState, getState) => ({
       if (activeExperience?.token === experienceToken)
         activeExperience = undefined;
     };
+    const settleWithoutRenderer = () => {
+      if (!initial || parcelTransitionController.hasRenderer) return;
+      // A test or unsupported-renderer fallback has no render loop that can
+      // report the visual handoff. Let the current async turn finish first,
+      // then expose the workspace without inventing a visual completion time.
+      void Promise.resolve().then(() => {
+        queueMicrotask(() => {
+          if (
+            !signal.aborted &&
+            !parcelTransitionController.hasRenderer &&
+            getState().project.id === project.id &&
+            getState().phase === "descending"
+          )
+            setState({ phase: "editing" });
+        });
+      });
+    };
     setState({
       project,
       phase: initial ? "descending" : "editing",
@@ -640,20 +658,6 @@ export const useOrb = create<State>((setState, getState) => ({
         : [...getState().history, before].slice(-HISTORY_LIMIT),
       future: [],
     });
-    if (initial)
-      setTimeout(
-        () => {
-          if (
-            !signal.aborted &&
-            getState().project.id === project.id &&
-            getState().phase === "descending"
-          )
-            setState({ phase: "editing" });
-        },
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? 100
-          : 4200,
-      );
     let cursor: Cursor = {
       runId: crypto.randomUUID(),
       sequence: 0,
@@ -898,6 +902,7 @@ export const useOrb = create<State>((setState, getState) => ({
               : "Your world is saved on this device.",
         });
         await getState().save();
+        settleWithoutRenderer();
       }
     } catch (error) {
       if (active === controller && !signal.aborted) {

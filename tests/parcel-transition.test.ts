@@ -56,4 +56,28 @@ describe("parcel transition", () => {
     expect(state.progress).toBe(1);
     expect(state.spin).toBe(0);
   });
+
+  it("coordinates the camera settle and composer arrival windows", () => {
+    let state = createParcelTransition();
+    for (let i = 0; i < 51; i++) state = stepParcelTransition(state, 1, 1 / 60);
+    expect(state.uiProgress).toBeCloseTo(1, 5);
+    expect(state.progress).toBeLessThan(1);
+    expect(state.settled).toBe(false);
+    for (let i = 0; i < 177; i++)
+      state = stepParcelTransition(state, 1, 1 / 60);
+    expect(state.progress).toBe(1);
+    expect(state.settled).toBe(true);
+  });
+
+  it("reverses without carrying stale completion state", () => {
+    let state = createParcelTransition(1);
+    for (let i = 0; i < 51; i++) state = stepParcelTransition(state, 0, 1 / 60);
+    expect(state.uiProgress).toBeCloseTo(0, 5);
+    expect(state.progress).toBeGreaterThan(0);
+    expect(state.settled).toBe(false);
+    for (let i = 0; i < 177; i++)
+      state = stepParcelTransition(state, 0, 1 / 60);
+    expect(state.progress).toBe(0);
+    expect(state.settled).toBe(true);
+  });
 });

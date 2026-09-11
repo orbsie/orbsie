@@ -126,6 +126,107 @@ async function observe(page, name, screenshot, report) {
   return item;
 }
 
+function assertNear(label, actual, expected, tolerance = 16) {
+  if (Math.abs(actual - expected) > tolerance)
+    throw Error(
+      `${label}: expected ${actual} to be within ${tolerance}px of ${expected}`,
+    );
+}
+
+function assertBetween(label, actual, first, second, tolerance = 4) {
+  const low = Math.min(first, second) - tolerance;
+  const high = Math.max(first, second) + tolerance;
+  if (actual < low || actual > high)
+    throw Error(`${label}: ${actual} is outside [${low}, ${high}]`);
+}
+
+async function assertReturnGeometry(page, report, reducedMotion) {
+  const composer = page.locator(".composer-shell");
+  const workspace = await composer.boundingBox();
+  if (!workspace)
+    throw Error("Return geometry: workspace composer is missing.");
+  let start = await page.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const button = document.querySelector(".back-button");
+        const app = document.querySelector(".app");
+        if (!(button instanceof HTMLElement) || !app) {
+          reject(Error("Return geometry: back button or app is missing."));
+          return;
+        }
+        const sample = () => {
+          const element = document.querySelector(".composer-shell");
+          if (!(element instanceof HTMLElement)) {
+            reject(
+              Error("Return geometry: committed landing start is missing."),
+            );
+            return;
+          }
+          const rect = element.getBoundingClientRect();
+          resolve({
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          });
+        };
+        const observer = new MutationObserver(() => {
+          if (app.classList.contains("is-landing")) {
+            observer.disconnect();
+            sample();
+          }
+        });
+        observer.observe(app, { attributes: true, attributeFilter: ["class"] });
+        button.click();
+      }),
+  );
+  await expect(page.locator(".app.is-landing")).toBeVisible({
+    timeout: 30000,
+  });
+  if (reducedMotion) {
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(resolve)),
+    );
+    const reducedStart = await composer.boundingBox();
+    if (!reducedStart)
+      throw Error("Return geometry: reduced landing start is missing.");
+    start = reducedStart;
+  }
+  await page.waitForTimeout(reducedMotion ? 80 : 380);
+  const mid = await composer.boundingBox();
+  if (!mid) throw Error("Return geometry: landing midpoint is missing.");
+  await page.waitForTimeout(reducedMotion ? 120 : 1500);
+  const end = await composer.boundingBox();
+  if (!end) throw Error("Return geometry: landing end is missing.");
+
+  if (reducedMotion) {
+    assertNear("reduced return start.left", start.x, end.x, 4);
+    assertNear("reduced return start.width", start.width, end.width, 4);
+    assertNear("reduced return midpoint.left", mid.x, end.x, 4);
+  } else {
+    assertNear("return start.left", start.x, workspace.x);
+    assertNear("return start.width", start.width, workspace.width);
+    assertBetween("return midpoint.left", mid.x, start.x, end.x, 2);
+    assertBetween(
+      "return midpoint.width",
+      mid.width,
+      start.width,
+      end.width,
+      2,
+    );
+    const viewportWidth = await page.evaluate(() => innerWidth);
+    assertNear("return end.left", end.x, viewportWidth / 2 - end.width / 2, 16);
+  }
+  report.returnGeometry ??= [];
+  report.returnGeometry.push({
+    reducedMotion,
+    workspace,
+    start,
+    mid,
+    end,
+  });
+}
+
 async function openLocalWorkspace(
   browser,
   fixture,
@@ -166,10 +267,7 @@ async function openLocalWorkspace(
     reducedMotion ? "reduced-motion-direct-open.png" : "direct-local-open.png",
     report,
   );
-  await page
-    .getByRole("button", { name: "Back to planet", exact: true })
-    .click();
-  await expect(page.locator(".app.is-landing")).toBeVisible({ timeout: 30000 });
+  await assertReturnGeometry(page, report, reducedMotion);
   await page.waitForTimeout(reducedMotion ? 120 : 2200);
   await observe(
     page,
@@ -223,13 +321,18 @@ async function runInitialDescent(browser, fixture, report) {
       });
   });
   await page.goto(baseURL, { waitUntil: "domcontentloaded" });
-  await expect(page.getByPlaceholder("What experience to build?")).toBeVisible({
-    timeout: 30000,
+  await page.waitForLoadState("networkidle");
+  const prompt = page.getByPlaceholder("What experience to build?");
+  await expect(prompt).toBeVisible({ timeout: 30000 });
+  await prompt.click();
+  await prompt.pressSequentially("A fixture garden");
+  await expect(prompt).toHaveValue("A fixture garden");
+  const createButton = page.getByRole("button", {
+    name: "Create",
+    exact: true,
   });
-  await page
-    .getByPlaceholder("What experience to build?")
-    .fill("A fixture garden");
-  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(createButton).toBeEnabled({ timeout: 30000 });
+  await createButton.click();
   await expect(page.locator(".app.is-workspace")).toBeVisible({
     timeout: 30000,
   });
@@ -274,6 +377,7 @@ const report = {
   generationRequests: [],
   externalRequests: [],
   pageErrors: [],
+  returnGeometry: [],
   standalone: null,
 };
 

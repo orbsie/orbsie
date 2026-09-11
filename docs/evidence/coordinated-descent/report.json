@@ -1,0 +1,159 @@
+{
+  "url": "http://localhost:3017",
+  "fixture": {
+    "id": "parcel-transition-fixture",
+    "entityCount": 15,
+    "title": "Parcel transition fixture"
+  },
+  "scenarios": [
+    {
+      "name": "initial-descent-early",
+      "screenshot": "initial-descent-early.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA fixture garden\nEdit\nPlay\nYour world\n\nA fixture garden\n\n✧\n\nFixture descent is ready.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nYour world is saved on this device."
+    },
+    {
+      "name": "initial-descent-mid",
+      "screenshot": "initial-descent-mid.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA fixture garden\nEdit\nPlay\nYour world\n\nA fixture garden\n\n✧\n\nFixture descent is ready.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nYour world is saved on this device."
+    },
+    {
+      "name": "initial-descent-settled",
+      "screenshot": "initial-descent-settled.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nA fixture garden\nEdit\nPlay\nYour world\n\nA fixture garden\n\n✧\n\nFixture descent is ready.\n\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nYour world is saved on this device."
+    },
+    {
+      "name": "direct-local-open",
+      "screenshot": "direct-local-open.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nParcel transition fixture\nEdit\nPlay\nYour world\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left"
+    },
+    {
+      "name": "back-to-planet",
+      "screenshot": "back-to-planet.png",
+      "appClass": "app is-landing  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Create a world\nWhat experience to build?\n3 free prompts\nCreate\nResume\nStopped. Finished objects are safe."
+    },
+    {
+      "name": "repeated-project-arrival",
+      "screenshot": "repeated-project-arrival.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nParcel transition fixture\nEdit\nPlay\nYour world\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nStopped. Finished objects are safe."
+    },
+    {
+      "name": "reduced-motion-direct-open",
+      "screenshot": "reduced-motion-direct-open.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nParcel transition fixture\nEdit\nPlay\nYour world\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left"
+    },
+    {
+      "name": "reduced-motion-planet",
+      "screenshot": "reduced-motion-planet.png",
+      "appClass": "app is-landing  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Create a world\nWhat experience to build?\n3 free prompts\nCreate\nResume\nStopped. Finished objects are safe."
+    },
+    {
+      "name": "reduced-motion-repeated-arrival",
+      "screenshot": "reduced-motion-repeated-arrival.png",
+      "appClass": "app is-workspace  sheet-open",
+      "canvasCount": 1,
+      "scrollWidth": 1440,
+      "viewportWidth": 1440,
+      "bodyText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nParcel transition fixture\nEdit\nPlay\nYour world\nWhat experience to build?\n3 free prompts\nChange this\n3 free prompts left\nStopped. Finished objects are safe."
+    }
+  ],
+  "generationRequests": [
+    {
+      "method": "POST",
+      "url": "http://localhost:3017/api/generate"
+    }
+  ],
+  "externalRequests": [],
+  "pageErrors": [],
+  "returnGeometry": [
+    {
+      "reducedMotion": false,
+      "workspace": {
+        "x": 20,
+        "y": 88,
+        "width": 342,
+        "height": 890
+      },
+      "start": {
+        "x": 20,
+        "y": 88,
+        "width": 342,
+        "height": 133
+      },
+      "mid": {
+        "x": 218.95294189453125,
+        "y": 240.75164794921875,
+        "width": 411.84375,
+        "height": 133
+      },
+      "end": {
+        "x": 470,
+        "y": 433.5,
+        "width": 500,
+        "height": 133
+      }
+    },
+    {
+      "reducedMotion": true,
+      "workspace": {
+        "x": 20,
+        "y": 88,
+        "width": 342,
+        "height": 890
+      },
+      "start": {
+        "x": 470,
+        "y": 433.5,
+        "width": 500,
+        "height": 133
+      },
+      "mid": {
+        "x": 470,
+        "y": 433.5,
+        "width": 500,
+        "height": 133
+      },
+      "end": {
+        "x": 470,
+        "y": 433.5,
+        "width": 500,
+        "height": 133
+      }
+    }
+  ],
+  "standalone": {
+    "sourceIncludesParcelTransition": true,
+    "sourceEntryCount": 54
+  }
+}

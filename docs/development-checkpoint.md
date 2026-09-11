@@ -11,13 +11,11 @@ large logs, and copied diffs.
 - Input-game acceptance correction committed as `2c8db05`.
 - Experience reconciliation reviewed: parcel frame, desktop composer focus and
   narrow play-during-stream paths already have deterministic browser evidence.
-- Active worker: Luna `coordinate_descent` implements shared camera/UI transition
-  control with targeted tests. Owns transition/store/World/editor/CSS and tests;
-  root owns docs. Preserve canvas/focus, independent generation and reduced motion.
-- Review returned for fixes: initial editing mount, smooth same-project return,
-  clean composer destination measurements and interrupted/resize transitions.
-  Worker reports initial typecheck/15 tests/9 parcel scenarios passed, but
-  acceptance requires these fixes plus composer browser evidence. Not deployed.
+- Shared transition reviewed: direct mount, reversal, resize/interruption and
+  CSS centering corrected. 19 tests/typecheck passed; final nine-scenario parcel
+  run retained in `docs/evidence/coordinated-descent`. No active worker.
+- Next: rebuild and validate the integrated production/player artifacts before
+  deployment. Local browser evidence does not close live provider acceptance.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
   its .995 camera handoff at about 5.58s. This does not prove content is blocked.
 - Live-provider authorization request remains pending.

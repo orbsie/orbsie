@@ -445,7 +445,8 @@ p {
   border-radius: 19px;
   display: flex;
   flex-direction: column;
-  animation: arrive 0.75s ease-out;
+  /* Position and width are interpolated by the shared parcel controller. */
+  will-change: transform, width;
 }
 .chat-header {
   display: flex;
@@ -1008,16 +1009,6 @@ kbd {
   50% {
     opacity: 0.55;
     transform: scale(0.93);
-  }
-}
-@keyframes arrive {
-  from {
-    opacity: 0.5;
-    transform: translateX(100px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @media (min-height: 900px) {

@@ -5,6 +5,7 @@ import { capturePublicationThumbnail } from "@/lib/publication-thumbnail";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
@@ -82,6 +83,7 @@ const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
 const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
+import { parcelTransitionController } from "@/lib/parcel-transition";
 import ChatGPTConnection from "./chatgpt-connection";
 const World = dynamic(() => import("./world"), {
   ssr: false,
@@ -435,6 +437,7 @@ export default function Orbsie() {
   const [publicView, setPublicView] = useState(false);
   const chat = useRef<HTMLDivElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const composer = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const landing = s.phase === "landing";
   const selected = s.project.entities.find((e) => e.id === s.selected);
@@ -447,6 +450,15 @@ export default function Orbsie() {
       e.behavior?.type === "collect" &&
       s.score.includes(e.id),
   ).length;
+  useLayoutEffect(() => {
+    parcelTransitionController.setTarget(landing ? 0 : 1);
+    return parcelTransitionController.attachUi(composer.current);
+  }, [landing, publicView, s.phase]);
+  useEffect(() => {
+    const refresh = () => parcelTransitionController.refreshUi();
+    window.addEventListener("resize", refresh);
+    return () => window.removeEventListener("resize", refresh);
+  }, []);
   const refreshCloud = async () => {
     const isCurrent = captureCloudRequest();
     const projectId = useOrb.getState().project.id;
@@ -1032,7 +1044,14 @@ export default function Orbsie() {
       <div className="sky-texture" aria-hidden="true" />
       <div className="cosmic-backdrop" aria-hidden="true" />
       <div className="scene">
-        <World />
+        <World
+          onError={() => {
+            parcelTransitionController.markRendererUnavailable();
+            const current = useOrb.getState();
+            if (current.phase === "descending")
+              current.set({ phase: "editing" });
+          }}
+        />
       </div>
       {landing && (
         <div className="orbital-lines" aria-hidden="true">
@@ -1162,6 +1181,7 @@ export default function Orbsie() {
       )}
       {!publicView && (
         <section
+          ref={composer}
           className={`composer-shell ${landing ? "landing-composer" : "chat-panel"}`}
           aria-label={landing ? "Create a world" : "World conversation"}
         >
