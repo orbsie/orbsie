@@ -10,8 +10,8 @@
   "creation": {
     "status": "blocked",
     "operations": 0,
-    "firstReservationMs": null,
-    "seedObserved": false
+    "firstReservationMs": 6519,
+    "seedObserved": true
   },
   "edit": {
     "status": "blocked",
@@ -39,8 +39,8 @@
     ],
     "generationDiagnostics": [
       {
-        "code": "PROVIDER_STREAM_ERROR",
-        "diagnostic": "{\"operation\":0,\"issues\":[],\"providerStatus\":429}"
+        "code": "INVALID_SCENE_JSON",
+        "diagnostic": "{\"operation\":10,\"issues\":[]}"
       }
     ],
     "blockedExternalRequests": 0,
@@ -48,7 +48,8 @@
   },
   "evidence": [
     "connection-model.png",
+    "intermediate-seed.png",
     "failure.png"
   ],
-  "error": "Generation stream reported PROVIDER_STREAM_ERROR before the first entity reservation."
+  "error": "Generation failed before saving: The model returned an invalid scene update. Finished objects are preserved."
 }
