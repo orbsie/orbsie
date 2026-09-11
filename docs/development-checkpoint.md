@@ -23,6 +23,9 @@ large logs, and copied diffs.
   its .995 camera handoff at about 5.58s. This does not prove content is blocked.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
+- Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
+  solids rejection at `tree-shape`. No edit or retry. Evidence retained under
+  `docs/evidence/provider-e2e/input-game-authorized-sep11`; local processes stopped.
 - Owner supplied Gateway test key; added as sensitive `AI_GATEWAY_TEST_KEY` to
   Vercel production for `grappeggias-projects/orbsie`; env listing verified it.
   No key retained in repository. Available to subsequent deployments; no redeploy
