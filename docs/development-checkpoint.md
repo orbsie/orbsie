@@ -8,8 +8,10 @@ large logs, and copied diffs.
   Vercel AI Gateway and browser ChatGPT journeys.
 - Current source: `f88bcc9` is deployed to `https://orbsie.com`; `39710bd` records
   the release smoke. Verify `HEAD` on resume.
-- Active task: Input-game acceptance correction reviewed and ready to commit.
-- Files changed: provider browser harness, focused input-game tests, audit and checkpoint.
+- Input-game acceptance correction committed as `2c8db05`.
+- Active task: Luna `reconcile_experience_gates` reviews existing parcel,
+  composer continuity and play-during-stream evidence against stale audit rows.
+- Worker owns `docs/scope-audit.md`; root owns this checkpoint.
 - Harness evidence: canonical project validation accepts baked browser geometry;
   actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
   tests, syntax and safety-gate checks passed. No new live inference was run.
@@ -27,6 +29,8 @@ large logs, and copied diffs.
 - External gaps: Gateway BYOK key/cap absent; browser ChatGPT consent and live
   subscription inference absent. Root also revalidated empty CUA surfaces and
   absent `AI_GATEWAY_TEST_KEY`/`AI_GATEWAY_API_KEY` without inspecting secrets.
+  A names-only check of `.env.local`, `.env.production.local` and
+  `.env.openrouter.local` also found no Gateway key or account-state assignment.
 - Next action: run bounded input-game live acceptance within explicit call/cap
   authorization; Gateway BYOK and browser ChatGPT consent remain separate gates.
 - Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
