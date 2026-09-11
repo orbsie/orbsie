@@ -34,6 +34,18 @@ export function isRecommendedModel(id: string) {
   );
 }
 
+const lunaProviderOrder = Object.freeze([
+  "OpenAI",
+  "Amazon Bedrock",
+  "Azure",
+]);
+
+export function openrouterProviderRouting(model: string) {
+  return model === "openai/gpt-5.6-luna"
+    ? { order: lunaProviderOrder, allow_fallbacks: false }
+    : undefined;
+}
+
 export type CatalogModel = {
   capabilities?: ModelCapabilities;
   id: string;

@@ -2,6 +2,76 @@ import { it, expect, vi, afterEach } from "vitest";
 import { generateCommands } from "../src/lib/server/generation";
 import { blankProject } from "../src/lib/protocol";
 afterEach(() => vi.unstubAllGlobals());
+it("routes OpenRouter Luna through OpenAI, Amazon Bedrock, then Azure", async () => {
+  const encoder = new TextEncoder();
+  const line = JSON.stringify({ type: "commit_revision", message: "Ready." });
+  const fetcher = vi.fn(
+    async (_url: string, _options?: RequestInit) =>
+      new Response(
+        new ReadableStream({
+          start(c) {
+            for (const fragment of [line.slice(0, 13), line.slice(13) + "\n"]) {
+              const data =
+                "data: " +
+                JSON.stringify({
+                  choices: [{ delta: { content: fragment } }],
+                }) +
+                "\n\n";
+              c.enqueue(encoder.encode(data));
+            }
+            c.enqueue(encoder.encode("data: [DONE]\n\n"));
+            c.close();
+          },
+        }),
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  await generateCommands({
+    provider: "openrouter",
+    model: "openai/gpt-5.6-luna",
+    key: "test-key-not-real",
+    prompt: "Hello",
+    project: blankProject(),
+    signal: new AbortController().signal,
+  });
+  const submitted = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  expect(submitted.provider).toEqual({
+    order: ["OpenAI", "Amazon Bedrock", "Azure"],
+    allow_fallbacks: false,
+  });
+});
+it("keeps OpenRouter automatic provider routing for other models", async () => {
+  const fetcher = vi.fn(
+    async (_url: string, _options?: RequestInit) =>
+      new Response(
+        new ReadableStream({
+          start(c) {
+            const encoder = new TextEncoder();
+            const line = JSON.stringify({
+              type: "commit_revision",
+              message: "Ready.",
+            });
+            c.enqueue(
+              encoder.encode("data: " + JSON.stringify({ choices: [{ delta: { content: line } }] }) + "\n\n"),
+            );
+            c.enqueue(encoder.encode("data: [DONE]\n\n"));
+            c.close();
+          },
+        }),
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+  await generateCommands({
+    provider: "openrouter",
+    model: "openai/gpt-6-astra",
+    key: "test-key-not-real",
+    prompt: "Hello",
+    project: blankProject(),
+    signal: new AbortController().signal,
+  });
+  const submitted = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  expect(submitted.provider).toBeUndefined();
+});
 for (const provider of ["openrouter", "gateway"] as const) {
   it(`${provider} buffers fragments until a complete validated command arrives`, async () => {
     const encoder = new TextEncoder();

@@ -15,7 +15,10 @@ import {
   type ModelCommand,
 } from "../protocol";
 import { z } from "zod";
-import { isRecommendedModel } from "../model-modes";
+import {
+  isRecommendedModel,
+  openrouterProviderRouting,
+} from "../model-modes";
 import {
   generationDiagnostic,
   ProviderStreamError,
@@ -100,6 +103,8 @@ export async function generateCommands({
     provider === "openrouter"
       ? "https://openrouter.ai/api/v1/chat/completions"
       : "https://ai-gateway.vercel.sh/v1/chat/completions";
+  const providerRouting =
+    provider === "openrouter" ? openrouterProviderRouting(model) : undefined;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -114,6 +119,7 @@ export async function generateCommands({
       stream: true,
       max_tokens: maxTokens,
       ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
+      ...(providerRouting ? { provider: providerRouting } : {}),
       messages: [
         {
           role: "system",
