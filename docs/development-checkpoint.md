@@ -9,9 +9,12 @@ large logs, and copied diffs.
 - Current source: `f88bcc9` is deployed to `https://orbsie.com`; `39710bd` records
   the release smoke. Verify `HEAD` on resume.
 - Input-game acceptance correction committed as `2c8db05`.
-- Active task: Luna `reconcile_experience_gates` reviews existing parcel,
-  composer continuity and play-during-stream evidence against stale audit rows.
-- Worker owns `docs/scope-audit.md`; root owns this checkpoint.
+- Experience reconciliation reviewed: parcel frame, desktop composer focus and
+  narrow play-during-stream paths already have deterministic browser evidence.
+- Next implementation investigation: coordinate renderer/UI descent progress;
+  source still has a separate 4.2-second phase timer. Measure whether this
+  affects readiness before claiming or fixing an artificial content hold.
+- No active worker; live-provider authorization request remains pending.
 - Harness evidence: canonical project validation accepts baked browser geometry;
   actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
   tests, syntax and safety-gate checks passed. No new live inference was run.
