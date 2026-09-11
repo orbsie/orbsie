@@ -24,10 +24,8 @@ large logs, and copied diffs.
 - Production build and ChatGPT host-package verification passed for `33148de`.
 - Active Luna worker: `feedback_browser_acceptance`, deterministic real-worker
   browser rejection/correction flow, preserving last-good geometry. No live calls.
-- Production/player build and host-package verification passed; deployment and
-  production smoke passed. Next: close authorized live provider acceptance gates.
-- Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
-  its .995 camera handoff at about 5.58s. This does not prove content is blocked.
+- The feedback integration is built locally but not yet deployed. Production
+  smoke evidence applies to `1c09907`, before feedback integration.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
 - Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
@@ -52,13 +50,12 @@ large logs, and copied diffs.
   the harness is now corrected, but live gameplay acceptance remains unproven.
 - Publication evidence: `2632a40` records live account/cloud/per-Orb deployment
   and signed-out playback of a deterministic protocol world; it made no model call.
-- External gaps: Gateway BYOK key/cap absent; browser ChatGPT consent and live
-  subscription inference absent. Root also revalidated empty CUA surfaces and
-  absent `AI_GATEWAY_TEST_KEY`/`AI_GATEWAY_API_KEY` without inspecting secrets.
-  A names-only check of `.env.local`, `.env.production.local` and
-  `.env.openrouter.local` also found no Gateway key or account-state assignment.
-- Next action: run bounded input-game live acceptance within explicit call/cap
-  authorization; Gateway BYOK and browser ChatGPT consent remain separate gates.
+- External gaps: Gateway key is stored in Vercel production, but local test
+  configuration and spending cap remain outstanding. Browser ChatGPT consent
+  and live hosted subscription inference remain unverified.
+- Next action: review the active worker's deterministic rejection/correction
+  browser evidence, then integrate and deploy if it passes. The prior failed
+  OpenRouter create/edit authorization does not authorize a new creation retry.
 - Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
   deterministic publication or production smoke with provider E2E acceptance.
 
