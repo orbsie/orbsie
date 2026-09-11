@@ -1,0 +1,216 @@
+{
+  "mode": "fixture-modeling-feedback-real-editor-worker",
+  "source": "33148de",
+  "sourceProvenance": "Application feedback changes under test were committed at 33148de; this run used the production build from checkout HEAD 54c09ec.",
+  "fixture": {
+    "transport": "intercepted /api/generate NDJSON",
+    "liveInference": false,
+    "serverFundedCalls": false,
+    "databaseMutations": false,
+    "geometryWorker": "/modeling/worker.js + /modeling/manifold.wasm",
+    "targetId": "feedback-target",
+    "unrelatedId": "feedback-unrelated",
+    "rejectedNodeId": "overlap",
+    "correctedOperation": "boolean union"
+  },
+  "requests": [
+    {
+      "prompt": "Build an original boolean sculpture",
+      "browserModeling": true,
+      "localModeling": false,
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "prompt": "Make the sculpture more open",
+      "selected": "feedback-target",
+      "browserModeling": true,
+      "localModeling": false,
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "projectRevision": 5,
+      "entityIds": [
+        "feedback-target",
+        "feedback-unrelated"
+      ]
+    },
+    {
+      "prompt": "Fix the rejected overlap with a boolean union",
+      "selected": "feedback-target",
+      "browserModeling": true,
+      "localModeling": false,
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "projectRevision": 5,
+      "entityIds": [
+        "feedback-target",
+        "feedback-unrelated"
+      ],
+      "modelingFeedback": {
+        "version": 1,
+        "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+        "entityId": "feedback-target",
+        "backend": "browser-manifold",
+        "nodeId": "overlap",
+        "error": "[browser-modeling-kernel] node overlap contains touching or overlapping solids.",
+        "recipe": {
+          "version": 1,
+          "revision": 1,
+          "output": "overlap",
+          "nodes": [
+            {
+              "id": "base",
+              "kind": "box",
+              "size": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "id": "piece",
+              "kind": "box",
+              "size": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "placed",
+              "kind": "transform",
+              "input": "piece",
+              "position": [
+                0.5,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "overlap",
+              "kind": "compose",
+              "inputs": [
+                "base",
+                "placed"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "prompt": "Confirm the repaired sculpture remains usable",
+      "selected": "feedback-target",
+      "browserModeling": true,
+      "localModeling": false,
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "projectRevision": 7,
+      "entityIds": [
+        "feedback-target",
+        "feedback-unrelated"
+      ]
+    }
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    }
+  ],
+  "blocked": [],
+  "unexpectedApi": [],
+  "pageErrors": [],
+  "checks": {
+    "initialReady": {
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "revision": 5,
+      "targetHash": "57154c84812373eb7e8792ae3cf43a73270acce3c81a612ba8fcfc88faec1d68",
+      "unrelatedHash": "dd333c124e5106bf056bc7d3721c3ffc49b52a66b85f483176a64ff2c8fa945c"
+    },
+    "invalidEditPreservedLastGood": {
+      "targetId": "feedback-target",
+      "targetHash": "57154c84812373eb7e8792ae3cf43a73270acce3c81a612ba8fcfc88faec1d68",
+      "error": "[browser-modeling-kernel] node overlap contains touching or overlapping solids."
+    },
+    "boundedFeedbackCarriedIntoFix": {
+      "projectId": "c650c871-794f-4d74-876e-cba0d6ec4fcc",
+      "entityId": "feedback-target",
+      "nodeId": "overlap",
+      "recipeBytes": 308
+    },
+    "correctedReady": {
+      "targetId": "feedback-target",
+      "beforeHash": "57154c84812373eb7e8792ae3cf43a73270acce3c81a612ba8fcfc88faec1d68",
+      "afterHash": "629a16aedd0db0843e67c5a63f385bc7206764509d5f76fb8226bb4b9ead0833",
+      "recipeOutput": "union",
+      "unrelatedHash": "dd333c124e5106bf056bc7d3721c3ffc49b52a66b85f483176a64ff2c8fa945c"
+    },
+    "successClearedErrorAndTransientFeedback": {
+      "followupRequestHadModelingFeedback": false,
+      "targetHashUnchanged": true,
+      "unrelatedHashUnchanged": true
+    }
+  },
+  "status": "passed"
+}
