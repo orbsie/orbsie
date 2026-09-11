@@ -6,8 +6,8 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and browser ChatGPT journeys.
-- Current source: `1c09907` is deployed to `https://orbsie.com`; production smoke
-  passed in `docs/evidence/coordinated-descent-release`. Verify `HEAD` on resume.
+- Current source: `be7672a` is deployed to `https://orbsie.com`; production smoke
+  passed in `docs/evidence/modeling-feedback-release`. Verify `HEAD` on resume.
 - Input-game acceptance correction committed as `2c8db05`.
 - Experience reconciliation reviewed: parcel frame, desktop composer focus and
   narrow play-during-stream paths already have deterministic browser evidence.
@@ -22,10 +22,11 @@ large logs, and copied diffs.
   Last-good geometry preserved; no automatic inference. 67 focused tests and
   typecheck passed. Feedback is transient and does not survive reload.
 - Production build and ChatGPT host-package verification passed for `33148de`.
-- Active Luna worker: `feedback_browser_acceptance`, deterministic real-worker
-  browser rejection/correction flow, preserving last-good geometry. No live calls.
-- The feedback integration is built locally but not yet deployed. Production
-  smoke evidence applies to `1c09907`, before feedback integration.
+- Browser feedback acceptance passed: four fixture requests with real Manifold
+  worker, last-good preservation, exact rejection feedback, corrected bake and
+  cleared feedback on the next request. Evidence: `modeling-feedback-browser`.
+- Feedback integration deployed; remote build/typecheck and read-only production
+  smoke passed. No live inference. No active worker remains.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
 - Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
@@ -53,8 +54,8 @@ large logs, and copied diffs.
 - External gaps: Gateway key is stored in Vercel production, but local test
   configuration and spending cap remain outstanding. Browser ChatGPT consent
   and live hosted subscription inference remain unverified.
-- Next action: review the active worker's deterministic rejection/correction
-  browser evidence, then integrate and deploy if it passes. The prior failed
+- Next action: close remaining live provider acceptance prerequisites and audit
+  remaining gameplay/publication requirements. The prior failed
   OpenRouter create/edit authorization does not authorize a new creation retry.
 - Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
   deterministic publication or production smoke with provider E2E acceptance.
