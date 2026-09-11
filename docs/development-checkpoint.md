@@ -21,7 +21,13 @@ large logs, and copied diffs.
   production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
   its .995 camera handoff at about 5.58s. This does not prove content is blocked.
-- Live-provider authorization request remains pending.
+- Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
+  calls, 4096 output tokens each, using the existing local key (2026-09-11).
+- Owner supplied Gateway test key; added as sensitive `AI_GATEWAY_TEST_KEY` to
+  Vercel production for `grappeggias-projects/orbsie`; env listing verified it.
+  No key retained in repository. Available to subsequent deployments; no redeploy
+  or inference performed for this configuration action. Gateway spending cap
+  and browser ChatGPT consent remain outstanding.
 - Harness evidence: canonical project validation accepts baked browser geometry;
   actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
   tests, syntax and safety-gate checks passed. No new live inference was run.
