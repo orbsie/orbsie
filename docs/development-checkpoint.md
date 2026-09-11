@@ -30,8 +30,10 @@ large logs, and copied diffs.
 - Gameplay audit: prior fixture/published evidence already proves physical
   crystal/portal win-reset and platform behavior. The saved live OpenRouter
   flagship has `project.game`, which the legacy traversal verifier rejects.
-- Active Luna worker: `flagship_program_traversal` extends the verifier for that
-  unchanged saved ZIP. No model calls or product changes; report actual failures.
+- Saved flagship traversal accepted in `5d0867f`: unchanged OpenRouter ZIP,
+  desktop keyboard and touch five-crystal portal win/reset; legacy fixture
+  desktop check passed. Platform landing/carry remains explicitly unobserved.
+  No model calls or product changes. No active worker remains.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
 - Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
@@ -59,8 +61,8 @@ large logs, and copied diffs.
 - External gaps: Gateway key is stored in Vercel production, but local test
   configuration and spending cap remain outstanding. Browser ChatGPT consent
   and live hosted subscription inference remain unverified.
-- Next action: review saved flagship traversal evidence, then close remaining
-  live provider acceptance prerequisites. The prior failed
+- Next action: close remaining live provider acceptance prerequisites and
+  full flagship platform-traversal evidence. The prior failed
   OpenRouter create/edit authorization does not authorize a new creation retry.
 - Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
   deterministic publication or production smoke with provider E2E acceptance.
