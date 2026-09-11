@@ -16,7 +16,10 @@ large logs, and copied diffs.
   run retained in `docs/evidence/coordinated-descent`.
 - Provider report attribution reviewed: harness repository SHA/dirty status,
   timestamp and optional operator-supplied app SHA; no remote verification claim.
-  Four focused tests/typecheck passed. No active worker.
+  Four focused tests/typecheck passed.
+- Active Luna worker: `modeling_failure_feedback` traces and reproduces whether
+  rejected browser recipes reach an explicit follow-up correction request.
+  Preserve validation/last-good world; no automatic inference or live retries.
 - Production/player build and host-package verification passed; deployment and
   production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
