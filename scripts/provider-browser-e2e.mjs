@@ -260,9 +260,15 @@ function readConfiguration(argv) {
       throw new HarnessConfigurationError(
         "The supplied local-only OpenRouter credential is restricted to the explicit Luna test model; set ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna.",
       );
-    if (outputCap > 512)
+    // Owner authorization on 2026-09-10 permits a bounded cap raise to 4096
+    // output tokens for the flagship/procedural live journeys, gated behind
+    // this explicit flag so ordinary runs keep the standing 512 cap.
+    const raisedCap = process.env.ORBSIE_OPENROUTER_RAISED_CAP === "1";
+    if (outputCap > (raisedCap ? 4096 : 512))
       throw new HarnessConfigurationError(
-        "The supplied local-only OpenRouter run is capped at 512 output tokens or less.",
+        raisedCap
+          ? "The raised OpenRouter cap is bounded at 4096 output tokens."
+          : "The supplied local-only OpenRouter run is capped at 512 output tokens or less.",
       );
   }
   if (provider === "free") {
