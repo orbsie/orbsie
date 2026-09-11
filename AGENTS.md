@@ -1,12 +1,13 @@
-# Development model and delegation policy
+# Development model and bounded execution policy
 
-- Astra low owns architecture, task contracts, review of every finished diff, integration, and final verification. Review code and evidence without duplicating the worker's investigation unless a specific gap requires it.
-- Luna xhigh implements bounded tasks. Use `.codex/agents/luna-worker.toml` through `luna_worker`, or explicit `gpt-5.6-luna` / `xhigh` spawn overrides.
-- Allow at most one worker at a time, including nested delegation. Workers must not spawn additional agents. Give concise, self-contained task context and file ownership; use `fork_turns="none"` rather than copying the full conversation.
-- Batch validation: targeted tests per change; full E2E and live model calls at meaningful integration or release milestones. Repeat checks only after relevant changes, failures, or unresolved concerns.
-- Use regular/standard processing (`service_tier = "default"`) for lead and workers; keep Fast mode off.
-- Live model-backed tests may call Luna only. This does not change the Astra lead/reviewer role or Luna worker policy. Preserve credential-specific output and spending limits. Do not apply this test restriction to users’ supported model choices.
-- Follow the development execution and quality plan in `prompt.md`.
+- Astra low/regular owns architecture, task contracts, shared interfaces, acceptance criteria, review of every finished diff, integration, and final verification. Review code and evidence without repeating the worker's investigation unless a concrete evidence gap requires it.
+- Luna xhigh/regular implements one cohesive, bounded task at a time through `.codex/agents/luna-worker.toml` and `luna_worker`. Keep small work in that task; do not create separate investigation, review, or documentation workers for it. Allow at most one worker, including nested delegation, and never let a worker spawn agents.
+- Before delegation, inspect the relevant source and send only task-specific context: intended behavior, file ownership, constraints, and acceptance evidence. Launch with `fork_turns="none"`; do not copy the full conversation. The worker reports changed files, targeted checks and results, assumptions, and unresolved risks in a concise final.
+- Use completion notifications to drive coordination. Astra does useful independent work while the worker runs and does not spin status-only polls or automatic continuation chatter. If explicit tool waiting is necessary, use at most 60 seconds per blocking call and do not start a new turn just to recheck unchanged state.
+- Batch fixes and run targeted validation for each change. Reserve full E2E and live model calls for meaningful integration or release milestones; do not repeat green checks unless a relevant change, failure, or new risk justifies them.
+- Resume from `docs/development-checkpoint.md` and verify its source against the worktree. Update that compact checkpoint at task handoff; do not copy the conversation into it.
+- Use regular/standard processing (`service_tier = "default"`) for Astra and Luna, with Fast mode off. Live model-backed tests may call Luna only; preserve credential-specific output/spending limits. This test restriction does not limit end users' supported provider/model choices.
+- Follow the development execution and quality plan in `prompt.md`. Repository policy cannot disable host-level automatic goal continuation, change subscription accounting, or guarantee a 2x saving; those are external settings and billing behavior.
 
 ## Local Blender access
 
