@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "base": "http://localhost:3058",
+  "startedAt": "2026-09-11T03:02:32.331Z",
+  "checks": {
+    "exhaustedModal": "passed",
+    "promptPreserved": "passed",
+    "offlineToast": "passed"
+  },
+  "finishedAt": "2026-09-11T03:02:40.568Z"
+}

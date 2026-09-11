@@ -220,6 +220,11 @@ async function withDraftWriteLock(
     write,
   );
 }
+function draftTitleFromPrompt(prompt: string): string {
+  const cleaned = prompt.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "A pocketful of sunshine";
+  return cleaned.length > 40 ? `${cleaned.slice(0, 40).trimEnd()}…` : cleaned;
+}
 let active: AbortController | undefined;
 let baseline: Project | undefined;
 let activeExperience: { projectId: string; token: string } | undefined;
@@ -461,13 +466,18 @@ export const useOrb = create<State>((setState, getState) => ({
     active?.abort();
     active = undefined;
     const s = getState();
+    const committedWorld = committed(s.project, baseline);
     setState({
       phase: s.phase === "descending" ? "editing" : s.phase,
       building: false,
-      project: committed(s.project, baseline),
+      project: committedWorld,
       notice: "Stopped. Finished objects are safe.",
     });
-    void getState().save();
+    if (
+      committedWorld.entities.length > 0 ||
+      committedWorld.messages.length > 0
+    )
+      void getState().save();
   },
   undo() {
     const s = getState();
@@ -521,11 +531,7 @@ export const useOrb = create<State>((setState, getState) => ({
     const assetPolicy = deriveAssetPolicy(prompt, selected, before);
     const project = {
       ...before,
-      title: initial
-        ? prompt.toLowerCase().includes("garden")
-          ? "The daydream garden"
-          : "A pocketful of sunshine"
-        : before.title,
+      title: initial ? draftTitleFromPrompt(prompt) : before.title,
       messages: [
         ...before.messages,
         {
@@ -834,7 +840,11 @@ export const useOrb = create<State>((setState, getState) => ({
                 ? error.message
                 : "Something went wrong. Your finished world is safe.",
         });
-        await getState().save();
+        if (
+          getState().project.entities.length > 0 ||
+          getState().project.messages.length > 0
+        )
+          await getState().save();
       }
     } finally {
       signal.removeEventListener("abort", cancelDurable);

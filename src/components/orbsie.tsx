@@ -37,6 +37,10 @@ import {
   MicOff,
 } from "lucide-react";
 import { useDictation } from "@/lib/use-dictation";
+import {
+  connectionNoticeCopy,
+  noticeForGenerationCode,
+} from "@/lib/connection-messages";
 import { modelModes, type CatalogModel } from "@/lib/model-modes";
 import { modelRankingMetadata } from "@/lib/model-rankings";
 import {
@@ -303,17 +307,21 @@ export default function Orbsie() {
         remaining: Number.isInteger(data.remaining)
           ? Math.max(0, data.remaining)
           : 0,
+        offline: false,
       };
-      setTrial(next);
+      setTrial({ enabled: next.enabled, remaining: next.remaining });
       return next;
     } catch {
+      const offline =
+        typeof navigator !== "undefined" && navigator.onLine === false;
       setTrial({ enabled: false, remaining: 0 });
-      return { enabled: false, remaining: 0 };
+      return { enabled: false, remaining: 0, offline };
     }
   };
   const [sheet, setSheet] = useState(true);
   const [shareUrl, setShareUrl] = useState("");
   const [modalError, setModalError] = useState("");
+  const [modalNotice, setModalNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [models, setModels] = useState<CatalogModel[]>([]);
   const [modelSearch, setModelSearch] = useState("");
@@ -481,7 +489,10 @@ export default function Orbsie() {
     if (modal) {
       dialog.current?.showModal();
       setModalError("");
-    } else dialog.current?.close();
+    } else {
+      dialog.current?.close();
+      setModalNotice("");
+    }
   }, [modal]);
   useEffect(() => {
     if (
@@ -600,6 +611,19 @@ export default function Orbsie() {
         )
           return;
         if (!allowance.enabled || allowance.remaining < 1) {
+          if (!textarea.current?.value) setPrompt(instruction);
+          if (allowance.offline) {
+            useOrb.getState().set({
+              error: connectionNoticeCopy("offline"),
+            });
+            return;
+          }
+          setModalNotice(
+            connectionNoticeCopy(
+              allowance.enabled ? "free-exhausted" : "free-unavailable",
+              { signedIn: Boolean(user) },
+            ),
+          );
           setModal(user || !capabilities.accounts ? "settings" : "account");
           return;
         }
@@ -708,6 +732,14 @@ export default function Orbsie() {
           ...(providerFailure === "PROVIDER_AUTH_REJECTED" ? { key: "" } : {}),
         });
         setOAuthMessage(useOrb.getState().error);
+        setModalNotice(
+          connectionNoticeCopy(
+            providerFailure === "PROVIDER_AUTH_REJECTED"
+              ? "provider-key-rejected"
+              : "provider-access-denied",
+            { signedIn: Boolean(user) },
+          ),
+        );
         if (!textarea.current?.value) setPrompt(instruction);
         setModal("settings");
       }
@@ -719,10 +751,14 @@ export default function Orbsie() {
           quotaExceeded &&
           generationWorld() &&
           connectionVersion.current === selectedConnectionVersion &&
-          submission.current.sequence === sequence &&
-          !textarea.current?.value
+          submission.current.sequence === sequence
         ) {
-          setPrompt(instruction);
+          if (!textarea.current?.value) setPrompt(instruction);
+          setModalNotice(
+            connectionNoticeCopy("free-exhausted", {
+              signedIn: Boolean(user),
+            }),
+          );
           setModal(user || !capabilities.accounts ? "settings" : "account");
         }
       }
@@ -1460,6 +1496,11 @@ export default function Orbsie() {
                   ? "Your ChatGPT account is connected for this browser session."
                   : "Connect your AI account or API key to create and edit your world."}
               </p>
+              {modalNotice && (
+                <div className="setup-note" role="status">
+                  {modalNotice}
+                </div>
+              )}
               <p className="fine-print">
                 Models are built and rendered in your browser. No installation
                 is required.
@@ -1832,6 +1873,11 @@ export default function Orbsie() {
                 Your draft is saved on this device. An account adds cloud saving
                 and ownership.
               </p>
+              {modalNotice && (
+                <div className="setup-note" role="status">
+                  {modalNotice}
+                </div>
+              )}
               {s.drafts.map((draft) => (
                 <button
                   key={draft.id}
