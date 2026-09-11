@@ -8,8 +8,11 @@ large logs, and copied diffs.
   Vercel AI Gateway and browser ChatGPT journeys.
 - Current source: `f88bcc9` is deployed to `https://orbsie.com`; `39710bd` records
   the release smoke. Verify `HEAD` on resume.
-- Active task: Provider evidence reconciliation is complete for Astra review.
-- Files changed: `docs/scope-audit.md` and this checkpoint only.
+- Active task: Input-game acceptance correction reviewed and ready to commit.
+- Files changed: provider browser harness, focused input-game tests, audit and checkpoint.
+- Harness evidence: canonical project validation accepts baked browser geometry;
+  actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
+  tests, syntax and safety-gate checks passed. No new live inference was run.
 - Recovery evidence: stale-load browser/release checks passed; 35 targeted
   recovery tests, type checking, production build and host-package verification
   passed. Journal/checkpoint replay and completed-run recovery are implemented;
@@ -17,14 +20,15 @@ large logs, and copied diffs.
 - Live OpenRouter evidence: Luna `openai/gpt-5.6-luna`, low/default,
   local-only key; deformation/vary passed at 512 tokens, flagship/garden/
   procedural passed at owner-authorized 4096 raised cap. Input-game attempts
-  failed recipe validation at 4096; no fallback or new cap is inferred.
+  hit one recipe failure and two overly narrow harness rejections at 4096;
+  the harness is now corrected, but live gameplay acceptance remains unproven.
 - Publication evidence: `2632a40` records live account/cloud/per-Orb deployment
   and signed-out playback of a deterministic protocol world; it made no model call.
 - External gaps: Gateway BYOK key/cap absent; browser ChatGPT consent and live
   subscription inference absent. Root also revalidated empty CUA surfaces and
   absent `AI_GATEWAY_TEST_KEY`/`AI_GATEWAY_API_KEY` without inspecting secrets.
-- Next action: obtain owner-authorized Gateway BYOK credentials and cap, then run
-  one bounded Luna browser create/edit/recovery/export/standalone acceptance.
+- Next action: run bounded input-game live acceptance within explicit call/cap
+  authorization; Gateway BYOK and browser ChatGPT consent remain separate gates.
 - Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
   deterministic publication or production smoke with provider E2E acceptance.
 

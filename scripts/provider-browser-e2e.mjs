@@ -16,6 +16,7 @@ import {
   statusFirstHostedGate,
   validateHostedNDJSON,
 } from "./lib/hosted-chatgpt-acceptance.mjs";
+import { loadHostedProjectValidator } from "./lib/hosted-project-validator.mjs";
 
 /**
  * Opt-in, provider-backed browser acceptance harness.
@@ -52,7 +53,7 @@ const DEFAULT_PROMPT =
 const DEFAULT_EDIT =
   "Change only the selected entity to bright pink #ff44aa. Preserve its geometry and every unrelated entity and environment. Commit the edit.";
 const INPUT_GAME_PROMPT =
-  "Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use procedural or custom geometry only, finish both entities as ready refined geometry, and preserve a simple playable presentation. Then define exactly three input game rules: right adds score 7, up wins, and left loses. Use no timers, collection triggers, or collection scoring. Commit the world.";
+  "Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use browser-manifold recipes (including custom mesh) or browser procedural/custom geometry only; do not use catalog assets, native Blender jobs, or remote URLs. Finish both entities as ready refined geometry, and preserve a simple playable presentation. Then define exactly three input game rules: right adds score 7, up wins, and left loses. Use no timers, collection triggers, or collection scoring. Commit the world.";
 const INPUT_GAME_EDIT =
   "Change only the selected entity's material to bright pink #ff44aa. Preserve its geometry, position, behavior, the complete three-rule input game, the other entity, and the environment. Commit the edit.";
 const REPORT_DIR = resolve(
@@ -1084,6 +1085,17 @@ async function waitForTrustedBrowserBake(page, entityId) {
   return snapshot.project;
 }
 
+async function verifyInputGameBrowserBakes(page, project) {
+  // Metadata acceptance above is paired with the existing IndexedDB digest
+  // check so generated entities are backed by the browser's actual GLB.
+  let verified = project;
+  for (const entity of project.entities) {
+    if (entity.geometry?.kind !== "generated") continue;
+    verified = await waitForTrustedBrowserBake(page, entity.id);
+  }
+  return verified;
+}
+
 async function setupOutputCap(page, config) {
   if (
     config.provider === "chatgpt-local" ||
@@ -1503,7 +1515,71 @@ function assertGenerationRequests(config, info) {
   }
 }
 
-function assertInputGameProject(project, label) {
+function assertBrowserGeneratedGeometryMetadata(geometry, label) {
+  assert(
+    geometry && geometry.kind === "generated",
+    `${label} must use generated geometry for a browser-built original model.`,
+  );
+  const job = geometry.job;
+  assert(
+    job && job.backend === "browser-manifold",
+    `${label} must retain a browser-manifold modeling job.`,
+  );
+  assert(
+    !Object.hasOwn(geometry, "url") &&
+      !Object.hasOwn(job, "url") &&
+      !Object.hasOwn(geometry.model ?? {}, "url"),
+    `${label} contains an external model URL.`,
+  );
+
+  const model = geometry.model;
+  assert(
+    model &&
+      model.source === "browser-manifold" &&
+      /^[a-f0-9]{64}$/.test(model.sha256) &&
+      Number.isInteger(model.bytes) &&
+      model.bytes > 0,
+    `${label} does not contain baked browser-manifold model metadata.`,
+  );
+
+  const authoring = job.authoring;
+  if (authoring === undefined) return;
+  const source = authoring.source;
+  assert(
+    source &&
+      source.version === 1 &&
+      source.language === "quickjs" &&
+      Number.isInteger(source.seed) &&
+      typeof source.code === "string" &&
+      source.code.length > 0 &&
+      /^[a-f0-9]{64}$/.test(authoring.sourceHash),
+    `${label} has invalid browser procedural source provenance.`,
+  );
+  const canonicalSource = {
+    version: source.version,
+    language: source.language,
+    code: source.code,
+    seed: source.seed,
+  };
+  assert.equal(
+    createHash("sha256")
+      .update(JSON.stringify(canonicalSource), "utf8")
+      .digest("hex"),
+    authoring.sourceHash,
+    `${label} has a mismatched browser procedural source hash.`,
+  );
+}
+
+export function assertInputGameProject(
+  project,
+  label = "Input game project",
+  canonicalProjectValidator,
+) {
+  if (canonicalProjectValidator)
+    assert(
+      canonicalProjectValidator(project),
+      `${label} failed canonical project validation.`,
+    );
   assert(
     project && Array.isArray(project.entities),
     `${label} has no entities.`,
@@ -1515,11 +1591,19 @@ function assertInputGameProject(project, label) {
   );
   const entityDescriptions = project.entities.map((entity) => {
     assert.equal(entity.stage, "ready", `${label} has unfinished geometry.`);
-    assert(
+    if (
       entity.geometry &&
-        ["tree", "mushroom", "custom"].includes(entity.geometry.kind),
-      `${label} contains a non-procedural/non-custom entity.`,
-    );
+      ["tree", "mushroom", "custom"].includes(entity.geometry.kind)
+    ) {
+      // Existing procedural/custom geometry remains a valid original object.
+    } else if (entity.geometry?.kind === "generated") {
+      assertBrowserGeneratedGeometryMetadata(
+        entity.geometry,
+        `${label} entity ${entity.id}`,
+      );
+    } else {
+      assert(false, `${label} contains a non-procedural/non-custom entity.`);
+    }
     assert.equal(
       entity.geometry.detail,
       "refined",
@@ -1527,13 +1611,18 @@ function assertInputGameProject(project, label) {
     );
     return `${entity.id} ${entity.label} ${entity.geometry.kind}`.toLowerCase();
   });
-  assert(
-    entityDescriptions.some((value) => value.includes("tree")),
-    `${label} has no tree entity.`,
+  const treeIndex = entityDescriptions.findIndex((value) =>
+    value.includes("tree"),
   );
-  assert(
-    entityDescriptions.some((value) => value.includes("mushroom")),
-    `${label} has no mushroom entity.`,
+  const mushroomIndex = entityDescriptions.findIndex((value) =>
+    value.includes("mushroom"),
+  );
+  assert(treeIndex >= 0, `${label} has no tree entity.`);
+  assert(mushroomIndex >= 0, `${label} has no mushroom entity.`);
+  assert.notEqual(
+    treeIndex,
+    mushroomIndex,
+    `${label} must contain separate tree and mushroom entities.`,
   );
 
   const game = project.game;
@@ -2927,6 +3016,7 @@ async function run(config) {
     hostedNDJSON: [],
     ndjsonReads: [],
     hostedProjectValidator: null,
+    projectValidator: null,
   };
   let storageState;
   try {
@@ -2934,10 +3024,10 @@ async function run(config) {
       config.provider === HOSTED_PROVIDER
         ? await readHostedAccountStorageState(config)
         : await readExplicitCloudStorageState(config);
-    if (config.provider === HOSTED_PROVIDER) {
-      const { loadHostedProjectValidator } =
-        await import("./lib/hosted-project-validator.mjs");
-      info.hostedProjectValidator = await loadHostedProjectValidator();
+    if (config.requireInputGame || config.provider === HOSTED_PROVIDER) {
+      info.projectValidator = await loadHostedProjectValidator();
+      if (config.provider === HOSTED_PROVIDER)
+        info.hostedProjectValidator = info.projectValidator;
     }
   } catch (error) {
     report.error = sanitizedError(error, config);
@@ -3154,8 +3244,16 @@ async function run(config) {
     if (config.requireInputGame) {
       report.inputGame = {
         status: "checking-creation",
-        ...assertInputGameProject(projectAfterCreation, "Created project"),
+        ...assertInputGameProject(
+          projectAfterCreation,
+          "Created project",
+          info.projectValidator,
+        ),
       };
+      projectAfterCreation = await verifyInputGameBrowserBakes(
+        page,
+        projectAfterCreation,
+      );
     }
     assert.equal(
       seedObserved,
@@ -3300,6 +3398,10 @@ async function run(config) {
     if (config.requireBrowserModel)
       projectAfterEdit = await waitForTrustedBrowserBake(page, targetBefore.id);
     if (config.requireInputGame) {
+      projectAfterEdit = await verifyInputGameBrowserBakes(
+        page,
+        projectAfterEdit,
+      );
       assert.deepEqual(
         projectAfterEdit.game,
         projectAfterCreation.game,
@@ -3307,7 +3409,11 @@ async function run(config) {
       );
       report.inputGame = {
         status: "passed",
-        ...assertInputGameProject(projectAfterEdit, "Edited project"),
+        ...assertInputGameProject(
+          projectAfterEdit,
+          "Edited project",
+          info.projectValidator,
+        ),
         preservedAcrossEdit: true,
       };
     }
@@ -3563,7 +3669,11 @@ async function run(config) {
     const recovered = await waitForSavedProject(page, expectedRevision);
     assert.equal(recovered.revision, expectedRevision);
     if (config.requireInputGame) {
-      assertInputGameProject(recovered, "Reloaded project");
+      assertInputGameProject(
+        recovered,
+        "Reloaded project",
+        info.projectValidator,
+      );
       assert.deepEqual(
         recovered.game,
         projectAfterEdit.game,
@@ -3600,7 +3710,11 @@ async function run(config) {
       evidenceDir,
     );
     if (config.requireInputGame) {
-      assertInputGameProject(zip.project, "Exported project");
+      assertInputGameProject(
+        zip.project,
+        "Exported project",
+        info.projectValidator,
+      );
       assert.deepEqual(
         zip.project.game,
         projectAfterEdit.game,
