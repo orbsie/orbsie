@@ -6,12 +6,14 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and ChatGPT journeys.
-- Current source: Working tree on main; verify HEAD and pending changes on resume.
-- Active task: Usage-saving execution policy, implemented by Luna and reviewed by Astra.
-- Files in scope: AGENTS.md, prompt.md execution policy, Luna role, this checkpoint.
-- Evidence completed: TOML parsing, whitespace and policy consistency checks passed.
-- Next action: Reconcile the existing app/storage recovery changes before resuming
-  a single bounded product task; do not assume those changes are reviewed.
+- Current source: main at ee4464c when task started; verify pending changes on resume.
+- Active task: Luna fix_stale_project_load reproduces and fixes asynchronous
+  history loading that can overwrite a newer selected world.
+- Files in scope: src/lib/store.ts and focused recovery tests; Astra owns this checkpoint.
+- Evidence completed: Review of e204bde/ee4464c; 41 targeted recovery/store tests
+  passed but did not cover out-of-order load completion. Worktree was clean.
+- Next action: Review the worker's reproduction, stale-load guards and targeted
+  evidence when its completion notification arrives. Do not poll unchanged status.
 - Blockers: Live provider acceptance is incomplete. Revalidate authorized account
   access and test credentials without exposing their values before a live milestone.
 
