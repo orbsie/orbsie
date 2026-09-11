@@ -6,12 +6,12 @@
   "reasoning": "low",
   "serviceTier": "default",
   "keyScope": "local-only",
-  "outputCapTokens": 512,
+  "outputCapTokens": 4096,
   "creation": {
     "status": "blocked",
     "operations": 0,
-    "firstReservationMs": null,
-    "seedObserved": false
+    "firstReservationMs": 3482,
+    "seedObserved": true
   },
   "edit": {
     "status": "blocked",
@@ -37,18 +37,14 @@
     "generationStatuses": [
       200
     ],
-    "generationDiagnostics": [
-      {
-        "code": "PROVIDER_STREAM_ERROR",
-        "diagnostic": "{\"operation\":0,\"issues\":[],\"providerStatus\":429}"
-      }
-    ],
+    "generationDiagnostics": [],
     "blockedExternalRequests": 0,
     "interceptedGeneration": false
   },
   "evidence": [
     "connection-model.png",
+    "intermediate-seed.png",
     "failure.png"
   ],
-  "error": "Generation stream reported PROVIDER_STREAM_ERROR before the first entity reservation."
+  "error": "Created project contains a non-procedural/non-custom entity."
 }

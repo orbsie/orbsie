@@ -1,8 +1,9 @@
-# OpenRouter input-game live attempts — blocked at the authorized cap
+# OpenRouter input-game live attempts — model recipe quality, routed upstream
 
-Two real OpenRouter Luna attempts of the harness input-game scenario (`ORBSIE_REQUIRE_INPUT_GAME=1`, exact model `openai/gpt-5.6-luna`, authorized `local-only` key, explicit 512-output-token cap, standard processing) both failed before a committed game:
+Three real OpenRouter Luna attempts of the harness input-game scenario under the OpenAI-first upstream routing (exact model `openai/gpt-5.6-luna`, authorized `local-only` key, 4096-token cap with `ORBSIE_OPENROUTER_RAISED_CAP=1`, standard processing), superseding the earlier 512-cap truncation boundary:
 
-1. HTTP 200 stream reached operation 4 and ended with a mid-record SyntaxError (`INVALID_SCENE_JSON`), consistent with the response truncating before the full two-entity, three-rule game fit the 512-token cap.
-2. HTTP 200 stream reported an upstream 429 (`PROVIDER_STREAM_ERROR`) before the first reservation.
+1. The model authored a browser-manifold tree recipe whose compose inputs touched — the kernel rejected `node tree contains touching or overlapping solids` (fail-closed, world preserved).
+2. The model created an entity with a protocol geometry kind instead of the gate's required procedural/custom-only geometry ("Created project contains a non-procedural/non-custom entity").
+3. Same as 2.
 
-No fallback model, cap increase, or funding change was attempted: the 512-token cap is the owner's standing authorization for this key. The input-game gate for OpenRouter remains open pending an explicitly authorized larger output budget; the equivalent ChatGPT input-game acceptance already passed under its own policy.
+All three streamed fully over HTTP 200 with zero provider errors — infrastructure is healthy; the failures are recipe-quality variance for the strict "original geometry + three input rules" combination. No further retries were made after three consecutive attempts. The gate remains open; the equivalent ChatGPT input-game acceptance already passed under its own policy, and the deterministic runtime/gameplay coverage is proven in the editor fixtures.
