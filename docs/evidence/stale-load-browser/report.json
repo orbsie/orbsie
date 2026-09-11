@@ -1,0 +1,21 @@
+{
+  "base": "http://127.0.0.1:3061",
+  "startedAt": "2026-09-11T04:38:23.066Z",
+  "checks": {
+    "heavyMount": "passed",
+    "recoveredDraft": "passed",
+    "storageEstimate": "passed",
+    "lazyDrafts": "passed",
+    "manualReset": "passed"
+  },
+  "seedOutcomes": [
+    "ok:orbsie-li",
+    "ok:orbsie-hi",
+    "ok:orbsie-dr"
+  ],
+  "seededLibraryKeys": 12,
+  "reloadToCanvasMs": 409,
+  "draftsVisible": 13,
+  "libKeys": 12,
+  "status": "passed"
+}
