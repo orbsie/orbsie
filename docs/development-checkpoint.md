@@ -21,8 +21,9 @@ large logs, and copied diffs.
   optional 32KiB recipe reach explicit follow-up requests across provider paths.
   Last-good geometry preserved; no automatic inference. 67 focused tests and
   typecheck passed. Feedback is transient and does not survive reload.
-- No active worker. Next: production build and package integration checks for
-  feedback transport, then a deterministic browser correction milestone.
+- Production build and ChatGPT host-package verification passed for `33148de`.
+- Active Luna worker: `feedback_browser_acceptance`, deterministic real-worker
+  browser rejection/correction flow, preserving last-good geometry. No live calls.
 - Production/player build and host-package verification passed; deployment and
   production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches
