@@ -1,0 +1,4640 @@
+{
+  "status": "failed",
+  "mode": "saved-openrouter-flagship-desktop-platform-landing-carry",
+  "provider": "openrouter",
+  "liveProvider": false,
+  "startedAt": "2026-09-11T23:47:14.967Z",
+  "finishedAt": "2026-09-11T23:47:25.221Z",
+  "repoHead": "e474878072c8effe7987ef97028c62bd691448ce",
+  "zip": {
+    "path": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+    "sha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
+    "bytes": 957813,
+    "projectSha256": "fdaabbd42a80478b3395e9220d5385706d646f457e523e2a7010ece3d47837a0",
+    "runtimeSha256": "3d2fa966dc49a46eee64bd453e4db5861f57b565d71ec953f26b05c8ae4c7742",
+    "runtimeCssSha256": "0174f4a45f76e1adaa103d5f1275bdbe1ae1c5e4fe710849428b16940b152e76",
+    "projectId": "7ae95eba-aeca-4474-87d4-342d0dc33aa6",
+    "projectRevision": 30,
+    "title": "A pocketful of sunshine"
+  },
+  "runtime": {
+    "runtimeSha256": "3d2fa966dc49a46eee64bd453e4db5861f57b565d71ec953f26b05c8ae4c7742",
+    "runtimeBytes": 1770481,
+    "runtimeCssSha256": "0174f4a45f76e1adaa103d5f1275bdbe1ae1c5e4fe710849428b16940b152e76",
+    "runtimeCssBytes": 1487
+  },
+  "platforms": [
+    {
+      "id": "platform-1",
+      "label": "Moving Platform 1",
+      "position": [
+        -1,
+        1,
+        5.5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 1,
+        "amplitude": 2,
+        "axis": "x"
+      }
+    },
+    {
+      "id": "platform-2",
+      "label": "Moving Platform 2",
+      "position": [
+        2,
+        1,
+        5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 1.2,
+        "amplitude": 1.5,
+        "axis": "z"
+      }
+    },
+    {
+      "id": "platform-3",
+      "label": "Moving Platform 3",
+      "position": [
+        4.5,
+        1,
+        4.5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 0.8,
+        "amplitude": 1.2,
+        "axis": "x"
+      }
+    }
+  ],
+  "driverExperiments": 3,
+  "maxDriverExperiments": 3,
+  "inferenceCalls": 0,
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "pageErrors": [],
+  "serverRequests": [
+    {
+      "method": "GET",
+      "pathname": "index.html"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.css"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "project.json"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/5e644323088e8bcd47fe227e0acd3beafada787bd61cc2d7bcb13d36ec8ac210.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/e6bfbfc97910b5bc562ac0bfead31f6d6063156d55dbedcee1d24deb82fb89bc.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/platform_grass.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_default.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/34af330e88a7239b618bba915d1186b8df53765be5afe14a850997656f9ed944.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/af2c7c3b269af48cdc2692e29e1b12b22f0a42d777325089acb2ed461f921f02.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_pineTallA.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "index.html"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.css"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "project.json"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/5e644323088e8bcd47fe227e0acd3beafada787bd61cc2d7bcb13d36ec8ac210.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/af2c7c3b269af48cdc2692e29e1b12b22f0a42d777325089acb2ed461f921f02.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/34af330e88a7239b618bba915d1186b8df53765be5afe14a850997656f9ed944.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/platform_grass.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_default.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/e6bfbfc97910b5bc562ac0bfead31f6d6063156d55dbedcee1d24deb82fb89bc.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_pineTallA.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "index.html"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.css"
+    },
+    {
+      "method": "GET",
+      "pathname": "runtime.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "project.json"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/5e644323088e8bcd47fe227e0acd3beafada787bd61cc2d7bcb13d36ec8ac210.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/34af330e88a7239b618bba915d1186b8df53765be5afe14a850997656f9ed944.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/af2c7c3b269af48cdc2692e29e1b12b22f0a42d777325089acb2ed461f921f02.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/generated/e6bfbfc97910b5bc562ac0bfead31f6d6063156d55dbedcee1d24deb82fb89bc.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/platform_grass.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_default.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "models/kenney/nature-kit/tree_pineTallA.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "asset-geometry-worker.js"
+    }
+  ],
+  "runs": [
+    {
+      "id": "platform-1",
+      "label": "Moving Platform 1",
+      "behavior": {
+        "type": "move",
+        "speed": 1,
+        "amplitude": 2,
+        "axis": "x"
+      },
+      "geometrySource": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "inputMethod": "desktop keyboard",
+      "mappingUuid": "c2bfcbeb-40a3-44ff-86f7-7932afe90b93",
+      "status": "passed",
+      "inputLog": [
+        {
+          "atPerformanceMs": 819.7000000476837,
+          "phase": "approach",
+          "keys": [
+            "a",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 887.6000000238419,
+          "phase": "approach",
+          "keys": [
+            "a",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 961.7000000476837,
+          "phase": "pre-jump-release",
+          "keys": []
+        },
+        {
+          "atPerformanceMs": 1041.7000000476837,
+          "phase": "jump",
+          "keys": [
+            " "
+          ]
+        },
+        {
+          "atPerformanceMs": 1124.7000000476837,
+          "phase": "jump-release",
+          "keys": []
+        },
+        {
+          "atPerformanceMs": 1146.1000000238419,
+          "phase": "airborne-correction",
+          "keys": [
+            "d",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 1208.2000000476837,
+          "phase": "airborne-correction",
+          "keys": [
+            "d",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 1269.1000000238419,
+          "phase": "airborne-correction",
+          "keys": [
+            "d",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 1488.800000011921,
+          "phase": "airborne-correction",
+          "keys": [
+            "d",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 1547.2000000476837,
+          "phase": "airborne-correction",
+          "keys": [
+            "d"
+          ]
+        },
+        {
+          "atPerformanceMs": 1604,
+          "phase": "airborne-correction",
+          "keys": [
+            "d"
+          ]
+        },
+        {
+          "atPerformanceMs": 1655.7000000476837,
+          "phase": "airborne-correction",
+          "keys": [
+            "d"
+          ]
+        },
+        {
+          "atPerformanceMs": 1715.300000011921,
+          "phase": "airborne-correction",
+          "keys": [
+            "d"
+          ]
+        },
+        {
+          "atPerformanceMs": 1776.1000000238419,
+          "phase": "airborne-correction",
+          "keys": [
+            "d",
+            "s"
+          ]
+        },
+        {
+          "atPerformanceMs": 1838.6000000238419,
+          "phase": "airborne-correction",
+          "keys": [
+            "d"
+          ]
+        },
+        {
+          "atPerformanceMs": 1897,
+          "phase": "airborne-correction",
+          "keys": []
+        },
+        {
+          "atPerformanceMs": 1954.9000000357628,
+          "phase": "airborne-correction",
+          "keys": []
+        },
+        {
+          "atPerformanceMs": 2013.300000011921,
+          "phase": "landing-release",
+          "keys": []
+        },
+        {
+          "atPerformanceMs": 2014,
+          "phase": "carry-release",
+          "keys": []
+        }
+      ],
+      "approachSamples": [
+        {
+          "atPerformanceMs": 806,
+          "player": {
+            "center": [
+              0,
+              0.41999999999999993,
+              5
+            ],
+            "bounds": {
+              "min": [
+                -0.2199999988079071,
+                0.019999994039535507,
+                4.790767565369606
+              ],
+              "max": [
+                0.2199999988079071,
+                0.8200000059604644,
+                5.209232434630394
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 806,
+              "center": [
+                -0.20788671703367867,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.8331247004988733,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.417351266431516,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 806,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.708662423608835
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.419094595430429
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.99823025178724
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 806,
+              "center": [
+                4.885181050947692,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.259943067482497,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.510419034412886,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "approach"
+        },
+        {
+          "atPerformanceMs": 877.3000000119209,
+          "player": {
+            "center": [
+              -0.05630790622854015,
+              0.46499519674291045,
+              5.191909925996959
+            ],
+            "bounds": {
+              "min": [
+                -0.32631602522700864,
+                0.06499519078244603,
+                4.929202324250775
+              ],
+              "max": [
+                0.21370021276992834,
+                0.8649952027033749,
+                5.454617527743143
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 877.3000000119209,
+              "center": [
+                -0.08717831613990423,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.7124162996050989,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.5380596673252904,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 877.3000000119209,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.812391676241406
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.522823848063
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.101959504419812
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 877.3000000119209,
+              "center": [
+                4.945291271209346,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.320053287744152,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.570529254674541,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "approach"
+        },
+        {
+          "atPerformanceMs": 946.6000000238419,
+          "player": {
+            "center": [
+              -0.13119742151249852,
+              0.4550017761665901,
+              5.447150127572914
+            ],
+            "bounds": {
+              "min": [
+                -0.401205540510967,
+                0.05500177020612562,
+                5.1844425258267295
+              ],
+              "max": [
+                0.13881069748596994,
+                0.8550017821270546,
+                5.709857729319098
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 946.6000000238419,
+              "center": [
+                0.029137272250474022,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.5961007112147206,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.6543752557156687,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 946.6000000238419,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.910673176679283
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.621105348500877
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.200241004857689
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 946.6000000238419,
+              "center": [
+                5.0039658836798875,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.378727900214693,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.6292038671450815,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "approach"
+        }
+      ],
+      "landingSamples": [
+        {
+          "atPerformanceMs": 1126.9000000357628,
+          "player": {
+            "center": [
+              -0.15180611520556914,
+              0.8280000000000001,
+              5.517389160533555
+            ],
+            "bounds": {
+              "min": [
+                -0.42181423420403763,
+                0.4279999940395356,
+                5.254681558787371
+              ],
+              "max": [
+                0.11820200379289938,
+                1.2280000059604645,
+                5.780096762279739
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1126.9000000357628,
+              "center": [
+                0.30696688092167335,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.3182711025435213,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.932204864386868,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1126.9000000357628,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.136159739270412
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.846591911092006
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.425727567448818
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1126.9000000357628,
+              "center": [
+                5.148340934455849,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.523102950990655,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.773578917921044,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1194.5,
+          "player": {
+            "center": [
+              -0.15180611520556914,
+              0.9565462500000002,
+              5.517389160533555
+            ],
+            "bounds": {
+              "min": [
+                -0.42181423420403763,
+                0.5565462440395357,
+                5.254681558787371
+              ],
+              "max": [
+                0.11820200379289938,
+                1.3565462559604646,
+                5.780096762279739
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1194.5,
+              "center": [
+                0.35110913544421696,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.2741288480209777,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.9763471189094116,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1194.5,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.170376320886215
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.880808492707809
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.45994414906462
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1194.5,
+              "center": [
+                5.172023418352616,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.546785434887421,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.79726140181781,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1255.7000000476837,
+          "player": {
+            "center": [
+              -0.15180611520556914,
+              0.9565462500000002,
+              5.517389160533555
+            ],
+            "bounds": {
+              "min": [
+                -0.42181423420403763,
+                0.5565462440395357,
+                5.254681558787371
+              ],
+              "max": [
+                0.11820200379289938,
+                1.3565462559604646,
+                5.780096762279739
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1255.7000000476837,
+              "center": [
+                0.35110913544421696,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.2741288480209777,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.9763471189094116,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1255.7000000476837,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.170376320886215
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.880808492707809
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.45994414906462
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1255.7000000476837,
+              "center": [
+                5.172023418352616,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.546785434887421,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.79726140181781,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1476.800000011921,
+          "player": {
+            "center": [
+              0.0017218255919973502,
+              1.124485147853358,
+              5.562435485516387
+            ],
+            "bounds": {
+              "min": [
+                -0.26098577615418694,
+                0.7244851418928935,
+                5.292427366517918
+              ],
+              "max": [
+                0.26442942733818164,
+                1.5244851538138224,
+                5.8324436045148556
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1476.800000011921,
+              "center": [
+                0.5716230613490885,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.0536149221161063,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.1968610448142831,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1476.800000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.331230710098669
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.041662881920264
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.620798538277075
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1476.800000011921,
+              "center": [
+                5.295086145487252,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.669848162022058,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.920324128952447,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1536.4000000357628,
+          "player": {
+            "center": [
+              0.16407762303117884,
+              1.2852202808805038,
+              5.6100719741991565
+            ],
+            "bounds": {
+              "min": [
+                -0.09862997871500545,
+                0.8852202749200393,
+                5.340063855200688
+              ],
+              "max": [
+                0.42678522477736314,
+                1.6852202868409683,
+                5.880080093197625
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1536.4000000357628,
+              "center": [
+                0.7778907082800808,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.15265272481488623,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.4031286917452754,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1536.4000000357628,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.456141858201936
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.16657403002353
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.745709686380342
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1536.4000000357628,
+              "center": [
+                5.422582104232594,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.7973441207673995,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.047820087697788,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1595.2000000476837,
+          "player": {
+            "center": [
+              0.31760556382874533,
+              1.381071564368877,
+              5.655118299181988
+            ],
+            "bounds": {
+              "min": [
+                0.054897962082561036,
+                0.9810715584084124,
+                5.38511018018352
+              ],
+              "max": [
+                0.5803131655749296,
+                1.7810715703293414,
+                5.925126418180457
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1595.2000000476837,
+              "center": [
+                0.826128232547785,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.20089024908259023,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.4513662160129797,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1595.2000000476837,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.478525499410484
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.188957671232078
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.76809332758889
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1595.2000000476837,
+              "center": [
+                5.455795499550868,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.8305575160856735,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.081033483016062,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1650.1000000238419,
+          "player": {
+            "center": [
+              0.4580187737312049,
+              1.436902588373313,
+              5.5784102130053155
+            ],
+            "bounds": {
+              "min": [
+                0.16892641979629902,
+                1.0369025824128486,
+                5.2850306777694485
+              ],
+              "max": [
+                0.7471111276661109,
+                1.8369025943337776,
+                5.8717897482411825
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1650.1000000238419,
+              "center": [
+                0.8760694838940426,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.25083150042884783,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.5013074673592373,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1650.1000000238419,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.496634808624794
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.207066980446388
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.7862026368032
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1650.1000000238419,
+              "center": [
+                5.492751576586302,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.867513593121108,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.117989560051497,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1702.9000000357628,
+          "player": {
+            "center": [
+              0.4580187737312049,
+              1.436902588373313,
+              5.5784102130053155
+            ],
+            "bounds": {
+              "min": [
+                0.16892641979629902,
+                1.0369025824128486,
+                5.2850306777694485
+              ],
+              "max": [
+                0.7471111276661109,
+                1.8369025943337776,
+                5.8717897482411825
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1702.9000000357628,
+              "center": [
+                0.8760694838940426,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.25083150042884783,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.5013074673592373,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1702.9000000357628,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.496634808624794
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.207066980446388
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.7862026368032
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1702.9000000357628,
+              "center": [
+                5.492751576586302,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.867513593121108,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.117989560051497,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1763.1000000238419,
+          "player": {
+            "center": [
+              0.5984319836336647,
+              1.5021762720942136,
+              5.501702126828643
+            ],
+            "bounds": {
+              "min": [
+                0.3093396296987587,
+                1.102176266133749,
+                5.2083225915927756
+              ],
+              "max": [
+                0.8875243375685706,
+                1.902176278054678,
+                5.79508166206451
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1763.1000000238419,
+              "center": [
+                0.9459096994335197,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.3206717159683251,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.5711476828987143,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1763.1000000238419,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.505815129267692
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.216247301089286
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.7953829574460975
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1763.1000000238419,
+              "center": [
+                5.552751205459819,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.927513221994624,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.177989188925013,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1824.1000000238419,
+          "player": {
+            "center": [
+              0.7519599244312312,
+              1.5450085493206964,
+              5.5467484518114745
+            ],
+            "bounds": {
+              "min": [
+                0.48925232268504687,
+                1.145008543360232,
+                5.276740332813006
+              ],
+              "max": [
+                1.0146675261774154,
+                1.945008555281161,
+                5.816756570809943
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1824.1000000238419,
+              "center": [
+                0.9774527117282592,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.35221472826306466,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.6026906951934539,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1824.1000000238419,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.494720483803952
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.205152655625546
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.784288311982357
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1824.1000000238419,
+              "center": [
+                5.5878191242069875,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.9625811407417935,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.213057107672182,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1886.1000000238419,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.5412151333744204,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.141215127413956,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.9412151393348849,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1886.1000000238419,
+              "center": [
+                0.9934466489791836,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.3682086655139888,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.6186846324443782,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1886.1000000238419,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.476052227360123
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.186484399181717
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.765620055538529
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1886.1000000238419,
+              "center": [
+                5.612495121801347,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.987257138336153,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.237733105266542,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 1944.800000011921,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.5412151333744204,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.141215127413956,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.9412151393348849,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 1944.800000011921,
+              "center": [
+                0.9934466489791836,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.3682086655139888,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.6186846324443782,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 1944.800000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.476052227360123
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.186484399181717
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.765620055538529
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 1944.800000011921,
+              "center": [
+                5.612495121801347,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.987257138336153,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.237733105266542,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        },
+        {
+          "atPerformanceMs": 2002.800000011921,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.4858491499939028,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.0858491440334384,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.8858491559543673,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2002.800000011921,
+              "center": [
+                1.0012265633783712,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.37598857991317647,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.626464546843566,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2002.800000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.4142922443799995
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.124724416201594
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.703860072558405
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2002.800000011921,
+              "center": [
+                5.652570137901332,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.027332154436138,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.277808121366527,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "jump"
+        }
+      ],
+      "carrySamples": [
+        {
+          "atPerformanceMs": 2015.300000011921,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.4858491499939028,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.0858491440334384,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.8858491559543673,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2015.300000011921,
+              "center": [
+                1.0012265633783712,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.37598857991317647,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.626464546843566,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2015.300000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.4142922443799995
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.124724416201594
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.703860072558405
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2015.300000011921,
+              "center": [
+                5.652570137901332,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.027332154436138,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.277808121366527,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2097.2000000476837,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.4858491499939028,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.0858491440334384,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.8858491559543673,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2097.2000000476837,
+              "center": [
+                1.0012265633783712,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.37598857991317647,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.626464546843566,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2097.2000000476837,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.4142922443799995
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.124724416201594
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.703860072558405
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2097.2000000476837,
+              "center": [
+                5.652570137901332,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.027332154436138,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.277808121366527,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2178.400000035763,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.4427691499867503,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.0427691440262858,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.8427691559472148,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2178.400000035763,
+              "center": [
+                0.9767232025746144,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.3514852191094199,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.601961186039809,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2178.400000035763,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.318435743323544
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  6.028867915145138
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.60800357150195
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2178.400000035763,
+              "center": [
+                5.681487649492283,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.056249666027089,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.306725632957478,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2260.600000023842,
+          "player": {
+            "center": [
+              0.8923731343336909,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.6032807803987849,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                1.1814654882685969,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2260.600000023842,
+              "center": [
+                0.9529781076509172,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.3277401241857226,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.5782160911161118,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2260.600000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.260267506646864
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.970699678468458
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.54983533482527
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2260.600000023842,
+              "center": [
+                5.691118963363056,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.065880979897862,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.316356946828251,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2343.2000000476837,
+          "player": {
+            "center": [
+              0.826003267651414,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.5369109137165079,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                1.11509562158632,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2343.2000000476837,
+              "center": [
+                0.8866082409686402,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.26137025750344567,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.5118462244338349,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2343.2000000476837,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.1299730374544135
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.840405209276008
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.419540865632819
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2343.2000000476837,
+              "center": [
+                5.701239486081295,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.0760015026161005,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.326477469546489,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2423.7000000476837,
+          "player": {
+            "center": [
+              0.7689478120815578,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.479855458146652,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                1.0580401660164638,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2423.7000000476837,
+              "center": [
+                0.8295527853987845,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.20431480193358975,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.4547907688639792,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2423.7000000476837,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                6.033614049725594
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.744046221547189
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.323181877904
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2423.7000000476837,
+              "center": [
+                5.701980278598263,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.076742295133069,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.327218262063458,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2501.800000011921,
+          "player": {
+            "center": [
+              0.6612480752359627,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.3721557213010568,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.9503404291708687,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2501.800000011921,
+              "center": [
+                0.7218530485531891,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.09661506508799456,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.3470910320183838,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2501.800000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.870095798220274
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.580527970041868
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.15966362639868
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2501.800000011921,
+              "center": [
+                5.694371659923574,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.06913367645838,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.319609643388769,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2581.5,
+          "player": {
+            "center": [
+              0.639530228034216,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.35043787409931004,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.928622581969122,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2581.5,
+              "center": [
+                0.7001352013514424,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.07489721788624781,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.325373184816637,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2581.5,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.839069012069434
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.549501183891028
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.1286368402478395
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2581.5,
+              "center": [
+                5.691911554467367,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.066673571002172,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.317149537932561,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2661.5,
+          "player": {
+            "center": [
+              0.639530228034216,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.35043787409931004,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.928622581969122,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2661.5,
+              "center": [
+                0.7001352013514424,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  0.07489721788624781,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.325373184816637,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2661.5,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.839069012069434
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.549501183891028
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  6.1286368402478395
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2661.5,
+              "center": [
+                5.691911554467367,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.066673571002172,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.317149537932561,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2739.800000011921,
+          "player": {
+            "center": [
+              0.39281469450979245,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.1037223405748865,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.6819070484446984,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2739.800000011921,
+              "center": [
+                0.453419667827019,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.17181831563817573,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.0786576512922137,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2739.800000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.515071715647696
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.22550388746929
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.804639543826101
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2739.800000011921,
+              "center": [
+                5.651108591169601,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.025870607704407,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.276346574634796,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2820.100000023842,
+          "player": {
+            "center": [
+              0.35612156473009204,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                0.06702921079518609,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.645213918664998,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2820.100000023842,
+              "center": [
+                0.4167265380473186,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.20851144541787614,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  1.0419645215125133,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2820.100000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.4702905788263125
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.180722750647907
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.759858407004718
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2820.100000023842,
+              "center": [
+                5.643563454238732,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  5.018325470773538,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.268801437703927,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2898.5,
+          "player": {
+            "center": [
+              0.21993314738580472,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.06915920654910124,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.5090255013207107,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2898.5,
+              "center": [
+                0.2805381207030312,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.34469986276216347,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.9057761041682258,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2898.5,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.309950812297546
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.0203829841191405
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.599518640475952
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2898.5,
+              "center": [
+                5.613146318017632,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.987908334552438,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.238384301482827,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 2978.600000023842,
+          "player": {
+            "center": [
+              0.014140850379362635,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.2749515035555433,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.3032332043142686,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 2978.600000023842,
+              "center": [
+                0.07474582369658911,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.5504921597686055,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.6999838071617838,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 2978.600000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.082708221446461
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.793140393268056
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.372276049624867
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 2978.600000023842,
+              "center": [
+                5.561215974995353,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.935977991530158,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.186453958460547,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3059.100000023842,
+          "player": {
+            "center": [
+              -0.09759872964391814,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.3866910835788241,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.19149362429098782,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3059.100000023842,
+              "center": [
+                -0.03699375632669166,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.6622317397918863,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.588244227138503,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3059.100000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.965926056767263
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.676358228588858
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.255493884945669
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3059.100000023842,
+              "center": [
+                5.5304976389836575,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.905259655518463,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.1557356224488515,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3141,
+          "player": {
+            "center": [
+              -0.21809961323828742,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.5071919671731934,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                0.07099274069661854,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3141,
+              "center": [
+                -0.15749463992106094,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.7827326233862556,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.4677433435441337,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3141,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.844735940772429
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.555168112594023
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.134303768950835
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3141,
+              "center": [
+                5.495609932371128,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.870371948905933,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.120847915836322,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3222.300000011921,
+          "player": {
+            "center": [
+              -0.44293305921063697,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.7320254131455429,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                -0.15384070527573102,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3222.300000011921,
+              "center": [
+                -0.38232808589341055,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -1.0075660693586053,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.24290989757178416,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3222.300000011921,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.631015204845784
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.341447376667379
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  4.92058303302419
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3222.300000011921,
+              "center": [
+                5.42601702397627,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.800779040511076,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.051255007441465,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3303.100000023842,
+          "player": {
+            "center": [
+              -0.5589239802207749,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.8480163341556809,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                -0.269831626285869,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3303.100000023842,
+              "center": [
+                -0.4983190069035485,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -1.1235569903687432,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.1269189765616462,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3303.100000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.526833128749354
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.237265300570948
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  4.81640095692776
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3303.100000023842,
+              "center": [
+                5.38794398784988,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.762706004384686,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  6.013181971315075,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3384.5,
+          "player": {
+            "center": [
+              -0.656339582131504,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -0.94543193606641,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                -0.36724722819659805,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3384.5,
+              "center": [
+                -0.5957346088142776,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -1.2209725922794723,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.029503374650917125,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3384.5,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.442471603153379
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  4.152903774974973
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  4.732039431331785
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3384.5,
+              "center": [
+                5.354858358160278,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.729620374695084,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.980096341625472,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3464.100000023842,
+          "player": {
+            "center": [
+              -0.8903798667917728,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -1.1794722207266788,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                -0.601287512856867,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3464.100000023842,
+              "center": [
+                -0.8297748934745466,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -1.4550128769397412,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  -0.2045369100093518,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3464.100000023842,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.251490124590077
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568111
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  3.961922296411672
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  4.541057952768483
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3464.100000023842,
+              "center": [
+                5.271246571944426,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.646008588479231,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.89648455540962,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        },
+        {
+          "atPerformanceMs": 3545.900000035763,
+          "player": {
+            "center": [
+              -1.0013894245262267,
+              1.44062499895,
+              5.470040365634802
+            ],
+            "bounds": {
+              "min": [
+                -1.2904817784611327,
+                1.0406249929895355,
+                5.1766608303989345
+              ],
+              "max": [
+                -0.7122970705913207,
+                1.8406250049104644,
+                5.763419900870669
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 3545.900000035763,
+              "center": [
+                -0.9407844512090002,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -1.5660224346741949,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  -0.31554646774380557,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 3545.900000035763,
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                4.166753370144513
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568111
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  3.877185541966108
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  4.456321198322919
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 3545.900000035763,
+              "center": [
+                5.229524107465034,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.60428612399984,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.854762090930229,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "released-input"
+        }
+      ],
+      "beforeJump": {
+        "atPerformanceMs": 1033.5,
+        "player": {
+          "center": [
+            -0.15180611520556914,
+            0.449270542709041,
+            5.517389160533555
+          ],
+          "bounds": {
+            "min": [
+              -0.42181423420403763,
+              0.04927053674857651,
+              5.254681558787371
+            ],
+            "max": [
+              0.11820200379289938,
+              0.8492705486695055,
+              5.780096762279739
+            ]
+          }
+        },
+        "platforms": {
+          "platform-1": {
+            "atPerformanceMs": 1033.5,
+            "center": [
+              0.06037075654300128,
+              0.9978124992921948,
+              5.506432151794433
+            ],
+            "size": [
+              1.2504759669303893,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                -0.5648672269221934,
+                0.9874999998137355,
+                5.2168643236160275
+              ],
+              "max": [
+                0.6856087400081959,
+                1.0081249987706542,
+                5.795999979972839
+              ]
+            },
+            "top": 1.0081249987706542
+          },
+          "platform-2": {
+            "atPerformanceMs": 1033.5,
+            "center": [
+              2.0022379517555233,
+              0.9978124992921948,
+              5.936734934306956
+            ],
+            "size": [
+              1.2504759669303893,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                1.376999968290329,
+                0.9874999998137355,
+                5.64716710612855
+              ],
+              "max": [
+                2.627475935220718,
+                1.0081249987706542,
+                6.2263027624853615
+              ]
+            },
+            "top": 1.0081249987706542
+          },
+          "platform-3": {
+            "atPerformanceMs": 1033.5,
+            "center": [
+              5.019870282459861,
+              0.9978124992921948,
+              4.506432151794433
+            ],
+            "size": [
+              1.2504759669303889,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                4.394632298994667,
+                0.9874999998137355,
+                4.2168643236160275
+              ],
+              "max": [
+                5.645108265925056,
+                1.0081249987706542,
+                4.795999979972839
+              ]
+            },
+            "top": 1.0081249987706542
+          }
+        },
+        "phase": "before-jump"
+      },
+      "landedAt": {
+        "atPerformanceMs": 2002.800000011921,
+        "player": {
+          "center": [
+            0.8923731343336909,
+            1.4858491499939028,
+            5.470040365634802
+          ],
+          "bounds": {
+            "min": [
+              0.6032807803987849,
+              1.0858491440334384,
+              5.1766608303989345
+            ],
+            "max": [
+              1.1814654882685969,
+              1.8858491559543673,
+              5.763419900870669
+            ]
+          }
+        },
+        "platforms": {
+          "platform-1": {
+            "atPerformanceMs": 2002.800000011921,
+            "center": [
+              1.0012265633783712,
+              0.9978124992921948,
+              5.506432151794433
+            ],
+            "size": [
+              1.2504759669303893,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                0.37598857991317647,
+                0.9874999998137355,
+                5.2168643236160275
+              ],
+              "max": [
+                1.626464546843566,
+                1.0081249987706542,
+                5.795999979972839
+              ]
+            },
+            "top": 1.0081249987706542
+          },
+          "platform-2": {
+            "atPerformanceMs": 2002.800000011921,
+            "center": [
+              2.0022379517555233,
+              0.9978124992921948,
+              6.4142922443799995
+            ],
+            "size": [
+              1.2504759669303893,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                1.376999968290329,
+                0.9874999998137355,
+                6.124724416201594
+              ],
+              "max": [
+                2.627475935220718,
+                1.0081249987706542,
+                6.703860072558405
+              ]
+            },
+            "top": 1.0081249987706542
+          },
+          "platform-3": {
+            "atPerformanceMs": 2002.800000011921,
+            "center": [
+              5.652570137901332,
+              0.9978124992921948,
+              4.506432151794433
+            ],
+            "size": [
+              1.2504759669303889,
+              0.020624998956918716,
+              0.5791356563568115
+            ],
+            "bounds": {
+              "min": [
+                5.027332154436138,
+                0.9874999998137355,
+                4.2168643236160275
+              ],
+              "max": [
+                6.277808121366527,
+                1.0081249987706542,
+                4.795999979972839
+              ]
+            },
+            "top": 1.0081249987706542
+          }
+        },
+        "phase": "jump"
+      },
+      "inputReleasedBeforeCarrySampling": true,
+      "analysis": {
+        "axis": "x",
+        "onTopSampleCount": 21,
+        "totalSamples": 21,
+        "maximumPlatformDisplacement": 1.9420110145873715,
+        "maximumPlayerDisplacement": 1.8937625588599176,
+        "maximumDisplacementError": 0.04824845572745384,
+        "comparison": {
+          "fromPerformanceMs": 2002.800000011921,
+          "toPerformanceMs": 3545.900000035763,
+          "platformDelta": -1.9420110145873715,
+          "playerDelta": -1.8937625588599176,
+          "error": 0.04824845572745384
+        },
+        "landed": true,
+        "carried": true,
+        "disposition": "landed-and-carried"
+      },
+      "screenshot": "platform-1-released.png"
+    },
+    {
+      "id": "platform-2",
+      "label": "Moving Platform 2",
+      "behavior": {
+        "type": "move",
+        "speed": 1.2,
+        "amplitude": 1.5,
+        "axis": "z"
+      },
+      "geometrySource": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "inputMethod": "desktop keyboard",
+      "mappingUuid": "69ef82b2-c22f-40e3-bd92-aec5044180fc",
+      "status": "failed",
+      "inputLog": [],
+      "approachSamples": [
+        {
+          "atPerformanceMs": 1762.5,
+          "player": {
+            "center": [
+              0,
+              0.41999999999999993,
+              5
+            ],
+            "bounds": {
+              "min": [
+                -0.2199999988079071,
+                0.019999994039535507,
+                4.790767565369606
+              ],
+              "max": [
+                0.2199999988079071,
+                0.8200000059604644,
+                5.209232434630394
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": null,
+            "platform-2": null,
+            "platform-3": null
+          },
+          "phase": "approach"
+        }
+      ],
+      "landingSamples": [],
+      "carrySamples": [],
+      "failure": "Error: Missing rendered telemetry for platform-2."
+    },
+    {
+      "id": "platform-3",
+      "label": "Moving Platform 3",
+      "behavior": {
+        "type": "move",
+        "speed": 0.8,
+        "amplitude": 1.2,
+        "axis": "x"
+      },
+      "geometrySource": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "inputMethod": "desktop keyboard",
+      "mappingUuid": "a313fb59-84c7-4a52-878d-bbc93a7abec4",
+      "status": "failed",
+      "inputLog": [],
+      "approachSamples": [
+        {
+          "atPerformanceMs": 1726,
+          "player": {
+            "center": [
+              0,
+              0.41999999999999993,
+              5
+            ],
+            "bounds": {
+              "min": [
+                -0.2199999988079071,
+                0.019999994039535507,
+                4.790767565369606
+              ],
+              "max": [
+                0.2199999988079071,
+                0.8200000059604644,
+                5.209232434630394
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": null,
+            "platform-2": null,
+            "platform-3": null
+          },
+          "phase": "approach"
+        }
+      ],
+      "landingSamples": [],
+      "carrySamples": [],
+      "failure": "Error: Missing rendered telemetry for platform-3."
+    }
+  ],
+  "renderedPlatformMapping": {
+    "platform-1": "c2bfcbeb-40a3-44ff-86f7-7932afe90b93",
+    "platform-2": "69ef82b2-c22f-40e3-bd92-aec5044180fc",
+    "platform-3": "a313fb59-84c7-4a52-878d-bbc93a7abec4"
+  },
+  "initialRenderedTelemetry": {
+    "atPerformanceMs": 790.8000000119209,
+    "player": {
+      "center": [
+        0,
+        0.41999999999999993,
+        5
+      ],
+      "bounds": {
+        "min": [
+          -0.2199999988079071,
+          0.019999994039535507,
+          4.790767565369606
+        ],
+        "max": [
+          0.2199999988079071,
+          0.8200000059604644,
+          5.209232434630394
+        ]
+      }
+    },
+    "platforms": {
+      "platform-1": {
+        "atPerformanceMs": 790.8000000119209,
+        "center": [
+          -0.23368710497830125,
+          0.9978124992921948,
+          5.506432151794433
+        ],
+        "size": [
+          1.2504759669303893,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            -0.8589250884434959,
+            0.9874999998137355,
+            5.2168643236160275
+          ],
+          "max": [
+            0.3915508784868934,
+            1.0081249987706542,
+            5.795999979972839
+          ]
+        },
+        "top": 1.0081249987706542
+      },
+      "platform-2": {
+        "atPerformanceMs": 790.8000000119209,
+        "center": [
+          2.0022379517555233,
+          0.9978124992921948,
+          5.686296466475334
+        ],
+        "size": [
+          1.2504759669303893,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            1.376999968290329,
+            0.9874999998137355,
+            5.396728638296929
+          ],
+          "max": [
+            2.627475935220718,
+            1.0081249987706542,
+            5.97586429465374
+          ]
+        },
+        "top": 1.0081249987706542
+      },
+      "platform-3": {
+        "atPerformanceMs": 790.8000000119209,
+        "center": [
+          4.872420015489759,
+          0.9978124992921948,
+          4.506432151794433
+        ],
+        "size": [
+          1.2504759669303889,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            4.247182032024564,
+            0.9874999998137355,
+            4.2168643236160275
+          ],
+          "max": [
+            5.497657998954953,
+            1.0081249987706542,
+            4.795999979972839
+          ]
+        },
+        "top": 1.0081249987706542
+      }
+    }
+  }
+}
