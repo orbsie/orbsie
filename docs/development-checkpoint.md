@@ -14,8 +14,9 @@ large logs, and copied diffs.
 - Shared transition reviewed: direct mount, reversal, resize/interruption and
   CSS centering corrected. 19 tests/typecheck passed; final nine-scenario parcel
   run retained in `docs/evidence/coordinated-descent`.
-- Active Luna worker: `provider_evidence_identity`, adding harness/source
-  attribution to provider reports without implying remote-source verification.
+- Provider report attribution reviewed: harness repository SHA/dirty status,
+  timestamp and optional operator-supplied app SHA; no remote verification claim.
+  Four focused tests/typecheck passed. No active worker.
 - Production/player build and host-package verification passed; deployment and
   production smoke passed. Next: close authorized live provider acceptance gates.
 - Confirmed timing mismatch: store phase timer is 4.2s; renderer damping reaches

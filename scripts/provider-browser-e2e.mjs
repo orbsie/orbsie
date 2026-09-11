@@ -17,6 +17,10 @@ import {
   validateHostedNDJSON,
 } from "./lib/hosted-chatgpt-acceptance.mjs";
 import { loadHostedProjectValidator } from "./lib/hosted-project-validator.mjs";
+import {
+  collectProviderBrowserE2EProvenance,
+  parseApplicationSourceCommit,
+} from "./lib/provider-browser-e2e-provenance.mjs";
 
 /**
  * Opt-in, provider-backed browser acceptance harness.
@@ -167,6 +171,14 @@ function readConfiguration(argv) {
     throw new HarnessConfigurationError(
       "--provider is required and must be openrouter, gateway, free, chatgpt-local, or chatgpt-hosted.",
     );
+  let applicationSource;
+  try {
+    applicationSource = parseApplicationSourceCommit(
+      process.env.ORBSIE_APP_SOURCE_COMMIT,
+    );
+  } catch (error) {
+    throw new HarnessConfigurationError(error.message);
+  }
   const baseValue = process.env.ORBSIE_TEST_URL ?? process.env.TEST_URL;
   if (!baseValue)
     throw new HarnessConfigurationError(
@@ -292,6 +304,7 @@ function readConfiguration(argv) {
 
   const config = {
     provider,
+    applicationSource,
     baseOrigin: baseURL.origin,
     keyScope,
     expectedModel,
@@ -553,8 +566,20 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function emptyReport(config) {
+export function emptyReport(config, provenance) {
+  const reportProvenance = provenance ?? {
+    checkedAt: new Date().toISOString(),
+    harness: {
+      checkoutSHA: null,
+      dirty: null,
+      status: "unavailable",
+    },
+    application:
+      config.applicationSource ?? parseApplicationSourceCommit(undefined),
+  };
   return {
+    checkedAt: reportProvenance.checkedAt,
+    provenance: reportProvenance,
     provider: config.provider,
     mode: REPORT_MODE,
     targetOrigin: config.baseOrigin,
@@ -2985,8 +3010,7 @@ async function runPublication(
   };
 }
 
-async function run(config) {
-  const report = emptyReport(config);
+async function run(config, report = emptyReport(config)) {
   const evidenceDir = join(REPORT_DIR, config.provider);
   await mkdir(evidenceDir, { recursive: true });
   const approvedOrigins = new Set([config.baseOrigin]);
@@ -3871,9 +3895,14 @@ async function main() {
   let runStarted = false;
   try {
     config = readConfiguration(process.argv.slice(2));
-    report = emptyReport(config);
+    report = emptyReport(
+      config,
+      await collectProviderBrowserE2EProvenance({
+        appSourceCommit: config.applicationSource,
+      }),
+    );
     runStarted = true;
-    const result = await run(config);
+    const result = await run(config, report);
     const reportPath = await writeReport(result, config);
     console.log(`Provider browser E2E passed; sanitized report: ${reportPath}`);
   } catch (error) {
