@@ -14,8 +14,11 @@ large logs, and copied diffs.
   `gateway-input-game-approved`. Private temporary Gateway key file deleted.
   Owner also approved Chrome consent work;
   CUA still reports no browsers. Do not treat consent as already completed.
-- Current source: `be7672a` is deployed to `https://orbsie.com`; production smoke
-  passed in `docs/evidence/modeling-feedback-release`. Verify `HEAD` on resume.
+- Current source: `905b682` is deployed to `https://orbsie.com`; production smoke
+  passed in `docs/evidence/compound-policy-release`. Verify `HEAD` on resume.
+- Deployed kernel-tested compound union example (`38370aa`) and owner-scoped
+  publication identity with republish harness (`6df72ec`). Build/typecheck and
+  hosted-package verification passed; live acceptance of these changes is open.
 - Input-game acceptance correction committed as `2c8db05`.
 - Experience reconciliation reviewed: parcel frame, desktop composer focus and
   narrow play-during-stream paths already have deterministic browser evidence.
