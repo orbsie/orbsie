@@ -1,0 +1,12 @@
+{
+  "status": "blocked",
+  "stage": "preflight",
+  "reason": "development VERCEL_DEPLOY_TOKEN is absent; publication was not attempted.",
+  "vercelDeployTokenPresent": false,
+  "generationCalls": 0,
+  "publicationPosts": 0,
+  "serverStarted": false,
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "revision": 9,
+  "recordedAt": "2026-09-12T06:35:54.575Z"
+}

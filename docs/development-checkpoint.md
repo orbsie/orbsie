@@ -380,3 +380,17 @@ Both attempts made0 generation calls and0 publication requests; no deployment
 handle exists. Reports are retained under gateway-reload-recovery-publication.
 One Luna worker is comparing the successful recovery run's account/DB setup
 with the publication setup read-only before any further login attempt.
+
+### Gateway-authored recovery game published and verified
+
+Project4a5d7783-c7fd-44e0-bf19-864bab9f9b08 revision9 published once as
+dpl_8SXrutydgMwHjWxZxqSnsb2Z6WDf in prj_2sG67u1U0jO8mDEWT2lMWMkm64zi.
+Exact publishable cloud and served snapshots matched the accepted Gateway ZIP.
+Signed-out score/win/loss/restart passed with0 cookies/external requests/page
+errors/model calls. Evidence: gateway-reload-recovery-publication. Root reviewed
+report/image and checked credential cleanup. Codex allowance now66% remaining.
+URL: https://orb-c8952b5b6fd77ac951a4-ant5977ut-grappeggias-projects.vercel.app
+
+This connects the bounded Gateway create/reload recovery/edit/cloud/export
+journey to actual publication and signed-out gameplay. Other provider stories,
+mobile/physical performance and full flagship quality remain incomplete.

@@ -1,5 +1,5 @@
 {
-  "status": "failed",
+  "status": "passed",
   "scope": "Existing Gateway recovery project publication; no generation",
   "baseOrigin": "http://127.0.0.1:3017",
   "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
@@ -16,9 +16,39 @@
     "entityCount": 2,
     "gameRuleCount": 3
   },
-  "preflight": null,
-  "publication": null,
-  "browser": null,
-  "error": "Sign-in failed (HTTP 401).",
-  "finishedAt": "2026-09-12T06:32:36.070Z"
+  "preflight": {
+    "status": "passed",
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "comparedAs": "publishable snapshot (messages cleared like export/publication)",
+    "snapshotTokenPresent": true
+  },
+  "publication": {
+    "status": "READY",
+    "deploymentId": "dpl_8SXrutydgMwHjWxZxqSnsb2Z6WDf",
+    "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-ant5977ut-grappeggias-projects.vercel.app",
+    "postVercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi",
+    "getVercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi",
+    "servedRevision": 9,
+    "requestPaths": [
+      "/api/projects",
+      "/api/publish",
+      "/api/publish",
+      "/api/publish"
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "ready": true,
+    "canvas": true,
+    "scoreRight": 7,
+    "win": true,
+    "loss": true,
+    "restart": true,
+    "generationRoutes": 0,
+    "externalRoutes": 0,
+    "cookies": 0,
+    "pageErrors": 0
+  },
+  "finishedAt": "2026-09-12T06:37:13.504Z"
 }
