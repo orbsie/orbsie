@@ -523,3 +523,16 @@ the earlier editor capture likely caught a transition. No material/loader/scale
 fix is justified by this evidence. Sparse authored detail remains a visual
 quality limitation. A bounded harness follow-up will inspect completion signals
 so edit screenshots capture settled presentation, without new model calls.
+
+### Live mixed free-world publication passed
+
+Harness c900d94 published an explicit clone of the free strawberry export
+(source revision13 → new cloud revision1) using one signup, one deduplicated
+generated GLB upload, one save and one publish POST, without retries or model
+calls. Deployment dpl_28MfnFdZZ2mCvvmfRg9yGdozLMgw served the exact cloned
+snapshot and byte-identical catalog tree, license, used-assets provenance,
+generated GLB and generated manifest. Signed-out browser readiness/canvas passed
+with zero cookies, external/API requests and page errors. Root reviewed report
+and exact file hashes. Evidence: docs/evidence/publication-free-strawberry.
+Worker deleted its private password file. This closes this mixed-asset packaging
+and public-loading journey, not full objectives/gameplay or physical mobile.

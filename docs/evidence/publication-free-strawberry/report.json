@@ -1,0 +1,590 @@
+{
+  "status": "passed",
+  "base": "https://orbsie.com",
+  "startedAt": "2026-09-12T08:21:57.304Z",
+  "account": {
+    "email": "orbsie-free-publication-1789201317224@example.com"
+  },
+  "harness": {
+    "commit": "c900d94372f4e144f834b878699bd4c44c847908",
+    "dirty": false
+  },
+  "source": {
+    "zipPath": "docs/evidence/provider-e2e/free-strawberry-current/free/world.zip",
+    "sourceZipSha256": "baaae47ddd407d9612efbb8696e49fc0d8ec0149c9dc61e828a4481d07aed133",
+    "sourceProjectId": "94c7f11d-cf1a-4942-b5aa-58e318b8ecad",
+    "sourceRevision": 13,
+    "publicationProjectId": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+    "publicationRevision": 1,
+    "expectedReferencedFiles": [
+      {
+        "file": "assets/catalog/used-assets.json",
+        "kind": "catalog-provenance",
+        "bytes": 2994,
+        "sha256": "e8e3333d0fcd04c899a69817b4b53ca8e2fc48090892872ac64e44e9eea13a11"
+      },
+      {
+        "file": "models/kenney/nature-kit/tree_default.glb",
+        "kind": "catalog-glb",
+        "bytes": 9428,
+        "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+      },
+      {
+        "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+        "kind": "catalog-license",
+        "bytes": 611,
+        "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+      },
+      {
+        "file": "models/generated/7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2.glb",
+        "kind": "generated-glb",
+        "bytes": 13032,
+        "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2"
+      },
+      {
+        "file": "models/generated/manifest.json",
+        "kind": "generated-provenance",
+        "bytes": 537,
+        "sha256": "43994fe9b61bace5c6787607e74f316897c9de432c71e8b593fc707c406ee799"
+      }
+    ]
+  },
+  "plan": {
+    "accountSignup": 1,
+    "generatedModelUploads": 1,
+    "cloudProjectSaves": 1,
+    "publicationSubmissions": 1,
+    "inferenceCalls": 0,
+    "republishSubmissions": 0
+  },
+  "mutations": {
+    "accountSignup": 1,
+    "generatedModelUploads": 1,
+    "generatedModelHashes": [
+      "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2"
+    ],
+    "cloudProjectSaves": 1,
+    "publicationSubmissions": 1
+  },
+  "progress": {
+    "account": {
+      "email": "orbsie-free-publication-1789201317224@example.com"
+    },
+    "world": {
+      "id": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+      "revision": 1,
+      "title": "a tree with blue strawberries"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+          "revision": 1,
+          "title": "a tree with blue strawberries"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_28MfnFdZZ2mCvvmfRg9yGdozLMgw",
+        "deploymentUrl": "https://orb-086167528b040271a034-l6t3kwm6i-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+        "vercelProjectId": "prj_tVNuIAe3n1DRWsAKL1pZ5c4cD5WG",
+        "world": {
+          "id": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+          "revision": 1,
+          "title": "a tree with blue strawberries"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "vercelProjectId": "prj_tVNuIAe3n1DRWsAKL1pZ5c4cD5WG"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentUrl": "https://orb-086167528b040271a034-l6t3kwm6i-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+        "vercelProjectId": "prj_tVNuIAe3n1DRWsAKL1pZ5c4cD5WG"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "a tree with blue strawberries"
+        }
+      }
+    ],
+    "last": {
+      "step": "first public release snapshot",
+      "snapshot": {
+        "revision": 1,
+        "title": "a tree with blue strawberries"
+      }
+    }
+  },
+  "checks": {
+    "signup": "passed",
+    "generatedModelUploads": 1,
+    "cloudSave": {
+      "revision": 1
+    },
+    "publicationSubmitted": {
+      "deploymentId": "dpl_28MfnFdZZ2mCvvmfRg9yGdozLMgw",
+      "deploymentUrl": "https://orb-086167528b040271a034-l6t3kwm6i-grappeggias-projects.vercel.app",
+      "vercelProjectId": "prj_tVNuIAe3n1DRWsAKL1pZ5c4cD5WG"
+    },
+    "signedOut": {
+      "version": 1,
+      "id": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+      "title": "a tree with blue strawberries",
+      "seed": 42,
+      "revision": 1,
+      "entities": [
+        {
+          "id": "tree-main",
+          "label": "Blue Strawberry Tree",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1.15,
+            1.15,
+            1.15
+          ],
+          "color": "#ff44aa",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.tree-default",
+            "detail": "refined",
+            "tint": "#ff44aa"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "blue-strawberry-01",
+          "label": "Blue Strawberry 1",
+          "position": [
+            -0.55,
+            1.18,
+            0.18
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "rotation": [
+            0,
+            0.2,
+            0
+          ],
+          "color": "#2878d0",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "berry",
+                "nodes": [
+                  {
+                    "id": "berry",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.13,
+                        0.04
+                      ],
+                      [
+                        0.18,
+                        0.18
+                      ],
+                      [
+                        0.11,
+                        0.31
+                      ],
+                      [
+                        0,
+                        0.38
+                      ]
+                    ],
+                    "segments": 24
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2",
+              "bytes": 13032,
+              "bounds": {
+                "min": [
+                  -0.17999999970197678,
+                  0,
+                  -0.17999999970197678
+                ],
+                "max": [
+                  0.17999999970197678,
+                  0.380000002682209,
+                  0.17999999970197678
+                ]
+              },
+              "createdAt": "2026-09-12T07:51:05.590Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined",
+            "tint": "#2878d0"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "blue-strawberry-02",
+          "label": "Blue Strawberry 2",
+          "position": [
+            0.48,
+            1.34,
+            0.12
+          ],
+          "scale": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "rotation": [
+            0,
+            -0.35,
+            0
+          ],
+          "color": "#2878d0",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "berry",
+                "nodes": [
+                  {
+                    "id": "berry",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.13,
+                        0.04
+                      ],
+                      [
+                        0.18,
+                        0.18
+                      ],
+                      [
+                        0.11,
+                        0.31
+                      ],
+                      [
+                        0,
+                        0.38
+                      ]
+                    ],
+                    "segments": 24
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2",
+              "bytes": 13032,
+              "bounds": {
+                "min": [
+                  -0.17999999970197678,
+                  0,
+                  -0.17999999970197678
+                ],
+                "max": [
+                  0.17999999970197678,
+                  0.380000002682209,
+                  0.17999999970197678
+                ]
+              },
+              "createdAt": "2026-09-12T07:51:05.590Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined",
+            "tint": "#2878d0"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "blue-strawberry-03",
+          "label": "Blue Strawberry 3",
+          "position": [
+            0.1,
+            1.58,
+            -0.38
+          ],
+          "scale": [
+            0.82,
+            0.82,
+            0.82
+          ],
+          "rotation": [
+            0,
+            0.5,
+            0
+          ],
+          "color": "#2878d0",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "berry",
+                "nodes": [
+                  {
+                    "id": "berry",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.13,
+                        0.04
+                      ],
+                      [
+                        0.18,
+                        0.18
+                      ],
+                      [
+                        0.11,
+                        0.31
+                      ],
+                      [
+                        0,
+                        0.38
+                      ]
+                    ],
+                    "segments": 24
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2",
+              "bytes": 13032,
+              "bounds": {
+                "min": [
+                  -0.17999999970197678,
+                  0,
+                  -0.17999999970197678
+                ],
+                "max": [
+                  0.17999999970197678,
+                  0.380000002682209,
+                  0.17999999970197678
+                ]
+              },
+              "createdAt": "2026-09-12T07:51:05.590Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined",
+            "tint": "#2878d0"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "blue-strawberry-04",
+          "label": "Blue Strawberry 4",
+          "position": [
+            -0.25,
+            0.96,
+            -0.48
+          ],
+          "scale": [
+            0.78,
+            0.78,
+            0.78
+          ],
+          "rotation": [
+            0,
+            -0.25,
+            0
+          ],
+          "color": "#2878d0",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "berry",
+                "nodes": [
+                  {
+                    "id": "berry",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.13,
+                        0.04
+                      ],
+                      [
+                        0.18,
+                        0.18
+                      ],
+                      [
+                        0.11,
+                        0.31
+                      ],
+                      [
+                        0,
+                        0.38
+                      ]
+                    ],
+                    "segments": 24
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2",
+              "bytes": 13032,
+              "bounds": {
+                "min": [
+                  -0.17999999970197678,
+                  0,
+                  -0.17999999970197678
+                ],
+                "max": [
+                  0.17999999970197678,
+                  0.380000002682209,
+                  0.17999999970197678
+                ]
+              },
+              "createdAt": "2026-09-12T07:51:05.590Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined",
+            "tint": "#2878d0"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        }
+      ],
+      "environment": {
+        "sky": "#dceee9",
+        "ground": "#91b977",
+        "water": "#59bdbb"
+      },
+      "messages": []
+    },
+    "artifact": {
+      "projectId": "pub-free-0ffb89af-d88a-4a61-a3a9-f945cb969cd7",
+      "revision": 1,
+      "files": [
+        {
+          "file": "assets/catalog/used-assets.json",
+          "kind": "catalog-provenance",
+          "bytes": 2994,
+          "sha256": "e8e3333d0fcd04c899a69817b4b53ca8e2fc48090892872ac64e44e9eea13a11"
+        },
+        {
+          "file": "models/kenney/nature-kit/tree_default.glb",
+          "kind": "catalog-glb",
+          "bytes": 9428,
+          "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+        },
+        {
+          "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+          "kind": "catalog-license",
+          "bytes": 611,
+          "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+        },
+        {
+          "file": "models/generated/7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2.glb",
+          "kind": "generated-glb",
+          "bytes": 13032,
+          "sha256": "7abe4b5566b68d29624d21119b2792821b874017248df80eaf9f02fb98fa68c2"
+        },
+        {
+          "file": "models/generated/manifest.json",
+          "kind": "generated-provenance",
+          "bytes": 537,
+          "sha256": "43994fe9b61bace5c6787607e74f316897c9de432c71e8b593fc707c406ee799"
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-09-12T08:22:11.590Z"
+}
