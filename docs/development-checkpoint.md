@@ -36,6 +36,13 @@ integration tests, then add concise generation guidance. Owns generation.ts
 and focused tests only; no schema expansion without a concrete gap, no model
 calls, no nested workers. Root reviews. Preserve captured failure evidence.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
+Acceptance distinction: existing verify-flagship-platforms asserts landing
+then560ms carried support. That is appropriate for moving nonbounce platforms,
+not automatic bounce. A bounce browser contract must instead show descending
+contact followed by upward launch with no jump input, continued platform path,
+and sequential reachable contact. Do not weaken carry checks to call a bounce
+pass; keep separate evidence scopes. Root sent this criterion to the worker.
+
 Publication terminal-state regression a49c84e passed26 targeted tests; live
 failed-deployment continuity remains unverified.
 
