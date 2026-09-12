@@ -30,13 +30,14 @@ production build passed. Root then ran the real browser: zero generation,
 exact edited reload, seeded-history undo, baseline reload/ZIP/standalone passed.
 Evidence: `docs/evidence/provider-e2e/gateway-flagship-offline-continuation/`.
 Original live history, settled visual quality and gameplay remain unverified.
-Active worker `/root/gateway_saved_gameplay` now owns the saved-artifact
-gameplay task below: traversal script/contract, pre-undo goal7 export in the
-provider harness, and corresponding tests. Root completed export and desktop run under d838ce5: score7/win/reset
-observed, but contact proof selected planet bounds, so early-portal gate is
-rejected. Worker now fixes exact portal identification and targeted tests only.
-Evidence `docs/evidence/gateway-seven-gameplay/` stays partial; no inference.
-Root will rerun after review. No nested agents.
+The saved-gameplay worker completed and root integrated265f026. Corrected
+saved revision40 traversal passed desktop keyboard and390x844 CDP touch:
+portal contact at score0/no win, then score7/win/reset; zero inference/external
+or mutating requests. Evidence `gateway-seven-gameplay-portal-bound/` and
+`gateway-seven-gameplay-touch/`. Root reviewed actual portal bounds and mobile
+winning screenshot. No worker task currently active. Next meaningful step:
+independent publication of this exact edited revision and signed-out gameplay,
+without new inference; preserve separate physical-mobile/platform/size gaps.
 Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
