@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "scope": "offline-browser IndexedDB-to-file capture fixture; not app recovery",
+  "inferenceCalls": 0,
+  "networkRequests": 0,
+  "sourceZipEntry": "models/generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb",
+  "sha256": "fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666",
+  "bytes": 6288,
+  "phase": {
+    "phase": "fixture",
+    "status": "complete",
+    "models": [
+      {
+        "entityIds": [
+          "fixture-generated"
+        ],
+        "sha256": "fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666",
+        "bytes": 6288,
+        "path": "generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb",
+        "status": "complete"
+      }
+    ],
+    "missing": [],
+    "totalBytes": 6288
+  }
+}

@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import {
   assertFlagshipStoryCreation,
   assertFlagshipStoryMushroom,
   assertFlagshipStoryPlatform,
+  buildGeneratedModelEvidence,
+  persistFlagshipStoryPhase,
   readConfiguration,
 } from "../scripts/provider-browser-e2e.mjs";
 
@@ -439,5 +442,127 @@ describe("flagship provider story contract", () => {
     expect(() => assertFlagshipStoryMushroom(before, after, tree.id)).toThrow(
       /supported mushroom evidence/,
     );
+  });
+
+  it("deduplicates and validates generated GLB evidence by hash", () => {
+    const glb = new Uint8Array([0x67, 0x6c, 0x42]);
+    const sha256 = createHash("sha256").update(glb).digest("hex");
+    const project = {
+      entities: [
+        entity(
+          "generated-a",
+          "Generated A",
+          {
+            kind: "generated",
+            detail: "refined",
+            model: { sha256, bytes: glb.byteLength },
+          },
+        ),
+        entity(
+          "generated-b",
+          "Generated B",
+          {
+            kind: "generated",
+            detail: "refined",
+            model: { sha256, bytes: glb.byteLength },
+          },
+        ),
+      ],
+    };
+    const complete = buildGeneratedModelEvidence(
+      project,
+      new Map([[sha256, { sha256, bytes: glb.byteLength, glb }]]),
+    );
+    expect(complete.status).toBe("complete");
+    expect(complete.models).toHaveLength(1);
+    expect(complete.models[0]).toMatchObject({
+      entityIds: ["generated-a", "generated-b"],
+      sha256,
+      bytes: glb.byteLength,
+      path: `generated/${sha256}.glb`,
+      status: "complete",
+    });
+
+    const missing = buildGeneratedModelEvidence(project, new Map());
+    expect(missing.status).toBe("incomplete");
+    expect(missing.missing).toContainEqual(
+      expect.objectContaining({
+        sha256,
+        status: "incomplete",
+        reason: "missing-indexeddb-record",
+      }),
+    );
+
+    const mismatched = buildGeneratedModelEvidence(
+      project,
+      new Map([
+        [
+          sha256,
+          {
+            sha256: "0".repeat(64),
+            bytes: glb.byteLength,
+            glb,
+          },
+        ],
+      ]),
+    );
+    expect(mismatched.status).toBe("incomplete");
+    expect(mismatched.missing).toContainEqual(
+      expect.objectContaining({ reason: "hash-mismatch" }),
+    );
+
+    const missingMetadata = buildGeneratedModelEvidence(
+      {
+        entities: [
+          entity("unfinished", "Unfinished model", {
+            kind: "generated",
+            detail: "coarse",
+          }),
+        ],
+      },
+      new Map(),
+    );
+    expect(missingMetadata.status).toBe("incomplete");
+    expect(missingMetadata.missing).toContainEqual(
+      expect.objectContaining({ reason: "missing-model-metadata" }),
+    );
+
+    const corrupt = buildGeneratedModelEvidence(
+      project,
+      new Map([
+        [
+          sha256,
+          {
+            sha256,
+            bytes: glb.byteLength,
+            glb: [-1, 256, 3],
+          },
+        ],
+      ]),
+    );
+    expect(corrupt.status).toBe("incomplete");
+    expect(corrupt.missing).toContainEqual(
+      expect.objectContaining({ reason: "hash-mismatch" }),
+    );
+  });
+
+  it("keeps a snapshot write failure explicitly incomplete", async () => {
+    const report: any = {
+      evidence: [],
+      flagshipStory: {},
+    };
+    const phase = await persistFlagshipStoryPhase(
+      report,
+      "/dev/null",
+      "created",
+      { entities: [] },
+      null,
+    );
+
+    expect(phase.status).toBe("incomplete");
+    expect(phase.missing).toContainEqual(
+      expect.objectContaining({ reason: "snapshot-write-failed" }),
+    );
+    expect(report.flagshipStory.generatedModels.status).toBe("incomplete");
   });
 });

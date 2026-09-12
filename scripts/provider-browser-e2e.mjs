@@ -1315,8 +1315,13 @@ async function waitForSavedProject(page, minRevision, assistantCount = 0) {
   return snapshot.project;
 }
 
-async function readStoredGeneratedModelDigest(page, hash) {
-  return page.evaluate(async (storageKey) => {
+const MAX_GENERATED_MODEL_EVIDENCE_BYTES = 2 * 1024 * 1024;
+const MAX_GENERATED_MODEL_EVIDENCE_TOTAL_BYTES = 6 * 1024 * 1024;
+const GENERATED_MODEL_EVIDENCE_WAIT_MS = 30000;
+
+async function readStoredGeneratedModelDigest(page, hash, includeBytes = false) {
+  return page.evaluate(
+    async ({ storageKey, includeBytes: shouldIncludeBytes, maxBytes }) => {
     const record = await new Promise((resolve, reject) => {
       const request = indexedDB.open("keyval-store");
       request.onupgradeneeded = () => request.transaction?.abort();
@@ -1342,15 +1347,222 @@ async function readStoredGeneratedModelDigest(page, hash) {
     });
     const value = record && typeof record === "object" ? record.glb : null;
     if (!value) return null;
+    const declaredBytes =
+      Number.isSafeInteger(value?.byteLength) && value.byteLength >= 0
+        ? value.byteLength
+        : Array.isArray(value) && value.length;
+    if (
+      Number.isSafeInteger(declaredBytes) &&
+      declaredBytes > maxBytes
+    )
+      return { bytes: declaredBytes, sha256: null, tooLarge: true };
     const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
     const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    if (bytes.byteLength > maxBytes)
+      return {
+        bytes: bytes.byteLength,
+        sha256: [...digest]
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join(""),
+        tooLarge: true,
+      };
     return {
       bytes: bytes.byteLength,
       sha256: [...digest]
         .map((byte) => byte.toString(16).padStart(2, "0"))
         .join(""),
+      ...(shouldIncludeBytes ? { glb: [...bytes] } : {}),
     };
-  }, `orbsie-model:${hash}`);
+    },
+    {
+      storageKey: `orbsie-model:${hash}`,
+      includeBytes,
+      maxBytes: MAX_GENERATED_MODEL_EVIDENCE_BYTES,
+    },
+  );
+}
+
+function generatedModelBytes(value) {
+  if (value instanceof Uint8Array) return value;
+  if (
+    Array.isArray(value) &&
+    value.every(
+      (byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255,
+    )
+  )
+    return Uint8Array.from(value);
+  return null;
+}
+
+function generatedModelReferences(project) {
+  const byHash = new Map();
+  const invalid = [];
+  for (const entity of project?.entities ?? []) {
+    if (entity?.geometry?.kind !== "generated") continue;
+    const model = entity.geometry.model;
+    if (!model || typeof model !== "object") {
+      invalid.push({
+        entityIds: [entity.id],
+        status: "incomplete",
+        reason: "missing-model-metadata",
+      });
+      continue;
+    }
+    const hash = model.sha256;
+    const bytes = model.bytes;
+    if (
+      typeof hash !== "string" ||
+      !/^[a-f0-9]{64}$/.test(hash) ||
+      !Number.isSafeInteger(bytes) ||
+      bytes <= 0 ||
+      bytes > MAX_GENERATED_MODEL_EVIDENCE_BYTES
+    ) {
+      invalid.push({
+        entityIds: [entity.id],
+        status: "incomplete",
+        reason: "invalid-model-metadata",
+      });
+      continue;
+    }
+    const current = byHash.get(hash);
+    if (current) {
+      current.entityIds.push(entity.id);
+      if (current.expectedBytes !== bytes) current.metadataConflict = true;
+    } else {
+      byHash.set(hash, {
+        entityIds: [entity.id],
+        expectedBytes: bytes,
+        metadataConflict: false,
+      });
+    }
+  }
+  return { references: [...byHash].map(([sha256, reference]) => ({ sha256, ...reference })), invalid };
+}
+
+export function buildGeneratedModelEvidence(project, storedByHash) {
+  const { references, invalid } = generatedModelReferences(project);
+  const models = [];
+  const missing = [...invalid];
+  let totalBytes = 0;
+  for (const reference of references) {
+    const stored =
+      storedByHash instanceof Map
+        ? storedByHash.get(reference.sha256)
+        : storedByHash?.[reference.sha256];
+    if (!stored || reference.metadataConflict) {
+      missing.push({
+        entityIds: reference.entityIds,
+        sha256: reference.sha256,
+        expectedBytes: reference.expectedBytes,
+        status: "incomplete",
+        reason: reference.metadataConflict
+          ? "conflicting-model-metadata"
+          : "missing-indexeddb-record",
+      });
+      continue;
+    }
+    if (stored.tooLarge) {
+      missing.push({
+        entityIds: reference.entityIds,
+        sha256: reference.sha256,
+        expectedBytes: reference.expectedBytes,
+        status: "incomplete",
+        reason: "model-byte-budget-exceeded",
+      });
+      continue;
+    }
+    const bytes = generatedModelBytes(stored.glb);
+    const actualHash =
+      bytes && createHash("sha256").update(bytes).digest("hex");
+    if (
+      !bytes ||
+      stored.sha256 !== reference.sha256 ||
+      actualHash !== reference.sha256
+    ) {
+      missing.push({
+        entityIds: reference.entityIds,
+        sha256: reference.sha256,
+        expectedBytes: reference.expectedBytes,
+        status: "incomplete",
+        reason: "hash-mismatch",
+      });
+      continue;
+    }
+    if (
+      bytes.byteLength !== reference.expectedBytes ||
+      stored.bytes !== reference.expectedBytes
+    ) {
+      missing.push({
+        entityIds: reference.entityIds,
+        sha256: reference.sha256,
+        expectedBytes: reference.expectedBytes,
+        status: "incomplete",
+        reason: "byte-count-mismatch",
+      });
+      continue;
+    }
+    if (totalBytes + bytes.byteLength > MAX_GENERATED_MODEL_EVIDENCE_TOTAL_BYTES) {
+      missing.push({
+        entityIds: reference.entityIds,
+        sha256: reference.sha256,
+        expectedBytes: reference.expectedBytes,
+        status: "incomplete",
+        reason: "evidence-byte-budget-exceeded",
+      });
+      continue;
+    }
+    totalBytes += bytes.byteLength;
+    models.push({
+      entityIds: reference.entityIds,
+      sha256: reference.sha256,
+      bytes: reference.expectedBytes,
+      path: `generated/${reference.sha256}.glb`,
+      status: "complete",
+      glb: bytes,
+    });
+  }
+  return {
+    status: missing.length === 0 ? "complete" : "incomplete",
+    models,
+    missing,
+    totalBytes,
+  };
+}
+
+async function captureStoredGeneratedModelEvidence(page, project) {
+  const deadline = Date.now() + GENERATED_MODEL_EVIDENCE_WAIT_MS;
+  const references = generatedModelReferences(project);
+  const storedDigests = new Map();
+  while (Date.now() < deadline) {
+    for (const reference of references.references) {
+      if (storedDigests.has(reference.sha256)) continue;
+      const digest = await readStoredGeneratedModelDigest(
+        page,
+        reference.sha256,
+      ).catch(() => null);
+      if (digest) storedDigests.set(reference.sha256, digest);
+    }
+    const waitingForRecord = references.references.some(
+      (reference) => !storedDigests.has(reference.sha256),
+    );
+    if (!waitingForRecord) break;
+    try {
+      await page.waitForTimeout(250);
+    } catch {
+      break;
+    }
+  }
+  for (const reference of references.references) {
+    const digest = storedDigests.get(reference.sha256);
+    if (!digest) continue;
+    const stored = await readStoredGeneratedModelDigest(
+      page,
+      reference.sha256,
+      true,
+    ).catch(() => null);
+    storedDigests.set(reference.sha256, stored ?? digest);
+  }
+  return { project, storedByHash: storedDigests };
 }
 
 async function waitForTrustedBrowserBake(page, entityId) {
@@ -2300,14 +2512,138 @@ function storyComparable(project) {
   return rest;
 }
 
-async function persistFlagshipStoryPhase(report, evidenceDir, phase, project) {
+export async function persistFlagshipStoryPhase(
+  report,
+  evidenceDir,
+  phase,
+  project,
+  page,
+) {
   const filename = `story-${phase}-project.json`;
-  await writeFile(
-    join(evidenceDir, filename),
-    `${JSON.stringify(project, null, 2)}\n`,
-    { encoding: "utf8", mode: 0o600 },
+  let snapshotWritten = true;
+  try {
+    await writeFile(
+      join(evidenceDir, filename),
+      `${JSON.stringify(project, null, 2)}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+    report.evidence.push(filename);
+  } catch {
+    snapshotWritten = false;
+  }
+
+  const captured = await captureStoredGeneratedModelEvidence(page, project);
+  const artifact = buildGeneratedModelEvidence(
+    captured.project,
+    captured.storedByHash,
   );
-  report.evidence.push(filename);
+  if (!snapshotWritten)
+    artifact.missing.push({
+      entityIds: [],
+      status: "incomplete",
+      reason: "snapshot-write-failed",
+    });
+  const generatedDir = join(evidenceDir, "generated");
+  let generatedDirReady = true;
+  try {
+    await mkdir(generatedDir, { recursive: true, mode: 0o700 });
+  } catch {
+    generatedDirReady = false;
+  }
+  const previousEvidence = report.flagshipStory?.generatedModels ?? {};
+  const writtenHashes = new Set(previousEvidence.writtenHashes ?? []);
+  const writtenModels = [];
+  const writeFailures = [];
+  for (const model of artifact.models) {
+    if (!generatedDirReady) {
+      writeFailures.push({
+        entityIds: model.entityIds,
+        sha256: model.sha256,
+        expectedBytes: model.bytes,
+        status: "incomplete",
+        reason: "evidence-directory-write-failed",
+      });
+      continue;
+    }
+    const target = join(generatedDir, `${model.sha256}.glb`);
+    const bytes = generatedModelBytes(model.glb);
+    let validExisting = false;
+    try {
+      const existing = await readFile(target);
+      validExisting =
+        existing.byteLength === model.bytes &&
+        createHash("sha256").update(existing).digest("hex") === model.sha256;
+    } catch {
+      // The model is written below when this phase has not already captured it.
+    }
+    if (!validExisting && bytes) {
+      try {
+        await writeFile(target, bytes, { mode: 0o600 });
+        validExisting = true;
+      } catch {
+        // The phase manifest records the incomplete evidence without masking
+        // a semantic story assertion that follows this call.
+      }
+    }
+    if (validExisting) {
+      writtenHashes.add(model.sha256);
+      writtenModels.push(model);
+    } else {
+      writeFailures.push({
+        entityIds: model.entityIds,
+        sha256: model.sha256,
+        expectedBytes: model.bytes,
+        status: "incomplete",
+        reason: "evidence-file-write-failed",
+      });
+    }
+  }
+  const phaseManifest = {
+    phase,
+    status:
+      snapshotWritten &&
+      artifact.missing.length === 0 &&
+      artifact.status === "complete" &&
+      writeFailures.length === 0
+        ? "complete"
+        : "incomplete",
+    models: writtenModels.map(({ glb: _glb, ...model }) => model),
+    missing: [...artifact.missing, ...writeFailures],
+    totalBytes: writtenModels.reduce((sum, model) => sum + model.bytes, 0),
+  };
+  const manifestFilename = `story-${phase}-generated.json`;
+  let manifestWritten = true;
+  try {
+    await writeFile(
+      join(evidenceDir, manifestFilename),
+      `${JSON.stringify(phaseManifest, null, 2)}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+    report.evidence.push(manifestFilename);
+  } catch {
+    manifestWritten = false;
+  }
+  if (!manifestWritten) phaseManifest.status = "incomplete";
+  report.flagshipStory.generatedModels = {
+    ...previousEvidence,
+    status:
+      previousEvidence.status === "incomplete" ||
+      phaseManifest.status === "incomplete" ||
+      !manifestWritten
+        ? "incomplete"
+        : "complete",
+    writtenHashes: [...writtenHashes],
+    phases: {
+      ...(previousEvidence.phases ?? {}),
+      [phase]: {
+        status: phaseManifest.status,
+        modelCount: phaseManifest.models.length,
+        missingCount: phaseManifest.missing.length,
+        totalBytes: phaseManifest.totalBytes,
+      },
+    },
+  };
+  return phaseManifest;
 }
 
 async function runFlagshipStory(
@@ -2327,7 +2663,7 @@ async function runFlagshipStory(
       creation: { revision: created.revision },
     },
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "created", created);
+  await persistFlagshipStoryPhase(report, evidenceDir, "created", created, page);
   const initialStory = assertFlagshipStoryCreation(created);
   assert.equal(
     created.messages[0]?.text,
@@ -2362,7 +2698,7 @@ async function runFlagshipStory(
     status: "observed",
     revision: mushroom.revision,
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom);
+  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom, page);
   const mushroomCheck = assertFlagshipStoryMushroom(
     created,
     mushroom,
@@ -2396,7 +2732,7 @@ async function runFlagshipStory(
     status: "observed",
     revision: goal7.revision,
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "goal7", goal7);
+  await persistFlagshipStoryPhase(report, evidenceDir, "goal7", goal7, page);
   const platformCheck = assertFlagshipStoryPlatform(
     mushroom,
     goal7,
