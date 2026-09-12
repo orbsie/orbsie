@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { getMigrations } from "better-auth/db/migration";
+import { anonymous } from "better-auth/plugins";
 import { readFile } from "node:fs/promises";
 if (!process.env.DATABASE_URL)
   throw Error("Set DATABASE_URL before running migrations.");
@@ -7,6 +8,12 @@ const database = new Pool({ connectionString: process.env.DATABASE_URL });
 const migration = await getMigrations({
   database,
   emailAndPassword: { enabled: true },
+  plugins: [
+    anonymous({
+      disableDeleteAnonymousUser: true,
+      generateName: () => "Guest",
+    }),
+  ],
 });
 await migration.runMigrations();
 await database.query(await readFile("scripts/schema.sql", "utf8"));

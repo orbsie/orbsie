@@ -1,4 +1,5 @@
 import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { anonymous } from "better-auth/plugins";
 import { Pool } from "pg";
 let pool: Pool | undefined;
 let auth: ReturnType<typeof betterAuth> | undefined;
@@ -17,6 +18,12 @@ export function getAuth() {
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
     emailAndPassword: { enabled: true, minPasswordLength: 8 },
+    plugins: [
+      anonymous({
+        disableDeleteAnonymousUser: true,
+        generateName: () => "Guest",
+      }),
+    ],
     databaseHooks: {
       session: {
         delete: {

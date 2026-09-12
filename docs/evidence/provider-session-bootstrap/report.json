@@ -1,0 +1,16 @@
+{
+  "scope": "Local Next route against real configured database; initial passwordless bootstrap implementation; no provider authorization or inference",
+  "base": "http://127.0.0.1:3070",
+  "migration": "Added user.isAnonymous boolean DEFAULT false; confirmed column exists",
+  "checks": {
+    "passwordRequired": false,
+    "bootstrapStatus": 200,
+    "existingSessionReused": true,
+    "independentBrowserOwnerIds": true,
+    "crossOriginStatus": 403,
+    "tokenExcludedFromBody": true,
+    "httpOnlyCookie": true,
+    "temporaryGuestUsersRemoved": true
+  },
+  "providerCalls": 0
+}

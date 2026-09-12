@@ -19,6 +19,29 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+PRIORITY owner correction: no separate Orbsie email/password gate for provider
+connection. Implemented BetterAuth anonymous-session bootstrap with existing
+session reuse, cookie forwarding, origin/rate-limit preservation, sanitized user
+response and no auto-deletion of guest owners. Additive user.isAnonymous boolean
+DEFAULT false applied to .env.local DB. Real bootstrap/reuse/isolation/HTTPOnly/
+403-origin checks passed; temporary test users removed. No provider calls.
+Frontend ChatGPT button now opens settings and starts device authorization without
+email/password. Bounded singleflight bootstrap, stale account guards and StrictMode
+unmount cleanup included. Root reviewed diff;38 focused tests+tsc passed. Browser
+check with real bootstrap/mocked ChatGPT passed start1/cancel1/email0/draft preserved.
+Signedout OpenRouter OAuth destination(mocked) and Gateway entry also passed with
+zero email requests. Evidence docs/evidence/provider-session-bootstrap. Existing
+OpenAI device-code/link step remains; automatic external redirect not implemented.
+Deployment pending; owner's Chrome still runs OLD version until release. Local
+Next dev3070 session75807. Do not tell owner fix is live before deploy verification.
+
+Asset task is paused: conforming bake worker finished with reported0 Tjunctions
+and no visible speckles, but root has NOT reviewed its diff/images. Pending files
+are converter/topology script and mushroom-basic-conforming evidence. Do not
+stage or deploy them as reviewed work yet; preserve them while fixing connection.
+
+## Asset handoff (paused)
+
 The bounded offline Three.js FBX/TGA import probe passed and root reviewed source
 and report. scripts/probe-mushroom-import.mjs imports one762-vertex/254-triangle
 mesh with762 UV vertices, finite bounds, and exact texture-map identity. TGA is

@@ -88,7 +88,9 @@ const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 import { parcelTransitionController } from "@/lib/parcel-transition";
-import ChatGPTConnection from "./chatgpt-connection";
+import ChatGPTConnection, {
+  type ProviderSessionUser,
+} from "./chatgpt-connection";
 const World = dynamic(() => import("./world"), {
   ssr: false,
   loading: () => (
@@ -110,6 +112,23 @@ function providerLogoKind(provider: string): ProviderLogoKind | undefined {
   if (provider === "chatgpt-hosted") return "chatgpt";
   if (provider === "openrouter" || provider === "gateway") return provider;
   return undefined;
+}
+
+function parseProviderSessionUser(value: unknown): ProviderSessionUser | null {
+  if (!value || typeof value !== "object") return null;
+  const user = value as Record<string, unknown>;
+  if (
+    typeof user.id !== "string" ||
+    user.id.length === 0 ||
+    typeof user.name !== "string" ||
+    typeof user.isAnonymous !== "boolean"
+  )
+    return null;
+  return {
+    id: user.id,
+    name: user.name,
+    isAnonymous: user.isAnonymous,
+  };
 }
 
 function ProviderLogo({
@@ -217,8 +236,7 @@ export default function Orbsie() {
   }
   useEffect(() => {
     if (modal !== "account") {
-      setSignInHint("");
-      setPostSignInIntent("");
+      setProviderHint("");
       setResetArmed(false);
       return;
     }
@@ -406,11 +424,13 @@ export default function Orbsie() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [signup, setSignup] = useState(false);
-  const [postSignInIntent, setPostSignInIntent] = useState<"" | "chatgpt">("");
-  const [signInHint, setSignInHint] = useState("");
+  const [providerHint, setProviderHint] = useState("");
+  const [chatGPTStartRequest, setChatGPTStartRequest] = useState(0);
   const [storageUsage, setStorageUsage] = useState("");
   const [resetArmed, setResetArmed] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
+  const providerSession = useRef<Promise<ProviderSessionUser> | null>(null);
+  const providerSessionController = useRef<AbortController | null>(null);
   const [cloudBaseline, setCloudBaseline] = useState<ProjectValue<{
     revision: number;
     snapshotToken: string;
@@ -432,6 +452,9 @@ export default function Orbsie() {
     return () => inProject() && generation === accountGeneration.current;
   };
   const clearAccountState = () => {
+    providerSessionController.current?.abort();
+    providerSessionController.current = null;
+    providerSession.current = null;
     connectionVersion.current++;
     accountGeneration.current++;
     if (connection.provider === "chatgpt-hosted")
@@ -443,6 +466,61 @@ export default function Orbsie() {
     setShareUrl("");
     setModalError("");
   };
+
+  const ensureProviderSession = useCallback(() => {
+    if (providerSession.current) return providerSession.current;
+    const generation = accountGeneration.current;
+    const controller = new AbortController();
+    providerSessionController.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+    const promise = (async () => {
+      const response = await fetch("/api/provider-session", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
+        signal: controller.signal,
+      });
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch {
+        throw Error("Could not start a private Orbsie session.");
+      }
+      if (!response.ok)
+        throw Error("Could not start a private Orbsie session.");
+      const user = parseProviderSessionUser(
+        data && typeof data === "object"
+          ? (data as { user?: unknown }).user
+          : undefined,
+      );
+      if (!user) throw Error("Could not start a private Orbsie session.");
+      if (generation !== accountGeneration.current)
+        throw Error("Could not start a private Orbsie session.");
+      setUser(user);
+      return user;
+    })();
+    providerSession.current = promise;
+    void promise.then(
+      () => {
+        window.clearTimeout(timeout);
+        if (providerSessionController.current === controller)
+          providerSessionController.current = null;
+        if (providerSession.current === promise) providerSession.current = null;
+      },
+      () => {
+        window.clearTimeout(timeout);
+        if (providerSessionController.current === controller)
+          providerSessionController.current = null;
+        if (providerSession.current === promise) providerSession.current = null;
+      },
+    );
+    return promise;
+  }, []);
+  const consumeChatGPTStartRequest = useCallback(
+    () => setChatGPTStartRequest(0),
+    [],
+  );
 
   const useChatGPT = (model: string, effort: string) => {
     setConnection({
@@ -1152,10 +1230,7 @@ export default function Orbsie() {
       setUser(data.user);
       await refreshCloud();
       setPassword("");
-      if (postSignInIntent === "chatgpt") {
-        setPostSignInIntent("");
-        setModal("settings");
-      } else setModal(null);
+      setModal(null);
     } catch (e) {
       setModalError(e instanceof Error ? e.message : "Sign-in failed.");
     } finally {
@@ -1717,8 +1792,10 @@ export default function Orbsie() {
               {capabilities.chatgptHosted ? (
                 <ChatGPTConnection
                   signedIn={Boolean(user)}
+                  ensureProviderSession={ensureProviderSession}
+                  startRequest={chatGPTStartRequest}
+                  onStartRequestConsumed={consumeChatGPTStartRequest}
                   generationEnabled={capabilities.chatgptGeneration}
-                  onSignIn={() => setModal("account")}
                   onUseChatGPT={useChatGPT}
                   onDisconnect={disconnectChatGPT}
                 />
@@ -2327,16 +2404,15 @@ export default function Orbsie() {
                         type="button"
                         disabled={oauthBusy || busy}
                         onClick={() => {
-                          setPostSignInIntent("chatgpt");
-                          setSignInHint(
-                            "Sign in first — ChatGPT connects right after your sign-in.",
-                          );
-                          document.getElementById("account-email")?.focus();
+                          setChatGPTStartRequest((request) => request + 1);
+                          setModal("settings");
                         }}
                       >
                         <ProviderLogo provider="chatgpt" />
-                        <strong>Connect with ChatGPT</strong>
-                        <span>Uses your ChatGPT subscription.</span>
+                        <strong>Connect ChatGPT</strong>
+                        <span>
+                          Use your ChatGPT subscription in this browser.
+                        </span>
                         <ArrowUpRight />
                       </button>
                     )}
@@ -2346,7 +2422,7 @@ export default function Orbsie() {
                       onClick={() => {
                         void connectOpenRouter().then((started) => {
                           if (!started)
-                            setSignInHint(
+                            setProviderHint(
                               "Could not start sign-in. Check that your world can be saved and try again.",
                             );
                         });
@@ -2377,9 +2453,9 @@ export default function Orbsie() {
                       <ArrowUpRight />
                     </button>
                   </div>
-                  {signInHint && (
+                  {providerHint && (
                     <p className="fine-print" role="status">
-                      {signInHint}
+                      {providerHint}
                     </p>
                   )}
                 </>

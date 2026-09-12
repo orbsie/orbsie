@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "scope": "Real passwordless app session; mocked ChatGPT device authorization only",
+  "bootstrapStatus": 200,
+  "counts": {
+    "start": 1,
+    "cancel": 1,
+    "email": 0
+  },
+  "passwordFormAbsent": true,
+  "promptPreserved": true,
+  "codeLinkVisible": true,
+  "cancelled": true,
+  "pageErrors": [],
+  "liveProviderCalls": 0
+}

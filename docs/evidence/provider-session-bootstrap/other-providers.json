@@ -1,0 +1,6 @@
+{
+  "scope": "Signed-out provider entry paths; OpenRouter destination mocked; no live provider authentication",
+  "gateway": true,
+  "openrouter": true,
+  "emailRequests": 0
+}

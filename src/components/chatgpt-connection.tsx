@@ -43,6 +43,12 @@ export type ChatGPTModelOption = {
   defaultReasoningEffort: string;
 };
 
+export type ProviderSessionUser = {
+  id: string;
+  name: string;
+  isAnonymous: boolean;
+};
+
 const lifecycleValues = new Set<ChatGPTSnapshot["lifecycle"]>([
   "idle",
   "pending",
@@ -301,13 +307,17 @@ function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
 
 export default function ChatGPTConnection({
   signedIn,
-  onSignIn,
+  ensureProviderSession,
+  startRequest,
+  onStartRequestConsumed,
   generationEnabled,
   onUseChatGPT,
   onDisconnect,
 }: {
   signedIn: boolean;
-  onSignIn: () => void;
+  ensureProviderSession: () => Promise<ProviderSessionUser>;
+  startRequest: number;
+  onStartRequestConsumed: () => void;
   generationEnabled: boolean;
   onUseChatGPT: (model: string, effort: string) => void;
   onDisconnect: () => void;
@@ -325,6 +335,10 @@ export default function ChatGPTConnection({
   const pollController = useRef<AbortController | null>(null);
   const pollTimer = useRef<number | null>(null);
   const pollExpiryTimer = useRef<number | null>(null);
+  const active = useRef(false);
+  const startAttempt = useRef(0);
+  const startInProgress = useRef(false);
+  const consumedStartRequest = useRef(0);
 
   const clearPoll = useCallback(() => {
     if (pollTimer.current !== null) {
@@ -336,6 +350,23 @@ export default function ChatGPTConnection({
       pollExpiryTimer.current = null;
     }
   }, []);
+
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+      queueMicrotask(() => {
+        if (active.current) return;
+        startAttempt.current++;
+        requestController.current?.abort();
+        requestController.current = null;
+        pollController.current?.abort();
+        pollController.current = null;
+        clearPoll();
+        generation.current++;
+      });
+    };
+  }, [clearPoll]);
 
   const beginRequest = useCallback(() => {
     requestController.current?.abort();
@@ -398,10 +429,13 @@ export default function ChatGPTConnection({
 
   useEffect(() => {
     if (!signedIn) {
-      beginRequest();
-      setView({ phase: "idle" });
+      if (!startInProgress.current) {
+        beginRequest();
+        setView({ phase: "idle" });
+      }
       return () => undefined;
     }
+    if (startInProgress.current) return () => undefined;
     refresh();
     return () => {
       requestController.current?.abort();
@@ -412,24 +446,39 @@ export default function ChatGPTConnection({
   }, [beginRequest, clearPoll, refresh, signedIn]);
 
   const start = useCallback(() => {
-    if (!signedIn) {
-      onSignIn();
-      return;
-    }
-    const { controller, current } = beginRequest();
+    const attempt = ++startAttempt.current;
+    startInProgress.current = true;
     setView({ phase: "checking" });
-    void requestJSON("start", "POST", controller.signal)
-      .then((data) => {
-        if (!currentRequest(controller, current)) return;
-        const challenge = parseChatGPTChallenge(data);
-        if (!challenge) {
-          setView({ phase: "error", message: genericError });
-          return;
-        }
-        setView({ phase: "pending", challenge });
+    let request: { controller: AbortController; current: number } | null = null;
+    const session = signedIn
+      ? Promise.resolve()
+      : ensureProviderSession().then(() => undefined);
+    void session
+      .then(() => {
+        if (!active.current || attempt !== startAttempt.current) return;
+        request = beginRequest();
+        return requestJSON("start", "POST", request.controller.signal).then(
+          (data) => {
+            if (
+              !request ||
+              !currentRequest(request.controller, request.current)
+            )
+              return;
+            const challenge = parseChatGPTChallenge(data);
+            if (!challenge) {
+              setView({ phase: "error", message: genericError });
+              return;
+            }
+            setView({ phase: "pending", challenge });
+          },
+        );
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted || !currentRequest(controller, current))
+        if (
+          request?.controller.signal.aborted ||
+          !active.current ||
+          attempt !== startAttempt.current
+        )
           return;
         const stale = isChatGPTStaleConnectionError(error);
         setView(
@@ -439,16 +488,26 @@ export default function ChatGPTConnection({
                 message: CHATGPT_STALE_CONNECTION_MESSAGE,
                 stale: true,
               }
-            : { phase: "idle", message: errorMessage(error) },
+            : {
+                phase: signedIn ? "idle" : "error",
+                message: errorMessage(error),
+              },
         );
+      })
+      .finally(() => {
+        if (attempt === startAttempt.current) startInProgress.current = false;
       });
-  }, [beginRequest, onSignIn, signedIn]);
+  }, [beginRequest, ensureProviderSession, signedIn]);
+
+  useEffect(() => {
+    if (startRequest <= consumedStartRequest.current) return;
+    consumedStartRequest.current = startRequest;
+    onStartRequestConsumed();
+    start();
+  }, [onStartRequestConsumed, start, startRequest]);
 
   const reconnect = useCallback(() => {
-    if (!signedIn) {
-      onSignIn();
-      return;
-    }
+    if (!signedIn) return start();
     const { controller, current } = beginRequest();
     setView({ phase: "checking" });
     void requestJSON("logout", "POST", controller.signal)
@@ -483,7 +542,7 @@ export default function ChatGPTConnection({
             : { phase: "error", message: errorMessage(error) },
         );
       });
-  }, [beginRequest, onDisconnect, onSignIn, signedIn]);
+  }, [beginRequest, onDisconnect, signedIn, start]);
 
   const cancel = useCallback(() => {
     if (!signedIn) return;
@@ -666,10 +725,24 @@ export default function ChatGPTConnection({
       <p>Connect your ChatGPT account without installing anything.</p>
       {!signedIn ? (
         <div className="setup-note">
-          Sign in to Orbsie before connecting your ChatGPT account.
-          <button className="primary full" onClick={onSignIn}>
-            Sign in to Orbsie
-          </button>
+          {view.phase === "checking" ? (
+            <p role="status">
+              <LoaderCircle size={15} className="spin" aria-hidden="true" />
+              Connecting to ChatGPT…
+            </p>
+          ) : view.phase === "error" ? (
+            <p role="alert">{view.message}</p>
+          ) : (
+            <p>
+              Connect your ChatGPT subscription. No separate Orbsie password is
+              needed.
+            </p>
+          )}
+          {view.phase !== "checking" && (
+            <button className="primary full" onClick={start}>
+              {view.phase === "error" ? "Try again" : "Connect ChatGPT"}
+            </button>
+          )}
         </div>
       ) : view.phase === "checking" ? (
         <div className="setup-note" role="status">
