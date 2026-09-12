@@ -18,7 +18,12 @@ import { z } from "zod";
 import { isRecommendedModel, openrouterProviderRouting } from "../model-modes";
 import {
   generationDiagnostic,
+  normalizeFinishReason,
   ProviderStreamError,
+  SceneJSONError,
+  SceneProtocolError,
+  TruncatedSceneStreamError,
+  type GenerationFinishReason,
 } from "../generation-diagnostics";
 import {
   modelingFeedbackSchema,
@@ -170,40 +175,76 @@ export async function generateCommands({
         working = project,
         count = 0,
         lastCommandType = "";
+      let finishReason: GenerationFinishReason = null;
       let cursor: Cursor = {
         runId: crypto.randomUUID(),
         sequence: 0,
         seen: new Set(),
       };
+      const objectRecord = (
+        value: unknown,
+      ): Record<string, unknown> | undefined =>
+        value && typeof value === "object" && !Array.isArray(value)
+          ? (value as Record<string, unknown>)
+          : undefined;
       function emit(line: string) {
         if (!line.trim()) return;
         if (++count > 250)
           throw Error(
             "This turn reached its scene update limit. Continue from the saved world.",
           );
-        const command = enforceAssetPolicy(
-          working,
-          parseModelCommandForProcessing(
-            JSON.parse(line),
+        let input: unknown;
+        try {
+          input = JSON.parse(line);
+        } catch {
+          throw new SceneJSONError(finishReason);
+        }
+        let parsed: ModelCommand;
+        try {
+          parsed = parseModelCommandForProcessing(
+            input,
             localModeling,
             browserModeling,
-          ),
-          assetPolicy,
-        );
-        assertModelingCommand(command, localModeling, browserModeling);
-        const applied = applyModelOperation(
-          working,
-          {
-            version: 1,
-            projectId: working.id,
-            runId: cursor.runId,
-            operationId: crypto.randomUUID(),
-            sequence: cursor.sequence + 1,
-            baseRevision: working.revision,
-            command,
-          },
-          cursor,
-        );
+          );
+        } catch (error) {
+          if (error instanceof z.ZodError) throw error;
+          throw new SceneProtocolError(finishReason);
+        }
+        let command: ModelCommand;
+        try {
+          command = enforceAssetPolicy(working, parsed, assetPolicy);
+        } catch (error) {
+          if (error instanceof z.ZodError) throw error;
+          throw new SceneProtocolError(finishReason);
+        }
+        try {
+          assertModelingCommand(command, localModeling, browserModeling);
+        } catch (error) {
+          if (error instanceof z.ZodError) throw error;
+          throw new SceneProtocolError(
+            finishReason,
+            error instanceof Error ? error.message : undefined,
+          );
+        }
+        let applied: ReturnType<typeof applyModelOperation>;
+        try {
+          applied = applyModelOperation(
+            working,
+            {
+              version: 1,
+              projectId: working.id,
+              runId: cursor.runId,
+              operationId: crypto.randomUUID(),
+              sequence: cursor.sequence + 1,
+              baseRevision: working.revision,
+              command,
+            },
+            cursor,
+          );
+        } catch (error) {
+          if (error instanceof z.ZodError) throw error;
+          throw new SceneProtocolError(finishReason);
+        }
         working = applied.project;
         cursor = applied.cursor;
         lastCommandType = command.type;
@@ -222,9 +263,25 @@ export async function generateCommands({
             if (!line.startsWith("data:")) continue;
             const text = line.slice(5).trim();
             if (!text || text === "[DONE]") continue;
-            const event = JSON.parse(text);
-            if (event.error) throw new ProviderStreamError(event.error);
-            const delta = event.choices?.[0]?.delta?.content;
+            let event: unknown;
+            try {
+              event = JSON.parse(text);
+            } catch {
+              throw new SceneProtocolError(finishReason);
+            }
+            const record = objectRecord(event);
+            if (!record) throw new SceneProtocolError(finishReason);
+            const choice = Array.isArray(record.choices)
+              ? objectRecord(record.choices[0])
+              : undefined;
+            if (choice) {
+              const reason = choice.finish_reason;
+              if (reason !== undefined && reason !== null)
+                finishReason = normalizeFinishReason(reason);
+            }
+            if (record.error)
+              throw new ProviderStreamError(record.error, finishReason);
+            const delta = objectRecord(choice?.delta)?.content;
             if (typeof delta !== "string") continue;
             records += delta;
             if (records.length > 100000)
@@ -235,16 +292,23 @@ export async function generateCommands({
           }
         }
         if (records.trim()) emit(records);
-        if (!count)
-          throw Error(
+        if (!count) {
+          if (finishReason === "length")
+            throw new TruncatedSceneStreamError(finishReason);
+          throw new SceneProtocolError(
+            finishReason,
             "This model did not return any supported scene commands. Select another model.",
           );
-        if (lastCommandType !== "commit_revision")
-          throw Error(
-            "Generation ended before committing this turn. Finished objects are preserved; retry to continue.",
-          );
+        }
+        if (lastCommandType !== "commit_revision") {
+          const message =
+            "Generation ended before committing this turn. Finished objects are preserved; retry to continue.";
+          if (finishReason === "length")
+            throw new TruncatedSceneStreamError(finishReason, message);
+          throw new SceneProtocolError(finishReason, message);
+        }
       } catch (error) {
-        const diagnostic = generationDiagnostic(error, count);
+        const diagnostic = generationDiagnostic(error, count, finishReason);
         controller.enqueue(
           encoder.encode(
             JSON.stringify({

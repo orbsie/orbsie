@@ -52,7 +52,11 @@ it("keeps OpenRouter automatic provider routing for other models", async () => {
               message: "Ready.",
             });
             c.enqueue(
-              encoder.encode("data: " + JSON.stringify({ choices: [{ delta: { content: line } }] }) + "\n\n"),
+              encoder.encode(
+                "data: " +
+                  JSON.stringify({ choices: [{ delta: { content: line } }] }) +
+                  "\n\n",
+              ),
             );
             c.enqueue(encoder.encode("data: [DONE]\n\n"));
             c.close();
@@ -197,7 +201,22 @@ for (const provider of ["openrouter", "gateway"] as const) {
       });
       const text = await new Response(stream).text();
       if (browserModeling) expect(text).toContain('"commit_revision"');
-      else expect(text).toContain("Browser modeling is unavailable");
+      else {
+        expect(text).toContain("Browser modeling is unavailable");
+        const records = text
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line));
+        expect(records[0]).toMatchObject({ type: "reserve_entity" });
+        expect(records[1]).toMatchObject({
+          code: "INVALID_SCENE_PROTOCOL",
+          diagnostic: {
+            operation: 2,
+            issues: [],
+            finishReason: null,
+          },
+        });
+      }
       const request = JSON.parse(
         String((fetcher.mock.calls[0]?.[1] as RequestInit | undefined)?.body),
       );
@@ -329,4 +348,12 @@ it("reports truncated generation after valid partial commands instead of claimin
     .map((line) => JSON.parse(line));
   expect(records[0]).toEqual(command);
   expect(records[1].error).toContain("before committing");
+  expect(records[1]).toMatchObject({
+    code: "TRUNCATED_SCENE_STREAM",
+    diagnostic: {
+      operation: 1,
+      issues: [],
+      finishReason: "length",
+    },
+  });
 });

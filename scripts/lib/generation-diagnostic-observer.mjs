@@ -35,6 +35,8 @@ export async function installGenerationDiagnosticObserver(page) {
                   ![
                     "INVALID_SCENE_UPDATE",
                     "INVALID_SCENE_JSON",
+                    "INVALID_SCENE_PROTOCOL",
+                    "TRUNCATED_SCENE_STREAM",
                     "PROVIDER_STREAM_ERROR",
                   ].includes(record.code)
                 )

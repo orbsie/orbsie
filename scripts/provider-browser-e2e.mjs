@@ -897,9 +897,12 @@ function attachRequestEvidence(page, config, info) {
                   continue;
                 }
                 if (
-                  !["INVALID_SCENE_UPDATE", "INVALID_SCENE_JSON"].includes(
-                    record.code,
-                  )
+                  ![
+                    "INVALID_SCENE_UPDATE",
+                    "INVALID_SCENE_JSON",
+                    "INVALID_SCENE_PROTOCOL",
+                    "TRUNCATED_SCENE_STREAM",
+                  ].includes(record.code)
                 )
                   continue;
                 if (info.generationDiagnostics.length >= 8) break;
@@ -3199,6 +3202,8 @@ async function run(config, report = emptyReport(config)) {
         return [
           "INVALID_SCENE_UPDATE",
           "INVALID_SCENE_JSON",
+          "INVALID_SCENE_PROTOCOL",
+          "TRUNCATED_SCENE_STREAM",
           "PROVIDER_STREAM_ERROR",
         ].includes(code)
           ? code

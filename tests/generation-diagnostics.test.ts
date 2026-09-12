@@ -57,6 +57,7 @@ describe("generation diagnostics", () => {
       operation: 0,
       issues: [],
       providerStatus: 429,
+      finishReason: null,
     });
     expect(JSON.stringify(record)).not.toContain("private-secret");
   });
@@ -173,6 +174,106 @@ describe("generation diagnostics", () => {
     expect(generationDiagnostic(new Error("private"))).toBeUndefined();
   });
 
+  it.each([
+    ["length", "TRUNCATED_SCENE_STREAM"],
+    ["stop", "INVALID_SCENE_JSON"],
+    ["private-provider-reason", "INVALID_SCENE_JSON"],
+  ] as const)(
+    "distinguishes a %s finish from malformed scene JSON",
+    async (finishReason, code) => {
+      vi.stubGlobal(
+        "fetch",
+        async () =>
+          new Response(
+            `data: ${JSON.stringify({
+              choices: [
+                {
+                  delta: { content: '{"type":"reserve_entity"' },
+                  finish_reason: finishReason,
+                },
+              ],
+            })}\n\ndata: [DONE]\n\n`,
+            { headers: { "Content-Type": "text/event-stream" } },
+          ),
+      );
+      const stream = await generateCommands({
+        provider: "gateway",
+        model: "test-model",
+        key: "test-key",
+        prompt: "make a shape",
+        project: blankProject(),
+        signal: new AbortController().signal,
+      });
+      const record = JSON.parse(await new Response(stream).text());
+      expect(record.code).toBe(code);
+      expect(record.diagnostic).toEqual({
+        operation: 1,
+        issues: [],
+        finishReason:
+          finishReason === "private-provider-reason" ? "other" : finishReason,
+      });
+      expect(JSON.stringify(record)).not.toContain("private-provider-reason");
+    },
+  );
+
+  it("classifies a valid but unappliable command as protocol failure", async () => {
+    const reservation = {
+      type: "reserve_entity",
+      entity: {
+        id: "existing-object",
+        label: "Existing object",
+        position: [0, 0, 0],
+        scale: [1, 1, 1],
+        color: "#88aa55",
+        stage: "seed",
+      },
+    };
+    const command = {
+      type: "set_material",
+      id: "missing-object",
+      color: "#ffffff",
+    };
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          `data: ${JSON.stringify({
+            choices: [
+              {
+                delta: {
+                  content: `${JSON.stringify(reservation)}\n${JSON.stringify(command)}\n`,
+                },
+                finish_reason: "stop",
+              },
+            ],
+          })}\n\ndata: [DONE]\n\n`,
+          { headers: { "Content-Type": "text/event-stream" } },
+        ),
+    );
+    const stream = await generateCommands({
+      provider: "gateway",
+      model: "test-model",
+      key: "test-key",
+      prompt: "make a shape",
+      project: blankProject(),
+      signal: new AbortController().signal,
+    });
+    const records = (await new Response(stream).text())
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(records[0]).toMatchObject({ type: "reserve_entity" });
+    const record = records[1];
+    expect(record.code).toBe("INVALID_SCENE_PROTOCOL");
+    expect(record.diagnostic).toEqual({
+      operation: 2,
+      issues: [],
+      finishReason: "stop",
+    });
+    expect(record.error).toContain("could not be applied");
+    expect(JSON.stringify(record)).not.toContain("missing-object");
+  });
+
   it("bounds the operation count independently of issue details", () => {
     const error = new z.ZodError([
       { code: "custom", path: [], message: "private" },
@@ -216,7 +317,7 @@ describe("generation diagnostics", () => {
       "fetch",
       async () =>
         new Response(
-          `data: ${JSON.stringify({ choices: [{ delta: { content: `${JSON.stringify(command)}\n` } }] })}\n\ndata: [DONE]\n\n`,
+          `data: ${JSON.stringify({ choices: [{ delta: { content: `${JSON.stringify(command)}\n` }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`,
           { headers: { "Content-Type": "text/event-stream" } },
         ),
     );
@@ -234,6 +335,7 @@ describe("generation diagnostics", () => {
     );
     expect(record.code).toBe("INVALID_SCENE_UPDATE");
     expect(record.diagnostic.operation).toBe(1);
+    expect(record.diagnostic.finishReason).toBe("stop");
     expect(JSON.stringify(record)).not.toContain("privateApiKey");
     expect(JSON.stringify(record)).not.toContain("provider-secret");
   });

@@ -108,12 +108,72 @@ const knownIssueCodes = new Set([
 ]);
 
 type DiagnosticCode =
-  "INVALID_SCENE_UPDATE" | "INVALID_SCENE_JSON" | "PROVIDER_STREAM_ERROR";
+  | "INVALID_SCENE_UPDATE"
+  | "INVALID_SCENE_JSON"
+  | "INVALID_SCENE_PROTOCOL"
+  | "TRUNCATED_SCENE_STREAM"
+  | "PROVIDER_STREAM_ERROR";
+
+export type GenerationFinishReason =
+  | "stop"
+  | "length"
+  | "tool_calls"
+  | "content_filter"
+  | "error"
+  | "other"
+  | null;
+
+export function normalizeFinishReason(value: unknown): GenerationFinishReason {
+  if (value === null || value === undefined) return null;
+  if (
+    value === "stop" ||
+    value === "length" ||
+    value === "tool_calls" ||
+    value === "content_filter" ||
+    value === "error"
+  )
+    return value;
+  return "other";
+}
+
+export class SceneJSONError extends SyntaxError {
+  readonly finishReason: GenerationFinishReason;
+  constructor(finishReason: GenerationFinishReason) {
+    super("The model returned malformed scene JSON.");
+    this.name = "SceneJSONError";
+    this.finishReason = finishReason;
+  }
+}
+
+export class SceneProtocolError extends Error {
+  readonly finishReason: GenerationFinishReason;
+  constructor(
+    finishReason: GenerationFinishReason,
+    message = "The model returned a scene update that could not be applied.",
+  ) {
+    super(message);
+    this.name = "SceneProtocolError";
+    this.finishReason = finishReason;
+  }
+}
+
+export class TruncatedSceneStreamError extends Error {
+  readonly finishReason: GenerationFinishReason;
+  constructor(
+    finishReason: GenerationFinishReason,
+    message = "The model response ended before the scene was complete.",
+  ) {
+    super(message);
+    this.name = "TruncatedSceneStreamError";
+    this.finishReason = finishReason;
+  }
+}
 
 /** Retain only a bounded status code, never provider messages or metadata. */
 export class ProviderStreamError extends Error {
   readonly providerStatus: number | null;
-  constructor(value: unknown) {
+  readonly finishReason?: GenerationFinishReason;
+  constructor(value: unknown, finishReason?: GenerationFinishReason) {
     super("The provider interrupted this generation. Please retry.");
     const code =
       value && typeof value === "object" && "code" in value
@@ -126,6 +186,7 @@ export class ProviderStreamError extends Error {
       code <= 599
         ? code
         : null;
+    if (finishReason !== undefined) this.finishReason = finishReason;
   }
 }
 type DiagnosticPathSegment = string | number;
@@ -141,6 +202,7 @@ export interface GenerationDiagnostic {
     readonly operation: number;
     readonly issues: readonly GenerationDiagnosticIssue[];
     readonly providerStatus?: number | null;
+    readonly finishReason?: GenerationFinishReason;
   };
 }
 
@@ -232,6 +294,7 @@ function zodIssues(error: z.ZodError): GenerationDiagnosticIssue[] {
 export function generationDiagnostic(
   error: unknown,
   operationCount = 0,
+  finishReason?: GenerationFinishReason,
 ): GenerationDiagnostic | undefined {
   const operation = Number.isFinite(operationCount)
     ? Math.min(MAX_OPERATION_COUNT, Math.max(0, Math.trunc(operationCount)))
@@ -243,6 +306,39 @@ export function generationDiagnostic(
         operation,
         issues: [],
         providerStatus: error.providerStatus,
+        ...(error.finishReason !== undefined
+          ? { finishReason: error.finishReason }
+          : {}),
+      },
+    };
+  if (error instanceof TruncatedSceneStreamError)
+    return {
+      code: "TRUNCATED_SCENE_STREAM",
+      diagnostic: {
+        operation,
+        issues: [],
+        finishReason: error.finishReason,
+      },
+    };
+  if (error instanceof SceneProtocolError)
+    return {
+      code: "INVALID_SCENE_PROTOCOL",
+      diagnostic: {
+        operation,
+        issues: [],
+        finishReason: error.finishReason,
+      },
+    };
+  if (error instanceof SceneJSONError)
+    return {
+      code:
+        error.finishReason === "length"
+          ? "TRUNCATED_SCENE_STREAM"
+          : "INVALID_SCENE_JSON",
+      diagnostic: {
+        operation,
+        issues: [],
+        finishReason: error.finishReason,
       },
     };
   if (error instanceof z.ZodError) {
@@ -252,6 +348,7 @@ export function generationDiagnostic(
       diagnostic: {
         operation,
         issues,
+        ...(finishReason !== undefined ? { finishReason } : {}),
       },
     };
   }
