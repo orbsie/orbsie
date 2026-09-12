@@ -9,7 +9,9 @@ large logs, and copied diffs.
 - Fresh owner approval: one Luna create/edit test EACH for OpenRouter and
   Gateway, maximum two calls/provider, 4096 output tokens/call, no retries.
   OpenRouter run used one HTTP200 call, then tree-shape overlap rejection before
-  save; no edit/retry. Evidence: `input-game-feedback-approved`. Gateway unused.
+  save; no edit/retry. Evidence: `input-game-feedback-approved`. Gateway also
+  used one HTTP200 Luna call then tree overlap rejection, no edit/retry; evidence
+  `gateway-input-game-approved`. Private temporary Gateway key file deleted.
   Owner also approved Chrome consent work;
   CUA still reports no browsers. Do not treat consent as already completed.
 - Current source: `be7672a` is deployed to `https://orbsie.com`; production smoke
