@@ -46,8 +46,12 @@ fall to1.0175,27 stays there,28→29 rise, all after recorded jump release.
 This is partial retained evidence, not a fresh passing rerun. Current script
 fixes catalog-vs-visible contact height, scans later candidates and closes
 contexts before video save; synthetic fall/flat cases reject. Syntax passes.
-Next bounded step: one corrected browser run, with provenance and retained
-partial diagnostics, then review export/touch; no new inference required.
+Root corrected run in moving-bounce-browser-corrected passed desktop rebound,
+continued path, UI reload and ZIP export; raw status failed on touch immediate
+platform readiness assertion. Root reviewed desktop image/trace. Luna
+`/root/bounce_readiness` owns ONLY the verifier readiness wait for player+matched
+platform; no input/contact changes or browser calls. Root will review then
+run acceptance. One fixture response, zero models/external/page errors.
 Server3068 runtime e0dff7c remains unchanged; revalidate before use. Do not
 rebuild .next while server in use. Live provider effectiveness remains open.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
