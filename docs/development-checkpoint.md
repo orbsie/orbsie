@@ -146,3 +146,15 @@ OpenRouter JSON object via catalog, exact strawberry prompt then material edit
 only if creation succeeds. Maximum two calls per provider, 4096 output tokens,
 Luna low/default, no retries or fallback. Test key is temporary/local-only.
 This is not yet a successful acceptance or a production deployment.
+
+### First envelope live milestone completed
+
+From `ff6ea23`, OpenRouter passed two-call strawberry creation/material edit,
+recovery, ZIP export and standalone playback. Gateway stopped after one create
+call with INVALID_SCENE_UPDATE at geometry.job.recipe.nodes[2].id (custom);
+the sanitized path alone cannot distinguish duplicate IDs from unreachable
+nodes. No edit/retry. Temporary Gateway key deleted and server stopped.
+Root scanned JSON/text/ZIP evidence for key patterns (none) and viewed the edit
+screenshot: functional success, but tiny/sparse tree does not close visual QA.
+Gateway semantic validation, visual quality and the broader acceptance matrix
+remain open. No production deploy in this milestone.
