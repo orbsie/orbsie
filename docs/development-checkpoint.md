@@ -21,6 +21,16 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Active worker: `/root/republish_acceptance_harness`, mobile touch-input lifecycle
   in editor and standalone player: cancellation, multitouch, blur/background,
   typing and play/edit transitions. No live calls/deployment; review before commit.
+- Root review rejected synthetic touch browser acceptance: harness overrode pointer
+  capture after CDP events failed to arrive. Worker must restore actual browser
+  touch/capture or report an unresolved gap; unit/synthetic coverage is separate.
+- Owner authorized Android emulator installation. Isolated AVD `orbsie_api35_phone`
+  is booted as `emulator-5580` (root process session4786), Android35 Google Play
+  x86_64, Pixel6 profile, KVM, SwiftShader,3GiB/2cores. Use SDK adb at
+  `/home/marcos/android-sdk/platform-tools/adb` (system adb was unreliable).
+  Chrome is installed; welcome flow awaits owner approval of Google Terms effective
+  July30,2026. Root opened the terms link only; no consent/account created.
+  Do not bypass onboarding or accept terms without the pending explicit approval.
 - Mobile is an explicit release gate (`63f7332`): full workflows and actual-device
   iOS Safari/Android Chrome validation. Emulation alone cannot establish completion.
 - Diagnostics accepted in `a698cbf`; alias resolution/integration in `7e74569`.
