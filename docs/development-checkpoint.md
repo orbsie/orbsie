@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-12 against HEAD `9304276`; full goal remains incomplete.
+Updated 2026-09-12 against HEAD `f565a7a`; full goal remains incomplete.
 Historical reports and rejected evidence are retained in `docs/evidence/` and
 `docs/scope-audit.md`. This file records current state, not conversation history.
 
@@ -10,14 +10,14 @@ Implement all of `prompt.md`, including real OpenRouter, Vercel AI Gateway and
 browser-only ChatGPT subscription workflows. Astra reviews/integrates; one
 Luna xhigh/default bounded worker, no nested delegation, concise context.
 Fast off. Targeted checks per change; full/live checks only at milestones.
-Stop agents/tests below20% remaining Codex usage. Fresh App Server quota read
-2026-09-12: primary usedPercent15, 85% remaining, weekly10080-minute window.
+Stop agents/tests below20% remaining Codex usage. Latest recorded App Server quota read
+2026-09-12: primary usedPercent19, 81% remaining, weekly10080-minute window.
 Goal token totals are not quota. Live tests Luna only, low/default,4096 output
 maximum per call, no automatic retries; Gateway up to5 calls/test, OpenRouter
 2/run. Proposed OpenRouter3-call recovery remains pending. End users retain
 supported model choice. GitHub actions use computer use. Never print secrets.
 
-## Current task and bounce acceptance
+## Earlier bounce acceptance (historical)
 
 No worker active. `/root/multitouch_traversal` finished: winning traversal now
 uses stable independent touch IDs, shared diagonal choices, five touch points,
@@ -263,3 +263,21 @@ bounded live OpenRouter create/edit placement milestone (Luna only, explicit
 4096-token raised cap, at most2 calls, no retries); preserve user model freedom.
 ChatGPT owner authorization remains pending. Full goal and physical mobile
 acceptance remain incomplete. See mushroom-placement-comparison evidence.
+
+## Fresh OpenRouter placement attempt: harness contract mismatch
+
+Root rebuilt f565a7a successfully (production build and TypeScript), replaced
+stale local server; current server handle37626 at127.0.0.1:3068. Luna completed
+one OpenRouter run: exactly2 HTTP200 calls, Luna low/default,4096 explicit raised
+cap, no retries/fallback. Creation passed6 operations,1 catalog and1 browser
+ generated entity. Ordinary tree→giant pink mushroom edit hit the generic recipe
+edit verifier's appearance-preservation assertion because tint changed. This
+contract conflicts with the requested pink edit. No trusted post-edit placement,
+export or standalone acceptance; report edit.selectedIdPreserved=false is an
+unreached default, not proof of an identity mutation. Preserve raw failed report.
+
+Evidence: provider-e2e/openrouter-catalog-placement. No worker/test active.
+Next: fix the semantic test contract and retain snapshots before assertions;
+validate offline before considering a new live milestone. Do not repeat model
+calls merely to bypass the failed assertion. ChatGPT owner consent and physical
+mobile remain pending; full objective incomplete.
