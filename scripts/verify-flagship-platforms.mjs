@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Desktop-only acceptance for landing on and being carried by the three
-// moving catalog platforms in the saved OpenRouter flagship ZIP.
+// moving catalog platforms in the saved OpenRouter flagship ZIP or its
+// read-only published deployment.
 //
 // This verifier serves the ZIP bytes directly, observes only rendered Three.js
 // objects, and drives the game through real keyboard events. It never imports
@@ -25,6 +26,11 @@ const zipPath = resolve(
 const output = resolve(process.argv[2] ?? "docs/evidence/flagship-platforms");
 const reanalyzeReport = process.env.FLAGSHIP_REANALYZE_REPORT;
 const sequential = process.env.FLAGSHIP_SEQUENTIAL === "1";
+const publishedUrl = process.env.FLAGSHIP_PUBLISHED_URL;
+const published = Boolean(publishedUrl);
+const publishedTarget = published ? new URL(publishedUrl) : null;
+if (published && !["http:", "https:"].includes(publishedTarget.protocol))
+  throw Error("FLAGSHIP_PUBLISHED_URL must use HTTP(S).");
 if (!reanalyzeReport) await mkdir(output, { recursive: false });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -139,51 +145,58 @@ if (reanalyzeReport) {
 
 let standaloneServer;
 let standaloneOrigin;
+const targetOrigin = publishedTarget?.origin;
 const serverRequests = [];
-standaloneServer = createServer((request, response) => {
-  const normalized = posixPath.normalize(
-    new URL(request.url ?? "/", "http://snapshot.local").pathname.slice(1),
-  );
-  const pathname = normalized === "." ? "index.html" : normalized;
-  if (pathname.startsWith("../") || pathname === "..") {
-    response.writeHead(400).end();
-    return;
-  }
-  const bytes = files[pathname];
-  if (!bytes) {
-    response.writeHead(404).end();
-    return;
-  }
-  serverRequests.push({ method: request.method, pathname });
-  const extension = pathname.split(".").pop();
-  response.setHeader(
-    "Content-Type",
-    {
-      css: "text/css",
-      glb: "model/gltf-binary",
-      html: "text/html",
-      js: "text/javascript",
-      json: "application/json",
-      mjs: "text/javascript",
-      png: "image/png",
-      wasm: "application/wasm",
-    }[extension] ?? "application/octet-stream",
-  );
-  response.writeHead(200);
-  if (request.method !== "HEAD") response.end(bytes);
-  else response.end();
-});
-await new Promise((resolveServer, rejectServer) => {
-  standaloneServer.once("error", rejectServer);
-  standaloneServer.listen(0, "127.0.0.1", resolveServer);
-});
-standaloneOrigin = `http://127.0.0.1:${standaloneServer.address().port}`;
+if (!published) {
+  standaloneServer = createServer((request, response) => {
+    const normalized = posixPath.normalize(
+      new URL(request.url ?? "/", "http://snapshot.local").pathname.slice(1),
+    );
+    const pathname = normalized === "." ? "index.html" : normalized;
+    if (pathname.startsWith("../") || pathname === "..") {
+      response.writeHead(400).end();
+      return;
+    }
+    const bytes = files[pathname];
+    if (!bytes) {
+      response.writeHead(404).end();
+      return;
+    }
+    serverRequests.push({ method: request.method, pathname });
+    const extension = pathname.split(".").pop();
+    response.setHeader(
+      "Content-Type",
+      {
+        css: "text/css",
+        glb: "model/gltf-binary",
+        html: "text/html",
+        js: "text/javascript",
+        json: "application/json",
+        mjs: "text/javascript",
+        png: "image/png",
+        wasm: "application/wasm",
+      }[extension] ?? "application/octet-stream",
+    );
+    response.writeHead(200);
+    if (request.method !== "HEAD") response.end(bytes);
+    else response.end();
+  });
+  await new Promise((resolveServer, rejectServer) => {
+    standaloneServer.once("error", rejectServer);
+    standaloneServer.listen(0, "127.0.0.1", resolveServer);
+  });
+  standaloneOrigin = `http://127.0.0.1:${standaloneServer.address().port}`;
+}
 
 const report = {
   status: "running",
-  mode: sequential
-    ? "saved-openrouter-flagship-desktop-platform-sequential-landing-carry"
-    : "saved-openrouter-flagship-desktop-platform-landing-carry",
+  mode: published
+    ? sequential
+      ? "published-flagship-desktop-platform-sequential-landing-carry"
+      : "published-flagship-desktop-platform-landing-carry"
+    : sequential
+      ? "saved-openrouter-flagship-desktop-platform-sequential-landing-carry"
+      : "saved-openrouter-flagship-desktop-platform-landing-carry",
   provider: "openrouter",
   liveProvider: false,
   startedAt,
@@ -234,7 +247,9 @@ const report = {
   inferenceCalls: 0,
   externalRequests: [],
   mutatingRequests: [],
+  blockedRequests: [],
   pageErrors: [],
+  publicRequests: [],
   serverRequests,
   runs: [],
 };
@@ -250,6 +265,26 @@ const choices = [
   { x: -Math.SQRT1_2, z: Math.SQRT1_2, keys: ["a", "s"] },
   { x: -Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["a", "w"] },
 ];
+
+function publishableProject(projectSnapshot) {
+  const copy = JSON.parse(JSON.stringify(projectSnapshot));
+  delete copy.id;
+  delete copy.revision;
+  delete copy.messages;
+  return copy;
+}
+
+async function readPublishedAsset(pathname) {
+  const response = await fetch(new URL(pathname, publishedTarget), {
+    redirect: "error",
+  });
+  if (!response.ok)
+    throw Error(`Published ${pathname} HTTP ${response.status}.`);
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    status: response.status,
+  };
+}
 
 function geometryBounds(geometry) {
   const box = geometry.boundingBox;
@@ -940,6 +975,51 @@ const browser = await chromium.launch({
 });
 
 try {
+  if (published) {
+    const [publishedProjectAsset, publishedRuntimeAsset, publishedCssAsset] =
+      await Promise.all([
+        readPublishedAsset("project.json"),
+        readPublishedAsset("runtime.js"),
+        readPublishedAsset("runtime.css"),
+      ]);
+    let publishedProject;
+    try {
+      publishedProject = JSON.parse(strFromU8(publishedProjectAsset.bytes));
+      assert.deepEqual(
+        publishableProject(publishedProject),
+        publishableProject(project),
+      );
+    } catch {
+      throw Error(
+        "Published project snapshot differs from the flagship source after ignoring only id, revision, and messages.",
+      );
+    }
+    report.published = {
+      url: publishedTarget.href,
+      projectId: publishedProject.id,
+      projectRevision: publishedProject.revision,
+      snapshotComparison: {
+        passed: true,
+        ignoredFields: ["id", "revision", "messages"],
+      },
+      servedRuntime: {
+        projectJson: {
+          status: publishedProjectAsset.status,
+          sha256: sha256(publishedProjectAsset.bytes),
+        },
+        runtimeJs: {
+          status: publishedRuntimeAsset.status,
+          sha256: sha256(publishedRuntimeAsset.bytes),
+          bytes: publishedRuntimeAsset.bytes.byteLength,
+        },
+        runtimeCss: {
+          status: publishedCssAsset.status,
+          sha256: sha256(publishedCssAsset.bytes),
+          bytes: publishedCssAsset.bytes.byteLength,
+        },
+      },
+    };
+  }
   const context = await browser.newContext({
     viewport: desktopViewport,
     recordVideo: { dir: output },
@@ -949,7 +1029,13 @@ try {
     const request = route.request();
     const target = new URL(request.url());
     if (target.pathname === "/api/generate") report.inferenceCalls++;
-    if (target.origin !== standaloneOrigin) {
+    const allowedOrigin = published ? targetOrigin : standaloneOrigin;
+    if (published)
+      report.publicRequests.push({
+        method: request.method(),
+        pathname: target.pathname,
+      });
+    if (target.origin !== allowedOrigin) {
       report.externalRequests.push(request.url());
       return route.abort();
     }
@@ -957,12 +1043,16 @@ try {
       report.mutatingRequests.push(`${request.method()} ${request.url()}`);
       return route.abort();
     }
+    if (published && target.pathname.startsWith("/api/")) {
+      report.blockedRequests.push(`${request.method()} ${target.pathname}`);
+      return route.abort();
+    }
     return route.fallback();
   });
   const page = await context.newPage();
   page.setDefaultTimeout(30000);
   page.on("pageerror", (error) => report.pageErrors.push(error.message));
-  await page.goto(standaloneOrigin);
+  await page.goto(published ? publishedTarget.href : standaloneOrigin);
   await expect(page.locator('main[data-ready="true"]')).toBeVisible({
     timeout: 30000,
   });
@@ -1079,6 +1169,7 @@ try {
     report.inferenceCalls === 0 &&
     report.externalRequests.length === 0 &&
     report.mutatingRequests.length === 0 &&
+    report.blockedRequests.length === 0 &&
     report.pageErrors.length === 0
       ? "passed"
       : "failed";
