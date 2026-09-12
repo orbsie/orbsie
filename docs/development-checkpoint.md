@@ -513,3 +513,13 @@ patterns. App source a2ffe54 is operator supplied, not independently attested by
 this harness. This closes this bounded free creation/edit journey, not failure
 preservation, input-game objectives, full visual quality or mobile acceptance.
 The rendering remains visually sparse; do not claim flagship quality.
+
+### Strawberry visual diagnosis
+
+Read-only comparison of the saved ZIP and screenshots found one 114-triangle
+Kenney catalog tree and four authored low-poly revolve berries without calyx
+geometry. Standalone rendering shows the saved pink tint on trunk and canopy;
+the earlier editor capture likely caught a transition. No material/loader/scale
+fix is justified by this evidence. Sparse authored detail remains a visual
+quality limitation. A bounded harness follow-up will inspect completion signals
+so edit screenshots capture settled presentation, without new model calls.
