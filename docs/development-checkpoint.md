@@ -169,3 +169,13 @@ physical baseline for later visual review: tree-1 scale1.4 × catalog height
 1.70788741 =2.391042374. Mushroom-red at scale10 is only2.028 tall; raw scale
 and a mushroom label cannot close giant-size acceptance. Existing generation
 guidance already requests transformed dimensions and procedural fallback.
+
+## Creation-stage continuation reviewed
+
+Worker finished. Explicit ORBSIE_FLAGSHIP_RESUME_STAGE=creation validates
+mandatory manifest path/hash, restores exact saved project via UI, and reuses
+story edits with2call cap and no fake creation request. Old mushroom-stage
+resume remains1call. Root corrected earlier motion-test union narrowing;
+TypeScript passes and28 flagship tests pass. Worker also reported38 tests
+across targeted checks. No new browser/model calls yet. Next run uses captured
+revision26 and retained manifest; assess giant dimensions visually afterward.

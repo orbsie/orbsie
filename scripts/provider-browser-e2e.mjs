@@ -109,6 +109,12 @@ function isBlockedError(error) {
   );
 }
 
+export function flagshipResumeExecutionMode(config) {
+  if (!config.flagshipResume) return "fresh";
+  if (config.flagshipResumeOffline) return "offline";
+  return config.flagshipResumeStage === "creation" ? "creation" : "checkpoint";
+}
+
 function parseArgs(argv) {
   const result = { provider: undefined, publication: false };
   for (let i = 0; i < argv.length; i += 1) {
@@ -210,6 +216,21 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_RESUME must be 0 or 1.",
     );
   const flagshipResume = flagshipResumeValue === "1";
+  const flagshipResumeStageValue = process.env.ORBSIE_FLAGSHIP_RESUME_STAGE;
+  if (
+    flagshipResumeStageValue !== undefined &&
+    !["creation", "mushroom"].includes(flagshipResumeStageValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_STAGE must be creation or mushroom.",
+    );
+  if (flagshipResumeStageValue !== undefined && !flagshipResume)
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_STAGE requires ORBSIE_FLAGSHIP_RESUME=1.",
+    );
+  const flagshipResumeStage = flagshipResume
+    ? flagshipResumeStageValue ?? "mushroom"
+    : undefined;
   const flagshipResumeOfflineValue = process.env.ORBSIE_FLAGSHIP_RESUME_OFFLINE;
   if (
     flagshipResumeOfflineValue !== undefined &&
@@ -226,6 +247,10 @@ export function readConfiguration(argv) {
   if (flagshipStory && flagshipResume)
     throw new HarnessConfigurationError(
       "ORBSIE_FLAGSHIP_STORY and ORBSIE_FLAGSHIP_RESUME cannot be combined.",
+    );
+  if (flagshipResumeOffline && flagshipResumeStage === "creation")
+    throw new HarnessConfigurationError(
+      "Creation-stage flagship resume requires live edit calls and cannot use offline resume.",
     );
   if (flagshipStory && provider !== "gateway")
     throw new HarnessConfigurationError(
@@ -403,10 +428,13 @@ export function readConfiguration(argv) {
       : flagshipResumeOffline
         ? 0
         : flagshipResume
-          ? 1
+          ? flagshipResumeStage === "creation"
+            ? 2
+            : 1
           : 2,
     flagshipStory,
     flagshipResume,
+    flagshipResumeStage,
     flagshipResumeOffline,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
@@ -437,6 +465,7 @@ export function readConfiguration(argv) {
       config.resumeCheckpoint = readFlagshipResumeCheckpoint(
         checkpointPath,
         modelsPath,
+        flagshipResumeStage,
       );
       if (flagshipResumeOffline) {
         const editedPath = process.env.ORBSIE_FLAGSHIP_RESUME_EDITED;
@@ -833,7 +862,171 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
+export function assertFlagshipStoryAssetReferences(project) {
+  const references = [];
+  const visit = (value, path) => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => visit(entry, `${path}[${index}]`));
+      return;
+    }
+    for (const [key, child] of Object.entries(value)) {
+      const childPath = `${path}.${key}`;
+      if (key === "assetId") {
+        assert(
+          typeof child === "string" && STORY_CATALOG_ASSETS.has(child),
+          `Story checkpoint has an unknown catalog asset reference at ${childPath}.`,
+        );
+        references.push(child);
+      }
+      visit(child, childPath);
+    }
+  };
+  visit(project, "project");
+  for (const entity of project?.entities ?? []) {
+    if (entity?.geometry?.kind !== "asset") continue;
+    assert(
+      typeof entity.geometry.assetId === "string" &&
+        STORY_CATALOG_ASSETS.has(entity.geometry.assetId),
+      `Story asset entity ${entity.id} has no supported catalog asset reference.`,
+    );
+  }
+  return [...new Set(references)];
+}
+
+function assertFlagshipResumeSourceBinding(
+  evidence,
+  checkpointPath,
+  checkpointBytes,
+) {
+  assert(
+    typeof evidence.sourceSnapshot === "string" &&
+      resolve(SOURCE_ROOT, evidence.sourceSnapshot) === checkpointPath,
+    "Flagship resume evidence is not bound to the supplied checkpoint.",
+  );
+  assert.equal(
+    evidence.sourceSnapshotSha256,
+    sha256(checkpointBytes),
+    "Flagship resume evidence has an invalid source snapshot hash.",
+  );
+}
+
+function readFlagshipCreationCheckpointEvidence(
+  checkpointPath,
+  modelsDir,
+  project,
+  checkpointBytes,
+) {
+  let evidence;
+  try {
+    evidence = JSON.parse(
+      readFileSync(join(modelsDir, "story-created-generated.json")),
+    );
+  } catch {
+    throw Error(
+      "Flagship creation checkpoint or story-created-generated.json could not be read.",
+    );
+  }
+  assertFlagshipStoryAssetReferences(project);
+  assertFlagshipResumeSourceBinding(evidence, checkpointPath, checkpointBytes);
+  assert.equal(
+    evidence?.phase,
+    "created",
+    "Flagship creation evidence has an unexpected phase.",
+  );
+  assert.equal(
+    evidence?.status,
+    "complete",
+    "Flagship creation evidence is incomplete.",
+  );
+  assert(
+    Array.isArray(evidence.models) && Array.isArray(evidence.missing),
+    "Flagship creation evidence has an invalid generated-model manifest.",
+  );
+  assert.equal(
+    evidence.missing.length,
+    0,
+    "Flagship creation evidence contains missing generated assets.",
+  );
+  const { references, invalid } = generatedModelReferences(project);
+  assert.equal(
+    invalid.length,
+    0,
+    "Flagship creation checkpoint contains unsupported generated asset metadata.",
+  );
+  assert.equal(
+    evidence.models.length,
+    references.length,
+    references.length
+      ? "Flagship creation evidence omitted a generated asset."
+      : "Flagship creation evidence contains an unexpected generated asset.",
+  );
+  const expectedByHash = new Map(
+    references.map((reference) => [reference.sha256, reference]),
+  );
+  const seen = new Set();
+  const models = [];
+  let totalBytes = 0;
+  for (const record of evidence.models) {
+    const expected = expectedByHash.get(record?.sha256);
+    const path = record?.path;
+    assert(
+      expected &&
+        !seen.has(record.sha256) &&
+        record.status === "complete" &&
+        record.bytes === expected.expectedBytes &&
+        Array.isArray(record.entityIds) &&
+        [...new Set(record.entityIds)].sort().join("\0") ===
+          [...expected.entityIds].sort().join("\0") &&
+        typeof path === "string",
+      "Flagship creation evidence has mismatched generated-model metadata.",
+    );
+    assert(/^generated\/[a-f0-9]{64}\.glb$/.test(path), "Flagship creation evidence contains an unsafe model path.");
+    const modelPath = resolve(modelsDir, path);
+    const modelRelative = relative(modelsDir, modelPath);
+    assert(
+      modelRelative === path && !modelRelative.startsWith(".."),
+      "Flagship creation evidence contains an unsafe model path.",
+    );
+    let glb;
+    try {
+      glb = readFileSync(modelPath);
+    } catch {
+      throw Error(
+        `Flagship creation generated model ${record.sha256} could not be read; generated bytes cannot be reconstructed.`,
+      );
+    }
+    assert(
+      glb.byteLength === expected.expectedBytes &&
+        sha256(glb) === expected.sha256,
+      `Flagship creation generated model ${record.sha256} failed its hash or byte check.`,
+    );
+    seen.add(record.sha256);
+    totalBytes += glb.byteLength;
+    models.push({
+      entityIds: expected.entityIds,
+      metadata: project.entities.find(
+        (entity) => entity.geometry?.model?.sha256 === expected.sha256,
+      ).geometry.model,
+      glb: [...glb],
+    });
+  }
+  assert.equal(
+    totalBytes,
+    evidence.totalBytes,
+    "Flagship creation evidence has an incorrect generated-model byte total.",
+  );
+  return {
+    models,
+    sourceSnapshotSha256: sha256(checkpointBytes),
+  };
+}
+
+export function readFlagshipResumeCheckpoint(
+  checkpointArg,
+  modelsArg,
+  stage = "mushroom",
+) {
   const checkpointPath = resolve(checkpointArg);
   const modelsDir = resolve(modelsArg);
   let checkpointBytes;
@@ -843,7 +1036,12 @@ function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
     checkpointBytes = readFileSync(checkpointPath);
     project = JSON.parse(checkpointBytes.toString("utf8"));
     evidence = JSON.parse(
-      readFileSync(join(modelsDir, "report.json")).toString("utf8"),
+      readFileSync(
+        join(
+          modelsDir,
+          stage === "creation" ? "story-created-generated.json" : "report.json",
+        ),
+      ).toString("utf8"),
     );
   } catch {
     throw Error("Flagship resume checkpoint or evidence report could not be read.");
@@ -852,6 +1050,42 @@ function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
     throw Error("Flagship resume checkpoint has an invalid project shape.");
   if (project.revision < 1 || !project.id)
     throw Error("Flagship resume checkpoint is missing a project revision.");
+  if (stage === "creation") {
+    try {
+      assertFlagshipStoryCreation(project);
+      assert(
+        project.messages.some(
+          (message) => message?.text === FLAGSHIP_STORY_PROMPT,
+        ),
+        "Flagship creation checkpoint is missing the original story prompt.",
+      );
+      const evidence = readFlagshipCreationCheckpointEvidence(
+        checkpointPath,
+        modelsDir,
+        project,
+        checkpointBytes,
+      );
+      return {
+        project,
+        models: evidence.models,
+        checkpointPath,
+        modelsDir,
+        sourceSnapshotSha256: evidence.sourceSnapshotSha256,
+        stage,
+      };
+    } catch (error) {
+      throw Error(
+        error instanceof Error
+          ? error.message
+          : "Flagship creation checkpoint failed its story validation.",
+      );
+    }
+  }
+  assert.equal(
+    stage,
+    "mushroom",
+    "Flagship resume checkpoint stage must be creation or mushroom.",
+  );
   try {
     assertFlagshipStoryCreation(project);
     assert(
@@ -947,6 +1181,7 @@ function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
     checkpointPath,
     modelsDir,
     sourceSnapshotSha256: sha256(checkpointBytes),
+    stage,
   };
 }
 
@@ -1311,6 +1546,7 @@ export function emptyReport(config, provenance) {
             status: "not-started",
             generationBudget: config.generationBudget,
             mode: config.flagshipResumeOffline ? "offline-seeded" : "live",
+            stage: config.flagshipResumeStage,
             checkpoint: config.resumeCheckpoint
               ? {
                   projectId: config.resumeCheckpoint.project.id,
@@ -1395,7 +1631,7 @@ export async function installTrafficGuard(
       requestURL.pathname === "/api/generate" &&
       route.request().method() === "POST";
     if (isApiGeneration) {
-      const allowedBudgets = config.flagshipResume ? [1] : [2, 3];
+      const allowedBudgets = config.flagshipResume ? [1, 2] : [2, 3];
       if (!allowedBudgets.includes(config.generationBudget)) {
         info.generationBudgetViolations ||= [];
         info.generationBudgetViolations.push("invalid-generation-budget");
@@ -2482,7 +2718,9 @@ function assertGenerationRequests(config, info) {
     info.generationRequests,
     expectedCount,
     config.flagshipResume
-      ? `Expected exactly one live generation request for the flagship checkpoint resume, observed ${info.generationRequests}.`
+      ? config.flagshipResumeStage === "creation"
+        ? `Expected exactly two live generation requests for the creation-stage flagship continuation, observed ${info.generationRequests}.`
+        : `Expected exactly one live generation request for the flagship checkpoint resume, observed ${info.generationRequests}.`
       : config.interruptedRecovery
       ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
       : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
@@ -3462,16 +3700,42 @@ async function runFlagshipStory(
   evidenceDir,
   created,
   onGoodProject,
+  options = {},
 ) {
-  report.flagshipStory = {
-    ...(report.flagshipStory ?? {}),
-    status: "creation-observed",
-    visualReview: "pending",
-    phases: {
-      creation: { revision: created.revision },
-    },
-  };
-  await persistFlagshipStoryPhase(report, evidenceDir, "created", created, page);
+  const generationRequestOffset =
+    options.generationRequestOffset ?? info.generationRequests;
+  const assistantMessageBaseline =
+    options.assistantMessageBaseline ??
+    created.messages.filter((message) => message.role === "assistant").length;
+  if (options.seeded) {
+    report.flagshipStory = {
+      ...(report.flagshipStory ?? {}),
+      status: "seeded-creation",
+      visualReview: "pending",
+      phases: {
+        creation: {
+          status: "seeded",
+          revision: created.revision,
+        },
+      },
+    };
+  } else {
+    report.flagshipStory = {
+      ...(report.flagshipStory ?? {}),
+      status: "creation-observed",
+      visualReview: "pending",
+      phases: {
+        creation: { revision: created.revision },
+      },
+    };
+    await persistFlagshipStoryPhase(
+      report,
+      evidenceDir,
+      "created",
+      created,
+      page,
+    );
+  }
   const initialStory = assertFlagshipStoryCreation(created);
   assert.equal(
     created.messages[0]?.text,
@@ -3495,13 +3759,19 @@ async function runFlagshipStory(
   );
   await page.locator("#prompt").fill(FLAGSHIP_STORY_MUSHROOM_PROMPT);
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(2);
+  await expect
+    .poll(() => info.generationRequests, { timeout: 30000 })
+    .toBe(generationRequestOffset + 1);
   assert.equal(
     info.generationBodies.at(-1)?.selectedId,
     initialStory.tree.id,
     "Story mushroom edit did not target the selected tree.",
   );
-  const mushroom = await waitForSavedProject(page, created.revision + 1, 2);
+  const mushroom = await waitForSavedProject(
+    page,
+    created.revision + 1,
+    assistantMessageBaseline + 1,
+  );
   report.flagshipStory.phases.mushroom = {
     status: "observed",
     revision: mushroom.revision,
@@ -3529,13 +3799,19 @@ async function runFlagshipStory(
     .click();
   await page.locator("#prompt").fill(FLAGSHIP_STORY_PLATFORM_PROMPT);
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(3);
+  await expect
+    .poll(() => info.generationRequests, { timeout: 30000 })
+    .toBe(generationRequestOffset + 2);
   assert.equal(
     info.generationBodies.at(-1)?.selectedId ?? null,
     null,
     "Story platform edit unexpectedly retained a selected entity.",
   );
-  const goal7 = await waitForSavedProject(page, mushroom.revision + 1, 3);
+  const goal7 = await waitForSavedProject(
+    page,
+    mushroom.revision + 1,
+    assistantMessageBaseline + 2,
+  );
   report.flagshipStory.phases.goal7 = {
     status: "observed",
     revision: goal7.revision,
@@ -5689,7 +5965,8 @@ async function run(config, report = emptyReport(config)) {
     await writeReport(report, config);
     throw error;
   }
-  if (config.flagshipResumeOffline)
+  const resumeExecutionMode = flagshipResumeExecutionMode(config);
+  if (resumeExecutionMode === "offline")
     return runFlagshipResumeOffline(
       config,
       report,
@@ -5697,7 +5974,7 @@ async function run(config, report = emptyReport(config)) {
       evidenceDir,
       approvedOrigins,
     );
-  if (config.flagshipResume)
+  if (resumeExecutionMode === "checkpoint")
     return runFlagshipResume(
       config,
       report,
@@ -5725,9 +6002,13 @@ async function run(config, report = emptyReport(config)) {
   let lastGoodProject;
   let projectAfterCreation;
   let projectAfterEdit;
+  const creationContinuation =
+    config.flagshipResumeStage === "creation" && config.flagshipResume;
   try {
     if (config.provider !== "chatgpt-local")
       await page.goto(config.baseOrigin, { waitUntil: "domcontentloaded" });
+    if (creationContinuation)
+      await seedFlagshipResume(page, config.resumeCheckpoint);
     await setupOutputCap(page, config);
     if (config.provider === "chatgpt-local")
       await configureChatGPTLocal(page, config, report, info, evidenceDir);
@@ -5783,6 +6064,76 @@ async function run(config, report = emptyReport(config)) {
     }
     await prepareObserver(page);
     await installGenerationDiagnosticObserver(page);
+    if (creationContinuation) {
+      await openFlagshipResumeProject(
+        page,
+        config.resumeCheckpoint.project,
+      );
+      const seededSnapshot = await storageSnapshot(page);
+      assert.deepEqual(
+        persistenceJSON(seededSnapshot.project),
+        persistenceJSON(config.resumeCheckpoint.project),
+        "The seeded creation checkpoint did not reopen exactly.",
+      );
+      assert.equal(
+        info.generationRequests,
+        0,
+        "Creation-stage continuation made a generation request while restoring the checkpoint.",
+      );
+      for (const model of config.resumeCheckpoint.models) {
+        const stored = await readStoredGeneratedModelDigest(
+          page,
+          model.metadata.sha256,
+        );
+        assert(
+          stored,
+          `Seeded creation checkpoint model ${model.id} was not reopened.`,
+        );
+        assert.equal(stored.sha256, model.metadata.sha256);
+        assert.equal(stored.bytes, model.metadata.bytes);
+      }
+      await assertNoStoredKey(page, config);
+      projectBefore = config.resumeCheckpoint.project;
+      projectAfterCreation = config.resumeCheckpoint.project;
+      lastGoodProject = projectAfterCreation;
+      report.creation = {
+        status: "seeded",
+        operations: 0,
+        firstReservationMs: null,
+        seedObserved: false,
+        catalogEntities: projectAfterCreation.entities.filter(
+          (entity) => entity.geometry?.kind === "asset",
+        ).length,
+        proceduralEntities: projectAfterCreation.entities.filter(
+          (entity) =>
+            entity.geometry &&
+            !["asset", "generated"].includes(entity.geometry.kind),
+        ).length,
+        generatedEntities: projectAfterCreation.entities.filter(
+          (entity) => entity.geometry?.kind === "generated" && entity.geometry.model,
+        ).length,
+      };
+      report.flagshipResume = {
+        ...(report.flagshipResume ?? {}),
+        status: "checkpoint-restored",
+        stage: "creation",
+        seededCreation: {
+          status: "validated",
+          projectId: projectAfterCreation.id,
+          revision: projectAfterCreation.revision,
+          sourceSnapshot: relative(
+            SOURCE_ROOT,
+            config.resumeCheckpoint.checkpointPath,
+          ),
+          sourceSnapshotSha256: config.resumeCheckpoint.sourceSnapshotSha256,
+          assetReferences: assertFlagshipStoryAssetReferences(
+            projectAfterCreation,
+          ),
+          generatedModels: config.resumeCheckpoint.models.length,
+        },
+      };
+    }
+    if (!creationContinuation) {
     projectBefore = await storageSnapshot(
       page,
       (config.key ?? config.companionToken)
@@ -6318,6 +6669,27 @@ async function run(config, report = emptyReport(config)) {
       selectedIdPreserved: true,
     };
     }
+    } else {
+      projectAfterEdit = await runFlagshipStory(
+        page,
+        config,
+        report,
+        info,
+        evidenceDir,
+        projectAfterCreation,
+        (project) => {
+          lastGoodProject = project;
+        },
+        {
+          seeded: true,
+          generationRequestOffset: 0,
+          assistantMessageBaseline:
+            config.resumeCheckpoint.project.messages.filter(
+              (message) => message.role === "assistant",
+            ).length,
+        },
+      );
+    }
     await page.screenshot({
       path: join(evidenceDir, "edit.png"),
       fullPage: true,
@@ -6434,6 +6806,18 @@ async function run(config, report = emptyReport(config)) {
       );
     await Promise.allSettled(info.ndjsonReads);
     assertGenerationRequests(config, info);
+    if (creationContinuation) {
+      report.flagshipResume = {
+        ...(report.flagshipResume ?? {}),
+        status: "structural-passed",
+        liveEdits: {
+          generationRequests: info.generationRequests,
+          mushroomRevision: report.flagshipStory?.phases?.mushroom?.revision,
+          goal7Revision: report.flagshipStory?.phases?.goal7?.revision,
+          undoRevision: projectAfterEdit.revision,
+        },
+      };
+    }
     if (config.provider === HOSTED_PROVIDER) {
       report.liveInference = true;
       report.hosted.generationStatus = "passed";

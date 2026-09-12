@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { zipSync } from "fflate";
 import {
   assertFlagshipStoryCreation,
+  assertFlagshipStoryAssetReferences,
   assertFlagshipStoryGoalSeven,
   assertFlagshipStoryMushroom,
   assertFlagshipStoryPlatform,
@@ -15,6 +16,8 @@ import {
   installTrafficGuard,
   persistFlagshipStoryPhase,
   readConfiguration,
+  readFlagshipResumeCheckpoint,
+  flagshipResumeExecutionMode,
 } from "../scripts/provider-browser-e2e.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
@@ -39,6 +42,7 @@ const ENV_NAMES = [
   "ORBSIE_KEY_SCOPE",
   "ORBSIE_FLAGSHIP_STORY",
   "ORBSIE_FLAGSHIP_RESUME",
+  "ORBSIE_FLAGSHIP_RESUME_STAGE",
   "ORBSIE_FLAGSHIP_RESUME_CHECKPOINT",
   "ORBSIE_FLAGSHIP_RESUME_MODELS",
   "ORBSIE_FLAGSHIP_RESUME_OFFLINE",
@@ -95,6 +99,9 @@ const RESUME_EDITED_MODELS = resolve(
 const CURRENT_GATEWAY_STORY = resolve(
   "docs/evidence/provider-e2e/gateway-current-full-story/gateway/story-created-project.json",
 );
+const CURRENT_GATEWAY_STORY_MODELS = resolve(
+  "docs/evidence/provider-e2e/gateway-current-full-story/gateway",
+);
 
 function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
   gatewayStoryEnvironment({
@@ -102,6 +109,17 @@ function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_FLAGSHIP_RESUME: "1",
     ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: RESUME_CHECKPOINT,
     ORBSIE_FLAGSHIP_RESUME_MODELS: RESUME_MODELS,
+    ...overrides,
+  });
+}
+
+function gatewayCreationResumeEnvironment(
+  overrides: Record<string, string> = {},
+) {
+  gatewayResumeEnvironment({
+    ORBSIE_FLAGSHIP_RESUME_STAGE: "creation",
+    ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: CURRENT_GATEWAY_STORY,
+    ORBSIE_FLAGSHIP_RESUME_MODELS: CURRENT_GATEWAY_STORY_MODELS,
     ...overrides,
   });
 }
@@ -344,6 +362,166 @@ describe("flagship provider story contract", () => {
     });
     expect(config.resumeCheckpoint.project.revision).toBeGreaterThan(0);
     expect(config.resumeCheckpoint.models).toHaveLength(5);
+    expect(flagshipResumeExecutionMode(config)).toBe("checkpoint");
+  });
+
+  it("enables the explicit two-call creation-stage continuation from the saved scene", () => {
+    gatewayCreationResumeEnvironment();
+    const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
+    expect(config).toMatchObject({
+      provider: "gateway",
+      expectedModel: "openai/gpt-5.6-luna",
+      outputCap: 4096,
+      generationBudget: 2,
+      flagshipStory: false,
+      flagshipResume: true,
+      flagshipResumeStage: "creation",
+      editPrompt: "Make the middle platform slower and add two more crystals",
+      resumeCheckpoint: {
+        project: { revision: 26 },
+        models: [],
+      },
+    });
+    expect(flagshipResumeExecutionMode(config)).toBe("creation");
+    expect(
+      assertFlagshipStoryAssetReferences(config.resumeCheckpoint.project),
+    ).toEqual(
+      expect.arrayContaining([
+        "kenney.nature.platform-grass",
+        "kenney.nature.tree-default",
+        "kenney.nature.tree-pine-tall-a",
+      ]),
+    );
+  });
+
+  it("rejects an invalid creation-stage source hash before opening a browser", async () => {
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-creation-stage-hash-test-"),
+    );
+    try {
+      const manifest = JSON.parse(
+        readFileSync(
+          join(CURRENT_GATEWAY_STORY_MODELS, "story-created-generated.json"),
+          "utf8",
+        ),
+      );
+      manifest.sourceSnapshotSha256 = "0".repeat(64);
+      await writeFile(
+        join(temporary, "story-created-generated.json"),
+        JSON.stringify(manifest),
+      );
+      gatewayCreationResumeEnvironment({
+        ORBSIE_FLAGSHIP_RESUME_MODELS: temporary,
+      });
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /invalid source snapshot hash/,
+      );
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an invalid mode and an unknown saved catalog asset", async () => {
+    gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_STAGE: "seed" });
+    expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+      /creation or mushroom/,
+    );
+
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-creation-stage-asset-test-"),
+    );
+    try {
+      const project = currentGatewayStory();
+      project.entities.find((candidate: any) => candidate.id === "tree-1").geometry.assetId =
+        "unknown.tree";
+      const checkpointBytes = Buffer.from(`${JSON.stringify(project)}\n`);
+      const checkpointPath = join(temporary, "story-created-project.json");
+      await writeFile(checkpointPath, checkpointBytes);
+      const manifest = JSON.parse(
+        readFileSync(
+          join(CURRENT_GATEWAY_STORY_MODELS, "story-created-generated.json"),
+          "utf8",
+        ),
+      );
+      manifest.sourceSnapshot = checkpointPath;
+      manifest.sourceSnapshotSha256 = createHash("sha256")
+        .update(checkpointBytes)
+        .digest("hex");
+      await writeFile(
+        join(temporary, "story-created-generated.json"),
+        JSON.stringify(manifest),
+      );
+      gatewayCreationResumeEnvironment({
+        ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: checkpointPath,
+        ORBSIE_FLAGSHIP_RESUME_MODELS: temporary,
+      });
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /unknown catalog asset reference/,
+      );
+      expect(() => assertFlagshipStoryAssetReferences(project)).toThrow(
+        /unknown catalog asset reference/,
+      );
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when a generated creation reference has no captured bytes", async () => {
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-creation-stage-generated-test-"),
+    );
+    try {
+      const project = currentGatewayStory();
+      const crystal = project.entities.find(
+        (candidate: any) => candidate.id === "crystal-1",
+      );
+      const bytes = Buffer.from("captured-model");
+      const modelHash = createHash("sha256").update(bytes).digest("hex");
+      crystal.geometry = {
+        kind: "generated",
+        detail: "refined",
+        job: { backend: "test" },
+        model: { sha256: modelHash, bytes: bytes.byteLength },
+      };
+      const checkpointBytes = Buffer.from(`${JSON.stringify(project)}\n`);
+      const checkpointPath = join(temporary, "story-created-project.json");
+      await writeFile(checkpointPath, checkpointBytes);
+      const manifest = JSON.parse(
+        readFileSync(
+          join(CURRENT_GATEWAY_STORY_MODELS, "story-created-generated.json"),
+          "utf8",
+        ),
+      );
+      manifest.sourceSnapshot = checkpointPath;
+      manifest.sourceSnapshotSha256 = createHash("sha256")
+        .update(checkpointBytes)
+        .digest("hex");
+      manifest.models = [
+        {
+          entityIds: ["crystal-1"],
+          sha256: modelHash,
+          bytes: bytes.byteLength,
+          path: `generated/${modelHash}.glb`,
+          status: "complete",
+        },
+      ];
+      manifest.totalBytes = bytes.byteLength;
+      await writeFile(
+        join(temporary, "story-created-generated.json"),
+        JSON.stringify(manifest),
+      );
+      gatewayCreationResumeEnvironment({
+        ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: checkpointPath,
+        ORBSIE_FLAGSHIP_RESUME_MODELS: temporary,
+      });
+      expect(() => readFlagshipResumeCheckpoint(
+        checkpointPath,
+        temporary,
+        "creation",
+      )).toThrow(/cannot be reconstructed/);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
   });
 
   it("checks the variable-based seven-crystal portal gate", () => {
@@ -384,6 +562,7 @@ describe("flagship provider story contract", () => {
     });
     const offline = config.resumeOffline;
     if (!offline) throw new Error("offline resume artifacts were not loaded");
+    expect(flagshipResumeExecutionMode(config)).toBe("offline");
     expect(offline.models).toHaveLength(7);
   });
 
@@ -654,6 +833,7 @@ describe("flagship provider story contract", () => {
     const before = currentGatewayStory();
     const slowed = addGatewayGoalSevenEdit(before, 1.1);
     const check = assertFlagshipStoryPlatform(before, slowed, "platform-2");
+    if (!("previousPathDuration" in check)) throw Error("Expected path slowdown evidence");
     expect(check.previousPathDuration).toBe(2.2);
     expect(check.revisedPathDuration).toBeCloseTo(3.3);
     expect(check.collectibles).toBe(7);
@@ -676,6 +856,7 @@ describe("flagship provider story contract", () => {
       movePathSlowed,
       "platform-2",
     );
+    if (!("revisedPathDuration" in movePathCheck)) throw Error("Expected path slowdown evidence");
     expect(movePathCheck.revisedPathDuration).toBeCloseTo(3.3);
     const movePathSpeedOnly = addGatewayGoalSevenEdit(movePathBefore);
     movePathSpeedOnly.entities.find(
