@@ -115,6 +115,8 @@ describe("structured generation envelopes", () => {
     expect(body.messages[0].content).not.toContain("NDJSON");
     expect(body.messages[0].content).not.toContain("before the newline");
     expect(body.messages[0].content).toContain("commands array");
+    expect(body.messages[0].content).toContain('"$schema"');
+    expect(body.messages[0].content).toContain("unscaled local bounds");
   });
 
   it("requests the capability-specific non-strict JSON schema", async () => {
@@ -150,6 +152,10 @@ describe("structured generation envelopes", () => {
     });
     expect(body.provider.require_parameters).toBe(true);
     expect(body.messages[0].content).not.toContain("NDJSON");
+    expect(body.messages[0].content).not.toContain('"$schema"');
+    expect(body.messages[0].content).toContain("response_format");
+    expect(body.messages[0].content).toContain("unscaled local bounds");
+    expect(body.messages[0].content).toContain("parent transform");
   });
 
   it("emits a reservation before the envelope closes", async () => {
@@ -382,6 +388,10 @@ describe("structured generation envelopes", () => {
     expect(body.provider.require_parameters).toBeUndefined();
     expect(systemPromptForCapabilities(false, false)).toContain(
       "newline-delimited JSON",
+    );
+    expect(systemPromptForCapabilities(false, true)).toContain('"$schema"');
+    expect(systemPromptForCapabilities(false, true)).toContain(
+      "meters in a Y-up world",
     );
   });
 });

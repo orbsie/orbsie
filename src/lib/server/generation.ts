@@ -82,6 +82,9 @@ const baseSystemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use
 const modelingFeedbackInstruction =
   "If modelingFeedback is present, it is a bounded browser-side rejection report. Repair the reported entity or node in response to the current instruction, preserve stable IDs and unrelated finished geometry, and change the rejected recipe instead of repeating it.";
 
+const catalogCompositionInstruction =
+  "When catalog assets are allowed and combined with generated parts, use each asset's supplied unscaled local bounds, origin, units, axis, and source-to-runtime scale to size and place attachments. Apply the entity transform and any parent transform when reasoning about world placement. Scale catalog assets when needed; make attachments intentionally contact or provide explicit branch/stem support. Do not treat separated spheres as detailed fruit. Use procedural freedom for varied silhouettes and requested details.";
+
 function modelingInstructionsForOutputFormat(
   localModeling: boolean,
   browserModeling: boolean,
@@ -106,7 +109,11 @@ export function systemPromptForCapabilities(
   browserModeling = false,
   outputFormat: GenerationOutputFormat = "ndjson",
 ) {
-  return `${baseSystemPrompt} ${outputFormatInstruction(outputFormat)} ${modelingFeedbackInstruction} ${modelingInstructionsForOutputFormat(localModeling, browserModeling, outputFormat)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+  const schemaInstruction =
+    outputFormat === "json-schema"
+      ? "Each command in the commands array must match the command schema supplied in response_format."
+      : `You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+  return `${baseSystemPrompt} ${outputFormatInstruction(outputFormat)} ${modelingFeedbackInstruction} ${catalogCompositionInstruction} ${modelingInstructionsForOutputFormat(localModeling, browserModeling, outputFormat)} ${schemaInstruction}`;
 }
 
 function responseFormatFor(

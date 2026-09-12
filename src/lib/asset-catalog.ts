@@ -241,6 +241,45 @@ export interface AssetPromptMetadata {
   readonly summary: string;
   readonly useFor: readonly string[];
   readonly collision: string;
+  readonly bounds: {
+    readonly min: readonly [number, number, number];
+    readonly max: readonly [number, number, number];
+  };
+  readonly origin: string;
+  readonly scale: {
+    readonly axis: string;
+    readonly units: string;
+    readonly sourceToRuntime: number;
+  };
+}
+
+const PROMPT_BOUNDS_DECIMALS = 4;
+const PROMPT_BOUNDS_FACTOR = 10 ** PROMPT_BOUNDS_DECIMALS;
+
+function outwardRound(value: number, direction: "min" | "max") {
+  const rounded =
+    direction === "min"
+      ? Math.floor(value * PROMPT_BOUNDS_FACTOR)
+      : Math.ceil(value * PROMPT_BOUNDS_FACTOR);
+  const normalized = rounded / PROMPT_BOUNDS_FACTOR;
+  return Object.is(normalized, -0) ? 0 : normalized;
+}
+
+function promptBounds(asset: CatalogAsset): AssetPromptMetadata["bounds"] {
+  const min = asset.bounds.min.map((value) => outwardRound(value, "min")) as [
+    number,
+    number,
+    number,
+  ];
+  const max = asset.bounds.max.map((value) => outwardRound(value, "max")) as [
+    number,
+    number,
+    number,
+  ];
+  return Object.freeze({
+    min: Object.freeze(min),
+    max: Object.freeze(max),
+  });
 }
 
 const promptSummaries: Record<AssetId, string> = {
@@ -271,6 +310,13 @@ export const assetPromptCatalog: readonly AssetPromptMetadata[] = Object.freeze(
       summary: promptSummaries[id],
       useFor: Object.freeze(asset.tags.filter((tag) => tag !== "nature")),
       collision: asset.collision.recommended,
+      bounds: promptBounds(asset),
+      origin: asset.bounds.origin,
+      scale: Object.freeze({
+        axis: asset.scale.axis,
+        units: asset.scale.units,
+        sourceToRuntime: asset.scale.sourceToRuntime,
+      }),
     });
   }),
 );

@@ -35,6 +35,25 @@ describe("local 3D asset catalog", () => {
       id: tree.id,
       keywords: expect.arrayContaining(["tree"]),
     });
+    for (const asset of catalogAssets) {
+      const prompt = assetPromptCatalog.find(({ id }) => id === asset.id)!;
+      expect(prompt.bounds.min).toHaveLength(3);
+      expect(prompt.bounds.max).toHaveLength(3);
+      for (let axis = 0; axis < 3; axis += 1) {
+        expect(prompt.bounds.min[axis]).toBeLessThanOrEqual(
+          asset.bounds.min[axis],
+        );
+        expect(prompt.bounds.max[axis]).toBeGreaterThanOrEqual(
+          asset.bounds.max[axis],
+        );
+      }
+      expect(prompt.origin).toBe(asset.bounds.origin);
+      expect(prompt.scale).toEqual({
+        axis: asset.scale.axis,
+        units: asset.scale.units,
+        sourceToRuntime: asset.scale.sourceToRuntime,
+      });
+    }
     expect(promptCatalogForPolicy("new-only")).toEqual([]);
     expect(findCatalogAsset("not-in-the-catalog")).toBeUndefined();
   });
