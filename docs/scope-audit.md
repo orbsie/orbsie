@@ -2,6 +2,12 @@
 
 ## Current reconciliation — 2026-09-12
 
+Live canceled-replacement continuity now passed: publication-terminal-corrected
+at8d870f3, two publication POSTs/one cancellation/zero modelcalls. Exact previous
+snapshot and served revision/URL retained with fresh signed-out browser readiness.
+This supersedes older statements that no terminal-failure run exists; actual
+ERROR-state deployment and full gameplay/mobile are separate scopes.
+
 Latest source/UI review (after7cd343e): regular Chrome remains on Orbsie sign-in.
 Clicking Connect with ChatGPT displays “Sign in first — ChatGPT connects right
 after your sign-in.” Owner sign-in is a verified current gate, not proof of

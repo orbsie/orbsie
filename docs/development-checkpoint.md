@@ -373,3 +373,15 @@ Raw report: publication-terminal. Corrected guard offline; terminal helper
 checks served URL after failure. Persist future second submission before
 assertions. No rerun. This is a harness failure, not product defect or terminal
 continuity proof. No worker/test active. Full goal and ChatGPT/mobile gates open.
+
+## Live canceled replacement continuity passed
+
+Corrected harness8d870f3 ran once in publication-terminal-corrected. Test world
+terminal-publication-mtywr8zn / Vercelprj_CrpJ3tQUkrcYkB4ueZHXxx7YH8VL.
+First dpl_6vn7oV22aZT7cmzCu5FhVohzicSZ verified signed out. Replacement
+ dpl_95Akyg2u8HVst9ko55b4QTHZqhjQ confirmed exact ID/project/pending then
+PATCH canceled HTTP200. OwnerGET CANCELED retained oldURL+servedRevision1.
+Root reviewed exact oldsnapshot equality, fresh signedout browserHTTP200/ready
+canvas/zeroerrors and screenshot.2publishPOSTs,1cancel,0modelcalls. Main app
+untouched. This closes live CANCELED-state continuity; ERROR only offline,
+fullgameplay/mobile not claimed. No active worker/test. Full goal incomplete.
