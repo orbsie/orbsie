@@ -7,6 +7,10 @@ export type ModelCapabilities = {
   streamingText: Capability;
   tools: Capability;
   structuredOutput: Capability;
+  /** OpenRouter's response_format=json_object request shape. */
+  jsonObject?: Capability;
+  /** OpenRouter's structured_outputs response_format=json_schema request shape. */
+  jsonSchema?: Capability;
 };
 const unknown = (): Capability => ({
   supported: "unknown",
@@ -47,13 +51,34 @@ export function modelCapabilities(
     : provider === "openrouter" && parameters
       ? { supported: false, source: "catalog" }
       : unknown();
+  const jsonObject: Capability =
+    provider === "openrouter" && parameters
+      ? {
+          supported: parameters.includes("response_format"),
+          source: "catalog",
+        }
+      : unknown();
+  const jsonSchema: Capability =
+    provider === "openrouter" && parameters
+      ? {
+          supported: parameters.includes("structured_outputs"),
+          source: "catalog",
+        }
+      : unknown();
   const streamingText: Capability =
     text.supported === false
       ? { supported: false, source: "catalog" }
       : provider === "openrouter" && text.supported === true
         ? { supported: true, source: "provider-contract" }
         : unknown();
-  return { text, streamingText, tools, structuredOutput };
+  return {
+    text,
+    streamingText,
+    tools,
+    structuredOutput,
+    jsonObject,
+    jsonSchema,
+  };
 }
 /** The relay validates complete NDJSON records; native tools/schema are optional. */
 export function modelSupportsGeneration(model: {

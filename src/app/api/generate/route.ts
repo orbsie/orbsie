@@ -21,6 +21,11 @@ import {
   FREE_MODEL,
   type TrialIdentity,
 } from "@/lib/server/trial";
+import {
+  GenerationFormatConfigError,
+  parseGenerationFormatOverrides,
+  resolveGenerationOutputFormat,
+} from "@/lib/server/generation-output-format";
 export const maxDuration = 180;
 export async function POST(request: Request) {
   let identity: TrialIdentity | undefined;
@@ -42,8 +47,10 @@ export async function POST(request: Request) {
       .safeParse(await boundedJSON(request));
     if (!parsed.success)
       throw new HttpError(400, "Check your connection and world data.");
+    const formatOverrides = parseGenerationFormatOverrides();
     const free = parsed.data.provider === "free";
     const maxTokens = generationMaxTokens(free);
+    let outputFormat: "ndjson" | "json-object" | "json-schema";
     if (
       !free &&
       (!parsed.data.model || !parsed.data.key || parsed.data.key.length < 10)
@@ -61,16 +68,32 @@ export async function POST(request: Request) {
           413,
           "Connect your provider to keep building this larger world.",
         );
-      await requireGenerationModel("gateway", FREE_MODEL, request.signal);
+      const model = await requireGenerationModel(
+        "gateway",
+        FREE_MODEL,
+        request.signal,
+      );
+      outputFormat = resolveGenerationOutputFormat({
+        provider: "gateway",
+        model: FREE_MODEL,
+        capabilities: model.capabilities,
+        overrides: formatOverrides,
+      });
       identity = trialIdentity(request);
       remaining = await claimTrial(identity);
-    }
-    if (!free)
-      await requireGenerationModel(
+    } else {
+      const model = await requireGenerationModel(
         parsed.data.provider as "openrouter" | "gateway",
         parsed.data.model!,
         request.signal,
       );
+      outputFormat = resolveGenerationOutputFormat({
+        provider: parsed.data.provider as "openrouter" | "gateway",
+        model: parsed.data.model!,
+        capabilities: model.capabilities,
+        overrides: formatOverrides,
+      });
+    }
     const stream = await generateCommands({
       ...parsed.data,
       provider: free
@@ -80,6 +103,7 @@ export async function POST(request: Request) {
       key: free ? process.env.AI_GATEWAY_API_KEY_FREE! : parsed.data.key!,
       maxTokens,
       signal: AbortSignal.any([request.signal, AbortSignal.timeout(175000)]),
+      outputFormat,
     });
     return new Response(stream, {
       headers: {
@@ -95,6 +119,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (e) {
+    if (e instanceof GenerationFormatConfigError)
+      return apiError(new HttpError(500, e.message));
     if (e instanceof TrialExhausted)
       return Response.json(
         { error: e.message, code: "FREE_LIMIT_REACHED", remaining: 0 },
