@@ -101,6 +101,42 @@ function projectWithCatalogAsset() {
   });
 }
 
+function mixedPublishSnapshot() {
+  return {
+    version: 1 as const,
+    id: "orb",
+    title: "Mixed world",
+    seed: 1,
+    revision: 2,
+    entities: [
+      {
+        id: "tree",
+        label: "Catalog tree",
+        position: [-2, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#6ead60",
+        stage: "ready" as const,
+        geometry: {
+          kind: "asset" as const,
+          assetId: catalogAsset.id,
+          detail: "refined" as const,
+        },
+      },
+      {
+        id: "crystal",
+        label: "New crystal",
+        position: [2, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#66ccff",
+        stage: "ready" as const,
+        geometry: { kind: "crystal" as const, detail: "refined" as const },
+      },
+    ],
+    environment: { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" },
+    messages: [],
+  };
+}
+
 function publicDeployment(
   files: readonly PublicationFile[] = artifactFiles(),
   overrides: { projectId?: string; revision?: number } = {},
@@ -854,6 +890,96 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
       "orb",
     ],
   );
+});
+
+it("publishes mixed catalog and procedural scenes with exact asset provenance", async () => {
+  const client = { query: vi.fn(), release: vi.fn() };
+  const snapshot = mixedPublishSnapshot();
+  mock.connect.mockResolvedValue(client);
+  mock.boundedJSON.mockResolvedValue({ projectId: "orb", revision: 2 });
+  client.query
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({
+      rows: [
+        row({
+          deployment_id: null,
+          publication_revision: null,
+          published_revision: null,
+          revision: 2,
+          snapshot,
+          vercel_project_id: "prj_test",
+        }),
+      ],
+    })
+    .mockResolvedValueOnce({ rows: [{ count: "0" }] })
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({});
+
+  let deploymentPayload: {
+    files: Array<{ file: string; data: string; encoding?: string }>;
+  } | null = null;
+  const fetchMock = vi.fn(
+    async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/v7/deployments?"))
+        return Response.json({ deployments: [], pagination: { next: null } });
+      if (url.includes("/v13/deployments?")) {
+        deploymentPayload = JSON.parse(String(init?.body));
+        return Response.json({
+          id: "mixed-deployment",
+          state: "BUILDING",
+          url: "mixed.vercel.app",
+        });
+      }
+      throw new Error(`Unexpected Vercel call: ${url}`);
+    },
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const response = await publishRequest();
+
+  expect(await response.json()).toMatchObject({
+    state: "BUILDING",
+    deploymentId: "mixed-deployment",
+    vercelProjectId: "prj_test",
+  });
+  expect(deploymentPayload).not.toBeNull();
+  const files = deploymentPayload!.files;
+  const publishedProject = JSON.parse(
+    files.find(({ file }) => file === "project.json")!.data,
+  );
+  expect(
+    publishedProject.entities.map(
+      (entity: { geometry?: { kind?: string } }) => entity.geometry?.kind,
+    ),
+  ).toEqual(["asset", "crystal"]);
+
+  const model = files.find(({ file }) => file === catalogAsset.path.slice(1));
+  expect(model).toMatchObject({ encoding: "base64" });
+  expect(Buffer.from(model!.data, "base64")).toEqual(
+    readFileSync(`public${catalogAsset.path}`),
+  );
+  const license = files.find(
+    ({ file }) => file === catalogSource.license.textFile,
+  );
+  expect(license).toMatchObject({ encoding: "base64" });
+  expect(Buffer.from(license!.data, "base64")).toEqual(
+    readFileSync(catalogSource.license.textFile),
+  );
+  const usedAssets = JSON.parse(
+    new TextDecoder().decode(
+      Buffer.from(
+        files.find(({ file }) => file === PUBLICATION_USED_ASSETS_FILE)!.data,
+        "base64",
+      ),
+    ),
+  );
+  expect(usedAssets).toEqual({
+    schemaVersion: assetManifest.schemaVersion,
+    catalogVersion: assetManifest.catalogVersion,
+    assets: [catalogAsset],
+    sources: [catalogSource],
+  });
 });
 
 it("rejects an oversized publication asset before producing a manifest", () => {

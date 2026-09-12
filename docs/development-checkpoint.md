@@ -454,3 +454,14 @@ zero cookies, external requests, generation requests or page errors. Evidence:
 `docs/evidence/provider-e2e/gateway-reload-recovery-republish-resume/report.json`.
 Root reviewed the diff and assertions. Physical mobile and flagship quality
 remain unproven. Codex quota check reports 64% remaining.
+
+### Mixed-asset publication payload coverage
+
+A focused publication regression now submits a catalog tree plus procedural
+crystal through the real publication route with mocked database/Vercel transport.
+It checks both geometry kinds in project.json and exact packaged GLB, license
+and used-assets provenance against local catalog originals. Existing mixed ZIP
+and browser evidence was already present; this closes the payload test gap,
+not live mixed-asset publication acceptance. Root reviewed the finished diff.
+Worker validation: 25 publication/asset-bundle tests passed, typecheck and diff
+checks passed. No live provider calls, deployment or authentication was used.
