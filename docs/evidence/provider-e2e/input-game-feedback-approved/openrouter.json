@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-09-12T00:28:35.412Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T00:28:35.412Z",
+    "harness": {
+      "checkoutSHA": "6df72ec692381c1a4f065eaf0370b46b53b69c4e",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "6df72ec",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3018",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "creation": {
+    "status": "blocked",
+    "operations": 0,
+    "firstReservationMs": 4305,
+    "seedObserved": true
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "failure.png"
+  ],
+  "error": "Generation failed before saving: [browser-modeling-kernel] node tree-shape contains touching or overlapping solids."
+}
