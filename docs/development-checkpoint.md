@@ -47,11 +47,14 @@ This is partial retained evidence, not a fresh passing rerun. Current script
 fixes catalog-vs-visible contact height, scans later candidates and closes
 contexts before video save; synthetic fall/flat cases reject. Syntax passes.
 Root corrected run in moving-bounce-browser-corrected passed desktop rebound,
-continued path, UI reload and ZIP export; raw status failed on touch immediate
-platform readiness assertion. Root reviewed desktop image/trace. Luna
-`/root/bounce_readiness` owns ONLY the verifier readiness wait for player+matched
-platform; no input/contact changes or browser calls. Root will review then
-run acceptance. One fixture response, zero models/external/page errors.
+continued path, UI reload/ZIP, then failed immediate touch platform readiness.
+Luna added bounded player+matched-platform readiness; root reviewed and ran
+once in moving-bounce-browser-ready. Desktop/export passed, touch59 samples
+show ascent after release but proof fails. Root reviewed input/trajectory.
+Luna `/root/bounce_readiness` now owns an offline-only follow-up: confirm
+whether duplicate rendered frames wrongly reset ascent proof, fix with strict
+negative cases; no browser/model calls. Root owns evidence. Readiness code
+and subsequent correction remain uncommitted pending finished review.
 Server3068 runtime e0dff7c remains unchanged; revalidate before use. Do not
 rebuild .next while server in use. Live provider effectiveness remains open.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
