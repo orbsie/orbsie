@@ -7,7 +7,8 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Policy: Astra low reviews/integrates; one Luna xhigh worker, regular/default,
   no nested agents, Fast off. Only Luna for live tests; user model choices remain
   unrestricted among supported models. Batch validation at meaningful milestones.
-- Standing owner approval: two calls/provider/run, 4096 output tokens/call,
+- Standing owner approval: up to five Gateway calls/test; OpenRouter remains
+  two calls/run. Both use Luna only and 4096 output tokens/call,
   no automatic retries, for bounded OpenRouter/Gateway acceptance milestones.
   Do not treat this as unlimited inference. Sign-in must use computer use.
 - Production is source `7e74569` at https://orbsie.com, with smoke evidence
