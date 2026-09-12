@@ -1369,9 +1369,60 @@ kbd {
     height: 100dvh;
     min-height: 100dvh;
   }
+  .is-workspace .topbar {
+    padding: 8px 16px;
+    min-height: 48px;
+  }
+  .is-workspace .wordmark {
+    font-size: 20px;
+  }
+  .is-workspace .header-actions {
+    gap: 8px;
+  }
+  .is-workspace .saved {
+    display: none;
+  }
+  .is-workspace .header-actions .primary.small {
+    font-size: 9px;
+    padding: 7px 10px;
+  }
+  .workspace-heading {
+    left: 16px;
+    top: 52px;
+  }
+  .workspace-heading h2 {
+    font-size: 13px;
+    margin-top: 5px;
+  }
+  .play-toolbar {
+    top: 52px;
+    right: 16px;
+    padding: 3px;
+    gap: 1px;
+  }
+  .play-toolbar > button {
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+  .play-toolbar > button[aria-label] {
+    padding: 7px;
+  }
+  .game-hud {
+    top: 100px;
+    right: 16px;
+    padding: 9px 11px;
+    gap: 7px;
+  }
+  .game-hud strong {
+    font-size: 15px;
+  }
+  .game-hud > span:nth-child(3) {
+    font-size: 8px;
+  }
   .touch-controls {
     display: flex;
     position: fixed;
+    pointer-events: none;
     top: calc(100% - 112px);
     bottom: auto;
     left: 20px;
@@ -1380,6 +1431,7 @@ kbd {
     gap: 6px;
   }
   .touch-controls button {
+    pointer-events: auto;
     background: #fffff0cf;
     border: 1px solid #fff;
     border-radius: 13px;
@@ -1396,8 +1448,9 @@ kbd {
     position: fixed;
     top: auto;
     bottom: 10px;
-    left: 10px;
-    width: calc(100% - 20px);
+    left: 220px;
+    right: 100px;
+    width: auto;
     height: 180px;
     min-height: 0;
     border-radius: 18px;
@@ -1464,7 +1517,7 @@ kbd {
     bottom: auto;
   }
   .sheet-open .touch-controls {
-    top: 120px;
+    top: 164px;
     bottom: auto;
   }
   .is-public .touch-controls {
@@ -1473,16 +1526,21 @@ kbd {
   }
   .toast {
     position: fixed;
-    top: calc(100% - 175px);
+    top: 104px;
+    left: 16px;
+    transform: none;
     bottom: auto;
-    width: calc(100% - 30px);
+    width: min(360px, calc(100% - 200px));
     max-height: calc(100% - 120px);
     overflow: auto;
     font-size: 10px;
   }
   .sheet-open .toast {
-    top: 10px;
+    top: 104px;
     bottom: auto;
+  }
+  .sheet-closed .toast {
+    top: calc(100% - 175px);
   }
 }
 

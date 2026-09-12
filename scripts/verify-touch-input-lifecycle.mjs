@@ -339,6 +339,26 @@ async function assertToastLayout(page, result, mode) {
     const composer = document.querySelector(".chat-panel");
     const toolbar = document.querySelector(".play-toolbar");
     const hud = document.querySelector(".game-hud");
+    const touchLabels = ["Move w", "Move a", "Move s", "Move d", "Jump"];
+    const toolbarLabels = [
+      ["Edit", "text"],
+      ["Play", "text"],
+      ["Undo last change", "label"],
+      ["Redo last change", "label"],
+    ];
+    const headerLabels = [
+      ["Orbsie home", "label"],
+      ["Connections", "label"],
+      ["Your account and cloud worlds", "label"],
+      ["Share Orb", "text"],
+    ];
+    const buttonsBySpec = (specs) =>
+      Object.fromEntries(
+        specs.map(([name, kind]) => [
+          name,
+          hitFor(kind === "label" ? buttonByLabel(name) : buttonByText(name)),
+        ]),
+      );
     const styleFor = (element) => {
       if (!element) return null;
       const style = getComputedStyle(element);
@@ -368,8 +388,12 @@ async function assertToastLayout(page, result, mode) {
         composer: boxFor(composer),
         toolbar: boxFor(toolbar),
         hud: boxFor(hud),
-        right: hitFor(buttonByLabel("Move d")),
-        jump: hitFor(buttonByLabel("Jump")),
+        touch: buttonsBySpec(touchLabels.map((name) => [name, "label"])),
+        toolbarButtons: buttonsBySpec(toolbarLabels),
+        headerButtons: buttonsBySpec(headerLabels),
+        restart: hitFor(buttonByLabel("Restart game")),
+        prompt: boxFor(document.querySelector("#prompt")),
+        submit: hitFor(buttonByText("Change this")),
         actions: Object.fromEntries(
           ["Try again", "Use last working", "Dismiss message"]
             .map((name) => [name, hitFor(buttonByText(name))])
@@ -378,9 +402,20 @@ async function assertToastLayout(page, result, mode) {
       },
     };
   }, { expectedSheet });
-  const { toast: toastBox, composer: composerBox, right, jump, actions } =
-    layoutState.boxes;
-  if (!toastBox || !right || !jump)
+  const {
+    toast: toastBox,
+    composer: composerBox,
+    touch,
+    toolbarButtons,
+    headerButtons,
+    restart,
+    prompt,
+    submit,
+    actions,
+  } = layoutState.boxes;
+  const right = touch?.["Move d"];
+  const jump = touch?.Jump;
+  if (!toastBox || !touch || !right || !jump || !restart || !prompt || !submit)
     throw Error(`Toast or touch controls are not measurable in ${mode}.`);
   const expected = (value, label) =>
     value.button?.label === label || value.button?.text === label;
@@ -393,13 +428,49 @@ async function assertToastLayout(page, result, mode) {
     throw Error(
       `Unexpected composer state in ${mode}: ${JSON.stringify({ expectedSheet, appClass: layoutState.appClass })}`,
     );
-  if (overlaps(toastBox, right.box) || overlaps(toastBox, jump.box))
+  const requiredTouch = ["Move w", "Move a", "Move s", "Move d", "Jump"];
+  const requiredToolbar = ["Edit", "Play", "Undo last change", "Redo last change"];
+  const requiredHeader = [
+    "Orbsie home",
+    "Connections",
+    "Your account and cloud worlds",
+    "Share Orb",
+  ];
+  if (
+    requiredTouch.some((label) => !touch[label]) ||
+    requiredToolbar.some((label) => !toolbarButtons[label]) ||
+    requiredHeader.some((label) => !headerButtons[label])
+  )
     throw Error(
-      `Toast overlaps a touch control in ${mode}: ${JSON.stringify({ toastBox, right: right.box, jump: jump.box })}`,
+      `Required landscape controls are missing in ${mode}: ${JSON.stringify({
+        touch,
+        toolbarButtons,
+        headerButtons,
+      })}`,
     );
-  if (composerBox && (overlaps(composerBox, right.box) || overlaps(composerBox, jump.box)))
+  if (requiredTouch.some((label) => overlaps(toastBox, touch[label].box)))
     throw Error(
-      `Composer overlaps a touch control in ${mode}: ${JSON.stringify({ composerBox, right: right.box, jump: jump.box })}`,
+      `Toast overlaps a touch control in ${mode}: ${JSON.stringify({ toastBox, touch })}`,
+    );
+  const chromeBoxes = [
+    ...requiredToolbar.map((label) => toolbarButtons[label]),
+    ...requiredHeader.map((label) => headerButtons[label]),
+    restart,
+  ];
+  if (chromeBoxes.some((value) => overlaps(toastBox, value.box)))
+    throw Error(
+      `Toast overlaps editor chrome in ${mode}: ${JSON.stringify({ toastBox, chromeBoxes })}`,
+    );
+  if (composerBox && overlaps(composerBox, layoutState.boxes.hud))
+    throw Error(
+      `Composer overlaps the score HUD in ${mode}: ${JSON.stringify({ composerBox, hud: layoutState.boxes.hud })}`,
+    );
+  if (
+    composerBox &&
+    requiredTouch.some((label) => overlaps(composerBox, touch[label].box))
+  )
+    throw Error(
+      `Composer overlaps a touch control in ${mode}: ${JSON.stringify({ composerBox, touch })}`,
     );
   const insideViewport = (box) =>
     box.x >= 0 &&
@@ -416,7 +487,11 @@ async function assertToastLayout(page, result, mode) {
     layoutState.boxes.hud.width <= 0 ||
     layoutState.boxes.hud.height <= 0 ||
     !insideViewport(layoutState.boxes.toolbar) ||
-    !insideViewport(layoutState.boxes.hud)
+    !insideViewport(layoutState.boxes.hud) ||
+    !insideViewport(restart.box) ||
+    requiredTouch.some((label) => !insideViewport(touch[label].box)) ||
+    requiredToolbar.some((label) => !insideViewport(toolbarButtons[label].box)) ||
+    requiredHeader.some((label) => !insideViewport(headerButtons[label].box))
   )
     throw Error(
       `Play surface or editor chrome is not fully visible in ${mode}: ${JSON.stringify({
@@ -424,12 +499,35 @@ async function assertToastLayout(page, result, mode) {
         viewport: layoutState.viewport,
         toolbar: layoutState.boxes.toolbar,
         hud: layoutState.boxes.hud,
+        restart,
+        touch,
+        toolbarButtons,
+        headerButtons,
       })}`,
     );
-  if (!insideViewport(toastBox) || !insideViewport(right.box) || !insideViewport(jump.box))
+  if (!insideViewport(toastBox))
     throw Error(
-      `Toast or touch control is outside the ${mode} viewport: ${JSON.stringify({ toastBox, right: right.box, jump: jump.box })}`,
+      `Toast is outside the ${mode} viewport: ${JSON.stringify({ toastBox })}`,
     );
+  for (const label of requiredTouch)
+    if (!expected(touch[label], label))
+      throw Error(`Touch control ${label} is not hit-testable in ${mode}.`);
+  for (const [label, value] of Object.entries(toolbarButtons))
+    if (!expected(value, label))
+      throw Error(`Toolbar control ${label} is not hit-testable in ${mode}.`);
+  for (const [label, value] of Object.entries(headerButtons))
+    if (!expected(value, label))
+      throw Error(`Header control ${label} is not hit-testable in ${mode}.`);
+  if (!expected(restart, "Restart game"))
+    throw Error(`Restart control is not hit-testable in ${mode}.`);
+  if (mode.includes("Open")) {
+    if (!insideViewport(prompt) || !insideViewport(submit.box))
+      throw Error(
+        `Prompt or submit is outside the open ${mode} viewport: ${JSON.stringify({ prompt, submit })}`,
+      );
+    if (!expected(submit, "Change this"))
+      throw Error(`Submit control is not hit-testable in ${mode}.`);
+  }
   for (const [label, value] of Object.entries(actions))
     if (!insideViewport(value.box))
       throw Error(
@@ -449,7 +547,7 @@ async function assertToastLayout(page, result, mode) {
     composer: composerBox,
     layout: layoutState,
     appClass: layoutState.appClass,
-    controls: { right, jump },
+    controls: { all: touch, right, jump },
     actions,
     viewport: layoutState.viewport,
   };
@@ -772,6 +870,16 @@ try {
     fullPage: true,
   });
   report.evidence.push("toast-layout.png");
+  await editor.setViewportSize({ width: 667, height: 375 });
+  await assertToastLayout(editor, report.toastLayout, "recoverySmallLandscapeClosed");
+  await editor.locator(".sheet-handle").click();
+  await assertToastLayout(editor, report.toastLayout, "recoverySmallLandscapeOpen");
+  await editor.screenshot({
+    path: join(output, "toast-layout-small-landscape-open.png"),
+    fullPage: true,
+  });
+  report.evidence.push("toast-layout-small-landscape-open.png");
+  await editor.locator(".sheet-handle").click();
   await editor.setViewportSize({ width: 390, height: 844 });
   await editor.getByRole("button", { name: "Dismiss message" }).click();
   await editor.screenshot({

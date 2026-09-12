@@ -32,13 +32,16 @@ simulation, not an iOS or Android background certification.
 
 The toast layout regression now keeps success and recovery messages above the
 movement/jump controls in portrait and short landscape touch viewports. The
-short-landscape editor uses a bottom-sheet composer so the open and closed
-states leave a clear control lane. The browser run leaves the success toast
-visible while dispatching real movement and jump touches, and hit-tests `Try
-again`, `Use last working`, and dismissal actions with the recovery toast
-visible in both composer states. `toast-layout-landscape-open.png` records the
-open-sheet case; `toast-layout.png` records the closed-sheet case. Each state
-also asserts that the app surface spans the viewport and that the editor Play
+short-landscape editor uses a compact split layout: the header and Play/Edit
+toolbar stay at the top, the recovery toast occupies a left lane, the score
+HUD stays at upper right, the composer is a centered bottom sheet, and touch
+controls remain outside it. The browser run leaves the success toast visible
+while dispatching real movement and jump touches, and hit-tests all movement
+buttons, Play/Edit, undo/redo, header actions, Restart, prompt submission,
+and recovery actions. `toast-layout-landscape-open.png` records the 844x390
+open-sheet case; `toast-layout.png` records the closed-sheet case; the
+smaller 667x375 open case is in `toast-layout-small-landscape-open.png`. Each
+state asserts that the app surface spans the viewport and that the editor
 toolbar and score HUD remain visible, so touch hit boxes cannot pass against a
 collapsed render surface.
 
@@ -63,7 +66,8 @@ node scripts/verify-touch-input-lifecycle.mjs
 Evidence is in `report.json` (partial browser-touch result),
 `synthetic-handler-fixture.json`,
 `failure-cdp-injection.json`, `toast-layout-landscape-open.png`,
-`toast-layout.png`, `editor-touch.png`, `standalone-touch.png`, and `world.zip`.
+`toast-layout.png`, `toast-layout-small-landscape-open.png`,
+`editor-touch.png`, `standalone-touch.png`, and `world.zip`.
 This covers Chromium mobile emulation
 only; actual iOS/Android
 and physical device multitouch behavior remain open for device validation.
