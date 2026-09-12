@@ -44,7 +44,7 @@ async function routeThroughGuard(
         handler = callback;
       },
     },
-    { provider: "chatgpt-hosted", baseOrigin: target },
+    { provider: "chatgpt-hosted", baseOrigin: target, generationBudget: 2 },
     new Set([target]),
     {
       hostedConsentReady: true,

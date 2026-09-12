@@ -37,6 +37,13 @@ assert(
 const VERIFY_CLOUD = process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1";
 const VERIFY_INTERRUPTED =
   process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1";
+if (
+  VERIFY_INTERRUPTED &&
+  process.env.ORBSIE_INTERRUPTED_GENERATION_BUDGET !== "3"
+)
+  throw Error(
+    "ORBSIE_INTERRUPTED_GENERATION_BUDGET=3 is required for interrupted recovery; the wrapper never infers authorization for the third generation.",
+  );
 if (VERIFY_INTERRUPTED)
   assert(
     VERIFY_CLOUD,
@@ -222,6 +229,8 @@ try {
     ORBSIE_CHATGPT_COMPANION_URL: companion.url,
     ORBSIE_CHATGPT_COMPANION_TOKEN: companion.token,
   });
+  if (!VERIFY_INTERRUPTED)
+    delete childEnvironment.ORBSIE_INTERRUPTED_GENERATION_BUDGET;
   // ChatGPT-local deliberately has no output-cap environment setting. Remove
   // inherited live-provider and local-builder capabilities as well.
   for (const name of [

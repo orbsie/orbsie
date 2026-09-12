@@ -125,7 +125,7 @@ export function assertHostedPreflight({
   serviceTier = "default",
   accountStorageStatePath,
   interruptedRecovery = false,
-  interruptionMethod = undefined,
+  interruptionMethod = "stop",
   companionConfigured = false,
 }) {
   if (liveE2E !== "1")
@@ -163,9 +163,9 @@ export function assertHostedPreflight({
     throw new HostedAcceptanceBlockedError(
       "Set ORBSIE_ACCOUNT_STORAGE_STATE to the private Orbsie account storage-state path; no generation was attempted.",
     );
-  if (interruptedRecovery || interruptionMethod)
+  if (interruptionMethod && !["stop", "reload"].includes(interruptionMethod))
     throw new HostedAcceptanceBlockedError(
-      "Hosted ChatGPT acceptance does not support local companion interruption recovery; remove the recovery flags before the browser starts.",
+      "Hosted ChatGPT interruption recovery requires ORBSIE_INTERRUPTION_METHOD=stop or reload.",
     );
   if (companionConfigured)
     throw new HostedAcceptanceBlockedError(
@@ -448,6 +448,7 @@ export function hostedRouteDecision({
   generationCount = 0,
   consentReady = false,
   catalogReady = false,
+  generationBudget = 0,
   payload = {},
 }) {
   let requestURL;
@@ -480,8 +481,16 @@ export function hostedRouteDecision({
     return { action: "abort", reason: "generation-before-consent" };
   if (!catalogReady)
     return { action: "abort", reason: "generation-before-catalog" };
-  if (generationCount >= 2)
-    return { action: "abort", reason: "third-generation-forbidden" };
+  if (![2, 3].includes(generationBudget))
+    return { action: "abort", reason: "invalid-generation-budget" };
+  if (generationCount >= generationBudget)
+    return {
+      action: "abort",
+      reason:
+        generationBudget === 3
+          ? "fourth-generation-forbidden"
+          : "third-generation-forbidden",
+    };
   try {
     assertHostedGenerationPayload(payload, { browserModeling: true });
   } catch {

@@ -66,6 +66,13 @@ const REPORT_DIR = resolve(
 const REPORT_MODE = "live-browser";
 const JOURNAL_POLL_TIMEOUT = 120000;
 const INTERRUPTION_METHODS = new Set(["stop", "reload"]);
+const INTERRUPTED_RECOVERY_PROVIDERS = new Set([
+  "openrouter",
+  "gateway",
+  "chatgpt-local",
+  HOSTED_PROVIDER,
+]);
+const INTERRUPTED_GENERATION_BUDGET = 3;
 
 class HarnessConfigurationError extends Error {
   constructor(message) {
@@ -110,7 +117,7 @@ function parseArgs(argv) {
           "",
           "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
-          "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1 for authenticated chatgpt-local recovery.",
+          "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1, ORBSIE_INTERRUPTED_GENERATION_BUDGET=3, and an explicitly supported provider.",
           "Set ORBSIE_INTERRUPTION_METHOD=reload for the page-reload interruption variant; stop is the default.",
         ].join("\n"),
       );
@@ -157,7 +164,7 @@ function explicitlyRequestsNew(prompt) {
   });
 }
 
-function readConfiguration(argv) {
+export function readConfiguration(argv) {
   // Keep this check before all key/token reads. A normal syntax check or an
   // accidental invocation cannot inspect provider credentials.
   if (process.env.ORBSIE_LIVE_E2E !== "1")
@@ -322,6 +329,7 @@ function readConfiguration(argv) {
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
+    generationBudget: 2,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
       : undefined,
@@ -428,10 +436,34 @@ function readConfiguration(argv) {
     throw new HarnessConfigurationError(
       "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 requires ORBSIE_VERIFY_CLOUD_RECOVERY=1 so the authenticated cloud journal is enabled.",
     );
-  if (config.interruptedRecovery && provider !== "chatgpt-local")
+  if (
+    config.interruptedRecovery &&
+    !INTERRUPTED_RECOVERY_PROVIDERS.has(provider)
+  )
     throw new HarnessConfigurationError(
-      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 is currently supported only with --provider chatgpt-local.",
+      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 is supported only with openrouter, gateway, chatgpt-local, or chatgpt-hosted.",
     );
+  const configuredGenerationBudget =
+    process.env.ORBSIE_INTERRUPTED_GENERATION_BUDGET;
+  if (config.interruptedRecovery) {
+    if (configuredGenerationBudget === undefined)
+      throw new HarnessConfigurationError(
+        "ORBSIE_INTERRUPTED_GENERATION_BUDGET=3 is required for interrupted recovery; the harness never infers authorization for the third generation.",
+      );
+    const generationBudget = parsePositiveInteger(
+      configuredGenerationBudget,
+      "ORBSIE_INTERRUPTED_GENERATION_BUDGET",
+    );
+    if (generationBudget !== INTERRUPTED_GENERATION_BUDGET)
+      throw new HarnessConfigurationError(
+        "ORBSIE_INTERRUPTED_GENERATION_BUDGET must be exactly 3 for interrupted recovery.",
+      );
+    config.generationBudget = generationBudget;
+  } else if (configuredGenerationBudget !== undefined) {
+    throw new HarnessConfigurationError(
+      "ORBSIE_INTERRUPTED_GENERATION_BUDGET is valid only with ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1.",
+    );
+  }
   if (
     process.env.ORBSIE_INTERRUPTION_METHOD !== undefined &&
     !config.interruptedRecovery
@@ -588,6 +620,7 @@ export function emptyReport(config, provenance) {
     serviceTier: "default",
     keyScope: config.keyScope,
     outputCapTokens: config.outputCap,
+    generationBudget: config.generationBudget,
     ...(config.provider === HOSTED_PROVIDER
       ? {
           reusedConsent: false,
@@ -683,6 +716,26 @@ export async function installTrafficGuard(
 ) {
   await context.route("**/*", async (route) => {
     const requestURL = new URL(route.request().url());
+    const isApiGeneration =
+      requestURL.origin === config.baseOrigin &&
+      requestURL.pathname === "/api/generate" &&
+      route.request().method() === "POST";
+    if (isApiGeneration) {
+      if (![2, 3].includes(config.generationBudget)) {
+        info.generationBudgetViolations ||= [];
+        info.generationBudgetViolations.push("invalid-generation-budget");
+        await route.abort("blockedbyclient");
+        return;
+      }
+      const attempt = info.apiGenerationAttempts ?? 0;
+      if (attempt >= config.generationBudget) {
+        info.generationBudgetViolations ||= [];
+        info.generationBudgetViolations.push("api-generation-budget-exhausted");
+        await route.abort("blockedbyclient");
+        return;
+      }
+      info.apiGenerationAttempts = attempt + 1;
+    }
     if (config.provider === HOSTED_PROVIDER) {
       info.hostedViolations ||= [];
       let payload;
@@ -707,6 +760,7 @@ export async function installTrafficGuard(
           : (info.hostedGenerationRequests ?? 0),
         consentReady: info.hostedConsentReady,
         catalogReady: info.hostedCatalogReady,
+        generationBudget: config.generationBudget,
         payload,
       });
       if (decision.action === "abort") {
@@ -1431,15 +1485,16 @@ async function configureChatGPTHosted(page, config, report, info, evidenceDir) {
 
 function assertGenerationRequests(config, info) {
   if (config.provider === HOSTED_PROVIDER) {
+    const expectedCount = config.generationBudget;
     assert.equal(
       info.hostedGenerationRequests,
-      2,
-      `Expected exactly two hosted ChatGPT generation requests (creation and edit), observed ${info.hostedGenerationRequests}.`,
+      expectedCount,
+      `Expected exactly ${expectedCount} hosted ChatGPT generation requests, observed ${info.hostedGenerationRequests}.`,
     );
     assert.equal(
       info.hostedGenerationAttempts,
-      2,
-      `Expected exactly two hosted ChatGPT generation attempts (creation and edit), observed ${info.hostedGenerationAttempts}.`,
+      expectedCount,
+      `Expected exactly ${expectedCount} hosted ChatGPT generation attempts, observed ${info.hostedGenerationAttempts}.`,
     );
     assert.equal(
       info.apiGenerationRequests,
@@ -1468,8 +1523,8 @@ function assertGenerationRequests(config, info) {
     );
     assert.deepEqual(
       info.generationStatuses,
-      [200, 200],
-      "Hosted ChatGPT generation did not return two successful responses.",
+      Array.from({ length: expectedCount }, () => 200),
+      `Hosted ChatGPT generation did not return ${expectedCount} successful responses.`,
     );
     assert.deepEqual(
       info.hostedPayloadErrors,
@@ -1478,8 +1533,8 @@ function assertGenerationRequests(config, info) {
     );
     assert.equal(
       info.hostedNDJSON.length,
-      2,
-      "Hosted ChatGPT did not produce two observed NDJSON responses.",
+      expectedCount,
+      `Hosted ChatGPT did not produce ${expectedCount} observed NDJSON responses.`,
     );
     for (const response of info.hostedNDJSON) {
       assert.equal(response.status, 200);
@@ -1489,7 +1544,7 @@ function assertGenerationRequests(config, info) {
     }
     return;
   }
-  const expectedCount = config.interruptedRecovery ? 3 : 2;
+  const expectedCount = config.generationBudget;
   assert.equal(
     info.generationRequests,
     expectedCount,
@@ -1503,6 +1558,11 @@ function assertGenerationRequests(config, info) {
     "A generation request was not a complete live request.",
   );
   if (config.interruptedRecovery) {
+    assert.equal(
+      info.generationStatuses.length,
+      expectedCount,
+      "The interrupted-recovery transport did not return exactly the configured generation count.",
+    );
     assert(
       info.generationStatuses.every((status) => status === 200),
       "A live interrupted-recovery transport returned a non-success response.",
@@ -2064,6 +2124,15 @@ async function readLatestJournalRun(page, projectId) {
   return run;
 }
 
+export function providerReloadStrategy(provider) {
+  if (provider === "chatgpt-local") return "companion";
+  if (provider === HOSTED_PROVIDER) return "hosted";
+  if (provider === "openrouter" || provider === "gateway") return "api";
+  throw new HarnessConfigurationError(
+    `Interrupted reload recovery is unsupported for provider ${provider}.`,
+  );
+}
+
 async function reconnectChatGPTLocalAfterReload(page, config) {
   // The app consumes pairing fragments on mount, not on hash-only navigation.
   await page.goto("about:blank");
@@ -2098,6 +2167,26 @@ async function reconnectChatGPTLocalAfterReload(page, config) {
     page.getByText("ChatGPT is connected on this computer.", { exact: false }),
   ).toBeVisible({ timeout: 30000 });
   assert.equal(new URL(page.url()).hash, "");
+}
+
+async function reconnectProviderAfterReload(
+  page,
+  config,
+  report,
+  info,
+  evidenceDir,
+) {
+  switch (providerReloadStrategy(config.provider)) {
+    case "companion":
+      await reconnectChatGPTLocalAfterReload(page, config);
+      return "chatgpt-local-reconnected";
+    case "hosted":
+      await configureChatGPTHosted(page, config, report, info, evidenceDir);
+      return "chatgpt-hosted-reconnected";
+    case "api":
+      await configureApiProvider(page, config, report, info, evidenceDir);
+      return `${config.provider}-reconnected`;
+  }
 }
 
 async function restoreReloadedWorldThroughAccountUI(
@@ -2262,8 +2351,15 @@ async function verifyInterruptedRecovery(
     phases.push("ready-checkpoint-observer-captured");
     await page.reload({ waitUntil: "domcontentloaded" });
     phases.push("page-reloaded-while-journal-running");
-    await reconnectChatGPTLocalAfterReload(page, config);
-    phases.push("chatgpt-local-reconnected");
+    phases.push(
+      await reconnectProviderAfterReload(
+        page,
+        config,
+        report,
+        info,
+        evidenceDir,
+      ),
+    );
     await restoreReloadedWorldThroughAccountUI(
       page,
       projectId,
@@ -3407,7 +3503,7 @@ async function run(config, report = emptyReport(config)) {
       .click();
     await expect
       .poll(() => info.generationRequests, { timeout: 30000 })
-      .toBe(config.interruptedRecovery ? 3 : 2);
+      .toBe(config.generationBudget);
     assert.equal(
       info.generationBodies.at(-1)?.selectedId,
       targetBefore.id,
@@ -3803,6 +3899,7 @@ async function run(config, report = emptyReport(config)) {
         : {}),
       generationStatuses: info.generationStatuses,
       generationDiagnostics: info.generationDiagnostics,
+      generationBudgetViolations: info.generationBudgetViolations ?? [],
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
       interceptedGeneration: info.interceptedGeneration,
@@ -3861,6 +3958,7 @@ async function run(config, report = emptyReport(config)) {
         : {}),
       generationStatuses: info.generationStatuses,
       generationDiagnostics: info.generationDiagnostics,
+      generationBudgetViolations: info.generationBudgetViolations ?? [],
       blockedExternalRequests: info.blockedExternalRequests,
       interceptedGeneration: info.interceptedGeneration,
     };
@@ -3885,6 +3983,7 @@ async function run(config, report = emptyReport(config)) {
       generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
+      generationBudgetViolations: info.generationBudgetViolations ?? [],
       interceptedGeneration: info.interceptedGeneration,
     };
     await context.close();

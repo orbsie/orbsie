@@ -208,12 +208,19 @@ describe("hosted ChatGPT acceptance boundaries", () => {
     };
     const ready = {
       url: `${target}/api/chatgpt/generate`,
-      method: "POST",
-      consentReady: true,
-      catalogReady: true,
-      payload: request,
+    method: "POST",
+    consentReady: true,
+    catalogReady: true,
+    generationBudget: 2,
+    payload: request,
     };
     expect(hostedRouteDecision(ready)).toMatchObject({ action: "continue" });
+    expect(
+      hostedRouteDecision({ ...ready, generationBudget: undefined }),
+    ).toMatchObject({
+      action: "abort",
+      reason: "invalid-generation-budget",
+    });
     for (const change of [
       { prompt: "   " },
       { prompt: "x".repeat(4001) },
@@ -285,12 +292,51 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         consentReady: true,
         catalogReady: true,
         generationCount: 2,
+        generationBudget: 2,
         payload: request,
       }),
     ).toMatchObject({
       action: "abort",
       reason: "third-generation-forbidden",
     });
+    expect(
+      hostedRouteDecision({
+        url: `${target}/api/chatgpt/generate`,
+        method: "POST",
+        consentReady: true,
+        catalogReady: true,
+        generationCount: 2,
+        generationBudget: 3,
+        payload: request,
+      }),
+    ).toMatchObject({ action: "continue" });
+    expect(
+      hostedRouteDecision({
+        url: `${target}/api/chatgpt/generate`,
+        method: "POST",
+        consentReady: true,
+        catalogReady: true,
+        generationCount: 3,
+        generationBudget: 3,
+        payload: request,
+      }),
+    ).toMatchObject({
+      action: "abort",
+      reason: "fourth-generation-forbidden",
+    });
+  });
+
+  it("permits explicit hosted interruption recovery without a companion", () => {
+    expect(() =>
+      assertHostedPreflight({
+        liveE2E: "1",
+        baseOrigin: target,
+        expectedModel: HOSTED_MODEL,
+        accountStorageStatePath: "/private/state.json",
+        interruptedRecovery: true,
+        interruptionMethod: "reload",
+      }),
+    ).not.toThrow();
   });
 
   it("requires a final commit and rejects stream errors even after valid commands", () => {

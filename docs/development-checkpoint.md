@@ -344,3 +344,17 @@ player/worker hashes, visible canvas/prompt and no browser errors or external
 requests. Evidence: `docs/evidence/chatgpt-runtime-release/report.json`.
 The databases were migrated before deployment. Real owner ChatGPT consent and
 inference remain unverified; this release adds safe stale-runtime handling.
+
+### Current provider recovery harness implemented
+
+Root reviewed provider-aware Stop/reload recovery for OpenRouter, Gateway and
+hosted ChatGPT. Reload restores API selection with the in-memory key or hosted
+selection with account cookies; only historical chatgpt-local uses the companion.
+Normal preflight sets budget2. Interrupted mode requires explicit
+`ORBSIE_INTERRUPTED_GENERATION_BUDGET=3`; API/hosted guards reject invalid or
+exhausted budgets before dispatch. The historical wrapper cannot infer budget3.
+21 focused tests, typechecking and syntax checks passed; no live calls or builds.
+This is harness readiness, not proof of live recovery. Gateway's earlier owner
+allowance is up to5 calls/test; OpenRouter's most recent explicit milestone
+authorization is2 calls, so a3-call OpenRouter recovery run needs approval.
+Owner ChatGPT login/consent and Android Chrome terms remain pending.
