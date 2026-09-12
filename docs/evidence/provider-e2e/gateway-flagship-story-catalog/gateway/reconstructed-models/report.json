@@ -1,0 +1,209 @@
+{
+  "status": "passed",
+  "method": "reconstructed-from-recipe",
+  "sourceSnapshot": "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-mushroom-project.json",
+  "sourceSnapshotSha256": "6df53cb214d54d6ea40ceb98738d7eb4fa47e8fd4b2198e35a681391adbe41bb",
+  "helperHashes": {
+    "scripts/reconstruct-flagship-generated-models.mjs": "bf6a513900f1de18806c2f1ecef2a73385532727c5818b27989949f76a1d4313",
+    "src/lib/browser-modeling-connection.ts": "39bc6d846ac939146bc11129c0e0e78fff1cec6f10e7e9d648648be311cf112a",
+    "src/lib/browser-modeling-glb.ts": "29b96888f74ea0a161fa0105addf3b09455ad79368797358a5529004254a93ea",
+    "src/lib/browser-modeling-queue.ts": "be476d03bde0964a533356b3c7e86801101027e55e50a466d97e63712b3b53d0",
+    "src/lib/browser-modeling-worker.ts": "1fd52e58a2f659cae41366d57009c7a07669ec16b3918477bee5d672ad2a9530",
+    "src/lib/browser-modeling-kernel.ts": "db2163d793c8250058ee6053b55622b08f4244706832a771c31a1d09e7431901"
+  },
+  "kernelVersion": "3.3.2",
+  "inferenceCalls": 0,
+  "externalRequests": [],
+  "models": [
+    {
+      "id": "crystal-1",
+      "label": "Glow Crystal One",
+      "expected": {
+        "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+        "bytes": 3616,
+        "bounds": {
+          "min": [
+            -0.2800000011920929,
+            -0.7000000029802322,
+            -0.2800000011920929
+          ],
+          "max": [
+            0.2800000011920929,
+            0.7000000029802322,
+            0.2800000011920929
+          ]
+        }
+      },
+      "actual": {
+        "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+        "bytes": 3616
+      },
+      "bounds": {
+        "min": [
+          -0.2800000011920929,
+          -0.7000000029802322,
+          -0.2800000011920929
+        ],
+        "max": [
+          0.2800000011920929,
+          0.7000000029802322,
+          0.2800000011920929
+        ]
+      },
+      "status": "complete",
+      "path": "generated/d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099.glb"
+    },
+    {
+      "id": "crystal-2",
+      "label": "Glow Crystal Two",
+      "expected": {
+        "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+        "bytes": 3620,
+        "bounds": {
+          "min": [
+            -0.29999999701976776,
+            -0.7000000029802322,
+            -0.29999999701976776
+          ],
+          "max": [
+            0.29999999701976776,
+            0.7000000029802322,
+            0.29999999701976776
+          ]
+        }
+      },
+      "actual": {
+        "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+        "bytes": 3620
+      },
+      "bounds": {
+        "min": [
+          -0.29999999701976776,
+          -0.7000000029802322,
+          -0.29999999701976776
+        ],
+        "max": [
+          0.29999999701976776,
+          0.7000000029802322,
+          0.29999999701976776
+        ]
+      },
+      "status": "complete",
+      "path": "generated/848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517.glb"
+    },
+    {
+      "id": "crystal-3",
+      "label": "Glow Crystal Three",
+      "expected": {
+        "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+        "bytes": 3612,
+        "bounds": {
+          "min": [
+            -0.2800000011920929,
+            -0.7000000029802322,
+            -0.2800000011920929
+          ],
+          "max": [
+            0.2800000011920929,
+            0.7000000029802322,
+            0.2800000011920929
+          ]
+        }
+      },
+      "actual": {
+        "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+        "bytes": 3612
+      },
+      "bounds": {
+        "min": [
+          -0.2800000011920929,
+          -0.7000000029802322,
+          -0.2800000011920929
+        ],
+        "max": [
+          0.2800000011920929,
+          0.7000000029802322,
+          0.2800000011920929
+        ]
+      },
+      "status": "complete",
+      "path": "generated/283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110.glb"
+    },
+    {
+      "id": "crystal-4",
+      "label": "Glow Crystal Four",
+      "expected": {
+        "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+        "bytes": 3620,
+        "bounds": {
+          "min": [
+            -0.29999999701976776,
+            -0.7000000029802322,
+            -0.29999999701976776
+          ],
+          "max": [
+            0.29999999701976776,
+            0.7000000029802322,
+            0.29999999701976776
+          ]
+        }
+      },
+      "actual": {
+        "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+        "bytes": 3620
+      },
+      "bounds": {
+        "min": [
+          -0.29999999701976776,
+          -0.7000000029802322,
+          -0.29999999701976776
+        ],
+        "max": [
+          0.29999999701976776,
+          0.7000000029802322,
+          0.29999999701976776
+        ]
+      },
+      "status": "complete",
+      "path": "generated/31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4.glb"
+    },
+    {
+      "id": "crystal-5",
+      "label": "Glow Crystal Five",
+      "expected": {
+        "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+        "bytes": 3612,
+        "bounds": {
+          "min": [
+            -0.2800000011920929,
+            -0.7000000029802322,
+            -0.2800000011920929
+          ],
+          "max": [
+            0.2800000011920929,
+            0.7000000029802322,
+            0.2800000011920929
+          ]
+        }
+      },
+      "actual": {
+        "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+        "bytes": 3612
+      },
+      "bounds": {
+        "min": [
+          -0.2800000011920929,
+          -0.7000000029802322,
+          -0.2800000011920929
+        ],
+        "max": [
+          0.2800000011920929,
+          0.7000000029802322,
+          0.2800000011920929
+        ]
+      },
+      "status": "complete",
+      "path": "generated/358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b.glb"
+    }
+  ]
+}
