@@ -30,9 +30,11 @@ effective position[-1,1.2,5] from saved bounce-1 set_position rule yields
 contactY1.7025, above observed apex1.50 and ideal ground-jump apex1.62.
 Zero inference/external/mutating requests/page errors. This is a generated
 playability defect for this ground jump, not proof all routes are impossible.
-No worker remains active. Next bounded task: prevent platform-reposition
-rules from substituting for requested player bounce; assess existing behavior
-composition/authoring guidance before implementing, preserve captured evidence.
+Luna `/root/moving_bounce_authoring` now owns a bounded follow-up: prove
+existing bounce behavior + start move_path composition with actual runtime
+integration tests, then add concise generation guidance. Owns generation.ts
+and focused tests only; no schema expansion without a concrete gap, no model
+calls, no nested workers. Root reviews. Preserve captured failure evidence.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
 Publication terminal-state regression a49c84e passed26 targeted tests; live
 failed-deployment continuity remains unverified.

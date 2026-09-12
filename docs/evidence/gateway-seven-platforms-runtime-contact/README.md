@@ -24,3 +24,7 @@ player. Do not modify the captured artifact to manufacture provider acceptance.
 Next product work should address generation of playable moving/bouncing
 platforms and validate through a fresh authorized milestone. The visible GLB
 child offset is separate from this catalog collision proxy.
+
+Root inspected `final-frame.png`, extracted from the retained recording. The
+scene and player render; the observation does not establish platform contact
+or visual-size acceptance. The tiny scene scale keeps visual quality open.
