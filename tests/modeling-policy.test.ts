@@ -8,7 +8,15 @@ import {
   evaluateBrowserModelRecipe,
   type BrowserModelKernel,
 } from "../src/lib/browser-modeling-kernel";
-import { overlappingTrunkCanopyUnionRecipe } from "../src/lib/browser-modeling-recipe-examples";
+import {
+  overlappingTrunkCanopyUnionCommand,
+  overlappingTrunkCanopyUnionRecipe,
+} from "../src/lib/browser-modeling-recipe-examples";
+import {
+  applyModelOperation,
+  blankProject,
+  parseModelCommandForProcessing,
+} from "../src/lib/protocol";
 import {
   browserModelingInstructions,
   modelingInstructions,
@@ -80,11 +88,75 @@ describe("browser modeling policy", () => {
     expect(browserModelingInstructions).toContain(
       JSON.stringify(overlappingTrunkCanopyUnionRecipe),
     );
+    expect(browserModelingInstructions).toContain(
+      JSON.stringify(overlappingTrunkCanopyUnionCommand),
+    );
 
     const result = evaluateBrowserModelRecipe(parsed, manifoldKernel(wasm));
     expect(result.statistics.triangles).toBeGreaterThan(0);
     expect(result.bounds.min[1]).toBeLessThan(0);
     expect(result.bounds.max[1]).toBeGreaterThan(1);
+  });
+
+  it("parses and applies the complete command after reserving its entity", () => {
+    const project = blankProject();
+    const cursor = { runId: "run", sequence: 0, seen: new Set<string>() };
+    const reserved = applyModelOperation(
+      project,
+      {
+        version: 1,
+        projectId: project.id,
+        runId: "run",
+        operationId: "reserve",
+        sequence: 1,
+        baseRevision: 0,
+        command: {
+          type: "reserve_entity",
+          entity: {
+            id: overlappingTrunkCanopyUnionCommand.id,
+            label: "Compound object",
+            position: [0, 0, 0],
+            scale: [1, 1, 1],
+            color: "#6ead60",
+            stage: "seed",
+          },
+        },
+      },
+      cursor,
+    );
+    const serializedCommand = JSON.parse(
+      JSON.stringify(overlappingTrunkCanopyUnionCommand),
+    );
+    const parsed = parseModelCommandForProcessing(
+      serializedCommand,
+      false,
+      true,
+    );
+    expect(parsed).toEqual(overlappingTrunkCanopyUnionCommand);
+    if (parsed.type !== "set_geometry")
+      throw new Error("Expected set_geometry");
+    expect(parsed.assetPolicy).toBe("new-only");
+    expect(parsed.geometry).not.toHaveProperty("assetPolicy");
+
+    const applied = applyModelOperation(
+      reserved.project,
+      {
+        version: 1,
+        projectId: project.id,
+        runId: "run",
+        operationId: "geometry",
+        sequence: 2,
+        baseRevision: reserved.project.revision,
+        command: parsed,
+      },
+      reserved.cursor,
+    );
+    expect(applied.project.entities[0]).toMatchObject({
+      id: overlappingTrunkCanopyUnionCommand.id,
+      stage: "ready",
+      assetPolicy: "new-only",
+      geometry: overlappingTrunkCanopyUnionCommand.geometry,
+    });
   });
 
   it("rejects the same touching or overlapping parts when modeled as compose", async () => {

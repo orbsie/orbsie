@@ -1,4 +1,5 @@
 import type { BrowserModelRecipe } from "./browser-modeling";
+import type { ModelCommand } from "./protocol";
 
 /**
  * A compact example of merging intentionally overlapping parts into one solid.
@@ -34,3 +35,23 @@ export const overlappingTrunkCanopyUnionRecipe = {
     },
   ],
 } as const satisfies BrowserModelRecipe;
+
+/**
+ * A complete model command for a previously reserved generic entity. Keeping
+ * the wrapper beside the recipe prevents the policy example from drifting
+ * away from the command schema or moving assetPolicy inside geometry.
+ */
+export const overlappingTrunkCanopyUnionCommand = {
+  type: "set_geometry",
+  id: "compound-object",
+  geometry: {
+    kind: "generated",
+    collision: "none",
+    detail: "refined",
+    job: {
+      backend: "browser-manifold",
+      recipe: overlappingTrunkCanopyUnionRecipe,
+    },
+  },
+  assetPolicy: "new-only",
+} as const satisfies Extract<ModelCommand, { type: "set_geometry" }>;
