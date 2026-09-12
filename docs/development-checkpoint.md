@@ -139,10 +139,13 @@ Owner-dependent ChatGPT sign-in and real-device gates remain as listed above.
 `gateway-current-full-story/` stopped after1 Luna HTTP200 creation,4096 cap,
 no retries; scene contains3 bounce+move_path platforms but old story classifier
 requires behavior=move. Saved revision26; no edits ran. Temp credential deleted.
-One worker `/root/story_path_motion` owns only story motion classification,
-effective duration-based slowdown assertions and flagship tests. No live calls
-or browser runs. Root identified unused bounce.speed vs actual path duration
-as the related slowdown-check gap. Reuse captured project for validation.
+Worker `/root/story_path_motion` finished; root reviewed and removed unrelated
+formatting. Story classification accepts unconditional active bounce paths,
+rejects ambiguous writers; slowdown uses duration for path-driven bounce/move,
+not inert behavior.speed. Added collect rules preserve baseline positive score
+(including10). Portal ID and eq/gte comparison are preserved.24 focused tests
+passed; syntax/diff checks passed. No live calls or browser runs. These are
+structural checks, not proof of actual route playability. Reuse captured scene.
 
 ### Resume-after-creation contract for next bounded task
 

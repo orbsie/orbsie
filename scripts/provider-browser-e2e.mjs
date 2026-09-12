@@ -2727,14 +2727,79 @@ function storyCollectibles(project) {
   );
 }
 
+function storyPlatformMotionWriters(project, entityId) {
+  const rules = project?.game?.rules;
+  if (!Array.isArray(rules)) return [];
+  const writers = [];
+  for (const rule of rules) {
+    if (!Array.isArray(rule.actions)) continue;
+    rule.actions.forEach((action, actionIndex) => {
+      if (
+        (action?.type === "move_path" || action?.type === "set_position") &&
+        action.entityId === entityId
+      )
+        writers.push({ rule, action, actionIndex });
+    });
+  }
+  return writers;
+}
+
+function storyActiveStartPath(project, entityId) {
+  const writers = storyPlatformMotionWriters(project, entityId);
+  assert(
+    writers.length <= 1,
+    `Story platform ${entityId} has conflicting motion writers.`,
+  );
+  const writer = writers[0];
+  if (
+    !writer ||
+    writer.action.type !== "move_path" ||
+    writer.rule.trigger?.type !== "start" ||
+    (writer.rule.conditions ?? []).length !== 0
+  )
+    return null;
+  const points = writer.action.points;
+  const validPoints =
+    Array.isArray(points) &&
+    points.length >= 2 &&
+    points.every(
+      (point) =>
+        Array.isArray(point) &&
+        point.length === 3 &&
+        point.every((value) => Number.isFinite(value)),
+    );
+  const nondegenerate =
+    validPoints &&
+    points.some((point, index) => {
+      if (index === 0) return false;
+      return point.some((value, axis) => value !== points[index - 1][axis]);
+    });
+  const validDuration =
+    Number.isFinite(writer.action.duration) && writer.action.duration > 0;
+  const validLoop =
+    writer.action.loop === undefined || typeof writer.action.loop === "boolean";
+  if (!validPoints || !nondegenerate || !validDuration || !validLoop)
+    return null;
+  return writer;
+}
+
 function storyPlatforms(project) {
   return project.entities
-    .filter(
-      (entity) =>
-        entity.stage === "ready" &&
-        entity.behavior?.type === "move" &&
-        /\bplatform\b/.test(storyEntityText(entity)),
-    )
+    .filter((entity) => {
+      if (
+        entity.stage !== "ready" ||
+        !/\bplatform\b/.test(storyEntityText(entity))
+      )
+        return false;
+        if (entity.behavior?.type === "move") {
+          storyActiveStartPath(project, entity.id);
+          return true;
+        }
+      return (
+        entity.behavior?.type === "bounce" &&
+        Boolean(storyActiveStartPath(project, entity.id))
+      );
+    })
     .sort(
       (a, b) =>
         a.position[0] - b.position[0] ||
@@ -2835,6 +2900,251 @@ function scaledModelBoundsSize(bounds, scale) {
   );
 }
 
+function storyPortalWinRule(rule, portalId) {
+  return (
+    rule?.trigger?.type === "collision" &&
+    rule.trigger.entityId === portalId &&
+    Array.isArray(rule.actions) &&
+    rule.actions.some((action) => action?.type === "win")
+  );
+}
+
+function storyCrystalGoalCondition(rule) {
+  const matches = (rule?.conditions ?? []).flatMap((condition, index) =>
+    condition?.operand?.type === "variable" &&
+    condition.operand.name === "crystals" &&
+    ["eq", "gte"].includes(condition.comparison)
+      ? [{ condition, index }]
+      : [],
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function storyRulesById(project, label) {
+  const rules = project?.game?.rules;
+  assert(Array.isArray(rules), `${label} has no game rules.`);
+  const byId = new Map();
+  for (const rule of rules) {
+    assert(
+      typeof rule?.id === "string" && !byId.has(rule.id),
+      `${label} has ambiguous game rule IDs.`,
+    );
+    byId.set(rule.id, rule);
+  }
+  return { rules, byId };
+}
+
+function storyNormalizedPathRule(writer) {
+  return {
+    ...writer.rule,
+    actions: writer.rule.actions.map((action, index) =>
+      index === writer.actionIndex
+        ? {
+            ...action,
+            duration: "__path_duration__",
+            loop: action.loop ?? false,
+          }
+        : action,
+    ),
+  };
+}
+
+function storyNormalizedGoalRule(rule, conditionIndex) {
+  return {
+    ...rule,
+    conditions: (rule.conditions ?? []).map((condition, index) =>
+      index === conditionIndex
+        ? { ...condition, value: "__goal_threshold__" }
+        : condition,
+    ),
+  };
+}
+
+function assertStoryPlatformRules(before, after, beforePath, afterPath) {
+  const beforeHasGame = before?.game !== undefined;
+  const afterHasGame = after?.game !== undefined;
+  if (!beforeHasGame && !afterHasGame) return;
+  assert(
+    beforeHasGame && afterHasGame,
+    "Story platform edit changed the presence of the game program.",
+  );
+  const previous = storyRulesById(before, "Story platform baseline");
+  const current = storyRulesById(after, "Story platform edit");
+  const previousPortals = before.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  const currentPortals = after.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  assert.equal(
+    previousPortals.length,
+    1,
+    "Story platform baseline must have one portal entity.",
+  );
+  assert.equal(
+    currentPortals.length,
+    1,
+    "Story platform edit must preserve one portal entity.",
+  );
+  const portalId = previousPortals[0].id;
+  assert.equal(
+    currentPortals[0].id,
+    portalId,
+    "Story platform edit replaced the portal entity.",
+  );
+  const previousGoalRules = previous.rules.filter((rule) =>
+    storyPortalWinRule(rule, portalId),
+  );
+  const currentGoalRules = current.rules.filter((rule) =>
+    storyPortalWinRule(rule, portalId),
+  );
+  assert.equal(
+    previousGoalRules.length,
+    1,
+    "Story platform baseline must have one portal win rule.",
+  );
+  assert.equal(
+    currentGoalRules.length,
+    1,
+    "Story platform edit must preserve one portal win rule.",
+  );
+  const previousGoal = previousGoalRules[0];
+  const currentGoal = currentGoalRules[0];
+  assert.equal(
+    currentGoal.id,
+    previousGoal.id,
+    "Story platform edit replaced the portal win rule.",
+  );
+  const previousGoalCondition = storyCrystalGoalCondition(previousGoal);
+  const currentGoalCondition = storyCrystalGoalCondition(currentGoal);
+  assert(
+    previousGoalCondition && currentGoalCondition,
+    "Story platform edit must preserve the crystal portal threshold rule.",
+  );
+  assert(
+    previousGoalCondition.condition.value === 5,
+    "Story platform baseline must require five crystals.",
+  );
+  assert.equal(
+    currentGoalCondition.condition.value,
+    7,
+    "Story platform edit must reconcile the portal goal to seven crystals.",
+  );
+  const previousPathId = beforePath?.rule.id;
+  const currentPathId = afterPath?.rule.id;
+  assert.equal(
+    currentPathId,
+    previousPathId,
+    "Story platform edit replaced the active platform path rule.",
+  );
+  for (const rule of previous.rules) {
+    const editedRule = current.byId.get(rule.id);
+    assert(
+      editedRule,
+      `Story platform edit removed unrelated rule ${rule.id}.`,
+    );
+    if (rule.id === previousGoal.id) {
+      assert.deepEqual(
+        storyNormalizedGoalRule(editedRule, currentGoalCondition.index),
+        storyNormalizedGoalRule(rule, previousGoalCondition.index),
+        "Story platform edit changed the portal rule beyond goal reconciliation.",
+      );
+    } else if (rule.id === previousPathId) {
+      assert.deepEqual(
+        storyNormalizedPathRule(afterPath),
+        storyNormalizedPathRule(beforePath),
+        "Story platform edit changed the active path beyond its duration.",
+      );
+    } else {
+      assert.deepEqual(
+        editedRule,
+        rule,
+        `Story platform edit changed unrelated rule ${rule.id}.`,
+      );
+    }
+  }
+  const addedRules = current.rules.filter(
+    (rule) => !previous.byId.has(rule.id),
+  );
+  assert.equal(
+    addedRules.length,
+    2,
+    "Story platform edit must add exactly two collectible rules.",
+  );
+  const previousCollectibleIds = new Set(
+    storyCollectibles(before).map((entity) => entity.id),
+  );
+  const previousCollectScoreAmounts = previous.rules.flatMap((rule) => {
+    if (
+      rule.trigger?.type !== "collect" ||
+      !previousCollectibleIds.has(rule.trigger.entityId)
+    )
+      return [];
+    return (rule.actions ?? [])
+      .filter(
+        (action) =>
+          action?.type === "add_score" &&
+          Number.isFinite(action.amount) &&
+          action.amount > 0,
+      )
+      .map((action) => action.amount);
+  });
+  assert(
+    previousCollectScoreAmounts.length > 0 &&
+      previousCollectScoreAmounts.every(
+        (amount) => amount === previousCollectScoreAmounts[0],
+      ),
+    "Story platform baseline has no consistent positive collectible score.",
+  );
+  const collectibleScoreAmount = previousCollectScoreAmounts[0];
+  const addedCollectibleIds = new Set(
+    storyCollectibles(after)
+      .filter((entity) => !previousCollectibleIds.has(entity.id))
+      .map((entity) => entity.id),
+  );
+  assert.equal(
+    addedCollectibleIds.size,
+    2,
+    "Story platform edit must add two collectible entities for its new rules.",
+  );
+  const addedRuleTargets = new Set();
+  for (const rule of addedRules) {
+    const target =
+      rule.trigger?.type === "collect" ? rule.trigger.entityId : null;
+    assert(
+      addedCollectibleIds.has(target) && !addedRuleTargets.has(target),
+      "Story platform edit added an unrelated or duplicate game rule.",
+    );
+    addedRuleTargets.add(target);
+    assert.deepEqual(
+      rule.conditions ?? [],
+      [],
+      `Story collectible rule ${rule.id} has an unexpected condition.`,
+    );
+    assert(
+      Array.isArray(rule.actions),
+      `Story collectible rule ${rule.id} has no actions.`,
+    );
+    assert(
+      rule.actions.some(
+        (action) =>
+          action?.type === "add_variable" &&
+          action.name === "crystals" &&
+          action.amount === 1,
+      ),
+      `Story collectible rule ${rule.id} does not increment crystals.`,
+    );
+    assert(
+      rule.actions.some(
+        (action) =>
+          action?.type === "add_score" &&
+          action.amount === collectibleScoreAmount,
+      ),
+      `Story collectible rule ${rule.id} does not increment score.`,
+    );
+  }
+}
+
 export function assertFlagshipStoryMushroom(before, after, treeId) {
   const beforeEntity = storyEntityMap(before).get(treeId);
   const afterEntity = storyEntityMap(after).get(treeId);
@@ -2888,18 +3198,65 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
   const beforePlatform = beforeMap.get(platformId);
   const afterPlatform = afterMap.get(platformId);
   assert(beforePlatform && afterPlatform, "Story middle platform disappeared.");
+  const beforePath = storyActiveStartPath(before, platformId);
+  const afterPath = storyActiveStartPath(after, platformId);
+  const beforeUsesPath = Boolean(beforePath);
   const beforeSpeed = beforePlatform.behavior?.speed;
   const afterSpeed = afterPlatform.behavior?.speed;
-  assert(
-    typeof beforeSpeed === "number" && beforeSpeed > 0,
-    "Story middle platform had no positive starting speed.",
-  );
-  assert(
-    typeof afterSpeed === "number" &&
-      afterSpeed > 0 &&
-      afterSpeed < beforeSpeed,
-    "Story middle platform speed did not decrease while staying positive.",
-  );
+  if (beforeUsesPath) {
+    assert(
+      beforePath,
+      "Story middle platform had no valid active start path.",
+    );
+    assert.equal(
+      afterPlatform.behavior?.type,
+      beforePlatform.behavior?.type,
+      "Story middle platform changed its path composition.",
+    );
+    assert(
+      afterPath,
+      "Story middle platform lost its active start path.",
+    );
+    assert(
+      afterPath.action.duration > beforePath.action.duration,
+      "Story middle platform path duration did not increase while staying positive.",
+    );
+    assert.deepEqual(
+      afterPath.action.points,
+      beforePath.action.points,
+      "Story middle platform path geometry changed while slowing.",
+    );
+    assert.equal(
+      afterPath.action.loop ?? false,
+      beforePath.action.loop ?? false,
+      "Story middle platform path loop changed while slowing.",
+    );
+    assert.deepEqual(
+      afterPath.rule.trigger,
+      beforePath.rule.trigger,
+      "Story middle platform path trigger changed while slowing.",
+    );
+    const { speed: _beforeSpeed, ...beforeBehaviorProperties } =
+      beforePlatform.behavior;
+    const { speed: _afterSpeed, ...afterBehaviorProperties } =
+      afterPlatform.behavior;
+    assert.deepEqual(
+      afterBehaviorProperties,
+      beforeBehaviorProperties,
+      "Story platform edit changed the bounce behavior beyond speed.",
+    );
+  } else {
+    assert(
+      typeof beforeSpeed === "number" && beforeSpeed > 0,
+      "Story middle platform had no positive starting speed.",
+    );
+    assert(
+      typeof afterSpeed === "number" &&
+        afterSpeed > 0 &&
+        afterSpeed < beforeSpeed,
+      "Story middle platform speed did not decrease while staying positive.",
+    );
+  }
   assert.deepEqual(afterPlatform.position, beforePlatform.position);
   const { behavior: beforeBehavior, ...beforePlatformProperties } =
     beforePlatform;
@@ -2909,13 +3266,15 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
     beforePlatformProperties,
     "Story platform edit changed the middle platform beyond its speed.",
   );
-  const { speed: _beforeSpeed, ...beforeBehaviorProperties } = beforeBehavior;
-  const { speed: _afterSpeed, ...afterBehaviorProperties } = afterBehavior;
-  assert.deepEqual(
-    afterBehaviorProperties,
-    beforeBehaviorProperties,
-    "Story platform edit changed the middle platform behavior beyond speed.",
-  );
+  if (!beforeUsesPath) {
+    const { speed: _beforeSpeed, ...beforeBehaviorProperties } = beforeBehavior;
+    const { speed: _afterSpeed, ...afterBehaviorProperties } = afterBehavior;
+    assert.deepEqual(
+      afterBehaviorProperties,
+      beforeBehaviorProperties,
+      "Story platform edit changed the middle platform behavior beyond speed.",
+    );
+  }
   const beforeCollectibles = storyCollectibles(before);
   const afterCollectibles = storyCollectibles(after);
   const beforeIds = new Set(beforeCollectibles.map((entity) => entity.id));
@@ -2942,10 +3301,15 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
   );
   assertStoryUnchangedEntities(before, after, new Set([platformId]));
   assert.deepEqual(after.environment, before.environment);
+  assertStoryPlatformRules(before, after, beforePath, afterPath);
   return {
     platformId,
-    previousSpeed: beforeSpeed,
-    revisedSpeed: afterSpeed,
+    ...(beforeUsesPath
+      ? {
+          previousPathDuration: beforePath.action.duration,
+          revisedPathDuration: afterPath.action.duration,
+        }
+      : { previousSpeed: beforeSpeed, revisedSpeed: afterSpeed }),
     addedCollectibleIds: added.map((entity) => entity.id),
     collectibles: afterCollectibles.length,
   };

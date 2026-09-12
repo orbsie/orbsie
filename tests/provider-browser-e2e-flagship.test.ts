@@ -92,6 +92,9 @@ const RESUME_EDITED = resolve(
 const RESUME_EDITED_MODELS = resolve(
   "docs/evidence/provider-e2e/gateway-flagship-checkpoint-resume/gateway",
 );
+const CURRENT_GATEWAY_STORY = resolve(
+  "docs/evidence/provider-e2e/gateway-current-full-story/gateway/story-created-project.json",
+);
 
 function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
   gatewayStoryEnvironment({
@@ -193,6 +196,59 @@ function initialProject() {
   };
 }
 
+function currentGatewayStory() {
+  return JSON.parse(readFileSync(CURRENT_GATEWAY_STORY, "utf8"));
+}
+
+function addGatewayGoalSevenEdit(project: any, durationChange?: number) {
+  const edited = structuredClone(project);
+  const collectibleScoreAmount = project.game.rules
+    .find((rule: any) => rule.trigger?.type === "collect")
+    .actions.find((action: any) => action.type === "add_score").amount;
+  const pathRule = edited.game.rules.find(
+    (rule: any) => rule.id === "move-platform-2",
+  );
+  const pathAction = pathRule.actions.find(
+    (action: any) => action.type === "move_path",
+  );
+  if (durationChange !== undefined) pathAction.duration += durationChange;
+  edited.entities.push(
+    entity(
+      "crystal-6",
+      "Glow Crystal 6",
+      { kind: "crystal", detail: "refined" },
+      { behavior: { type: "collect" } },
+    ),
+    entity(
+      "crystal-7",
+      "Glow Crystal 7",
+      { kind: "crystal", detail: "refined" },
+      { behavior: { type: "collect" } },
+    ),
+  );
+  for (const index of [6, 7])
+    edited.game.rules.push({
+      id: `collect-${index}`,
+      trigger: { type: "collect", entityId: `crystal-${index}` },
+      conditions: [],
+      actions: [
+        { type: "add_variable", name: "crystals", amount: 1 },
+        { type: "add_score", amount: collectibleScoreAmount },
+      ],
+    });
+  const portalRule = edited.game.rules.find(
+    (rule: any) => rule.id === "portal-win",
+  );
+  const portalCondition = portalRule.conditions.find(
+    (condition: any) =>
+      condition.operand?.type === "variable" &&
+      condition.operand.name === "crystals" &&
+      condition.comparison === "gte",
+  );
+  portalCondition.value = 7;
+  return edited;
+}
+
 describe("flagship provider story contract", () => {
   it("binds portal contact evidence to its transformed render group", () => {
     const traversal = readFileSync(
@@ -212,7 +268,9 @@ describe("flagship provider story contract", () => {
   });
 
   it("keeps the edited goal-7 ZIP separate from the baseline export", async () => {
-    const temporary = await mkdtemp(join(tmpdir(), "orbsie-goal7-export-test-"));
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-goal7-export-test-"),
+    );
     try {
       const requiredNames = [
         "index.html",
@@ -405,7 +463,6 @@ describe("flagship provider story contract", () => {
     expect(continued).toBe(false);
   });
 
-
   it("keeps the ordinary story budget and rejects resume for another provider", () => {
     gatewayStoryEnvironment();
     expect(readConfiguration(["--provider", "gateway"]).generationBudget).toBe(
@@ -425,10 +482,7 @@ describe("flagship provider story contract", () => {
       );
       report.sourceSnapshot =
         "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-created-project.json";
-      await writeFile(
-        join(temporary, "report.json"),
-        JSON.stringify(report),
-      );
+      await writeFile(join(temporary, "report.json"), JSON.stringify(report));
       gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
       expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
         /bound to the supplied checkpoint/,
@@ -438,7 +492,10 @@ describe("flagship provider story contract", () => {
         readFileSync(join(RESUME_MODELS, "report.json"), "utf8"),
       );
       safeReport.models[0].path = "generated/../outside.glb";
-      await writeFile(join(temporary, "report.json"), JSON.stringify(safeReport));
+      await writeFile(
+        join(temporary, "report.json"),
+        JSON.stringify(safeReport),
+      );
       gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
       expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
         /unsafe model path/,
@@ -455,7 +512,10 @@ describe("flagship provider story contract", () => {
         if (index === 0) bytes[0] ^= 0xff;
         await writeFile(join(temporary, model.path), bytes);
       }
-      await writeFile(join(temporary, "report.json"), JSON.stringify(goodReport));
+      await writeFile(
+        join(temporary, "report.json"),
+        JSON.stringify(goodReport),
+      );
       gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
       expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
         /hash or byte check/,
@@ -550,6 +610,94 @@ describe("flagship provider story contract", () => {
       "crystal-6",
       "crystal-7",
     ]);
+  });
+
+  it("accepts the saved moving-bounce story and rejects inert path variants", () => {
+    const project = currentGatewayStory();
+    const initial = assertFlagshipStoryCreation(project);
+    expect(initial.platforms.map((candidate: any) => candidate.id)).toEqual([
+      "platform-1",
+      "platform-2",
+      "platform-3",
+    ]);
+
+    const variants = [
+      (candidate: any) => {
+        const rule = candidate.game.rules.find(
+          (entry: any) => entry.id === "move-platform-1",
+        );
+        rule.actions = [];
+      },
+      (candidate: any) => {
+        const action = candidate.game.rules
+          .find((entry: any) => entry.id === "move-platform-1")
+          .actions.find((entry: any) => entry.type === "move_path");
+        action.entityId = "tree-1";
+      },
+      (candidate: any) => {
+        const action = candidate.game.rules
+          .find((entry: any) => entry.id === "move-platform-1")
+          .actions.find((entry: any) => entry.type === "move_path");
+        action.points = [action.points[0], action.points[0]];
+      },
+    ];
+    for (const mutate of variants) {
+      const invalid = structuredClone(project);
+      mutate(invalid);
+      expect(() => assertFlagshipStoryCreation(invalid)).toThrow(
+        /three moving platforms/,
+      );
+    }
+  });
+
+  it("requires a slower path duration and preserves the moving-bounce story rules", () => {
+    const before = currentGatewayStory();
+    const slowed = addGatewayGoalSevenEdit(before, 1.1);
+    const check = assertFlagshipStoryPlatform(before, slowed, "platform-2");
+    expect(check.previousPathDuration).toBe(2.2);
+    expect(check.revisedPathDuration).toBeCloseTo(3.3);
+    expect(check.collectibles).toBe(7);
+
+    const speedOnly = addGatewayGoalSevenEdit(before);
+    speedOnly.entities.find(
+      (candidate: any) => candidate.id === "platform-2",
+    ).behavior.speed = 0.5;
+    expect(() =>
+      assertFlagshipStoryPlatform(before, speedOnly, "platform-2"),
+    ).toThrow(/path duration did not increase/);
+
+    const movePathBefore = currentGatewayStory();
+    movePathBefore.entities.find(
+      (candidate: any) => candidate.id === "platform-2",
+    ).behavior.type = "move";
+    const movePathSlowed = addGatewayGoalSevenEdit(movePathBefore, 1.1);
+    const movePathCheck = assertFlagshipStoryPlatform(
+      movePathBefore,
+      movePathSlowed,
+      "platform-2",
+    );
+    expect(movePathCheck.revisedPathDuration).toBeCloseTo(3.3);
+    const movePathSpeedOnly = addGatewayGoalSevenEdit(movePathBefore);
+    movePathSpeedOnly.entities.find(
+      (candidate: any) => candidate.id === "platform-2",
+    ).behavior.speed = 0.5;
+    expect(() =>
+      assertFlagshipStoryPlatform(
+        movePathBefore,
+        movePathSpeedOnly,
+        "platform-2",
+      ),
+    ).toThrow(/path duration did not increase/);
+
+    const tenPointBefore = currentGatewayStory();
+    for (const rule of tenPointBefore.game.rules) {
+      if (rule.trigger?.type !== "collect") continue;
+      rule.actions.find((action: any) => action.type === "add_score").amount = 10;
+    }
+    const tenPointSlowed = addGatewayGoalSevenEdit(tenPointBefore, 1.1);
+    expect(() =>
+      assertFlagshipStoryPlatform(tenPointBefore, tenPointSlowed, "platform-2"),
+    ).not.toThrow();
   });
 
   it("accepts two trees and keeps size evidence pending without model bounds", () => {
@@ -762,24 +910,16 @@ describe("flagship provider story contract", () => {
     const sha256 = createHash("sha256").update(glb).digest("hex");
     const project = {
       entities: [
-        entity(
-          "generated-a",
-          "Generated A",
-          {
-            kind: "generated",
-            detail: "refined",
-            model: { sha256, bytes: glb.byteLength },
-          },
-        ),
-        entity(
-          "generated-b",
-          "Generated B",
-          {
-            kind: "generated",
-            detail: "refined",
-            model: { sha256, bytes: glb.byteLength },
-          },
-        ),
+        entity("generated-a", "Generated A", {
+          kind: "generated",
+          detail: "refined",
+          model: { sha256, bytes: glb.byteLength },
+        }),
+        entity("generated-b", "Generated B", {
+          kind: "generated",
+          detail: "refined",
+          model: { sha256, bytes: glb.byteLength },
+        }),
       ],
     };
     const complete = buildGeneratedModelEvidence(
