@@ -85,7 +85,14 @@ calls at4096 cap, local app7c0eec7, existing local-only key. Original flagship
 creation + selected color edit, reload, ZIP and standalone load passed.
 Saved13 objects include3 bounce entities and3 move_path actions; confirms
 structural guidance adoption, not actual3-platform route/giant edit/full story.
-No worker/test process active. Full goal still incomplete.
+Luna `/root/collectible_score_contract` is active, owns winning-traversal
+contract/helper integration/tests only: derive expected score50 from five
+10-point collect rules instead of assuming5, preserve old fixtures and reject
+unsupported score/counter writers. No browser/model calls. Root separately
+recorded route-planning.json nominal physics/footprint calculations. These
+are planning only, not traversal proof; phase0.25 candidate precedes a normal
+spawn approach and must not be treated as an executable full route.
+Full goal still incomplete.
 
 ## Current Gateway flagship evidence
 
