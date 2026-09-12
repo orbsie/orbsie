@@ -749,6 +749,7 @@ async function runPlatform(page, entity, mapping, run, asset) {
           previousY: evidence.previousY,
           currentY: evidence.currentY,
           crossedContactHeight: evidence.crossedContactHeight,
+          atContactHeight: evidence.atContactHeight,
           sourceOverlap: evidence.sourceOverlap,
           accepted: evidence.accepted,
         }
@@ -1104,6 +1105,7 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
               previousY: evidence.previousY,
               currentY: evidence.currentY,
               crossedContactHeight: evidence.crossedContactHeight,
+              atContactHeight: evidence.atContactHeight,
               sourceOverlap: evidence.sourceOverlap,
               accepted: evidence.accepted,
             }
