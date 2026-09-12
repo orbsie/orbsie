@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import { strFromU8, unzipSync } from "fflate";
+import { Matrix4, Vector3 } from "three";
 import { expect, it } from "vitest";
 import {
   horizontalGapToPlatform,
   jumpReachModel,
   movingTargetMotionBound,
   renderedDimensionsMatchSource,
+  sourcePlatformContact,
   sourceLandingEvidence,
   touchControlLabel,
   transformedAssetDimensions,
@@ -133,6 +135,96 @@ it("rejects the touch run's late below-platform sample as a false landing", () =
   );
   expect(nearMissEvidence.atContactHeight).toBe(false);
   expect(nearMissEvidence.accepted).toBe(false);
+});
+
+it("uses the rendered runtime matrix when a game action changes platform height", () => {
+  const platform = entityFor("platform-1");
+  const runtimeMatrix = new Matrix4()
+    .makeTranslation(-1, 1.2, 5)
+    .scale(new Vector3(1.5, 1, 1));
+  const rendered = {
+    center: [-1, 1.24125, 5],
+    size: transformedAssetDimensions(platform, asset),
+    runtimeMatrix: runtimeMatrix.toArray(),
+  };
+  const evidence = sourceLandingEvidence(
+    {
+      player: {
+        center: [-0.8, 1.78, 5.1],
+        runtimeCenter: [-1, 1.78, 5],
+      },
+      platforms: { "platform-1": rendered },
+    },
+    {
+      player: {
+        center: [-0.8, 1.702499, 5.1],
+        runtimeCenter: [-1, 1.702499, 5],
+      },
+      platforms: { "platform-1": rendered },
+    },
+    platform,
+    asset,
+  );
+  expect(evidence.source?.contactModel).toBe("runtime-matrix-support-surface");
+  expect(evidence.source?.runtimeSurfaceY).toBeCloseTo(1.2825, 8);
+  expect(evidence.source?.contactY).toBeCloseTo(1.7025, 8);
+  expect(evidence.accepted).toBe(true);
+});
+
+it("rejects an authored-height sample when the runtime platform pose moved", () => {
+  const platform = entityFor("platform-1");
+  const runtimeMatrix = new Matrix4()
+    .makeTranslation(-1, 1.2, 5)
+    .scale(new Vector3(1.5, 1, 1));
+  const renderedRuntime = {
+    center: [-1, 1.24125, 5],
+    size: transformedAssetDimensions(platform, asset),
+    runtimeMatrix: runtimeMatrix.toArray(),
+  };
+  const authoredContactY =
+    platform.position[1] + asset.bounds.max[1] * platform.scale[1] + 0.42;
+  const previous = { player: { center: [-1, authoredContactY + 0.05, 5] } };
+  const current = {
+    player: { center: [-1, authoredContactY - 0.000001, 5] },
+  };
+  const movedEvidence = sourceLandingEvidence(
+    previous,
+    { ...current, platforms: { "platform-1": renderedRuntime } },
+    platform,
+    asset,
+  );
+  expect(movedEvidence.source?.contactY).toBeCloseTo(1.7025, 8);
+  expect(movedEvidence.accepted).toBe(false);
+
+  const authoredEvidence = sourceLandingEvidence(
+    previous,
+    {
+      ...current,
+      platforms: {
+        "platform-1": { ...renderedRuntime, runtimeMatrix: undefined },
+      },
+    },
+    platform,
+    asset,
+  );
+  expect(authoredEvidence.source?.contactY).toBeCloseTo(authoredContactY, 8);
+  expect(authoredEvidence.accepted).toBe(true);
+});
+
+it("rejects malformed runtime matrices instead of falling back to authored contact", () => {
+  const platform = entityFor("platform-1");
+  const malformedMatrix = new Matrix4().makeTranslation(-1, 1.2, 5).toArray();
+  malformedMatrix[15] = 2;
+  expect(
+    sourcePlatformContact(
+      platform,
+      {
+        center: [-1, 1.24125, 5],
+        runtimeMatrix: malformedMatrix,
+      },
+      asset,
+    ),
+  ).toBeNull();
 });
 
 it("accepts settled catalog dimensions and rejects the transient formation dimensions", () => {

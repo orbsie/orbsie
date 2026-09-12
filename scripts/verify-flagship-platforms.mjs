@@ -30,10 +30,9 @@ import {
   touchControlLabel,
 } from "./lib/flagship-platforms-verifier.mjs";
 
-const zipPath = resolve(
-  process.env.FLAGSHIP_GAME_ZIP ??
-    "docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
-);
+const defaultZipPath =
+  "docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip";
+const zipPath = resolve(process.env.FLAGSHIP_GAME_ZIP ?? defaultZipPath);
 const output = resolve(process.argv[2] ?? "docs/evidence/flagship-platforms");
 const reanalyzeReport = process.env.FLAGSHIP_REANALYZE_REPORT;
 const sequential = process.env.FLAGSHIP_SEQUENTIAL === "1";
@@ -41,6 +40,26 @@ const touchInput = process.env.FLAGSHIP_INPUT === "touch";
 const publishedUrl = process.env.FLAGSHIP_PUBLISHED_URL;
 const published = Boolean(publishedUrl);
 const publishedTarget = published ? new URL(publishedUrl) : null;
+const provider = (() => {
+  const explicit = process.env.FLAGSHIP_PROVIDER;
+  if (explicit) {
+    if (!["openrouter", "gateway"].includes(explicit))
+      throw Error("FLAGSHIP_PROVIDER must be openrouter or gateway.");
+    return explicit;
+  }
+  const known = [
+    ...new Set(
+      zipPath
+        .split(/[\\/]+/)
+        .filter((part) => part === "openrouter" || part === "gateway"),
+    ),
+  ];
+  if (known.length === 1) return known[0];
+  if (zipPath === resolve(defaultZipPath)) return "openrouter";
+  throw Error(
+    "Cannot identify the saved ZIP provider; set FLAGSHIP_PROVIDER to openrouter or gateway.",
+  );
+})();
 if (published && !["http:", "https:"].includes(publishedTarget.protocol))
   throw Error("FLAGSHIP_PUBLISHED_URL must use HTTP(S).");
 if (touchInput && !sequential)
@@ -209,9 +228,9 @@ const report = {
       ? `published-flagship-${touchInput ? "mobile-touch" : "desktop"}-platform-sequential-landing-carry`
       : "published-flagship-desktop-platform-landing-carry"
     : sequential
-      ? `saved-openrouter-flagship-${touchInput ? "mobile-touch" : "desktop"}-platform-sequential-landing-carry`
-      : "saved-openrouter-flagship-desktop-platform-landing-carry",
-  provider: "openrouter",
+      ? `saved-${provider}-flagship-${touchInput ? "mobile-touch" : "desktop"}-platform-sequential-landing-carry`
+      : `saved-${provider}-flagship-desktop-platform-landing-carry`,
+  provider,
   liveProvider: false,
   startedAt,
   finishedAt: null,
@@ -249,6 +268,8 @@ const report = {
     behavior: entity.behavior,
     collisionSource: {
       gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+      runtimePose:
+        "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
       playerHalfHeight: PLAYER_HALF_HEIGHT,
       catalogAssetId: entity.geometry.assetId,
       catalogBounds: catalogAssets.get(entity.geometry.assetId).bounds,
@@ -430,8 +451,11 @@ function makeInitScript() {
           const key = parent.uuid;
           if (!groups.has(key)) {
             const matrix = parent.matrixWorld.elements;
+            const runtimeMatrix = parent.matrix.elements;
             groups.set(key, {
               uuid: key,
+              runtimeMatrix: Array.from(runtimeMatrix),
+              worldMatrix: Array.from(matrix),
               vertexCount:
                 object.geometry.getAttribute?.("position")?.count ?? 0,
               localBounds: bounds,
@@ -449,6 +473,14 @@ function makeInitScript() {
               : null;
           })()
         : null;
+      const playerRuntimeBounds = playerMesh?.parent
+        ? (() => {
+            const local = localBounds(playerMesh.geometry);
+            return local
+              ? worldBounds(playerMesh.parent.matrix.elements, local)
+              : null;
+          })()
+        : null;
       return {
         observedScenes: observed.length,
         atPerformanceMs: performance.now(),
@@ -459,6 +491,10 @@ function makeInitScript() {
               ),
               bounds: playerBounds,
               center: center(playerBounds),
+              runtimeBounds: playerRuntimeBounds,
+              runtimeCenter: playerRuntimeBounds
+                ? center(playerRuntimeBounds)
+                : null,
             }
           : null,
         groups: [...groups.values()],
@@ -517,6 +553,8 @@ function platformView(telemetry, uuid) {
   const bounds = candidate.worldBounds;
   return {
     uuid,
+    runtimeMatrix: candidate.runtimeMatrix,
+    worldMatrix: candidate.worldMatrix,
     bounds,
     center: bounds.min.map((value, axis) => (value + bounds.max[axis]) / 2),
     size: dimensions(bounds),
@@ -559,6 +597,8 @@ function compactTelemetry(sample, mapping) {
         view
           ? {
               atPerformanceMs: sample.atPerformanceMs,
+              runtimeMatrix: view.runtimeMatrix,
+              worldMatrix: view.worldMatrix,
               center: view.center,
               size: view.size,
               bounds: view.bounds,
@@ -571,7 +611,12 @@ function compactTelemetry(sample, mapping) {
   return {
     atPerformanceMs: sample.atPerformanceMs,
     player: sample.player
-      ? { center: sample.player.center, bounds: sample.player.bounds }
+      ? {
+          center: sample.player.center,
+          bounds: sample.player.bounds,
+          runtimeCenter: sample.player.runtimeCenter,
+          runtimeBounds: sample.player.runtimeBounds,
+        }
       : null,
     platforms: platformsSample,
   };
@@ -699,6 +744,8 @@ async function runPlatform(page, entity, mapping, run, asset) {
   run.carrySamples = [];
   run.sourceContactModel = {
     gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+    runtimePose:
+      "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
     assetId: asset.id,
     catalogBounds: asset.bounds,
     entityPosition: entity.position,
@@ -873,18 +920,23 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     return compact;
   };
   const groundContact = (sample) =>
-    Boolean(sample.player && sample.player.center[1] <= 0.5);
+    Boolean(
+      sample.player &&
+      (sample.player.runtimeCenter ?? sample.player.center)[1] <= 0.5,
+    );
   const sourceCarried = (sample, entity, asset) => {
     const rendered = sample.platforms[entity.id];
     const player = sample.player;
-    const source = sourcePlatformContact(entity, rendered, asset);
-    if (!player || !rendered || !source) return false;
+    if (!player || !rendered) return false;
+    const playerCenter = player.runtimeCenter ?? player.center;
+    const source = sourcePlatformContact(entity, rendered, asset, playerCenter);
+    if (!source) return false;
     return (
       playerOnPlatform(player, rendered) &&
-      Math.abs(player.center[1] - source.contactY) <= 0.1 &&
-      Math.abs(player.center[0] - source.center[0]) <=
+      Math.abs(playerCenter[1] - source.contactY) <= 0.1 &&
+      Math.abs(playerCenter[0] - source.center[0]) <=
         source.halfX + CONTACT_HORIZONTAL_TOLERANCE &&
-      Math.abs(player.center[2] - source.center[2]) <=
+      Math.abs(playerCenter[2] - source.center[2]) <=
         source.halfZ + CONTACT_HORIZONTAL_TOLERANCE
     );
   };
@@ -918,6 +970,8 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     run.sourceContactModel = ordered.map((entity) => ({
       id: entity.id,
       gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+      runtimePose:
+        "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
       assetId: entity.geometry.assetId,
       catalogBounds: catalogAssets.get(entity.geometry.assetId).bounds,
       entityPosition: entity.position,
@@ -990,7 +1044,7 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       while (Date.now() <= deadline) {
         const current = await sample("favorable-gap-wait");
         const gap = horizontalGapToPlatform(
-          current.player?.center,
+          current.player?.runtimeCenter ?? current.player?.center,
           current.platforms[target.id],
           target,
           targetAsset,

@@ -19,18 +19,23 @@ supported model choice. GitHub actions use computer use. Never print secrets.
 
 ## Active bounded task
 
-Luna `/root/gateway_platform_contact` is running: investigate saved Gateway
-first-platform landing failure and reconcile verifier with runtime contact.
-Owns `scripts/verify-flagship-platforms.mjs`, its helper and focused tests;
-root owns checkpoint/evidence review. No inference or external requests.
-Root must review finished diff and targeted evidence before browser rerun.
+Luna `/root/gateway_platform_contact` completed the verifier correction; root
+reviewed source binding and ran one local acceptance. Eight targeted tests
+passed. Formation local matrix and Player local center now share gameplay
+coordinates; malformed matrices fail closed and authored-Y false landings
+are rejected. Provider metadata correctly identifies Gateway.
 
-Failure evidence committed `4b7b365` in `gateway-seven-platforms-sequential/`.
-Exact seven-crystal ZIP, one desktop attempt, no inference/external/mutating
-requests. Report hardcodes incorrect OpenRouter metadata; ZIP identity is
-Gateway. Initial rendered platform1 top1.2325 differs from verifier authored
-Y0.8+catalog0.0825. This alone does not prove a product defect. Raw failure
-must remain preserved. Runtime has a matrix support-surface contact branch.
+`gateway-seven-platforms-runtime-contact/` still fails platform1 landing:
+effective position[-1,1.2,5] from saved bounce-1 set_position rule yields
+contactY1.7025, above observed apex1.50 and ideal ground-jump apex1.62.
+Zero inference/external/mutating requests/page errors. This is a generated
+playability defect for this ground jump, not proof all routes are impossible.
+No worker remains active. Next bounded task: prevent platform-reposition
+rules from substituting for requested player bounce; assess existing behavior
+composition/authoring guidance before implementing, preserve captured evidence.
+Earlier failure `gateway-seven-platforms-sequential/` remains retained.
+Publication terminal-state regression a49c84e passed26 targeted tests; live
+failed-deployment continuity remains unverified.
 
 ## Current Gateway flagship evidence
 
