@@ -18,12 +18,13 @@ Keep this handoff compact and update it in place. Never include secrets.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
   This feature is not deployed yet.
-- Active worker: `/root/republish_acceptance_harness`, one post-union Gateway
-  input-game create/edit run on local build `60f91c7`, port3018, cap4096, exact
-  `openai/gpt-5.6-luna`, low/default, local-only key. At most two calls; failed
-  creation stops. Evidence target `provider-e2e/gateway-input-game-union-policy`.
-  Revalidate worker status; do not restart an unobserved run. Worker must delete
-  its private temporary Gateway env file and stop its server/browser afterward.
+- Active worker: `/root/republish_acceptance_harness`, diagnosing Gateway's
+  operation5 INVALID_SCENE_JSON with empty issues. No live calls authorized for
+  this diagnostic task; reproduce a source bug or add bounded redacted diagnostics.
+- Latest Gateway run (`b899115`) stopped after one HTTP200 Luna creation call,
+  low/default, cap4096, local build60f91c7; no edit/retry. Evidence directory
+  `provider-e2e/gateway-input-game-union-policy`. Server stopped and root verified
+  private key deletion. Cause is not yet established; Gateway remains unverified.
 - OpenRouter post-union input-game passed (`694c904`): exactly two HTTP200 calls,
   creation/edit, recovery, export, standalone win/loss/restart. Evidence directory
   `provider-e2e/input-game-union-policy`; app source905b682 is operator-supplied.
