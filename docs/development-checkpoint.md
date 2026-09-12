@@ -32,8 +32,11 @@ Evidence: `docs/evidence/provider-e2e/gateway-flagship-offline-continuation/`.
 Original live history, settled visual quality and gameplay remain unverified.
 Active worker `/root/gateway_saved_gameplay` now owns the saved-artifact
 gameplay task below: traversal script/contract, pre-undo goal7 export in the
-provider harness, and corresponding tests. No browser/live calls assigned;
-root will run the zero-inference milestone after review. No nested agents.
+provider harness, and corresponding tests. Root completed export and desktop run under d838ce5: score7/win/reset
+observed, but contact proof selected planet bounds, so early-portal gate is
+rejected. Worker now fixes exact portal identification and targeted tests only.
+Evidence `docs/evidence/gateway-seven-gameplay/` stays partial; no inference.
+Root will rerun after review. No nested agents.
 Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;

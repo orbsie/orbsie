@@ -1,0 +1,332 @@
+{
+  "status": "passed",
+  "url": "http://127.0.0.1:34285",
+  "startedAt": "2026-09-12T16:33:45.196Z",
+  "mode": "flagship-project-game-standalone-traversal",
+  "projectRevision": 40,
+  "entities": 15,
+  "traversalOptions": {
+    "expectedCollectibleCount": 7,
+    "portalComparison": "gte"
+  },
+  "inferenceCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-12T16:33:52.036Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "phase": "portal-before-collectibles",
+          "target": "portal",
+          "position": {
+            "x": 5.8220860532295795,
+            "y": 0.42,
+            "z": 5.468755088520084,
+            "visible": true
+          },
+          "collected": 0,
+          "hud": "Score: 0"
+        },
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": -2.8280229021165573,
+            "y": 0.430395356140737,
+            "z": 1.2287644571700251,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -1.2426758377471199,
+            "y": 0.7724762999987212,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": 0.93827139602411,
+            "y": 0.4465749067333493,
+            "z": -0.8488532399120681,
+            "visible": true
+          },
+          "collected": 3,
+          "hud": "Score: 3"
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 3.787366157374235,
+            "y": 0.4590233487708425,
+            "z": -0.012906064043370788,
+            "visible": true
+          },
+          "collected": 4,
+          "hud": "Score: 4"
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 4.881030090612633,
+            "y": 0.452744352308832,
+            "z": 3.8385623107194062,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        },
+        {
+          "target": "crystal-6",
+          "position": {
+            "x": -4.728776324731899,
+            "y": 0.4646227933105881,
+            "z": 3.0366423249114365,
+            "visible": true
+          },
+          "collected": 6,
+          "hud": "Score: 6"
+        },
+        {
+          "target": "crystal-7",
+          "position": {
+            "x": 1.7020562810720645,
+            "y": 0.43518569119132755,
+            "z": 2.017400927664914,
+            "visible": true
+          },
+          "collected": 7,
+          "hud": "Score: 7"
+        },
+        {
+          "phase": "portal-after-collectibles",
+          "target": "portal",
+          "position": {
+            "x": 5.397334454847728,
+            "y": 0.42,
+            "z": 5.015246671106747,
+            "visible": true
+          },
+          "collected": 7,
+          "hud": "Score: 7",
+          "contact": {
+            "player": {
+              "x": 5.397334454847728,
+              "y": 0.42,
+              "z": 5.015246671106747,
+              "visible": true
+            },
+            "bounds": {
+              "geometryType": "SphereGeometry",
+              "min": [
+                -33.77334896204844,
+                -50.27407335964956,
+                -31.682952025932124
+              ],
+              "max": [
+                33.77334896204844,
+                8.274073359649563,
+                31.682952025932124
+              ],
+              "distanceXZ": 0,
+              "height": 58.548146719299126
+            },
+            "horizontalGap": 0,
+            "verticalOverlap": 0.84,
+            "contact": true,
+            "collected": 7,
+            "settledTicks": 1
+          }
+        }
+      ],
+      "inputSteps": 142,
+      "collectedIds": [
+        "crystal-1",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5",
+        "crystal-6",
+        "crystal-7"
+      ],
+      "platformSupport": {
+        "directSupportObserved": false,
+        "method": "read-only player position telemetry",
+        "nearMovingPlatformHeightSamples": 1,
+        "maximumProximityCandidateStreak": 1,
+        "note": "Player position alone cannot distinguish a platform landing/carry from a jump-through trajectory. No support state or transform was injected.",
+        "disposition": "direct-support-not-observed; proximity samples are non-proof"
+      },
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.8663514000008483
+      },
+      "portalBeforeCollectibles": {
+        "reached": true,
+        "contact": {
+          "player": {
+            "x": 5.8220860532295795,
+            "y": 0.42,
+            "z": 5.468755088520084,
+            "visible": true
+          },
+          "bounds": {
+            "geometryType": "SphereGeometry",
+            "min": [
+              -33.77334896204844,
+              -50.27407335964956,
+              -31.682952025932124
+            ],
+            "max": [
+              33.77334896204844,
+              8.274073359649563,
+              31.682952025932124
+            ],
+            "distanceXZ": 0,
+            "height": 58.548146719299126
+          },
+          "horizontalGap": 0,
+          "verticalOverlap": 0.84,
+          "contact": true,
+          "collected": 0,
+          "settledTicks": 1
+        },
+        "collected": 0,
+        "winStatusVisible": false
+      },
+      "pickupJumps": [
+        {
+          "target": "crystal-2",
+          "attempt": 0,
+          "beforeJump": {
+            "x": -1.2426758377471199,
+            "y": 0.42,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "airborne": {
+            "x": -1.2426758377471199,
+            "y": 1.4858304000006681,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "collected": 2
+        },
+        {
+          "target": "crystal-2",
+          "attempt": 1,
+          "beforeJump": {
+            "x": -1.2426758377471199,
+            "y": 0.42,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "airborne": {
+            "x": -1.2426758377471199,
+            "y": 1.4786917499995607,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "collected": 2
+        },
+        {
+          "target": "crystal-2",
+          "attempt": 2,
+          "beforeJump": {
+            "x": -1.2426758377471199,
+            "y": 0.42,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "airborne": {
+            "x": -1.2426758377471199,
+            "y": 1.5139178999999998,
+            "z": 2.952569250357415,
+            "visible": true
+          },
+          "collected": 2
+        }
+      ],
+      "won": true,
+      "finishedAt": "2026-09-12T16:34:13.978Z",
+      "overflow": false,
+      "restart": {
+        "score": 0,
+        "winStatusVisible": false
+      },
+      "signedOut": true
+    }
+  ],
+  "snapshot": {
+    "zipPath": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/gateway-flagship-seven-export/gateway/world-goal-7.zip",
+    "zipSha256": "4460108481bbd9b7b3153afff9a948b41c51a69499b0b5035fc6d5accd02ecfd",
+    "projectSha256": "756b62c53307a3362499662ef137e75933601095f4e2f4dc6d6e658245d221bc",
+    "runtimeSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+    "runtimeCssSha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182",
+    "projectRevision": 40,
+    "projectId": "d149cb1c-de74-437b-98cb-36ede3beb578",
+    "title": "Make a sunny little island game where I…",
+    "contract": {
+      "collectibleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5",
+        "crystal-6",
+        "crystal-7"
+      ],
+      "collectRuleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5",
+        "crystal-6",
+        "crystal-7"
+      ],
+      "portalId": "portal",
+      "ruleCount": 9
+    }
+  },
+  "contract": {
+    "collectibleIds": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5",
+      "crystal-6",
+      "crystal-7"
+    ],
+    "collectRuleIds": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5",
+      "crystal-6",
+      "crystal-7"
+    ],
+    "portalId": "portal",
+    "ruleCount": 9
+  }
+}
