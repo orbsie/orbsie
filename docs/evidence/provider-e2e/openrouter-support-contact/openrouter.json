@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-09-12T21:48:38.465Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T21:48:38.465Z",
+    "harness": {
+      "checkoutSHA": "2e0404074e4367b2886c30cfe079ca0df9c4a242",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "2e0404074e4367b2886c30cfe079ca0df9c4a242",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3068",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationBudget": 2,
+  "creation": {
+    "status": "passed",
+    "operations": 6,
+    "firstReservationMs": 3707,
+    "seedObserved": true,
+    "catalogEntities": 1,
+    "proceduralEntities": 0,
+    "generatedEntities": 1
+  },
+  "edit": {
+    "status": "passed",
+    "type": "mushroom-replacement",
+    "selectedIdPreserved": true
+  },
+  "mushroomReplacement": {
+    "status": "passed",
+    "targetId": "friendly-tree",
+    "targetLabel": "Friendly Tree",
+    "label": "Friendly Tree",
+    "mushroomEvidence": "catalog-mushroom-tag",
+    "rawBoundsExpanded": false,
+    "transformedBoundsExpanded": true,
+    "dimensions": {
+      "status": "observed",
+      "source": {
+        "before": "catalog",
+        "after": "catalog"
+      },
+      "before": [
+        0.8305000594000002,
+        1.8786761521000002,
+        0.7192339000000001
+      ],
+      "after": [
+        2.0876065812,
+        2.4335999999999998,
+        2.410559976
+      ]
+    },
+    "sizeVisualReview": "pending",
+    "supportedGeometry": "catalog",
+    "physicalSizeExpansion": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "mushroom-replacement-before.json",
+    "mushroom-replacement-after.json",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 6077.10000000149,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  }
+}

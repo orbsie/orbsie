@@ -408,3 +408,16 @@ https://orbsie-ajqudkzty-grappeggias-projects.vercel.app, aliashttps://orbsie.co
 Vercel production compilation/TypeScript passed. No new modelcalls duringdeploy.
 Support-contact guidance now live; freshgenerated-grounding correctness remains
 unverified. Earlier savedprojects/exports retain their original placements.
+
+## Fresh support-contact guidance live acceptance passed
+
+Fresh localbuild2e04040/server1205 on3068 passed compile/TypeScript. One live
+OpenRouter2call Luna low/default4096run openrouter-support-contact passed
+create/targetedpinkmushroom/reload/export/standalone, nofallback/retries. Model
+chose scale12,y.6; catalogminY-.05 givesbase0. GeneratedislandpositionY-.2+
+maxY.2 gives support0; gap0. Root reviewed rawreport/exact snapshots/standalone
+screenshot. Size2.088x2.434x2.411 vs tree.831x1.879x.719. StableID/unrelatedisland
+preserved. Ground-contact defect corrected in this run; numericgrowth does not
+close giant-size/recognizablemushroom visualquality. Silhouette still angular.
+Allmodelcalls2HTTP200. No newproductiondeployneeded (guidancealready216386c).
+No worker/test active. ChatGPT consent/physicalmobile/fullflagship remain open.

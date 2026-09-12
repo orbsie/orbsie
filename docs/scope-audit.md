@@ -2,6 +2,12 @@
 
 ## Current reconciliation — 2026-09-12
 
+OpenRouter targeted catalog replacement now has fresh post-fix grounding evidence:
+openrouter-support-contact at2e04040, two Luna calls, ID/unrelated preservation,
+reload/export/standalone pass, computed supportgap0. Root reviewed screenshot.
+Angular mushroom visualquality/fullflagship story remain open; this is a bounded
+provider edit journey, not all-provider or full-scope acceptance.
+
 Live canceled-replacement continuity now passed: publication-terminal-corrected
 at8d870f3, two publication POSTs/one cancellation/zero modelcalls. Exact previous
 snapshot and served revision/URL retained with fresh signed-out browser readiness.
