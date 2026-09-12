@@ -60,6 +60,11 @@ const INPUT_GAME_PROMPT =
   "Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use browser-manifold recipes (including custom mesh) or browser procedural/custom geometry only; do not use catalog assets, native Blender jobs, or remote URLs. Finish both entities as ready refined geometry, and preserve a simple playable presentation. Then define exactly three input game rules: right adds score 7, up wins, and left loses. Use no timers, collection triggers, or collection scoring. Commit the world.";
 const INPUT_GAME_EDIT =
   "Change only the selected entity's material to bright pink #ff44aa. Preserve its geometry, position, behavior, the complete three-rule input game, the other entity, and the environment. Commit the edit.";
+const FLAGSHIP_STORY_PROMPT =
+  "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond.";
+const FLAGSHIP_STORY_MUSHROOM_PROMPT = "Make this a giant pink mushroom";
+const FLAGSHIP_STORY_PLATFORM_PROMPT =
+  "Make the middle platform slower and add two more crystals";
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
@@ -177,6 +182,27 @@ export function readConfiguration(argv) {
   if (!PROVIDERS.has(provider))
     throw new HarnessConfigurationError(
       "--provider is required and must be openrouter, gateway, free, chatgpt-local, or chatgpt-hosted.",
+    );
+  const flagshipStoryValue = process.env.ORBSIE_FLAGSHIP_STORY;
+  if (
+    flagshipStoryValue !== undefined &&
+    !["0", "1"].includes(flagshipStoryValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_STORY must be 0 or 1.",
+    );
+  const flagshipStory = flagshipStoryValue === "1";
+  if (flagshipStory && provider !== "gateway")
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_STORY=1 is authorized only for the Gateway provider.",
+    );
+  if (
+    flagshipStory &&
+    process.env.ORBSIE_CREATION_PROMPT !== undefined &&
+    process.env.ORBSIE_CREATION_PROMPT !== FLAGSHIP_STORY_PROMPT
+  )
+    throw new HarnessConfigurationError(
+      "Flagship story mode requires the exact original island prompt.",
     );
   let applicationSource;
   try {
@@ -316,12 +342,14 @@ export function readConfiguration(argv) {
     keyScope,
     expectedModel,
     outputCap,
-    prompt:
-      process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+    prompt: flagshipStory
+      ? FLAGSHIP_STORY_PROMPT
+      : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
         ? INPUT_GAME_PROMPT
         : process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
-    editPrompt:
-      process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+    editPrompt: flagshipStory
+      ? FLAGSHIP_STORY_MUSHROOM_PROMPT
+      : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
         ? INPUT_GAME_EDIT
         : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
     publication:
@@ -329,7 +357,8 @@ export function readConfiguration(argv) {
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
-    generationBudget: 2,
+    generationBudget: flagshipStory ? 3 : 2,
+    flagshipStory,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
       : undefined,
@@ -347,6 +376,35 @@ export function readConfiguration(argv) {
     requireGeometryEdit: process.env.ORBSIE_REQUIRE_GEOMETRY_EDIT === "1",
     requireProcedural: process.env.ORBSIE_REQUIRE_PROCEDURAL === "1",
   };
+
+  if (flagshipStory && outputCap !== 4096)
+    throw new HarnessConfigurationError(
+      "Flagship story mode requires ORBSIE_OUTPUT_CAP_TOKENS=4096.",
+    );
+  if (
+    flagshipStory &&
+    process.env.ORBSIE_EDIT_PROMPT !== undefined &&
+    process.env.ORBSIE_EDIT_PROMPT !== FLAGSHIP_STORY_MUSHROOM_PROMPT
+  )
+    throw new HarnessConfigurationError(
+      "Flagship story mode requires its fixed mushroom and platform edit prompts.",
+    );
+  if (
+    flagshipStory &&
+    (config.interruptedRecovery ||
+      config.requireInputGame ||
+      config.requireNewOnly ||
+      config.requireBrowserModel ||
+      config.requireExtrusion ||
+      config.requireRevolution ||
+      config.requireGeometryEdit ||
+      config.requireProcedural ||
+      config.publication ||
+      config.cloudRecovery)
+  )
+    throw new HarnessConfigurationError(
+      "Flagship story mode cannot be combined with interrupted recovery, input-game, cloud, or publication phases.",
+    );
 
   if (
     process.env.ORBSIE_REQUIRE_BROWSER_MODEL !== undefined &&
@@ -807,6 +865,14 @@ export function emptyReport(config, provenance) {
       type: config.requireGeometryEdit ? "geometry" : "material",
       selectedIdPreserved: false,
     },
+    ...(config.flagshipStory
+      ? {
+          flagshipStory: {
+            status: "not-started",
+            generationBudget: config.generationBudget,
+          },
+        }
+      : {}),
     freeTrial: config.provider === "free" ? { status: "blocked" } : null,
     localRecovery: "blocked",
     export: "blocked",
@@ -1779,8 +1845,8 @@ function assertGenerationRequests(config, info) {
   } else {
     assert.deepEqual(
       info.generationStatuses,
-      [200, 200],
-      "A live generation transport did not return two successful responses.",
+      Array.from({ length: expectedCount }, () => 200),
+      `A live generation transport did not return ${expectedCount} successful responses.`,
     );
   }
   if (config.provider === "chatgpt-local") {
@@ -1956,6 +2022,391 @@ export function assertInputGameProject(
     leftLoses: true,
     noTimersOrCollectionScoring: true,
   };
+}
+
+function storyEntityText(entity) {
+  return `${entity?.label ?? ""} ${entity?.geometry?.kind ?? ""}`.toLowerCase();
+}
+
+function storyCollectibles(project) {
+  return project.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
+  );
+}
+
+function storyPlatforms(project) {
+  return project.entities
+    .filter(
+      (entity) =>
+        entity.stage === "ready" &&
+        entity.behavior?.type === "move" &&
+        /\bplatform\b/.test(storyEntityText(entity)),
+    )
+    .sort(
+      (a, b) =>
+        a.position[0] - b.position[0] ||
+        a.position[2] - b.position[2] ||
+        a.id.localeCompare(b.id),
+    );
+}
+
+export function assertFlagshipStoryCreation(project) {
+  assert(
+    project && Array.isArray(project.entities),
+    "Story project has no entities.",
+  );
+  const trees = project.entities.filter((entity) =>
+    /\btree\b/.test(storyEntityText(entity)),
+  );
+  const platforms = storyPlatforms(project);
+  const collectibles = storyCollectibles(project);
+  const ponds = project.entities.filter((entity) =>
+    /\bpond\b/.test(storyEntityText(entity)),
+  );
+  const portals = project.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  assert(trees.length >= 1, "Story creation must contain a friendly tree.");
+  assert.equal(
+    platforms.length,
+    3,
+    "Story creation must contain three moving platforms.",
+  );
+  assert.equal(
+    collectibles.length,
+    5,
+    "Story creation must contain five collectibles.",
+  );
+  assert.equal(ponds.length, 1, "Story creation must contain one pond.");
+  assert.equal(portals.length, 1, "Story creation must contain one portal.");
+  for (const entity of [
+    ...trees,
+    ...platforms,
+    ...collectibles,
+    ...ponds,
+    ...portals,
+  ])
+    assert.equal(
+      entity.stage,
+      "ready",
+      `Story entity ${entity.id} is unfinished.`,
+    );
+  return {
+    tree: trees[0],
+    middlePlatform: platforms[1],
+    collectibles,
+    trees,
+    platforms,
+  };
+}
+
+function storyEntityMap(project) {
+  return new Map(project.entities.map((entity) => [entity.id, entity]));
+}
+
+function assertStoryUnchangedEntities(before, after, excludedIds) {
+  const previous = storyEntityMap(before);
+  const current = storyEntityMap(after);
+  for (const [id, entity] of previous) {
+    if (excludedIds.has(id)) continue;
+    assert.deepEqual(
+      current.get(id),
+      entity,
+      `Story edit changed unrelated entity ${id}.`,
+    );
+  }
+}
+
+function isPink(value) {
+  if (typeof value !== "string" || !/^#[0-9a-f]{6}$/i.test(value)) return false;
+  const red = Number.parseInt(value.slice(1, 3), 16);
+  const green = Number.parseInt(value.slice(3, 5), 16);
+  const blue = Number.parseInt(value.slice(5, 7), 16);
+  return red >= 160 && blue >= 120 && red > green && blue > green;
+}
+
+function scaledModelBoundsSize(bounds, scale) {
+  if (
+    !bounds ||
+    !Array.isArray(bounds.min) ||
+    !Array.isArray(bounds.max) ||
+    bounds.min.length !== 3 ||
+    bounds.max.length !== 3 ||
+    !Array.isArray(scale) ||
+    scale.length !== 3 ||
+    ![...bounds.min, ...bounds.max, ...scale].every(Number.isFinite)
+  ) {
+    return null;
+  }
+  return [0, 1, 2].map(
+    (axis) =>
+      Math.abs(bounds.max[axis] - bounds.min[axis]) * Math.abs(scale[axis]),
+  );
+}
+
+export function assertFlagshipStoryMushroom(before, after, treeId) {
+  const beforeEntity = storyEntityMap(before).get(treeId);
+  const afterEntity = storyEntityMap(after).get(treeId);
+  assert(beforeEntity && afterEntity, "Story mushroom target disappeared.");
+  assert.match(
+    String(afterEntity.label ?? ""),
+    /mushroom/i,
+    "Story mushroom edit did not provide mushroom label evidence.",
+  );
+  assert.notDeepEqual(
+    afterEntity.geometry,
+    beforeEntity.geometry,
+    "Story mushroom edit did not change geometry.",
+  );
+  const beforeBounds = beforeEntity.geometry?.model?.bounds;
+  const afterBounds = afterEntity.geometry?.model?.bounds;
+  const rawBoundsExpanded =
+    beforeBounds &&
+    afterBounds &&
+    [0, 1, 2].some(
+      (axis) =>
+        afterBounds.max[axis] - afterBounds.min[axis] >
+        beforeBounds.max[axis] - beforeBounds.min[axis],
+    );
+  const beforeSize = scaledModelBoundsSize(beforeBounds, beforeEntity.scale);
+  const afterSize = scaledModelBoundsSize(afterBounds, afterEntity.scale);
+  const transformedBoundsExpanded =
+    beforeSize &&
+    afterSize &&
+    afterSize.some((size, axis) => size > beforeSize[axis]);
+  assert(
+    isPink(afterEntity.color) || isPink(afterEntity.geometry?.tint),
+    "Story mushroom edit did not produce a pink material.",
+  );
+  assert.equal(after.entities.length, before.entities.length);
+  assertStoryUnchangedEntities(before, after, new Set([treeId]));
+  assert.deepEqual(after.environment, before.environment);
+  return {
+    targetId: treeId,
+    label: afterEntity.label,
+    rawBoundsExpanded: Boolean(rawBoundsExpanded),
+    transformedBoundsExpanded: Boolean(transformedBoundsExpanded),
+    sizeVisualReview: "pending",
+  };
+}
+
+export function assertFlagshipStoryPlatform(before, after, platformId) {
+  const beforeMap = storyEntityMap(before);
+  const afterMap = storyEntityMap(after);
+  const beforePlatform = beforeMap.get(platformId);
+  const afterPlatform = afterMap.get(platformId);
+  assert(beforePlatform && afterPlatform, "Story middle platform disappeared.");
+  const beforeSpeed = beforePlatform.behavior?.speed;
+  const afterSpeed = afterPlatform.behavior?.speed;
+  assert(
+    typeof beforeSpeed === "number" && beforeSpeed > 0,
+    "Story middle platform had no positive starting speed.",
+  );
+  assert(
+    typeof afterSpeed === "number" &&
+      afterSpeed > 0 &&
+      afterSpeed < beforeSpeed,
+    "Story middle platform speed did not decrease while staying positive.",
+  );
+  assert.deepEqual(afterPlatform.position, beforePlatform.position);
+  const { behavior: beforeBehavior, ...beforePlatformProperties } =
+    beforePlatform;
+  const { behavior: afterBehavior, ...afterPlatformProperties } = afterPlatform;
+  assert.deepEqual(
+    afterPlatformProperties,
+    beforePlatformProperties,
+    "Story platform edit changed the middle platform beyond its speed.",
+  );
+  const { speed: _beforeSpeed, ...beforeBehaviorProperties } = beforeBehavior;
+  const { speed: _afterSpeed, ...afterBehaviorProperties } = afterBehavior;
+  assert.deepEqual(
+    afterBehaviorProperties,
+    beforeBehaviorProperties,
+    "Story platform edit changed the middle platform behavior beyond speed.",
+  );
+  const beforeCollectibles = storyCollectibles(before);
+  const afterCollectibles = storyCollectibles(after);
+  const beforeIds = new Set(beforeCollectibles.map((entity) => entity.id));
+  const added = afterCollectibles.filter((entity) => !beforeIds.has(entity.id));
+  assert.equal(
+    after.entities.length,
+    before.entities.length + 2,
+    "Story platform edit must add exactly two entities.",
+  );
+  assert.equal(
+    added.length,
+    2,
+    "Story platform edit must add exactly two collectibles.",
+  );
+  assert.equal(
+    afterCollectibles.length,
+    7,
+    "Story platform edit must reach goal 7.",
+  );
+  assert.equal(
+    new Set(afterCollectibles.map((entity) => entity.id)).size,
+    7,
+    "Story goal 7 collectibles must have unique IDs.",
+  );
+  assertStoryUnchangedEntities(before, after, new Set([platformId]));
+  assert.deepEqual(after.environment, before.environment);
+  return {
+    platformId,
+    previousSpeed: beforeSpeed,
+    revisedSpeed: afterSpeed,
+    addedCollectibleIds: added.map((entity) => entity.id),
+    collectibles: afterCollectibles.length,
+  };
+}
+
+function storyComparable(project) {
+  const { revision: _revision, messages: _messages, ...rest } = project;
+  return rest;
+}
+
+async function persistFlagshipStoryPhase(report, evidenceDir, phase, project) {
+  const filename = `story-${phase}-project.json`;
+  await writeFile(
+    join(evidenceDir, filename),
+    `${JSON.stringify(project, null, 2)}\n`,
+    { encoding: "utf8", mode: 0o600 },
+  );
+  report.evidence.push(filename);
+}
+
+async function runFlagshipStory(
+  page,
+  config,
+  report,
+  info,
+  evidenceDir,
+  created,
+  onGoodProject,
+) {
+  const initialStory = assertFlagshipStoryCreation(created);
+  assert.equal(
+    created.messages[0]?.text,
+    FLAGSHIP_STORY_PROMPT,
+    "Story creation did not persist the exact flagship prompt.",
+  );
+  onGoodProject(created);
+  report.flagshipStory = {
+    status: "running",
+    visualReview: "pending",
+    phases: {
+      creation: { revision: created.revision },
+    },
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "created", created);
+  const treeRow = page
+    .locator(".object-list button")
+    .filter({ hasText: initialStory.tree.label })
+    .first();
+  await expect(treeRow).toHaveCount(1);
+  await treeRow.click();
+  await expect(page.locator(".selection-chip")).toContainText(
+    initialStory.tree.label,
+  );
+  await page.locator("#prompt").fill(FLAGSHIP_STORY_MUSHROOM_PROMPT);
+  await page.getByRole("button", { name: "Change this", exact: true }).click();
+  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(2);
+  assert.equal(
+    info.generationBodies.at(-1)?.selectedId,
+    initialStory.tree.id,
+    "Story mushroom edit did not target the selected tree.",
+  );
+  const mushroom = await waitForSavedProject(page, created.revision + 1, 2);
+  const mushroomCheck = assertFlagshipStoryMushroom(
+    created,
+    mushroom,
+    initialStory.tree.id,
+  );
+  onGoodProject(mushroom);
+  report.flagshipStory.phases.mushroom = {
+    revision: mushroom.revision,
+    ...mushroomCheck,
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom);
+  await page.screenshot({
+    path: join(evidenceDir, "story-mushroom.png"),
+    fullPage: true,
+  });
+  report.evidence.push("story-mushroom.png");
+
+  await page
+    .getByRole("button", { name: "Clear selected object", exact: true })
+    .click();
+  await page.locator("#prompt").fill(FLAGSHIP_STORY_PLATFORM_PROMPT);
+  await page.getByRole("button", { name: "Change this", exact: true }).click();
+  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(3);
+  assert.equal(
+    info.generationBodies.at(-1)?.selectedId ?? null,
+    null,
+    "Story platform edit unexpectedly retained a selected entity.",
+  );
+  const goal7 = await waitForSavedProject(page, mushroom.revision + 1, 3);
+  const platformCheck = assertFlagshipStoryPlatform(
+    mushroom,
+    goal7,
+    initialStory.middlePlatform.id,
+  );
+  onGoodProject(goal7);
+  report.flagshipStory.phases.goal7 = {
+    revision: goal7.revision,
+    ...platformCheck,
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "goal7", goal7);
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(page.locator(".game-hud")).toBeVisible();
+  await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
+  await page.screenshot({
+    path: join(evidenceDir, "story-goal-7.png"),
+    fullPage: true,
+  });
+  report.evidence.push("story-goal-7.png");
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Undo last change", exact: true })
+    .click();
+  await expect(
+    page.getByText("Previous change restored.", { exact: true }),
+  ).toBeVisible();
+  const undone = await waitForSavedProject(
+    page,
+    goal7.revision + 1,
+    mushroom.messages.filter((message) => message.role === "assistant").length,
+  );
+  assert.deepEqual(
+    storyComparable(undone),
+    storyComparable(mushroom),
+    "Story undo did not restore the mushroom revision apart from revision/messages.",
+  );
+  onGoodProject(undone);
+  report.flagshipStory = {
+    ...report.flagshipStory,
+    status: "structural-passed",
+    visualReview: "pending",
+    initial: {
+      trees: initialStory.trees.length,
+      platforms: initialStory.platforms.length,
+      collectibles: initialStory.collectibles.length,
+      treeId: initialStory.tree.id,
+      middlePlatformId: initialStory.middlePlatform.id,
+    },
+    mushroom: { ...mushroomCheck, revision: mushroom.revision },
+    goal7: { ...platformCheck, revision: goal7.revision },
+    undo: {
+      restoredRevision: undone.revision,
+      restoredMushroomState: true,
+      exportedGoal: 5,
+    },
+  };
+  report.edit = {
+    status: "passed",
+    type: "flagship-story",
+    selectedIdPreserved: true,
+  };
+  return undone;
 }
 
 async function extractZip(download, config, expectedRevision, evidenceDir) {
@@ -3641,6 +4092,19 @@ async function run(config, report = emptyReport(config)) {
       );
       report.creation.browserGeneratedEntities = browserEntities.length;
     }
+    if (config.flagshipStory) {
+      projectAfterEdit = await runFlagshipStory(
+        page,
+        config,
+        report,
+        info,
+        evidenceDir,
+        projectAfterCreation,
+        (project) => {
+          lastGoodProject = project;
+        },
+      );
+    } else {
     const targetBefore = config.requireBrowserModel
       ? browserEntities[0]
       : config.builderURL
@@ -3731,7 +4195,10 @@ async function run(config, report = emptyReport(config)) {
     );
     lastGoodProject = projectAfterEdit;
     if (config.requireBrowserModel)
-      projectAfterEdit = await waitForTrustedBrowserBake(page, targetBefore.id);
+        projectAfterEdit = await waitForTrustedBrowserBake(
+          page,
+          targetBefore.id,
+        );
     if (config.requireInputGame) {
       projectAfterEdit = await verifyInputGameBrowserBakes(
         page,
@@ -3790,7 +4257,10 @@ async function run(config, report = emptyReport(config)) {
       );
       const beforeRecipe = targetBefore.geometry?.job?.recipe;
       const afterRecipe = targetAfter.geometry?.job?.recipe;
-      assert(beforeRecipe && afterRecipe, "The geometry edit lost its recipe.");
+        assert(
+          beforeRecipe && afterRecipe,
+          "The geometry edit lost its recipe.",
+        );
       if (config.requireProcedural) {
         const beforeSource = targetBefore.geometry.job.authoring;
         const afterSource = targetAfter.geometry.job.authoring;
@@ -3973,6 +4443,7 @@ async function run(config, report = emptyReport(config)) {
       type: config.requireGeometryEdit ? "geometry" : "material",
       selectedIdPreserved: true,
     };
+    }
     await page.screenshot({
       path: join(evidenceDir, "edit.png"),
       fullPage: true,
