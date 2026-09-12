@@ -385,3 +385,20 @@ Root reviewed exact oldsnapshot equality, fresh signedout browserHTTP200/ready
 canvas/zeroerrors and screenshot.2publishPOSTs,1cancel,0modelcalls. Main app
 untouched. This closes live CANCELED-state continuity; ERROR only offline,
 fullgameplay/mobile not claimed. No active worker/test. Full goal incomplete.
+
+## Live OpenRouter replacement workflow passed; grounding defect addressed
+
+Fresh2db0ada build passed. Local server3431 on3068. One corrected contractrun
+openrouter-mushroom-replacement-current:2Luna4096low/defaultHTTP200, no retries.
+Create/edit/ID/unrelatedpreservation/reload/export/standalone passed. Target
+friendly-tree became pink catalogmushroom scale25, dimensions4.349x5.07x5.022
+vs tree.944x2.135x.817. SavedY.05 yields minY-1.2; generatedislandtop0 confirms
+clipping. Root reviewed snapshots and standalone image; no grounding/qualitypass.
+
+Luna updated provider-neutral catalog instructions: everyplacement/replacement,
+recompute contact translation aftergeometry/scale, transformedbounds for parents,
+respect intentionalfloating/embedded, material-only preserves transforms. Root
+reviewed one-linepromptdiff, removed wording-only newtests; existing17generation
+checks+TypeScript passed. No additional modelcalls. Rebuilt trackedplayerartifacts
+contain only World/inputtracker changes in sourcebundle. Deploy promptcorrection
+next; freshgeneration effect remains unverified. Goal incomplete, no workeractive.

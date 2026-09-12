@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "id": "b2726d34-b5ff-48f0-b76c-63409a1331b4",
+  "title": "Build a tiny island with one friendly tr…",
+  "seed": 42,
+  "revision": 6,
+  "environment": {
+    "sky": "#dceee9",
+    "ground": "#91b977",
+    "water": "#59bdbb"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "text": "Build a tiny island with one friendly tree standing on the ground. Keep it simple and commit the world."
+    },
+    {
+      "role": "assistant",
+      "text": "Built a tiny island with one friendly tree standing on the ground."
+    }
+  ],
+  "entities": [
+    {
+      "id": "tiny-island",
+      "label": "Tiny Island",
+      "position": [
+        0,
+        -0.2,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "color": "#91b977",
+      "assetPolicy": "new-only",
+      "stage": "ready",
+      "geometry": {
+        "kind": "generated",
+        "detail": "refined",
+        "collision": "platform",
+        "job": {
+          "backend": "browser-manifold",
+          "recipe": {
+            "version": 1,
+            "revision": 0,
+            "output": "island-disc",
+            "nodes": [
+              {
+                "id": "island-disc",
+                "kind": "cylinder",
+                "radius": 6,
+                "depth": 0.4,
+                "axis": "y",
+                "segments": 32
+              }
+            ]
+          }
+        },
+        "model": {
+          "version": 1,
+          "sha256": "55da8390576d7bd5f65df654fb6af5d81598058a08f31f8664dc1dce3a7d7398",
+          "bytes": 11268,
+          "source": "browser-manifold",
+          "kernelVersion": "3.3.2",
+          "bounds": {
+            "min": [
+              -6,
+              -0.2,
+              -6
+            ],
+            "max": [
+              6,
+              0.2,
+              6
+            ]
+          },
+          "createdAt": "2026-09-12T21:42:01.502Z"
+        }
+      }
+    },
+    {
+      "id": "friendly-tree",
+      "label": "Friendly Tree",
+      "position": [
+        0,
+        0.05,
+        0
+      ],
+      "scale": [
+        1.25,
+        1.25,
+        1.25
+      ],
+      "color": "#69a84f",
+      "behavior": {
+        "type": "static"
+      },
+      "assetPolicy": "catalog-allowed",
+      "stage": "ready",
+      "geometry": {
+        "kind": "asset",
+        "detail": "refined",
+        "assetId": "kenney.nature.tree-default"
+      }
+    }
+  ]
+}
