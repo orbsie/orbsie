@@ -30,16 +30,26 @@ does emit it, and the synthetic fixture covers the handler's explicit
 lost-capture callback. The OS-background step is a browser lifecycle-event
 simulation, not an iOS or Android background certification.
 
-The fixture transport handled one local generation request. No live inference
-was made, no external requests or page errors were observed, and the standalone
-ZIP was served from an isolated local HTTP server. The editor's success toast
-also overlaps the touch-control hit area at this mobile viewport; the harness
-dismisses it before testing. That is a remaining mobile product-layout issue.
-The first CDP attempt is
-retained in `failure-cdp-injection.json`: the success toast covered the button
-hit coordinates, so Chromium delivered the touch to the toast. The final run
-dismisses that overlay and records the control hit through the real browser
-event path.
+The toast layout regression now keeps success and recovery messages above the
+movement/jump controls in portrait and short landscape touch viewports. The
+short-landscape editor uses a bottom-sheet composer so the open and closed
+states leave a clear control lane. The browser run leaves the success toast
+visible while dispatching real movement and jump touches, and hit-tests `Try
+again`, `Use last working`, and dismissal actions with the recovery toast
+visible in both composer states. `toast-layout-landscape-open.png` records the
+open-sheet case; `toast-layout.png` records the closed-sheet case. Each state
+also asserts that the app surface spans the viewport and that the editor Play
+toolbar and score HUD remain visible, so touch hit boxes cannot pass against a
+collapsed render surface.
+
+The fixture transport handled two local generation requests (editor and
+standalone). No live inference was made, no external requests or page errors
+were observed, and the standalone ZIP was served from an isolated local HTTP
+server. The first CDP attempt is retained in `failure-cdp-injection.json`: the
+success toast covered the button hit coordinates, so Chromium delivered the
+touch to the toast. The final run dismisses no overlay before the
+success-touch check; the corrected layout records the control hit through the
+real browser event path.
 
 Run command:
 
@@ -52,6 +62,8 @@ node scripts/verify-touch-input-lifecycle.mjs
 
 Evidence is in `report.json` (partial browser-touch result),
 `synthetic-handler-fixture.json`,
-`failure-cdp-injection.json`, `editor-touch.png`, `standalone-touch.png`, and
-`world.zip`. This covers Chromium mobile emulation only; actual iOS/Android
+`failure-cdp-injection.json`, `toast-layout-landscape-open.png`,
+`toast-layout.png`, `editor-touch.png`, `standalone-touch.png`, and `world.zip`.
+This covers Chromium mobile emulation
+only; actual iOS/Android
 and physical device multitouch behavior remain open for device validation.

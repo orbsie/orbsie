@@ -5,13 +5,1412 @@
   "syntheticPointerHandlers": false,
   "captureOverride": false,
   "url": "http://127.0.0.1:3027",
-  "fixtureGenerationRequests": 1,
+  "fixtureGenerationRequests": 2,
   "liveInferenceCalls": 0,
   "externalRequests": [],
   "pageErrors": [],
   "openGates": [
     "Chromium CDP releasePointerCapture cleared capture but did not emit lostpointercapture; ordinary touch release and real touchCancel are recorded separately."
   ],
+  "toastLayout": {
+    "status": "passed",
+    "successClosed": {
+      "toast": {
+        "x": 19.5,
+        "y": 681,
+        "width": 351,
+        "height": 41
+      },
+      "composer": {
+        "x": 10,
+        "y": 792,
+        "width": 370,
+        "height": 362.90625
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-closed",
+        "expectedSheet": "sheet-closed",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "844px",
+          "minHeight": "600px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "absolute",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "733px",
+          "bottom": "67px"
+        },
+        "toastStyle": {
+          "position": "absolute",
+          "height": "41px",
+          "minHeight": "0px",
+          "top": "681px",
+          "bottom": "122px"
+        },
+        "composerStyle": {
+          "position": "absolute",
+          "height": "362.906px",
+          "minHeight": "270px",
+          "top": "471.094px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 19.5,
+            "y": 681,
+            "width": 351,
+            "height": 41
+          },
+          "composer": {
+            "x": 10,
+            "y": 792,
+            "width": 370,
+            "height": 362.90625
+          },
+          "toolbar": {
+            "x": 230,
+            "y": 81,
+            "width": 143,
+            "height": 42
+          },
+          "hud": {
+            "x": 250,
+            "y": 136,
+            "width": 123,
+            "height": 50
+          },
+          "right": {
+            "box": {
+              "x": 170,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "jump": {
+            "box": {
+              "x": 326,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 348,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          },
+          "actions": {
+            "Dismiss message": {
+              "box": {
+                "x": 339.5,
+                "y": 694,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 347,
+                "y": 701.5
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-closed",
+      "controls": {
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 326,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 348,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Dismiss message": {
+          "box": {
+            "x": 339.5,
+            "y": 694,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 347,
+            "y": 701.5
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "pointerCoarse": true
+      }
+    },
+    "recoveryOpen": {
+      "toast": {
+        "x": 19.5,
+        "y": 278.09375,
+        "width": 351,
+        "height": 53
+      },
+      "composer": {
+        "x": 10,
+        "y": 471.09375,
+        "width": 370,
+        "height": 362.90625
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-open",
+        "expectedSheet": "sheet-open",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "844px",
+          "minHeight": "600px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "absolute",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "402.094px",
+          "bottom": "397.92px"
+        },
+        "toastStyle": {
+          "position": "absolute",
+          "height": "53px",
+          "minHeight": "0px",
+          "top": "278.094px",
+          "bottom": "512.92px"
+        },
+        "composerStyle": {
+          "position": "absolute",
+          "height": "362.906px",
+          "minHeight": "270px",
+          "top": "471.094px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 19.5,
+            "y": 278.09375,
+            "width": 351,
+            "height": 53
+          },
+          "composer": {
+            "x": 10,
+            "y": 471.09375,
+            "width": 370,
+            "height": 362.90625
+          },
+          "toolbar": {
+            "x": 230,
+            "y": 81,
+            "width": 143,
+            "height": 42
+          },
+          "hud": {
+            "x": 250,
+            "y": 136,
+            "width": 123,
+            "height": 50
+          },
+          "right": {
+            "box": {
+              "x": 170,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "jump": {
+            "box": {
+              "x": 326,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 348,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          },
+          "actions": {
+            "Try again": {
+              "box": {
+                "x": 162.5,
+                "y": 291.09375,
+                "width": 60,
+                "height": 27
+              },
+              "point": {
+                "x": 192.5,
+                "y": 304.59375
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action retry"
+              },
+              "button": {
+                "label": null,
+                "text": "Try again"
+              }
+            },
+            "Use last working": {
+              "box": {
+                "x": 228.5,
+                "y": 291.09375,
+                "width": 95,
+                "height": 27
+              },
+              "point": {
+                "x": 276,
+                "y": 304.59375
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action"
+              },
+              "button": {
+                "label": null,
+                "text": "Use last working"
+              }
+            },
+            "Dismiss message": {
+              "box": {
+                "x": 339.5,
+                "y": 297.09375,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 347,
+                "y": 304.59375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-open",
+      "controls": {
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 402.09375,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 424.09375
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 326,
+            "y": 402.09375,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 348,
+            "y": 424.09375
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Try again": {
+          "box": {
+            "x": 162.5,
+            "y": 291.09375,
+            "width": 60,
+            "height": 27
+          },
+          "point": {
+            "x": 192.5,
+            "y": 304.59375
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action retry"
+          },
+          "button": {
+            "label": null,
+            "text": "Try again"
+          }
+        },
+        "Use last working": {
+          "box": {
+            "x": 228.5,
+            "y": 291.09375,
+            "width": 95,
+            "height": 27
+          },
+          "point": {
+            "x": 276,
+            "y": 304.59375
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action"
+          },
+          "button": {
+            "label": null,
+            "text": "Use last working"
+          }
+        },
+        "Dismiss message": {
+          "box": {
+            "x": 339.5,
+            "y": 297.09375,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 347,
+            "y": 304.59375
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "pointerCoarse": true
+      }
+    },
+    "recoveryLandscapeOpen": {
+      "toast": {
+        "x": 42.203125,
+        "y": 10,
+        "width": 759.59375,
+        "height": 53
+      },
+      "composer": {
+        "x": 10,
+        "y": 200,
+        "width": 824,
+        "height": 180
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-open",
+        "expectedSheet": "sheet-open",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 390
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "390px",
+          "minHeight": "390px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "fixed",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "120px",
+          "bottom": "226px"
+        },
+        "toastStyle": {
+          "position": "fixed",
+          "height": "53px",
+          "minHeight": "0px",
+          "top": "10px",
+          "bottom": "327px"
+        },
+        "composerStyle": {
+          "position": "fixed",
+          "height": "180px",
+          "minHeight": "0px",
+          "top": "200px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 844,
+          "height": 390,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 42.203125,
+            "y": 10,
+            "width": 759.59375,
+            "height": 53
+          },
+          "composer": {
+            "x": 10,
+            "y": 200,
+            "width": 824,
+            "height": 180
+          },
+          "toolbar": {
+            "x": 580,
+            "y": 145,
+            "width": 237,
+            "height": 46
+          },
+          "hud": {
+            "x": 673,
+            "y": 208,
+            "width": 144,
+            "height": 60
+          },
+          "right": {
+            "box": {
+              "x": 170,
+              "y": 120,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 142
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "jump": {
+            "box": {
+              "x": 780,
+              "y": 120,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 802,
+              "y": 142
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          },
+          "actions": {
+            "Try again": {
+              "box": {
+                "x": 593.796875,
+                "y": 23,
+                "width": 60,
+                "height": 27
+              },
+              "point": {
+                "x": 623.796875,
+                "y": 36.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action retry"
+              },
+              "button": {
+                "label": null,
+                "text": "Try again"
+              }
+            },
+            "Use last working": {
+              "box": {
+                "x": 659.796875,
+                "y": 23,
+                "width": 95,
+                "height": 27
+              },
+              "point": {
+                "x": 707.296875,
+                "y": 36.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action"
+              },
+              "button": {
+                "label": null,
+                "text": "Use last working"
+              }
+            },
+            "Dismiss message": {
+              "box": {
+                "x": 770.796875,
+                "y": 29,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 778.296875,
+                "y": 36.5
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-open",
+      "controls": {
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 120,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 142
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 780,
+            "y": 120,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 802,
+            "y": 142
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Try again": {
+          "box": {
+            "x": 593.796875,
+            "y": 23,
+            "width": 60,
+            "height": 27
+          },
+          "point": {
+            "x": 623.796875,
+            "y": 36.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action retry"
+          },
+          "button": {
+            "label": null,
+            "text": "Try again"
+          }
+        },
+        "Use last working": {
+          "box": {
+            "x": 659.796875,
+            "y": 23,
+            "width": 95,
+            "height": 27
+          },
+          "point": {
+            "x": 707.296875,
+            "y": 36.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action"
+          },
+          "button": {
+            "label": null,
+            "text": "Use last working"
+          }
+        },
+        "Dismiss message": {
+          "box": {
+            "x": 770.796875,
+            "y": 29,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 778.296875,
+            "y": 36.5
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "pointerCoarse": true
+      }
+    },
+    "recoveryClosed": {
+      "toast": {
+        "x": 19.5,
+        "y": 669,
+        "width": 351,
+        "height": 53
+      },
+      "composer": {
+        "x": 10,
+        "y": 792,
+        "width": 370,
+        "height": 362.90625
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-closed",
+        "expectedSheet": "sheet-closed",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "844px",
+          "minHeight": "600px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "absolute",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "733px",
+          "bottom": "67px"
+        },
+        "toastStyle": {
+          "position": "absolute",
+          "height": "53px",
+          "minHeight": "0px",
+          "top": "669px",
+          "bottom": "122px"
+        },
+        "composerStyle": {
+          "position": "absolute",
+          "height": "362.906px",
+          "minHeight": "270px",
+          "top": "471.094px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 19.5,
+            "y": 669,
+            "width": 351,
+            "height": 53
+          },
+          "composer": {
+            "x": 10,
+            "y": 792,
+            "width": 370,
+            "height": 362.90625
+          },
+          "toolbar": {
+            "x": 230,
+            "y": 81,
+            "width": 143,
+            "height": 42
+          },
+          "hud": {
+            "x": 250,
+            "y": 136,
+            "width": 123,
+            "height": 50
+          },
+          "right": {
+            "box": {
+              "x": 170,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "jump": {
+            "box": {
+              "x": 326,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 348,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          },
+          "actions": {
+            "Try again": {
+              "box": {
+                "x": 162.5,
+                "y": 682,
+                "width": 60,
+                "height": 27
+              },
+              "point": {
+                "x": 192.5,
+                "y": 695.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action retry"
+              },
+              "button": {
+                "label": null,
+                "text": "Try again"
+              }
+            },
+            "Use last working": {
+              "box": {
+                "x": 228.5,
+                "y": 682,
+                "width": 95,
+                "height": 27
+              },
+              "point": {
+                "x": 276,
+                "y": 695.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action"
+              },
+              "button": {
+                "label": null,
+                "text": "Use last working"
+              }
+            },
+            "Dismiss message": {
+              "box": {
+                "x": 339.5,
+                "y": 688,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 347,
+                "y": 695.5
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-closed",
+      "controls": {
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 326,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 348,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Try again": {
+          "box": {
+            "x": 162.5,
+            "y": 682,
+            "width": 60,
+            "height": 27
+          },
+          "point": {
+            "x": 192.5,
+            "y": 695.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action retry"
+          },
+          "button": {
+            "label": null,
+            "text": "Try again"
+          }
+        },
+        "Use last working": {
+          "box": {
+            "x": 228.5,
+            "y": 682,
+            "width": 95,
+            "height": 27
+          },
+          "point": {
+            "x": 276,
+            "y": 695.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action"
+          },
+          "button": {
+            "label": null,
+            "text": "Use last working"
+          }
+        },
+        "Dismiss message": {
+          "box": {
+            "x": 339.5,
+            "y": 688,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 347,
+            "y": 695.5
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "pointerCoarse": true
+      }
+    },
+    "recoveryLandscapeClosed": {
+      "toast": {
+        "x": 42.203125,
+        "y": 215,
+        "width": 759.59375,
+        "height": 53
+      },
+      "composer": {
+        "x": 10,
+        "y": 338,
+        "width": 824,
+        "height": 180
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-closed",
+        "expectedSheet": "sheet-closed",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 390
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "390px",
+          "minHeight": "390px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "fixed",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "278px",
+          "bottom": "68px"
+        },
+        "toastStyle": {
+          "position": "fixed",
+          "height": "53px",
+          "minHeight": "0px",
+          "top": "215px",
+          "bottom": "122px"
+        },
+        "composerStyle": {
+          "position": "fixed",
+          "height": "180px",
+          "minHeight": "0px",
+          "top": "200px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 844,
+          "height": 390,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 42.203125,
+            "y": 215,
+            "width": 759.59375,
+            "height": 53
+          },
+          "composer": {
+            "x": 10,
+            "y": 338,
+            "width": 824,
+            "height": 180
+          },
+          "toolbar": {
+            "x": 580,
+            "y": 145,
+            "width": 237,
+            "height": 46
+          },
+          "hud": {
+            "x": 673,
+            "y": 208,
+            "width": 144,
+            "height": 60
+          },
+          "right": {
+            "box": {
+              "x": 170,
+              "y": 278,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 300
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "jump": {
+            "box": {
+              "x": 780,
+              "y": 278,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 802,
+              "y": 300
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          },
+          "actions": {
+            "Try again": {
+              "box": {
+                "x": 593.796875,
+                "y": 228,
+                "width": 60,
+                "height": 27
+              },
+              "point": {
+                "x": 623.796875,
+                "y": 241.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action retry"
+              },
+              "button": {
+                "label": null,
+                "text": "Try again"
+              }
+            },
+            "Use last working": {
+              "box": {
+                "x": 659.796875,
+                "y": 228,
+                "width": 95,
+                "height": 27
+              },
+              "point": {
+                "x": 707.296875,
+                "y": 241.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action"
+              },
+              "button": {
+                "label": null,
+                "text": "Use last working"
+              }
+            },
+            "Dismiss message": {
+              "box": {
+                "x": 770.796875,
+                "y": 234,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 778.296875,
+                "y": 241.5
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-closed",
+      "controls": {
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 278,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 300
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 780,
+            "y": 278,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 802,
+            "y": 300
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Try again": {
+          "box": {
+            "x": 593.796875,
+            "y": 228,
+            "width": 60,
+            "height": 27
+          },
+          "point": {
+            "x": 623.796875,
+            "y": 241.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action retry"
+          },
+          "button": {
+            "label": null,
+            "text": "Try again"
+          }
+        },
+        "Use last working": {
+          "box": {
+            "x": 659.796875,
+            "y": 228,
+            "width": 95,
+            "height": 27
+          },
+          "point": {
+            "x": 707.296875,
+            "y": 241.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action"
+          },
+          "button": {
+            "label": null,
+            "text": "Use last working"
+          }
+        },
+        "Dismiss message": {
+          "box": {
+            "x": 770.796875,
+            "y": 234,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 778.296875,
+            "y": 241.5
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "pointerCoarse": true
+      }
+    },
+    "touchWithVisibleSuccess": true
+  },
   "editor": {
     "status": "passed",
     "simultaneousActions": true,
@@ -22,6 +1421,7 @@
     "lostPointerCaptureRelease": false,
     "touchCancelLostCapture": true,
     "otherActionHeldAfterOrdinaryRelease": true,
+    "toastTouchWithNotice": true,
     "backgroundReset": true,
     "buttonSpaceActivation": true,
     "textEntryDoesNotMove": true,
@@ -48,6 +1448,7 @@
     "lostPointerCaptureRelease": false,
     "touchCancelLostCapture": true,
     "otherActionHeldAfterOrdinaryRelease": true,
+    "toastTouchWithNotice": false,
     "backgroundReset": true,
     "eventsBeforeScore": [
       {
@@ -63,6 +1464,8 @@
     ]
   },
   "evidence": [
+    "toast-layout-landscape-open.png",
+    "toast-layout.png",
     "editor-touch.png",
     "world.zip",
     "standalone-touch.png"

@@ -82,6 +82,9 @@ const report = {
   externalRequests: [],
   pageErrors: [],
   openGates: [],
+  toastLayout: {
+    status: "not-started",
+  },
   editor: {
     status: "not-started",
     simultaneousActions: false,
@@ -92,6 +95,7 @@ const report = {
     lostPointerCaptureRelease: false,
     touchCancelLostCapture: false,
     otherActionHeldAfterOrdinaryRelease: false,
+    toastTouchWithNotice: false,
     backgroundReset: false,
     buttonSpaceActivation: false,
     textEntryDoesNotMove: false,
@@ -106,6 +110,7 @@ const report = {
     lostPointerCaptureRelease: false,
     touchCancelLostCapture: false,
     otherActionHeldAfterOrdinaryRelease: false,
+    toastTouchWithNotice: false,
     backgroundReset: false,
   },
   evidence: [],
@@ -123,6 +128,7 @@ function trackPage(page, sameOrigin) {
 }
 
 async function installEditorRoutes(context) {
+  let failNextGeneration = false;
   await context.route("**/api/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -132,6 +138,14 @@ async function installEditorRoutes(context) {
       return route.fulfill({ json: { enabled: true, remaining: 3, limit: 3 } });
     if (path === "/api/generate") {
       report.fixtureGenerationRequests += 1;
+      if (failNextGeneration) {
+        failNextGeneration = false;
+        return route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Fixture generation failed." }),
+        });
+      }
       return route.fulfill({
         contentType: "application/x-ndjson",
         body:
@@ -140,6 +154,11 @@ async function installEditorRoutes(context) {
     }
     return route.fulfill({ json: { models: [] } });
   });
+  return {
+    failNextGeneration() {
+      failNextGeneration = true;
+    },
+  };
 }
 
 async function inputEvents(page) {
@@ -205,6 +224,237 @@ async function dismissNotice(page) {
     await dismiss.first().click();
 }
 
+async function topmostButtonAt(page, locator) {
+  const box = await locator.boundingBox();
+  if (!box) throw Error("Expected visible toast or touch control.");
+  const hit = await page.evaluate(
+    ({ x, y }) => {
+      const target = document.elementFromPoint(x, y);
+      const button = target?.closest("button");
+      return {
+        point: { x, y },
+        viewport: {
+          width: innerWidth,
+          height: innerHeight,
+          pointerCoarse: matchMedia("(pointer: coarse)").matches,
+        },
+        target: target
+          ? {
+              tag: target.tagName,
+              className: String(target.className),
+            }
+          : null,
+        button: button
+          ? {
+              label: button.getAttribute("aria-label"),
+              text: button.textContent?.trim(),
+            }
+          : null,
+      };
+    },
+    { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+  );
+  return { box, ...hit };
+}
+
+async function waitForStableLayout(page) {
+  await page.evaluate(async () => {
+    const selectors = [".toast", ".chat-panel", ".touch-controls"];
+    const read = () =>
+      selectors.map((selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return rect
+          ? [rect.x, rect.y, rect.width, rect.height].map((value) =>
+              Number(value.toFixed(3)),
+            )
+          : null;
+      });
+    let previous = read();
+    let stableFrames = 0;
+    for (let frame = 0; frame < 90; frame += 1) {
+      await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame));
+      const current = read();
+      const stable = current.every((box, index) => {
+        const prior = previous[index];
+        return (
+          box &&
+          prior &&
+          box.every((value, valueIndex) => Math.abs(value - prior[valueIndex]) < 0.1)
+        );
+      });
+      stableFrames = stable ? stableFrames + 1 : 0;
+      previous = current;
+      if (stableFrames >= 3) return;
+    }
+    throw new Error("Timed out waiting for touch layout transitions to settle.");
+  });
+}
+
+async function assertToastLayout(page, result, mode) {
+  await expect(page.locator(".toast")).toBeVisible();
+  await waitForStableLayout(page);
+  const expectedSheet = mode.includes("Open") ? "sheet-open" : "sheet-closed";
+  const layoutState = await page.evaluate(({ expectedSheet }) => {
+    const boxFor = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    };
+    const hitFor = (element) => {
+      const box = boxFor(element);
+      if (!box) return null;
+      const target = document.elementFromPoint(
+        box.x + box.width / 2,
+        box.y + box.height / 2,
+      );
+      const button = target?.closest("button");
+      return {
+        box,
+        point: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+        target: target
+          ? { tag: target.tagName, className: String(target.className) }
+          : null,
+        button: button
+          ? {
+              label: button.getAttribute("aria-label"),
+              text: button.textContent?.trim(),
+            }
+          : null,
+      };
+    };
+    const buttonByLabel = (label) =>
+      [...document.querySelectorAll("button")].find(
+        (button) => button.getAttribute("aria-label") === label,
+      );
+    const buttonByText = (text) =>
+      [...document.querySelectorAll("button")].find(
+        (button) =>
+          !button.hidden &&
+          (button.textContent?.trim() === text ||
+            button.getAttribute("aria-label") === text),
+      );
+    const app = document.querySelector("main.app");
+    const touch = document.querySelector(".touch-controls");
+    const toast = document.querySelector(".toast");
+    const composer = document.querySelector(".chat-panel");
+    const toolbar = document.querySelector(".play-toolbar");
+    const hud = document.querySelector(".game-hud");
+    const styleFor = (element) => {
+      if (!element) return null;
+      const style = getComputedStyle(element);
+      return {
+        position: style.position,
+        height: style.height,
+        minHeight: style.minHeight,
+        top: style.top,
+        bottom: style.bottom,
+      };
+    };
+    return {
+      appClass: app?.className ?? "",
+      expectedSheet,
+      app: boxFor(app),
+      appStyle: styleFor(app),
+      touchStyle: styleFor(touch),
+      toastStyle: styleFor(toast),
+      composerStyle: styleFor(composer),
+      viewport: {
+        width: innerWidth,
+        height: innerHeight,
+        pointerCoarse: matchMedia("(pointer: coarse)").matches,
+      },
+      boxes: {
+        toast: boxFor(toast),
+        composer: boxFor(composer),
+        toolbar: boxFor(toolbar),
+        hud: boxFor(hud),
+        right: hitFor(buttonByLabel("Move d")),
+        jump: hitFor(buttonByLabel("Jump")),
+        actions: Object.fromEntries(
+          ["Try again", "Use last working", "Dismiss message"]
+            .map((name) => [name, hitFor(buttonByText(name))])
+            .filter(([, value]) => value),
+        ),
+      },
+    };
+  }, { expectedSheet });
+  const { toast: toastBox, composer: composerBox, right, jump, actions } =
+    layoutState.boxes;
+  if (!toastBox || !right || !jump)
+    throw Error(`Toast or touch controls are not measurable in ${mode}.`);
+  const expected = (value, label) =>
+    value.button?.label === label || value.button?.text === label;
+  const overlaps = (first, second) =>
+    first.x < second.x + second.width &&
+    first.x + first.width > second.x &&
+    first.y < second.y + second.height &&
+    first.y + first.height > second.y;
+  if (!layoutState.appClass.split(/\s+/).includes(expectedSheet))
+    throw Error(
+      `Unexpected composer state in ${mode}: ${JSON.stringify({ expectedSheet, appClass: layoutState.appClass })}`,
+    );
+  if (overlaps(toastBox, right.box) || overlaps(toastBox, jump.box))
+    throw Error(
+      `Toast overlaps a touch control in ${mode}: ${JSON.stringify({ toastBox, right: right.box, jump: jump.box })}`,
+    );
+  if (composerBox && (overlaps(composerBox, right.box) || overlaps(composerBox, jump.box)))
+    throw Error(
+      `Composer overlaps a touch control in ${mode}: ${JSON.stringify({ composerBox, right: right.box, jump: jump.box })}`,
+    );
+  const insideViewport = (box) =>
+    box.x >= 0 &&
+    box.y >= 0 &&
+    box.x + box.width <= layoutState.viewport.width &&
+    box.y + box.height <= layoutState.viewport.height;
+  if (
+    !layoutState.app ||
+    layoutState.app.height < layoutState.viewport.height - 1 ||
+    !layoutState.boxes.toolbar ||
+    !layoutState.boxes.hud ||
+    layoutState.boxes.toolbar.width <= 0 ||
+    layoutState.boxes.toolbar.height <= 0 ||
+    layoutState.boxes.hud.width <= 0 ||
+    layoutState.boxes.hud.height <= 0 ||
+    !insideViewport(layoutState.boxes.toolbar) ||
+    !insideViewport(layoutState.boxes.hud)
+  )
+    throw Error(
+      `Play surface or editor chrome is not fully visible in ${mode}: ${JSON.stringify({
+        app: layoutState.app,
+        viewport: layoutState.viewport,
+        toolbar: layoutState.boxes.toolbar,
+        hud: layoutState.boxes.hud,
+      })}`,
+    );
+  if (!insideViewport(toastBox) || !insideViewport(right.box) || !insideViewport(jump.box))
+    throw Error(
+      `Toast or touch control is outside the ${mode} viewport: ${JSON.stringify({ toastBox, right: right.box, jump: jump.box })}`,
+    );
+  for (const [label, value] of Object.entries(actions))
+    if (!insideViewport(value.box))
+      throw Error(
+        `Toast action ${label} is outside the ${mode} viewport: ${JSON.stringify(value.box)}`,
+      );
+  if (!expected(right, "Move d") || !expected(jump, "Jump"))
+    throw Error(
+      `Toast blocks touch controls in ${mode}: ${JSON.stringify({ right, jump })}`,
+    );
+  for (const [label, value] of Object.entries(actions))
+    if (!expected(value, label))
+      throw Error(
+        `Toast action ${label} is not hit-testable in ${mode}: ${JSON.stringify(value)}`,
+      );
+  result[mode] = {
+    toast: toastBox,
+    composer: composerBox,
+    layout: layoutState,
+    appClass: layoutState.appClass,
+    controls: { right, jump },
+    actions,
+    viewport: layoutState.viewport,
+  };
+}
+
 async function touchPoint(page, label, pointerId) {
   const box = await buttonCenter(page, label);
   const x = box.x;
@@ -245,7 +495,7 @@ async function dispatchTouch(cdp, type, touchPoints) {
 }
 
 async function runTouchSequence(page, names, result) {
-  await dismissNotice(page);
+  const noticeVisible = await page.locator(".toast").isVisible().catch(() => false);
   const cdp = await touchSession(page);
   const right = await touchPoint(page, names.right, 101);
   const jump = await touchPoint(page, names.jump, 102);
@@ -274,6 +524,7 @@ async function runTouchSequence(page, names, result) {
     names.standalone ? "Score: 18" : "18",
     { timeout: 5000 },
   );
+  if (noticeVisible) result.toastTouchWithNotice = true;
   const downEvents = await inputEvents(page);
   const rightDownAfterScore = downEvents.find(
     (event) => event.key === "d" && event.down === true,
@@ -462,7 +713,7 @@ try {
     hasTouch: true,
   });
   await installInputObserver(editorContext);
-  await installEditorRoutes(editorContext);
+  const editorRoutes = await installEditorRoutes(editorContext);
   const editor = await editorContext.newPage();
   trackPage(editor, new URL(base).origin);
   await editor.goto(base);
@@ -477,6 +728,7 @@ try {
   await expect(
     editor.getByRole("button", { name: "Move d", exact: true }),
   ).toBeVisible();
+  await assertToastLayout(editor, report.toastLayout, "successClosed");
   await runTouchSequence(
     editor,
     { right: "Move d", jump: "Jump", standalone: false },
@@ -496,6 +748,32 @@ try {
   await editor.keyboard.press("d");
   await expect(editor.locator(".game-hud strong")).toHaveText("0");
   report.editor.textEntryDoesNotMove = true;
+  await editor.getByRole("button", { name: "Play", exact: true }).click();
+  await editor.locator(".sheet-handle").click();
+  editorRoutes.failNextGeneration();
+  await editor.locator("#prompt").fill("Trigger a bounded fixture failure.");
+  await editor.locator("form.prompt-form").evaluate((form) => form.requestSubmit());
+  await expect(editor.getByRole("button", { name: "Try again", exact: true })).toBeVisible();
+  await assertToastLayout(editor, report.toastLayout, "recoveryOpen");
+  await editor.setViewportSize({ width: 844, height: 390 });
+  await assertToastLayout(editor, report.toastLayout, "recoveryLandscapeOpen");
+  await editor.screenshot({
+    path: join(output, "toast-layout-landscape-open.png"),
+    fullPage: true,
+  });
+  report.evidence.push("toast-layout-landscape-open.png");
+  await editor.setViewportSize({ width: 390, height: 844 });
+  await editor.locator(".sheet-handle").click();
+  await assertToastLayout(editor, report.toastLayout, "recoveryClosed");
+  await editor.setViewportSize({ width: 844, height: 390 });
+  await assertToastLayout(editor, report.toastLayout, "recoveryLandscapeClosed");
+  await editor.screenshot({
+    path: join(output, "toast-layout.png"),
+    fullPage: true,
+  });
+  report.evidence.push("toast-layout.png");
+  await editor.setViewportSize({ width: 390, height: 844 });
+  await editor.getByRole("button", { name: "Dismiss message" }).click();
   await editor.screenshot({
     path: join(output, "editor-touch.png"),
     fullPage: true,
@@ -558,6 +836,8 @@ try {
       "Chromium CDP releasePointerCapture cleared capture but did not emit lostpointercapture; ordinary touch release and real touchCancel are recorded separately.",
     );
   report.status = report.openGates.length ? "partial" : "passed";
+  report.toastLayout.status = "passed";
+  report.toastLayout.touchWithVisibleSuccess = report.editor.toastTouchWithNotice;
   await writeFile(
     join(output, "report.json"),
     `${JSON.stringify(report, null, 2)}\n`,
@@ -568,6 +848,10 @@ try {
   report.error = error instanceof Error ? error.message : String(error);
   await writeFile(
     join(output, "report.json"),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
+  await writeFile(
+    join(output, "failure-latest.json"),
     `${JSON.stringify(report, null, 2)}\n`,
   );
   throw error;

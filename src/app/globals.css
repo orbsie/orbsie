@@ -1341,9 +1341,12 @@ kbd {
     top: 40%;
   }
   .toast {
-    bottom: 58px;
+    bottom: 122px;
     width: calc(100% - 30px);
     font-size: 10px;
+  }
+  .sheet-open .toast {
+    bottom: calc(43dvh + 150px);
   }
   .is-public .touch-controls {
     bottom: 30px;
@@ -1358,6 +1361,128 @@ kbd {
   }
   .resume-pill ~ .landing-footer {
     display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .app {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+  .touch-controls {
+    display: flex;
+    position: fixed;
+    top: calc(100% - 112px);
+    bottom: auto;
+    left: 20px;
+    right: 20px;
+    z-index: 5;
+    gap: 6px;
+  }
+  .touch-controls button {
+    background: #fffff0cf;
+    border: 1px solid #fff;
+    border-radius: 13px;
+    height: 44px;
+    width: 44px;
+    touch-action: none;
+  }
+  .touch-controls button:last-child {
+    margin-left: auto;
+    background: #3a6b56;
+    color: #fff;
+  }
+  .chat-panel {
+    position: fixed;
+    top: auto;
+    bottom: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: 180px;
+    min-height: 0;
+    border-radius: 18px;
+    transition: transform 0.3s;
+    animation: none;
+  }
+  .sheet-closed .chat-panel {
+    transform: translateY(calc(100% - 42px));
+  }
+  .sheet-handle {
+    display: flex;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 20px;
+    background: transparent;
+  }
+  .sheet-handle > span {
+    width: 33px;
+    height: 3px;
+    background: #b7c5aa;
+    border-radius: 4px;
+  }
+  .sheet-handle svg {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+  }
+  .chat-header {
+    padding: 21px 15px 10px;
+    gap: 8px;
+  }
+  .chat-header .little-spark {
+    width: 25px;
+    height: 25px;
+  }
+  .chat-header > div > span {
+    display: none;
+  }
+  .chat-header strong {
+    font-size: 11px;
+  }
+  .chat-messages {
+    padding: 12px;
+  }
+  .message {
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+  .chat-panel .prompt-form {
+    padding: 7px 5px;
+  }
+  .chat-panel textarea {
+    min-height: 35px;
+    height: 40px;
+    font-size: 11px;
+  }
+  .panel-foot {
+    padding: 4px 5px 8px;
+    font-size: 7px;
+  }
+  .sheet-closed .touch-controls {
+    top: calc(100% - 112px);
+    bottom: auto;
+  }
+  .sheet-open .touch-controls {
+    top: 120px;
+    bottom: auto;
+  }
+  .is-public .touch-controls {
+    top: calc(100% - 112px);
+    bottom: auto;
+  }
+  .toast {
+    position: fixed;
+    top: calc(100% - 175px);
+    bottom: auto;
+    width: calc(100% - 30px);
+    max-height: calc(100% - 120px);
+    overflow: auto;
+    font-size: 10px;
+  }
+  .sheet-open .toast {
+    top: 10px;
+    bottom: auto;
   }
 }
 
