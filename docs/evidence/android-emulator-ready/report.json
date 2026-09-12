@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-09-12T05:19:43.951639+00:00",
+  "status": "setup-ready-browser-consent-pending",
+  "avd": "orbsie_api35_phone",
+  "serial": "emulator-5580",
+  "bootCompleted": true,
+  "androidRelease": "15",
+  "chromeVersion": "124.0.6367.219",
+  "configured": {
+    "memoryMiB": 3072,
+    "cpuCores": 2,
+    "graphics": "SwiftShader",
+    "display": [
+      1080,
+      2400
+    ]
+  },
+  "observedBrowserState": "Welcome to Chrome; Use without an account requires Terms of Service acceptance",
+  "termsAccepted": false,
+  "modelCalls": 0,
+  "limitations": [
+    "No gameplay or browser rendering acceptance performed",
+    "Chrome version is old; this is not current-browser certification",
+    "Emulation is not physical-device performance evidence"
+  ]
+}

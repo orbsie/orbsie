@@ -233,3 +233,12 @@ recovery/export/standalone passed. Production live free-trial, cloud/publication
 provider matrix, browser ChatGPT consent/inference, physical mobile and full
 visual/performance targets remain unproven. User sign-in and emulator terms
 answers remain pending. No physical/emulated Android currently attached.
+
+### Android setup revalidated
+
+The existing isolated orbsie_api35_phone AVD was restarted and Android15 boot
+completion observed. It is at Chrome first-run consent; no terms accepted or
+prompt submitted. Bundled Chrome is124.0.6367.219, so current-browser coverage
+requires an updated environment in addition to physical-device acceptance.
+Report:docs/evidence/android-emulator-ready/report.json. Revalidate the live
+emulator handle before use; this setup report is not gameplay certification.
