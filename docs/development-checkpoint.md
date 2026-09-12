@@ -38,6 +38,15 @@ or mutating requests. Evidence `gateway-seven-gameplay-portal-bound/` and
 winning screenshot. No worker task currently active. Next meaningful step:
 independent publication of this exact edited revision and signed-out gameplay,
 without new inference; preserve separate physical-mobile/platform/size gaps.
+Publication milestone now running in exec session20868. Evidence updates at
+`docs/evidence/publication-gateway-seven/report.json`. One signup, seven
+uploads, one cloud save and one publication submitted; no inference/retries.
+Deployment dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL, Vercel project
+prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9; last observed INITIALIZING. Re-poll same
+session/handle; never resubmit due timeout. Temporary test password exists at
+/tmp/orbsie-gateway-publication-password; do not print; remove after completion
+or retain privately only if authenticated recovery is needed. Run signed-out
+public gameplay after publication/assets pass; saved-ZIP evidence is separate.
 Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
