@@ -37,10 +37,14 @@ contact gives velocityY7.08 without jump input, path continues and unrelated
 tree is preserved.20 focused tests/typecheck/format/diff checks passed.
 Generation guidance now teaches composition and ground-jump reach margin;
 set_position repositions the entity and cancels its path, not a player launch.
-No schema/runtime behavior changed. No worker active. Browser bounce trajectory
-and live provider effectiveness remain unverified; next step is a fixture
-browser trajectory through the real editor/export runtime, then a meaningful
-fresh authorized provider milestone. Do not relabel captured failed world.
+No schema/runtime behavior changed. Luna `/root/bounce_browser_acceptance`
+now owns a focused fixture browser harness and evidence (verify-moving-bounce
+and moving-bounce-browser), with desktop/touch no-input automatic rebound,
+continued path, UI create/reload/export/standalone scope. Server3068 responds200;
+uses unchanged runtime from e0dff7c. Do not rebuild .next while that server is
+used. No live calls/external requests/nested workers. Root reviews evidence
+and final diff. Live provider effectiveness remains unverified; do not relabel
+the captured failed world.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
 Acceptance distinction: existing verify-flagship-platforms asserts landing
 then560ms carried support. That is appropriate for moving nonbounce platforms,
