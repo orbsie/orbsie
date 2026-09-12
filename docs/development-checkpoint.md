@@ -85,3 +85,24 @@ Keep this handoff compact and update it in place. Never include secrets.
   representative GPU/mobile performance and timing, and full requirement audit.
 - Avoid status-only turn churn. Await the existing worker without spawning another;
   review its diff/evidence before acceptance, commit coherent progress, then move on.
+
+## Current strawberry failure follow-up
+
+- Reviewed acceptance source `43dc427`: Gateway failed JSON at operation 4;
+  OpenRouter failed JSON at operation 3. One call each, edits skipped, no retries.
+  Evidence and refreshed player source committed in `d4485c2`. Prompt example
+  alone did not solve the failure; production fix remains open.
+- One Luna worker is implementing an offline incremental `{"commands":[...]}`
+  decoder. Each complete command must retain the existing schema and application
+  validation. No malformed JSON repair, partial command emission, or scene reset.
+  Integration must withhold final commit until the entire envelope is valid.
+- Provider-format selection is still under investigation: current OpenRouter Luna
+  catalog advertises `response_format` and `structured_outputs`; Gateway Luna
+  catalog omits both. Do not infer support for every model. OpenRouter documents
+  JSON object mode; Gateway documents JSON Schema mode. Verify the actual
+  supported format before wiring production requests. Preserve arbitrary supported
+  user model choices and choose compatibility transport before inference; no
+  automatic paid retry on format rejection.
+- Next: review decoder, implement capability-aware transport and integration tests,
+  then a bounded live create/edit milestone. Do not repeat live prompt-only tests.
+- Codex allowance last observed 71% remaining; stop agents/tests below 20%.
