@@ -32,9 +32,11 @@ large logs, and copied diffs.
   flagship has `project.game`, which the legacy traversal verifier rejects.
 - Saved flagship traversal accepted in `5d0867f`: unchanged OpenRouter ZIP,
   desktop keyboard and touch five-crystal portal win/reset; legacy fixture
-  desktop check passed. Separate platform probe now verifies carrying on 1/3;
-  platform 2 did not land within the bounded run, so full acceptance fails.
-  Evidence: `docs/evidence/flagship-platforms`; no source defect yet established.
+  desktop check passed. Separate probes verify carrying on all three platforms:
+  1/3 in `flagship-platforms`, 2 in `flagship-platform2-corrected`. The initial
+  platform-2 failure came from premature verifier release; corrected detector,
+  retained-sample regression, and one focused browser run passed. These are
+  isolated saved-snapshot probes, not a continuous three-platform route.
   No model calls or product changes. No active worker remains.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
