@@ -6,9 +6,16 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 
-const inspectionPath = "docs/evidence/mushroom-candidate-inspection/report.json";
-const conversionPath = "docs/evidence/mushroom-candidate-conversion/report.json";
-const evidenceDirectory = "docs/evidence/mushroom-candidate-preview";
+const inspectionPath =
+  process.env.MUSHROOM_INSPECTION_PATH ??
+  "docs/evidence/mushroom-candidate-inspection/report.json";
+const conversionPath =
+  process.env.MUSHROOM_CONVERSION_PATH ??
+  "docs/evidence/mushroom-candidate-conversion/report.json";
+const evidenceDirectory =
+  process.env.MUSHROOM_PREVIEW_EVIDENCE_DIRECTORY ??
+  "docs/evidence/mushroom-candidate-preview";
+const selectedFbxArchivePath = process.env.MUSHROOM_FBX_ARCHIVE_PATH;
 const reportPath = join(evidenceDirectory, "report.json");
 const temporary = await mkdtemp(join(tmpdir(), "orbsie-mushroom-preview-"));
 let server;
@@ -22,9 +29,16 @@ async function main() {
   await mkdir(evidenceDirectory, { recursive: true });
   const inspection = JSON.parse(await readFile(inspectionPath, "utf8"));
   const conversion = JSON.parse(await readFile(conversionPath, "utf8"));
-  const fbxEntry = inspection.selectedFiles.find(
-    (entry) => entry.archivePath === "Meshes/Fly_Agaric_Big.fbx",
+  const fbxEntries = inspection.selectedFiles.filter((entry) =>
+    entry.archivePath.toLowerCase().endsWith(".fbx"),
   );
+  const fbxEntry = selectedFbxArchivePath
+    ? fbxEntries.find((entry) => entry.archivePath === selectedFbxArchivePath)
+    : fbxEntries.length === 1
+      ? fbxEntries[0]
+      : fbxEntries.find(
+          (entry) => entry.archivePath === "Meshes/Fly_Agaric_Big.fbx",
+        );
   const tgaEntry = inspection.selectedFiles.find(
     (entry) => entry.archivePath === "Textures/Mushrooms_C.tga",
   );

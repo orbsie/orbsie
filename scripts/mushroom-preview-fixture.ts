@@ -8,6 +8,34 @@ const cameraPosition = new THREE.Vector3(1.7, 1.2, 2);
 const lookAt = new THREE.Vector3(0, 0.5, 0);
 const panelSize = 420;
 
+type PreviewFixture = {
+  ready: () => boolean;
+  status: () => unknown;
+  renderRear: () => boolean;
+};
+
+declare global {
+  interface Window {
+    mushroomPreviewFixture: PreviewFixture;
+  }
+}
+
+function meshOf(object: THREE.Object3D): THREE.Mesh | undefined {
+  return object instanceof THREE.Mesh ? object : undefined;
+}
+
+function materialColor(material: THREE.Material): THREE.Color {
+  return "color" in material && material.color instanceof THREE.Color
+    ? material.color.clone()
+    : new THREE.Color(0xffffff);
+}
+
+function materialMap(material: THREE.Material): THREE.Texture | null {
+  return "map" in material && material.map instanceof THREE.Texture
+    ? material.map
+    : null;
+}
+
 function boundsOf(root: THREE.Object3D) {
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
@@ -31,20 +59,21 @@ function normalizeSource(root: THREE.Object3D) {
 
 function replaceWithStandardMaterial(root: THREE.Object3D) {
   root.traverse((object) => {
-    if (!object.isMesh) return;
-    const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
+    const mesh = meshOf(object);
+    if (!mesh) return;
+    const materials: THREE.Material[] = Array.isArray(mesh.material)
+      ? mesh.material
+      : [mesh.material];
     const replacement = materials.map((material) =>
       new THREE.MeshStandardMaterial({
-        color: material.color?.clone() ?? new THREE.Color(0xffffff),
-        map: material.map ?? null,
+        color: materialColor(material),
+        map: materialMap(material),
         roughness: 0.8,
         metalness: 0,
         name: `${material.name}_preview_standard`,
       }),
     );
-    object.material = Array.isArray(object.material)
+    mesh.material = Array.isArray(mesh.material)
       ? replacement
       : replacement[0];
   });
@@ -52,8 +81,9 @@ function replaceWithStandardMaterial(root: THREE.Object3D) {
 
 function tintPink(root: THREE.Object3D) {
   root.traverse((object) => {
-    if (!object.isMesh) return;
-    const geometry = object.geometry.clone();
+    const mesh = meshOf(object);
+    if (!mesh) return;
+    const geometry = mesh.geometry.clone();
     const sourceColor = geometry.getAttribute("color");
     if (!sourceColor) throw new Error("Baked mesh has no color attribute.");
     const pink = new THREE.Color("#ff69b4");
@@ -64,18 +94,21 @@ function tintPink(root: THREE.Object3D) {
       colors[index * 3 + 2] = pink.b;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    object.geometry = geometry;
-    const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
-    const replacement = materials.map((material) => {
-      const clone = material.clone();
-      clone.color.set(0xffffff);
-      clone.map = null;
-      clone.vertexColors = true;
-      return clone;
-    });
-    object.material = Array.isArray(object.material)
+    mesh.geometry = geometry;
+    const materials: THREE.Material[] = Array.isArray(mesh.material)
+      ? mesh.material
+      : [mesh.material];
+    const replacement = materials.map(
+      (material) =>
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.8,
+          metalness: 0,
+          vertexColors: true,
+          name: `${material.name}_preview_pink`,
+        }),
+    );
+    mesh.material = Array.isArray(mesh.material)
       ? replacement
       : replacement[0];
   });
@@ -128,24 +161,26 @@ const texture = new THREE.DataTexture(
   THREE.RGBAFormat,
   THREE.UnsignedByteType,
 );
-texture.flipY = tgaData.flipY;
+texture.flipY = tgaData.flipY ?? false;
 texture.colorSpace = THREE.SRGBColorSpace;
 texture.needsUpdate = true;
-const textureHandler = {
-  path: "",
-  setPath(path: string) {
-    this.path = path;
-    return this;
-  },
-  load(url: string, onLoad?: (value: THREE.Texture) => void) {
+class PreparedTextureLoader extends THREE.Loader<THREE.Texture> {
+  constructor(private readonly preparedTexture: THREE.Texture) {
+    super();
+  }
+
+  override load(
+    url: string,
+    onLoad?: (value: THREE.Texture) => void,
+  ): THREE.Texture {
     const basename = url.replaceAll("\\", "/").split("/").at(-1);
     if (basename !== "Mushrooms_C.tga") throw new Error(`Unexpected TGA request: ${url}`);
-    onLoad?.(texture);
-    return texture;
-  },
-};
+    onLoad?.(this.preparedTexture);
+    return this.preparedTexture;
+  }
+}
 const manager = new THREE.LoadingManager();
-manager.addHandler(/\.tga$/i, textureHandler);
+manager.addHandler(/\.tga$/i, new PreparedTextureLoader(texture));
 manager.setURLModifier((url) => {
   throw new Error(`Unexpected external resource request: ${url}`);
 });
@@ -158,8 +193,9 @@ gltf.scene.updateMatrixWorld(true);
 const baked = gltf.scene;
 const bakedColorSnapshots: Float32Array[] = [];
 baked.traverse((object) => {
-  if (!object.isMesh) return;
-  const color = object.geometry.getAttribute("color");
+  const mesh = meshOf(object);
+  if (!mesh) return;
+  const color = mesh.geometry.getAttribute("color");
   if (!color) throw new Error("Baked mesh has no color attribute.");
   bakedColorSnapshots.push(new Float32Array(color.array));
 });
@@ -167,9 +203,10 @@ const pink = baked.clone(true);
 tintPink(pink);
 let pinkSnapshotIndex = 0;
 pink.traverse((object) => {
-  if (!object.isMesh) return;
+  const mesh = meshOf(object);
+  if (!mesh) return;
   const bakedColor = bakedColorSnapshots[pinkSnapshotIndex++];
-  const color = object.geometry.getAttribute("color");
+  const color = mesh.geometry.getAttribute("color");
   const pinkColor = new THREE.Color("#ff69b4");
   if (!color || !bakedColor) throw new Error("Pink color assertion inputs are missing.");
   if (color.array === bakedColor || color.array.every((value, index) => value === bakedColor[index]))
@@ -182,20 +219,22 @@ pink.traverse((object) => {
     )
       throw new Error("Pink comparator color assertion failed.");
   }
-  const materials = Array.isArray(object.material)
-    ? object.material
-    : [object.material];
-  if (materials.some((material) => material.color?.getHex() !== 0xffffff))
+  const materials: THREE.Material[] = Array.isArray(mesh.material)
+    ? mesh.material
+    : [mesh.material];
+  if (materials.some((material) => materialColor(material).getHex() !== 0xffffff))
     throw new Error("Pink comparator material is not white.");
 });
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Preview root is missing.");
-const panels = [
+const panelEntries: [string, string, THREE.Object3D][] = [
   ["original", "Original textured FBX", source],
   ["baked", "Baked vertex colors", baked],
   ["pink", "Baked + production pink tint", pink],
-].map(([id, label, object]) => {
+];
+type Panel = ReturnType<typeof makePanel>;
+const panels: [string, Panel][] = panelEntries.map(([id, label, object]) => {
   const panel = document.createElement("section");
   panel.innerHTML = `<h2>${label}</h2>`;
   const canvas = document.createElement("canvas");
@@ -205,9 +244,12 @@ const panels = [
   root.append(panel);
   return [id, makePanel(object, canvas)];
 });
-const panelMap = new Map(panels);
+const panelMap = new Map<string, Panel>(panels);
 for (const [, panel] of panels) panel.render();
-const rendererContext = panelMap.get("baked").renderer.getContext();
+const bakedPanel = panelMap.get("baked");
+const pinkPanel = panelMap.get("pink");
+if (!bakedPanel || !pinkPanel) throw new Error("Baked preview panels are missing.");
+const rendererContext = bakedPanel.renderer.getContext();
 const debug = rendererContext.getExtension("WEBGL_debug_renderer_info");
 const renderer = debug
   ? rendererContext.getParameter(debug.UNMASKED_RENDERER_WEBGL)
@@ -228,8 +270,8 @@ const status = {
   },
   bounds: {
     original: sourceBounds,
-    baked: panelMap.get("baked").bounds,
-    pink: panelMap.get("pink").bounds,
+    baked: bakedPanel.bounds,
+    pink: pinkPanel.bounds,
   },
 };
 window.mushroomPreviewFixture = {

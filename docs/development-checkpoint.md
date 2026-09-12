@@ -37,8 +37,14 @@ and fixture. Evidence mushroom-candidate-preview. First incorrect multiplicative
 pink comparator preserved under first-run; corrected comparator replaces COLOR_0
 and clones geometry, with assertions. No page errors/external requests. Silhouette
 matches source; gills/spots softened. Flat mature cap is not approved as the default
-giant mushroom. No catalog admission. Next inspect rounder Fly Agaric variant from
-same already-downloaded licensed archive with proven tools. Prior full conversion attempt was stopped
+giant mushroom. No catalog admission. Basic variant has now been extracted, converted and rendered using those tools.
+Evidence mushroom-basic-{inspection,conversion,preview}; GLB384900 bytes,
+10656 vertices/3552 triangles, base0/height1m. Root sees rounded cap and distinct
+stem in pink, but jagged baked white spots are a visible quality defect. Not
+admitted. Next improve texture-boundary fidelity before repeating visual review.
+Preview fixture TypeScript errors were corrected; repository tsc now passes.
+Converter/verifier accept environment-selected inputs/output dirs; historical
+Big evidence is unchanged. Prior full conversion attempt was stopped
 at its time bound without artifacts; do not repeat a broad investigation.
 
 Candidate source: Asset Quest Low Poly Mushroom Kit, bundled CC0 license verified.

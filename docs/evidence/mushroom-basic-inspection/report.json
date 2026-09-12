@@ -1,0 +1,83 @@
+{
+  "status": "inspection-only",
+  "source": {
+    "archiveUrl": "https://opengameart.org/sites/default/files/free_mushroom_pack_assetquest.zip",
+    "authorPageUrl": "https://opengameart.org/content/low-poly-mushroom-kit",
+    "archivePath": "/tmp/orbsie-mushroom-candidate.nIL3N8/free_mushroom_pack_assetquest.zip",
+    "archiveBytes": 54791351,
+    "archiveSha256": "b32c4bf0c9d5471ffcde83747402d0f8355add48c317f9147950c4f44facaffd",
+    "archiveEntries": 30,
+    "robotsCrawlDelaySeconds": 10
+  },
+  "license": {
+    "evidencePath": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/mushroom-candidate-inspection/License.txt",
+    "sourcePath": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/License.txt",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "creator": "Asset Quest",
+    "licenseBytes": 567,
+    "licenseSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+    "pageText": "License(s): CC0; collection: 3D Assets (CC0)"
+  },
+  "selectedFiles": [
+    {
+      "archivePath": "Meshes/Fly_Agaric_Basic.fbx",
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Meshes/Fly_Agaric_Basic.fbx",
+      "bytes": 33856,
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b",
+      "format": "FBX binary, version 7700",
+      "globalSettings": {
+        "upAxis": "Y (1)",
+        "upAxisSign": 1,
+        "frontAxis": "Z (2)",
+        "frontAxisSign": 1,
+        "coordAxis": "X (0)",
+        "coordAxisSign": 1,
+        "unitScaleFactor": 1.0,
+        "originalUnitScaleFactor": 1.0
+      },
+      "geometry": {
+        "positionVertexCount": 666,
+        "polygonCount": 111,
+        "triangleCountAfterTriangulation": 222,
+        "polygonSizes": [3, 4],
+        "boundsMin": [-7.282815933227539, -0.1662549078464508, -7.282815933227539],
+        "boundsMax": [7.282815933227539, 18.43482780456543, 7.282815933227539],
+        "boundsSize": [14.565631866455078, 18.601082712411, 14.565631866455078]
+      },
+      "uv": {
+        "mapping": "ByPolygonVertex",
+        "uvArrayScalarCount": 1332,
+        "uvIndexCount": 222
+      },
+      "material": "Mushooms_MAT",
+      "externalTexture": "Textures/Mushrooms_C.tga"
+    },
+    {
+      "archivePath": "Textures/Mushrooms_C.tga",
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Textures/Mushrooms_C.tga",
+      "bytes": 50331692,
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "format": "TGA type 2, uncompressed true-color, 4096x4096, 24-bit"
+    }
+  ],
+  "packFormats": {
+    "meshFiles": 25,
+    "meshFormats": ["FBX binary"],
+    "objFiles": 0,
+    "gltfFiles": 0,
+    "textureFiles": 2,
+    "textureFormats": ["PNG", "TGA"],
+    "regularFiles": 28,
+    "directoryEntries": 2
+  },
+  "assessment": {
+    "capStemCandidate": "Named Fly Agaric Basic by the source pack; 666 positions/222 triangles. Bounds alone do not establish cap/stem recognizability.",
+    "textureDependency": "Required by the FBX material: UVs plus external ../Textures/Mushrooms_C.tga.",
+    "catalogCompatibility": "Not directly compatible with the current catalog path: the candidate is FBX rather than a self-contained GLB, and asset-geometry-core removes UV attributes and builds vertex colors from material color and COLOR_0 without sampling diffuse texture maps.",
+    "actionsNotTaken": [
+      "No app/catalog/model/browser changes",
+      "No network download; Basic FBX was extracted from the already verified archive"
+    ]
+  }
+}
