@@ -35,6 +35,28 @@ const player = await build({
   },
   alias: { "@": "./src" },
 });
+const catalogManifest = JSON.parse(
+  await readFile("assets/catalog/manifest.json", "utf8"),
+);
+const catalogLicensePaths = catalogManifest.sources.map(
+  (source) => source.license.textFile,
+);
+for (const textFile of catalogLicensePaths) {
+  const relativePath = "assets/catalog/licenses/";
+  const suffix =
+    typeof textFile === "string" && textFile.startsWith(relativePath)
+      ? textFile.slice(relativePath.length)
+      : "";
+  if (
+    !suffix ||
+    textFile.includes("\\") ||
+    textFile.startsWith("/") ||
+    suffix.split("/").some((segment) => !segment || segment === "." || segment === "..")
+  )
+    throw new Error(
+      `Catalog license textFile must be a relative POSIX path under ${relativePath}: ${String(textFile)}`,
+    );
+}
 const paths = [
   "src/player/main.tsx",
   "src/player/player.css",
@@ -70,7 +92,7 @@ const paths = [
   "src/lib/asset-geometry-worker.ts",
   "src/lib/use-asset-geometry.ts",
   "assets/catalog/manifest.json",
-  "assets/catalog/licenses/kenney-nature-kit-License.txt",
+  ...catalogLicensePaths,
   "src/lib/protocol.ts",
   "src/lib/fixtures.ts",
   "src/lib/geometry.ts",

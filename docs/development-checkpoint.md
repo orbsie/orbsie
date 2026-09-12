@@ -434,3 +434,19 @@ Next bounded step: prototype a self-contained vertex-colored GLB derivative,
 then review rendered cap/stem and texture-bake fidelity before admitting it under
 a new ID. Preserve original mesh/license provenance; existing asset stays intact.
 No model calls in this inspection. ChatGPT owner sign-in and full goal remain open.
+
+## Conversion attempt bounded; source-license export fix in progress
+
+The offline FBX-to-vertex-color GLB prototype task was interrupted after its
+execution bound with no repository artifacts produced. Conversion/visual quality
+remain unverified; no asset admitted or product behavior changed. Do not treat
+the attempt as successful or restart a broad conversion investigation.
+Root found scripts/build-player.mjs hardcodes the sole Kenney license; a second
+catalog source requires manifest-driven license inclusion in source.json. One
+Luna worker completed that narrow build fix; root reviewed the diff. Node syntax
+check and player build passed, and every manifest license matched source.json
+byte-for-byte as text. Generated player artifacts are unchanged for the current
+single-source catalog. License paths reject traversal/absolute/backslash forms.
+Latest Codex rate-limit read: 24% weekly used (76% remaining), above owner stop
+threshold. Chrome snapshot still shows owner sign-in form with ChatGPT queued.
+No live provider model calls in these tasks. Full goal remains incomplete.
