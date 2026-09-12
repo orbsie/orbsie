@@ -1,5 +1,7 @@
 # Build Orbsie
 
+- Owner capacity rule: stop all subagents and running tests if a reliable Codex usage-limit signal shows less than 20% of the Codex allowance remaining, or the owner reports that threshold. Read quota through local Codex App Server account/rateLimits/read (helper: /tmp/orbsie-read-codex-quota.py); use 100 minus usedPercent for the codex bucket. Last observed 72% weekly remaining. An unbounded goal token budget is not quota evidence.
+
 ## Owner updates — 2026-09-07
 
 - Remove user-facing demo mode. Every creation uses available free prompts or the linked API/account; otherwise preserve the prompt and ask for sign-in or a provider connection. Deterministic fixtures are test infrastructure only. This overrides earlier demo-mode requirements below.

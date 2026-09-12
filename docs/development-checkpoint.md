@@ -1,5 +1,7 @@
 # Development checkpoint
 
+- Owner capacity rule: stop all subagents and running tests if a reliable Codex usage-limit signal shows less than 20% of the Codex allowance remaining, or the owner reports that threshold. Read quota through local Codex App Server account/rateLimits/read (helper: /tmp/orbsie-read-codex-quota.py); use 100 minus usedPercent for the codex bucket. Last observed 72% weekly remaining. An unbounded goal token budget is not quota evidence.
+
 Keep this handoff compact and update it in place. Never include secrets.
 
 - Objective: implement all of `prompt.md` with E2E OpenRouter, Vercel AI Gateway
