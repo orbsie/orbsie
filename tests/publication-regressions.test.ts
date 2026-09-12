@@ -15,9 +15,10 @@ const mock = vi.hoisted(() => ({
   query: vi.fn(),
   connect: vi.fn(),
   boundedJSON: vi.fn(),
+  requireUser: vi.fn(),
 }));
 vi.mock("@/lib/server/auth", () => ({
-  requireUser: async () => ({ id: "owner" }),
+  requireUser: mock.requireUser,
   database: () => mock,
   checkOrigin: vi.fn(),
   boundedJSON: mock.boundedJSON,
@@ -162,6 +163,7 @@ function row(overrides: Record<string, unknown> = {}) {
     public_url: "https://old.example",
     publication_revision: 2,
     published_revision: 1,
+    vercel_project_id: "vp",
     ...overrides,
   };
 }
@@ -247,12 +249,77 @@ beforeEach(() => {
   mock.query.mockReset();
   mock.connect.mockReset();
   mock.boundedJSON.mockReset();
+  mock.requireUser.mockReset();
+  mock.requireUser.mockResolvedValue({ id: "owner" });
   process.env.VERCEL_DEPLOY_TOKEN = "test";
   process.env.VERCEL_TEAM_ID = "test";
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+it("returns the owned Vercel project mapping for an idempotent publication request", async () => {
+  const client = { query: vi.fn(), release: vi.fn() };
+  mock.connect.mockResolvedValue(client);
+  mock.boundedJSON.mockResolvedValue({ projectId: "orb", revision: 2 });
+  client.query
+    .mockResolvedValueOnce({})
+    .mockResolvedValueOnce({
+      rows: [
+        row({
+          deployment_id: "existing-deployment",
+          publication_revision: 2,
+          revision: 2,
+          vercel_project_id: "prj_existing",
+        }),
+      ],
+    })
+    .mockResolvedValueOnce({});
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: URL | RequestInfo) => {
+      expect(String(input)).toContain(
+        "/v13/deployments/existing-deployment?teamId=test",
+      );
+      return Response.json({
+        id: "existing-deployment",
+        readyState: "READY",
+        url: "existing.vercel.app",
+        meta: {
+          orbId: "orb",
+          orbRevision: "2",
+          artifactDigest: "a".repeat(64),
+        },
+      });
+    }),
+  );
+
+  const response = await publishRequest();
+
+  expect(await response.json()).toMatchObject({
+    state: "VERIFYING",
+    deploymentId: "existing-deployment",
+    deploymentUrl: "https://existing.vercel.app",
+    vercelProjectId: "prj_existing",
+  });
+  expect(client.query).toHaveBeenLastCalledWith("COMMIT");
+});
+
+it("does not disclose a Vercel project mapping before owner authentication", async () => {
+  mock.requireUser.mockRejectedValue(
+    Object.assign(new Error("Please sign in."), { status: 401 }),
+  );
+
+  const post = await publishRequest();
+  expect(post.status).toBe(401);
+  expect(await post.json()).toEqual({ error: "Please sign in." });
+  expect(mock.query).not.toHaveBeenCalled();
+
+  const getResponse = await get();
+  expect(getResponse.status).toBe(401);
+  expect(await getResponse.json()).toEqual({ error: "Please sign in." });
+  expect(mock.query).not.toHaveBeenCalled();
 });
 
 it("verifies every immutable artifact before atomically labeling the confirmed URL", async () => {
@@ -267,6 +334,7 @@ it("verifies every immutable artifact before atomically labeling the confirmed U
     state: "READY",
     servedRevision: 2,
     deploymentUrl: "https://orb.vercel.app",
+    vercelProjectId: "vp",
   });
   expect(mock.query.mock.calls[1][0]).toContain(
     "public_url=$1,published_revision=publication_revision",
@@ -307,6 +375,7 @@ it("promotes matching pending metadata with the verified public URL", async () =
   expect(await response.json()).toMatchObject({
     state: "READY",
     servedRevision: 2,
+    vercelProjectId: "vp",
   });
   expect(mock.query.mock.calls[1][1]).toEqual([
     "https://orb.vercel.app",
@@ -417,7 +486,10 @@ it("does not claim readiness when an in-flight status request loses the deployme
 
   const response = await get();
 
-  expect(await response.json()).toEqual({ state: "VERIFYING" });
+  expect(await response.json()).toEqual({
+    state: "VERIFYING",
+    vercelProjectId: "vp",
+  });
   expect(mock.query.mock.calls[1][0]).toContain(
     "AND deployment_id=$5 AND publication_revision=$6",
   );
@@ -461,6 +533,7 @@ it("keeps the previous public release when an artifact is corrupt", async () => 
     state: "VERIFYING",
     servedRevision: 1,
     deploymentUrl: "https://old.example",
+    vercelProjectId: "vp",
   });
   expect(mock.query).toHaveBeenCalledTimes(1);
 });
@@ -509,6 +582,7 @@ it("reports Vercel deployment protection without replacing the previous release"
     state: "PROTECTED",
     servedRevision: 1,
     deploymentUrl: "https://old.example",
+    vercelProjectId: "vp",
   });
   expect(mock.query).toHaveBeenCalledTimes(1);
 });
@@ -524,6 +598,7 @@ it("refuses to promote backward deployments that have no integrity metadata", as
     servedRevision: 1,
     error:
       "This deployment is missing immutable integrity metadata. Publish this revision again to create a verifiable release.",
+    vercelProjectId: "vp",
   });
   expect(mock.query).toHaveBeenCalledTimes(1);
 });
@@ -601,6 +676,7 @@ it("recovers an accepted deployment from a later Vercel page without POST", asyn
     state: "VERIFYING",
     deploymentId: "recovered-deployment",
     deploymentUrl: "https://recovered.vercel.app",
+    vercelProjectId: "prj_test",
   });
   expect(deploymentPosts).toBe(0);
   expect(
@@ -730,6 +806,7 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
   expect(await response.json()).toMatchObject({
     state: "BUILDING",
     deploymentId: "new-deployment",
+    vercelProjectId: "vp",
   });
   const deploymentCall = calls.find(
     ({ url, init }) =>

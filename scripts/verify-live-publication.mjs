@@ -1,19 +1,25 @@
 #!/usr/bin/env node
-import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import {
+  assertLivePublicationOptIn,
+  PublicationAcceptanceError,
+  runPublicationAcceptance,
+} from "./lib/publication-acceptance.mjs";
+
+// This harness creates an account, saves a cloud revision, and publishes to
+// Vercel. Keep the safety gate before reading credentials or making any write.
+assertLivePublicationOptIn();
 
 const BASE = process.env.ORBSIE_TEST_URL ?? "https://orbsie.com";
 const EVIDENCE =
-  process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR ?? "docs/evidence/publication-live";
+  process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR ??
+  "docs/evidence/publication-live";
+const REPUBLISH = process.env.ORBSIE_PUBLICATION_REPUBLISH === "1";
 const EMAIL =
   process.env.ORBSIE_TEST_ACCOUNT_EMAIL ??
   `orbsie-publication-${Date.now()}@example.com`;
 const PASSWORD =
   process.env.ORBSIE_TEST_ACCOUNT_PASSWORD ?? "orbsie-publication-pass-1";
-
-const report = { status: "running", base: BASE, startedAt: new Date().toISOString(), checks: {} };
-await mkdir(EVIDENCE, { recursive: true });
 
 const world = {
   version: 1,
@@ -57,114 +63,119 @@ const world = {
   ],
 };
 
-async function call(path, init, label) {
-  const response = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Origin: BASE,
-      ...(init.cookie ? { Cookie: init.cookie } : {}),
-    },
-    redirect: "error",
-  });
-  const text = await response.text();
-  let body;
+function parseResponse(text) {
   try {
-    body = JSON.parse(text);
+    return JSON.parse(text);
   } catch {
-    body = { raw: text.slice(0, 300) };
+    return { raw: text.slice(0, 300) };
   }
-  if (!response.ok)
-    throw new Error(`${label} HTTP ${response.status}: ${text.slice(0, 220)}`);
-  return { response, body };
 }
 
-try {
-  const signup = await call(
-    "/api/auth/sign-up/email",
-    {
-      method: "POST",
-      body: JSON.stringify({ email: EMAIL, password: PASSWORD, name: "Orbsie Publication Acceptance" }),
-    },
-    "sign-up",
-  );
-  const cookies = (signup.response.headers.getSetCookie?.() ?? [])
-    .map((line) => line.split(";")[0])
-    .join("; ");
-  assert.ok(cookies.length > 0, "signup returned a session cookie");
-  report.checks.signup = "passed";
-
-  world.revision = 1;
-  const saved = await call(
-    "/api/projects",
-    {
-      method: "PUT",
-      cookie: cookies,
-      body: JSON.stringify({ project: world, baseRevision: null, baseSnapshotToken: null }),
-    },
-    "cloud save",
-  );
-  assert.equal(saved.body.revision, 1);
-  report.checks.cloudSave = { revision: saved.body.revision };
-
-  const submitted = await call(
-    "/api/publish",
-    {
-      method: "POST",
-      cookie: cookies,
-      body: JSON.stringify({ projectId: world.id, revision: world.revision }),
-    },
-    "publish",
-  );
-  report.checks.publishSubmitted = {
-    state: submitted.body.state,
-    url: submitted.body.url,
-    deploymentUrl: submitted.body.deploymentUrl,
-  };
-
-  let ready;
-  for (let attempt = 0; attempt < 120; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    try {
-      const status = await call(
-        `/api/publish?projectId=${encodeURIComponent(world.id)}`,
-        { cookie: cookies },
-        "publication status",
-      );
-      ready = status.body;
-      if (ready.state === "READY" && ready.public_url) break;
-      if (ready.state === "PROTECTED")
-        throw new Error(`Deployment protected: ${ready.error ?? ""}`);
-      if (ready.error && ready.state === "VERIFYING" && attempt > 60)
-        throw new Error(`Still unverified: ${ready.error}`);
-    } catch (error) {
-      report.pollErrors ??= [];
-      report.pollErrors.push(String(error).slice(0, 200));
-      if (attempt > 100) throw error;
-    }
+async function request(path, init = {}, label) {
+  let response;
+  try {
+    response = await fetch(`${BASE}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        Origin: BASE,
+        ...(init.cookie ? { Cookie: init.cookie } : {}),
+      },
+      redirect: "error",
+    });
+  } catch (error) {
+    throw new PublicationAcceptanceError(`${label} network request failed.`, {
+      cause: error,
+    });
   }
-  if (!ready || ready.state !== "READY")
-    throw new Error(`Publication never became READY: ${JSON.stringify(ready).slice(0, 300)}`);
-  report.checks.publicationReady = { state: ready.state, publicUrl: ready.public_url, servedRevision: ready.served_revision ?? ready.servedRevision };
+  const text = await response.text();
+  return {
+    response,
+    status: response.status,
+    ok: response.ok,
+    body: parseResponse(text),
+  };
+}
 
-  const signedOut = await fetch(ready.public_url, {
-    redirect: "error",
-    headers: { "User-Agent": "OrbsiePublicationAcceptance/1.0" },
+async function publicGet(url, label) {
+  let response;
+  try {
+    response = await fetch(url, {
+      redirect: "error",
+      credentials: "omit",
+      headers: { "User-Agent": "OrbsiePublicationAcceptance/1.0" },
+    });
+  } catch (error) {
+    throw new PublicationAcceptanceError(`${label} network request failed.`, {
+      cause: error,
+    });
+  }
+  return { status: response.status, text: await response.text() };
+}
+
+function reportOrigin(value) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return "<invalid-origin>";
+  }
+}
+
+const report = {
+  status: "running",
+  base: reportOrigin(BASE),
+  republish: REPUBLISH,
+  startedAt: new Date().toISOString(),
+  checks: {},
+};
+
+try {
+  const result = await runPublicationAcceptance({
+    transport: { request, publicGet },
+    world,
+    email: EMAIL,
+    password: PASSWORD,
+    republish: REPUBLISH,
   });
-  report.checks.signedOutStatus = signedOut.status;
-  const page = await signedOut.text();
-  report.checks.signedOutDataReady = page.includes('data-ready="true"');
-  report.checks.signedOutTitle = (page.match(/<title>([^<]*)<\/title>/) ?? [])[1] ?? null;
-  assert.equal(report.checks.signedOutStatus, 200);
-  assert.equal(report.checks.signedOutDataReady, true);
-
+  const sharingPage = new URL(result.first.publicUrl, BASE).toString();
+  report.checks = {
+    // Keep the first-publish evidence fields stable for existing reports.
+    signup: "passed",
+    cloudSave: { revision: result.first.revision },
+    publishSubmitted: {
+      state: result.first.state,
+      url: result.first.publicUrl,
+      deploymentUrl: result.first.deploymentUrl,
+      deploymentId: result.first.deploymentId,
+      vercelProjectId: result.first.vercelProjectId,
+    },
+    publicationReady: {
+      state: "READY",
+      publicUrl: result.first.deploymentUrl,
+      sharingPage,
+      servedRevision: result.first.servedRevision,
+      vercelProjectId: result.first.vercelProjectId,
+    },
+    signedOutStatus: 200,
+    signedOutDataReady: true,
+    signedOutTitle: result.first.signedOutSnapshot.title,
+    first: result.first,
+    ...(result.republish ? { republish: result.republish } : {}),
+  };
   report.status = "passed";
 } catch (error) {
   report.status = "failed";
-  report.error = String(error).slice(0, 1200);
+  report.error =
+    error instanceof Error
+      ? error.message.slice(0, 1200)
+      : "Publication acceptance failed.";
   process.exitCode = 1;
 } finally {
   report.finishedAt = new Date().toISOString();
-  await writeFile(`${EVIDENCE}/report.json`, JSON.stringify(report, null, 2) + "\n");
+  await mkdir(EVIDENCE, { recursive: true });
+  await writeFile(
+    `${EVIDENCE}/report.json`,
+    JSON.stringify(report, null, 2) + "\n",
+  );
   console.log(JSON.stringify(report, null, 1));
 }

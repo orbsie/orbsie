@@ -128,6 +128,7 @@ export async function POST(request: Request) {
           url: publicPath(projectId),
           deploymentUrl: `https://${deployment.url}`,
           deploymentId: deployment.id,
+          vercelProjectId: orb.vercel_project_id ?? null,
         });
       }
     }
@@ -327,6 +328,7 @@ export async function POST(request: Request) {
       url: publicPath(projectId),
       deploymentUrl: `https://${deployment.url}`,
       deploymentId,
+      vercelProjectId: target ?? null,
     });
   } catch (e) {
     if (client) await client.query("ROLLBACK");
@@ -340,7 +342,7 @@ export async function GET(request: Request) {
     const user = await requireUser(request);
     const id = new URL(request.url).searchParams.get("projectId");
     const result = await database().query(
-      "SELECT deployment_id,public_url,publication_revision,published_revision,publication_metadata,published_metadata FROM orbs WHERE id=$1 AND owner_id=$2",
+      "SELECT deployment_id,public_url,publication_revision,published_revision,publication_metadata,published_metadata,vercel_project_id FROM orbs WHERE id=$1 AND owner_id=$2",
       [id, user.id],
     );
     const orb = result.rows[0];
@@ -361,6 +363,7 @@ export async function GET(request: Request) {
           state: "VERIFYING",
           servedRevision: orb.published_revision ?? null,
           deploymentUrl: orb.public_url,
+          vercelProjectId: orb.vercel_project_id ?? null,
           error:
             "This deployment is missing immutable integrity metadata. Publish this revision again to create a verifiable release.",
         });
@@ -384,12 +387,14 @@ export async function GET(request: Request) {
             state: "PROTECTED",
             servedRevision: orb.published_revision ?? null,
             deploymentUrl: orb.public_url,
+            vercelProjectId: orb.vercel_project_id ?? null,
             error: verification.message,
           });
         return Response.json({
           state: "VERIFYING",
           servedRevision: orb.published_revision ?? null,
           deploymentUrl: orb.public_url,
+          vercelProjectId: orb.vercel_project_id ?? null,
           error: verification.message,
         });
       }
@@ -412,7 +417,11 @@ export async function GET(request: Request) {
         ],
       );
       // A new POST may have replaced the attempt while artifact verification was in flight.
-      if (!promoted.rows.length) return Response.json({ state: "VERIFYING" });
+      if (!promoted.rows.length)
+        return Response.json({
+          state: "VERIFYING",
+          vercelProjectId: orb.vercel_project_id ?? null,
+        });
       orb.published_revision = promoted.rows[0].published_revision;
     }
     return Response.json({
@@ -421,6 +430,7 @@ export async function GET(request: Request) {
       url: d.readyState === "READY" ? publicPath(id!) : undefined,
       deploymentUrl:
         d.readyState === "READY" ? `https://${d.url}` : orb.public_url,
+      vercelProjectId: orb.vercel_project_id ?? null,
     });
   } catch (e) {
     return apiError(e);
