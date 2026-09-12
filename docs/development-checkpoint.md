@@ -106,3 +106,17 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Next: review decoder, implement capability-aware transport and integration tests,
   then a bounded live create/edit milestone. Do not repeat live prompt-only tests.
 - Codex allowance last observed 71% remaining; stop agents/tests below 20%.
+
+### Decoder review accepted
+
+`e6c7cf5` adds the bounded incremental command-envelope decoder. Luna reports
+20 focused tests plus typechecking passing; Astra reviewed the implementation
+and requested immediate incomplete-command limits, chunk-consistent Unicode
+accounting, and fail-closed callback handling before acceptance.
+
+Next bounded task implements optional internal JSON object / JSON Schema
+transports through the existing generation validation pipeline. Defaults and
+route capability selection remain unchanged until reviewed and live-verified.
+The schema transport uses non-strict schema guidance, not an unsupported claim
+of full strict-schema compatibility. Final commit must wait for complete valid
+envelope syntax and a non-truncated provider result. No live calls in this task.
