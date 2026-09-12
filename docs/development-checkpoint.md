@@ -127,7 +127,9 @@ publication passed. These are bounded evidence, not complete provider E2E.
 
 ## Next integration milestone
 
-Use corrected touch driver at a meaningful saved-game mobile milestone; do
-not repeat its passing focused check. Full bounce route still needs steering
+Corrected touch driver passed one saved-game mobile integration at c1f763b:
+`winning-multitouch-integration/`, earlier OpenRouter revision30, score0 portal
+rejection→five crystals/win/reset, no overflow/cookies/external/model calls.
+Root reviewed report and screenshot. Do not repeat these green checks. Full bounce route still needs steering
 that accounts for platform phase; existing two-attempt task is finished.
 Owner-dependent ChatGPT sign-in and real-device gates remain as listed above.
