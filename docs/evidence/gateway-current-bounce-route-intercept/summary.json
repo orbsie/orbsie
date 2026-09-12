@@ -1,0 +1,50 @@
+{
+  "finalHarnessBaseCommit": "347fde7d7de103c844ad7659eb704a1aacbe8398",
+  "finalHarnessState": "reviewed source-footprint-only correction; no browser rerun",
+  "sourceZip": "docs/evidence/provider-e2e/gateway-captured-offline/gateway/world-goal-7.zip",
+  "sourceZipSha256": "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
+  "projectId": "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+  "revision": 37,
+  "browserAttemptsUsed": 1,
+  "input": "real desktop keyboard",
+  "modelCalls": 0,
+  "externalRequests": 0,
+  "pageErrors": 0,
+  "transitions": [
+    {
+      "id": "platform-1",
+      "contactAtMs": 21274.3,
+      "ascentAtMs": 21391.9
+    }
+  ],
+  "intercept": {
+    "entityId": "platform-2",
+    "atMs": 22694.0,
+    "wraps": true,
+    "target": [
+      0,
+      2,
+      1.3089318182
+    ],
+    "reachable": true
+  },
+  "observedGap": {
+    "playerX": -0.686,
+    "platformHalfX": 0.6699,
+    "meaning": "Strict source landing overlap was missed by about 0.016 units; prior steering dead zone was 0.08."
+  },
+  "finalCorrection": {
+    "steeringBounds": "sourcePlatformContact runtime bounds",
+    "inwardMargin": 0.01,
+    "prediction": "removed after review; neither wall-clock ballistic timing nor fixed horizon was established",
+    "validation": "11 targeted tests passed; syntax and diff checks passed; no browser rerun"
+  },
+  "status": "partial-failure",
+  "unresolved": "The final 0.01-unit edge-steering correction is covered by static checks but was not rerun because the one browser attempt was exhausted. p2/p3, win, and reset remain unverified.",
+  "runBaseCommit": "347fde7d7de103c844ad7659eb704a1aacbe8398",
+  "runHarnessState": "uncommitted predictive experiment based on runBaseCommit",
+  "reviewedHarnessSha256": {
+    "scripts/lib/saved-bounce-route.mjs": "a85235b1ea433ce831742c90ebf14317264853c6514315ad84f4599c47d6552e",
+    "scripts/verify-saved-bounce-route.mjs": "20683796334a34fa42f09215180c9342135503e0cfb0fd6b557f4ea804cff7cc"
+  }
+}

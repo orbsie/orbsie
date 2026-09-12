@@ -14,11 +14,14 @@ import { strFromU8, unzipSync } from "fflate";
 import {
   PLAYER_HALF_HEIGHT,
   renderedDimensionsMatchSource,
+  sourcePlatformContact,
 } from "./lib/flagship-platforms-verifier.mjs";
 import {
   bounceStageTransition,
   groundSamplesAfter,
   jumpDownEventsAfter,
+  platformFootprintSteeringNeeded,
+  PLATFORM_INTERCEPT_MARGIN,
   sequentialRouteAnalysis,
   runtimePlayerCenter,
 } from "./lib/saved-bounce-route.mjs";
@@ -788,13 +791,36 @@ try {
     });
   };
   const steerToPlatform = async (current, entity, phase) => {
-    const position = positionForPlatform(current, entity.id);
     const player = runtimePlayerCenter(current);
-    if (!position || !player) return;
-    const gap = Math.hypot(player[0] - position[0], player[2] - position[1]);
+    if (!player) return;
+    const platform = current.platforms[entity.id];
+    const source = sourcePlatformContact(
+      entity,
+      platform,
+      catalogAssets.get(entity.geometry.assetId),
+      player,
+    );
+    if (
+      !source ||
+      !Number.isFinite(source.halfX) ||
+      !Number.isFinite(source.halfZ)
+    ) {
+      await setKeys([], `${phase}-source-contact-unavailable`);
+      return;
+    }
+    const halfX = source.halfX;
+    const halfZ = source.halfZ;
+    const target = source.center;
+    const needsSteering = platformFootprintSteeringNeeded({
+      playerCenter: player,
+      target,
+      halfX,
+      halfZ,
+      margin: PLATFORM_INTERCEPT_MARGIN,
+    });
     await setKeys(
-      gap > 0.11
-        ? movementKeys(position[0] - player[0], position[1] - player[2])
+      needsSteering
+        ? movementKeys(target[0] - player[0], target[2] - player[2])
         : [],
       phase,
     );

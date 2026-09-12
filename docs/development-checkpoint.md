@@ -187,13 +187,21 @@ following the established route without requiring airborne travel to portal;
 retain actual-input and unchanged-world constraints. Owner ChatGPT sign-in,
 physical mobile, visual quality and full original acceptance gates remain.
 
-## Current route steering task
+## Reviewed source-footprint steering correction
 
-One corrected-harness integration after0fdca17 failed at platform2 following
-a verified platform1 bounce (`gateway-current-route-integration/`). No model
-calls. Across attempts different path phases fail atp2/p3, while one reached
-all3 and score7. Root source review found current-pose steering with no landing
-intercept. Luna gateway_bounce_route now owns one bounded diagnostic/steering
-correction, targeted tests and at most1 browser run only after concrete tested
-change. Preserve sourceZIP/physics/contact assertions. Do not repeat random
-phase attempts. Root updated scope audit's stale multitouch and Gateway rows.
+Corrected-harness integration after0fdca17 failed at platform2 following
+platform1 bounce (`gateway-current-route-integration/`,347fde7). Luna then
+ran one bounded predictive experiment (`gateway-current-bounce-route-intercept/`):
+platform1 passed, platform2 missed by about0.016 beyond its strict footprint.
+No model calls. Root rejected prediction based on performance-clock velocity
+and a later fixed0.72 horizon because simulation timing was not established.
+
+Final reviewed change is small: current platform contact bounds in runtime
+coordinates plus0.01 inward margin, replacing rendered-world center steering.
+Unused prediction code/tests removed.11 focused tests passed (both outside
+edges, inset edge and safe interior); syntax/diff passed. No browser rerun
+of final correction and no complete portal/reset claim. All raw failed runs
+retained separately; prior three-bounce/score7 proof remains valid. No active
+worker. Avoid repeated random-phase retries or building an unnecessary
+navigation subsystem. Next acceptance still needs actual portal/reset for
+this scene and owner ChatGPT sign-in; physical mobile and visual quality open.

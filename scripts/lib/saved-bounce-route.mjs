@@ -8,6 +8,7 @@ export const BOUNCE_ASCENT_RISE = 0.08;
 export const BOUNCE_CONTACT_SETTLE_DELTA = 0.012;
 export const BOUNCE_CONTACT_MAX_DEPTH = 0.18;
 export const GROUND_CENTER_Y = 0.5;
+export const PLATFORM_INTERCEPT_MARGIN = 0.01;
 
 export function runtimePlayerCenter(sample) {
   return sample?.player?.runtimeCenter ?? sample?.player?.center ?? null;
@@ -15,6 +16,37 @@ export function runtimePlayerCenter(sample) {
 
 function sampleTime(sample) {
   return sample?.atPerformanceMs;
+}
+
+function finiteVec3(value) {
+  return (
+    Array.isArray(value) &&
+    value.length === 3 &&
+    value.every((component) => Number.isFinite(component))
+  );
+}
+
+/** Keep the player inside an inward margin of the strict source footprint. */
+export function platformFootprintSteeringNeeded({
+  playerCenter,
+  target,
+  halfX,
+  halfZ,
+  margin = PLATFORM_INTERCEPT_MARGIN,
+} = {}) {
+  if (
+    !finiteVec3(playerCenter) ||
+    !finiteVec3(target) ||
+    ![halfX, halfZ, margin].every(Number.isFinite) ||
+    halfX < 0 ||
+    halfZ < 0 ||
+    margin < 0
+  )
+    return true;
+  return (
+    Math.abs(playerCenter[0] - target[0]) > Math.max(0, halfX - margin) ||
+    Math.abs(playerCenter[2] - target[2]) > Math.max(0, halfZ - margin)
+  );
 }
 
 /**

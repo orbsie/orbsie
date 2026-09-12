@@ -3,6 +3,7 @@ import {
   bounceStageTransition,
   groundSamplesAfter,
   jumpDownEventsAfter,
+  platformFootprintSteeringNeeded,
   sequentialRouteAnalysis,
 } from "../scripts/lib/saved-bounce-route.mjs";
 
@@ -202,6 +203,39 @@ describe("saved moving-bounce route evidence", () => {
       expect(route.noGroundResetObserved).toBe(true);
       expect(route.groundObservationBoundCoversFinalAscent).toBe(false);
       expect(route.passed).toBe(false);
+    },
+  );
+
+  it.each([-0.686, 0.686])(
+    "keeps steering when the player is just outside the strict footprint (%s)",
+    (playerX) => {
+      expect(
+        platformFootprintSteeringNeeded({
+          playerCenter: [playerX, 1, 0],
+          target: [0, 1, 0],
+          halfX: 0.67,
+          halfZ: 0.4,
+          margin: 0.01,
+        }),
+      ).toBe(true);
+      expect(
+        platformFootprintSteeringNeeded({
+          playerCenter: [Math.sign(playerX) * 0.665, 1, 0],
+          target: [0, 1, 0],
+          halfX: 0.67,
+          halfZ: 0.4,
+          margin: 0.01,
+        }),
+      ).toBe(true);
+      expect(
+        platformFootprintSteeringNeeded({
+          playerCenter: [Math.sign(playerX) * 0.65, 1, 0],
+          target: [0, 1, 0],
+          halfX: 0.67,
+          halfZ: 0.4,
+          margin: 0.01,
+        }),
+      ).toBe(false);
     },
   );
 });
