@@ -1,0 +1,5451 @@
+{
+  "status": "passed",
+  "scope": "One fixture intercepted through the real editor UI, reload recovery, ZIP export, desktop keyboard bounce, and exported 390x844 CDP touch bounce run",
+  "appUrl": "http://127.0.0.1:3068",
+  "appSourceCommit": "e0dff7c",
+  "sourceCommits": {
+    "repoHead": "2890dc48a8aac4229ebcd0db386d384666a48f8a",
+    "appSourceAssumedFromRepoHead": false,
+    "verifierSha256": "c2b49632db6fa773719923f276811b29596dda3b92f81765ec07490551fbe5c9",
+    "runtimeSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+    "runtimeCssSha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+  },
+  "fixture": {
+    "transport": "test-only intercepted application/x-ndjson",
+    "requestCount": 1,
+    "modelCalls": 0,
+    "providerCalls": 0,
+    "bodySha256": "c7bfb0357f237512f9ad6a7b32a0c19844924d37ef5e125e73a8767899b3995a",
+    "contactHeight": 1.0174999874,
+    "commands": [
+      {
+        "type": "reserve_entity",
+        "entity": {
+          "id": "moving-bounce-platform",
+          "label": "Moving bounce platform",
+          "position": [
+            -0.85,
+            0.35,
+            3.2
+          ],
+          "color": "#74c884",
+          "scale": [
+            3,
+            3,
+            3
+          ],
+          "behavior": {
+            "type": "bounce"
+          },
+          "stage": "seed"
+        }
+      },
+      {
+        "type": "set_geometry",
+        "id": "moving-bounce-platform",
+        "geometry": {
+          "kind": "asset",
+          "detail": "refined",
+          "assetId": "kenney.nature.platform-grass"
+        }
+      },
+      {
+        "type": "set_game",
+        "game": {
+          "variables": [],
+          "rules": [
+            {
+              "id": "start-moving-bounce",
+              "trigger": {
+                "type": "start"
+              },
+              "conditions": [],
+              "actions": [
+                {
+                  "type": "move_path",
+                  "entityId": "moving-bounce-platform",
+                  "points": [
+                    [
+                      -0.85,
+                      0.35,
+                      3.2
+                    ],
+                    [
+                      1.1,
+                      0.35,
+                      3.2
+                    ]
+                  ],
+                  "duration": 2.8,
+                  "loop": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "commit_revision",
+        "message": "A moving bounce platform is ready. Jump once, release, and watch it carry the bounce."
+      }
+    ],
+    "requestSummaries": [
+      {
+        "prompt": "Build a moving bounce platform game with one reachable jump.",
+        "revision": 0,
+        "entityIds": [],
+        "requestShapeValid": true
+      }
+    ]
+  },
+  "externalRequests": [],
+  "standaloneRequests": [
+    {
+      "method": "GET",
+      "path": "index.html"
+    },
+    {
+      "method": "GET",
+      "path": "runtime.css"
+    },
+    {
+      "method": "GET",
+      "path": "runtime.js"
+    },
+    {
+      "method": "GET",
+      "path": "project.json"
+    },
+    {
+      "method": "GET",
+      "path": "models/kenney/nature-kit/platform_grass.glb"
+    },
+    {
+      "method": "GET",
+      "path": "asset-geometry-worker.js"
+    }
+  ],
+  "pageErrors": [],
+  "checks": {
+    "syntheticBounceRegression": {
+      "repeatedFrameBounceAccepted": true,
+      "continuedFallRejected": true,
+      "flatAtSurfaceRejected": true
+    },
+    "createdThroughEditor": true,
+    "reloadPrompt": true,
+    "reloadRecovery": true,
+    "editorPlayReady": true,
+    "desktopBounce": true,
+    "exported": {
+      "archiveSha256": "1d5f213480e2b103c0df23102aee7efae3f74b86d5c7c63bfa08bcd00587a057",
+      "projectSha256": "626049c9446ba874598a4c7c12c210ce0f310c10e3def1fe834e9cfa3bd9c117",
+      "projectRevision": 4,
+      "entityIds": [
+        "moving-bounce-platform"
+      ],
+      "gameRules": [
+        "start-moving-bounce"
+      ]
+    },
+    "standaloneReady": true,
+    "touchBounce": true
+  },
+  "output": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/moving-bounce-browser-frame-aware",
+  "desktop": {
+    "inputStartAt": 1315.5999999996275,
+    "releaseAt": 2942.2000000001863,
+    "samples": [
+      {
+        "atPerformanceMs": 1315.5999999996275,
+        "player": {
+          "center": [
+            0,
+            0.4868918000004029,
+            5
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.8219436748099813,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.16173935366397,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.5178520040440074,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1386.2000000001863,
+        "player": {
+          "center": [
+            -0.06366771152699535,
+            0.5765830141019085,
+            4.883457035780305
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7870526033810208,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.1268482822350094,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.552743075472968,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1452.3999999994412,
+        "player": {
+          "center": [
+            -0.06366771152699535,
+            0.5765830141019085,
+            4.883457035780305
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7870526033810208,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.1268482822350094,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.552743075472968,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1513.8999999994412,
+        "player": {
+          "center": [
+            -0.14037579770366782,
+            0.8045966068999257,
+            4.743043825877845
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7591954605238778,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0989911393778664,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.5806002183301109,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1577.0999999996275,
+        "player": {
+          "center": [
+            -0.21708388388034028,
+            0.9645731163638998,
+            4.602630615975386
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7313383176667348,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0711339965207234,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6084573611872537,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1637.8999999994412,
+        "player": {
+          "center": [
+            -0.21708388388034028,
+            0.9645731163638998,
+            4.602630615975386
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7313383176667348,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0711339965207234,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6084573611872537,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 1697.8999999994412,
+        "player": {
+          "center": [
+            -0.21708388388034028,
+            0.9645731163638998,
+            4.602630615975386
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7313383176667348,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0711339965207234,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6084573611872537,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2765,
+        "player": {
+          "center": [
+            -0.3705000562336852,
+            1.2734541747362498,
+            4.321804196170467
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6756240319524491,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.015419710806438,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6641716469015395,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2823.2999999998137,
+        "player": {
+          "center": [
+            -0.48249386205234146,
+            1.4161912350650097,
+            4.116800909711568
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6349526033807611,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9747482822347497,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7048430754732276,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2880.2000000001863,
+        "player": {
+          "center": [
+            -0.578378969773182,
+            1.4933286143570343,
+            3.941284397333493
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6001311748093325,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9399268536633212,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7396645040446561,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2935,
+        "player": {
+          "center": [
+            -0.6742640774940226,
+            1.5755221361554594,
+            3.765767884955418
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.565309746237904,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9051054250918926,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7744859326160847,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2975.7999999998137,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.5778794500001798,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5304186748095918,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8702143536635805,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8093770040443967,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3013.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.5726908000000888,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5070883176667347,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8468839965207233,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8327073611872539,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3052.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.5511828999999977,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.48410617480959184,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8239018536635805,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8556895040443968,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3093.7000000001863,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.4872228999988606,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.4492151033806313,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.78901078223462,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8905805754733573,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3132.0999999996275,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.4243532499993354,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.4261633176666051,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7659589965205937,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9136323611873836,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3172.5,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.2978747499973655,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3912722462376444,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.731067925091633,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9485234326163442,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3209.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.1926390999988712,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3680115319523194,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.707807210806308,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9717841469016693,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3245.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.0702674499986866,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3446811748094621,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6844768536634507,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9951145040445265,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3284.2999999998137,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.132210387398775,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.32155974623790384,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6613554250918925,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0182359326160848,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3323.2000000001863,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.432084987397776,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.28827046052374783,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6280661393777365,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0515252183302408,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      }
+    ],
+    "beforeJump": {
+      "atPerformanceMs": 1315.5999999996275,
+      "player": {
+        "center": [
+          0,
+          0.4868918000004029,
+          5
+        ],
+        "visible": true
+      },
+      "platform": {
+        "center": [
+          -0.8219436748099813,
+          0.3237499915063381,
+          3.224120569229126
+        ],
+        "bounds": {
+          "min": [
+            -2.16173935366397,
+            0.1999999977648258,
+            2.1382412135601045
+          ],
+          "max": [
+            0.5178520040440074,
+            0.4474999852478504,
+            4.309999924898148
+          ]
+        },
+        "dimensions": [
+          2.6795913577079773,
+          0.2474999874830246,
+          2.171758711338043
+        ]
+      },
+      "keyEvents": [],
+      "inputEvents": []
+    },
+    "contact": {
+      "index": 18,
+      "previous": {
+        "atPerformanceMs": 3209.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.1926390999988712,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3680115319523194,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.707807210806308,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9717841469016693,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      "current": {
+        "atPerformanceMs": 3245.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.0702674499986866,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3446811748094621,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6844768536634507,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9951145040445265,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      "contactHeight": 1.0174999874,
+      "descentDelta": -0.12237165000018457,
+      "descending": true,
+      "crossedHeight": true,
+      "overlap": true,
+      "noJumpInputAfterRelease": true
+    },
+    "transition": {
+      "contact": {
+        "index": 18,
+        "previous": {
+          "atPerformanceMs": 3209.899999999441,
+          "player": {
+            "center": [
+              -0.7062897034731406,
+              1.1926390999988712,
+              3.7071453698204873
+            ],
+            "visible": true
+          },
+          "platform": {
+            "center": [
+              -0.3680115319523194,
+              0.3237499915063381,
+              3.224120569229126
+            ],
+            "bounds": {
+              "min": [
+                -1.707807210806308,
+                0.1999999977648258,
+                2.1382412135601045
+              ],
+              "max": [
+                0.9717841469016693,
+                0.4474999852478504,
+                4.309999924898148
+              ]
+            },
+            "dimensions": [
+              2.6795913577079773,
+              0.2474999874830246,
+              2.171758711338043
+            ]
+          },
+          "keyEvents": [
+            {
+              "type": "down",
+              "key": "w",
+              "atPerformanceMs": 1330.8999999994412
+            },
+            {
+              "type": "down",
+              "key": " ",
+              "atPerformanceMs": 1332
+            },
+            {
+              "type": "up",
+              "key": " ",
+              "atPerformanceMs": 2940
+            },
+            {
+              "type": "up",
+              "key": "w",
+              "atPerformanceMs": 2941.0999999996275
+            }
+          ],
+          "inputEvents": []
+        },
+        "current": {
+          "atPerformanceMs": 3245.899999999441,
+          "player": {
+            "center": [
+              -0.7062897034731406,
+              1.0702674499986866,
+              3.7071453698204873
+            ],
+            "visible": true
+          },
+          "platform": {
+            "center": [
+              -0.3446811748094621,
+              0.3237499915063381,
+              3.224120569229126
+            ],
+            "bounds": {
+              "min": [
+                -1.6844768536634507,
+                0.1999999977648258,
+                2.1382412135601045
+              ],
+              "max": [
+                0.9951145040445265,
+                0.4474999852478504,
+                4.309999924898148
+              ]
+            },
+            "dimensions": [
+              2.6795913577079773,
+              0.2474999874830246,
+              2.171758711338043
+            ]
+          },
+          "keyEvents": [
+            {
+              "type": "down",
+              "key": "w",
+              "atPerformanceMs": 1330.8999999994412
+            },
+            {
+              "type": "down",
+              "key": " ",
+              "atPerformanceMs": 1332
+            },
+            {
+              "type": "up",
+              "key": " ",
+              "atPerformanceMs": 2940
+            },
+            {
+              "type": "up",
+              "key": "w",
+              "atPerformanceMs": 2941.0999999996275
+            }
+          ],
+          "inputEvents": []
+        },
+        "contactHeight": 1.0174999874,
+        "descentDelta": -0.12237165000018457,
+        "descending": true,
+        "crossedHeight": true,
+        "overlap": true
+      },
+      "minimumIndex": 18,
+      "ascentIndex": 20,
+      "ascentDeltas": [
+        0.06194293740008838,
+        0.2998745999990009
+      ],
+      "velocityDirectionReversal": true
+    },
+    "ascentSamples": [
+      {
+        "atPerformanceMs": 3245.899999999441,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.0702674499986866,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3446811748094621,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6844768536634507,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9951145040445265,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3284.2999999998137,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.132210387398775,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.32155974623790384,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6613554250918925,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0182359326160848,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 3323.2000000001863,
+        "player": {
+          "center": [
+            -0.7062897034731406,
+            1.432084987397776,
+            3.7071453698204873
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.28827046052374783,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6280661393777365,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0515252183302408,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [
+          {
+            "type": "down",
+            "key": "w",
+            "atPerformanceMs": 1330.8999999994412
+          },
+          {
+            "type": "down",
+            "key": " ",
+            "atPerformanceMs": 1332
+          },
+          {
+            "type": "up",
+            "key": " ",
+            "atPerformanceMs": 2940
+          },
+          {
+            "type": "up",
+            "key": "w",
+            "atPerformanceMs": 2941.0999999996275
+          }
+        ],
+        "inputEvents": []
+      }
+    ],
+    "pathMotion": {
+      "sampleCount": 30,
+      "xRange": 1.913367857143117,
+      "yRange": 0,
+      "zRange": 0
+    },
+    "postReleaseJumpEvents": [],
+    "keyEvents": [
+      {
+        "type": "down",
+        "key": "w",
+        "atPerformanceMs": 1330.8999999994412
+      },
+      {
+        "type": "down",
+        "key": " ",
+        "atPerformanceMs": 1332
+      },
+      {
+        "type": "up",
+        "key": " ",
+        "atPerformanceMs": 2940
+      },
+      {
+        "type": "up",
+        "key": "w",
+        "atPerformanceMs": 2941.0999999996275
+      }
+    ],
+    "inputEvents": []
+  },
+  "touch": {
+    "inputStartAt": 2619.2000000001863,
+    "releaseAt": 3714,
+    "samples": [
+      {
+        "atPerformanceMs": 2619.2000000001863,
+        "player": {
+          "center": [
+            0,
+            0.41999999999999993,
+            5
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7568972462382932,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.096692925092282,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.5828984326156954,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": []
+      },
+      {
+        "atPerformanceMs": 2906.2999999998137,
+        "player": {
+          "center": [
+            0,
+            0.41999999999999993,
+            5
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7011829605240076,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0409786393779963,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6386127183299811,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 2964.5999999996275,
+        "player": {
+          "center": [
+            0,
+            0.41999999999999993,
+            5
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7011829605240076,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0409786393779963,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6386127183299811,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3021.2000000001863,
+        "player": {
+          "center": [
+            0,
+            0.41999999999999993,
+            5
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.7011829605240076,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0409786393779963,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6386127183299811,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3078,
+        "player": {
+          "center": [
+            -0.07670808617667246,
+            0.6809890922507402,
+            4.8595867900975405
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6733258176668646,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0131214965208533,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.666469861187124,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3137,
+        "player": {
+          "center": [
+            -0.07670808617667246,
+            0.6809890922507402,
+            4.8595867900975405
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6733258176668646,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -2.0131214965208533,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.666469861187124,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3197.4000000003725,
+        "player": {
+          "center": [
+            -0.15341617235334493,
+            0.842359426305721,
+            4.719173580195081
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6454686748097218,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9852643536637105,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6943270040442668,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3255,
+        "player": {
+          "center": [
+            -0.15341617235334493,
+            0.842359426305721,
+            4.719173580195081
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6454686748097218,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9852643536637105,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6943270040442668,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3312.4000000003725,
+        "player": {
+          "center": [
+            -0.15341617235334493,
+            0.842359426305721,
+            4.719173580195081
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6454686748097218,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9852643536637105,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6943270040442668,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3369,
+        "player": {
+          "center": [
+            -0.15341617235334493,
+            0.842359426305721,
+            4.719173580195081
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.6454686748097218,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9852643536637105,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.6943270040442668,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3426.2000000001863,
+        "player": {
+          "center": [
+            -0.23012425853001747,
+            1.0375620548591764,
+            4.578760370292621
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.617611531952579,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9574072108065677,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7221841469014098,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3747.0999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3017592420518145,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5618972462382932,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9016929250922818,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7778984326156955,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3786.7999999998137,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3017592420518145,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5618972462382932,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.9016929250922818,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.7778984326156955,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3827.5999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5340401033811504,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.873835782235139,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8057555754728383,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3865.0999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5340401033811504,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.873835782235139,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8057555754728383,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3901.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4280000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5061829605240076,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8459786393779962,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8336127183299811,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3939.5,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4280000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.5061829605240076,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8459786393779962,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8336127183299811,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 3979.0999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4760000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.4783258176668647,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8181214965208534,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.861469861187124,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4018.7000000001863,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4760000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.4783258176668647,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.8181214965208534,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.861469861187124,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4060.7999999998137,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5000000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.45046867480972175,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7902643536637104,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8893270040442669,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4099.5999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5000000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.45046867480972175,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7902643536637104,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8893270040442669,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4139.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5000000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.45046867480972175,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7902643536637104,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.8893270040442669,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4180.700000000186,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5000000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.42261153195257894,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7624072108065676,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9171841469014097,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4218.9000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5000000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.42261153195257894,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7624072108065676,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9171841469014097,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4255.9000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4760000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3947543890954359,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7345500679494246,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9450412897585527,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4293.5999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4760000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3947543890954359,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7345500679494246,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9450412897585527,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4333.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4760000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3947543890954359,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7345500679494246,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9450412897585527,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4371.700000000186,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4280000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3668972462382931,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7066929250922818,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9728984326156955,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4409,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4280000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3668972462382931,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7066929250922818,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9728984326156955,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4445.700000000186,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.4280000000000004,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3668972462382931,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.7066929250922818,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              0.9728984326156955,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4483.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3390401033811501,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6788357822351387,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0007555754728386,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4521.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3390401033811501,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6788357822351387,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0007555754728386,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4561.799999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3390401033811501,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6788357822351387,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0007555754728386,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4601.0999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.3560000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3390401033811501,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6788357822351387,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0007555754728386,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4639.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2600000000000002,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3111829605240073,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.650978639377996,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0286127183299814,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4677,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2600000000000002,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3111829605240073,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.650978639377996,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0286127183299814,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4717.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2600000000000002,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3111829605240073,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.650978639377996,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0286127183299814,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4754.5,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.1400000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.2833258176668645,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6231214965208531,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0564698611871242,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4793.0999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.0174999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.25546867480972146,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.59526435366371,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0843270040442672,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4831.9000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.0174999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.25546867480972146,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.59526435366371,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0843270040442672,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4870.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.0174999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.25546867480972146,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.59526435366371,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0843270040442672,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4909.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2766999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.22761153195257888,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5674072108065675,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1121841469014098,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4946.5999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2766999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.22761153195257888,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5674072108065675,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1121841469014098,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4985,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5118999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.19975438909543586,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5395500679494245,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1400412897585528,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      }
+    ],
+    "beforeJump": {
+      "atPerformanceMs": 2619.2000000001863,
+      "player": {
+        "center": [
+          0,
+          0.41999999999999993,
+          5
+        ],
+        "visible": true
+      },
+      "platform": {
+        "center": [
+          -0.7568972462382932,
+          0.3237499915063381,
+          3.224120569229126
+        ],
+        "bounds": {
+          "min": [
+            -2.096692925092282,
+            0.1999999977648258,
+            2.1382412135601045
+          ],
+          "max": [
+            0.5828984326156954,
+            0.4474999852478504,
+            4.309999924898148
+          ]
+        },
+        "dimensions": [
+          2.6795913577079773,
+          0.2474999874830246,
+          2.171758711338043
+        ]
+      },
+      "keyEvents": [],
+      "inputEvents": []
+    },
+    "contact": {
+      "index": 37,
+      "previous": {
+        "atPerformanceMs": 4717.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2600000000000002,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.3111829605240073,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.650978639377996,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0286127183299814,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      "current": {
+        "atPerformanceMs": 4754.5,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.1400000000000003,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.2833258176668645,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.6231214965208531,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0564698611871242,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      "contactHeight": 1.0174999874,
+      "descentDelta": -0.11999999999999988,
+      "descending": true,
+      "crossedHeight": true,
+      "overlap": true,
+      "noJumpInputAfterRelease": true
+    },
+    "transition": {
+      "contact": {
+        "index": 37,
+        "previous": {
+          "atPerformanceMs": 4717.299999999814,
+          "player": {
+            "center": [
+              -0.3835404308833624,
+              1.2600000000000002,
+              4.297933950487702
+            ],
+            "visible": true
+          },
+          "platform": {
+            "center": [
+              -0.3111829605240073,
+              0.3237499915063381,
+              3.224120569229126
+            ],
+            "bounds": {
+              "min": [
+                -1.650978639377996,
+                0.1999999977648258,
+                2.1382412135601045
+              ],
+              "max": [
+                1.0286127183299814,
+                0.4474999852478504,
+                4.309999924898148
+              ]
+            },
+            "dimensions": [
+              2.6795913577079773,
+              0.2474999874830246,
+              2.171758711338043
+            ]
+          },
+          "keyEvents": [],
+          "inputEvents": [
+            {
+              "key": "w",
+              "down": true,
+              "pointerId": 2,
+              "atPerformanceMs": 2852.2999999998137
+            },
+            {
+              "key": " ",
+              "down": true,
+              "pointerId": 3,
+              "atPerformanceMs": 2852.5999999996275
+            },
+            {
+              "key": "w",
+              "down": false,
+              "pointerId": 2,
+              "atPerformanceMs": 3712.2000000001863
+            },
+            {
+              "key": "w",
+              "down": false,
+              "pointerId": 2,
+              "atPerformanceMs": 3712.2999999998137
+            },
+            {
+              "key": " ",
+              "down": false,
+              "pointerId": 3,
+              "atPerformanceMs": 3712.4000000003725
+            },
+            {
+              "key": " ",
+              "down": false,
+              "pointerId": 3,
+              "atPerformanceMs": 3712.4000000003725
+            }
+          ]
+        },
+        "current": {
+          "atPerformanceMs": 4754.5,
+          "player": {
+            "center": [
+              -0.3835404308833624,
+              1.1400000000000003,
+              4.297933950487702
+            ],
+            "visible": true
+          },
+          "platform": {
+            "center": [
+              -0.2833258176668645,
+              0.3237499915063381,
+              3.224120569229126
+            ],
+            "bounds": {
+              "min": [
+                -1.6231214965208531,
+                0.1999999977648258,
+                2.1382412135601045
+              ],
+              "max": [
+                1.0564698611871242,
+                0.4474999852478504,
+                4.309999924898148
+              ]
+            },
+            "dimensions": [
+              2.6795913577079773,
+              0.2474999874830246,
+              2.171758711338043
+            ]
+          },
+          "keyEvents": [],
+          "inputEvents": [
+            {
+              "key": "w",
+              "down": true,
+              "pointerId": 2,
+              "atPerformanceMs": 2852.2999999998137
+            },
+            {
+              "key": " ",
+              "down": true,
+              "pointerId": 3,
+              "atPerformanceMs": 2852.5999999996275
+            },
+            {
+              "key": "w",
+              "down": false,
+              "pointerId": 2,
+              "atPerformanceMs": 3712.2000000001863
+            },
+            {
+              "key": "w",
+              "down": false,
+              "pointerId": 2,
+              "atPerformanceMs": 3712.2999999998137
+            },
+            {
+              "key": " ",
+              "down": false,
+              "pointerId": 3,
+              "atPerformanceMs": 3712.4000000003725
+            },
+            {
+              "key": " ",
+              "down": false,
+              "pointerId": 3,
+              "atPerformanceMs": 3712.4000000003725
+            }
+          ]
+        },
+        "contactHeight": 1.0174999874,
+        "descentDelta": -0.11999999999999988,
+        "descending": true,
+        "crossedHeight": true,
+        "overlap": true
+      },
+      "minimumIndex": 40,
+      "ascentIndex": 43,
+      "ascentDeltas": [
+        0.2592000000000001,
+        0.23520000000000008
+      ],
+      "velocityDirectionReversal": true
+    },
+    "ascentSamples": [
+      {
+        "atPerformanceMs": 4870.299999999814,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.0174999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.25546867480972146,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.59526435366371,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.0843270040442672,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4909.4000000003725,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2766999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.22761153195257888,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5674072108065675,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1121841469014098,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4946.5999999996275,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.2766999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.22761153195257888,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5674072108065675,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1121841469014098,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      },
+      {
+        "atPerformanceMs": 4985,
+        "player": {
+          "center": [
+            -0.3835404308833624,
+            1.5118999874,
+            4.297933950487702
+          ],
+          "visible": true
+        },
+        "platform": {
+          "center": [
+            -0.19975438909543586,
+            0.3237499915063381,
+            3.224120569229126
+          ],
+          "bounds": {
+            "min": [
+              -1.5395500679494245,
+              0.1999999977648258,
+              2.1382412135601045
+            ],
+            "max": [
+              1.1400412897585528,
+              0.4474999852478504,
+              4.309999924898148
+            ]
+          },
+          "dimensions": [
+            2.6795913577079773,
+            0.2474999874830246,
+            2.171758711338043
+          ]
+        },
+        "keyEvents": [],
+        "inputEvents": [
+          {
+            "key": "w",
+            "down": true,
+            "pointerId": 2,
+            "atPerformanceMs": 2852.2999999998137
+          },
+          {
+            "key": " ",
+            "down": true,
+            "pointerId": 3,
+            "atPerformanceMs": 2852.5999999996275
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2000000001863
+          },
+          {
+            "key": "w",
+            "down": false,
+            "pointerId": 2,
+            "atPerformanceMs": 3712.2999999998137
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          },
+          {
+            "key": " ",
+            "down": false,
+            "pointerId": 3,
+            "atPerformanceMs": 3712.4000000003725
+          }
+        ]
+      }
+    ],
+    "pathMotion": {
+      "sampleCount": 30,
+      "xRange": 0.9067500000000006,
+      "yRange": 0,
+      "zRange": 0
+    },
+    "postReleaseJumpEvents": [],
+    "keyEvents": [],
+    "inputEvents": [
+      {
+        "key": "w",
+        "down": true,
+        "pointerId": 2,
+        "atPerformanceMs": 2852.2999999998137
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 3,
+        "atPerformanceMs": 2852.5999999996275
+      },
+      {
+        "key": "w",
+        "down": false,
+        "pointerId": 2,
+        "atPerformanceMs": 3712.2000000001863
+      },
+      {
+        "key": "w",
+        "down": false,
+        "pointerId": 2,
+        "atPerformanceMs": 3712.2999999998137
+      },
+      {
+        "key": " ",
+        "down": false,
+        "pointerId": 3,
+        "atPerformanceMs": 3712.4000000003725
+      },
+      {
+        "key": " ",
+        "down": false,
+        "pointerId": 3,
+        "atPerformanceMs": 3712.4000000003725
+      }
+    ]
+  },
+  "videos": {
+    "editor": "editor-desktop.webm",
+    "standalone": "standalone-touch.webm"
+  }
+}

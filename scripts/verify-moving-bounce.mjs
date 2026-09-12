@@ -419,6 +419,7 @@ function bounceTransition(samples, startAt = -Infinity) {
     )
       continue;
     let upwardSteps = 0;
+    const upwardDeltas = [];
     for (
       let index = minimumIndex + 1;
       index < Math.min(samples.length, minimumIndex + 10);
@@ -426,30 +427,33 @@ function bounceTransition(samples, startAt = -Infinity) {
     ) {
       const previous = samples[index - 1]?.player?.center[1];
       const current = samples[index]?.player?.center[1];
-      if (
-        Number.isFinite(previous) &&
-        Number.isFinite(current) &&
-        current - previous >= 0.015
-      ) {
+      if (!Number.isFinite(previous) || !Number.isFinite(current)) {
+        upwardSteps = 0;
+        upwardDeltas.length = 0;
+        continue;
+      }
+      const delta = current - previous;
+      if (delta >= 0.015) {
         upwardSteps++;
-        if (upwardSteps >= 2 && current - minimum >= 0.08)
+        upwardDeltas.push(delta);
+        if (upwardSteps >= 2 && current - minimum >= 0.08) {
+          const ascentDeltas = upwardDeltas.slice(-2);
           return {
             contact,
             minimumIndex,
             ascentIndex: index,
-            ascentDeltas: [
-              samples[index - 1].player.center[1] -
-                samples[index - 2].player.center[1],
-              current - previous,
-            ],
+            ascentDeltas,
             velocityDirectionReversal:
               contact.descentDelta < 0 &&
-              samples[index - 1].player.center[1] -
-                samples[index - 2].player.center[1] >
-                0 &&
-              current - previous > 0,
+              ascentDeltas.every((delta) => delta > 0),
           };
-      } else upwardSteps = 0;
+        }
+      } else if (delta !== 0) {
+        // Preserve the ascent across unchanged rendered frames. Any actual
+        // reversal or sub-threshold rise starts a fresh measured ascent.
+        upwardSteps = 0;
+        upwardDeltas.length = 0;
+      }
     }
   }
   return null;
@@ -469,6 +473,21 @@ function regressionSample(y, index) {
 
 const continuedFall = [1.3, 1.16, 1.03, 0.91].map(regressionSample);
 const flatAtSurface = [1.3, 1.16, 1.03, 1.02, 1.02, 1.02].map(regressionSample);
+const repeatedFrameBounce = [
+  1.3,
+  1.16,
+  1.05,
+  1.02,
+  1.02,
+  1.2,
+  1.2,
+  1.4,
+].map(regressionSample);
+const repeatedFrameTransition = bounceTransition(repeatedFrameBounce);
+assert(
+  repeatedFrameTransition?.velocityDirectionReversal,
+  "Repeated rendered frames should preserve bounce ascent.",
+);
 assert.equal(bounceTransition(continuedFall), null);
 assert.equal(bounceTransition(flatAtSurface), null);
 
@@ -510,9 +529,19 @@ async function touchPoint(page, label, id) {
 async function runBounce(page, mode, report) {
   const read = async () =>
     compactTelemetry(await page.evaluate(() => window.__orbReadWorld()));
-  await page.waitForFunction(() => window.__orbReadWorld?.().player?.visible, {
-    timeout: 30000,
-  });
+  let beforeJump;
+  await expect
+    .poll(
+      async () => {
+        const telemetry = await page.evaluate(() =>
+          window.__orbReadWorld?.(),
+        );
+        beforeJump = telemetry ? compactTelemetry(telemetry) : null;
+        return Boolean(beforeJump?.player?.visible && beforeJump?.platform);
+      },
+      { timeout: 30000 },
+    )
+    .toBe(true);
   await page.mouse.click(
     mode === "touch" ? 195 : 1100,
     mode === "touch" ? 180 : 650,
@@ -522,7 +551,6 @@ async function runBounce(page, mode, report) {
       document.activeElement instanceof HTMLElement &&
       document.activeElement.blur(),
   );
-  const beforeJump = await read();
   assert(
     beforeJump.player?.visible,
     `${mode}: player was not rendered before jump.`,
@@ -714,6 +742,9 @@ const report = {
   output,
 };
 report.checks.syntheticBounceRegression = {
+  repeatedFrameBounceAccepted: Boolean(
+    repeatedFrameTransition?.velocityDirectionReversal,
+  ),
   continuedFallRejected: bounceTransition(continuedFall) === null,
   flatAtSurfaceRejected: bounceTransition(flatAtSurface) === null,
 };

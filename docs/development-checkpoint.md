@@ -51,10 +51,15 @@ continued path, UI reload/ZIP, then failed immediate touch platform readiness.
 Luna added bounded player+matched-platform readiness; root reviewed and ran
 once in moving-bounce-browser-ready. Desktop/export passed, touch59 samples
 show ascent after release but proof fails. Root reviewed input/trajectory.
-Luna `/root/bounce_readiness` now owns an offline-only follow-up: confirm
-whether duplicate rendered frames wrongly reset ascent proof, fix with strict
-negative cases; no browser/model calls. Root owns evidence. Readiness code
-and subsequent correction remain uncommitted pending finished review.
+Luna corrected duplicate-frame ascent handling offline; root reviewed final
+diff and ran one new fixture browser milestone. moving-bounce-browser-frame-aware
+PASSED editor create/reload, desktop bounce/path, exact ZIP export, standalone
+390x844 CDP touch bounce/path. Root reviewed actual direction reversal, no
+post-release jump events and touch screenshot. Zero provider/model/external
+requests/page errors. No worker or owned test process remains active. This
+closes one fixture composition path, not three-platform route/live provider
+story/physical mobile. Next meaningful step: deploy/test current authoring
+guidance in an authorized fresh provider milestone, preserving all failures.
 Server3068 runtime e0dff7c remains unchanged; revalidate before use. Do not
 rebuild .next while server in use. Live provider effectiveness remains open.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
