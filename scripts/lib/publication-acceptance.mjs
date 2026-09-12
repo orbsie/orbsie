@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
 
+const PENDING_PUBLICATION_STATES = new Set([
+  "INITIALIZING",
+  "QUEUED",
+  "BUILDING",
+  "VERIFYING",
+]);
+
 export class PublicationAcceptanceError extends Error {
   constructor(message, options = {}) {
     super(message, options.cause ? { cause: options.cause } : undefined);
@@ -52,6 +59,18 @@ function responseError(result) {
   return typeof body.error === "string" ? body.error.slice(0, 240) : undefined;
 }
 
+function responseCode(result) {
+  const body = responseBody(result);
+  return typeof body.code === "string" ? body.code.slice(0, 120) : undefined;
+}
+
+function responseMessage(result) {
+  const body = responseBody(result);
+  return typeof body.message === "string"
+    ? body.message.slice(0, 240)
+    : undefined;
+}
+
 function responseState(result) {
   const state = responseBody(result).state;
   return typeof state === "string" ? state : undefined;
@@ -66,10 +85,20 @@ function failResponse(label, result) {
   const status = responseStatus(result);
   const state = responseState(result);
   const error = responseError(result);
-  const detail = error ? `: ${error}` : state ? `: ${state}` : "";
+  const code = responseCode(result);
+  const message = responseMessage(result);
+  const detail = error
+    ? `: ${error}`
+    : code
+      ? `: ${code}${message ? ` — ${message}` : ""}`
+      : message
+        ? `: ${message}`
+        : state
+          ? `: ${state}`
+          : "";
   throw new PublicationAcceptanceError(
     `${label} failed (HTTP ${status})${detail}`,
-    { status, state },
+    { status, state, code },
   );
 }
 
@@ -80,7 +109,7 @@ function requireResponse(label, result) {
   if (["PROTECTED", "ERROR", "CANCELED"].includes(state) || error)
     throw new PublicationAcceptanceError(
       `${label} failed${state ? ` (${state})` : ""}${error ? `: ${error}` : ""}`,
-      { status: responseStatus(result), state },
+      { status: responseStatus(result), state, code: responseCode(result) },
     );
   return responseBody(result);
 }
@@ -159,6 +188,11 @@ function responseEvidence(result) {
   const fields = [
     ["state", body.state],
     ["error", responseError(result)],
+    ["code", responseCode(result)],
+    [
+      "message",
+      responseStatus(result) >= 400 ? responseMessage(result) : undefined,
+    ],
     ["revision", body.revision],
     ["servedRevision", body.servedRevision],
     ["deploymentId", body.deploymentId],
@@ -569,7 +603,7 @@ export async function runPublicationAcceptance({
   );
 
   const servedDuringUpdate = secondSubmittedBody.servedRevision;
-  if (!["QUEUED", "BUILDING", "VERIFYING"].includes(secondSubmittedBody.state))
+  if (!PENDING_PUBLICATION_STATES.has(secondSubmittedBody.state))
     throw new PublicationAcceptanceError(
       `Republish mapping cannot claim a previous-release window from state ${secondSubmittedBody.state ?? "unknown"}.`,
     );
@@ -653,5 +687,175 @@ export async function runPublicationAcceptance({
       previousRelease: previousRelease.snapshot,
       finalSnapshot: finalRelease.snapshot,
     },
+  };
+}
+
+/**
+ * Resume an already-submitted publication using only sign-in, one owner status
+ * read, and signed-out public reads. This never saves a project or submits a
+ * deployment, so a late resume cannot create another revision or deployment.
+ */
+export async function resumePublicationAcceptance({
+  transport,
+  projectId,
+  email,
+  password,
+  expectedVercelProjectId,
+  firstRelease,
+  secondRelease,
+  firstWorld,
+  secondWorld,
+  onProgress = async (_progress) => undefined,
+}) {
+  if (!transport || typeof transport.request !== "function")
+    throw new TypeError("A publication transport is required.");
+  if (typeof transport.publicGet !== "function")
+    throw new TypeError(
+      "Publication resume requires a signed-out public transport.",
+    );
+  if (typeof transport.browserReady !== "function")
+    throw new TypeError(
+      "Publication resume requires an injected signed-out browser transport.",
+    );
+  if (!projectId || !email || !password)
+    throw new TypeError("Publication resume requires project credentials.");
+  if (!firstRelease?.deploymentUrl || !secondRelease?.deploymentUrl)
+    throw new TypeError("Publication resume requires both deployment URLs.");
+  assert.notEqual(
+    firstRelease.deploymentId,
+    secondRelease.deploymentId,
+    "resume deployments must remain distinct",
+  );
+  assert.equal(
+    firstRelease.vercelProjectId,
+    secondRelease.vercelProjectId,
+    "resume deployment project mappings",
+  );
+  assert.equal(
+    firstRelease.vercelProjectId,
+    expectedVercelProjectId,
+    "resume expected Vercel project mapping",
+  );
+
+  const progress = {
+    account: { email },
+    world: {
+      id: projectId,
+      revisions: [firstWorld?.revision ?? null, secondWorld?.revision ?? null],
+    },
+    steps: [],
+    last: null,
+  };
+  const recordStep = async (step, response, extra = {}) => {
+    const event = {
+      step,
+      ...(response ? responseEvidence(response) : {}),
+      ...extra,
+    };
+    progress.last = event;
+    progress.steps.push(event);
+    await onProgress(structuredClone(progress));
+  };
+  await recordStep("resume start", null);
+
+  const signIn = await transport.request(
+    "/api/auth/sign-in/email",
+    {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    },
+    "resume sign-in",
+  );
+  await recordStep("resume sign-in", signIn);
+  requireResponse("resume sign-in", signIn);
+  const cookies = cookieFromSignup(signIn);
+
+  const statusResult = await transport.request(
+    `/api/publish?projectId=${encodeURIComponent(projectId)}`,
+    { cookie: cookies },
+    "resume publication status",
+  );
+  await recordStep("resume publication status", statusResult);
+  const statusBody = requireResponse("resume publication status", statusResult);
+  const getProjectId = identity(statusBody);
+  if (!getProjectId)
+    throw new PublicationAcceptanceError(
+      "Resume mapping could not be verified: status GET did not expose vercelProjectId.",
+    );
+  assert.equal(
+    getProjectId,
+    expectedVercelProjectId,
+    "resume status GET Vercel project mapping",
+  );
+  const state = statusBody.state;
+  if (state !== "READY" && !PENDING_PUBLICATION_STATES.has(state))
+    throw new PublicationAcceptanceError(
+      `Resume publication returned unexpected state ${state ?? "unknown"}.`,
+      { state },
+    );
+  if (state === "READY") {
+    const currentDeployment = deploymentUrl(
+      statusBody,
+      "resume publication status",
+    );
+    assert.equal(
+      currentDeployment,
+      secondRelease.deploymentUrl,
+      "resume status GET revision-2 deployment URL",
+    );
+    assert.equal(
+      statusBody.servedRevision,
+      secondWorld.revision,
+      "resume status GET served revision",
+    );
+  } else assert.equal(statusBody.servedRevision, firstWorld.revision);
+  const statusEvidence = {
+    state,
+    servedRevision: statusBody.servedRevision ?? null,
+    deploymentUrl: statusBody.deploymentUrl ?? null,
+    vercelProjectId: getProjectId,
+  };
+
+  const oldRelease = await signedOutRelease(
+    transport,
+    firstRelease,
+    firstWorld,
+    "resumed previous public release",
+    recordStep,
+  );
+  if (state !== "READY")
+    return {
+      projectId,
+      vercelProjectId: getProjectId,
+      state,
+      status: statusEvidence,
+      pendingWindow: {
+        observed: true,
+        state,
+        servedRevision: statusBody.servedRevision,
+      },
+      oldRelease,
+      finalRelease: null,
+    };
+
+  const finalRelease = await signedOutRelease(
+    transport,
+    secondRelease,
+    secondWorld,
+    "resumed final public release",
+    recordStep,
+  );
+  return {
+    projectId,
+    vercelProjectId: getProjectId,
+    state,
+    status: statusEvidence,
+    pendingWindow: {
+      observed: false,
+      state,
+      note: "Resume began after the pending interval; no late read proves its prior window.",
+    },
+    oldRelease,
+    finalRelease,
   };
 }

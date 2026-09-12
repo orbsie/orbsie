@@ -1,0 +1,145 @@
+{
+  "status": "failed",
+  "base": "https://orbsie.com",
+  "republish": true,
+  "startedAt": "2026-09-12T00:48:54.271Z",
+  "account": {
+    "email": "orbsie-publication-republish-20260912t0050@example.com"
+  },
+  "world": {
+    "id": "pub-accept-mtxo31fj",
+    "title": "A tiny island to share",
+    "revision": 0
+  },
+  "progress": {
+    "account": {
+      "email": "orbsie-publication-republish-20260912t0050@example.com"
+    },
+    "world": {
+      "id": "pub-accept-mtxo31fj",
+      "revision": 2,
+      "title": "A tiny island to share — Sunset crystal garden"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "pub-accept-mtxo31fj",
+          "revision": 1,
+          "title": "A tiny island to share"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_4wuESSXkNkiLEJwRisQCSXLC7NX7",
+        "deploymentUrl": "https://orb-b587ad1428b5a164063e-f1prp0i8u-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mtxo31fj",
+        "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F",
+        "world": {
+          "id": "pub-accept-mtxo31fj",
+          "revision": 1,
+          "title": "A tiny island to share"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentUrl": "https://orb-b587ad1428b5a164063e-f1prp0i8u-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mtxo31fj",
+        "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "A tiny island to share",
+          "materialColor": "#a1f0d7"
+        }
+      },
+      {
+        "step": "cloud save revision 2",
+        "status": 200,
+        "ok": true,
+        "revision": 2,
+        "world": {
+          "id": "pub-accept-mtxo31fj",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      },
+      {
+        "step": "publish revision 2",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "servedRevision": 1,
+        "deploymentId": "dpl_8JN8fg8Jtk3be331TNaNPjWGbZRp",
+        "deploymentUrl": "https://orb-b587ad1428b5a164063e-pd2gp9jx9-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mtxo31fj",
+        "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F",
+        "world": {
+          "id": "pub-accept-mtxo31fj",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      }
+    ],
+    "last": {
+      "step": "publish revision 2",
+      "status": 200,
+      "ok": true,
+      "state": "INITIALIZING",
+      "servedRevision": 1,
+      "deploymentId": "dpl_8JN8fg8Jtk3be331TNaNPjWGbZRp",
+      "deploymentUrl": "https://orb-b587ad1428b5a164063e-pd2gp9jx9-grappeggias-projects.vercel.app",
+      "url": "/o/pub-accept-mtxo31fj",
+      "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F",
+      "world": {
+        "id": "pub-accept-mtxo31fj",
+        "revision": 2,
+        "title": "A tiny island to share — Sunset crystal garden"
+      }
+    }
+  },
+  "checks": {},
+  "error": "Republish mapping cannot claim a previous-release window from state INITIALIZING.",
+  "finishedAt": "2026-09-12T00:49:08.533Z"
+}

@@ -1,0 +1,29 @@
+{
+  "status": "failed",
+  "base": "https://orbsie.com",
+  "account": {
+    "email": "orbsie-publication-republish-20260912t0050@example.com"
+  },
+  "projectId": "pub-accept-mtxo31fj",
+  "expectedVercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F",
+  "progress": {
+    "steps": [
+      { "step": "resume start" },
+      {
+        "step": "resume sign-in",
+        "status": 403,
+        "ok": false
+      }
+    ],
+    "last": {
+      "step": "resume sign-in",
+      "status": 403,
+      "ok": false
+    }
+  },
+  "checks": {},
+  "error": {
+    "message": "resume sign-in failed (HTTP 403)",
+    "status": 403
+  }
+}

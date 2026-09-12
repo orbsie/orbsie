@@ -1,0 +1,140 @@
+{
+  "status": "passed",
+  "base": "https://orbsie.com",
+  "account": {
+    "email": "orbsie-publication-republish-20260912t0050@example.com"
+  },
+  "projectId": "pub-accept-mtxo31fj",
+  "expectedVercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F",
+  "originalReport": "report.json",
+  "progress": {
+    "account": {
+      "email": "orbsie-publication-republish-20260912t0050@example.com"
+    },
+    "world": {
+      "id": "pub-accept-mtxo31fj",
+      "revisions": [
+        1,
+        2
+      ]
+    },
+    "steps": [
+      {
+        "step": "resume start"
+      },
+      {
+        "step": "resume sign-in",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "resume publication status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 2,
+        "deploymentUrl": "https://orb-b587ad1428b5a164063e-pd2gp9jx9-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mtxo31fj",
+        "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F"
+      },
+      {
+        "step": "resumed previous public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "resumed previous public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "resumed previous public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "A tiny island to share",
+          "materialColor": "#a1f0d7"
+        }
+      },
+      {
+        "step": "resumed final public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "resumed final public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "resumed final public release snapshot",
+        "snapshot": {
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden",
+          "materialColor": "#ff8f6b"
+        }
+      }
+    ],
+    "last": {
+      "step": "resumed final public release snapshot",
+      "snapshot": {
+        "revision": 2,
+        "title": "A tiny island to share — Sunset crystal garden",
+        "materialColor": "#ff8f6b"
+      }
+    }
+  },
+  "checks": {
+    "signIn": "passed",
+    "statusGet": {
+      "state": "READY",
+      "servedRevision": 2,
+      "deploymentUrl": "https://orb-b587ad1428b5a164063e-pd2gp9jx9-grappeggias-projects.vercel.app",
+      "vercelProjectId": "prj_V9pT4WWQIY4XJAgch4x5rFPOdv7F"
+    },
+    "sameVercelProjectId": true,
+    "distinctDeploymentIds": true,
+    "pendingWindow": {
+      "observed": false,
+      "state": "READY",
+      "note": "Resume began after the pending interval; no late read proves its prior window."
+    },
+    "previousRelease": {
+      "deploymentId": "dpl_4wuESSXkNkiLEJwRisQCSXLC7NX7",
+      "deploymentUrl": "https://orb-b587ad1428b5a164063e-f1prp0i8u-grappeggias-projects.vercel.app",
+      "browser": {
+        "status": 200,
+        "ready": true,
+        "canvas": true,
+        "pageErrorCount": 0
+      },
+      "snapshot": {
+        "revision": 1,
+        "title": "A tiny island to share",
+        "materialColor": "#a1f0d7"
+      }
+    },
+    "finalRelease": {
+      "deploymentId": "dpl_8JN8fg8Jtk3be331TNaNPjWGbZRp",
+      "deploymentUrl": "https://orb-b587ad1428b5a164063e-pd2gp9jx9-grappeggias-projects.vercel.app",
+      "browser": {
+        "status": 200,
+        "ready": true,
+        "canvas": true,
+        "pageErrorCount": 0
+      },
+      "snapshot": {
+        "revision": 2,
+        "title": "A tiny island to share — Sunset crystal garden",
+        "materialColor": "#ff8f6b"
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ import {
   PublicationAcceptanceError,
   runPublicationAcceptance,
 } from "./lib/publication-acceptance.mjs";
+import { createPublicationTransport } from "./lib/publication-transport.mjs";
 
 // This harness creates an account, saves a cloud revision, and publishes to
 // Vercel. Keep the safety gate before reading credentials or making any write.
@@ -63,56 +64,6 @@ const world = {
     },
   ],
 };
-
-function parseResponse(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text.slice(0, 300) };
-  }
-}
-
-async function request(path, init = {}, label) {
-  let response;
-  try {
-    response = await fetch(`${BASE}${path}`, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        Origin: BASE,
-        ...(init.cookie ? { Cookie: init.cookie } : {}),
-      },
-      redirect: "error",
-    });
-  } catch (error) {
-    throw new PublicationAcceptanceError(`${label} network request failed.`, {
-      cause: error,
-    });
-  }
-  const text = await response.text();
-  return {
-    response,
-    status: response.status,
-    ok: response.ok,
-    body: parseResponse(text),
-  };
-}
-
-async function publicGet(url, label) {
-  let response;
-  try {
-    response = await fetch(url, {
-      redirect: "error",
-      credentials: "omit",
-      headers: { "User-Agent": "OrbsiePublicationAcceptance/1.0" },
-    });
-  } catch (error) {
-    throw new PublicationAcceptanceError(`${label} network request failed.`, {
-      cause: error,
-    });
-  }
-  return { status: response.status, text: await response.text() };
-}
 
 async function browserReady(url, label) {
   const browser = await chromium.launch({
@@ -175,10 +126,11 @@ const report = {
   progress: null,
   checks: {},
 };
+const httpTransport = createPublicationTransport(BASE);
 
 try {
   const result = await runPublicationAcceptance({
-    transport: { request, publicGet, browserReady },
+    transport: { ...httpTransport, browserReady },
     world,
     email: EMAIL,
     password: PASSWORD,
