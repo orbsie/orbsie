@@ -161,3 +161,13 @@ model calls. Score40/50, elevated crystal5 missed by ground/pickup-jump driver;
 final portal contact observed with no victory. This does not prove route
 impossibility. Three-platform phase-aware bounce steering remains required.
 Chrome DevTools still shows empty Orbsie sign-in fields; CUA inventory empty.
+
+## Active bounded route task
+
+Luna `/root/saved_bounce_route` owns new saved-bounce route driver/helper/tests
+and its evidence only. At most2 browser attempts; no model/external calls or
+world mutation. Requires sequential descending contacts/automatic upward
+launches with no intervening ground reset, then collection/win if reachable.
+Root reviewed mobile input source independently: product supports pointer IDs,
+but existing winning touch driver supplies only one touch and no diagonals.
+Quota fresh read: primary used15%, remaining85%;20% stop rule unchanged.
