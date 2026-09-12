@@ -1,0 +1,178 @@
+{
+  "checkedAt": "2026-09-12T10:27:38.924Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T10:27:38.924Z",
+    "harness": {
+      "checkoutSHA": "9251381bfdbee8855f95dba23d14ccbf8f5541fd",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "9098500",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "gateway",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3068",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationBudget": 1,
+  "creation": {
+    "status": "blocked",
+    "operations": 0,
+    "firstReservationMs": null,
+    "seedObserved": false
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "flagshipResume": {
+    "status": "failed",
+    "checkpoint": {
+      "projectId": "d149cb1c-de74-437b-98cb-36ede3beb578",
+      "revision": 33,
+      "sourceSnapshotSha256": "6df53cb214d54d6ea40ceb98738d7eb4fa47e8fd4b2198e35a681391adbe41bb",
+      "models": [
+        {
+          "id": "crystal-1",
+          "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+          "bytes": 3616
+        },
+        {
+          "id": "crystal-2",
+          "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+          "bytes": 3620
+        },
+        {
+          "id": "crystal-3",
+          "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+          "bytes": 3612
+        },
+        {
+          "id": "crystal-4",
+          "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+          "bytes": 3620
+        },
+        {
+          "id": "crystal-5",
+          "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+          "bytes": 3612
+        }
+      ]
+    },
+    "generationBudget": 1,
+    "edited": {
+      "revision": 40,
+      "platform": {
+        "platformId": "platform-2",
+        "previousSpeed": 1.2,
+        "revisedSpeed": 0.6,
+        "addedCollectibleIds": [
+          "crystal-6",
+          "crystal-7"
+        ],
+        "collectibles": 7
+      },
+      "collectibles": 7
+    },
+    "lastGoodCheckpoint": {
+      "id": "d149cb1c-de74-437b-98cb-36ede3beb578",
+      "revision": 40,
+      "entityIds": [
+        "tree-1",
+        "tree-2",
+        "tree-3",
+        "pond",
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5",
+        "platform-1",
+        "platform-2",
+        "platform-3",
+        "portal",
+        "crystal-6",
+        "crystal-7"
+      ]
+    }
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationDiagnostics": [],
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "interceptedGeneration": false,
+    "provider": "gateway"
+  },
+  "evidence": [
+    "connection-model.png",
+    "story-resumed-project.json",
+    "story-resumed-generated.json",
+    "resume-edited.png",
+    "resume-failure.png"
+  ],
+  "error": "expect(locator).toHaveText(expected) failed\n\nLocator: locator('.game-hud strong span')\nExpected pattern: /\\/\\s*7/\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toHaveText\" locator('.game-hud strong span') with timeout 5000ms\n  - waiting for locator('.game-hud strong span')\n",
+  "flagshipStory": {
+    "status": "checkpoint-resumed",
+    "visualReview": "pending",
+    "phases": {
+      "resumed": {
+        "status": "passed",
+        "revision": 40,
+        "platformId": "platform-2",
+        "previousSpeed": 1.2,
+        "revisedSpeed": 0.6,
+        "addedCollectibleIds": [
+          "crystal-6",
+          "crystal-7"
+        ],
+        "collectibles": 7
+      }
+    },
+    "generatedModels": {
+      "status": "complete",
+      "writtenHashes": [
+        "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+        "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+        "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+        "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+        "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+        "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5",
+        "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27"
+      ],
+      "phases": {
+        "resumed": {
+          "status": "complete",
+          "modelCount": 7,
+          "missingCount": 0,
+          "totalBytes": 25316
+        }
+      }
+    }
+  }
+}

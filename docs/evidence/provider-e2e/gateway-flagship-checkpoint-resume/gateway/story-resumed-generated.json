@@ -1,0 +1,71 @@
+{
+  "phase": "resumed",
+  "status": "complete",
+  "models": [
+    {
+      "entityIds": [
+        "crystal-1"
+      ],
+      "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+      "bytes": 3616,
+      "path": "generated/d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-2"
+      ],
+      "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+      "bytes": 3620,
+      "path": "generated/848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-3"
+      ],
+      "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+      "bytes": 3612,
+      "path": "generated/283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-4"
+      ],
+      "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+      "bytes": 3620,
+      "path": "generated/31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-5"
+      ],
+      "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+      "bytes": 3612,
+      "path": "generated/358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-6"
+      ],
+      "sha256": "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5",
+      "bytes": 3620,
+      "path": "generated/13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-7"
+      ],
+      "sha256": "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27",
+      "bytes": 3616,
+      "path": "generated/2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27.glb",
+      "status": "complete"
+    }
+  ],
+  "missing": [],
+  "totalBytes": 25316
+}
