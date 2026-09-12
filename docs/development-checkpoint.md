@@ -46,7 +46,14 @@ admitted. Opt-in adaptive bake now implemented and rendered in mushroom-basic-ad
 0.467→0.121; vertex budget saturated, threshold0.04 not achieved. Root reviewed
 images: spot outlines improved but dark cap speckles persist even under uniform
 pink. NOT approved. Next diagnose this concrete rendering defect; no blanket
-quality claim or repeated provider calls. Cause remains unverified.
+quality claim or repeated provider calls. Topology diagnosis (mushroom-topology-diagnosis) now compares source/uniform/
+adaptive geometry after unit-height normalization. Root corrected an initial
+mislabeling of small triangles as zero-area; first-run.json retained. Corrected
+adaptive has0 exact-zero triangles,32 positive areas<=1e-6m2,2689 T-junctions;
+uniform has0/0/0. Both finite normals/no inverted winding. This establishes a
+nonconforming topology difference, not rendered causality. Next bounded correction
+should ensure neighboring refined triangles share split edge vertices, then run
+numeric topology and the same pink visual comparison before any admission.
 Preview fixture TypeScript errors were corrected; repository tsc now passes.
 Converter/verifier accept environment-selected inputs/output dirs; historical
 Big evidence is unchanged. Prior full conversion attempt was stopped
