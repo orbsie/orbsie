@@ -75,7 +75,7 @@ describe("generation output format selection", () => {
   it("accepts exact operator assertions, including an explicit Gateway assertion", () => {
     vi.stubEnv(
       "ORBSIE_GENERATION_FORMAT_OVERRIDES",
-      '{"gateway:openai/gpt-5.6-luna":"json-schema"}',
+      '{"gateway:openai/gpt-5.6-luna":"json-schema-strict"}',
     );
     const overrides = parseGenerationFormatOverrides();
     expect(
@@ -84,7 +84,7 @@ describe("generation output format selection", () => {
         model: "openai/gpt-5.6-luna",
         overrides,
       }),
-    ).toBe("json-schema");
+    ).toBe("json-schema-strict");
     expect(
       resolveGenerationOutputFormat({
         provider: "gateway",

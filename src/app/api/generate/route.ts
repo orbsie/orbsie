@@ -26,6 +26,7 @@ import {
   parseGenerationFormatOverrides,
   resolveGenerationOutputFormat,
 } from "@/lib/server/generation-output-format";
+import type { GenerationOutputFormat } from "@/lib/server/generation-output-format";
 export const maxDuration = 180;
 export async function POST(request: Request) {
   let identity: TrialIdentity | undefined;
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const formatOverrides = parseGenerationFormatOverrides();
     const free = parsed.data.provider === "free";
     const maxTokens = generationMaxTokens(free);
-    let outputFormat: "ndjson" | "json-object" | "json-schema";
+    let outputFormat: GenerationOutputFormat;
     if (
       !free &&
       (!parsed.data.model || !parsed.data.key || parsed.data.key.length < 10)

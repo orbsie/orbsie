@@ -33,8 +33,13 @@ import {
   SceneCommandEnvelopeDecoder,
   SceneCommandEnvelopeError,
 } from "./scene-command-envelope";
+import {
+  strictSceneCommandJSONSchemaForCapabilities,
+  decodeStrictSceneCommand,
+  StrictSceneSchemaError,
+} from "./strict-scene-schema";
+import type { GenerationOutputFormat } from "./generation-output-format";
 
-export type GenerationOutputFormat = "ndjson" | "json-object" | "json-schema";
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
@@ -92,15 +97,22 @@ function modelingInstructionsForOutputFormat(
 ) {
   const instructions = modelingInstructions(localModeling, browserModeling);
   if (outputFormat === "ndjson") return instructions;
-  return instructions.replace(
+  const formatted = instructions.replace(
     /Keep each command as one complete compact NDJSON line:[^.]*\./,
     "Keep each command as one complete object in the commands array in authoring order: close the recipe, then job and geometry, then the command-level assetPolicy and final command brace before the next array entry.",
+  );
+  if (outputFormat !== "json-schema-strict") return formatted;
+  return formatted.replace(
+    "This complete schema-valid set_geometry command uses a generic reserved ID and shows the placement:",
+    "This canonical set_geometry example is conceptual only; do not copy it verbatim. Encode its modeling recipe using the strict wire wrappers and tuple objects supplied in response_format:",
   );
 }
 
 function outputFormatInstruction(outputFormat: GenerationOutputFormat) {
   if (outputFormat === "ndjson")
     return "Output ONLY newline-delimited JSON, one complete command per line, without Markdown.";
+  if (outputFormat === "json-schema-strict")
+    return "Output exactly one JSON object with only a commands array, without Markdown or other root keys. Use the strict wire schema supplied in response_format. Every optional property is a required wrapper of {present:false} or {present:true,value:...}; explicit null belongs inside value. Heterogeneous fixed tuples use closed objects with item0, item1, and so on. Put complete command objects in authoring order; the server validates each object incrementally and accepts the envelope only after its closing braces.";
   return "Output exactly one JSON object with only a commands array, without Markdown or other root keys. Put complete command objects in authoring order; the server validates each object incrementally and accepts the envelope only after its closing braces.";
 }
 
@@ -110,9 +122,11 @@ export function systemPromptForCapabilities(
   outputFormat: GenerationOutputFormat = "ndjson",
 ) {
   const schemaInstruction =
-    outputFormat === "json-schema"
-      ? "Each command in the commands array must match the command schema supplied in response_format."
-      : `You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+    outputFormat === "json-schema-strict"
+      ? "Each command in the commands array must match the strict wire schema supplied in response_format. Preserve every optional field with its presence wrapper and use itemN objects for heterogeneous tuples; the server restores canonical project commands before applying them."
+      : outputFormat === "json-schema"
+        ? "Each command in the commands array must match the command schema supplied in response_format."
+        : `You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
   return `${baseSystemPrompt} ${outputFormatInstruction(outputFormat)} ${modelingFeedbackInstruction} ${catalogCompositionInstruction} ${modelingInstructionsForOutputFormat(localModeling, browserModeling, outputFormat)} ${schemaInstruction}`;
 }
 
@@ -123,20 +137,24 @@ function responseFormatFor(
 ) {
   if (outputFormat === "ndjson") return undefined;
   if (outputFormat === "json-object") return { type: "json_object" as const };
+  const items =
+    outputFormat === "json-schema-strict"
+      ? strictSceneCommandJSONSchemaForCapabilities(
+          localModeling,
+          browserModeling,
+        )
+      : modelCommandJSONSchemaForCapabilities(localModeling, browserModeling);
   return {
     type: "json_schema" as const,
     json_schema: {
       name: "orbsie_scene_commands",
-      strict: false,
+      strict: outputFormat === "json-schema-strict",
       schema: {
         type: "object",
         properties: {
           commands: {
             type: "array",
-            items: modelCommandJSONSchemaForCapabilities(
-              localModeling,
-              browserModeling,
-            ),
+            items,
           },
         },
         required: ["commands"],
@@ -257,6 +275,7 @@ export async function generateCommands({
         count = 0,
         lastCommandType = "";
       const structuredOutput = outputFormat !== "ndjson";
+      const strictStructuredOutput = outputFormat === "json-schema-strict";
       let pendingCommit:
         Extract<ModelCommand, { type: "commit_revision" }> | undefined;
       let refusalSeen = false;
@@ -308,6 +327,19 @@ export async function generateCommands({
           input = JSON.parse(line);
         } catch {
           throw new SceneJSONError(finishReason);
+        }
+        if (strictStructuredOutput) {
+          try {
+            input = decodeStrictSceneCommand(
+              input,
+              localModeling,
+              browserModeling,
+            );
+          } catch (error) {
+            if (error instanceof StrictSceneSchemaError)
+              throw new SceneProtocolError(finishReason);
+            throw error;
+          }
         }
         let parsed: ModelCommand;
         try {

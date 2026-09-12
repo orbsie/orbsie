@@ -147,12 +147,12 @@ it("uses the same preflight selector for free generation before claiming a trial
 it("applies only an exact operator override", async () => {
   vi.stubEnv(
     "ORBSIE_GENERATION_FORMAT_OVERRIDES",
-    '{"openrouter:openai/gpt-5.6-luna":"json-schema"}',
+    '{"openrouter:openai/gpt-5.6-luna":"json-schema-strict"}',
   );
   setup(modelWith(false, false));
   await POST(request("openrouter"));
   expect(deps.generate).toHaveBeenCalledWith(
-    expect.objectContaining({ outputFormat: "json-schema" }),
+    expect.objectContaining({ outputFormat: "json-schema-strict" }),
   );
 
   deps.generate.mockClear();
@@ -160,6 +160,22 @@ it("applies only an exact operator override", async () => {
   await POST(request("openrouter", { model: "openai/gpt-6-astra" }));
   expect(deps.generate).toHaveBeenCalledWith(
     expect.objectContaining({ outputFormat: "ndjson" }),
+  );
+});
+
+it("passes the strict Gateway operator assertion through the route", async () => {
+  vi.stubEnv(
+    "ORBSIE_GENERATION_FORMAT_OVERRIDES",
+    '{"gateway:openai/gpt-5.6-luna":"json-schema-strict"}',
+  );
+  setup(modelWith(false, false));
+  const response = await POST(request("gateway"));
+  expect(response.status).toBe(200);
+  expect(deps.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      provider: "gateway",
+      outputFormat: "json-schema-strict",
+    }),
   );
 });
 

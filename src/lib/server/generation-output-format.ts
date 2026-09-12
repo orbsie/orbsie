@@ -1,5 +1,6 @@
 import type { ModelCapabilities } from "../model-capabilities";
-import type { GenerationOutputFormat } from "./generation";
+export type GenerationOutputFormat =
+  "ndjson" | "json-object" | "json-schema" | "json-schema-strict";
 type Provider = "openrouter" | "gateway";
 
 const MAX_OVERRIDE_BYTES = 4096;
@@ -54,7 +55,8 @@ export function parseGenerationFormatOverrides(
       /[\u0000-\u0020\u007f]/.test(model) ||
       (format !== "ndjson" &&
         format !== "json-object" &&
-        format !== "json-schema")
+        format !== "json-schema" &&
+        format !== "json-schema-strict")
     )
       return invalidConfig();
     overrides.set(key, format);

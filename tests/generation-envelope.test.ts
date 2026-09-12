@@ -79,7 +79,7 @@ async function recordsOf(stream: ReadableStream<Uint8Array>) {
 }
 
 function generationOptions(
-  outputFormat: "json-object" | "json-schema" | "ndjson",
+  outputFormat: "json-object" | "json-schema" | "json-schema-strict" | "ndjson",
   provider: "openrouter" | "gateway" = "openrouter",
 ) {
   return {
@@ -92,6 +92,54 @@ function generationOptions(
     outputFormat,
   } as const;
 }
+
+const strictReservation = {
+  type: "reserve_entity" as const,
+  entity: {
+    id: "tree-0",
+    label: "Tree",
+    position: [0, 0, 0] as [number, number, number],
+    scale: [1, 1, 1] as [number, number, number],
+    rotation: { present: false },
+    parentId: { present: false },
+    color: "#88aa55",
+    behavior: { present: false },
+    assetPolicy: { present: false },
+    stage: "seed" as const,
+  },
+};
+
+const strictGeneratedRevolve = {
+  type: "set_geometry" as const,
+  id: "tree-0",
+  geometry: {
+    kind: "generated" as const,
+    collision: "none" as const,
+    detail: "refined" as const,
+    job: {
+      backend: "browser-manifold" as const,
+      recipe: {
+        version: 1 as const,
+        revision: 0,
+        output: "revolve",
+        nodes: [
+          {
+            id: "revolve",
+            kind: "revolve",
+            profile: [
+              { item0: 0.2, item1: -0.5 },
+              { item0: 0.4, item1: 0.5 },
+              { item0: 0.2, item1: 1 },
+            ],
+            segments: 16,
+          },
+        ],
+      },
+    },
+    tint: { present: false },
+  },
+  assetPolicy: { present: false },
+};
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -158,6 +206,81 @@ describe("structured generation envelopes", () => {
     expect(body.messages[0].content).toContain("parent transform");
   });
 
+  it("requests the strict wire schema and decodes wrappers before applying commands", async () => {
+    const fetcher = vi.fn(async () =>
+      responseFor(
+        JSON.stringify({
+          commands: [strictReservation, strictGeneratedRevolve, commit],
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands({
+        ...generationOptions("json-schema-strict"),
+        browserModeling: true,
+      }),
+    );
+    expect(records).toEqual([
+      reservation,
+      {
+        type: "set_geometry",
+        id: "tree-0",
+        geometry: {
+          kind: "generated",
+          collision: "none",
+          detail: "refined",
+          job: {
+            backend: "browser-manifold",
+            recipe: {
+              version: 1,
+              revision: 0,
+              output: "revolve",
+              nodes: [
+                {
+                  id: "revolve",
+                  kind: "revolve",
+                  profile: [
+                    [0.2, -0.5],
+                    [0.4, 0.5],
+                    [0.2, 1],
+                  ],
+                  segments: 16,
+                },
+              ],
+            },
+          },
+        },
+      },
+      commit,
+    ]);
+
+    const body = bodyOf(fetcher);
+    expect(body.response_format).toMatchObject({
+      type: "json_schema",
+      json_schema: {
+        name: "orbsie_scene_commands",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: { commands: { type: "array" } },
+          required: ["commands"],
+          additionalProperties: false,
+        },
+      },
+    });
+    expect(
+      body.response_format.json_schema.schema.properties.commands.items,
+    ).toEqual(expect.objectContaining({ anyOf: expect.any(Array) }));
+    expect(body.messages[0].content).toContain("present:false");
+    expect(body.messages[0].content).toContain("item0");
+    expect(body.messages[0].content).not.toContain('"$schema"');
+    expect(body.messages[0].content).toContain(
+      "canonical set_geometry example is conceptual only",
+    );
+  });
+
   it("emits a reservation before the envelope closes", async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
@@ -212,6 +335,57 @@ describe("structured generation envelopes", () => {
     expect(records[1]).toMatchObject({
       code: "INVALID_SCENE_JSON",
       diagnostic: { operation: 1, finishReason: null },
+    });
+    expect(records.some((record) => record.type === "commit_revision")).toBe(
+      false,
+    );
+  });
+
+  it("rejects an invalid strict wire wrapper without committing", async () => {
+    const invalid = {
+      type: "set_transform",
+      id: "tree-0",
+      position: { present: true, value: null },
+      rotation: { present: false },
+      scale: { present: false },
+      assetPolicy: { present: false },
+    };
+    const fetcher = vi.fn(async () =>
+      responseFor(
+        JSON.stringify({ commands: [strictReservation, invalid, commit] }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-schema-strict")),
+    );
+    expect(records[0]).toEqual(reservation);
+    expect(records[1]).toMatchObject({
+      code: "INVALID_SCENE_UPDATE",
+      diagnostic: { operation: 2 },
+    });
+    expect(JSON.stringify(records[1])).not.toContain("tree-0");
+    expect(JSON.stringify(records[1])).not.toContain('"value":null');
+    expect(records.some((record) => record.type === "commit_revision")).toBe(
+      false,
+    );
+  });
+
+  it("holds a strict-wire commit when the envelope is truncated", async () => {
+    const incomplete = JSON.stringify({
+      commands: [strictReservation, commit],
+    }).slice(0, -3);
+    const fetcher = vi.fn(async () => responseFor(incomplete, "length"));
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-schema-strict")),
+    );
+    expect(records[0]).toEqual(reservation);
+    expect(records[1]).toMatchObject({
+      code: "TRUNCATED_SCENE_STREAM",
+      diagnostic: { operation: 1, finishReason: "length" },
     });
     expect(records.some((record) => record.type === "commit_revision")).toBe(
       false,
