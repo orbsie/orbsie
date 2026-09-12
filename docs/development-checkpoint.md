@@ -204,3 +204,15 @@ A Gateway-only strict acceptance run is now assigned from5403f61: one build,
 exact strawberry prompt, material edit only after successful creation, max2
 Luna low/default calls of4096 output tokens, no retries or fallback. No default
 Gateway transport or production environment has changed yet.
+
+### Strict Gateway acceptance passed
+
+Source5403f61 passed two bounded Luna requests for strawberry creation and
+selected material edit, plus recovery/export/standalone playback. No fallback
+or diagnostics. Strict mode was exact-override configured. Evidence directory
+`gateway-strawberry-strict`; source is operator-supplied-unverified. Root viewed
+edit screenshot and scanned text/JSON/ZIP for key patterns (none); temp key
+deleted, local server stopped. Visual quality remains small/sparse and open.
+Next release validation precedes deployment with the accepted exact Gateway
+Luna strict override. Live free-trial, cloud/publication and ChatGPT gates are
+not proven by this BYOK result.
