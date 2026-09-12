@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "mode": "synthetic-pointer-handler-fixture",
+  "actualDevice": false,
+  "syntheticPointerHandlers": true,
+  "url": "http://127.0.0.1:3027",
+  "fixtureGenerationRequests": 1,
+  "liveInferenceCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "editor": {
+    "status": "passed",
+    "simultaneousActions": true,
+    "lostPointerCaptureRelease": true,
+    "backgroundReset": true,
+    "buttonSpaceActivation": true,
+    "textEntryDoesNotMove": true,
+    "eventsBeforeScore": [
+      {
+        "key": "d",
+        "down": true,
+        "pointerId": 101
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 102
+      }
+    ]
+  },
+  "standalone": {
+    "status": "passed",
+    "simultaneousActions": true,
+    "lostPointerCaptureRelease": true,
+    "backgroundReset": true,
+    "eventsBeforeScore": [
+      {
+        "key": "d",
+        "down": true,
+        "pointerId": 101
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 102
+      }
+    ]
+  },
+  "evidence": [
+    "editor-touch.png",
+    "world.zip",
+    "standalone-touch.png"
+  ],
+  "captureOverride": true,
+  "limitations": "Synthetic PointerEvent dispatch with HTMLElement.prototype.setPointerCapture overridden; proves handler/tracker semantics only."
+}

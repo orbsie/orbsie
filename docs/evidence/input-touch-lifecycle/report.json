@@ -1,0 +1,70 @@
+{
+  "status": "partial",
+  "mode": "browser-touch-emulation",
+  "actualDevice": false,
+  "syntheticPointerHandlers": false,
+  "captureOverride": false,
+  "url": "http://127.0.0.1:3027",
+  "fixtureGenerationRequests": 1,
+  "liveInferenceCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "openGates": [
+    "Chromium CDP releasePointerCapture cleared capture but did not emit lostpointercapture; ordinary touch release and real touchCancel are recorded separately."
+  ],
+  "editor": {
+    "status": "passed",
+    "simultaneousActions": true,
+    "captureObserved": true,
+    "captureReleaseApiObserved": true,
+    "captureReleaseEventObserved": false,
+    "ordinaryTouchRelease": true,
+    "lostPointerCaptureRelease": false,
+    "touchCancelLostCapture": true,
+    "otherActionHeldAfterOrdinaryRelease": true,
+    "backgroundReset": true,
+    "buttonSpaceActivation": true,
+    "textEntryDoesNotMove": true,
+    "eventsBeforeScore": [
+      {
+        "key": "d",
+        "down": true,
+        "pointerId": 2
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 3
+      }
+    ]
+  },
+  "standalone": {
+    "status": "passed",
+    "simultaneousActions": true,
+    "captureObserved": true,
+    "captureReleaseApiObserved": true,
+    "captureReleaseEventObserved": false,
+    "ordinaryTouchRelease": true,
+    "lostPointerCaptureRelease": false,
+    "touchCancelLostCapture": true,
+    "otherActionHeldAfterOrdinaryRelease": true,
+    "backgroundReset": true,
+    "eventsBeforeScore": [
+      {
+        "key": "d",
+        "down": true,
+        "pointerId": 2
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 3
+      }
+    ]
+  },
+  "evidence": [
+    "editor-touch.png",
+    "world.zip",
+    "standalone-touch.png"
+  ]
+}

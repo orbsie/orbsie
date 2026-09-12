@@ -32,11 +32,12 @@ import { collectGameProgramEntityIds } from "@/lib/game-program";
 import { formationParticles } from "@/lib/formation-particles";
 import { registerPublicationThumbnail } from "@/lib/publication-thumbnail";
 import type { Entity } from "@/lib/protocol";
+import { GameSession, GAME_RULES_RESTART_NOTICE } from "@/lib/game-session";
 import {
-  GameSession,
-  GAME_RULES_RESTART_NOTICE,
-  type GameSessionInput,
-} from "@/lib/game-session";
+  PlayerInputTracker,
+  actionForPlayerKey,
+  type PlayerInputDetail,
+} from "@/lib/player-input";
 import {
   useAssetGeometry,
   isAssetGeometryReady,
@@ -582,8 +583,7 @@ function Player({
     position: [0, 0.5, 5],
     velocityY: 0,
   });
-  const keys = useRef(new Set<string>());
-  const presses = useRef<GameSessionInput[]>([]);
+  const inputs = useRef(new PlayerInputTracker());
   const direction = useMemo(() => new THREE.Vector3(), []);
   const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const playing = useOrb((s) => s.playing);
@@ -591,51 +591,28 @@ function Player({
   const projectId = useOrb((s) => s.project.id);
   useEffect(() => {
     if (!playing) {
-      presses.current = [];
-      keys.current.clear();
+      inputs.current.clear();
     }
   }, [playing]);
   useEffect(() => {
     state.current = { position: [0, 0.5, 5], velocityY: 0 };
     usableEntities.current.clear();
-    presses.current = [];
+    inputs.current.clear();
   }, [reset, projectId]);
   useEffect(() => {
-    const actionForKey = (key: string): GameSessionInput | undefined =>
-      (
-        ({
-          w: "up",
-          arrowup: "up",
-          s: "down",
-          arrowdown: "down",
-          a: "left",
-          arrowleft: "left",
-          d: "right",
-          arrowright: "right",
-          " ": "jump",
-        }) as Record<string, GameSessionInput>
-      )[key];
+    const legacyPointerIds = new Map<string, number | string>();
     const changeKey = (key: string, down: boolean) => {
-      const action = actionForKey(key);
-      if (down) {
-        if (
-          action &&
-          useOrb.getState().playing &&
-          presses.current.length < 64 &&
-          ![...keys.current].some((held) => actionForKey(held) === action)
-        )
-          presses.current.push(action);
-        keys.current.add(key);
-      } else keys.current.delete(key);
+      if (actionForPlayerKey(key)) inputs.current.setKeyboard(key, down);
     };
     const key = (e: KeyboardEvent, down: boolean) => {
+      const textEntry = isTextEntryTarget(e.target);
+      const buttonActivation =
+        (e.target as Element)?.closest("button") &&
+        [" ", "Enter"].includes(e.key);
+      // Always process releases so focus changes cannot leave a key held.
+      if (down && (textEntry || buttonActivation)) return;
       if (
-        isTextEntryTarget(e.target) ||
-        ((e.target as Element)?.closest("button") &&
-          [" ", "Enter"].includes(e.key))
-      )
-        return;
-      if (
+        down &&
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
       )
         e.preventDefault();
@@ -644,28 +621,47 @@ function Player({
     const d = (e: KeyboardEvent) => key(e, true),
       u = (e: KeyboardEvent) => key(e, false);
     const blur = () => {
-      keys.current.clear();
-      presses.current = [];
+      inputs.current.clear();
+      legacyPointerIds.clear();
     };
     const focus = (event: FocusEvent) => {
       if (isTextEntryTarget(event.target)) blur();
     };
     const touch = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (typeof detail?.key === "string")
-        changeKey(detail.key, Boolean(detail.down));
+      const detail = (e as CustomEvent<PlayerInputDetail>).detail;
+      if (
+        typeof detail?.key === "string" &&
+        (detail.pointerId === undefined || Number.isInteger(detail.pointerId))
+      ) {
+        const key = detail.key.toLowerCase();
+        const pointerId =
+          detail.pointerId ?? legacyPointerIds.get(key) ?? `legacy:${key}`;
+        if (detail.pointerId === undefined && detail.down)
+          legacyPointerIds.set(key, pointerId);
+        inputs.current.setPointer(pointerId, detail.key, Boolean(detail.down));
+        if (detail.pointerId === undefined && !detail.down)
+          legacyPointerIds.delete(key);
+      }
+    };
+    const hidden = () => {
+      if (document.visibilityState === "hidden") blur();
     };
     window.addEventListener("keydown", d);
     window.addEventListener("keyup", u);
     window.addEventListener("blur", blur);
+    window.addEventListener("pagehide", blur);
+    document.addEventListener("visibilitychange", hidden);
     window.addEventListener("focusin", focus);
     window.addEventListener("orbsie-input", touch);
     inputsReady.current = true;
     return () => {
       inputsReady.current = false;
+      blur();
       window.removeEventListener("keydown", d);
       window.removeEventListener("keyup", u);
       window.removeEventListener("blur", blur);
+      window.removeEventListener("pagehide", blur);
+      document.removeEventListener("visibilitychange", hidden);
       window.removeEventListener("focusin", focus);
       window.removeEventListener("orbsie-input", touch);
     };
@@ -701,19 +697,17 @@ function Player({
       )
         usableEntities.current.set(entity.id, entity);
     if (!playing) {
-      presses.current = [];
+      inputs.current.clear();
       return;
     }
     const dt = Math.min(delta, 0.04),
-      k = keys.current;
+      input = inputs.current;
     direction.set(
-      (k.has("d") || k.has("arrowright") ? 1 : 0) -
-        (k.has("a") || k.has("arrowleft") ? 1 : 0),
+      (input.isHeld("right") ? 1 : 0) - (input.isHeld("left") ? 1 : 0),
       0,
-      (k.has("s") || k.has("arrowdown") ? 1 : 0) -
-        (k.has("w") || k.has("arrowup") ? 1 : 0),
+      (input.isHeld("down") ? 1 : 0) - (input.isHeld("up") ? 1 : 0),
     );
-    const pressed = presses.current.splice(0, 64);
+    const pressed = input.consumePressed();
     for (const action of pressed) session.queueInput(action);
     session.advance(dt);
     const didReset = resetAvatar();
@@ -740,7 +734,7 @@ function Player({
       {
         x: direction.x,
         z: direction.z,
-        jump: k.has(" ") || pressed.includes("jump"),
+        jump: input.isHeld("jump") || pressed.includes("jump"),
       },
       s.project.entities
         .map((entity) => {

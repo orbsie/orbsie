@@ -54,6 +54,10 @@ import {
 } from "@/lib/project-state";
 import { useOrb } from "@/lib/store";
 import {
+  beginPlayerPointerInput,
+  endPlayerPointerInput,
+} from "@/lib/player-input";
+import {
   recoveredGenerationInput,
   recoveredGenerationProject,
 } from "@/lib/generation-journal";
@@ -1566,28 +1570,10 @@ export default function Orbsie() {
                   <button
                     key={key}
                     aria-label={key === " " ? "Jump" : `Move ${key}`}
-                    onPointerDown={(e) => {
-                      e.currentTarget.setPointerCapture(e.pointerId);
-                      window.dispatchEvent(
-                        new CustomEvent("orbsie-input", {
-                          detail: { key, down: true },
-                        }),
-                      );
-                    }}
-                    onPointerUp={() =>
-                      window.dispatchEvent(
-                        new CustomEvent("orbsie-input", {
-                          detail: { key, down: false },
-                        }),
-                      )
-                    }
-                    onPointerCancel={() =>
-                      window.dispatchEvent(
-                        new CustomEvent("orbsie-input", {
-                          detail: { key, down: false },
-                        }),
-                      )
-                    }
+                    onPointerDown={(e) => beginPlayerPointerInput(e, key)}
+                    onPointerUp={(e) => endPlayerPointerInput(e, key)}
+                    onPointerCancel={(e) => endPlayerPointerInput(e, key)}
+                    onLostPointerCapture={(e) => endPlayerPointerInput(e, key)}
                   >
                     <Icon size={21} />
                   </button>

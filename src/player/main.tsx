@@ -6,6 +6,10 @@ import { projectSchema } from "../lib/protocol";
 import "./player.css";
 import { configureGeneratedGeometryResolver } from "../lib/use-generated-geometry";
 import {
+  beginPlayerPointerInput,
+  endPlayerPointerInput,
+} from "../lib/player-input";
+import {
   generatedModelPath,
   MAX_GENERATED_MODEL_BYTES,
 } from "../lib/generated-models";
@@ -107,28 +111,10 @@ function PlayerApp() {
           <button
             key={key}
             aria-label={["Forward", "Left", "Back", "Right", "Jump"][i]}
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              window.dispatchEvent(
-                new CustomEvent("orbsie-input", {
-                  detail: { key, down: true },
-                }),
-              );
-            }}
-            onPointerUp={() =>
-              window.dispatchEvent(
-                new CustomEvent("orbsie-input", {
-                  detail: { key, down: false },
-                }),
-              )
-            }
-            onPointerCancel={() =>
-              window.dispatchEvent(
-                new CustomEvent("orbsie-input", {
-                  detail: { key, down: false },
-                }),
-              )
-            }
+            onPointerDown={(e) => beginPlayerPointerInput(e, key)}
+            onPointerUp={(e) => endPlayerPointerInput(e, key)}
+            onPointerCancel={(e) => endPlayerPointerInput(e, key)}
+            onLostPointerCapture={(e) => endPlayerPointerInput(e, key)}
           >
             {["↑", "←", "↓", "→", "↗"][i]}
           </button>

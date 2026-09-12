@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "mode": "browser-touch-emulation",
+  "actualDevice": false,
+  "failurePhase": "editor-touch-dispatch",
+  "fixtureGenerationRequests": 1,
+  "liveInferenceCalls": 0,
+  "eventsBeforeScore": [],
+  "expectedScore": "18",
+  "observedScore": "0",
+  "rootCause": "The initial Chromium CDP touch landed on the editor success toast, which covered the control hit coordinates. The browser therefore produced no orbsie-input events for the controls and the score stayed at 0. The final run dismisses the toast before hit-testing and uses the same CDP touch path with native pointer capture."
+}
