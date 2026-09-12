@@ -20,3 +20,11 @@ contents were written here.
 
 `report.json` is the sanitized harness output. The deployed output was left in
 place as requested for review; no cleanup or deletion was attempted.
+# Read-only first-release recovery
+
+After the harness stopped, an exact-ID read-only database query recovered the
+test Orb's deployment mapping. A fresh signed-out Chromium context then loaded
+the deployment, observed `main[data-ready="true"]` and its canvas, and fetched
+the revision-1 project snapshot. No page errors or cookies were present.
+See `recovered-first-release.json` and `recovered-first-release.png`.
+This confirms client-rendered readiness; revision 2 remains unsubmitted.
