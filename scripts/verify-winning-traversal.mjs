@@ -234,15 +234,25 @@ try {
           : null;
       };
       window.__orbReadObjectBounds = (target) => {
-        let best;
-        const include = (object) => {
-          const geometry = object.geometry;
-          if (!geometry || !geometry.attributes?.position) return;
+        const position = target?.position;
+        const scale = target?.scale;
+        if (
+          !Array.isArray(position) ||
+          position.length !== 3 ||
+          !position.every(Number.isFinite) ||
+          !Array.isArray(scale) ||
+          scale.length !== 3 ||
+          !scale.every(Number.isFinite)
+        )
+          return { error: "Invalid portal transform target." };
+        const close = (actual, expected, tolerance) =>
+          Math.abs(actual - expected) <= tolerance;
+        const boundsFor = (geometry, matrix) => {
+          if (!geometry || !geometry.attributes?.position) return null;
           if (!geometry.boundingBox && geometry.computeBoundingBox)
             geometry.computeBoundingBox();
           const bounds = geometry.boundingBox;
-          const matrix = object.matrixWorld?.elements;
-          if (!bounds || !matrix) return;
+          if (!bounds || !matrix) return null;
           const min = [Infinity, Infinity, Infinity];
           const max = [-Infinity, -Infinity, -Infinity];
           for (const x of [bounds.min.x, bounds.max.x])
@@ -258,41 +268,94 @@ try {
                   max[axis] = Math.max(max[axis], world[axis]);
                 }
               }
-          const dx =
-            target.x < min[0]
-              ? min[0] - target.x
-              : target.x > max[0]
-                ? target.x - max[0]
-                : 0;
-          const dz =
-            target.z < min[2]
-              ? min[2] - target.z
-              : target.z > max[2]
-                ? target.z - max[2]
-                : 0;
-          const distanceXZ = Math.hypot(dx, dz);
-          if (distanceXZ > 0.8) return;
-          const height = max[1] - min[1];
-          if (
-            !best ||
-            distanceXZ < best.distanceXZ ||
-            (distanceXZ === best.distanceXZ && height > best.height)
-          )
-            best = {
-              geometryType: geometry.type,
-              min,
-              max,
-              distanceXZ,
-              height,
-            };
+          return { min, max, geometryType: geometry.type };
         };
-        for (const scene of observed) {
+        const union = (components) => {
+          const min = [Infinity, Infinity, Infinity];
+          const max = [-Infinity, -Infinity, -Infinity];
+          for (const component of components) {
+            for (let axis = 0; axis < 3; axis++) {
+              min[axis] = Math.min(min[axis], component.min[axis]);
+              max[axis] = Math.max(max[axis], component.max[axis]);
+            }
+          }
+          return { min, max };
+        };
+        const candidates = [];
+        const seenGroups = new Set();
+        for (const scene of [...new Set(observed)]) {
+          scene.updateMatrixWorld?.(true);
           scene.traverse((object) => {
+            // EntityMesh renders an entity as one Group whose direct mesh is
+            // the same geometry used by gameplay contact bounds. Matching the
+            // authored world transform keeps the planet, player, and unrelated
+            // scene meshes out of this evidence path.
+            if (
+              !object.isGroup ||
+              object === scene ||
+              seenGroups.has(object)
+            )
+              return;
+            seenGroups.add(object);
             object.updateWorldMatrix?.(true, false);
-            include(object);
+            const matrix = object.matrixWorld?.elements;
+            if (!matrix) return;
+            const origin = [matrix[12], matrix[13], matrix[14]];
+            const worldScale = [
+              Math.hypot(matrix[0], matrix[1], matrix[2]),
+              Math.hypot(matrix[4], matrix[5], matrix[6]),
+              Math.hypot(matrix[8], matrix[9], matrix[10]),
+            ];
+            if (
+              !origin.every((value, axis) => close(value, position[axis], 1e-3)) ||
+              !worldScale.every((value, axis) => close(value, scale[axis], 1e-3))
+            )
+              return;
+            const components = object.children
+              .filter(
+                (child) =>
+                  child.isMesh && child.geometry?.type !== "CircleGeometry",
+              )
+              .map((child) => {
+                child.updateWorldMatrix?.(true, false);
+                return boundsFor(child.geometry, child.matrixWorld?.elements);
+              })
+              .filter(Boolean);
+            if (!components.length) return;
+            candidates.push({
+              bounds: union(components),
+              componentCount: components.length,
+              geometryTypes: components.map((component) => component.geometryType),
+              origin,
+              scale: worldScale,
+            });
           });
         }
-        return best ?? null;
+        if (candidates.length !== 1)
+          return {
+            error: "Could not uniquely identify the portal render group.",
+            candidateCount: candidates.length,
+            candidates: candidates.map(({ bounds, componentCount, geometryTypes, origin, scale }) => ({
+              bounds,
+              componentCount,
+              geometryTypes,
+              origin,
+              scale,
+            })),
+          };
+        const [candidate] = candidates;
+        return {
+          matchedEntity: target.entityId,
+          matchedBy: "portal-entity-render-group-transform",
+          expectedGeometryKind: target.geometryKind ?? null,
+          matchedTransform: {
+            position: candidate.origin,
+            scale: candidate.scale,
+          },
+          componentCount: candidate.componentCount,
+          geometryTypes: candidate.geometryTypes,
+          ...candidate.bounds,
+        };
       };
     });
     const page = await context.newPage();
@@ -545,13 +608,24 @@ try {
       const bounds = await page.evaluate(
         (target) => window.__orbReadObjectBounds(target),
         {
-          x: portalTarget.position[0],
-          y: portalTarget.position[1],
-          z: portalTarget.position[2],
+          entityId: portalTarget.id,
+          position: portalTarget.position,
+          scale: portalTarget.scale,
+          geometryKind: portalTarget.geometry?.kind,
         },
       );
-      if (!player || !bounds)
-        throw Error(`${label} could not observe the portal collision bounds.`);
+      if (!player)
+        throw Error(`${label} could not observe the player transform.`);
+      if (
+        !bounds ||
+        bounds.error ||
+        bounds.matchedEntity !== portalTarget.id ||
+        !bounds.min ||
+        !bounds.max
+      )
+        throw Error(
+          `${label} could not uniquely observe the portal collision bounds: ${JSON.stringify(bounds)}`,
+        );
       const horizontalX =
         player.x < bounds.min[0]
           ? bounds.min[0] - player.x
@@ -584,12 +658,29 @@ try {
         await setKeys([]);
         await page.waitForTimeout(120);
         lastContact = await readPortalContact();
-        if (lastContact.contact)
-          return {
+        if (lastContact.contact) {
+          const firstObservation = {
             ...lastContact,
             collected: await score(),
-            settledTicks: attempt + 1,
           };
+          // Require the same transformed portal envelope to overlap on a
+          // second settled simulation observation. A single transient frame
+          // cannot stand in for the runtime's XYZ collision predicate.
+          await page.waitForTimeout(80);
+          const secondContact = await readPortalContact();
+          const secondObservation = {
+            ...secondContact,
+            collected: await score(),
+          };
+          lastContact = secondContact;
+          if (secondContact.contact)
+            return {
+              ...secondContact,
+              collected: secondObservation.collected,
+              settledTicks: attempt + 2,
+              observations: [firstObservation, secondObservation],
+            };
+        }
         await setKeys([" "]);
         await page.waitForTimeout(180);
         await setKeys([]);

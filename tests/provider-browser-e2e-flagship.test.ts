@@ -194,6 +194,23 @@ function initialProject() {
 }
 
 describe("flagship provider story contract", () => {
+  it("binds portal contact evidence to its transformed render group", () => {
+    const traversal = readFileSync(
+      resolve("scripts/verify-winning-traversal.mjs"),
+      "utf8",
+    );
+    expect(traversal).toContain("object.isGroup");
+    expect(traversal).toContain("target.entityId");
+    expect(traversal).toContain('child.geometry?.type !== "CircleGeometry"');
+    expect(traversal).toContain(
+      'matchedBy: "portal-entity-render-group-transform"',
+    );
+    expect(traversal).toContain(
+      "observations: [firstObservation, secondObservation]",
+    );
+    expect(traversal).not.toContain("distanceXZ > 0.8");
+  });
+
   it("keeps the edited goal-7 ZIP separate from the baseline export", async () => {
     const temporary = await mkdtemp(join(tmpdir(), "orbsie-goal7-export-test-"));
     try {
