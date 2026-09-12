@@ -33,7 +33,9 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Gateway key also exists as sensitive Vercel production `AI_GATEWAY_TEST_KEY`.
   Never print it or commit local env files. Existing CLI deploy auth works.
 - ChatGPT browser subscription consent/discovery/inference remains unverified.
-  CUA exposes no browser; Chrome connector tab listing is not computer-use control.
+  Chrome DevTools snapshot/click tools now work. Root opened Orbsie sign-in in
+  page2; owner must enter credentials there, then root can continue connection.
+  CUA itself still exposes no browser. Do not export browser cookies/profiles.
   Historical local-companion evidence does not satisfy browser-only acceptance.
 - Republish evidence `republishing-browser-live/resume-report.json` proves same
   Vercel project, distinct deployments, served revision2, signed-out readiness,
