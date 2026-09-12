@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-12 against HEAD `4b7b365`; full goal remains incomplete.
+Updated 2026-09-12 against HEAD `7c0eec7`; full goal remains incomplete.
 Historical reports and rejected evidence are retained in `docs/evidence/` and
 `docs/scope-audit.md`. This file records current state, not conversation history.
 
@@ -60,7 +60,12 @@ requests/page errors. No worker or owned test process remains active. This
 closes one fixture composition path, not three-platform route/live provider
 story/physical mobile. Next meaningful step: deploy/test current authoring
 guidance in an authorized fresh provider milestone, preserving all failures.
-Server3068 runtime e0dff7c remains unchanged; revalidate before use. Do not
+Production build at7c0eec7 passed. Old idle server81664 stopped; new server3068
+session18186 serves this build with local env and output cap4096. No model
+calls started. Existing .env.openrouter.local contains nonempty test key,
+model and cap variables; values were not printed. Main env files and current
+environment contain no Gateway test key. OpenRouter remains local-only,
+2calls/run4096 maximum, Luna low/default/no retries;3-call request pending. Do not
 rebuild .next while server in use. Live provider effectiveness remains open.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
 Acceptance distinction: existing verify-flagship-platforms asserts landing
@@ -106,8 +111,7 @@ physical mobile or complete provider story. No publication job remains live.
 ## Runtime and other accepted milestones
 
 Latest production source a5b2769 at orbsie.com; smoke evidence in
-`replacement-sizing-release/`. Last local server port3068/session41341 was
-built e0dff7c; revalidate before reuse. Temporary Gateway key file deleted;
+`replacement-sizing-release/`. Current local server3068/session18186 uses build7c0eec7; revalidate before reuse. Temporary Gateway key file deleted;
 do not assume Vercel env pull contains a usable key.
 OpenRouter/Gateway input-game create/edit/reload/export/play passed separately.
 Gateway explicit continuation/cloud recovery/publication have separate reports.
