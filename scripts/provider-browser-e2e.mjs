@@ -3748,6 +3748,8 @@ async function runFlagshipStory(
     status: "running",
     visualReview: "pending",
   };
+  if (!(await page.locator(".object-list").isVisible()))
+    await page.getByRole("button", { name: "Show objects", exact: true }).click();
   const treeRow = page
     .locator(".object-list button")
     .filter({ hasText: initialStory.tree.label })

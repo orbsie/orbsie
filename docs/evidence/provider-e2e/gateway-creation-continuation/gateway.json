@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-09-12T19:18:37.934Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T19:18:37.934Z",
+    "harness": {
+      "checkoutSHA": "17fa022b8e62352e97b52a8a4f981806264eb2ef",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "7c0eec7",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "gateway",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3068",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationBudget": 2,
+  "creation": {
+    "status": "seeded",
+    "operations": 0,
+    "firstReservationMs": null,
+    "seedObserved": false,
+    "catalogEntities": 5,
+    "proceduralEntities": 7,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "flagshipResume": {
+    "status": "checkpoint-restored",
+    "generationBudget": 2,
+    "mode": "live",
+    "stage": "creation",
+    "checkpoint": {
+      "projectId": "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+      "revision": 26,
+      "sourceSnapshotSha256": "7864935f73834b7b44620158930a72784738783d910dc17fbb00a80331f6773e"
+    },
+    "seededCreation": {
+      "status": "validated",
+      "projectId": "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+      "revision": 26,
+      "sourceSnapshot": "docs/evidence/provider-e2e/gateway-current-full-story/gateway/story-created-project.json",
+      "sourceSnapshotSha256": "7864935f73834b7b44620158930a72784738783d910dc17fbb00a80331f6773e",
+      "assetReferences": [
+        "kenney.nature.platform-grass",
+        "kenney.nature.tree-default",
+        "kenney.nature.tree-pine-tall-a"
+      ],
+      "generatedModels": 0
+    }
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 0,
+    "generationStatuses": [],
+    "generationDiagnostics": [],
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "failure.png"
+  ],
+  "error": "expect(locator).toHaveCount(expected) failed\n\nLocator:  locator('.object-list button').filter({ hasText: 'Friendly Tree 1' }).first()\nExpected: 1\nReceived: 0\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveCount\" locator('.object-list button').filter({ hasText: 'Friendly Tree 1' }).first() with timeout 5000ms\n  - waiting for locator('.object-list button').filter({ hasText: 'Friendly Tree 1' }).first()\n    12 × locator resolved to 0 elements\n       - unexpected value \"0\"\n",
+  "flagshipStory": {
+    "status": "running",
+    "visualReview": "pending",
+    "phases": {
+      "creation": {
+        "status": "seeded",
+        "revision": 26
+      }
+    }
+  }
+}
