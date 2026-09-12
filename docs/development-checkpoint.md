@@ -1,117 +1,51 @@
 # Development checkpoint
 
-Keep this handoff compact (about 60 lines or fewer) and update it in place. It
-is a resume point, not a transcript: omit secrets, credentials, raw prompts,
-large logs, and copied diffs.
+Keep this handoff compact and update it in place. Never include secrets.
 
-- Current objective: Implement the full Orbsie plan with validated OpenRouter,
-  Vercel AI Gateway and browser ChatGPT journeys.
-- Latest owner direction: standing approval ("yes, anytime") for bounded Luna
-  OpenRouter/Gateway acceptance runs, two calls/provider/run, 4096 output tokens
-  per call, no automatic retries. Use meaningful milestones, not repeated calls.
-  Owner requests sign-in via computer use; CUA still cannot access Chrome.
-- Post-union OpenRouter input-game passed, evidence commit `694c904`: two HTTP200
-  Luna calls, create/edit, recovery, export, standalone win/loss/restart. Local app
-  source `905b682` is operator-supplied. Gateway post-fix acceptance remains open.
-- Recovery UI worker is implementing explicit retry/last-working controls;
-  review and deterministic browser acceptance remain pending.
-- Live republish: `republishing-browser-live/resume-report.json` proves same
-  Vercel project, distinct deployments, served revision2, signed-out browser
-  readiness and exact snapshots for revisions1/2. Pending-window observation
-  remains unproven. Resume header omission corrected; 17 focused tests passed.
-- Fresh owner approval: one Luna create/edit test EACH for OpenRouter and
-  Gateway, maximum two calls/provider, 4096 output tokens/call, no retries.
-  OpenRouter run used one HTTP200 call, then tree-shape overlap rejection before
-  save; no edit/retry. Evidence: `input-game-feedback-approved`. Gateway also
-  used one HTTP200 Luna call then tree overlap rejection, no edit/retry; evidence
-  `gateway-input-game-approved`. Private temporary Gateway key file deleted.
-  Owner also approved Chrome consent work;
-  CUA still reports no browsers. Do not treat consent as already completed.
-- Current source: `905b682` is deployed to `https://orbsie.com`; production smoke
-  passed in `docs/evidence/compound-policy-release`. Verify `HEAD` on resume.
-- Deployed kernel-tested compound union example (`38370aa`) and owner-scoped
-  publication identity with republish harness (`6df72ec`). Build/typecheck and
-  hosted-package verification passed; live acceptance of these changes is open.
-- Input-game acceptance correction committed as `2c8db05`.
-- Experience reconciliation reviewed: parcel frame, desktop composer focus and
-  narrow play-during-stream paths already have deterministic browser evidence.
-- Shared transition reviewed: direct mount, reversal, resize/interruption and
-  CSS centering corrected. 19 tests/typecheck passed; final nine-scenario parcel
-  run retained in `docs/evidence/coordinated-descent`.
-- Provider report attribution reviewed: harness repository SHA/dirty status,
-  timestamp and optional operator-supplied app SHA; no remote verification claim.
-  Four focused tests/typecheck passed.
-- Modeling failure feedback reviewed: typed project-scoped diagnostics and
-  optional 32KiB recipe reach explicit follow-up requests across provider paths.
-  Last-good geometry preserved; no automatic inference. 67 focused tests and
-  typecheck passed. Feedback is transient and does not survive reload.
-- Production build and ChatGPT host-package verification passed for `33148de`.
-- Browser feedback acceptance passed: four fixture requests with real Manifold
-  worker, last-good preservation, exact rejection feedback, corrected bake and
-  cleared feedback on the next request. Evidence: `modeling-feedback-browser`.
-- Feedback integration deployed; remote build/typecheck and read-only production
-  smoke passed. No live inference.
-- Gameplay audit: prior fixture/published evidence already proves physical
-  crystal/portal win-reset and platform behavior. The saved live OpenRouter
-  flagship has `project.game`, which the legacy traversal verifier rejects.
-- Saved flagship traversal accepted in `5d0867f`: unchanged OpenRouter ZIP,
-  desktop keyboard and touch five-crystal portal win/reset; legacy fixture
-  desktop check passed. Separate probes verify carrying on all three platforms:
-  1/3 in `flagship-platforms`, 2 in `flagship-platform2-corrected`. The initial
-  platform-2 failure came from premature verifier release; corrected detector,
-  retained-sample regression, and one focused browser run passed. These are
-  isolated saved-snapshot probes, not a continuous three-platform route.
-  No model calls or product changes in those platform probes.
-- Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
-  calls, 4096 output tokens each, using the existing local key (2026-09-11).
-- Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
-  solids rejection at `tree-shape`. No edit or retry. Evidence retained under
-  `docs/evidence/provider-e2e/input-game-authorized-sep11`; local processes stopped.
-- Owner supplied Gateway test key; added as sensitive `AI_GATEWAY_TEST_KEY` to
-  Vercel production for `grappeggias-projects/orbsie`; env listing verified it.
-  No key retained in repository. Available to subsequent deployments; no redeploy
-  or inference performed for this configuration action. Gateway spending cap
-  and browser ChatGPT consent remain outstanding.
-- Harness evidence: canonical project validation accepts baked browser geometry;
-  actual IndexedDB GLB digests are checked. Luna reports typecheck, 26 targeted
-  tests, syntax and safety-gate checks passed. No new live inference was run.
-- Recovery evidence: stale-load browser/release checks passed; 35 targeted
-  recovery tests, type checking, production build and host-package verification
-  passed. Journal/checkpoint replay and completed-run recovery are implemented;
-  this is not provider-stream resumption.
-- Live OpenRouter evidence: Luna `openai/gpt-5.6-luna`, low/default,
-  local-only key; deformation/vary passed at 512 tokens, flagship/garden/
-  procedural passed at owner-authorized 4096 raised cap. Input-game attempts
-  hit one recipe failure and two overly narrow harness rejections at 4096;
-  the harness is now corrected, but live gameplay acceptance remains unproven.
-- Publication evidence: `2632a40` records live account/cloud/per-Orb deployment
-  and signed-out playback of a deterministic protocol world; it made no model call.
-- External gaps: Gateway key is stored in Vercel production, but local test
-  configuration and spending cap remain outstanding. Browser ChatGPT consent
-  and live hosted subscription inference remain unverified.
-- Next action: close remaining live provider acceptance prerequisites and
-  full flagship platform-traversal evidence. The prior failed
-  OpenRouter create/edit authorization does not authorize a new creation retry.
-- Do not equate synthetic fixtures, free-prompt/server-funded Gateway evidence,
-  deterministic publication or production smoke with provider E2E acceptance.
-
-Coordination follows the repository policy:
-
-- Astra low/regular is the lead, reviewer, integrator, and final verifier.
-- At most one Luna xhigh/regular worker runs at once. Use `fork_turns="none"`
-  and task-specific context; workers do not spawn agents.
-- Keep small work in one cohesive task instead of separate investigation,
-  review, or documentation workers. Completion notifications drive follow-up.
-- Avoid status-only polling and automatic continuation chatter. If explicit
-  waiting is necessary, each blocking call is at most 60 seconds, with no new
-  turn solely to recheck unchanged state.
-- Batch fixes and targeted validation. Repeat green checks only after a
-  relevant change, failure, or new risk; reserve full E2E/live model checks
-  for meaningful integration or release milestones.
-
-The repo settings use regular processing (`service_tier = "default"`) and
-Fast mode off. Live model-backed tests are authorized for Luna only, while
-end users retain every model supported by their connected provider. Repo
-configuration cannot disable host automatic goal continuation, change
-subscription accounting, or guarantee 2x savings; those are external settings
-and billing behavior.
+- Objective: implement all of `prompt.md` with E2E OpenRouter, Vercel AI Gateway
+  and browser ChatGPT journeys. The full goal is incomplete.
+- Policy: Astra low reviews/integrates; one Luna xhigh worker, regular/default,
+  no nested agents, Fast off. Only Luna for live tests; user model choices remain
+  unrestricted among supported models. Batch validation at meaningful milestones.
+- Standing owner approval: two calls/provider/run, 4096 output tokens/call,
+  no automatic retries, for bounded OpenRouter/Gateway acceptance milestones.
+  Do not treat this as unlimited inference. Sign-in must use computer use.
+- Production remains source `905b682` at https://orbsie.com, with smoke evidence
+  in `docs/evidence/compound-policy-release`. Local HEAD must be checked on resume.
+- Latest accepted feature: `60f91c7`, explicit Try again / Use last working actions.
+  Original prompt/selection survive retry; latest valid increments survive failure;
+  unfinished reservations are removed; stale recovery clears on revision changes.
+  Eleven targeted tests, typecheck, production build, seven-request fixture browser
+  regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
+  This feature is not deployed yet.
+- Active worker: `/root/republish_acceptance_harness`, one post-union Gateway
+  input-game create/edit run on local build `60f91c7`, port3018, cap4096, exact
+  `openai/gpt-5.6-luna`, low/default, local-only key. At most two calls; failed
+  creation stops. Evidence target `provider-e2e/gateway-input-game-union-policy`.
+  Revalidate worker status; do not restart an unobserved run. Worker must delete
+  its private temporary Gateway env file and stop its server/browser afterward.
+- OpenRouter post-union input-game passed (`694c904`): exactly two HTTP200 calls,
+  creation/edit, recovery, export, standalone win/loss/restart. Evidence directory
+  `provider-e2e/input-game-union-policy`; app source905b682 is operator-supplied.
+- Gateway's preceding run failed on overlapping solids before edit; retain
+  `provider-e2e/gateway-input-game-approved`. No passing result claimed yet.
+- Gateway key also exists as sensitive Vercel production `AI_GATEWAY_TEST_KEY`.
+  Never print it or commit local env files. Existing CLI deploy auth works.
+- ChatGPT browser subscription consent/discovery/inference remains unverified.
+  CUA exposes no browser; Chrome connector tab listing is not computer-use control.
+  Historical local-companion evidence does not satisfy browser-only acceptance.
+- Republish evidence `republishing-browser-live/resume-report.json` proves same
+  Vercel project, distinct deployments, served revision2, signed-out readiness,
+  exact revision1/2 snapshots. Pending-window availability was not observed.
+- Saved flagship evidence proves keyboard/touch crystal/portal win/reset and
+  separate carry probes for all three platforms (`flagship-program-traversal`,
+  `flagship-platforms`, `flagship-platform2-corrected`), not one continuous route.
+- Modeling feedback, durable journals/checkpoints, share metadata and browser-only
+  modeling are implemented. See current reconciliation in `docs/scope-audit.md`;
+  conflicting historical rows are obsolete. Native Blender packaging is superseded.
+- Next local verification gap: runaway-allocation test accepts any procedural error,
+  so timeout could masquerade as memory-budget proof (`33ee035`). Strengthen evidence.
+- Other open gates: hosted ChatGPT, complete provider-publication journeys,
+  representative GPU/mobile performance and timing, and full requirement audit.
+- Avoid status-only turn churn. Await the existing worker without spawning another;
+  review its diff/evidence before acceptance, commit coherent progress, then move on.
