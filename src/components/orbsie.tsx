@@ -18,7 +18,6 @@ import {
   Download,
   Globe2,
   Leaf,
-  KeyRound,
   LoaderCircle,
   Play,
   Plus,
@@ -98,6 +97,40 @@ const World = dynamic(() => import("./world"), {
   ),
 });
 type Connection = GenerationConnection;
+type ProviderLogoKind = "chatgpt" | "openrouter" | "gateway";
+
+const providerLogoSources: Record<ProviderLogoKind, string> = {
+  chatgpt: "/providers/openai.svg",
+  openrouter: "/providers/openrouter.svg",
+  gateway: "/providers/vercel.svg",
+};
+
+function providerLogoKind(provider: string): ProviderLogoKind | undefined {
+  if (provider === "chatgpt-hosted") return "chatgpt";
+  if (provider === "openrouter" || provider === "gateway") return provider;
+  return undefined;
+}
+
+function ProviderLogo({
+  provider,
+  className = "",
+}: {
+  provider: ProviderLogoKind;
+  className?: string;
+}) {
+  return (
+    <img
+      className={`provider-logo ${className}`.trim()}
+      src={providerLogoSources[provider]}
+      alt=""
+      aria-hidden="true"
+      width={20}
+      height={20}
+      draggable={false}
+    />
+  );
+}
+
 const tokenPrice = (value: number | null | undefined) =>
   value == null
     ? "—"
@@ -1420,7 +1453,14 @@ export default function Orbsie() {
                   setModal("settings");
                 }}
               >
-                <span className="mode-dot" />
+                {providerLogoKind(connection.provider) ? (
+                  <ProviderLogo
+                    provider={providerLogoKind(connection.provider)!}
+                    className="provider-logo-inline"
+                  />
+                ) : (
+                  <span className="mode-dot" />
+                )}
                 {isGenerationReady(connection)
                   ? connection.provider === "chatgpt-hosted"
                     ? `ChatGPT · ${connection.model}`
@@ -1648,7 +1688,14 @@ export default function Orbsie() {
           {modal === "settings" && (
             <>
               <span className="modal-symbol">
-                <Sparkles />
+                {providerLogoKind(connection.provider) ? (
+                  <ProviderLogo
+                    provider={providerLogoKind(connection.provider)!}
+                    className="provider-logo-modal"
+                  />
+                ) : (
+                  <Sparkles />
+                )}
               </span>
               <h2>A little creative power</h2>
               <p>
@@ -1748,6 +1795,7 @@ export default function Orbsie() {
                       disabled={oauthBusy || s.building}
                       onClick={() => void connectOpenRouter()}
                     >
+                      <ProviderLogo provider="openrouter" />
                       {oauthBusy ? "Connecting…" : "Connect with OpenRouter"}
                     </button>
                   )}
@@ -2282,7 +2330,7 @@ export default function Orbsie() {
                             ?.focus();
                         }}
                       >
-                        <Sparkles />
+                        <ProviderLogo provider="chatgpt" />
                         <strong>Connect with ChatGPT</strong>
                         <span>Uses your ChatGPT subscription.</span>
                         <ArrowUpRight />
@@ -2300,7 +2348,7 @@ export default function Orbsie() {
                         });
                       }}
                     >
-                      <KeyRound />
+                      <ProviderLogo provider="openrouter" />
                       <strong>Connect with OpenRouter</strong>
                       <span>OpenRouter OAuth — their billing.</span>
                       <ArrowUpRight />
@@ -2319,7 +2367,7 @@ export default function Orbsie() {
                         setModal("settings");
                       }}
                     >
-                      <Globe2 />
+                      <ProviderLogo provider="gateway" />
                       <strong>Connect Vercel AI Gateway</strong>
                       <span>Bring your Vercel AI Gateway API key.</span>
                       <ArrowUpRight />

@@ -293,6 +293,25 @@ p {
   background: #b3c592;
   display: inline-block;
 }
+.provider-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  object-fit: contain;
+}
+.provider-logo-inline {
+  width: 14px;
+  height: 14px;
+}
+.provider-logo-modal {
+  width: 23px;
+  height: 23px;
+}
+.primary.full .provider-logo {
+  width: 18px;
+  height: 18px;
+}
 .create-button,
 .primary {
   background: var(--green);
@@ -840,6 +859,12 @@ kbd {
   border: 1px solid #dfe5d6;
   border-radius: 11px;
   background: transparent;
+}
+.connection-choice button > .provider-logo {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
+  margin-top: 1px;
 }
 .connection-choice button.chosen {
   border-color: #8ba178;
