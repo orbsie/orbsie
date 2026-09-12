@@ -135,6 +135,40 @@ for (const provider of ["openrouter", "gateway"] as const) {
   });
 }
 
+it("preserves escaped newlines in a command while the SSE frame is chunked", async () => {
+  const encoder = new TextEncoder();
+  const command = {
+    type: "commit_revision" as const,
+    message: "First line\nSecond line",
+  };
+  const event = `data: ${JSON.stringify({
+    choices: [{ delta: { content: `${JSON.stringify(command)}\n` } }],
+  })}\n\ndata: [DONE]\n\n`;
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            const bytes = encoder.encode(event);
+            for (let offset = 0; offset < bytes.length; offset += 5)
+              controller.enqueue(bytes.slice(offset, offset + 5));
+            controller.close();
+          },
+        }),
+      ),
+  );
+  const stream = await generateCommands({
+    provider: "gateway",
+    model: "test-model",
+    key: "test-key",
+    prompt: "make a shape",
+    project: blankProject(),
+    signal: new AbortController().signal,
+  });
+  expect(JSON.parse(await new Response(stream).text())).toEqual(command);
+});
+
 for (const provider of ["openrouter", "gateway"] as const) {
   it.each([false, true])(
     `${provider} gates browser recipes by the advertised capability (%s)`,

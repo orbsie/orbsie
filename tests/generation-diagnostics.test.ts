@@ -174,6 +174,59 @@ describe("generation diagnostics", () => {
     expect(generationDiagnostic(new Error("private"))).toBeUndefined();
   });
 
+  it("records the attempted malformed command before a later terminal frame", async () => {
+    const reservations = Array.from({ length: 3 }, (_, index) => ({
+      type: "reserve_entity" as const,
+      entity: {
+        id: `seed-${index}`,
+        label: `Seed ${index}`,
+        position: [index, 0, 0] as [number, number, number],
+        scale: [1, 1, 1] as [number, number, number],
+        color: "#88aa55",
+        stage: "seed" as const,
+      },
+    }));
+    const content =
+      reservations.map((command) => JSON.stringify(command)).join("\n") +
+      '\n{"type":"reserve_entity"\n';
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        new Response(
+          [
+            `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}`,
+            "",
+            `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "stop" }] })}`,
+            "",
+            "data: [DONE]",
+            "",
+          ].join("\n"),
+          { headers: { "Content-Type": "text/event-stream" } },
+        ),
+    );
+    const stream = await generateCommands({
+      provider: "gateway",
+      model: "test-model",
+      key: "test-key",
+      prompt: "make a shape",
+      project: blankProject(),
+      signal: new AbortController().signal,
+    });
+    const records = (await new Response(stream).text())
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(records.slice(0, 3)).toEqual(reservations);
+    expect(records[3]).toMatchObject({
+      code: "INVALID_SCENE_JSON",
+      diagnostic: {
+        operation: 4,
+        issues: [],
+        finishReason: null,
+      },
+    });
+  });
+
   it.each([
     ["length", "TRUNCATED_SCENE_STREAM"],
     ["stop", "INVALID_SCENE_JSON"],
