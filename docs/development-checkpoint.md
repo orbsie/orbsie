@@ -50,6 +50,21 @@ Baseline revision33 and reconstructed five-model evidence are under
 Use separate original-model and edited-model directories. Prior giant pink
 mushroom is physically shorter than its original tree; size acceptance is open.
 
+## Next acceptance contract (after current worker completes)
+
+Reuse `scripts/verify-winning-traversal.mjs` for actual goal7 gameplay with
+saved Gateway artifacts and zero inference. Source review found its contract
+helper hardcodes five collectibles and crystals == 5, while the Gateway game
+uses seven and >= 7. Add an explicit expected count/comparison contract with
+regressions preserving the existing five-crystal case. Reject contradictory
+win paths. The driver already traverses contract IDs but visits the portal
+only last: add an early portal collision check proving no win, then collect
+all seven, return, win and reset. Do not substitute structural rules for these
+browser observations. Obtain the exact edited goal7 ZIP separately; the current
+worker's undo/export check intentionally exports restored goal5. Retain source
+hashes, failure evidence, input cleanup and zero-generation traffic checks.
+Do not launch this task until the current worker completes and is reviewed.
+
 ## Deployment and established evidence
 
 Latest recorded production source is `a5b2769` at https://orbsie.com;
