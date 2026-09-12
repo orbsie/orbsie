@@ -36,12 +36,14 @@ type FixtureOptions = {
   secondProjectId?: string;
   secondGetProjectId?: string;
   firstPollError?: boolean;
+  secondPollError?: boolean;
   omitProjectId?: boolean;
   genericProjectId?: boolean;
   browserReady?: boolean;
   browserCanvas?: boolean;
   browserErrors?: string[];
   secondPostState?: string;
+  secondPostStatus?: number;
 };
 
 function result(body: unknown, status = 200, cookies?: string) {
@@ -92,6 +94,11 @@ function fixtureTransport(options: FixtureOptions = {}) {
           return result(
             { error: "provider rejected publication" },
             options.firstPostStatus,
+          );
+        if (revision === 2 && options.secondPostStatus)
+          return result(
+            { error: "provider rejected replacement" },
+            options.secondPostStatus,
           );
         const publication: Record<string, unknown> = {
           state:
@@ -151,6 +158,11 @@ function fixtureTransport(options: FixtureOptions = {}) {
             if (options.genericProjectId) status.projectId = world.id;
             return result(status);
           }
+          if (options.secondPollError)
+            return result({
+              state: "VERIFYING",
+              error: "replacement integrity check failed",
+            });
           const status: Record<string, unknown> = {
             state: "READY",
             servedRevision: 2,
@@ -356,6 +368,17 @@ it("saves revision 2 with CAS, retains the queued release, and verifies the fina
     deploymentId: "deployment-2",
     servedRevision: 2,
     previousRelease: { revision: 1, title: world.title },
+    pendingWindow: {
+      observed: true,
+      state: "BUILDING",
+      servedRevision: 1,
+      previousRelease: {
+        deploymentId: "deployment-1",
+        deploymentUrl: "https://deployment-1.vercel.app",
+        browser: { ready: true, canvas: true },
+        snapshot: { revision: 1, title: world.title },
+      },
+    },
     finalSnapshot: {
       revision: 2,
       title: "A tiny island to share — Sunset crystal garden",
@@ -373,6 +396,127 @@ it("saves revision 2 with CAS, retains the queued release, and verifies the fina
       title: "A tiny island to share — Sunset crystal garden",
     },
   });
+});
+
+it("checks the previous release after a failed replacement without polling or retrying", async () => {
+  const transport = fixtureTransport({ secondPostStatus: 502 });
+  const progress: unknown[] = [];
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      republish: true,
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toMatchObject({ status: 502 });
+
+  expect(
+    transport.requests.filter((entry) =>
+      entry.path.startsWith("/api/publish?"),
+    ),
+  ).toHaveLength(1);
+  const last = progress.at(-1) as {
+    last: {
+      failedReplacement: {
+        previousRelease: {
+          deploymentId: string;
+          deploymentUrl: string;
+          browser: { ready: boolean; canvas: boolean };
+          snapshot: { revision: number; title: string };
+        };
+      };
+    };
+  };
+  expect(last.last.failedReplacement.previousRelease).toMatchObject({
+    deploymentId: "deployment-1",
+    deploymentUrl: "https://deployment-1.vercel.app",
+    browser: { ready: true, canvas: true },
+    snapshot: { revision: 1, title: world.title },
+  });
+});
+
+it("records an unobserved pending window when revision 2 is already ready", async () => {
+  const transport = fixtureTransport({ secondPostState: "READY" });
+  const progress: unknown[] = [];
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      republish: true,
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toThrow(/previous-release window/);
+
+  const last = progress.at(-1) as {
+    last: {
+      pendingWindow: {
+        observed: boolean;
+        state: string;
+        servedRevision: number;
+      };
+    };
+  };
+  expect(last.last.pendingWindow).toEqual({
+    observed: false,
+    state: "READY",
+    servedRevision: 1,
+    note: expect.stringContaining("already terminal"),
+  });
+  expect(
+    transport.requests.filter((entry) =>
+      entry.path.startsWith("/api/publish?"),
+    ),
+  ).toHaveLength(1);
+});
+
+it("persists pending-window evidence before a later replacement poll failure", async () => {
+  const transport = fixtureTransport({ secondPollError: true });
+  const progress: unknown[] = [];
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      republish: true,
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toThrow(/integrity check failed/);
+
+  const last = progress.at(-1) as {
+    steps: Array<{
+      pendingWindow?: {
+        observed: boolean;
+        state: string;
+        servedRevision: number;
+      };
+    }>;
+  };
+  expect(last.steps).toContainEqual(
+    expect.objectContaining({
+      pendingWindow: expect.objectContaining({
+        observed: true,
+        state: "BUILDING",
+        servedRevision: 1,
+      }),
+    }),
+  );
 });
 
 it("accepts Vercel INITIALIZING as a legitimate pending revision-2 state", async () => {

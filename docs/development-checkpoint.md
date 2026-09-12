@@ -465,3 +465,14 @@ and browser evidence was already present; this closes the payload test gap,
 not live mixed-asset publication acceptance. Root reviewed the finished diff.
 Worker validation: 25 publication/asset-bundle tests passed, typecheck and diff
 checks passed. No live provider calls, deployment or authentication was used.
+
+### Publication continuity harness evidence made durable
+
+The live acceptance harness now records pending-window observation immediately
+after its previous-release browser/snapshot check, before later polling can fail.
+Terminal or wrong-served-revision responses record an unobserved window. A
+failed replacement POST triggers one bounded signed-out old-release check and
+then rethrows, with no retry. Root reviewed both changes and the regression
+proving evidence survives subsequent polling failure. Twenty harness tests,
+typecheck, syntax/format and diff checks passed. No live deployment was run;
+previous-release availability during a live pending window remains unverified.

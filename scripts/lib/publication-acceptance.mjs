@@ -587,10 +587,32 @@ export async function runPublicationAcceptance({
       title: secondWorld.title,
     },
   });
-  const secondSubmittedBody = requireResponse(
-    "publish revision 2",
-    secondSubmitted,
-  );
+  let secondSubmittedBody;
+  try {
+    secondSubmittedBody = requireResponse(
+      "publish revision 2",
+      secondSubmitted,
+    );
+  } catch (error) {
+    const previousReleaseAfterFailure = await signedOutRelease(
+      transport,
+      firstRelease,
+      firstWorld,
+      "previous public release after failed republish",
+      recordStep,
+    );
+    await recordStep("failed republish previous-release check", null, {
+      failedReplacement: {
+        state: "failed",
+        previousRelease: {
+          deploymentId: firstRelease.deploymentId,
+          deploymentUrl: firstRelease.deploymentUrl,
+          ...previousReleaseAfterFailure,
+        },
+      },
+    });
+    throw error;
+  }
   const secondProjectId = identity(secondSubmittedBody);
   if (!secondProjectId)
     throw new PublicationAcceptanceError(
@@ -603,10 +625,29 @@ export async function runPublicationAcceptance({
   );
 
   const servedDuringUpdate = secondSubmittedBody.servedRevision;
-  if (!PENDING_PUBLICATION_STATES.has(secondSubmittedBody.state))
+  if (!PENDING_PUBLICATION_STATES.has(secondSubmittedBody.state)) {
+    await recordStep("republish pending-window missed", null, {
+      pendingWindow: {
+        observed: false,
+        state: secondSubmittedBody.state ?? null,
+        servedRevision: servedDuringUpdate ?? null,
+        note: "The replacement was already terminal; no queued previous-release window was observed.",
+      },
+    });
     throw new PublicationAcceptanceError(
       `Republish mapping cannot claim a previous-release window from state ${secondSubmittedBody.state ?? "unknown"}.`,
     );
+  }
+  if (servedDuringUpdate !== 1) {
+    await recordStep("republish pending-window invalid", null, {
+      pendingWindow: {
+        observed: false,
+        state: secondSubmittedBody.state,
+        servedRevision: servedDuringUpdate ?? null,
+        note: "The replacement was pending, but the owner status did not retain revision 1 as the served release.",
+      },
+    });
+  }
   assert.equal(
     servedDuringUpdate,
     1,
@@ -619,6 +660,20 @@ export async function runPublicationAcceptance({
     "previous public release during republish",
     recordStep,
   );
+  const pendingWindow = {
+    observed: true,
+    state: secondSubmittedBody.state,
+    servedRevision: servedDuringUpdate,
+    previousRelease: {
+      deploymentId: firstRelease.deploymentId,
+      deploymentUrl: firstRelease.deploymentUrl,
+      browser: previousRelease.browser,
+      snapshot: previousRelease.snapshot,
+    },
+  };
+  await recordStep("republish pending-window observed", null, {
+    pendingWindow,
+  });
 
   const secondReady = await waitForReady({
     transport,
@@ -685,6 +740,7 @@ export async function runPublicationAcceptance({
       postVercelProjectId: secondProjectId,
       getVercelProjectId: secondGetProjectId,
       previousRelease: previousRelease.snapshot,
+      pendingWindow,
       finalSnapshot: finalRelease.snapshot,
     },
   };
