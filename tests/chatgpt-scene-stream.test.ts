@@ -24,6 +24,10 @@ const reserve = {
     stage: "seed",
   },
 };
+const reserveSecond = {
+  ...reserve,
+  entity: { ...reserve.entity, id: "orb-2", label: "Second orb" },
+};
 const output = (stream: ReadableStream<Uint8Array>) =>
   new Response(stream).text();
 describe("hosted ChatGPT scene stream", () => {
@@ -67,6 +71,39 @@ describe("hosted ChatGPT scene stream", () => {
     expect(result).not.toContain('"commit_revision"');
     expect(result).not.toContain("secret");
   });
+  it("rejects a valid command after a pending commit without emitting the commit", async () => {
+    const result = await output(
+      createChatGPTSceneStream(request(), {
+        generate: async (i) => {
+          i.onText(
+            `${JSON.stringify(reserve)}\n${commit}\n${JSON.stringify(reserveSecond)}\n`,
+          );
+        },
+      }),
+    );
+    expect(result).toContain('"reserve_entity"');
+    expect(result).toContain('"error":');
+    expect(result).not.toContain('"commit_revision"');
+    expect(result).not.toContain('"orb-2"');
+  });
+  it.each([
+    ["malformed command after commit", "not-json", "INVALID_SCENE_JSON"],
+    ["duplicate commit", `${commit}\n`, "INVALID_SCENE_PROTOCOL"],
+  ])(
+    "rejects %s without emitting the pending commit",
+    async (_label, extra, code) => {
+      const result = await output(
+        createChatGPTSceneStream(request(), {
+          generate: async (i) => {
+            i.onText(`${commit}\n${extra}`);
+          },
+        }),
+      );
+      expect(result).toContain('"error":');
+      expect(result).toContain(`"code":"${code}"`);
+      expect(result).not.toContain('"commit_revision"');
+    },
+  );
   it("forwards bounded browser modeling feedback to hosted ChatGPT", async () => {
     const feedback = {
       version: 1 as const,

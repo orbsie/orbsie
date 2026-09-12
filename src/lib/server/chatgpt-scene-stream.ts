@@ -11,10 +11,13 @@ import { deriveAssetPolicy, enforceAssetPolicy } from "../asset-policy";
 import { promptCatalogForPolicy } from "../asset-catalog";
 import { authoringHistory } from "../authoring-history";
 import { assertModelingCommand } from "../modeling-policy";
+import {
+  generationDiagnostic,
+  SceneProtocolError,
+} from "../generation-diagnostics";
 import { systemPromptForCapabilities } from "./generation";
 import type { createChatGPTGeneration } from "./chatgpt-generation";
 import { modelingFeedbackSchema } from "../modeling-feedback";
-import { generationDiagnostic } from "../generation-diagnostics";
 import {
   generationFeedbackInstruction,
   generationFeedbackSchema,
@@ -106,6 +109,15 @@ export function createChatGPTSceneStream(
             policy,
           );
           assertModelingCommand(command, false, input.browserModeling);
+          if (pendingCommit)
+            throw new SceneProtocolError(
+              null,
+              "No scene commands may follow commit_revision.",
+            );
+          if (command.type === "commit_revision") {
+            pendingCommit = command;
+            return;
+          }
           const applied = applyModelOperation(
             working,
             {
@@ -121,10 +133,7 @@ export function createChatGPTSceneStream(
           );
           working = applied.project;
           cursor = applied.cursor;
-          if (pendingCommit) enqueue(pendingCommit);
-          pendingCommit =
-            command.type === "commit_revision" ? command : undefined;
-          if (!pendingCommit) enqueue(command);
+          enqueue(command);
         };
         try {
           await generator.generate({
@@ -150,7 +159,24 @@ export function createChatGPTSceneStream(
           emit(buffer);
           combined.throwIfAborted();
           if (!pendingCommit) throw Error("Missing final commit.");
-          enqueue(pendingCommit);
+          const commit = pendingCommit;
+          pendingCommit = undefined;
+          const applied = applyModelOperation(
+            working,
+            {
+              version: 1,
+              projectId: working.id,
+              runId: cursor.runId,
+              operationId: crypto.randomUUID(),
+              sequence: cursor.sequence + 1,
+              baseRevision: working.revision,
+              command: commit,
+            },
+            cursor,
+          );
+          working = applied.project;
+          cursor = applied.cursor;
+          enqueue(commit);
         } catch (error) {
           const diagnostic = generationDiagnostic(error, count, null);
           if (!cancelled && !combined.aborted)
