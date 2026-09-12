@@ -18,21 +18,20 @@ Keep this handoff compact and update it in place. Never include secrets.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
   Recovery and diagnostic changes are deployed; read-only production smoke passed.
-- Active worker: `/root/republish_acceptance_harness`, one post-diagnostics Gateway
-  input-game milestone on built source7e74569, port3018. Evidence target
-  `provider-e2e/gateway-input-game-diagnostics`; max2 Luna calls, cap4096, no retries.
-  Revalidate worker before any follow-up. Worker must delete temporary key afterward.
+- Active worker: `/root/republish_acceptance_harness`, mobile touch-input lifecycle
+  in editor and standalone player: cancellation, multitouch, blur/background,
+  typing and play/edit transitions. No live calls/deployment; review before commit.
+- Mobile is an explicit release gate (`63f7332`): full workflows and actual-device
+  iOS Safari/Android Chrome validation. Emulation alone cannot establish completion.
 - Diagnostics accepted in `a698cbf`; alias resolution/integration in `7e74569`.
   Forty-four generation tests, typecheck and local/remote production builds pass.
-- Latest Gateway run (`b899115`) stopped after one HTTP200 Luna creation call,
-  low/default, cap4096, local build60f91c7; no edit/retry. Evidence directory
-  `provider-e2e/gateway-input-game-union-policy`. Server stopped and root verified
-  private key deletion. Cause is not yet established; Gateway remains unverified.
+- Gateway input-game passed (`39b8c90`): two HTTP200 Luna low/default calls, cap4096,
+  create/edit, reload recovery, export and standalone win/loss/restart. Evidence:
+  `provider-e2e/gateway-input-game-diagnostics`, local built source7e74569. Key deletion
+  verified; server/browser stopped. No account/cloud/publication in this run.
 - OpenRouter post-union input-game passed (`694c904`): exactly two HTTP200 calls,
   creation/edit, recovery, export, standalone win/loss/restart. Evidence directory
   `provider-e2e/input-game-union-policy`; app source905b682 is operator-supplied.
-- Gateway's preceding run failed on overlapping solids before edit; retain
-  `provider-e2e/gateway-input-game-approved`. No passing result claimed yet.
 - Gateway key also exists as sensitive Vercel production `AI_GATEWAY_TEST_KEY`.
   Never print it or commit local env files. Existing CLI deploy auth works.
 - ChatGPT browser subscription consent/discovery/inference remains unverified.
