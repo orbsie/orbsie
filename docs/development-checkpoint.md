@@ -9,7 +9,7 @@ Use raw evidence and current source to verify claims; older exports remain immut
 
 Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
 concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 24% weekly used, 76% remaining. Stop workers
+Latest actual Codex App Server read: 25% weekly used, 75% remaining. Stop workers
 and tests below 20% remaining. Goal token totals are not subscription quota.
 Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
 retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
@@ -41,7 +41,12 @@ giant mushroom. No catalog admission. Basic variant has now been extracted, conv
 Evidence mushroom-basic-{inspection,conversion,preview}; GLB384900 bytes,
 10656 vertices/3552 triangles, base0/height1m. Root sees rounded cap and distinct
 stem in pink, but jagged baked white spots are a visible quality defect. Not
-admitted. Next improve texture-boundary fidelity before repeating visual review.
+admitted. Opt-in adaptive bake now implemented and rendered in mushroom-basic-adaptive-
+{conversion,preview}:29997 vertices/9999 triangles,~1.08MB, sampled color error
+0.467→0.121; vertex budget saturated, threshold0.04 not achieved. Root reviewed
+images: spot outlines improved but dark cap speckles persist even under uniform
+pink. NOT approved. Next diagnose this concrete rendering defect; no blanket
+quality claim or repeated provider calls. Cause remains unverified.
 Preview fixture TypeScript errors were corrected; repository tsc now passes.
 Converter/verifier accept environment-selected inputs/output dirs; historical
 Big evidence is unchanged. Prior full conversion attempt was stopped

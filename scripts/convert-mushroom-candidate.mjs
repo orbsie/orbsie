@@ -15,6 +15,7 @@ const evidenceDirectory =
   process.env.MUSHROOM_EVIDENCE_DIRECTORY ??
   "docs/evidence/mushroom-candidate-conversion";
 const selectedFbxArchivePath = process.env.MUSHROOM_FBX_ARCHIVE_PATH;
+const adaptiveBake = process.env.MUSHROOM_ADAPTIVE_BAKE === "1";
 const outputPath = join(evidenceDirectory, "prototype.glb");
 const outputReportPath = join(evidenceDirectory, "report.json");
 const outputLicensePath = join(evidenceDirectory, "License.txt");
@@ -167,7 +168,131 @@ function sourceTriangle(
   return vertices;
 }
 
-function addBakedTriangle(output, triangle, barycentric, texture, materialColor, normalization) {
+const ADAPTIVE_ERROR_THRESHOLD = 0.04;
+const ADAPTIVE_MAX_DEPTH = 4;
+const ADAPTIVE_MAX_SPLITS = 2200;
+
+function midpoint(a, b) {
+  return a.map((value, index) => (value + b[index]) / 2);
+}
+
+function centroid(a, b, c) {
+  return a.map((value, index) => (value + b[index] + c[index]) / 3);
+}
+
+function averageColor(a, b) {
+  return a.map((value, index) => (value + b[index]) / 2);
+}
+
+function triangleSampleError(candidate, sampleColorAt) {
+  const [a, b, c] = candidate.corners;
+  const colors = [
+    sampleColorAt(candidate.source, a),
+    sampleColorAt(candidate.source, b),
+    sampleColorAt(candidate.source, c),
+  ];
+  const samples = [
+    [midpoint(a, b), averageColor(colors[0], colors[1])],
+    [midpoint(b, c), averageColor(colors[1], colors[2])],
+    [midpoint(c, a), averageColor(colors[2], colors[0])],
+    [centroid(a, b, c), colors[0].map((_, index) => (colors[0][index] + colors[1][index] + colors[2][index]) / 3)],
+  ];
+  let maximum = 0;
+  for (const [barycentric, predicted] of samples) {
+    const actual = sampleColorAt(candidate.source, barycentric);
+    for (let channel = 0; channel < 3; channel++)
+      maximum = Math.max(maximum, Math.abs(actual[channel] - predicted[channel]));
+  }
+  return maximum;
+}
+
+function childTriangles(candidate) {
+  const [a, b, c] = candidate.corners;
+  const ab = midpoint(a, b);
+  const bc = midpoint(b, c);
+  const ca = midpoint(c, a);
+  const depth = candidate.depth + 1;
+  return [
+    { source: candidate.source, corners: [a, ab, ca], depth },
+    { source: candidate.source, corners: [ab, b, bc], depth },
+    { source: candidate.source, corners: [ca, bc, c], depth },
+    { source: candidate.source, corners: [ab, bc, ca], depth },
+  ];
+}
+
+function refineTriangles(initialTriangles, sampleColorAt, maxVertices = MAX_VERTICES) {
+  const entries = initialTriangles.map((candidate) => ({
+    candidate,
+    error: triangleSampleError(candidate, sampleColorAt),
+  }));
+  const initialVertexCount = entries.length * 3;
+  const maxSplits = Math.min(
+    ADAPTIVE_MAX_SPLITS,
+    Math.floor(Math.max(0, maxVertices - initialVertexCount) / 9),
+  );
+  const initialMaxSampledError = Math.max(
+    0,
+    ...entries.map((entry) => entry.error),
+  );
+  let refinementCount = 0;
+  let budgetSaturation = false;
+  let depthSaturation = false;
+  while (true) {
+    let candidateIndex = -1;
+    let candidateError = ADAPTIVE_ERROR_THRESHOLD;
+    for (let index = 0; index < entries.length; index++) {
+      const entry = entries[index];
+      if (
+        entry.error > candidateError &&
+        entry.candidate.depth < ADAPTIVE_MAX_DEPTH
+      ) {
+        candidateIndex = index;
+        candidateError = entry.error;
+      }
+    }
+    if (candidateIndex < 0) {
+      depthSaturation = entries.some(
+        (entry) =>
+          entry.error > ADAPTIVE_ERROR_THRESHOLD &&
+          entry.candidate.depth >= ADAPTIVE_MAX_DEPTH,
+      );
+      break;
+    }
+    if (
+      refinementCount >= maxSplits ||
+      entries.length * 3 + 9 > maxVertices
+    ) {
+      budgetSaturation = true;
+      break;
+    }
+    const children = childTriangles(entries[candidateIndex].candidate).map(
+      (child) => ({ candidate: child, error: triangleSampleError(child, sampleColorAt) }),
+    );
+    entries.splice(candidateIndex, 1, ...children);
+    refinementCount++;
+  }
+  const triangles = entries.map((entry) => entry.candidate);
+  return {
+    triangles,
+    initialTriangles: initialTriangles.length,
+    finalTriangles: triangles.length,
+    initialMaxSampledError,
+    finalMaxSampledError: Math.max(0, ...entries.map((entry) => entry.error)),
+    refinementCount,
+    budgetSaturation,
+    depthSaturation,
+  };
+}
+
+function addBakedTriangle(
+  output,
+  triangle,
+  barycentric,
+  texture,
+  materialColor,
+  normalization,
+  sampleColorAt,
+) {
   const point = interpolateVector(
     triangle[0].point,
     triangle[1].point,
@@ -188,15 +313,13 @@ function addBakedTriangle(output, triangle, barycentric, texture, materialColor,
     triangle[2].uv,
     barycentric,
   );
-  const color = bilinearTextureSample(texture, uv).map(
-    (channel, index) => channel * materialColor[index],
-  );
+  const color = sampleColorAt(triangle, barycentric);
   output.positions.push(point.x, point.y, point.z);
   output.normals.push(normal.x, normal.y, normal.z);
   output.colors.push(color[0], color[1], color[2]);
 }
 
-function bakeMesh(mesh, texture, material) {
+function bakeMesh(mesh, texture, material, adaptiveEnabled) {
   const position = mesh.geometry.getAttribute("position");
   const normal = mesh.geometry.getAttribute("normal");
   const uv = mesh.geometry.getAttribute("uv");
@@ -236,17 +359,34 @@ function bakeMesh(mesh, texture, material) {
     ),
     scale: 1 / sourceHeight,
   };
-  const output = { positions: [], normals: [], colors: [] };
+  const colorCache = new Map();
+  const sampleColorAt = (triangle, barycentric) => {
+    const key = `${triangle.id}:${barycentric.map((value) => value.toPrecision(12)).join(",")}`;
+    const cached = colorCache.get(key);
+    if (cached) return cached;
+    const uvPoint = interpolateVector(
+      triangle[0].uv,
+      triangle[1].uv,
+      triangle[2].uv,
+      barycentric,
+    );
+    const sampled = bilinearTextureSample(texture, uvPoint).map(
+      (channel, index) => channel * materialColor[index],
+    );
+    colorCache.set(key, sampled);
+    return sampled;
+  };
+  const initialTriangles = [];
   const n = SUBDIVISION_LEVEL;
-  for (const triangle of triangles) {
-    const vertexAt = (i, j) => {
-      const weights = [i / n, j / n, 1 - (i + j) / n];
-      return [weights, triangle];
-    };
+  triangles.forEach((triangle, triangleIndex) => {
+    triangle.id = triangleIndex;
+    const vertexAt = (i, j) => [i / n, j / n, 1 - (i + j) / n];
     const emit = (a, b, c) => {
-      addBakedTriangle(output, triangle, vertexAt(...a)[0], texture, materialColor, normalization);
-      addBakedTriangle(output, triangle, vertexAt(...b)[0], texture, materialColor, normalization);
-      addBakedTriangle(output, triangle, vertexAt(...c)[0], texture, materialColor, normalization);
+      initialTriangles.push({
+        source: triangle,
+        corners: [vertexAt(...a), vertexAt(...b), vertexAt(...c)],
+        depth: 0,
+      });
     };
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n - i; j++) {
@@ -255,6 +395,33 @@ function bakeMesh(mesh, texture, material) {
           emit([i + 1, j], [i + 1, j + 1], [i, j + 1]);
       }
     }
+  });
+  const adaptive = adaptiveEnabled
+    ? refineTriangles(initialTriangles, (triangle, barycentric) =>
+        sampleColorAt(triangle, barycentric),
+      )
+    : {
+        triangles: initialTriangles,
+        initialTriangles: initialTriangles.length,
+        finalTriangles: initialTriangles.length,
+        initialMaxSampledError: 0,
+        finalMaxSampledError: 0,
+        refinementCount: 0,
+        budgetSaturation: false,
+        depthSaturation: false,
+      };
+  const output = { positions: [], normals: [], colors: [] };
+  for (const candidate of adaptive.triangles) {
+    for (const barycentric of candidate.corners)
+      addBakedTriangle(
+        output,
+        candidate.source,
+        barycentric,
+        texture,
+        materialColor,
+        normalization,
+        sampleColorAt,
+      );
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
@@ -269,7 +436,7 @@ function bakeMesh(mesh, texture, material) {
     "color",
     new THREE.Float32BufferAttribute(output.colors, 3),
   );
-  return { geometry, sourceBounds, normalization, triangleCount };
+  return { geometry, sourceBounds, normalization, triangleCount, adaptive };
 }
 
 function runSamplerAssertions() {
@@ -300,6 +467,38 @@ function runSamplerAssertions() {
   texture.dispose();
 }
 
+function runAdaptiveAssertions() {
+  const source = { id: "synthetic" };
+  const initial = [
+    {
+      source,
+      corners: [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
+      depth: 0,
+    },
+  ];
+  const flat = refineTriangles(initial, () => [0.25, 0.25, 0.25], 30);
+  if (flat.refinementCount !== 0)
+    throw new Error("Adaptive flat-color assertion refined unexpectedly.");
+  const contrast = refineTriangles(
+    initial,
+    (_, barycentric) => (barycentric[0] > 0.5 ? [1, 0, 0] : [0, 1, 0]),
+    30,
+  );
+  if (contrast.refinementCount === 0 || contrast.finalTriangles > 10)
+    throw new Error("Adaptive contrasting-boundary assertion failed.");
+  const budget = refineTriangles(
+    initial,
+    (_, barycentric) => (barycentric[0] > 0.5 ? [1, 0, 0] : [0, 1, 0]),
+    3,
+  );
+  if (budget.refinementCount !== 0 || !budget.budgetSaturation)
+    throw new Error("Adaptive budget assertion failed.");
+}
+
 class NodeFileReader {
   constructor() {
     this.result = null;
@@ -321,6 +520,7 @@ class NodeFileReader {
 
 async function main() {
   runSamplerAssertions();
+  runAdaptiveAssertions();
   await mkdir(evidenceDirectory, { recursive: true });
   const inspection = JSON.parse(await readFile(inspectionPath, "utf8"));
   const fbxEntries = inspection.selectedFiles.filter((entry) =>
@@ -402,7 +602,7 @@ async function main() {
   if (!material?.map || material.map !== texture)
     throw new Error("Selected FBX material does not use the prepared TGA map.");
   texture.updateMatrix();
-  const baked = bakeMesh(sourceMesh, texture, material);
+  const baked = bakeMesh(sourceMesh, texture, material, adaptiveBake);
   const bakedMesh = new THREE.Mesh(
     baked.geometry,
     new THREE.MeshStandardMaterial({
@@ -507,6 +707,20 @@ async function main() {
       sourceTriangles: baked.triangleCount,
       outputTriangles: triangleCount,
       outputVertices: vertexCount,
+      adaptive: {
+        enabled: adaptiveBake,
+        initialTriangles: baked.adaptive.initialTriangles,
+        finalTriangles: baked.adaptive.finalTriangles,
+        initialMaxSampledError: baked.adaptive.initialMaxSampledError,
+        finalMaxSampledError: baked.adaptive.finalMaxSampledError,
+        refinementCount: baked.adaptive.refinementCount,
+        budgetSaturation: baked.adaptive.budgetSaturation,
+        depthSaturation: baked.adaptive.depthSaturation,
+        threshold: ADAPTIVE_ERROR_THRESHOLD,
+        maxDepth: ADAPTIVE_MAX_DEPTH,
+        maxSplits: ADAPTIVE_MAX_SPLITS,
+        limitation: "Error is sampled only at edge midpoints and centroids; it is not a guarantee between samples.",
+      },
       textureSampling: {
         transform: "THREE.Texture.transformUv (repeat/offset/wrap/flipY)",
         filter: "bilinear",
