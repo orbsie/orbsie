@@ -6,12 +6,27 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import {
   assertFlagshipStoryCreation,
+  assertFlagshipStoryGoalSeven,
   assertFlagshipStoryMushroom,
   assertFlagshipStoryPlatform,
   buildGeneratedModelEvidence,
+  installTrafficGuard,
   persistFlagshipStoryPhase,
   readConfiguration,
 } from "../scripts/provider-browser-e2e.mjs";
+
+type ResumeConfig = ReturnType<typeof readConfiguration> & {
+  resumeCheckpoint: {
+    project: { revision: number };
+    models: unknown[];
+  };
+  flagshipResumeOffline?: boolean;
+  resumeOffline?: {
+    baseline: { revision: number };
+    edited: { revision: number };
+    models: unknown[];
+  };
+};
 
 const ENV_NAMES = [
   "ORBSIE_LIVE_E2E",
@@ -24,6 +39,9 @@ const ENV_NAMES = [
   "ORBSIE_FLAGSHIP_RESUME",
   "ORBSIE_FLAGSHIP_RESUME_CHECKPOINT",
   "ORBSIE_FLAGSHIP_RESUME_MODELS",
+  "ORBSIE_FLAGSHIP_RESUME_OFFLINE",
+  "ORBSIE_FLAGSHIP_RESUME_EDITED",
+  "ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS",
   "ORBSIE_CREATION_PROMPT",
   "ORBSIE_EDIT_PROMPT",
   "ORBSIE_REQUIRE_INPUT_GAME",
@@ -65,6 +83,12 @@ const RESUME_CHECKPOINT = resolve(
 );
 const RESUME_MODELS = resolve(
   "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/reconstructed-models",
+);
+const RESUME_EDITED = resolve(
+  "docs/evidence/provider-e2e/gateway-flagship-checkpoint-resume/gateway/story-resumed-project.json",
+);
+const RESUME_EDITED_MODELS = resolve(
+  "docs/evidence/provider-e2e/gateway-flagship-checkpoint-resume/gateway",
 );
 
 function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
@@ -170,7 +194,7 @@ function initialProject() {
 describe("flagship provider story contract", () => {
   it("enables exactly three Gateway generations with the fixed story prompt", () => {
     gatewayStoryEnvironment();
-    const config = readConfiguration(["--provider", "gateway"]);
+    const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
     expect(config).toMatchObject({
       provider: "gateway",
       expectedModel: "openai/gpt-5.6-luna",
@@ -184,7 +208,7 @@ describe("flagship provider story contract", () => {
 
   it("enables only the explicit one-call Gateway checkpoint resume", () => {
     gatewayResumeEnvironment();
-    const config = readConfiguration(["--provider", "gateway"]);
+    const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
     expect(config).toMatchObject({
       provider: "gateway",
       expectedModel: "openai/gpt-5.6-luna",
@@ -197,6 +221,124 @@ describe("flagship provider story contract", () => {
     expect(config.resumeCheckpoint.project.revision).toBeGreaterThan(0);
     expect(config.resumeCheckpoint.models).toHaveLength(5);
   });
+
+  it("checks the variable-based seven-crystal portal gate", () => {
+    const edited = JSON.parse(readFileSync(RESUME_EDITED, "utf8"));
+    expect(assertFlagshipStoryGoalSeven(edited)).toMatchObject({
+      variable: "crystals",
+      collectibles: 7,
+      portal: "crystals >= 7",
+      ui: "game-score",
+    });
+    const invalid = structuredClone(edited);
+    invalid.game.rules.find(
+      (rule: any) => rule.id === "portal-win",
+    ).conditions[0].value = 6;
+    expect(() => assertFlagshipStoryGoalSeven(invalid)).toThrow(
+      /crystals >= 7/,
+    );
+  });
+
+  it("enables offline resume without reading a provider key", () => {
+    gatewayResumeEnvironment({
+      ORBSIE_FLAGSHIP_RESUME_OFFLINE: "1",
+      ORBSIE_FLAGSHIP_RESUME_EDITED: RESUME_EDITED,
+      ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS: RESUME_EDITED_MODELS,
+    });
+    delete process.env.AI_GATEWAY_TEST_KEY;
+    delete process.env.AI_GATEWAY_API_KEY;
+    const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
+    expect(config).toMatchObject({
+      provider: "gateway",
+      flagshipResume: true,
+      flagshipResumeOffline: true,
+      generationBudget: 0,
+      resumeOffline: {
+        baseline: { revision: expect.any(Number) },
+        edited: { revision: expect.any(Number) },
+      },
+    });
+    const offline = config.resumeOffline;
+    if (!offline) throw new Error("offline resume artifacts were not loaded");
+    expect(offline.models).toHaveLength(7);
+  });
+
+  it("rejects a corrupt offline model before opening a browser", async () => {
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-offline-model-test-"),
+    );
+    try {
+      const manifest = JSON.parse(
+        readFileSync(
+          join(RESUME_EDITED_MODELS, "story-resumed-generated.json"),
+          "utf8",
+        ),
+      );
+      const first = manifest.models[0];
+      await mkdir(join(temporary, "generated"), { recursive: true });
+      await writeFile(
+        join(temporary, "story-resumed-generated.json"),
+        JSON.stringify(manifest),
+      );
+      for (const record of manifest.models) {
+        const bytes = readFileSync(join(RESUME_EDITED_MODELS, record.path));
+        await writeFile(join(temporary, record.path), bytes);
+      }
+      await writeFile(join(temporary, first.path), Buffer.from("corrupt"));
+      gatewayResumeEnvironment({
+        ORBSIE_FLAGSHIP_RESUME_OFFLINE: "1",
+        ORBSIE_FLAGSHIP_RESUME_EDITED: RESUME_EDITED,
+        ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS: temporary,
+      });
+      delete process.env.AI_GATEWAY_TEST_KEY;
+      delete process.env.AI_GATEWAY_API_KEY;
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /failed its hash or byte check/,
+      );
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it("aborts any offline API generation before route continuation", async () => {
+    const handlers: Array<(route: any) => Promise<void>> = [];
+    await installTrafficGuard(
+      {
+        route: async (
+          _pattern: string,
+          handler: (route: any) => Promise<void>,
+        ) => {
+          handlers.push(handler);
+        },
+      } as any,
+      {
+        provider: "gateway",
+        baseOrigin: "http://127.0.0.1:3018",
+        flagshipResume: true,
+        flagshipResumeOffline: true,
+        generationBudget: 0,
+      } as any,
+      new Set(["http://127.0.0.1:3018"]),
+      { generationBudgetViolations: [] },
+    );
+    let continued = false;
+    let aborted: string | undefined;
+    await handlers[0]({
+      request: () => ({
+        url: () => "http://127.0.0.1:3018/api/generate",
+        method: () => "POST",
+      }),
+      abort: async (reason: string) => {
+        aborted = reason;
+      },
+      continue: async () => {
+        continued = true;
+      },
+    });
+    expect(aborted).toBe("blockedbyclient");
+    expect(continued).toBe(false);
+  });
+
 
   it("keeps the ordinary story budget and rejects resume for another provider", () => {
     gatewayStoryEnvironment();

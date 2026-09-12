@@ -210,6 +210,19 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_RESUME must be 0 or 1.",
     );
   const flagshipResume = flagshipResumeValue === "1";
+  const flagshipResumeOfflineValue = process.env.ORBSIE_FLAGSHIP_RESUME_OFFLINE;
+  if (
+    flagshipResumeOfflineValue !== undefined &&
+    !["0", "1"].includes(flagshipResumeOfflineValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_OFFLINE must be 0 or 1.",
+    );
+  const flagshipResumeOffline = flagshipResumeOfflineValue === "1";
+  if (flagshipResumeOffline && !flagshipResume)
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_OFFLINE=1 requires ORBSIE_FLAGSHIP_RESUME=1.",
+    );
   if (flagshipStory && flagshipResume)
     throw new HarnessConfigurationError(
       "ORBSIE_FLAGSHIP_STORY and ORBSIE_FLAGSHIP_RESUME cannot be combined.",
@@ -385,9 +398,16 @@ export function readConfiguration(argv) {
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
-    generationBudget: flagshipStory ? 3 : flagshipResume ? 1 : 2,
+    generationBudget: flagshipStory
+      ? 3
+      : flagshipResumeOffline
+        ? 0
+        : flagshipResume
+          ? 1
+          : 2,
     flagshipStory,
     flagshipResume,
+    flagshipResumeOffline,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
       : undefined,
@@ -418,6 +438,20 @@ export function readConfiguration(argv) {
         checkpointPath,
         modelsPath,
       );
+      if (flagshipResumeOffline) {
+        const editedPath = process.env.ORBSIE_FLAGSHIP_RESUME_EDITED;
+        const editedModelsPath =
+          process.env.ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS;
+        if (!editedPath || !editedModelsPath)
+          throw new HarnessConfigurationError(
+            "Offline flagship resume requires ORBSIE_FLAGSHIP_RESUME_EDITED and ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS.",
+          );
+        config.resumeOffline = readFlagshipResumeOfflineArtifacts(
+          config.resumeCheckpoint,
+          editedPath,
+          editedModelsPath,
+        );
+      }
     } catch (error) {
       throw new HarnessConfigurationError(
         error instanceof Error
@@ -650,7 +684,11 @@ export function readConfiguration(argv) {
         "ORBSIE_CHATGPT_COMPANION_TOKEN must be the 256-bit capability printed by the companion.",
       );
     config.companionURL = companion.origin;
-  } else if (provider !== "free" && provider !== HOSTED_PROVIDER) {
+  } else if (
+    provider !== "free" &&
+    provider !== HOSTED_PROVIDER &&
+    !flagshipResumeOffline
+  ) {
     // This is the only point where an API credential is read, and it is
     // unreachable unless the explicit live flag and all safety gates passed.
     const keyEnvironments = Array.isArray(config.keyEnv)
@@ -912,6 +950,205 @@ function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
   };
 }
 
+export function assertFlagshipStoryGoalSeven(project) {
+  const game = project?.game;
+  assert(
+    game && Array.isArray(game.rules),
+    "Flagship project has no game program.",
+  );
+  const crystalsVariable = game.variables?.find(
+    (variable) => variable?.name === "crystals",
+  );
+  assert(
+    crystalsVariable && crystalsVariable.initial === 0,
+    "Flagship game has no zeroed crystals variable.",
+  );
+  const collectRules = new Map();
+  for (const rule of game.rules) {
+    const entityId = rule?.trigger?.entityId;
+    if (
+      rule?.trigger?.type === "collect" &&
+      /^crystal-[1-7]$/.test(entityId ?? "")
+    )
+      collectRules.set(entityId, rule);
+  }
+  assert.equal(
+    collectRules.size,
+    7,
+    "Flagship game must collect all seven crystals.",
+  );
+  for (let index = 1; index <= 7; index += 1) {
+    const rule = collectRules.get(`crystal-${index}`);
+    assert(rule, `Flagship game is missing crystal-${index} collection.`);
+    assert.deepEqual(
+      rule.conditions ?? [],
+      [],
+      `Flagship crystal-${index} collection has an unexpected condition.`,
+    );
+    assert(
+      rule.actions?.some(
+        (action) =>
+          action?.type === "add_variable" &&
+          action.name === "crystals" &&
+          action.amount === 1,
+      ),
+      `Flagship crystal-${index} collection does not increment crystals.`,
+    );
+    assert(
+      rule.actions?.some(
+        (action) => action?.type === "add_score" && action.amount === 1,
+      ),
+      `Flagship crystal-${index} collection does not increment score.`,
+    );
+  }
+  const portalRule = game.rules.find(
+    (rule) =>
+      rule?.trigger?.type === "collision" &&
+      rule.trigger.entityId === "portal" &&
+      rule.actions?.some((action) => action?.type === "win"),
+  );
+  assert(portalRule, "Flagship game has no winning portal rule.");
+  assert(
+    portalRule.conditions?.some(
+      (condition) =>
+        condition?.operand?.type === "variable" &&
+        condition.operand.name === "crystals" &&
+        condition.comparison === "gte" &&
+        condition.value === 7,
+    ),
+    "Flagship portal win must require crystals >= 7.",
+  );
+  return {
+    variable: "crystals",
+    collectibles: 7,
+    portal: "crystals >= 7",
+    ui: "game-score",
+  };
+}
+
+export function readFlagshipResumeOfflineArtifacts(
+  checkpoint,
+  editedArg,
+  modelsArg,
+) {
+  const editedPath = resolve(editedArg);
+  const modelsDir = resolve(modelsArg);
+  let editedBytes;
+  let edited;
+  let evidence;
+  try {
+    editedBytes = readFileSync(editedPath);
+    edited = JSON.parse(editedBytes.toString("utf8"));
+    evidence = JSON.parse(
+      readFileSync(join(modelsDir, "story-resumed-generated.json"), "utf8"),
+    );
+  } catch {
+    throw Error(
+      "Offline flagship resume snapshot or model evidence could not be read.",
+    );
+  }
+  if (!checkpointShape(edited))
+    throw Error(
+      "Offline flagship resume edited snapshot has an invalid project shape.",
+    );
+  if (
+    edited.id !== checkpoint.project.id ||
+    edited.revision <= checkpoint.project.revision
+  )
+    throw Error(
+      "Offline flagship resume edited snapshot is not a newer revision of the checkpoint.",
+    );
+  try {
+    assertFlagshipStoryPlatform(
+      checkpoint.project,
+      edited,
+      storyPlatforms(checkpoint.project)[1]?.id,
+    );
+    assertFlagshipStoryGoalSeven(edited);
+  } catch (error) {
+    throw Error(
+      error instanceof Error
+        ? error.message
+        : "Offline flagship resume edited snapshot failed validation.",
+    );
+  }
+  if (
+    evidence?.status !== "complete" ||
+    evidence.phase !== "resumed" ||
+    !Array.isArray(evidence.models) ||
+    evidence.models.length !== 7 ||
+    evidence.missing?.length
+  )
+    throw Error("Offline flagship resume model evidence is incomplete.");
+  const modelByEntity = new Map();
+  for (const record of evidence.models) {
+    const entityIds = record?.entityIds;
+    const path = record?.path;
+    if (
+      !Array.isArray(entityIds) ||
+      entityIds.length !== 1 ||
+      !/^crystal-[1-7]$/.test(entityIds[0] ?? "") ||
+      modelByEntity.has(entityIds[0]) ||
+      !/^generated\/[a-f0-9]{64}\.glb$/.test(path ?? "") ||
+      !Number.isSafeInteger(record?.bytes) ||
+      record.bytes < 1 ||
+      typeof record.sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(record.sha256)
+    )
+      throw Error(
+        "Offline flagship resume model evidence has invalid metadata.",
+      );
+    const modelPath = resolve(modelsDir, path);
+    const relativePath = relative(modelsDir, modelPath);
+    if (relativePath !== path || relativePath.startsWith(".."))
+      throw Error(
+        "Offline flagship resume model evidence contains an unsafe path.",
+      );
+    let glb;
+    try {
+      glb = readFileSync(modelPath);
+    } catch {
+      throw Error(
+        `Offline flagship resume model ${entityIds[0]} could not be read.`,
+      );
+    }
+    if (glb.byteLength !== record.bytes || sha256(glb) !== record.sha256)
+      throw Error(
+        `Offline flagship resume model ${entityIds[0]} failed its hash or byte check.`,
+      );
+    const entity = edited.entities.find(
+      (candidate) => candidate.id === entityIds[0],
+    );
+    const model = entity?.geometry?.model;
+    if (
+      !model ||
+      model.sha256 !== record.sha256 ||
+      model.bytes !== record.bytes
+    )
+      throw Error(
+        `Offline flagship resume model ${entityIds[0]} does not match the edited snapshot.`,
+      );
+    modelByEntity.set(entityIds[0], {
+      id: entityIds[0],
+      metadata: model,
+      glb: [...glb],
+    });
+  }
+  if (modelByEntity.size !== 7)
+    throw Error(
+      "Offline flagship resume model evidence omitted a crystal model.",
+    );
+  return {
+    baseline: checkpoint.project,
+    baselineModels: checkpoint.models,
+    edited,
+    editedSnapshotSha256: sha256(editedBytes),
+    models: [...modelByEntity.values()],
+    checkpointPath: checkpoint.checkpointPath,
+    modelsDir,
+  };
+}
+
 function checkpointSummary(project) {
   if (!project || typeof project !== "object") return null;
   return {
@@ -1073,6 +1310,7 @@ export function emptyReport(config, provenance) {
           flagshipResume: {
             status: "not-started",
             generationBudget: config.generationBudget,
+            mode: config.flagshipResumeOffline ? "offline-seeded" : "live",
             checkpoint: config.resumeCheckpoint
               ? {
                   projectId: config.resumeCheckpoint.project.id,
@@ -3028,29 +3266,44 @@ async function putIndexedDBValue(page, key, value) {
   );
 }
 
-async function seedFlagshipResume(page, checkpoint) {
+async function seedFlagshipProject(page, project, models, history = []) {
   await putIndexedDBValue(page, "orbsie-draft", {
-    project: checkpoint.project,
-    history: [],
+    project,
+    history,
     future: [],
     savedAt: Date.now(),
   });
   await putIndexedDBValue(page, "orbsie-library", {
-    [checkpoint.project.id]: checkpoint.project,
+    [project.id]: project,
   });
   await putIndexedDBValue(page, "orbsie-history", {
-    [checkpoint.project.id]: {
-      project: checkpoint.project,
-      history: [],
+    [project.id]: {
+      project,
+      history,
       future: [],
     },
   });
-  for (const model of checkpoint.models)
+  for (const model of models)
     await putIndexedDBValue(page, `orbsie-model:${model.metadata.sha256}`, {
       metadata: model.metadata,
       glb: model.glb,
     });
   await page.reload({ waitUntil: "domcontentloaded" });
+}
+
+async function seedFlagshipResume(page, checkpoint) {
+  await seedFlagshipProject(page, checkpoint.project, checkpoint.models);
+}
+
+async function seedFlagshipOfflineResume(page, artifacts) {
+  await seedFlagshipProject(page, artifacts.edited, artifacts.models, [
+    artifacts.baseline,
+  ]);
+  for (const model of artifacts.baselineModels)
+    await putIndexedDBValue(page, `orbsie-model:${model.metadata.sha256}`, {
+      metadata: model.metadata,
+      glb: model.glb,
+    });
 }
 
 async function openFlagshipResumeProject(page, project) {
@@ -3203,6 +3456,7 @@ async function runFlagshipResume(
       edited,
       storyPlatforms(config.resumeCheckpoint.project)[1].id,
     );
+    const goalCheck = assertFlagshipStoryGoalSeven(edited);
     lastGoodProject = edited;
     report.flagshipStory.phases.resumed = {
       status: "passed",
@@ -3217,12 +3471,14 @@ async function runFlagshipResume(
     report.flagshipResume.edited = {
       revision: edited.revision,
       platform: platformCheck,
+      goal: goalCheck,
       collectibles: storyCollectibles(edited).length,
     };
 
     await page.getByRole("button", { name: "Play", exact: true }).click();
     await expect(page.locator(".game-hud")).toBeVisible();
-    await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
+    await expect(page.locator(".game-hud strong")).toHaveText("0");
+    await expect(page.locator(".game-hud")).toContainText("Score");
     await page.screenshot({
       path: join(evidenceDir, "resume-goal-7.png"),
       fullPage: true,
@@ -3329,6 +3585,222 @@ async function runFlagshipResume(
       ...(report.flagshipResume ?? {}),
       status: "failed",
       lastGoodCheckpoint: checkpointSummary(lastGoodProject),
+    };
+    report.error = sanitizedError(error, config);
+    report.traffic = resumeTrafficEvidence(config, info);
+    await writeReport(report, config);
+    throw error;
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+  return report;
+}
+
+async function runFlagshipResumeOffline(
+  config,
+  report,
+  info,
+  evidenceDir,
+  approvedOrigins,
+) {
+  const browser = await chromium.launch({
+    headless: process.env.ORBSIE_HEADLESS !== "0",
+    args: [
+      "--no-sandbox",
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
+    ],
+  });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
+  await installTrafficGuard(context, config, approvedOrigins, info);
+  const page = await context.newPage();
+  attachRequestEvidence(page, config, info);
+  const artifacts = config.resumeOffline;
+  let lastGoodProject = artifacts.edited;
+  try {
+    await page.goto(config.baseOrigin, { waitUntil: "domcontentloaded" });
+    await seedFlagshipOfflineResume(page, artifacts);
+    await prepareObserver(page);
+    await installGenerationDiagnosticObserver(page);
+    await openFlagshipResumeProject(page, artifacts.edited);
+    const opened = await waitForSavedProject(page, artifacts.edited.revision);
+    assert.deepEqual(
+      persistenceJSON(opened),
+      persistenceJSON(artifacts.edited),
+      "The seeded edited checkpoint did not reopen exactly.",
+    );
+    for (const model of artifacts.models) {
+      const stored = await readStoredGeneratedModelDigest(
+        page,
+        model.metadata.sha256,
+      );
+      assert(stored, `Seeded edited model ${model.id} was not reopened.`);
+      assert.equal(stored.sha256, model.metadata.sha256);
+      assert.equal(stored.bytes, model.metadata.bytes);
+    }
+    const goalCheck = assertFlagshipStoryGoalSeven(artifacts.edited);
+    report.flagshipResume = {
+      ...(report.flagshipResume ?? {}),
+      status: "offline-checkpoint-restored",
+      source: {
+        baselineRevision: artifacts.baseline.revision,
+        editedRevision: artifacts.edited.revision,
+        editedSnapshotSha256: artifacts.editedSnapshotSha256,
+        generatedModelCount: artifacts.models.length,
+      },
+      seededHistory: true,
+      seededHistoryCaveat:
+        "Undo evidence uses the captured baseline seeded into local history; it is not the live model run's history.",
+      generationBudget: 0,
+    };
+    report.evidence.push("offline-edited-project.json");
+    await writeFile(
+      join(evidenceDir, "offline-edited-project.json"),
+      `${JSON.stringify(artifacts.edited, null, 2)}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.locator(".game-hud")).toBeVisible();
+    await expect(page.locator(".game-hud strong")).toHaveText("0");
+    await expect(page.locator(".game-hud")).toContainText("Score");
+    report.flagshipResume.goal = {
+      ...goalCheck,
+      hud: "game-score-starts-at-zero",
+      goalSevenUiCounter: "not-rendered-for-variable-based-game",
+      gameplayTraversal: "not-run",
+    };
+    await page.screenshot({
+      path: join(evidenceDir, "offline-goal-hud.png"),
+      fullPage: true,
+    });
+    report.evidence.push("offline-goal-hud.png");
+
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await openFlagshipResumeProject(page, artifacts.edited);
+    const reloadedEdited = await waitForSavedProject(
+      page,
+      artifacts.edited.revision,
+    );
+    assert.deepEqual(
+      persistenceJSON(reloadedEdited),
+      persistenceJSON(artifacts.edited),
+      "The edited checkpoint did not survive reload.",
+    );
+    report.localRecovery = "offline-edited-reload-passed";
+
+    await page
+      .getByRole("button", { name: "Edit", exact: true })
+      .click()
+      .catch(() => undefined);
+    await page
+      .getByRole("button", { name: "Undo last change", exact: true })
+      .click();
+    await expect(
+      page.getByText("Previous change restored.", { exact: true }),
+    ).toBeVisible();
+    const undone = await waitForSavedProject(
+      page,
+      artifacts.edited.revision + 1,
+    );
+    assert.deepEqual(
+      storyComparable(undone),
+      storyComparable(artifacts.baseline),
+      "Seeded offline undo did not restore the baseline checkpoint.",
+    );
+    assert.equal(storyCollectibles(undone).length, 5);
+    lastGoodProject = undone;
+    report.flagshipResume.undo = {
+      status: "offline-seeded-history-passed",
+      restoredRevision: undone.revision,
+      restoredCheckpoint: true,
+      restoredCollectibles: storyCollectibles(undone).length,
+    };
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await openFlagshipResumeProject(page, undone);
+    const reloadedUndone = await waitForSavedProject(page, undone.revision);
+    assert.deepEqual(
+      storyComparable(reloadedUndone),
+      storyComparable(artifacts.baseline),
+      "The restored baseline did not survive reload.",
+    );
+
+    await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: /^Download your world/ }),
+    ).toBeVisible({ timeout: 30000 });
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: /^Download your world/ }).click();
+    const download = await downloadPromise;
+    const zip = await extractZip(
+      download,
+      config,
+      reloadedUndone.revision,
+      evidenceDir,
+    );
+    assert.deepEqual(
+      storyComparable(zip.project),
+      storyComparable(artifacts.baseline),
+      "The offline export did not preserve the restored baseline.",
+    );
+    assert.equal(storyCollectibles(zip.project).length, 5);
+    report.flagshipResume.exported = {
+      status: "baseline-goal-5",
+      revision: zip.project.revision,
+      seededHistory: true,
+    };
+    report.evidence.push("world.zip");
+    report.export = "offline-baseline-passed";
+    await verifyStandalone(browser, zip, config, report, evidenceDir);
+    report.standalonePlayback = "passed";
+    await assertNoStoredKey(page, config);
+    assert.equal(
+      info.generationRequests,
+      0,
+      "Offline resume made a generation request.",
+    );
+    assert.deepEqual(
+      info.generationStatuses,
+      [],
+      "Offline resume observed a generation response.",
+    );
+    assert.deepEqual(
+      info.generationBudgetViolations ?? [],
+      [],
+      "Offline resume triggered a generation budget violation.",
+    );
+    assert.equal(info.interceptedGeneration, false);
+    report.flagshipResume.status = "offline-structural-passed";
+    report.liveInference = false;
+    report.traffic = resumeTrafficEvidence(config, info);
+  } catch (error) {
+    const diagnostics = await readGenerationDiagnostics(page).catch(() => []);
+    info.generationDiagnostics.push(
+      ...diagnostics.map((record) => ({
+        code: record.code,
+        diagnostic: sanitizeMessage(record.diagnostic, config),
+      })),
+    );
+    try {
+      await page.screenshot({
+        path: join(evidenceDir, "offline-resume-failure.png"),
+        fullPage: true,
+      });
+      report.evidence.push("offline-resume-failure.png");
+    } catch {
+      // The report retains the sanitized failure if the page never loaded.
+    }
+    report.flagshipResume = {
+      ...(report.flagshipResume ?? {}),
+      status: "offline-failed",
+      lastGoodCheckpoint: checkpointSummary(lastGoodProject),
+      generationRequests: info.generationRequests,
     };
     report.error = sanitizedError(error, config);
     report.traffic = resumeTrafficEvidence(config, info);
@@ -4763,6 +5235,14 @@ async function run(config, report = emptyReport(config)) {
     await writeReport(report, config);
     throw error;
   }
+  if (config.flagshipResumeOffline)
+    return runFlagshipResumeOffline(
+      config,
+      report,
+      info,
+      evidenceDir,
+      approvedOrigins,
+    );
   if (config.flagshipResume)
     return runFlagshipResume(
       config,
