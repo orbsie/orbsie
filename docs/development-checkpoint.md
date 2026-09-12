@@ -6,6 +6,10 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and browser ChatGPT journeys.
+- Latest owner direction: standing approval ("yes, anytime") for bounded Luna
+  OpenRouter/Gateway acceptance runs, two calls/provider/run, 4096 output tokens
+  per call, no automatic retries. Use meaningful milestones, not repeated calls.
+  Owner requests sign-in via computer use; CUA still cannot access Chrome.
 - Live republish: `republishing-browser-live/resume-report.json` proves same
   Vercel project, distinct deployments, served revision2, signed-out browser
   readiness and exact snapshots for revisions1/2. Pending-window observation
