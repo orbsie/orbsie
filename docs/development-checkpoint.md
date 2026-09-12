@@ -6,6 +6,10 @@ large logs, and copied diffs.
 
 - Current objective: Implement the full Orbsie plan with validated OpenRouter,
   Vercel AI Gateway and browser ChatGPT journeys.
+- Live republish: `republishing-browser-live/resume-report.json` proves same
+  Vercel project, distinct deployments, served revision2, signed-out browser
+  readiness and exact snapshots for revisions1/2. Pending-window observation
+  remains unproven. Resume header omission corrected; 17 focused tests passed.
 - Fresh owner approval: one Luna create/edit test EACH for OpenRouter and
   Gateway, maximum two calls/provider, 4096 output tokens/call, no retries.
   OpenRouter run used one HTTP200 call, then tree-shape overlap rejection before
