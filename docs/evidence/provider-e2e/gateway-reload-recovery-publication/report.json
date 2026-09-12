@@ -1,0 +1,23 @@
+{
+  "status": "prepared",
+  "scope": "Existing Gateway recovery project publication; no generation",
+  "baseOrigin": "http://127.0.0.1:3017",
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "expectedRevision": 9,
+  "generationCalls": 0,
+  "generationRoutesBlocked": 0,
+  "artifact": {
+    "path": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    "sha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    "bytes": 7545,
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "title": "Create a complete tiny scene with exactl…",
+    "entityCount": 2,
+    "gameRuleCount": 3
+  },
+  "preflight": null,
+  "publication": null,
+  "browser": null,
+  "finishedAt": "2026-09-12T06:29:10.042Z"
+}
