@@ -133,3 +133,16 @@ The next worker task selects formats from precise catalog parameters and adds
 an exact provider/model operator override for controlled Gateway acceptance.
 Unknown capabilities retain NDJSON. Override validation must happen before
 free-prompt consumption. No production deployment or additional live calls yet.
+
+### Capability selection accepted; bounded acceptance running
+
+`ff6ea23` enables OpenRouter format selection from separate response-format
+capabilities and bounded exact-model server overrides. All 44 targeted selector,
+route, anonymous/free, catalog and preflight tests plus typechecking passed.
+
+One Luna worker is running the first post-transport live milestone from that
+source: one production build, Gateway JSON Schema via exact Luna override and
+OpenRouter JSON object via catalog, exact strawberry prompt then material edit
+only if creation succeeds. Maximum two calls per provider, 4096 output tokens,
+Luna low/default, no retries or fallback. Test key is temporary/local-only.
+This is not yet a successful acceptance or a production deployment.
