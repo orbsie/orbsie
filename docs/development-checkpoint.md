@@ -559,3 +559,13 @@ the ordered scoring/position checkpoints and contract. Evidence:
 public crystal/portal traversal, not traversal across all three moving platforms,
 physical-device/mobile lifecycle or play during generation. Original preflight
 harness failure remains preserved.
+
+### Three independent platform carry checks passed
+
+`docs/evidence/flagship-platforms-current` verifies keyboard landing and carry
+on each of the three moving platforms in the immutable OpenRouter flagship ZIP.
+Each check has21 consecutive on-top samples with matching player/platform
+displacement, no inference/external/mutating requests or errors. Root reviewed
+provenance and clarified that the verifier reloads between platforms. This is
+three independent interactions on ZIP runtime3d2fa966, not continuous crossing
+of all three or verification of the newer public runtime. Those remain open.
