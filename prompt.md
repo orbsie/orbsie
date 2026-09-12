@@ -308,6 +308,34 @@ Instrument the experience rather than claiming fixed model latency.
 - Verify the independent export builds and plays without the editor. Verify the published URL in a signed-out context when deployment credentials are available.
 - Use actual browser interaction and visual inspection at desktop and mobile widths. Capture the landing, descent, a visible intermediate morph, editing, and public playback. Static endpoint screenshots alone cannot prove formation; provide a short recording when the available tooling supports it.
 
+### Mobile release requirement — owner addition
+
+The complete Orbsie experience, including every published game, must work reliably
+on mobile. Mobile correctness is a release gate, not a desktop-layout adaptation.
+
+- [ ] Validate the complete create → connect AI account/API → generate → play →
+  select/edit → stop/retry/recover → reload → export/share flow on iOS Safari and
+  Android Chrome. Cover OpenRouter, Vercel AI Gateway and the browser ChatGPT
+  connection; retain the distinction between fixture and live-provider evidence.
+- [ ] Verify signed-out published gameplay on mobile: movement, simultaneous
+  movement/jump or other game actions, collisions, objectives, win/loss and restart.
+  Controls must be reachable, clearly labeled and usable without hover or a keyboard.
+- [ ] Support narrow phones and tablets, portrait and landscape, safe-area insets,
+  browser toolbar resizing and the on-screen keyboard. No clipped controls,
+  overlapping dialogs, unintended horizontal scrolling or inaccessible composers.
+- [ ] Touch input must not become stuck or accidentally move the player while
+  typing/selecting. Handle multitouch, pointer cancellation, orientation changes,
+  background/resume and interrupted connections without corrupting the world.
+- [ ] Keep camera, touch controls and chat responsive during asset loading and
+  geometry generation. Adapt rendering quality to device limits; measure input
+  latency, frame-time percentiles and memory on representative recent and weaker
+  phones against the performance targets above. Avoid crashes and lost progress
+  during sustained play/edit sessions; provide clear recovery if resources run out.
+- [ ] Complete actual-device iOS and Android E2E and visual checks for both editor
+  and independent published player. Record device/OS/browser, scene, results and
+  any reproducible failure. Desktop emulation and SwiftShader alone do not close
+  this gate. Resolve release-blocking mobile defects before claiming completion.
+
 ## 14. Execution order and deliverables
 
 Work in these milestones, keeping the application runnable at each stage:
