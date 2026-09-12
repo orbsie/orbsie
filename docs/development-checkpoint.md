@@ -186,3 +186,14 @@ No worker remains active. Next gameplay task should complete portal approach
 following the established route without requiring airborne travel to portal;
 retain actual-input and unchanged-world constraints. Owner ChatGPT sign-in,
 physical mobile, visual quality and full original acceptance gates remain.
+
+## Current route steering task
+
+One corrected-harness integration after0fdca17 failed at platform2 following
+a verified platform1 bounce (`gateway-current-route-integration/`). No model
+calls. Across attempts different path phases fail atp2/p3, while one reached
+all3 and score7. Root source review found current-pose steering with no landing
+intercept. Luna gateway_bounce_route now owns one bounded diagnostic/steering
+correction, targeted tests and at most1 browser run only after concrete tested
+change. Preserve sourceZIP/physics/contact assertions. Do not repeat random
+phase attempts. Root updated scope audit's stale multitouch and Gateway rows.
