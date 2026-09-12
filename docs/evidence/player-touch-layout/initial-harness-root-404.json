@@ -1,0 +1,13 @@
+{
+  "status": "failed",
+  "source": "current built public/player runtime",
+  "fixture": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "revision": 9,
+  "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+  "inferenceCalls": 0,
+  "modes": [],
+  "pageErrors": [],
+  "error": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main[data-ready=\"true\"]')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" locator('main[data-ready=\"true\"]') with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for locator('main[data-ready=\"true\"]')\u001b[22m\n",
+  "finishedAt": "2026-09-12T06:45:38.998Z"
+}

@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "source": "current built public/player runtime",
+  "fixture": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "revision": 9,
+  "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+  "inferenceCalls": 0,
+  "modes": [
+    {
+      "name": "portrait-touch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+      "controls": true,
+      "footer": "Use the controls below to move and jump",
+      "scoreRight": 7,
+      "win": true,
+      "loss": true,
+      "restart": true,
+      "generationRequests": 0,
+      "externalRequests": 0,
+      "pageErrors": 0
+    },
+    {
+      "name": "landscape-touch",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+      "controls": true,
+      "footer": "Use the controls below to move and jump",
+      "scoreRight": 7,
+      "win": true,
+      "loss": true,
+      "restart": true,
+      "generationRequests": 0,
+      "externalRequests": 0,
+      "pageErrors": 0
+    }
+  ],
+  "pageErrors": [],
+  "finishedAt": "2026-09-12T06:47:19.312Z"
+}

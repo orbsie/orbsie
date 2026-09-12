@@ -394,3 +394,15 @@ URL: https://orb-c8952b5b6fd77ac951a4-ant5977ut-grappeggias-projects.vercel.app
 This connects the bounded Gateway create/reload recovery/edit/cloud/export
 journey to actual publication and signed-out gameplay. Other provider stories,
 mobile/physical performance and full flagship quality remain incomplete.
+
+### Standalone touch controls and truthful help fixed
+
+Root reviewed touch-layout state shared by controls/help, coarse-pointer and
+maxTouchPoints detection, click/tap wording and legacy bloom gating. Five focused
+tests/typechecking passed. Rebuilt standalone runtime passed actual CDP touch
+score/win/loss/restart in390x844 and844x390 with visible nonoverlapping footer
+and controls, zero external/inference requests or page errors. Evidence:
+`docs/evidence/player-touch-layout`. Root reviewed harness/report/landscape
+screenshot. Initial fixture root404 is retained. Physical devices/safe-area and
+real mobile performance remain separate acceptance gates. Not yet deployed;
+existing immutable published game still uses the prior player bundle.

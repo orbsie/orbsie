@@ -13,6 +13,7 @@ import {
   generatedModelPath,
   MAX_GENERATED_MODEL_BYTES,
 } from "../lib/generated-models";
+import { playerControlsHelp } from "../lib/player-controls";
 configureGeneratedGeometryResolver(async (hash, signal) => {
   const response = await fetch(`./${generatedModelPath(hash)}`, {
     signal,
@@ -52,6 +53,7 @@ function PlayerApp() {
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [ready, setReady] = useState(false);
+  const [touchDevice, setTouchDevice] = useState(false);
   const collectibles = s.project.entities.filter(
     (e) => e.stage === "ready" && e.behavior?.type === "collect",
   );
@@ -68,8 +70,19 @@ function PlayerApp() {
       })
       .catch((e) => setError(e.message));
   }, []);
+  useEffect(() => {
+    const media = window.matchMedia("(any-pointer: coarse)");
+    const update = () =>
+      setTouchDevice(media.matches || navigator.maxTouchPoints > 0);
+    update();
+    media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
   return (
-    <main data-ready={ready && !error}>
+    <main
+      className={touchDevice ? "touch-layout" : undefined}
+      data-ready={ready && !error}
+    >
       <div className="canvas">
         {loaded && <World onReady={() => setReady(true)} onError={setError} />}
       </div>
@@ -103,9 +116,7 @@ function PlayerApp() {
           </>
         )}
       </div>
-      <footer>
-        W A S D / Arrow keys to move · Space to jump · Click flowers to bloom
-      </footer>
+      <footer>{playerControlsHelp(s.project, touchDevice)}</footer>
       <div className="controls">
         {["w", "a", "s", "d", " "].map((key, i) => (
           <button

@@ -92,7 +92,37 @@ footer {
   right: 10%;
   text-align: center;
 }
-@media (max-width: 700px) {
+main.touch-layout header {
+  left: 15px;
+  right: 15px;
+}
+main.touch-layout header span {
+  font-size: 10px;
+}
+main.touch-layout .controls {
+  display: flex;
+  position: absolute;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  gap: 6px;
+}
+main.touch-layout .controls button {
+  width: 45px;
+  height: 45px;
+  padding: 0;
+  touch-action: none;
+  font-size: 20px;
+}
+main.touch-layout .controls button:last-child {
+  margin-left: auto;
+}
+main.touch-layout footer {
+  bottom: 90px;
+  font-size: 9px;
+}
+@media (max-width: 700px) and (pointer: fine),
+  (max-width: 700px) and (pointer: none) {
   header {
     left: 15px;
     right: 15px;
@@ -100,26 +130,7 @@ footer {
   header span {
     font-size: 10px;
   }
-  .controls {
-    display: flex;
-    position: absolute;
-    bottom: 30px;
-    left: 20px;
-    right: 20px;
-    gap: 6px;
-  }
-  .controls button {
-    width: 45px;
-    height: 45px;
-    padding: 0;
-    touch-action: none;
-    font-size: 20px;
-  }
-  .controls button:last-child {
-    margin-left: auto;
-  }
   footer {
-    bottom: 90px;
-    font-size: 9px;
+    font-size: 10px;
   }
 }
