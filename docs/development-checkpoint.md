@@ -421,3 +421,16 @@ preserved. Ground-contact defect corrected in this run; numericgrowth does not
 close giant-size/recognizablemushroom visualquality. Silhouette still angular.
 Allmodelcalls2HTTP200. No newproductiondeployneeded (guidancealready216386c).
 No worker/test active. ChatGPT consent/physicalmobile/fullflagship remain open.
+
+## Mushroom candidate inspected; conversion required before admission
+
+Asset Quest Low Poly Mushroom Kit downloaded once from its public author upload.
+Exact bundled CC0 license, source/archive hashes, selected FBX/texture hashes and
+technical inspection are in docs/evidence/mushroom-candidate-inspection. Selected
+Fly_Agaric_Big has 254 triangles and an external 4096-square diffuse TGA. Root
+confirmed current catalog decoding preserves material/COLOR_0 only, drops UVs,
+and cannot preserve that texture unchanged. No catalog or product change made.
+Next bounded step: prototype a self-contained vertex-colored GLB derivative,
+then review rendered cap/stem and texture-bake fidelity before admitting it under
+a new ID. Preserve original mesh/license provenance; existing asset stays intact.
+No model calls in this inspection. ChatGPT owner sign-in and full goal remain open.

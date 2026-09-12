@@ -1,0 +1,108 @@
+{
+  "status": "inspection-only",
+  "source": {
+    "archiveUrl": "https://opengameart.org/sites/default/files/free_mushroom_pack_assetquest.zip",
+    "authorPageUrl": "https://opengameart.org/content/low-poly-mushroom-kit",
+    "archivePath": "/tmp/orbsie-mushroom-candidate.nIL3N8/free_mushroom_pack_assetquest.zip",
+    "archiveBytes": 54791351,
+    "archiveSha256": "b32c4bf0c9d5471ffcde83747402d0f8355add48c317f9147950c4f44facaffd",
+    "archiveEntries": 30,
+    "authorPageCapturePath": "/tmp/orbsie-mushroom-candidate.nIL3N8/author-page.html",
+    "authorPageCaptureBytes": 22935,
+    "authorPageCaptureSha256": "082fad0bae11b3726dc774665a264e5bf8f023e852e24060eebdae5409a88c3e",
+    "robotsCrawlDelaySeconds": 10
+  },
+  "license": {
+    "evidencePath": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/mushroom-candidate-inspection/License.txt",
+    "sourcePath": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/License.txt",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "creator": "Asset Quest",
+    "licenseBytes": 567,
+    "licenseSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+    "pageText": "License(s): CC0; collection: 3D Assets (CC0)"
+  },
+  "selectedFiles": [
+    {
+      "archivePath": "Meshes/Fly_Agaric_Big.fbx",
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Meshes/Fly_Agaric_Big.fbx",
+      "bytes": 34304,
+      "sha256": "b3a436902476d2a8e08fc84917ff1da8fff640185064229659f1d8dbbec56d9c",
+      "format": "FBX binary, version 7700",
+      "globalSettings": {
+        "upAxis": "Y (1)",
+        "upAxisSign": 1,
+        "frontAxis": "Z (2)",
+        "frontAxisSign": 1,
+        "coordAxis": "X (0)",
+        "coordAxisSign": 1,
+        "unitScaleFactor": 1.0,
+        "originalUnitScaleFactor": 1.0
+      },
+      "geometry": {
+        "positionVertexCount": 137,
+        "polygonCount": 131,
+        "triangleCountAfterTriangulation": 254,
+        "polygonSizes": [
+          3,
+          4
+        ],
+        "boundsMin": [
+          -8.83735179901123,
+          -0.1662549078464508,
+          -8.83735179901123
+        ],
+        "boundsMax": [
+          8.83735179901123,
+          19.61448860168457,
+          8.83735179901123
+        ],
+        "boundsSize": [
+          17.67470359802246,
+          19.78074350953102,
+          17.67470359802246
+        ]
+      },
+      "uv": {
+        "mapping": "ByPolygonVertex",
+        "uvArrayScalarCount": 354,
+        "uvIndexCount": 516
+      },
+      "material": "Mushooms_MAT",
+      "externalTexture": "Textures/Mushrooms_C.tga"
+    },
+    {
+      "archivePath": "Textures/Mushrooms_C.tga",
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Textures/Mushrooms_C.tga",
+      "bytes": 50331692,
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "format": "TGA type 2, uncompressed true-color, 4096x4096, 24-bit"
+    }
+  ],
+  "packFormats": {
+    "meshFiles": 25,
+    "meshFormats": [
+      "FBX binary"
+    ],
+    "objFiles": 0,
+    "gltfFiles": 0,
+    "textureFiles": 2,
+    "textureFormats": [
+      "PNG",
+      "TGA"
+    ],
+    "regularFiles": 28,
+    "directoryEntries": 2
+  },
+  "assessment": {
+    "capStemCandidate": "Named Fly Agaric Big by the source pack; 137 positions/254 triangles. Bounds alone do not establish cap/stem recognizability. No render was performed; silhouette and smoothness remain unverified.",
+    "textureDependency": "Required by the FBX material: UVs plus external ../Textures/Mushrooms_C.tga. The smaller PNG is an alternate pack file, while this FBX explicitly references TGA.",
+    "catalogCompatibility": "Not directly compatible with the current catalog path: the candidate is FBX rather than a self-contained GLB, and asset-geometry-core removes UV attributes and builds vertex colors from material.color/COLOR_0 without sampling diffuse texture maps. Importing it unchanged would lose its textured appearance.",
+    "actionsNotTaken": [
+      "No conversion",
+      "No Blender",
+      "No catalog/app/model/browser changes",
+      "No additional download"
+    ]
+  }
+}
