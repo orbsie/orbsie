@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "orbsie.terminal-publication/v1",
+  "status": "failed",
+  "startedAt": "2026-09-12T21:37:48.002Z",
+  "base": "https://orbsie.com",
+  "account": {
+    "email": "orbsie-terminal-mtywp4o2@example.com"
+  },
+  "world": {
+    "id": "terminal-publication-mtywp4o2",
+    "revision": 0,
+    "title": "A tiny terminal continuity island"
+  },
+  "providerCalls": 0,
+  "publishPostCount": 2,
+  "cancellationCount": 0,
+  "vercelCalls": [],
+  "browserChecks": [
+    {
+      "label": "first public release browser",
+      "status": 200,
+      "ready": true,
+      "canvas": true,
+      "pageErrors": [],
+      "screenshot": "first-public-release-browser.png"
+    }
+  ],
+  "progress": {
+    "account": {
+      "email": "orbsie-terminal-mtywp4o2@example.com"
+    },
+    "world": {
+      "id": "terminal-publication-mtywp4o2",
+      "revision": 1,
+      "title": "A tiny terminal continuity island"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "terminal-publication-mtywp4o2",
+          "revision": 1,
+          "title": "A tiny terminal continuity island"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_2tjQBRZ91HMd1yM2vBbJKpK21PGq",
+        "deploymentUrl": "https://orb-5be2d09a02117b7fdfdb-pm5ps3wfa-grappeggias-projects.vercel.app",
+        "url": "/o/terminal-publication-mtywp4o2",
+        "vercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI",
+        "world": {
+          "id": "terminal-publication-mtywp4o2",
+          "revision": 1,
+          "title": "A tiny terminal continuity island"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_2tjQBRZ91HMd1yM2vBbJKpK21PGq",
+        "vercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentId": "dpl_2tjQBRZ91HMd1yM2vBbJKpK21PGq",
+        "deploymentUrl": "https://orb-5be2d09a02117b7fdfdb-pm5ps3wfa-grappeggias-projects.vercel.app",
+        "url": "/o/terminal-publication-mtywp4o2",
+        "vercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "A tiny terminal continuity island",
+          "materialColor": "#a1f0d7"
+        }
+      }
+    ],
+    "last": {
+      "step": "first public release snapshot",
+      "snapshot": {
+        "revision": 1,
+        "title": "A tiny terminal continuity island",
+        "materialColor": "#a1f0d7"
+      }
+    }
+  },
+  "first": {
+    "revision": 1,
+    "title": "A tiny terminal continuity island",
+    "projectId": "terminal-publication-mtywp4o2",
+    "state": "INITIALIZING",
+    "publicUrl": "/o/terminal-publication-mtywp4o2",
+    "deploymentUrl": "https://orb-5be2d09a02117b7fdfdb-pm5ps3wfa-grappeggias-projects.vercel.app",
+    "deploymentId": "dpl_2tjQBRZ91HMd1yM2vBbJKpK21PGq",
+    "vercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI",
+    "postVercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI",
+    "getVercelProjectId": "prj_vgu8OzqSdctmCtYxezIlyrZMaYJI",
+    "servedRevision": 1,
+    "signedOutSnapshot": {
+      "version": 1,
+      "id": "terminal-publication-mtywp4o2",
+      "title": "A tiny terminal continuity island",
+      "seed": 47,
+      "revision": 1,
+      "entities": [
+        {
+          "id": "tree-accept",
+          "label": "Friendly tree",
+          "position": [
+            -2,
+            0,
+            1
+          ],
+          "scale": [
+            1.25,
+            1.35,
+            1.25
+          ],
+          "color": "#6d9d58",
+          "geometry": {
+            "kind": "tree",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-accept",
+          "label": "Glowing crystal",
+          "position": [
+            1.5,
+            0.8,
+            -1
+          ],
+          "scale": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "color": "#a1f0d7",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "portal-accept",
+          "label": "Sunlight portal",
+          "position": [
+            0,
+            0,
+            -3.5
+          ],
+          "scale": [
+            1.2,
+            1.2,
+            1.2
+          ],
+          "color": "#eddbb7",
+          "geometry": {
+            "kind": "arch",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "portal"
+          },
+          "stage": "ready"
+        }
+      ],
+      "environment": {
+        "sky": "#dceee9",
+        "ground": "#91b977",
+        "water": "#59bdbb"
+      },
+      "messages": []
+    }
+  },
+  "replacement": null,
+  "checks": {},
+  "sourceCommit": "ea5a9665b5342f1a26e0b1fc37c7add505aaa502",
+  "sourceHashes": {
+    "scripts/verify-terminal-publication.mjs": "50b0307e0e42d6c80fa97ba81ef58991956869495c3cc1e4b705f0c56317c129",
+    "scripts/lib/publication-acceptance.mjs": "2cc459d6d79a22343c0723697ae69b85911d029f86dc8e53d0c543396bea08ac"
+  },
+  "error": "pending replacement retains served URL\n+ actual - expected\n\n+ 'https://orb-5be2d09a02117b7fdfdb-9n65tc0d8-grappeggias-projects.vercel.app'\n- 'https://orb-5be2d09a02117b7fdfdb-pm5ps3wfa-grappeggias-projects.vercel.app'\n",
+  "finishedAt": "2026-09-12T21:38:01.700Z"
+}

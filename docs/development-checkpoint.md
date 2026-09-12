@@ -358,3 +358,18 @@ orchestration should create/use only a dedicated test world, retain first good
 release, submit one replacement, cancel only that returned pending deployment
 via documented API, then run helper. No retries if replacement already READY.
 No main Orbsie deployment may be cancellation target. No model calls needed.
+
+## Controlled terminal publication attempt stopped before cancellation
+
+Added scripts/verify-terminal-publication.mjs. Root reviewed/corrected missing
+browser transport and fresh Vercel exact ID/pending-state guards before run.
+One production attempt created testworld terminal-publication-mtywp4o2 and
+firstrelease dpl_2tjQBRZ91HMd1yM2vBbJKpK21PGq in testproject
+prj_vgu8OzqSdctmCtYxezIlyrZMaYJI. Revision1 signed-out snapshot/browser passed.
+Revision2 submitted; root's extra URL guard incorrectly compared POST candidate
+URL to served URL (route POST intentionally returns candidate). Stopped before
+ANY direct Vercel calls/cancellation.2publicationPOSTs,0modelcalls,0cancel.
+Raw report: publication-terminal. Corrected guard offline; terminal helper
+checks served URL after failure. Persist future second submission before
+assertions. No rerun. This is a harness failure, not product defect or terminal
+continuity proof. No worker/test active. Full goal and ChatGPT/mobile gates open.
