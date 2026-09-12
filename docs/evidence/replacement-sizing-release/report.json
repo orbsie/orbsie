@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-12T09:58:21.371Z",
+  "sourceCommit": "a5b2769",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": null,
+    "environment": "production",
+    "url": "https://orbsie-p6qceihjx-grappeggias-projects.vercel.app"
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+      "observedSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+      "bytes": 1787031
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": []
+    },
+    "geometryWorkers": [
+      {
+        "file": "player/generated-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "63e639d8983fcffb7cbf288db761582ee04509d5791404d8d4054e99228f296d",
+        "bytes": 843445
+      },
+      {
+        "file": "player/asset-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "ce5f8397beb023e5ad27bac8d63503b8e8c2b7ca259c3fb99f5edd47047c19b7",
+        "bytes": 414154
+      },
+      {
+        "file": "modeling/worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "20d7329c7cb37126bff5a127deb3497fbb35e1e948c5ed51f43e541a4397923c",
+        "bytes": 504323
+      },
+      {
+        "file": "modeling/procedural-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "57dbba3ebb60804a6e07032ec980a8f502f1656c26fe958af540bb747ddeb68b",
+        "bytes": 498786
+      },
+      {
+        "file": "modeling/emscripten-module.wasm",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "105c3bed22d457e43e3d1c3c1c6959fda62a8fe06f0fc8a985303c3a2be72232",
+        "bytes": 503134
+      }
+    ]
+  },
+  "screenshot": "docs/evidence/replacement-sizing-release/landing.png"
+}
