@@ -598,5 +598,11 @@ describe("structured generation envelopes", () => {
     expect(systemPromptForCapabilities(false, true)).toContain(
       "meters in a Y-up world",
     );
+    expect(systemPromptForCapabilities(false, false)).toContain(
+      "raw scale values across different catalog assets are not comparable",
+    );
+    expect(systemPromptForCapabilities(false, false)).toContain(
+      "compare the replacement's transformed physical dimensions with the existing object's bounds",
+    );
   });
 });
