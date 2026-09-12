@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "productionUrl": "https://orbsie.com",
+  "deploymentUrl": "https://orbsie-hu79zsa68-grappeggias-projects.vercel.app",
+  "sourceCommit": "04899899fc436115cb61c5350de70e8a1e58c6d6",
+  "build": "Vercel production build and TypeScript passed",
+  "modelCalls": 0,
+  "providerCalls": 0,
+  "externalRequests": 0,
+  "pageErrors": 0,
+  "checks": {
+    "syntheticBounceRegression": {
+      "repeatedFrameBounceAccepted": true,
+      "continuedFallRejected": true,
+      "flatAtSurfaceRejected": true
+    },
+    "createdThroughEditor": true,
+    "reloadPrompt": true,
+    "reloadRecovery": true,
+    "editorPlayReady": true,
+    "desktopBounce": true,
+    "exported": {
+      "archiveSha256": "a4005c9bf8545ce4c3d703bb3791faf3f5776308b7a5f7262634bdbc86189855",
+      "projectSha256": "ec564388c145fc903ef77cc329cd12e84e9384af0aa760f587362ba5cde3cd16",
+      "projectRevision": 4,
+      "entityIds": [
+        "moving-bounce-platform"
+      ],
+      "gameRules": [
+        "start-moving-bounce"
+      ]
+    },
+    "standaloneReady": true,
+    "touchBounce": true
+  },
+  "observed": {
+    "desktop": {
+      "minimumY": 0.867499988,
+      "expectedContactY": 0.867499988,
+      "ascentDeltas": [
+        0.2592000000000001,
+        0.23520000000000008
+      ],
+      "postReleaseJumpEvents": [],
+      "pathMotion": {
+        "sampleCount": 30,
+        "xRange": 1.9076571428566242,
+        "yRange": 0,
+        "zRange": 0
+      }
+    },
+    "touch": {
+      "minimumY": 0.867499988,
+      "expectedContactY": 0.867499988,
+      "ascentDeltas": [
+        0.2592000000000001,
+        0.23520000000000008
+      ],
+      "postReleaseJumpEvents": [],
+      "pathMotion": {
+        "sampleCount": 30,
+        "xRange": 0.9252053571454524,
+        "yRange": 0,
+        "zRange": 0
+      }
+    }
+  },
+  "exportMatchesRebuiltSource": {
+    "runtime.js": true,
+    "runtime.css": true,
+    "asset-geometry-worker.js": true
+  },
+  "productionConfig": {
+    "chatgptHosted": true,
+    "chatgptGeneration": true
+  }
+}

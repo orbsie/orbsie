@@ -350,9 +350,8 @@ function overlap(player, platform) {
 }
 
 function contactHeight() {
-  // Gameplay uses the trusted catalog bounds for support contact. The
-  // rendered GLB may carry a different local origin, so rendered bounds are
-  // retained for overlap while this source height stays authoritative.
+  // Catalog bounds include GLB node transforms. Apply the authored entity
+  // transform once to obtain the same support surface as gameplay.
   return (
     evidence.position[1] + evidence.bounds.max[1] * evidence.scale[1] + 0.42
   );
@@ -481,11 +480,13 @@ function regressionSample(y, index) {
   };
 }
 
-const continuedFall = [1.3, 1.16, 1.03, 0.91].map(regressionSample);
-const flatAtSurface = [1.3, 1.16, 1.03, 1.02, 1.02, 1.02].map(regressionSample);
-const repeatedFrameBounce = [1.3, 1.16, 1.05, 1.02, 1.02, 1.2, 1.2, 1.4].map(
-  regressionSample,
-);
+const atSurface = (offsets) =>
+  offsets.map((offset) => contactHeight() + offset).map(regressionSample);
+const continuedFall = atSurface([0.28, 0.14, 0.01, -0.11]);
+const flatAtSurface = atSurface([0.28, 0.14, 0.01, 0, 0, 0]);
+const repeatedFrameBounce = atSurface([
+  0.28, 0.14, 0.03, 0, 0, 0.18, 0.18, 0.38,
+]);
 const repeatedFrameTransition = bounceTransition(repeatedFrameBounce);
 assert(
   repeatedFrameTransition?.velocityDirectionReversal,

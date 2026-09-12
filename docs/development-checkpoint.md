@@ -206,7 +206,7 @@ worker. Avoid repeated random-phase retries or building an unnecessary
 navigation subsystem. Next acceptance still needs actual portal/reset for
 this scene and owner ChatGPT sign-in; physical mobile and visual quality open.
 
-## Catalog transformed-bounds fix ready for release
+## Catalog transformed-bounds fix released and browser-verified
 
 Latest route integration1c78edf reached platforms1/2 but missed3; preserve
 `gateway-current-source-footprint-integration/`,5f3af83, no more phase retries.
@@ -226,8 +226,23 @@ Evidence `mushroom-visual-diagnosis/` distinguishes metadata defect from
 low-poly silhouette/uniform tint limitations; runtimefallback was not excluded
 by a new browser observation. Existing saved entity placements are unchanged.
 Old ZIP traces retain old runtime/catalog contracts; they do not validate
-updated-runtime contacts. Next: deploy clean committed source and run one
-current-bounds desktop/exported-touch fixture, zero model calls. No worker
-active. Owner ChatGPT sign-in/consent still pending (browser sign-in form);
-physical mobile/visual quality/full provider E2E remain open. Codex81%remaining
-last observed, stop below20%.
+updated-runtime contacts. Source04899899fc436115cb61c5350de70e8a1e58c6d6 is
+now deployed at https://orbsie-hu79zsa68-grappeggias-projects.vercel.app and
+aliased to https://orbsie.com. Clean archive, Vercel build/TypeScript passed.
+
+`catalog-bounds-release-browser/` passed one fresh production fixture:
+editor creation/reload, desktop auto-bounce, export,390x844 CDP touch bounce
+and continued horizontal path. Actual minimumY equals corrected support
+height0.867499988 for both modes, no post-release jump presses. Root reviewed
+image/trace and matched exported runtime/CSS/asset worker to rebuilt local
+artifacts. Export includes corrected catalog bounds. Zero model/provider/
+external calls/page errors. Preflight synthetic samples were changed from old
+absolute heights to relative source-height offsets; no browser launch occurred
+in that failed preflight. Fresh config confirms hosted/generation flagstrue.
+
+Generated player artifacts refreshed from the same source. Local3068 server
+still has an older Next build; rebuild before any new local acceptance. No
+worker/test active. Owner ChatGPT sign-in/consent remains pending; physical
+mobile, actual new model placement after corrected metadata, visual quality,
+full provider route/portal/reset and all original E2E gates remain open.
+Codex81%remaining last observed; stop below20%.
