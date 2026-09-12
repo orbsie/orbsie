@@ -133,3 +133,13 @@ rejection→five crystals/win/reset, no overflow/cookies/external/model calls.
 Root reviewed report and screenshot. Do not repeat these green checks. Full bounce route still needs steering
 that accounts for platform phase; existing two-attempt task is finished.
 Owner-dependent ChatGPT sign-in and real-device gates remain as listed above.
+
+## Current Gateway story / active worker
+
+`gateway-current-full-story/` stopped after1 Luna HTTP200 creation,4096 cap,
+no retries; scene contains3 bounce+move_path platforms but old story classifier
+requires behavior=move. Saved revision26; no edits ran. Temp credential deleted.
+One worker `/root/story_path_motion` owns only story motion classification,
+effective duration-based slowdown assertions and flagship tests. No live calls
+or browser runs. Root identified unused bounce.speed vs actual path duration
+as the related slowdown-check gap. Reuse captured project for validation.
