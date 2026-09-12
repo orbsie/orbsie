@@ -13,6 +13,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { posix as posixPath, resolve, join } from "node:path";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
+import {
+  PLAYER_HALF_HEIGHT,
+  sourceLandingEvidence,
+} from "./lib/flagship-platforms-verifier.mjs";
 
 const zipPath = resolve(
   process.env.FLAGSHIP_GAME_ZIP ??
@@ -26,6 +30,25 @@ const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const rootHead = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
+const verifierBytes = await readFile(new URL(import.meta.url));
+const verifierSha256 = sha256(verifierBytes);
+const verifierHelperPath = "scripts/lib/flagship-platforms-verifier.mjs";
+const verifierHelperSha256 = sha256(
+  await readFile(resolve(verifierHelperPath)),
+);
+const verifierDirty = Boolean(
+  execFileSync(
+    "git",
+    [
+      "status",
+      "--short",
+      "--untracked-files=no",
+      "--",
+      "scripts/verify-flagship-platforms.mjs",
+    ],
+    { encoding: "utf8" },
+  ).trim(),
+);
 const startedAt = new Date().toISOString();
 const zipBytes = await readFile(zipPath);
 const files = unzipSync(zipBytes);
@@ -53,6 +76,36 @@ assert.equal(
   3,
   "Moving platform IDs must be unique.",
 );
+const selectedPlatformId = process.env.FLAGSHIP_PLATFORM_ID;
+if (
+  selectedPlatformId &&
+  !platforms.some((entity) => entity.id === selectedPlatformId)
+)
+  throw Error(`Unknown flagship platform ID ${selectedPlatformId}.`);
+const selectedPlatforms = selectedPlatformId
+  ? platforms.filter((entity) => entity.id === selectedPlatformId)
+  : platforms;
+for (const entity of platforms) {
+  if (entity.parentId !== undefined || entity.rotation !== undefined)
+    throw Error(
+      `Unsupported source-contact transform for ${entity.id}: expected an unparented, unrotated entity.`,
+    );
+  if (entity.behavior.axis === "y")
+    throw Error(
+      `Unsupported source-contact motion for ${entity.id}: Y-moving platforms require a runtime clock transform.`,
+    );
+}
+const catalogManifest = JSON.parse(
+  (await readFile(resolve("assets/catalog/manifest.json"))).toString("utf8"),
+);
+const catalogAssets = new Map(
+  catalogManifest.assets.map((asset) => [asset.id, asset]),
+);
+for (const entity of platforms) {
+  const assetId = entity.geometry.assetId;
+  if (!catalogAssets.has(assetId))
+    throw Error(`Missing local catalog metadata for ${assetId}.`);
+}
 
 if (reanalyzeReport) {
   const retained = JSON.parse(
@@ -133,6 +186,13 @@ const report = {
   startedAt,
   finishedAt: null,
   repoHead: rootHead,
+  verifier: {
+    path: "scripts/verify-flagship-platforms.mjs",
+    sha256: verifierSha256,
+    dirty: verifierDirty,
+    helperPath: verifierHelperPath,
+    helperSha256: verifierHelperSha256,
+  },
   zip: {
     path: zipPath,
     sha256: sha256(zipBytes),
@@ -157,9 +217,16 @@ const report = {
     scale: entity.scale,
     geometry: entity.geometry,
     behavior: entity.behavior,
+    collisionSource: {
+      gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+      playerHalfHeight: PLAYER_HALF_HEIGHT,
+      catalogAssetId: entity.geometry.assetId,
+      catalogBounds: catalogAssets.get(entity.geometry.assetId).bounds,
+    },
   })),
+  selectedPlatformIds: selectedPlatforms.map((entity) => entity.id),
   driverExperiments: 0,
-  maxDriverExperiments: 3,
+  maxDriverExperiments: selectedPlatforms.length,
   inferenceCalls: 0,
   externalRequests: [],
   mutatingRequests: [],
@@ -534,7 +601,7 @@ function carryAnalysis(samples, entity) {
   };
 }
 
-async function runPlatform(page, entity, mapping, run) {
+async function runPlatform(page, entity, mapping, run, asset) {
   const held = new Set();
   const inputLog = [];
   const setKeys = async (keys, phase) => {
@@ -568,6 +635,14 @@ async function runPlatform(page, entity, mapping, run) {
   run.approachSamples = [];
   run.landingSamples = [];
   run.carrySamples = [];
+  run.sourceContactModel = {
+    gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+    assetId: asset.id,
+    catalogBounds: asset.bounds,
+    entityPosition: entity.position,
+    entityScale: entity.scale,
+    playerHalfHeight: PLAYER_HALF_HEIGHT,
+  };
   await page.mouse.click(1100, 850);
   for (let step = 0; step < 180; step++) {
     const current = await sample("approach");
@@ -593,21 +668,40 @@ async function runPlatform(page, entity, mapping, run) {
   await page.waitForTimeout(80);
   await release("jump-release");
 
-  let previousY = beforeJump.player?.center[1] ?? null;
+  let previousSample = beforeJump;
   let landedAt;
+  let landingProof;
   for (let step = 0; step < 42; step++) {
     const current = await sample("jump");
     run.landingSamples.push(current);
-    const view = current.platforms[entity.id];
-    const currentY = current.player?.center[1] ?? null;
-    const descending =
-      previousY !== null && currentY !== null && currentY < previousY - 0.005;
-    if (descending && playerOnPlatform(current.player, view)) {
+    const evidence = sourceLandingEvidence(
+      previousSample,
+      current,
+      entity,
+      asset,
+    );
+    current.sourceContact = evidence.source
+      ? {
+          contactY: evidence.source.contactY,
+          descending: evidence.descending,
+          previousY: evidence.previousY,
+          currentY: evidence.currentY,
+          crossedContactHeight: evidence.crossedContactHeight,
+          sourceOverlap: evidence.sourceOverlap,
+          accepted: evidence.accepted,
+        }
+      : null;
+    if (evidence.accepted) {
       landedAt = current;
+      landingProof = {
+        ...current.sourceContact,
+        source: evidence.source,
+      };
       await release("landing-release");
       break;
     }
-    previousY = currentY;
+    previousSample = current;
+    const view = current.platforms[entity.id];
     if (current.player && view) {
       const dx = view.center[0] - current.player.center[0];
       const dz = view.center[2] - current.player.center[2];
@@ -619,6 +713,13 @@ async function runPlatform(page, entity, mapping, run) {
     await page.waitForTimeout(45);
   }
   run.landedAt = landedAt ?? null;
+  run.landingProof = landingProof ?? null;
+  if (!landingProof)
+    run.landingFailure = {
+      reason:
+        "No descending sample satisfied the source catalog contact-height crossing and source X/Z overlap criteria.",
+      finalSample: run.landingSamples.at(-1)?.sourceContact ?? null,
+    };
   await release("carry-release");
   for (let index = 0; index < 20; index++) {
     run.carrySamples.push(await sample("released-input"));
@@ -689,7 +790,8 @@ try {
     .toBe(3);
   report.renderedPlatformMapping = mapping;
   report.initialRenderedTelemetry = compactTelemetry(initial, mapping);
-  for (const entity of platforms) {
+  for (const entity of selectedPlatforms) {
+    const asset = catalogAssets.get(entity.geometry.assetId);
     report.driverExperiments++;
     const run = {
       id: entity.id,
@@ -703,7 +805,7 @@ try {
     };
     report.runs.push(run);
     try {
-      await runPlatform(page, entity, mapping, run);
+      await runPlatform(page, entity, mapping, run, asset);
       run.status = run.analysis.carried ? "passed" : "failed";
       if (!run.analysis.carried)
         run.failure =
@@ -714,7 +816,7 @@ try {
     }
     // Fresh page state for the next platform; this keeps each jump independent
     // while retaining the same immutable ZIP bytes and runtime.
-    if (entity !== platforms.at(-1)) {
+    if (entity !== selectedPlatforms.at(-1)) {
       await page.reload();
       await expect(page.locator('main[data-ready="true"]')).toBeVisible({
         timeout: 30000,
@@ -749,8 +851,8 @@ try {
   report.finishedAt = new Date().toISOString();
   report.status =
     !report.failure &&
-    report.driverExperiments === 3 &&
-    report.runs.length === 3 &&
+    report.driverExperiments === selectedPlatforms.length &&
+    report.runs.length === selectedPlatforms.length &&
     report.runs.every((run) => run.status === "passed") &&
     report.inferenceCalls === 0 &&
     report.externalRequests.length === 0 &&
