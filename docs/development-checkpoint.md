@@ -18,8 +18,10 @@ Keep this handoff compact and update it in place. Never include secrets.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
   Recovery and diagnostic changes are deployed; read-only production smoke passed.
-- Active worker: `/root/republish_acceptance_harness`, strengthening procedural
-  memory-cap verification in tests only. No live calls/builds/deployments.
+- Active worker: `/root/republish_acceptance_harness`, one post-diagnostics Gateway
+  input-game milestone on built source7e74569, port3018. Evidence target
+  `provider-e2e/gateway-input-game-diagnostics`; max2 Luna calls, cap4096, no retries.
+  Revalidate worker before any follow-up. Worker must delete temporary key afterward.
 - Diagnostics accepted in `a698cbf`; alias resolution/integration in `7e74569`.
   Forty-four generation tests, typecheck and local/remote production builds pass.
 - Latest Gateway run (`b899115`) stopped after one HTTP200 Luna creation call,
@@ -47,8 +49,8 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Modeling feedback, durable journals/checkpoints, share metadata and browser-only
   modeling are implemented. See current reconciliation in `docs/scope-audit.md`;
   conflicting historical rows are obsolete. Native Blender packaging is superseded.
-- Next local verification gap: runaway-allocation test accepts any procedural error,
-  so timeout could masquerade as memory-budget proof (`33ee035`). Strengthen evidence.
+- Memory-cap regression accepted `71c50c8`: valid recipe after4MiB allocation passes,
+  above8MiB rejects as execution (not timeout); all13 procedural tests pass.
 - Other open gates: hosted ChatGPT, complete provider-publication journeys,
   representative GPU/mobile performance and timing, and full requirement audit.
 - Avoid status-only turn churn. Await the existing worker without spawning another;
