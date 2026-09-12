@@ -1,0 +1,227 @@
+{
+  "mode": "fixture-generation-failure-recovery-real-editor",
+  "fixture": {
+    "transport": "intercepted /api/generate NDJSON",
+    "liveInference": false,
+    "serverFundedCalls": false,
+    "databaseMutations": false,
+    "treeId": "tree-0",
+    "unrelatedId": "rock-0",
+    "pendingId": "pending-0"
+  },
+  "requests": [
+    {
+      "prompt": "Build the recovery fixture",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+        "code": "INVALID_SCENE_UPDATE",
+        "finishReason": "stop",
+        "issues": [
+          {
+            "code": "invalid_type",
+            "path": [
+              "geometry",
+              "job",
+              "recipe",
+              "nodes",
+              2
+            ],
+            "reason": "unreachable_recipe_node"
+          }
+        ]
+      }
+    },
+    {
+      "prompt": "Make the selected tree amber",
+      "selected": "tree-0",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 9,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree violet",
+      "selected": "tree-0",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 10,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 11,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "projectRevision": 12,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    }
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    }
+  ],
+  "blocked": [],
+  "unexpectedApi": [],
+  "pageErrors": [],
+  "checks": {
+    "created": {
+      "projectId": "abfa8ccc-c711-4ff3-8435-65ee0db72ffb",
+      "revision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    "unselectedRetryPreserved": {
+      "failedRequestSelected": null,
+      "retryRequestSelected": null,
+      "promptRestoredExactly": true,
+      "unrelatedPreserved": true,
+      "projectScopedFeedbackForwarded": true
+    },
+    "dismissal": {
+      "requestCountAfterDismiss": 4,
+      "ordinaryPromptDidNotReuseFeedback": true
+    },
+    "lastWorkingPreservedLatestIncrement": {
+      "treeColor": "#c982df",
+      "unrelatedPreserved": true,
+      "requestCountAfterRestore": 5
+    }
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ undefined\n- {\n-   code: 'INVALID_SCENE_UPDATE',\n-   finishReason: 'stop',\n-   issues: [\n-     {\n-       code: 'invalid_type',\n-       path: [\n-         'geometry',\n-         'job',\n-         'recipe',\n-         'nodes',\n-         2\n-       ],\n-       reason: 'unreachable_recipe_node'\n-     }\n-   ],\n-   projectId: 'abfa8ccc-c711-4ff3-8435-65ee0db72ffb',\n-   version: 1\n- }\n",
+  "transientErrors": [
+    "The model returned an invalid scene update. Finished objects are preserved.Try againUse last working",
+    "Original-geometry edits cannot reserve a replacement or substitute object.Try againUse last working"
+  ],
+  "visibleText": "Saved on this device\nShare Orb\nCreate a world\nBack to planet\nBuild the recovery fixture\nEdit\nPlay\nYour world\n\nBuild the recovery fixture\n\n✧\n\nThe recovery fixture is ready.\n\nTint the tree blue\n\nTint the tree blue\n\n✧\n\nThe unselected retry succeeded.\n\nFriendly tree\n\nMake the selected tree amber\n\nFriendly tree\n\nMake the selected tree violet\n\nFriendly tree\n\nMake the selected tree green\n\nFriendly tree\n\nMake the selected tree green\n\n✧\n\nThe selected retry succeeded.\n\nFriendly tree\nChange this object\n3 free prompts\nChange this\n3 free prompts left\nYour world is saved on this device."
+}

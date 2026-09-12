@@ -60,24 +60,50 @@ const createCommands = [
   },
   { type: "commit_revision", message: "The recovery fixture is ready." },
 ];
-const failureCommands = (color, message) => [
-  { type: "set_material", id: treeId, color },
-  { type: "reserve_entity", entity: { ...pending, geometry: undefined } },
-  { type: "set_material", id: "missing-object", color: "#ffffff" },
-  { type: "commit_revision", message },
-];
 const successCommands = (color, message) => [
   { type: "set_material", id: treeId, color },
   { type: "commit_revision", message },
 ];
+const safeGenerationFailure = {
+  error:
+    "The model returned an invalid scene update. Finished objects are preserved.",
+  code: "INVALID_SCENE_UPDATE",
+  diagnostic: {
+    operation: 3,
+    finishReason: "stop",
+    issues: [
+      {
+        code: "invalid_type",
+        path: ["geometry", "job", "recipe", "nodes", 2],
+        reason: "unreachable_recipe_node",
+      },
+    ],
+  },
+};
+const failureCommands = (color, message, selected) => [
+  { type: "set_material", id: treeId, color },
+  ...(selected
+    ? []
+    : [
+        { type: "reserve_entity", entity: { ...pending, geometry: undefined } },
+      ]),
+  safeGenerationFailure,
+];
 
 const report = {
-  mode: "fixture-generation-failure-recovery-real-editor",
+  mode: "fixture-generation-retry-feedback-real-editor",
   fixture: {
     transport: "intercepted /api/generate NDJSON",
     liveInference: false,
     serverFundedCalls: false,
     databaseMutations: false,
+    structuredFailure: {
+      code: safeGenerationFailure.code,
+      finishReason: safeGenerationFailure.diagnostic.finishReason,
+      issueCode: safeGenerationFailure.diagnostic.issues[0].code,
+      issuePath: safeGenerationFailure.diagnostic.issues[0].path,
+      reason: safeGenerationFailure.diagnostic.issues[0].reason,
+    },
     treeId,
     unrelatedId,
     pendingId,
@@ -98,6 +124,15 @@ const summarizeRequest = (body) => ({
   projectId: body.project?.id,
   projectRevision: body.project?.revision,
   entityIds: body.project?.entities?.map((entity) => entity.id),
+  generationFeedback: body.generationFeedback
+    ? {
+        version: body.generationFeedback.version,
+        projectId: body.generationFeedback.projectId,
+        code: body.generationFeedback.code,
+        finishReason: body.generationFeedback.finishReason,
+        issues: body.generationFeedback.issues,
+      }
+    : undefined,
 });
 const getProject = (page) =>
   storageSnapshot(page).then((value) => value.project);
@@ -182,15 +217,31 @@ try {
         number === 1
           ? createCommands
           : number === 2
-            ? failureCommands("#ff66aa", "The first failed edit.")
+            ? failureCommands(
+                "#ff66aa",
+                "The first failed edit.",
+                body.selected,
+              )
             : number === 3
               ? successCommands("#8ac6dd", "The unselected retry succeeded.")
               : number === 4
-                ? failureCommands("#f5b56f", "The dismissed failed edit.")
+                ? failureCommands(
+                    "#f5b56f",
+                    "The dismissed failed edit.",
+                    body.selected,
+                  )
                 : number === 5
-                  ? failureCommands("#c982df", "The latest valid checkpoint.")
+                  ? failureCommands(
+                      "#c982df",
+                      "The latest valid checkpoint.",
+                      body.selected,
+                    )
                   : number === 6
-                    ? failureCommands("#dd8a78", "The selected retry failure.")
+                    ? failureCommands(
+                        "#dd8a78",
+                        "The selected retry failure.",
+                        body.selected,
+                      )
                     : successCommands(
                         "#a2d07f",
                         "The selected retry succeeded.",
@@ -250,6 +301,7 @@ try {
   await expect(page.locator(".toast.error")).toBeVisible();
   const firstFailed = await getProject(page);
   assert.equal(report.requests[1].selected, undefined);
+  assert.equal(report.requests[1].generationFeedback, undefined);
   assert.equal(firstFailed.entities.length, 2);
   assert.equal(
     firstFailed.entities.find((entity) => entity.id === treeId)?.color,
@@ -270,6 +322,19 @@ try {
   );
   assert.equal(report.requests[2].selected, undefined);
   assert.equal(report.requests[2].prompt, report.requests[1].prompt);
+  assert.deepEqual(report.requests[2].generationFeedback, {
+    version: 1,
+    projectId: report.requests[1].projectId,
+    code: "INVALID_SCENE_UPDATE",
+    finishReason: "stop",
+    issues: [
+      {
+        code: "invalid_type",
+        path: ["geometry", "job", "recipe", "nodes", 2],
+        reason: "unreachable_recipe_node",
+      },
+    ],
+  });
   await expect(page.locator(".toast.error")).toHaveCount(0);
   await expect(page.locator(".toast")).toContainText(
     "Your world is saved on this device.",
@@ -281,6 +346,7 @@ try {
     retryRequestSelected: null,
     promptRestoredExactly: true,
     unrelatedPreserved: true,
+    projectScopedFeedbackForwarded: true,
   };
 
   await selectObject(page, "Friendly tree");
@@ -288,6 +354,7 @@ try {
   await expect(page.locator(".toast.error")).toBeVisible();
   const dismissed = await getProject(page);
   assert.equal(report.requests[3].selected, treeId);
+  assert.equal(report.requests[3].generationFeedback, undefined);
   assert.equal(
     dismissed.entities.find((entity) => entity.id === treeId)?.color,
     "#f5b56f",
@@ -304,12 +371,14 @@ try {
   assert.equal(report.requests.length, 4);
   report.checks.dismissal = {
     requestCountAfterDismiss: report.requests.length,
+    ordinaryPromptDidNotReuseFeedback: true,
   };
 
   await submitEdit(page, "Make the selected tree violet");
   await expect(page.locator(".toast.error")).toBeVisible();
   const latestCheckpoint = await getProject(page);
   assert.equal(report.requests[4].selected, treeId);
+  assert.equal(report.requests[4].generationFeedback, undefined);
   assert.equal(
     latestCheckpoint.entities.find((entity) => entity.id === treeId)?.color,
     "#c982df",
@@ -339,6 +408,7 @@ try {
   await submitEdit(page, "Make the selected tree green");
   await expect(page.locator(".toast.error")).toBeVisible();
   assert.equal(report.requests[5].selected, treeId);
+  assert.equal(report.requests[5].generationFeedback, undefined);
   await selectObject(page, "Unrelated rock");
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await waitForProject(
@@ -349,6 +419,19 @@ try {
   );
   assert.equal(report.requests[6].selected, treeId);
   assert.equal(report.requests[6].prompt, report.requests[5].prompt);
+  assert.deepEqual(report.requests[6].generationFeedback, {
+    version: 1,
+    projectId: report.requests[5].projectId,
+    code: "INVALID_SCENE_UPDATE",
+    finishReason: "stop",
+    issues: [
+      {
+        code: "invalid_type",
+        path: ["geometry", "job", "recipe", "nodes", 2],
+        reason: "unreachable_recipe_node",
+      },
+    ],
+  });
   assert.deepEqual(
     (await getProject(page)).entities.find(
       (entity) => entity.id === unrelatedId,
@@ -366,6 +449,11 @@ try {
     retryRequestSelected: treeId,
     changedSelectionBeforeRetry: unrelatedId,
     noAutomaticExtraRequest: true,
+    projectScopedFeedbackForwarded: true,
+  };
+  report.checks.interceptedGenerationRequests = {
+    fixtureRequests: report.requests.length,
+    liveInferenceCalls: 0,
   };
   report.status = "passed";
 } catch (error) {

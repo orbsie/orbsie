@@ -255,3 +255,17 @@ Both changes are local, not part of production source0c2381c. The single Luna
 worker is extending/running the existing actual-button browser fixture for
 retry feedback with all generation intercepted, after one local production
 build. Preserve the separate browser-only ChatGPT consent/inference gate.
+
+### Retry feedback browser fixture accepted
+
+Production build fromc01a1fe passed. The actual editor/button fixture passed
+with7 intercepted generation requests and0 live calls/page errors. Both
+selected/unselected retries forwarded safe project-scoped feedback; new prompts
+after dismissal/restore did not. Last-good increments, unrelated entities,
+selection and no-automatic-retry assertions held. Initial fixture probe failure
+is retained: its selected new-only reservation triggered the client guard before
+the intended server error. The final fixture omits that incompatible reservation
+for selected edits; it does not weaken the application guard.
+Evidence:docs/evidence/generation-retry-feedback-browser. Root reviewed harness
+diff, report and bundled-source consistency. These recovery changes are still
+local; production remains source0c2381c until the next deployment.
