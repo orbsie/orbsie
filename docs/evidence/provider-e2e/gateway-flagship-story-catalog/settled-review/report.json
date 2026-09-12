@@ -1,0 +1,22 @@
+{
+  "mode": "saved-snapshot-rendering",
+  "inferenceCalls": 0,
+  "blocked": [],
+  "errors": [],
+  "snapshots": [
+    {
+      "phase": "created",
+      "projectId": "d149cb1c-de74-437b-98cb-36ede3beb578",
+      "revision": 29,
+      "waitAfterCanvasMs": 10000,
+      "body": "Make your own \nCreate a world\n◆\n0\nScore\nW\nA\nS\nD\nMove\n·\nspace\nJump\nGlow Crystal Five: This model could not be loaded."
+    },
+    {
+      "phase": "mushroom",
+      "projectId": "d149cb1c-de74-437b-98cb-36ede3beb578",
+      "revision": 33,
+      "waitAfterCanvasMs": 10000,
+      "body": "Make your own \nCreate a world\n◆\n0\nScore\nW\nA\nS\nD\nMove\n·\nspace\nJump\nGlow Crystal Five: This model could not be loaded."
+    }
+  ]
+}
