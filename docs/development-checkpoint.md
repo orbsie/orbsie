@@ -158,3 +158,17 @@ Root scanned JSON/text/ZIP evidence for key patterns (none) and viewed the edit
 screenshot: functional success, but tiny/sparse tree does not close visual QA.
 Gateway semantic validation, visual quality and the broader acceptance matrix
 remain open. No production deploy in this milestone.
+
+### Recipe diagnostics and composition improvements
+
+`caf36e0` adds allowlisted duplicate/unreachable-node diagnostic reasons, with
+36 focused tests and typechecking passing. Validation remains strict.
+`4884ad0` supplies conservative catalog bounds and exact scale/origin metadata,
+plus parent-aware attachment guidance. 37 focused tests and typechecking pass.
+JSON Schema prompts no longer duplicate the full command schema.
+
+A Gateway-only acceptance milestone is running from 4884ad0: exact strawberry
+prompt, material edit only after success, max two Luna low/default calls at
+4096 output tokens, no retries. OpenRouter is not repeated in this milestone.
+Regular Chrome was rechecked: Orbsie is signed out; its sign-in dialog is open
+and the owner has been asked to sign in before browser ChatGPT acceptance.
