@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-12; verified against HEAD `7ee6f97` and current worktree.
+Updated 2026-09-12; verified against HEAD `b004e99` and current worktree.
 Keep this compact; historical evidence lives in `docs/scope-audit.md` and
 `docs/evidence/`. Never include credentials.
 
@@ -23,6 +23,18 @@ calls/run. A three-call OpenRouter recovery test remains pending approval.
 End users retain supported model choices. GitHub operations use computer use.
 
 ## Active bounded task
+
+Root ran one local saved Gateway seven-crystal platform sequence at b004e99;
+first landing failed. Evidence `docs/evidence/gateway-seven-platforms-sequential/`.
+No inference/external requests/mutations. Raw report hardcodes OpenRouter
+metadata despite exact Gateway ZIP identity. Rendered platform1 top1.2325
+differs from verifier authored-Y contact model (.8+.0825). This alone does
+not establish a product defect. Luna `/root/gateway_platform_contact` is
+investigating the runtime matrix contact contract and verifier, owns verifier
+and focused tests only; no live calls, no nested workers. Root reviews diff
+and evidence before acceptance. Earlier 'no worker active' notes below are
+historical. Questions on owner sign-in, emulator terms, recovery approval
+and physical device remain unanswered.
 
 Worker `/root/republish_acceptance_harness` completed the offline continuation.
 Implementation e0dff7c: 20 focused tests, typecheck, syntax/diff checks and root
