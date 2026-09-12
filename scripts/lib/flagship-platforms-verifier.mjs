@@ -15,6 +15,10 @@ export const DEFAULT_JUMP_REACH_MARGIN = 0.2;
 export const DEFAULT_DIMENSION_RELATIVE_TOLERANCE = 0.08;
 export const DEFAULT_DIMENSION_ABSOLUTE_TOLERANCE = 0.015;
 
+export function touchControlLabel(key) {
+  return { w: "Forward", a: "Left", s: "Back", d: "Right", " ": "Jump" }[key];
+}
+
 export function movingTargetMotionBound(entity, flightTime) {
   const behavior = entity?.behavior;
   if (

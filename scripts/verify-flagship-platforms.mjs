@@ -27,6 +27,7 @@ import {
   renderedDimensionsMatchSource,
   sourcePlatformContact,
   sourceLandingEvidence,
+  touchControlLabel,
 } from "./lib/flagship-platforms-verifier.mjs";
 
 const zipPath = resolve(
@@ -36,11 +37,14 @@ const zipPath = resolve(
 const output = resolve(process.argv[2] ?? "docs/evidence/flagship-platforms");
 const reanalyzeReport = process.env.FLAGSHIP_REANALYZE_REPORT;
 const sequential = process.env.FLAGSHIP_SEQUENTIAL === "1";
+const touchInput = process.env.FLAGSHIP_INPUT === "touch";
 const publishedUrl = process.env.FLAGSHIP_PUBLISHED_URL;
 const published = Boolean(publishedUrl);
 const publishedTarget = published ? new URL(publishedUrl) : null;
 if (published && !["http:", "https:"].includes(publishedTarget.protocol))
   throw Error("FLAGSHIP_PUBLISHED_URL must use HTTP(S).");
+if (touchInput && !sequential)
+  throw Error("FLAGSHIP_INPUT=touch requires FLAGSHIP_SEQUENTIAL=1.");
 if (!reanalyzeReport) await mkdir(output, { recursive: false });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -202,10 +206,10 @@ const report = {
   status: "running",
   mode: published
     ? sequential
-      ? "published-flagship-desktop-platform-sequential-landing-carry"
+      ? `published-flagship-${touchInput ? "mobile-touch" : "desktop"}-platform-sequential-landing-carry`
       : "published-flagship-desktop-platform-landing-carry"
     : sequential
-      ? "saved-openrouter-flagship-desktop-platform-sequential-landing-carry"
+      ? `saved-openrouter-flagship-${touchInput ? "mobile-touch" : "desktop"}-platform-sequential-landing-carry`
       : "saved-openrouter-flagship-desktop-platform-landing-carry",
   provider: "openrouter",
   liveProvider: false,
@@ -252,6 +256,7 @@ const report = {
   })),
   selectedPlatformIds: selectedPlatforms.map((entity) => entity.id),
   sequential,
+  inputMode: touchInput ? "mobile-touch" : "desktop-keyboard",
   driverExperiments: 0,
   maxDriverExperiments: sequential ? 1 : selectedPlatforms.length,
   inferenceCalls: 0,
@@ -265,6 +270,7 @@ const report = {
 };
 
 const desktopViewport = { width: 1440, height: 1000 };
+const touchViewport = { width: 390, height: 844 };
 const choices = [
   { x: 1, z: 0, keys: ["d"] },
   { x: -1, z: 0, keys: ["a"] },
@@ -792,23 +798,70 @@ async function runPlatform(page, entity, mapping, run, asset) {
 
 async function runSequentialPlatforms(page, ordered, mapping, run) {
   const held = new Set();
+  const touchHeld = new Map();
+  const cdp = touchInput ? await page.context().newCDPSession(page) : null;
+  if (cdp)
+    await cdp.send("Emulation.setTouchEmulationEnabled", {
+      enabled: true,
+      maxTouchPoints: 5,
+    });
+  let nextTouchId = 101;
   const inputLog = [];
+  const touchButtonPoint = async (key) => {
+    const label = touchControlLabel(key);
+    const box = await page
+      .getByRole("button", { name: label, exact: true })
+      .boundingBox();
+    if (!box) throw Error(`Missing visible touch control ${label}.`);
+    const point = {
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
+      id: nextTouchId++,
+    };
+    const hit = await page.evaluate(
+      ({ x, y, label }) => {
+        const target = document.elementFromPoint(x, y);
+        const button = target?.closest("button");
+        return button?.getAttribute("aria-label") === label;
+      },
+      { ...point, label },
+    );
+    if (!hit) throw Error(`Touch coordinate missed control ${label}.`);
+    return point;
+  };
+  const dispatchTouch = async (type, touchPoints) => {
+    if (!cdp) throw Error("Touch dispatch requested without a CDP session.");
+    await cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  };
   const setKeys = async (keys, phase) => {
     const next = new Set(keys);
-    for (const key of held)
-      if (!next.has(key)) {
-        await page.keyboard.up(key);
-        held.delete(key);
-      }
-    for (const key of next)
-      if (!held.has(key)) {
-        await page.keyboard.down(key);
-        held.add(key);
-      }
+    if (touchInput) {
+      for (const [key, point] of touchHeld)
+        if (!next.has(key)) {
+          await dispatchTouch("touchEnd", [point]);
+          touchHeld.delete(key);
+        }
+      for (const key of next)
+        if (!touchHeld.has(key)) {
+          touchHeld.set(key, await touchButtonPoint(key));
+          await dispatchTouch("touchStart", [...touchHeld.values()]);
+        }
+    } else {
+      for (const key of held)
+        if (!next.has(key)) {
+          await page.keyboard.up(key);
+          held.delete(key);
+        }
+      for (const key of next)
+        if (!held.has(key)) {
+          await page.keyboard.down(key);
+          held.add(key);
+        }
+    }
     inputLog.push({
       atPerformanceMs: await page.evaluate(() => performance.now()),
       phase,
-      keys: [...held],
+      keys: [...(touchInput ? touchHeld.keys() : held)],
     });
   };
   const release = async (phase) => setKeys([], phase);
@@ -839,6 +892,11 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     if (groundContact(value)) run.groundContactSamples.push(value);
   };
   const releaseHeld = async () => {
+    if (touchInput) {
+      for (const point of touchHeld.values())
+        await dispatchTouch("touchEnd", [point]).catch(() => {});
+      touchHeld.clear();
+    }
     for (const key of held) await page.keyboard.up(key).catch(() => {});
     held.clear();
   };
@@ -865,7 +923,10 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       entityScale: entity.scale,
       playerHalfHeight: PLAYER_HALF_HEIGHT,
     }));
-    await page.mouse.click(1100, 850);
+    await page.mouse.click(
+      touchInput ? touchViewport.width / 2 : 1100,
+      touchInput ? 180 : 850,
+    );
 
     const first = ordered[0];
     for (let step = 0; step < 180; step++) {
@@ -1006,9 +1067,24 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
           atPerformanceMs: await page.evaluate(() => performance.now()),
           from: entity.id,
         };
-      await setKeys([" "], `jump-platform-${index + 1}`);
+      const launchDirection =
+        touchInput &&
+        previousBeforeJump.player &&
+        previousBeforeJump.platforms[entity.id]
+          ? movementKeys(
+              previousBeforeJump.platforms[entity.id].center[0] -
+                previousBeforeJump.player.center[0],
+              previousBeforeJump.platforms[entity.id].center[2] -
+                previousBeforeJump.player.center[2],
+            )
+          : [];
+      const launchKeys = touchInput ? [...launchDirection, " "] : [" "];
+      stage.launchKeys = launchKeys;
+      await setKeys(launchKeys, `jump-platform-${index + 1}`);
       await page.waitForTimeout(80);
-      await release(`jump-release-platform-${index + 1}`);
+      if (touchInput)
+        await setKeys(launchDirection, `jump-release-platform-${index + 1}`);
+      else await release(`jump-release-platform-${index + 1}`);
       let previousSample = previousBeforeJump;
       let landedAt;
       let landingProof;
@@ -1154,7 +1230,9 @@ try {
     };
   }
   const context = await browser.newContext({
-    viewport: desktopViewport,
+    viewport: touchInput ? touchViewport : desktopViewport,
+    isMobile: touchInput,
+    hasTouch: touchInput,
     recordVideo: { dir: output },
   });
   await context.addInitScript(makeInitScript());
@@ -1195,6 +1273,13 @@ try {
         (await page.evaluate(() => window.__orbReadWorld())).player?.visible,
     )
     .toBe(true);
+  if (touchInput)
+    await expect(
+      page.getByRole("button", {
+        name: touchControlLabel("d"),
+        exact: true,
+      }),
+    ).toBeVisible();
   let initial;
   let mapping;
   await expect
@@ -1219,8 +1304,10 @@ try {
       id: "sequential-platform-route",
       label: "Moving platforms 1 → 2 → 3",
       platformIds: selectedPlatforms.map((entity) => entity.id),
-      viewport: desktopViewport,
-      inputMethod: "desktop keyboard",
+      viewport: touchInput ? touchViewport : desktopViewport,
+      inputMethod: touchInput
+        ? "mobile CDP multitouch buttons"
+        : "desktop keyboard",
       mappingUuid: mapping,
       status: "running",
     };

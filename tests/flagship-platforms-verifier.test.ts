@@ -7,6 +7,7 @@ import {
   movingTargetMotionBound,
   renderedDimensionsMatchSource,
   sourceLandingEvidence,
+  touchControlLabel,
   transformedAssetDimensions,
 } from "../scripts/lib/flagship-platforms-verifier.mjs";
 
@@ -141,4 +142,14 @@ it("computes a bounded jump reach from the gameplay movement model", () => {
   expect(
     horizontalGapToPlatform([-3, 1.440625, 5], rendered, platform, asset),
   ).toMatchObject({ reachable: false });
+});
+
+it("maps gameplay keys to the published player's real touch button labels", () => {
+  expect(["w", "a", "s", "d", " "].map(touchControlLabel)).toEqual([
+    "Forward",
+    "Left",
+    "Back",
+    "Right",
+    "Jump",
+  ]);
 });
