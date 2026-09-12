@@ -13,9 +13,10 @@ integration. One Luna xhigh/regular worker, no nested agents, concise context.
 Use completion notifications; do not spin status-only polls. Batch targeted
 checks; full E2E and live inference only at meaningful milestones. Fast off.
 
-Stop agents/tests below 20% remaining Codex quota. Last successful direct
-reading was 92% remaining; this is historical, not a fresh reading. The helper
-`/tmp/orbsie-read-codex-quota.py` is now absent. Goal token counts are not quota.
+Stop agents/tests below 20% remaining Codex quota. Fresh direct App Server `account/rateLimits/read` on 2026-09-12 returned
+Codex primary usedPercent=8 (92% remaining), weekly window10080 minutes. The
+old temporary helper is absent; a bounded stdio initialize/read/terminate
+request succeeded without inference. Goal token counts are not quota.
 Live tests use Luna only, low/default, maximum 4096 output tokens/call, no
 automatic retries. Gateway standing limit is five calls/test; OpenRouter two
 calls/run. A three-call OpenRouter recovery test remains pending approval.
