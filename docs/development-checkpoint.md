@@ -192,3 +192,15 @@ feedback to explicit retry/continuation requests so a model can correct its
 previous schema error. No automatic paid retry. Clear stale feedback on success,
 project/revision changes, and recovery dismissal; never forward raw payloads or
 provider messages. This is pending work, not implemented acceptance.
+
+### Strict wire integration accepted
+
+`0705a17` implements the roughly29KB optional-presence/tuple codec;8 focused
+tests and typechecking pass. `5403f61` adds the operator-only strict format,
+wire decode before canonical validation, and strict Gateway route tests.
+36 focused integration/codec/selector/route tests and typechecking pass.
+
+A Gateway-only strict acceptance run is now assigned from5403f61: one build,
+exact strawberry prompt, material edit only after successful creation, max2
+Luna low/default calls of4096 output tokens, no retries or fallback. No default
+Gateway transport or production environment has changed yet.
