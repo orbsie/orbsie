@@ -799,7 +799,7 @@ try {
     ).toBeVisible();
     expect(await score()).toBe(
       program
-        ? traversalContract.collectibleIds.length
+        ? traversalContract.expectedScore
         : project.entities.filter((e) => e.behavior?.type === "collect").length,
     );
     run.won = true;
