@@ -19,6 +19,6 @@
   "preflight": null,
   "publication": null,
   "browser": null,
-  "error": "Sign-in failed (HTTP 401).",
-  "finishedAt": "2026-09-12T06:32:36.070Z"
+  "error": "Sign-in failed (HTTP 403).",
+  "finishedAt": "2026-09-12T06:31:26.734Z"
 }

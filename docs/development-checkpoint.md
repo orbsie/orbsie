@@ -370,3 +370,13 @@ report/image and scanned text/ZIP for key patterns; private key deleted.
 Initial missing-cloud-state preflight made0 calls; corrected run was the sole
 provider attempt. Publication/free trial/full visual quality remain unproven.
 OpenRouter3-call approval and owner ChatGPT sign-in remain pending.
+
+### Existing Gateway publication setup failures retained
+
+The reviewed publication wrapper stopped before cloud lookup/publication: first
+HTTP403 due to a mismatched local Better Auth origin, then HTTP401/User not found
+after the local launch explicitly set BETTER_AUTH_URL to its loopback origin.
+Both attempts made0 generation calls and0 publication requests; no deployment
+handle exists. Reports are retained under gateway-reload-recovery-publication.
+One Luna worker is comparing the successful recovery run's account/DB setup
+with the publication setup read-only before any further login attempt.
