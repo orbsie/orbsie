@@ -358,6 +358,44 @@ it("does not disclose a Vercel project mapping before owner authentication", asy
   expect(mock.query).not.toHaveBeenCalled();
 });
 
+it.each(["ERROR", "CANCELED"])(
+  "retains the last public release when the pending deployment is %s",
+  async (readyState) => {
+    const previousRelease = {
+      title: "Released world",
+      creator: "Artist",
+      revision: 1,
+    };
+    const stored = row({
+      published_metadata: previousRelease,
+      publication_metadata: { title: "Pending draft", revision: 2 },
+    });
+    const before = structuredClone(stored);
+    mock.query.mockResolvedValueOnce({ rows: [stored] });
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      expect(String(input)).toContain("/v13/deployments/d2");
+      return Response.json({ readyState, url: "failed-attempt.vercel.app" });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await get();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      state: readyState,
+      deploymentId: "d2",
+      servedRevision: 1,
+      deploymentUrl: "https://old.example",
+      vercelProjectId: "vp",
+    });
+    expect(mock.query).toHaveBeenCalledTimes(1);
+    expect(mock.query.mock.calls[0][0]).toMatch(/^SELECT /);
+    expect(mock.query.mock.calls[0][1]).toEqual(["orb", "owner"]);
+    expect(stored).toEqual(before);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  },
+);
+
 it("verifies every immutable artifact before atomically labeling the confirmed URL", async () => {
   mock.query.mockResolvedValueOnce({ rows: [row()] });
   mock.query.mockResolvedValueOnce({ rows: [{ published_revision: 2 }] });
