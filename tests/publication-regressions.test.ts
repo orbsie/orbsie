@@ -332,6 +332,7 @@ it("verifies every immutable artifact before atomically labeling the confirmed U
 
   expect(await response.json()).toMatchObject({
     state: "READY",
+    deploymentId: "d2",
     servedRevision: 2,
     deploymentUrl: "https://orb.vercel.app",
     vercelProjectId: "vp",
@@ -488,6 +489,7 @@ it("does not claim readiness when an in-flight status request loses the deployme
 
   expect(await response.json()).toEqual({
     state: "VERIFYING",
+    deploymentId: "old",
     vercelProjectId: "vp",
   });
   expect(mock.query.mock.calls[1][0]).toContain(

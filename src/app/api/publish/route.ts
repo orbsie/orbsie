@@ -361,6 +361,7 @@ export async function GET(request: Request) {
       )
         return Response.json({
           state: "VERIFYING",
+          deploymentId: orb.deployment_id,
           servedRevision: orb.published_revision ?? null,
           deploymentUrl: orb.public_url,
           vercelProjectId: orb.vercel_project_id ?? null,
@@ -385,6 +386,7 @@ export async function GET(request: Request) {
         if (verification.kind === "protected")
           return Response.json({
             state: "PROTECTED",
+            deploymentId: orb.deployment_id,
             servedRevision: orb.published_revision ?? null,
             deploymentUrl: orb.public_url,
             vercelProjectId: orb.vercel_project_id ?? null,
@@ -392,6 +394,7 @@ export async function GET(request: Request) {
           });
         return Response.json({
           state: "VERIFYING",
+          deploymentId: orb.deployment_id,
           servedRevision: orb.published_revision ?? null,
           deploymentUrl: orb.public_url,
           vercelProjectId: orb.vercel_project_id ?? null,
@@ -420,12 +423,14 @@ export async function GET(request: Request) {
       if (!promoted.rows.length)
         return Response.json({
           state: "VERIFYING",
+          deploymentId: orb.deployment_id,
           vercelProjectId: orb.vercel_project_id ?? null,
         });
       orb.published_revision = promoted.rows[0].published_revision;
     }
     return Response.json({
       state: d.readyState,
+      deploymentId: orb.deployment_id,
       servedRevision: orb.published_revision ?? null,
       url: d.readyState === "READY" ? publicPath(id!) : undefined,
       deploymentUrl:
