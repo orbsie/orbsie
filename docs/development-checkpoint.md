@@ -302,3 +302,18 @@ Live mushroom replacement, physical grounding and visual giant-size acceptance
 remain unverified; expansion alone does not prove visually giant. No active
 worker. Server37626 remains last known local server. Owner ChatGPT consent and
 physical mobile still pending. Full goal incomplete.
+
+## Current auth observation and reviewed input telemetry
+
+Regular Chrome page1 https://orbsie.com remains signed out. Root clicked
+Connect with ChatGPT; UI explicitly queued connection after sign-in and focused
+email. No credentials entered. Owner must sign in. Local3068 /api/config200.
+Scope audit corrected: seven milestones and scene-update→draw instrumentation
+already exist. Luna added opt-in PlayerInputTracker acceptance→consumePressed
+latency snapshots with128-sample bound, protected copies, duplicate suppression,
+pending reset and invalid/regressing clock omission. Existing constructor/input
+behavior unchanged. Root reviewed complete diff and negative-clock correction;
+8 focused tests, TypeScript and diff checks pass. No browser/model calls.
+Telemetry is opt-in and not yet enabled in a representative browser measurement.
+It measures simulation consumption, not rendered feedback or input-to-photon.
+No worker active. Full goal still requires real-provider/mobile acceptance.

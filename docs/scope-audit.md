@@ -2,6 +2,19 @@
 
 ## Current reconciliation — 2026-09-12
 
+Latest source/UI review (after7cd343e): regular Chrome remains on Orbsie sign-in.
+Clicking Connect with ChatGPT displays “Sign in first — ChatGPT connects right
+after your sign-in.” Owner sign-in is a verified current gate, not proof of
+successful subscription authorization. Local acceptance server returns HTTP200.
+
+Performance inventory correction: src/lib/experience-metrics.ts already records
+all seven named milestone slots plus accepted-update→draw samples, with bounded
+retention; World/store/publish integration and focused tests exist. Historical
+“no instrumentation” rows below must not trigger duplicate implementation.
+Representative hardware measurements remain absent. Input acceptance→simulation
+consumption telemetry is a separate bounded addition in progress; it will not
+prove rendered feedback or physical-device input latency.
+
 This section supersedes conflicting historical status below; it does not close the full plan.
 
 - Catalog source-bounds audit found that all ten assets omitted their GLB node Y translation, and fence-gate metadata also omitted child transforms. Manifest bounds/origin notes are corrected and checked against active transformed vertices; original GLBs/licenses remain unchanged. This affects generation placement metadata and contact calculations. Historical ZIP traces use their bundled old catalog; they are not proof of updated-runtime contact. Source0489989 is deployed on orbsie.com; fresh production editor/exported CDP-touch fixture passes exact corrected support contact, automatic bounce and path motion with zero model calls (`catalog-bounds-release-browser/`). This does not prove new live-model placement or physical mobile. See `mushroom-visual-diagnosis/`.
