@@ -192,3 +192,13 @@ Score. No worker/test process active, temporary credential removed. First
 creation-continuation attempt had closed-list failure and zero model calls.
 Next: fix HUD/catalog-bound diagnostics and reuse captured snapshots/GLBs
 for offline undo/reload/export; no need to repeat live edits for harness fixes.
+
+## Active captured offline story task
+
+One Luna `/root/captured_story_offline` owns explicit captured-manifest loading,
+HUD/catalog-bound diagnostics, focused tests and at most1 offline browser
+attempt. Reuse actual rev30 mushroom→rev37 goal7 with2 GLBs; seed history
+explicitly (not original live undo proof). Mandatory bindings committed102c328.
+No model/account/external calls. Root separate visual review: original five
+custom cone+sphere crystals look mushroom-like; scene-quality gate stays open
+even if collectible/undo/export checks pass.
