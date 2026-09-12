@@ -589,6 +589,165 @@ function sanitizedError(error, config) {
   );
 }
 
+export function trialRemainingFromHeaders(headers) {
+  const value =
+    typeof headers?.get === "function"
+      ? headers.get("x-orbsie-trial-remaining")
+      : (headers?.["x-orbsie-trial-remaining"] ??
+        headers?.["X-Orbsie-Trial-Remaining"]);
+  if (typeof value !== "string" || !/^\d+$/.test(value)) return null;
+  const remaining = Number(value);
+  return Number.isSafeInteger(remaining) ? remaining : null;
+}
+
+function checkpointShape(project) {
+  if (!project || typeof project !== "object" || Array.isArray(project))
+    return false;
+  if (
+    project.version !== 1 ||
+    typeof project.id !== "string" ||
+    !Number.isSafeInteger(project.revision) ||
+    project.revision < 0 ||
+    !Array.isArray(project.entities) ||
+    !Array.isArray(project.messages) ||
+    !project.environment ||
+    typeof project.environment !== "object"
+  )
+    return false;
+  const ids = new Set();
+  const proceduralKinds = new Set([
+    "tree",
+    "mushroom",
+    "platform",
+    "arch",
+    "crystal",
+    "pond",
+    "flower",
+    "rock",
+    "custom",
+  ]);
+  for (const entity of project.entities) {
+    const geometry = entity?.geometry;
+    const geometryValid =
+      geometry === undefined ||
+      (geometry &&
+        typeof geometry === "object" &&
+        typeof geometry.kind === "string" &&
+        ["coarse", "refined"].includes(geometry.detail) &&
+        (proceduralKinds.has(geometry.kind) ||
+          (geometry.kind === "asset" && typeof geometry.assetId === "string") ||
+          (geometry.kind === "generated" &&
+            geometry.job &&
+            typeof geometry.job === "object")));
+    if (
+      !entity ||
+      typeof entity !== "object" ||
+      typeof entity.id !== "string" ||
+      ids.has(entity.id) ||
+      !Array.isArray(entity.position) ||
+      entity.position.length !== 3 ||
+      !entity.position.every(Number.isFinite) ||
+      !Array.isArray(entity.scale) ||
+      entity.scale.length !== 3 ||
+      !entity.scale.every(Number.isFinite) ||
+      !["seed", "coarse", "ready"].includes(entity.stage) ||
+      !geometryValid
+    )
+      return false;
+    ids.add(entity.id);
+  }
+  return true;
+}
+
+function checkpointSummary(project) {
+  if (!project || typeof project !== "object") return null;
+  return {
+    id: typeof project.id === "string" ? project.id : null,
+    revision: Number.isSafeInteger(project.revision) ? project.revision : null,
+    entityIds: Array.isArray(project.entities)
+      ? project.entities
+          .map((entity) => (typeof entity?.id === "string" ? entity.id : null))
+          .filter(Boolean)
+      : [],
+  };
+}
+
+export function classifyFailureCheckpoint(before, after) {
+  const beforeSummary = checkpointSummary(before);
+  const afterSummary = checkpointSummary(after);
+  const result = (status, reason) => ({
+    status,
+    reason,
+    scope: "structural-only",
+    before: beforeSummary,
+    after: afterSummary,
+  });
+  if (!checkpointShape(before))
+    return result("unavailable", "before-missing-or-invalid");
+  if (!after) return result("unavailable", "after-missing");
+  if (!checkpointShape(after)) return result("corrupt", "after-invalid");
+  if (after.id !== before.id) return result("corrupt", "project-id-changed");
+  if (after.revision < before.revision)
+    return result("corrupt", "revision-regressed");
+  const scene = (project) => {
+    const { messages: _messages, ...committedScene } = project;
+    return committedScene;
+  };
+  const unchanged =
+    JSON.stringify(scene(before)) === JSON.stringify(scene(after));
+  if (!unchanged && after.revision === before.revision)
+    return result("corrupt", "changed-without-revision");
+  return result(
+    unchanged ? "unchanged" : "partial-unverified",
+    unchanged ? "same-committed-scene" : "structural-check-only",
+  );
+}
+
+export function buildFreeTrialFailureEvidence({
+  responseRemaining,
+  trialStatus,
+  trialBody,
+  beforeProject,
+  afterProject,
+}) {
+  const remaining =
+    Number.isSafeInteger(responseRemaining) && responseRemaining >= 0
+      ? responseRemaining
+      : null;
+  const refreshedRemaining =
+    Number.isSafeInteger(trialBody?.remaining) && trialBody.remaining >= 0
+      ? trialBody.remaining
+      : null;
+  return {
+    status:
+      trialStatus === 200 && trialBody?.enabled === true
+        ? "observed"
+        : "unavailable",
+    responseRemaining: remaining,
+    refreshedTrial: {
+      status: Number.isSafeInteger(trialStatus) ? trialStatus : null,
+      enabled: trialBody?.enabled === true,
+      remaining: refreshedRemaining,
+      limit: Number.isSafeInteger(trialBody?.limit) ? trialBody.limit : null,
+    },
+    checkpoint: classifyFailureCheckpoint(beforeProject, afterProject),
+  };
+}
+
+export function recordGenerationResponseEvidence(response, config, info) {
+  info.generationStatuses.push(response.status());
+  if (config.provider === "free")
+    info.generationTrialRemaining.push(
+      trialRemainingFromHeaders(response.headers()),
+    );
+}
+
+function trialTrafficEvidence(config, info) {
+  return config.provider === "free"
+    ? { generationTrialRemaining: [...info.generationTrialRemaining] }
+    : {};
+}
+
 function persistenceJSON(value) {
   const encoded = JSON.stringify(value);
   return encoded === undefined ? undefined : JSON.parse(encoded);
@@ -921,7 +1080,7 @@ function attachRequestEvidence(page, config, info) {
         responseURL.origin === config.companionURL)
     ) {
       if (response.request().method() !== "POST") return;
-      info.generationStatuses.push(response.status());
+      recordGenerationResponseEvidence(response, config, info);
       const bodyRead = response.text();
       if (
         config.provider === HOSTED_PROVIDER &&
@@ -1240,6 +1399,52 @@ async function setupFreeTrial(page, config, report) {
     outputCapTokens: config.outputCap,
   };
   return report.freeTrial;
+}
+
+async function readFreeTrialStatus(page) {
+  return page.evaluate(async () => {
+    const response = await fetch("/api/trial", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    let body;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    return { status: response.status, body };
+  });
+}
+
+async function recordFreeTrialFailure(page, report, info, beforeProject) {
+  if (report.freeTrial === null || info.generationRequests < 1) return;
+  let trialStatus = null;
+  let trialBody;
+  try {
+    const refreshed = await readFreeTrialStatus(page);
+    trialStatus = refreshed.status;
+    trialBody = refreshed.body;
+  } catch {
+    // Keep the original generation failure and record the refresh as unavailable.
+  }
+  let afterProject;
+  try {
+    afterProject = (await storageSnapshot(page)).project;
+  } catch {
+    // The browser may have failed before IndexedDB was available.
+  }
+  report.freeTrial = {
+    ...report.freeTrial,
+    generationResponseRemaining: [...info.generationTrialRemaining],
+    failure: buildFreeTrialFailureEvidence({
+      responseRemaining: info.generationTrialRemaining.at(-1),
+      trialStatus,
+      trialBody,
+      beforeProject,
+      afterProject,
+    }),
+  };
 }
 
 async function configureApiProvider(page, config, report, info, evidenceDir) {
@@ -3119,6 +3324,7 @@ async function run(config, report = emptyReport(config)) {
     generationRequests: 0,
     generationBodies: [],
     generationStatuses: [],
+    generationTrialRemaining: [],
     generationDiagnostics: [],
     diagnosticReads: [],
     blockedExternalRequests: 0,
@@ -3191,6 +3397,7 @@ async function run(config, report = emptyReport(config)) {
   const page = await context.newPage();
   attachRequestEvidence(page, config, info);
   let projectBefore;
+  let lastGoodProject;
   let projectAfterCreation;
   let projectAfterEdit;
   try {
@@ -3257,6 +3464,7 @@ async function run(config, report = emptyReport(config)) {
         ? storageKeyDigest(config.key ?? config.companionToken)
         : undefined,
     );
+    lastGoodProject = projectBefore.project;
     assert.equal(projectBefore.sensitive, false);
     const prompt = page.getByPlaceholder("What experience to build?");
     await expect(prompt).toBeVisible({ timeout: 30000 });
@@ -3336,6 +3544,7 @@ async function run(config, report = emptyReport(config)) {
       interrupted ? interrupted.checkpoint.revision + 1 : 1,
       1,
     );
+    lastGoodProject = projectAfterCreation;
     if (config.requireBrowserModel) {
       const bakedEntity = projectAfterCreation.entities.find(
         (entity) =>
@@ -3520,6 +3729,7 @@ async function run(config, report = emptyReport(config)) {
       projectAfterCreation.revision + 1,
       2,
     );
+    lastGoodProject = projectAfterEdit;
     if (config.requireBrowserModel)
       projectAfterEdit = await waitForTrustedBrowserBake(page, targetBefore.id);
     if (config.requireInputGame) {
@@ -3883,8 +4093,14 @@ async function run(config, report = emptyReport(config)) {
       report.liveInference = true;
       report.hosted.generationStatus = "passed";
     }
+    if (config.provider === "free" && report.freeTrial)
+      report.freeTrial = {
+        ...report.freeTrial,
+        generationResponseRemaining: [...info.generationTrialRemaining],
+      };
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...trialTrafficEvidence(config, info),
       ...(config.provider === HOSTED_PROVIDER
         ? {
             hostedGenerationRequests: info.hostedGenerationRequests,
@@ -3924,6 +4140,8 @@ async function run(config, report = emptyReport(config)) {
       ).values(),
     ].slice(0, 8);
     report.error = sanitizedError(error, config);
+    if (config.provider === "free")
+      await recordFreeTrialFailure(page, report, info, lastGoodProject);
     if (config.cloudRecovery && report.cloudRecovery.status !== "passed")
       report.cloudRecovery.status = "failed";
     if (
@@ -3944,6 +4162,7 @@ async function run(config, report = emptyReport(config)) {
     }
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...trialTrafficEvidence(config, info),
       ...(config.provider === HOSTED_PROVIDER
         ? {
             hostedGenerationRequests: info.hostedGenerationRequests,
@@ -3967,6 +4186,7 @@ async function run(config, report = emptyReport(config)) {
   } finally {
     report.traffic = {
       generationRequests: info.generationRequests,
+      ...trialTrafficEvidence(config, info),
       ...(config.provider === HOSTED_PROVIDER
         ? {
             hostedGenerationRequests: info.hostedGenerationRequests,

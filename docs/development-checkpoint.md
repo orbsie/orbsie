@@ -489,3 +489,13 @@ browser checks had a ready canvas and zero page errors. Evidence:
 ordered observations. Temporary credentials were deleted after success. This
 proves bounded pending-release continuity, not gameplay or failed-live-deploy
 continuity, which remain separate requirements.
+
+### Free-trial failure observations added
+
+Provider browser acceptance now captures free-response remaining quota and
+refreshes trial status after failure. It compares saved scene checkpoints while
+excluding message-only changes, reports advancing scenes as partial-unverified
+with structural-only scope, and preserves the original error. Root reviewed
+these limitations and restricted trial refresh to free-provider failures. Ten
+focused tests, typecheck, syntax/format and diff checks passed. No live calls
+were used for this harness change; production free inference is still pending.
