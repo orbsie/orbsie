@@ -11,7 +11,7 @@ browser-only ChatGPT subscription workflows. Astra reviews/integrates; one
 Luna xhigh/default bounded worker, no nested delegation, concise context.
 Fast off. Targeted checks per change; full/live checks only at milestones.
 Stop agents/tests below20% remaining Codex usage. Latest recorded App Server quota read
-2026-09-12: primary usedPercent19, 81% remaining, weekly10080-minute window.
+2026-09-12: primary usedPercent22, 78% remaining, weekly10080-minute window.
 Goal token totals are not quota. Live tests Luna only, low/default,4096 output
 maximum per call, no automatic retries; Gateway up to5 calls/test, OpenRouter
 2/run. Proposed OpenRouter3-call recovery remains pending. End users retain
@@ -331,3 +331,30 @@ is nearest-rank p50, not ordinary median9.7ms; current harness label corrected
 without rerun. Eight input tests/TypeScript passed before reporting-only edit.
 No physical-device or rendered-latency claim; no representative performance
 claim from two samples. No worker/test active. Full goal remains incomplete.
+
+## Terminal publication continuity helper reviewed
+
+Fresh read-only Codex App Server account/rateLimits/read reports primary used22%,
+78% remaining (weekly10080min); ordinary usage allowed. No inference involved.
+Fresh Vercel CLI credential GET verified HTTP200 project orbsie/prj_oRks1By5wPlChGkGgHG0Kz4xYn17
+under configured team. No credential contents persisted or printed.
+
+Luna completed offline publication-acceptance helper/tests for
+successful POST followed by terminal ERROR/CANCELED, proving the exact previous
+served revision/resources remain signed-out accessible. Default successful
+republish flow stays unchanged; reject READY and mismatched project/deployment.
+No live deployment/cancellation/browser/model calls authorized in worker task.
+Root will review before any controlled test-owned cancellation. Official Vercel
+integration API documentation lists PATCH/v12/deployments/{id}/cancel; no existing
+production deployment has been canceled. Full objective remains incomplete.
+
+Root reviewed runTerminalReplacementAcceptance and its focused fake transport
+coverage:25 publication harness tests plus TypeScript/syntax/diff checks pass.
+Rejects READY, invalid polling/revision/state and mismatched project/deployment;
+ERROR/CANCELED requires old URL+served revision and exact signed-out snapshot
+with browser-ready evidence. Existing successful republish path untouched.
+No worker active. Live terminal-failure continuity still unverified. Next live
+orchestration should create/use only a dedicated test world, retain first good
+release, submit one replacement, cancel only that returned pending deployment
+via documented API, then run helper. No retries if replacement already READY.
+No main Orbsie deployment may be cancellation target. No model calls needed.

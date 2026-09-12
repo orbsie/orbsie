@@ -4,6 +4,7 @@ import {
   PublicationAcceptanceError,
   republishWorld,
   resumePublicationAcceptance,
+  runTerminalReplacementAcceptance,
   runPublicationAcceptance,
 } from "../scripts/lib/publication-acceptance.mjs";
 import { createPublicationTransport } from "../scripts/lib/publication-transport.mjs";
@@ -235,6 +236,67 @@ function resumeFixtureTransport(statusBody: Record<string, unknown>) {
   };
 }
 
+function terminalReplacementTransport(
+  options: {
+    state?: "ERROR" | "CANCELED" | "READY";
+    projectId?: string;
+    servedRevision?: number;
+  } = {},
+) {
+  const requests: string[] = [];
+  let polls = 0;
+  const firstWorld = structuredClone(world);
+  firstWorld.revision = 1;
+  return {
+    requests,
+    request: async (
+      path: string,
+      _init: Record<string, unknown>,
+      _label: string,
+    ) => {
+      requests.push(path);
+      if (!path.startsWith("/api/publish?"))
+        throw new Error(`unexpected terminal replacement request: ${path}`);
+      polls += 1;
+      return result({
+        state: polls === 1 ? "BUILDING" : (options.state ?? "ERROR"),
+        servedRevision: options.servedRevision ?? 1,
+        deploymentUrl:
+          polls === 1
+            ? "https://deployment-2.vercel.app"
+            : "https://deployment-1.vercel.app",
+        deploymentId: polls === 1 ? "deployment-2" : "deployment-2",
+        vercelProjectId: options.projectId ?? "project-1",
+      });
+    },
+    publicGet: async (url: string) => {
+      if (url.endsWith("/project.json"))
+        return result(JSON.stringify(firstWorld));
+      return result("<main></main>");
+    },
+    browserReady: async () => ({
+      status: 200,
+      ready: true,
+      canvas: true,
+      pageErrors: [],
+    }),
+  };
+}
+
+const terminalFirstWorld = structuredClone(world);
+terminalFirstWorld.revision = 1;
+const terminalFirstRelease = {
+  deploymentId: "deployment-1",
+  deploymentUrl: "https://deployment-1.vercel.app",
+  vercelProjectId: "project-1",
+};
+const terminalSecondSubmission = {
+  state: "BUILDING",
+  deploymentId: "deployment-2",
+  deploymentUrl: "https://deployment-2.vercel.app",
+  vercelProjectId: "project-1",
+};
+
 it("uses browser readiness instead of raw HTML data-ready markup", async () => {
   const transport = fixtureTransport();
   const report = await runPublicationAcceptance({
@@ -346,6 +408,93 @@ it("preserves the first-publish path when republish is unset", async () => {
   expect(
     transport.requests.filter((entry) => entry.path === "/api/publish"),
   ).toHaveLength(1);
+});
+
+it.each(["ERROR", "CANCELED"] as const)(
+  "accepts %s replacement failure while proving exact old release continuity",
+  async (state) => {
+    const transport = terminalReplacementTransport({ state });
+    const progress: unknown[] = [];
+    const report = await runTerminalReplacementAcceptance({
+      transport,
+      cookies: "orbsie_session=fixture",
+      projectId: terminalFirstWorld.id,
+      firstRelease: terminalFirstRelease,
+      firstWorld: terminalFirstWorld,
+      secondSubmission: terminalSecondSubmission,
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+    });
+
+    expect(report).toMatchObject({
+      state,
+      replacementSucceeded: false,
+      status: {
+        deploymentId: "deployment-2",
+        deploymentUrl: "https://deployment-1.vercel.app",
+        servedRevision: 1,
+        vercelProjectId: "project-1",
+      },
+      oldRelease: {
+        snapshot: terminalFirstWorld,
+      },
+    });
+    expect(progress.at(-1)).toMatchObject({
+      last: {
+        step: "previous public release after terminal replacement snapshot",
+      },
+    });
+    expect(transport.requests).toHaveLength(2);
+  },
+);
+
+it("rejects a terminal replacement check when owner status is READY", async () => {
+  const transport = terminalReplacementTransport({ state: "READY" });
+  await expect(
+    runTerminalReplacementAcceptance({
+      transport,
+      cookies: "orbsie_session=fixture",
+      projectId: terminalFirstWorld.id,
+      firstRelease: terminalFirstRelease,
+      firstWorld: terminalFirstWorld,
+      secondSubmission: terminalSecondSubmission,
+      maxPolls: 2,
+      pollDelayMs: 0,
+    }),
+  ).rejects.toThrow(/READY.*replacement failure/);
+});
+
+it("rejects terminal replacement status mapped to another Vercel project", async () => {
+  const transport = terminalReplacementTransport({ projectId: "project-2" });
+  await expect(
+    runTerminalReplacementAcceptance({
+      transport,
+      cookies: "orbsie_session=fixture",
+      projectId: terminalFirstWorld.id,
+      firstRelease: terminalFirstRelease,
+      firstWorld: terminalFirstWorld,
+      secondSubmission: terminalSecondSubmission,
+      pollDelayMs: 0,
+    }),
+  ).rejects.toThrow(/same Vercel project|status Vercel project mapping/);
+});
+
+it("rejects terminal replacement status that serves the new revision", async () => {
+  const transport = terminalReplacementTransport({ servedRevision: 2 });
+  await expect(
+    runTerminalReplacementAcceptance({
+      transport,
+      cookies: "orbsie_session=fixture",
+      projectId: terminalFirstWorld.id,
+      firstRelease: terminalFirstRelease,
+      firstWorld: terminalFirstWorld,
+      secondSubmission: terminalSecondSubmission,
+      pollDelayMs: 0,
+    }),
+  ).rejects.toThrow(/original served revision/);
 });
 
 it("saves revision 2 with CAS, retains the queued release, and verifies the final snapshot", async () => {

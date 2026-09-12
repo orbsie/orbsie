@@ -6,6 +6,8 @@ const PENDING_PUBLICATION_STATES = new Set([
   "BUILDING",
   "VERIFYING",
 ]);
+const MAX_TERMINAL_REPLACEMENT_POLLS = 120;
+const MAX_TERMINAL_REPLACEMENT_POLL_DELAY_MS = 60_000;
 
 export class PublicationAcceptanceError extends Error {
   constructor(message, options = {}) {
@@ -316,6 +318,242 @@ async function signedOutRelease(
     pageStatus: responseStatus(pageResult),
     browser: browserEvidence(browserResult),
     snapshot,
+  };
+}
+
+/**
+ * Accept a replacement that was submitted successfully but reaches a
+ * terminal ERROR/CANCELED state. This is deliberately separate from the
+ * normal republish path: it proves continuity of the already-served release
+ * without treating the failed replacement as a successful new revision.
+ */
+export async function runTerminalReplacementAcceptance({
+  transport,
+  cookies,
+  projectId,
+  firstRelease,
+  firstWorld,
+  secondSubmission,
+  maxPolls = 120,
+  pollDelayMs = 5000,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  onProgress = async (_progress) => undefined,
+}) {
+  if (!transport || typeof transport.request !== "function")
+    throw new TypeError("A publication transport is required.");
+  if (typeof transport.publicGet !== "function")
+    throw new TypeError(
+      "Terminal replacement acceptance requires a signed-out public transport.",
+    );
+  if (typeof transport.browserReady !== "function")
+    throw new TypeError(
+      "Terminal replacement acceptance requires an injected signed-out browser transport.",
+    );
+  if (typeof cookies !== "string" || cookies.length === 0)
+    throw new TypeError("Terminal replacement acceptance requires session cookies.");
+  if (
+    !projectId ||
+    !firstWorld?.id ||
+    projectId !== firstWorld.id ||
+    !Number.isInteger(firstWorld.revision) ||
+    firstWorld.revision < 0
+  )
+    throw new TypeError(
+      "Terminal replacement acceptance requires the first world's project identity.",
+    );
+  if (!firstRelease?.deploymentUrl || !firstRelease?.deploymentId)
+    throw new TypeError(
+      "Terminal replacement acceptance requires the first deployment identity.",
+    );
+  if (
+    !Number.isInteger(maxPolls) ||
+    maxPolls <= 0 ||
+    maxPolls > MAX_TERMINAL_REPLACEMENT_POLLS
+  )
+    throw new TypeError("Terminal replacement acceptance requires bounded polls.");
+  if (
+    !Number.isFinite(pollDelayMs) ||
+    pollDelayMs < 0 ||
+    pollDelayMs > MAX_TERMINAL_REPLACEMENT_POLL_DELAY_MS
+  )
+    throw new TypeError("Terminal replacement acceptance requires a valid poll delay.");
+
+  const submission =
+    secondSubmission?.body && typeof secondSubmission.body === "object"
+      ? secondSubmission.body
+      : secondSubmission;
+  if (!submission || typeof submission !== "object")
+    throw new TypeError("Terminal replacement acceptance requires a second submission mapping.");
+  if (secondSubmission?.status !== undefined && !responseIsOk(secondSubmission))
+    failResponse("publish replacement submission", secondSubmission);
+
+  const firstProjectId = identity(firstRelease);
+  const secondProjectId = identity(submission);
+  if (!firstProjectId || !secondProjectId)
+    throw new PublicationAcceptanceError(
+      "Terminal replacement mapping requires both Vercel project identities.",
+    );
+  assert.equal(
+    secondProjectId,
+    firstProjectId,
+    "terminal replacement must keep the same Vercel project",
+  );
+  const secondDeploymentId = submission.deploymentId;
+  if (typeof secondDeploymentId !== "string" || secondDeploymentId.length === 0)
+    throw new PublicationAcceptanceError(
+      "Terminal replacement mapping requires the second deployment identity.",
+    );
+  assert.notEqual(
+    secondDeploymentId,
+    firstRelease.deploymentId,
+    "terminal replacement deployment must differ from the served deployment",
+  );
+  const secondDeploymentUrl = deploymentUrl(
+    submission,
+    "terminal replacement submission",
+  );
+  if (submission.state === "READY")
+    throw new PublicationAcceptanceError(
+      "Terminal replacement acceptance cannot use a READY submission; no replacement failure was observed.",
+      { state: submission.state },
+    );
+  if (
+    typeof submission.state !== "string" ||
+    (!PENDING_PUBLICATION_STATES.has(submission.state) &&
+      submission.state !== "ERROR" &&
+      submission.state !== "CANCELED")
+  )
+    throw new PublicationAcceptanceError(
+      `Terminal replacement submission returned unexpected state ${submission.state ?? "unknown"}.`,
+      { state: submission.state },
+    );
+
+  const progress = {
+    world: { id: firstWorld.id, revision: firstWorld.revision },
+    firstRelease: {
+      deploymentId: firstRelease.deploymentId,
+      deploymentUrl: firstRelease.deploymentUrl,
+      vercelProjectId: firstProjectId,
+    },
+    secondSubmission: {
+      state: submission.state ?? null,
+      deploymentId: secondDeploymentId,
+      deploymentUrl: secondDeploymentUrl,
+      vercelProjectId: secondProjectId,
+    },
+    steps: [],
+    last: null,
+  };
+  const recordStep = async (step, response, extra = {}) => {
+    const event = {
+      step,
+      ...(response ? responseEvidence(response) : {}),
+      ...extra,
+    };
+    progress.last = event;
+    progress.steps.push(event);
+    await onProgress(structuredClone(progress));
+  };
+  await recordStep("terminal replacement start", null);
+  let terminalBody;
+  let terminalResponse;
+  for (let attempt = 0; attempt < maxPolls; attempt += 1) {
+    if (attempt > 0 && pollDelayMs > 0) await sleep(pollDelayMs);
+    terminalResponse = await transport.request(
+      `/api/publish?projectId=${encodeURIComponent(projectId)}`,
+      { cookie: cookies },
+      "terminal replacement status",
+    );
+    await recordStep("terminal replacement status", terminalResponse, {
+      poll: attempt + 1,
+    });
+    if (!responseIsOk(terminalResponse))
+      failResponse("terminal replacement status", terminalResponse);
+    const body = responseBody(terminalResponse);
+    const state = responseState(terminalResponse);
+    if (state === "READY")
+      throw new PublicationAcceptanceError(
+        "Terminal replacement status became READY; the requested replacement failure was not observed.",
+        { status: responseStatus(terminalResponse), state },
+      );
+    if (state === "ERROR" || state === "CANCELED") {
+      terminalBody = body;
+      break;
+    }
+    if (!PENDING_PUBLICATION_STATES.has(state))
+      throw new PublicationAcceptanceError(
+        `Terminal replacement status returned unexpected state ${state ?? "unknown"}.`,
+        { status: responseStatus(terminalResponse), state },
+      );
+  }
+  if (!terminalBody)
+    throw new PublicationAcceptanceError(
+      `Terminal replacement did not reach ERROR or CANCELED within ${maxPolls} status checks.`,
+    );
+
+  const terminalProjectId = identity(terminalBody);
+  assert.equal(
+    terminalProjectId,
+    firstProjectId,
+    "terminal replacement status Vercel project mapping",
+  );
+  assert.equal(
+    terminalProjectId,
+    secondProjectId,
+    "terminal replacement status must match the submitted Vercel project",
+  );
+  assert.equal(
+    terminalBody.deploymentId,
+    secondDeploymentId,
+    "terminal replacement status deployment identity",
+  );
+  assert.equal(
+    deploymentUrl(terminalBody, "terminal replacement status"),
+    firstRelease.deploymentUrl.replace(/\/$/, ""),
+    "terminal replacement must retain the original deployment URL",
+  );
+  assert.equal(
+    terminalBody.servedRevision,
+    firstWorld.revision,
+    "terminal replacement must retain the original served revision",
+  );
+  await recordStep("terminal replacement continuity status", terminalResponse, {
+    terminalReplacement: {
+      state: terminalBody.state,
+      replacementSucceeded: false,
+      deploymentId: secondDeploymentId,
+      vercelProjectId: terminalProjectId,
+      deploymentUrl: firstRelease.deploymentUrl,
+      servedRevision: terminalBody.servedRevision,
+    },
+  });
+
+  const oldRelease = await signedOutRelease(
+    transport,
+    firstRelease,
+    firstWorld,
+    "previous public release after terminal replacement",
+    recordStep,
+  );
+  assert.deepEqual(
+    oldRelease.snapshot,
+    firstWorld,
+    "terminal replacement must retain the exact previous public snapshot",
+  );
+  return {
+    projectId,
+    vercelProjectId: terminalProjectId,
+    state: terminalBody.state,
+    replacementSucceeded: false,
+    status: {
+      state: terminalBody.state,
+      deploymentId: terminalBody.deploymentId,
+      deploymentUrl: terminalBody.deploymentUrl,
+      servedRevision: terminalBody.servedRevision,
+      vercelProjectId: terminalProjectId,
+    },
+    oldRelease,
+    progress,
   };
 }
 
