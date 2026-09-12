@@ -604,5 +604,13 @@ describe("structured generation envelopes", () => {
     expect(systemPromptForCapabilities(false, false)).toContain(
       "compare the replacement's transformed physical dimensions with the existing object's bounds",
     );
+    const prompt = systemPromptForCapabilities(false, false);
+    expect(prompt).toContain(
+      'keep the entity behavior.type as "bounce" and use a game-program move_path action on that same entity',
+    );
+    expect(prompt).toContain(
+      "A set_position action only repositions the platform; it never launches the player",
+    );
+    expect(prompt).toContain("JUMP_SPEED 6 and gravity 15 (ideal rise 1.2");
   });
 });

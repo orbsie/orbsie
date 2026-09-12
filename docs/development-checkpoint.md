@@ -30,11 +30,17 @@ effective position[-1,1.2,5] from saved bounce-1 set_position rule yields
 contactY1.7025, above observed apex1.50 and ideal ground-jump apex1.62.
 Zero inference/external/mutating requests/page errors. This is a generated
 playability defect for this ground jump, not proof all routes are impossible.
-Luna `/root/moving_bounce_authoring` now owns a bounded follow-up: prove
-existing bounce behavior + start move_path composition with actual runtime
-integration tests, then add concise generation guidance. Owns generation.ts
-and focused tests only; no schema expansion without a concrete gap, no model
-calls, no nested workers. Root reviews. Preserve captured failure evidence.
+Luna `/root/moving_bounce_authoring` completed the bounded follow-up; root
+reviewed the diff. Existing bounce behavior + start move_path works: actual
+GameSession/runtimeEntityMatrix/stepGameplay integration proves downward
+contact gives velocityY7.08 without jump input, path continues and unrelated
+tree is preserved.20 focused tests/typecheck/format/diff checks passed.
+Generation guidance now teaches composition and ground-jump reach margin;
+set_position repositions the entity and cancels its path, not a player launch.
+No schema/runtime behavior changed. No worker active. Browser bounce trajectory
+and live provider effectiveness remain unverified; next step is a fixture
+browser trajectory through the real editor/export runtime, then a meaningful
+fresh authorized provider milestone. Do not relabel captured failed world.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
 Acceptance distinction: existing verify-flagship-platforms asserts landing
 then560ms carried support. That is appropriate for moving nonbounce platforms,
