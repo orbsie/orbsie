@@ -8,7 +8,9 @@ large logs, and copied diffs.
   Vercel AI Gateway and browser ChatGPT journeys.
 - Fresh owner approval: one Luna create/edit test EACH for OpenRouter and
   Gateway, maximum two calls/provider, 4096 output tokens/call, no retries.
-  These fresh allocations are unused. Owner also approved Chrome consent work;
+  OpenRouter run used one HTTP200 call, then tree-shape overlap rejection before
+  save; no edit/retry. Evidence: `input-game-feedback-approved`. Gateway unused.
+  Owner also approved Chrome consent work;
   CUA still reports no browsers. Do not treat consent as already completed.
 - Current source: `be7672a` is deployed to `https://orbsie.com`; production smoke
   passed in `docs/evidence/modeling-feedback-release`. Verify `HEAD` on resume.
