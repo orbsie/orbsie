@@ -1,0 +1,97 @@
+{
+  "status": "imported",
+  "scope": "offline FBX/TGA import probe; no conversion or catalog admission",
+  "sourceInspection": "docs/evidence/mushroom-candidate-inspection/report.json",
+  "inputs": {
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Meshes/Fly_Agaric_Big.fbx",
+      "archivePath": "Meshes/Fly_Agaric_Big.fbx",
+      "bytes": 34304,
+      "sha256": "b3a436902476d2a8e08fc84917ff1da8fff640185064229659f1d8dbbec56d9c",
+      "expectedSha256": "b3a436902476d2a8e08fc84917ff1da8fff640185064229659f1d8dbbec56d9c"
+    },
+    "tga": {
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Textures/Mushrooms_C.tga",
+      "archivePath": "Textures/Mushrooms_C.tga",
+      "bytes": 50331692,
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "expectedSha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680"
+    }
+  },
+  "tga": {
+    "width": 4096,
+    "height": 4096,
+    "pixelDataBytes": 67108864,
+    "pixelSizeBits": 24,
+    "imageType": 2,
+    "origin": "bottom-left",
+    "descriptorFlags": 0,
+    "loaderFlipY": true,
+    "textureFlipY": true,
+    "wrapS": "repeat",
+    "wrapT": "repeat",
+    "colorSpace": "srgb"
+  },
+  "scene": {
+    "name": "Fly_Agaric_Export",
+    "meshCount": 1,
+    "totalVertices": 762,
+    "totalTriangles": 254,
+    "bounds": {
+      "min": [
+        -8.83735179901123,
+        -0.1662549078464508,
+        -8.83735179901123
+      ],
+      "max": [
+        8.83735179901123,
+        19.61448860168457,
+        8.83735179901123
+      ],
+      "size": [
+        17.67470359802246,
+        19.78074350953102,
+        17.67470359802246
+      ]
+    },
+    "meshes": [
+      {
+        "name": "Fly_Agaric_Big",
+        "vertices": 762,
+        "triangles": 254,
+        "uvVertices": 762,
+        "indexed": false,
+        "materialNames": [
+          "Mushooms_MAT"
+        ],
+        "materialMapIdentity": [
+          true
+        ],
+        "matrixWorld": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    ]
+  },
+  "checks": {
+    "finiteGeometry": true,
+    "textureMapIdentity": true,
+    "urlModifierInstalled": true,
+    "externalResourceRequests": 0
+  }
+}
