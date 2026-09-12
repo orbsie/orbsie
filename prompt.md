@@ -314,6 +314,8 @@ Instrument the experience rather than claiming fixed model latency.
 
 The complete Orbsie experience, including every published game, must work reliably
 on mobile. Mobile correctness is a release gate, not a desktop-layout adaptation.
+The owner-selected Android target is a recent midrange phone, not a flagship.
+Record the actual model and OS when physical-device testing is performed.
 
 - [ ] Validate the complete create → connect AI account/API → generate → play →
   select/edit → stop/retry/recover → reload → export/share flow on iOS Safari and

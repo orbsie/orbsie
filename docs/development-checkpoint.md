@@ -11,6 +11,8 @@ Keep this handoff compact and update it in place. Never include secrets.
   two calls/run. Both use Luna only and 4096 output tokens/call,
   no automatic retries, for bounded OpenRouter/Gateway acceptance milestones.
   Do not treat this as unlimited inference. Sign-in must use computer use.
+  Latest explicit next-milestone approval is narrower: one fresh create/edit test
+  per OpenRouter/Gateway, maximum two calls each, 4096 output tokens/call, no retries.
 - Production is source `7e74569` at https://orbsie.com, with smoke evidence
   in `docs/evidence/recovery-diagnostics-release`. Local HEAD must be checked on resume.
 - Latest accepted feature: `60f91c7`, explicit Try again / Use last working actions.
@@ -40,6 +42,8 @@ Keep this handoff compact and update it in place. Never include secrets.
   Chrome is installed; welcome flow awaits owner approval of Google Terms effective
   July30,2026. Root opened the terms link only; no consent/account created.
   Do not bypass onboarding or accept terms without the pending explicit approval.
+- Owner mobile target: a recent midrange Android phone (not a flagship); exact
+  physical model/OS not yet supplied. Emulator results remain separate evidence.
 - Mobile is an explicit release gate (`63f7332`): full workflows and actual-device
   iOS Safari/Android Chrome validation. Emulation alone cannot establish completion.
 - Diagnostics accepted in `a698cbf`; alias resolution/integration in `7e74569`.
