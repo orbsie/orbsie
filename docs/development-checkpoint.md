@@ -158,4 +158,10 @@ not original live undo. HUD screenshot includes formation visuals and is not
 settled asset-quality proof. Live gameplay traversal, publication and mobile
 acceptance of this newest world remain unverified. Next: use its saved
 `gateway/world-goal-7.zip` for actual gameplay acceptance without inference.
-No worker is active. Owner-dependent ChatGPT and real-device gates above remain.
+Current offline ground-approach attempt `winning-gateway-current-seven/`
+collected6/7, missed elevated crystal-3, and confirmed rendered portal contact
+withheld victory at6. Reset/mobile did not run. No inference/external/mutating
+requests. Luna `gateway_bounce_route` now owns at most2 offline real-keyboard
+route attempts on this unchanged ZIP; no app/model-output changes permitted.
+Codex quota freshly observed82% remaining on September12; stop below20%.
+Owner-dependent ChatGPT and real-device gates above remain.
