@@ -590,3 +590,12 @@ was not attempted;17 sampled ground contacts were recorded. Public runtime
 product vs driver cause. Zero inference/external/mutating/API requests or page
 errors. Evidence: docs/evidence/publication-flagship-openrouter/platforms-sequential.
 Read-only trajectory/contact diagnosis is next; no retry or game modification.
+
+### Public platform failure narrowed to verifier phase handling
+
+Read-only comparison shows early public telemetry captured transient formation
+bounds. By actual platform1 landing/carry and platform2 samples, dimensions
+matched the ZIP catalog mesh. No renderer/collider divergence is established.
+The failed jump began at an unfavorable movement phase with a larger gap.
+Next verifier change waits for expected catalog bounds and a bounded reachable
+gap while carried, without changing physics or authored platform layout.
