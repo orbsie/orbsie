@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BROWSER_PROCEDURAL_MEMORY_LIMIT_BYTES,
   BROWSER_PROCEDURAL_OUTPUT_MAX_BYTES,
   BROWSER_PROCEDURAL_SOURCE_MAX_BYTES,
   BrowserProceduralError,
@@ -199,6 +200,34 @@ describe("browser procedural QuickJS evaluator", () => {
         { deadlineMs: 2_000 },
       ),
     ).rejects.toBeInstanceOf(BrowserProceduralError);
+  });
+
+  it("rejects a valid result only when an allocation crosses the 8 MiB cap", async () => {
+    const recipeAfterAllocation = (bytes: number) => `(() => {
+      const allocation = new ArrayBuffer(${bytes});
+      new Uint8Array(allocation)[0] = 1;
+      return ${JSON.stringify(box())};
+    })()`;
+    await expect(
+      evaluateBrowserProceduralSource({
+        version: 1,
+        language: "quickjs",
+        seed: 1,
+        code: recipeAfterAllocation(
+          Math.floor(BROWSER_PROCEDURAL_MEMORY_LIMIT_BYTES / 2),
+        ),
+      }),
+    ).resolves.toEqual(box());
+    await expect(
+      evaluateBrowserProceduralSource({
+        version: 1,
+        language: "quickjs",
+        seed: 1,
+        code: recipeAfterAllocation(
+          BROWSER_PROCEDURAL_MEMORY_LIMIT_BYTES + 1,
+        ),
+      }),
+    ).rejects.toMatchObject({ code: "execution" });
   });
 });
 
