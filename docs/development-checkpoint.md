@@ -24,12 +24,14 @@ End users retain supported model choices. GitHub operations use computer use.
 
 ## Active bounded task
 
-Worker `/root/republish_acceptance_harness` owns
-`scripts/provider-browser-e2e.mjs` and relevant tests. It is implementing a
-zero-inference continuation of the saved Gateway flagship edit, diagnosing
-its HUD expectation, and checking reload/undo/export from preserved artifacts.
-Root owns this checkpoint. The script has an unfinished diff; do not commit
-or accept it before the worker reports targeted checks and root reviews it.
+Worker `/root/republish_acceptance_harness` completed the offline continuation.
+Implementation e0dff7c: 20 focused tests, typecheck, syntax/diff checks and root
+production build passed. Root then ran the real browser: zero generation,
+exact edited reload, seeded-history undo, baseline reload/ZIP/standalone passed.
+Evidence: `docs/evidence/provider-e2e/gateway-flagship-offline-continuation/`.
+Original live history, settled visual quality and gameplay remain unverified.
+Next task is the saved-artifact gameplay contract below. No worker task is active.
+Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
 audit reconciliation `7ee6f97`. Evidence directory:
