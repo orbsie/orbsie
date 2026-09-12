@@ -317,3 +317,17 @@ behavior unchanged. Root reviewed complete diff and negative-clock correction;
 Telemetry is opt-in and not yet enabled in a representative browser measurement.
 It measures simulation consumption, not rendered feedback or input-to-photon.
 No worker active. Full goal still requires real-provider/mobile acceptance.
+
+## Input consumption browser integration reviewed
+
+World exposes optional onInputLatency callback; telemetry stays disabled for
+ordinary callers. Shared renderer fixture exercises actual keyboard and CDP
+touch via production handlers. Worker first run timed out due unawaited async
+load resetting play; preserved report.attempt-1. Root corrected setup and blur
+assertion race, ran once separately: input-consumption-latency-corrected passed,
+2 samples5.4/14ms, duplicate suppression, no delayed press after blur, zero
+errors/external/modelcalls. Root reviewed screenshot/raw report. Raw medianMs
+is nearest-rank p50, not ordinary median9.7ms; current harness label corrected
+without rerun. Eight input tests/TypeScript passed before reporting-only edit.
+No physical-device or rendered-latency claim; no representative performance
+claim from two samples. No worker/test active. Full goal remains incomplete.

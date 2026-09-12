@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "orbsie.input-consumption-latency/v1",
+  "checkedAt": "2026-09-12T21:26:45.597Z",
+  "sourceCommit": "6639c7dd085b1dc1d541b78d07a886048f9ffbd2",
+  "sourceHashes": {
+    "src/components/world.tsx": "a10b7d50bf701e2e295d1e0583a66b43f3e235b7c263bdb9fc7bb00ee04c90c5",
+    "src/lib/player-input.ts": "a5c8bab77bae90d60653077d2e1dab5ba18904176d20ecd34c2639df5b35f156",
+    "scripts/input-latency-fixture.tsx": "6d5a32219325a120b4421d8512823e1a40faf27cc0396e4460087f7a6195248a",
+    "scripts/verify-input-latency.mjs": "1e57e34300ca1abcf237c4b1bd310267988649a731953838ddd0306c48e947e6"
+  },
+  "status": "passed",
+  "scope": "One offline local production World renderer run measuring accepted press to consumePressed simulation-boundary latency.",
+  "latencyLabel": "simulation-consumption latency only; this is not rendered feedback, input-to-photon latency, or a device performance claim.",
+  "providerCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "browser": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "platform": "Linux x86_64",
+    "hardwareConcurrency": 32,
+    "devicePixelRatio": 1,
+    "viewport": {
+      "width": 900,
+      "height": 600
+    }
+  },
+  "renderer": {
+    "status": "ready",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "rawSnapshots": [
+    {
+      "sampleCount": 1,
+      "samplesMs": [
+        5.400000002235174
+      ]
+    },
+    {
+      "sampleCount": 2,
+      "samplesMs": [
+        5.400000002235174,
+        14
+      ]
+    }
+  ],
+  "samplesMs": [
+    5.400000002235174,
+    14
+  ],
+  "statistics": {
+    "count": 2,
+    "medianMs": 5.400000002235174,
+    "p95Ms": 14,
+    "maxMs": 14
+  },
+  "checks": {
+    "keyboardRepeatDeduplicated": true,
+    "touchHeldDuplicateDeduplicated": true,
+    "noDelayedPressAfterBlur": true,
+    "finiteSamples": true,
+    "samplesCaptured": true,
+    "noPageErrors": true,
+    "noExternalRequests": true
+  },
+  "evidence": [
+    "input-consumption-latency.png"
+  ],
+  "networkAuditCompleted": true
+}

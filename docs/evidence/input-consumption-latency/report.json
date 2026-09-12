@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "orbsie.input-consumption-latency/v1",
+  "checkedAt": "2026-09-12T21:24:27.401Z",
+  "sourceCommit": "6639c7dd085b1dc1d541b78d07a886048f9ffbd2",
+  "sourceHashes": {
+    "src/components/world.tsx": "a10b7d50bf701e2e295d1e0583a66b43f3e235b7c263bdb9fc7bb00ee04c90c5",
+    "src/lib/player-input.ts": "a5c8bab77bae90d60653077d2e1dab5ba18904176d20ecd34c2639df5b35f156",
+    "scripts/input-latency-fixture.tsx": "2bb2fe125961a73e5bd9f958250ea2c7111f99236301d9a34d25377bf417dedb",
+    "scripts/verify-input-latency.mjs": "2e73a364c875ddd5ede94d6d5809b367f15900d1d03bccebd5475e126ac088ab"
+  },
+  "status": "failed",
+  "scope": "One offline local production World renderer run measuring accepted press to consumePressed simulation-boundary latency.",
+  "latencyLabel": "simulation-consumption latency only; this is not rendered feedback, input-to-photon latency, or a device performance claim.",
+  "providerCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "browser": {},
+  "renderer": {},
+  "rawSnapshots": [],
+  "samplesMs": [],
+  "statistics": null,
+  "checks": {},
+  "evidence": [
+    "input-consumption-latency-failure.png"
+  ],
+  "failure": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate",
+  "networkAuditCompleted": true
+}

@@ -37,6 +37,7 @@ import {
   PlayerInputTracker,
   actionForPlayerKey,
   type PlayerInputDetail,
+  type PlayerInputLatencySnapshot,
 } from "@/lib/player-input";
 import {
   useAssetGeometry,
@@ -570,9 +571,11 @@ function Formation({
 function Player({
   session,
   onReady,
+  onInputLatency,
 }: {
   session: GameSession;
   onReady?: () => void;
+  onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
 }) {
   const inputsReady = useRef(false);
   const announcedReady = useRef(false);
@@ -583,7 +586,13 @@ function Player({
     position: [0, 0.5, 5],
     velocityY: 0,
   });
-  const inputs = useRef(new PlayerInputTracker());
+  const inputs = useRef(
+    new PlayerInputTracker(
+      onInputLatency ? { latencyTelemetry: true } : undefined,
+    ),
+  );
+  const onInputLatencyRef = useRef(onInputLatency);
+  onInputLatencyRef.current = onInputLatency;
   const direction = useMemo(() => new THREE.Vector3(), []);
   const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const playing = useOrb((s) => s.playing);
@@ -708,6 +717,8 @@ function Player({
       (input.isHeld("down") ? 1 : 0) - (input.isHeld("up") ? 1 : 0),
     );
     const pressed = input.consumePressed();
+    if (pressed.length > 0)
+      onInputLatencyRef.current?.(input.getLatencySnapshot());
     for (const action of pressed) session.queueInput(action);
     session.advance(dt);
     const didReset = resetAvatar();
@@ -884,7 +895,13 @@ function Pebbles() {
     </instancedMesh>
   );
 }
-function Scene({ onReady }: { onReady?: () => void }) {
+function Scene({
+  onReady,
+  onInputLatency,
+}: {
+  onReady?: () => void;
+  onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
+}) {
   const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
   const phase = useOrb((s) => s.phase),
@@ -1086,7 +1103,11 @@ function Scene({ onReady }: { onReady?: () => void }) {
             session={session}
           />
         ))}
-        <Player session={session} onReady={onReady} />
+        <Player
+          session={session}
+          onReady={onReady}
+          onInputLatency={onInputLatency}
+        />
         <ContactShadows
           position={[0, -0.77, 0]}
           opacity={0.17}
@@ -1147,7 +1168,12 @@ class Boundary extends Component<
 export default function World({
   onReady,
   onError,
-}: { onReady?: () => void; onError?: (message: string) => void } = {}) {
+  onInputLatency,
+}: {
+  onReady?: () => void;
+  onError?: (message: string) => void;
+  onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
+} = {}) {
   const [rendererFailed, setRendererFailed] = useState(false);
   // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
   // adaptation so typing and scene revisions cannot restore full resolution.
@@ -1182,7 +1208,7 @@ export default function World({
         }}
       >
         <AdaptiveResolution onChange={setRenderDpr} />
-        <Scene onReady={onReady} />
+        <Scene onReady={onReady} onInputLatency={onInputLatency} />
       </Canvas>
     </Boundary>
   );
