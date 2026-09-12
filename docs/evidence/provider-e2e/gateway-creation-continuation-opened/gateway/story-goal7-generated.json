@@ -22,5 +22,7 @@
     }
   ],
   "missing": [],
-  "totalBytes": 41008
+  "totalBytes": 41008,
+  "sourceSnapshot": "docs/evidence/provider-e2e/gateway-creation-continuation-opened/gateway/story-goal7-project.json",
+  "sourceSnapshotSha256": "38606a52068206da403dd22f85fe7a97dca2eafc51e600249d3445d34b7e2dac"
 }
