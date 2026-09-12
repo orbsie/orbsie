@@ -1,0 +1,115 @@
+{
+  "status": "failed",
+  "scope": "One fixture intercepted through the real editor UI, reload recovery, ZIP export, desktop keyboard bounce, and exported 390x844 CDP touch bounce run",
+  "appUrl": "http://127.0.0.1:3068",
+  "appSourceCommit": null,
+  "sourceCommits": {
+    "repoHead": "25e435405428441ae41ade8c7819067d2139448f",
+    "appSourceAssumedFromRepoHead": true,
+    "verifierSha256": "34cc441aa533720d91150474af505d3b421cf2b6674551f2fab6066565f5f4fd",
+    "runtimeSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+    "runtimeCssSha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+  },
+  "fixture": {
+    "transport": "test-only intercepted application/x-ndjson",
+    "requestCount": 1,
+    "modelCalls": 0,
+    "providerCalls": 0,
+    "bodySha256": "c7bfb0357f237512f9ad6a7b32a0c19844924d37ef5e125e73a8767899b3995a",
+    "commands": [
+      {
+        "type": "reserve_entity",
+        "entity": {
+          "id": "moving-bounce-platform",
+          "label": "Moving bounce platform",
+          "position": [
+            -0.85,
+            0.35,
+            3.2
+          ],
+          "color": "#74c884",
+          "scale": [
+            3,
+            3,
+            3
+          ],
+          "behavior": {
+            "type": "bounce"
+          },
+          "stage": "seed"
+        }
+      },
+      {
+        "type": "set_geometry",
+        "id": "moving-bounce-platform",
+        "geometry": {
+          "kind": "asset",
+          "detail": "refined",
+          "assetId": "kenney.nature.platform-grass"
+        }
+      },
+      {
+        "type": "set_game",
+        "game": {
+          "variables": [],
+          "rules": [
+            {
+              "id": "start-moving-bounce",
+              "trigger": {
+                "type": "start"
+              },
+              "conditions": [],
+              "actions": [
+                {
+                  "type": "move_path",
+                  "entityId": "moving-bounce-platform",
+                  "points": [
+                    [
+                      -0.85,
+                      0.35,
+                      3.2
+                    ],
+                    [
+                      1.1,
+                      0.35,
+                      3.2
+                    ]
+                  ],
+                  "duration": 2.8,
+                  "loop": true
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "type": "commit_revision",
+        "message": "A moving bounce platform is ready. Jump once, release, and watch it carry the bounce."
+      }
+    ],
+    "requestSummaries": [
+      {
+        "prompt": "Build a moving bounce platform game with one reachable jump.",
+        "revision": 0,
+        "entityIds": [],
+        "requestShapeValid": true
+      }
+    ]
+  },
+  "externalRequests": [],
+  "standaloneRequests": [],
+  "pageErrors": [],
+  "checks": {
+    "syntheticBounceRegression": {
+      "continuedFallRejected": true,
+      "flatAtSurfaceRejected": true
+    },
+    "createdThroughEditor": true,
+    "reloadPrompt": true,
+    "reloadRecovery": true,
+    "editorPlayReady": true
+  },
+  "output": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/moving-bounce-browser",
+  "error": "desktop: no descending rendered contact with bounce platform."
+}

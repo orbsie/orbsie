@@ -1,0 +1,49 @@
+{
+  "status": "partial",
+  "sourceReportSha256": "2e0c98de5366ded19ec2fdabd268f9522372cadd6e0458779af751c4b16a2825",
+  "rawStatusUnchanged": "failed",
+  "scope": "Independent arithmetic review of retained desktop trajectory, not fresh browser acceptance",
+  "releaseAt": 2814,
+  "observations": [
+    {
+      "index": 24,
+      "atPerformanceMs": 4379.799999999814,
+      "playerY": 1.3136365873986446
+    },
+    {
+      "index": 25,
+      "atPerformanceMs": 4418.799999999814,
+      "playerY": 1.056416587398533
+    },
+    {
+      "index": 26,
+      "atPerformanceMs": 4458,
+      "playerY": 1.0174999874
+    },
+    {
+      "index": 27,
+      "atPerformanceMs": 4495.299999999814,
+      "playerY": 1.0174999874
+    },
+    {
+      "index": 28,
+      "atPerformanceMs": 4534.700000000186,
+      "playerY": 1.2766999874
+    },
+    {
+      "index": 29,
+      "atPerformanceMs": 4575.200000000186,
+      "playerY": 1.5118999874
+    }
+  ],
+  "runtimeContactHeight": 1.0174999874,
+  "limitations": [
+    "Raw run failed; no export or touch phase was reached.",
+    "Current verifier correction was checked offline only.",
+    "No new browser or provider request was made by this review."
+  ],
+  "arithmeticChecks": {
+    "descentThenLowPointThenTwoRisingSamples": true,
+    "allAfterRecordedJumpRelease": true
+  }
+}

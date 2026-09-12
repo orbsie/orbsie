@@ -11,7 +11,7 @@ browser-only ChatGPT subscription workflows. Astra reviews/integrates; one
 Luna xhigh/default bounded worker, no nested delegation, concise context.
 Fast off. Targeted checks per change; full/live checks only at milestones.
 Stop agents/tests below20% remaining Codex usage. Fresh App Server quota read
-2026-09-12: primary usedPercent11, 89% remaining, weekly10080-minute window.
+2026-09-12: primary usedPercent12, 88% remaining, weekly10080-minute window.
 Goal token totals are not quota. Live tests Luna only, low/default,4096 output
 maximum per call, no automatic retries; Gateway up to5 calls/test, OpenRouter
 2/run. Proposed OpenRouter3-call recovery remains pending. End users retain
@@ -37,14 +37,19 @@ contact gives velocityY7.08 without jump input, path continues and unrelated
 tree is preserved.20 focused tests/typecheck/format/diff checks passed.
 Generation guidance now teaches composition and ground-jump reach margin;
 set_position repositions the entity and cancels its path, not a player launch.
-No schema/runtime behavior changed. Luna `/root/bounce_browser_acceptance`
-now owns a focused fixture browser harness and evidence (verify-moving-bounce
-and moving-bounce-browser), with desktop/touch no-input automatic rebound,
-continued path, UI create/reload/export/standalone scope. Server3068 responds200;
-uses unchanged runtime from e0dff7c. Do not rebuild .next while that server is
-used. No live calls/external requests/nested workers. Root reviews evidence
-and final diff. Live provider effectiveness remains unverified; do not relabel
-the captured failed world.
+No schema/runtime behavior changed. Browser worker stopped after four local
+fixture attempts; no worker/process remains active. New verify-moving-bounce
+script and moving-bounce-browser* evidence preserve failures. Current raw
+report fails desktop ascent, before export/touch. Root reviewed code and
+recorded independent arithmetic in root-trace-review.json: samples24→26
+fall to1.0175,27 stays there,28→29 rise, all after recorded jump release.
+This is partial retained evidence, not a fresh passing rerun. Current script
+fixes catalog-vs-visible contact height, scans later candidates and closes
+contexts before video save; synthetic fall/flat cases reject. Syntax passes.
+Next bounded step: one corrected browser run, with provenance and retained
+partial diagnostics, then review export/touch; no new inference required.
+Server3068 runtime e0dff7c remains unchanged; revalidate before use. Do not
+rebuild .next while server in use. Live provider effectiveness remains open.
 Earlier failure `gateway-seven-platforms-sequential/` remains retained.
 Acceptance distinction: existing verify-flagship-platforms asserts landing
 then560ms carried support. That is appropriate for moving nonbounce platforms,
@@ -101,8 +106,7 @@ publication passed. These are bounded evidence, not complete provider E2E.
 
 ## Owner-dependent and remaining gates
 
-- CUA fresh inventory2026-09-12: apps[],browsers[]. Last DevTools Orbsie page2
-  showed empty sign-in fields. Owner sign-in/browser access needed for ChatGPT
+- CUA fresh inventory2026-09-12: apps[],browsers[]. Fresh DevTools page1 was opened to Orbsie sign-in; fields empty. Owner sign-in/browser access needed for ChatGPT
   consent/discovery/inference/recovery. Local companion does not satisfy scope.
 - Android Chrome first-run terms without Google account need specific approval.
   Emulator installation authorized. Revalidate AVD; physical recent midrange
