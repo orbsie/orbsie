@@ -30,7 +30,10 @@ production build passed. Root then ran the real browser: zero generation,
 exact edited reload, seeded-history undo, baseline reload/ZIP/standalone passed.
 Evidence: `docs/evidence/provider-e2e/gateway-flagship-offline-continuation/`.
 Original live history, settled visual quality and gameplay remain unverified.
-Next task is the saved-artifact gameplay contract below. No worker task is active.
+Active worker `/root/gateway_saved_gameplay` now owns the saved-artifact
+gameplay task below: traversal script/contract, pre-undo goal7 export in the
+provider harness, and corresponding tests. No browser/live calls assigned;
+root will run the zero-inference milestone after review. No nested agents.
 Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
@@ -65,7 +68,7 @@ all seven, return, win and reset. Do not substitute structural rules for these
 browser observations. Obtain the exact edited goal7 ZIP separately; the current
 worker's undo/export check intentionally exports restored goal5. Retain source
 hashes, failure evidence, input cleanup and zero-generation traffic checks.
-Do not launch this task until the current worker completes and is reviewed.
+Previous offline worker completed and was reviewed; this contract is now delegated.
 
 ## Deployment and established evidence
 
