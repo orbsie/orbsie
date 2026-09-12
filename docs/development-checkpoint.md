@@ -242,3 +242,16 @@ prompt submitted. Bundled Chrome is124.0.6367.219, so current-browser coverage
 requires an updated environment in addition to physical-device acceptance.
 Report:docs/evidence/android-emulator-ready/report.json. Revalidate the live
 emulator handle before use; this setup report is not gameplay certification.
+
+### Reviewed recovery changes after the production release
+
+`5387592` adds bounded explicit-retry feedback across OpenRouter/Gateway and
+hosted ChatGPT, including EOF error records and shared allowlists.86 targeted
+tests and typechecking pass. No automatic model calls or paid retries added.
+`c01a1fe` holds ChatGPT commits until successful generation completion and
+rejects any later command;11 hosted-stream tests and typechecking pass.
+
+Both changes are local, not part of production source0c2381c. The single Luna
+worker is extending/running the existing actual-button browser fixture for
+retry feedback with all generation intercepted, after one local production
+build. Preserve the separate browser-only ChatGPT consent/inference gate.
