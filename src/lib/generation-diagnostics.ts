@@ -7,6 +7,11 @@ const MAX_UNION_DEPTH = 4;
 const MAX_CANDIDATES = 256;
 const MAX_OPERATION_COUNT = 251;
 
+const knownDiagnosticReasons = new Set([
+  "duplicate_recipe_node_id",
+  "unreachable_recipe_node",
+]);
+
 const knownPathKeys = new Set([
   "type",
   "version",
@@ -194,6 +199,7 @@ type DiagnosticPathSegment = string | number;
 export interface GenerationDiagnosticIssue {
   readonly code: string;
   readonly path: readonly DiagnosticPathSegment[];
+  readonly reason?: string;
 }
 
 export interface GenerationDiagnostic {
@@ -209,6 +215,7 @@ export interface GenerationDiagnostic {
 type Candidate = {
   code: string;
   path: unknown[];
+  reason?: string;
   depth: number;
   order: number;
 };
@@ -217,6 +224,14 @@ function issueCode(value: unknown): string {
   return typeof value === "string" && knownIssueCodes.has(value)
     ? value
     : "custom";
+}
+
+function issueReason(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const reason = (value as Record<string, unknown>).diagnosticReason;
+  return typeof reason === "string" && knownDiagnosticReasons.has(reason)
+    ? reason
+    : undefined;
 }
 
 function sanitizePath(path: readonly unknown[]): DiagnosticPathSegment[] {
@@ -252,6 +267,7 @@ function collectIssue(
   candidates.push({
     code: issueCode(issue.code),
     path,
+    reason: issueReason(issue.params),
     depth,
     order: nextOrder.value++,
   });
@@ -281,10 +297,14 @@ function zodIssues(error: z.ZodError): GenerationDiagnosticIssue[] {
   const issues: GenerationDiagnosticIssue[] = [];
   for (const candidate of candidates) {
     const path = sanitizePath(candidate.path);
-    const key = `${candidate.code}:${JSON.stringify(path)}`;
+    const key = `${candidate.code}:${JSON.stringify(path)}:${candidate.reason ?? ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    issues.push({ code: candidate.code, path });
+    issues.push({
+      code: candidate.code,
+      path,
+      ...(candidate.reason ? { reason: candidate.reason } : {}),
+    });
     if (issues.length >= MAX_ISSUES) break;
   }
   return issues;

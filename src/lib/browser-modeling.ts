@@ -29,6 +29,9 @@ const MAX_DEFORMATION_SCALE = 4;
 const MAX_VARY_SEED = 1023;
 const MAX_VARY_AMPLITUDE = 0.5;
 
+const DUPLICATE_RECIPE_NODE_ID = "duplicate_recipe_node_id" as const;
+const UNREACHABLE_RECIPE_NODE = "unreachable_recipe_node" as const;
+
 const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/);
 const coordinate = z
   .number()
@@ -285,8 +288,17 @@ const browserModelRecipeBaseSchema = z
 export type BrowserModelNode = z.infer<typeof browserModelNodeSchema>;
 export type BrowserModelRecipe = z.infer<typeof browserModelRecipeBaseSchema>;
 
-function graphIssue(message: string, path: (string | number)[] = []) {
-  return { code: "custom" as const, message, path };
+function graphIssue(
+  message: string,
+  path: (string | number)[] = [],
+  reason?: typeof DUPLICATE_RECIPE_NODE_ID | typeof UNREACHABLE_RECIPE_NODE,
+) {
+  return {
+    code: "custom" as const,
+    message,
+    path,
+    ...(reason ? { params: { diagnosticReason: reason } } : {}),
+  };
 }
 
 type PolygonProfile = readonly (readonly [number, number])[];
@@ -420,11 +432,11 @@ export const browserModelRecipeSchema =
     recipe.nodes.forEach((node, index) => {
       if (byId.has(node.id)) {
         context.addIssue(
-          graphIssue(`Duplicate browser recipe node ID: ${node.id}.`, [
-            "nodes",
-            index,
-            "id",
-          ]),
+          graphIssue(
+            `Duplicate browser recipe node ID: ${node.id}.`,
+            ["nodes", index, "id"],
+            DUPLICATE_RECIPE_NODE_ID,
+          ),
         );
       } else byId.set(node.id, node);
     });
@@ -672,6 +684,7 @@ export const browserModelRecipeSchema =
           graphIssue(
             `Browser recipe node is unreachable from output: ${node.id}.`,
             ["nodes", index, "id"],
+            UNREACHABLE_RECIPE_NODE,
           ),
         );
     });

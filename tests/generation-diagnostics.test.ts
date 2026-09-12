@@ -6,6 +6,7 @@ import {
   ProviderStreamError,
 } from "../src/lib/generation-diagnostics";
 import { generateCommands } from "../src/lib/server/generation";
+import { parseBrowserModelRecipe } from "../src/lib/browser-modeling";
 
 const allowedCodes = new Set([
   "invalid_type",
@@ -134,6 +135,74 @@ describe("generation diagnostics", () => {
     });
     expect(JSON.stringify(diagnostic)).not.toContain("privateApiKey");
     expect(JSON.stringify(diagnostic)).not.toContain("do-not-leak");
+  });
+
+  it("distinguishes duplicate and unreachable browser recipe nodes with safe reasons", () => {
+    const duplicate = {
+      version: 1,
+      revision: 0,
+      output: "root",
+      nodes: [
+        { id: "root", kind: "box", size: [1, 1, 1] },
+        { id: "root", kind: "sphere", radius: 1 },
+      ],
+    };
+    const unreachable = {
+      version: 1,
+      revision: 0,
+      output: "root",
+      nodes: [
+        { id: "root", kind: "box", size: [1, 1, 1] },
+        { id: "orphan", kind: "sphere", radius: 1 },
+      ],
+    };
+    let duplicateError: unknown;
+    let unreachableError: unknown;
+    try {
+      parseBrowserModelRecipe(duplicate);
+    } catch (error) {
+      duplicateError = error;
+    }
+    try {
+      parseBrowserModelRecipe(unreachable);
+    } catch (error) {
+      unreachableError = error;
+    }
+
+    expect(
+      generationDiagnostic(duplicateError)?.diagnostic.issues,
+    ).toContainEqual({
+      code: "custom",
+      path: ["nodes", 1, "id"],
+      reason: "duplicate_recipe_node_id",
+    });
+    expect(
+      generationDiagnostic(unreachableError)?.diagnostic.issues,
+    ).toContainEqual({
+      code: "custom",
+      path: ["nodes", 1, "id"],
+      reason: "unreachable_recipe_node",
+    });
+  });
+
+  it("allowlists diagnostic reasons and never exposes arbitrary issue params", () => {
+    const error = new z.ZodError([
+      {
+        code: "custom",
+        path: ["geometry", "recipe"],
+        message: "private message",
+        params: {
+          diagnosticReason: "private_reason",
+          token: "provider-secret",
+        },
+      } as never,
+    ]);
+    const diagnostic = generationDiagnostic(error);
+    expect(diagnostic?.diagnostic.issues).toEqual([
+      { code: "custom", path: ["geometry", "recipe"] },
+    ]);
+    expect(JSON.stringify(diagnostic)).not.toContain("private_reason");
+    expect(JSON.stringify(diagnostic)).not.toContain("provider-secret");
   });
 
   it("recurses unions with bounded depth and prioritizes deeper issues", () => {
