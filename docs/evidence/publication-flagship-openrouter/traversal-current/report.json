@@ -1,0 +1,230 @@
+{
+  "status": "passed",
+  "url": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app",
+  "startedAt": "2026-09-12T08:33:19.764Z",
+  "mode": "published-flagship-game-traversal",
+  "projectRevision": 1,
+  "entities": 13,
+  "inferenceCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-12T08:33:26.595Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": -4.020064274131494,
+            "y": 0.4644479563155227,
+            "z": 3.938387453779958,
+            "visible": true
+          },
+          "collected": 1,
+          "hud": "Score: 1"
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -2.099617731302991,
+            "y": 0.4559209264949324,
+            "z": 1.0318419263863556,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": 0.9090356124991129,
+            "y": 0.4648594606296011,
+            "z": 2.957487365469241,
+            "visible": true
+          },
+          "collected": 3,
+          "hud": "Score: 3"
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 3.41231766038836,
+            "y": 0.46405147889204595,
+            "z": 0.024538933815498654,
+            "visible": true
+          },
+          "collected": 4,
+          "hud": "Score: 4"
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 5.024784744486041,
+            "y": 0.420679858844204,
+            "z": 3.4168415331850026,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": 5.522867787661351,
+            "y": 0.4469126440963699,
+            "z": 5.026501135804188,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        }
+      ],
+      "inputSteps": 68,
+      "collectedIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.8996626499483944
+      },
+      "won": true,
+      "finishedAt": "2026-09-12T08:33:34.064Z",
+      "overflow": false,
+      "restart": true,
+      "signedOut": true
+    },
+    {
+      "label": "mobile-touch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "startedAt": "2026-09-12T08:33:42.770Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "target": "crystal-1",
+          "position": {
+            "x": -4.035575575030257,
+            "y": 0.4598943195987735,
+            "z": 3.9730402066993937,
+            "visible": true
+          },
+          "collected": 1,
+          "hud": "Score: 1"
+        },
+        {
+          "target": "crystal-2",
+          "position": {
+            "x": -1.9508807493635056,
+            "y": 0.4598533688678904,
+            "z": 0.9366809450380077,
+            "visible": true
+          },
+          "collected": 2,
+          "hud": "Score: 2"
+        },
+        {
+          "target": "crystal-3",
+          "position": {
+            "x": 1.1372291025658008,
+            "y": 0.4326903640710297,
+            "z": 2.8299287636716213,
+            "visible": true
+          },
+          "collected": 3,
+          "hud": "Score: 3"
+        },
+        {
+          "target": "crystal-4",
+          "position": {
+            "x": 3.651794861383233,
+            "y": 0.45869556933889527,
+            "z": -0.07617620492967647,
+            "visible": true
+          },
+          "collected": 4,
+          "hud": "Score: 4"
+        },
+        {
+          "target": "crystal-5",
+          "position": {
+            "x": 5.0216221636492815,
+            "y": 0.4454997307626738,
+            "z": 3.721152904123805,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        },
+        {
+          "target": "portal",
+          "position": {
+            "x": 5.726761245805482,
+            "y": 0.4627132767280324,
+            "z": 5.011901336110319,
+            "visible": true
+          },
+          "collected": 5,
+          "hud": "Score: 5"
+        }
+      ],
+      "inputSteps": 103,
+      "collectedIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 1.1872230001100599
+      },
+      "won": true,
+      "finishedAt": "2026-09-12T08:33:52.090Z",
+      "overflow": false,
+      "restart": true,
+      "signedOut": true
+    }
+  ],
+  "contract": {
+    "collectibleIds": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5"
+    ],
+    "collectRuleIds": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5"
+    ],
+    "portalId": "portal",
+    "ruleCount": 6
+  }
+}

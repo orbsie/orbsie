@@ -547,3 +547,15 @@ passed. Evidence: docs/evidence/publication-flagship-openrouter.
 Public traversal stopped before Chromium because the harness rejects project.game
 in published mode while supporting it for ZIP mode. Original failure retained;
 a bounded harness fix is in progress. Public gameplay is not yet proven.
+
+### Published flagship crystal/portal traversal passed
+
+Harness5965d6a tested the existing flagship deployment without new writes.
+Desktop keyboard and390x844 CDP touch each collected all five crystals, jumped,
+won at the portal and reset to score0. Both remained signed out; zero inference,
+external/mutating requests, page errors or overflow were reported. Root reviewed
+the ordered scoring/position checkpoints and contract. Evidence:
+`docs/evidence/publication-flagship-openrouter/traversal-current`. This proves
+public crystal/portal traversal, not traversal across all three moving platforms,
+physical-device/mobile lifecycle or play during generation. Original preflight
+harness failure remains preserved.
