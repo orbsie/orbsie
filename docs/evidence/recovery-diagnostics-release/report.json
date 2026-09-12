@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-12T01:40:42.353Z",
+  "sourceCommit": "7e74569",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": "FkMtXvy9srGMqZRbLnydoNSJxWzZ",
+    "environment": "production",
+    "url": "https://orbsie-b98lk3s7g-grappeggias-projects.vercel.app"
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "4f10e0a0c73d08b01b869802cb8169a7538ed315c093dc6834d8934b59a36b64",
+      "observedSha256": "4f10e0a0c73d08b01b869802cb8169a7538ed315c093dc6834d8934b59a36b64",
+      "bytes": 1782184
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": []
+    },
+    "geometryWorkers": [
+      {
+        "file": "player/generated-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "63e639d8983fcffb7cbf288db761582ee04509d5791404d8d4054e99228f296d",
+        "bytes": 843445
+      },
+      {
+        "file": "player/asset-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "b0c7e5516af5b3fee0cee8119987d50cc218f5cadefa87c1404ad464735ab3d0",
+        "bytes": 413743
+      },
+      {
+        "file": "modeling/worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "c521ab898345a04be7029c585b8d4ad64835f28b617d998f5d4d0b8c2ebca084",
+        "bytes": 504214
+      },
+      {
+        "file": "modeling/procedural-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "76f5096c673d69c698c3227ac9c5d0b6b8543ebf69d0054b40972a8b4e3439d3",
+        "bytes": 498681
+      },
+      {
+        "file": "modeling/emscripten-module.wasm",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "105c3bed22d457e43e3d1c3c1c6959fda62a8fe06f0fc8a985303c3a2be72232",
+        "bytes": 503134
+      }
+    ]
+  },
+  "screenshot": "docs/evidence/recovery-diagnostics-release/landing.png"
+}

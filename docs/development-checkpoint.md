@@ -10,17 +10,18 @@ Keep this handoff compact and update it in place. Never include secrets.
 - Standing owner approval: two calls/provider/run, 4096 output tokens/call,
   no automatic retries, for bounded OpenRouter/Gateway acceptance milestones.
   Do not treat this as unlimited inference. Sign-in must use computer use.
-- Production remains source `905b682` at https://orbsie.com, with smoke evidence
-  in `docs/evidence/compound-policy-release`. Local HEAD must be checked on resume.
+- Production is source `7e74569` at https://orbsie.com, with smoke evidence
+  in `docs/evidence/recovery-diagnostics-release`. Local HEAD must be checked on resume.
 - Latest accepted feature: `60f91c7`, explicit Try again / Use last working actions.
   Original prompt/selection survive retry; latest valid increments survive failure;
   unfinished reservations are removed; stale recovery clears on revision changes.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
-  This feature is not deployed yet.
-- Active worker: `/root/republish_acceptance_harness`, diagnosing Gateway's
-  operation5 INVALID_SCENE_JSON with empty issues. No live calls authorized for
-  this diagnostic task; reproduce a source bug or add bounded redacted diagnostics.
+  Recovery and diagnostic changes are deployed; read-only production smoke passed.
+- Active worker: `/root/republish_acceptance_harness`, strengthening procedural
+  memory-cap verification in tests only. No live calls/builds/deployments.
+- Diagnostics accepted in `a698cbf`; alias resolution/integration in `7e74569`.
+  Forty-four generation tests, typecheck and local/remote production builds pass.
 - Latest Gateway run (`b899115`) stopped after one HTTP200 Luna creation call,
   low/default, cap4096, local build60f91c7; no edit/retry. Evidence directory
   `provider-e2e/gateway-input-game-union-policy`. Server stopped and root verified
