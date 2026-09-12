@@ -599,3 +599,15 @@ matched the ZIP catalog mesh. No renderer/collider divergence is established.
 The failed jump began at an unfavorable movement phase with a larger gap.
 Next verifier change waits for expected catalog bounds and a bounded reachable
 gap while carried, without changing physics or authored platform layout.
+
+### Public sequential moving-platform route passed
+
+Harness a384466 completed one read-only public keyboard route across platforms
+1→2→3 after matching settled catalog dimensions. It waited2711ms on platform1
+and3315ms on platform2 for conservative reachable gaps while maintaining
+observed carry; all three landings/carry analyses passed. No ground contact was
+observed in sampled telemetry (not a per-simulation-step guarantee). Twenty
+same-origin GETs, zero inference/external/mutating/API requests or page errors.
+Root reviewed route outcomes and waits. Evidence:
+`docs/evidence/publication-flagship-openrouter/platforms-sequential-phase-aware`.
+Prior failure retained. Touch/physical-device platform crossing remains open.
