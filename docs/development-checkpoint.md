@@ -402,3 +402,9 @@ reviewed one-linepromptdiff, removed wording-only newtests; existing17generation
 checks+TypeScript passed. No additional modelcalls. Rebuilt trackedplayerartifacts
 contain only World/inputtracker changes in sourcebundle. Deploy promptcorrection
 next; freshgeneration effect remains unverified. Goal incomplete, no workeractive.
+
+Deployment216386c completed successfully from clean gitarchive:
+https://orbsie-ajqudkzty-grappeggias-projects.vercel.app, aliashttps://orbsie.com.
+Vercel production compilation/TypeScript passed. No new modelcalls duringdeploy.
+Support-contact guidance now live; freshgenerated-grounding correctness remains
+unverified. Earlier savedprojects/exports retain their original placements.
