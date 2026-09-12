@@ -580,3 +580,13 @@ claim to sampled observations, and required failed-stage retention/key cleanup.
 Syntax, existing helper test and diff checks passed; no redundant browser rerun.
 Evidence README records the post-run label correction and older runtime limit.
 Public/current-runtime and touch crossing remain unverified.
+
+### Public sequential platform attempt failed
+
+One read-only attempt with harness58da795 passed exact flagship snapshot
+comparison but failed to land on platform2 after platform1 carry. Platform3
+was not attempted;17 sampled ground contacts were recorded. Public runtime
+825e0fea differs from ZIP runtime3d2fa966. This difference does not isolate
+product vs driver cause. Zero inference/external/mutating/API requests or page
+errors. Evidence: docs/evidence/publication-flagship-openrouter/platforms-sequential.
+Read-only trajectory/contact diagnosis is next; no retry or game modification.
