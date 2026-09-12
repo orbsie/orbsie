@@ -32,8 +32,13 @@ Output: docs/evidence/mushroom-candidate-conversion/prototype.glb,440200 bytes,
 12192 vertices/4064 triangles, one-meter height/base0, no texture/image/URI. Exact
 license copied and source/output hashes recorded in report.json. GLTFLoader and
 transformed bounds checks passed. Appearance remains unverified; no catalog change.
-Next: render original textured FBX and this GLB under identical camera/lighting,
-plus pink-tinted derivative, review recognizability and color detail before admission. Prior full conversion attempt was stopped
+Local original/baked/pink front/rear previews now rendered; root reviewed images
+and fixture. Evidence mushroom-candidate-preview. First incorrect multiplicative
+pink comparator preserved under first-run; corrected comparator replaces COLOR_0
+and clones geometry, with assertions. No page errors/external requests. Silhouette
+matches source; gills/spots softened. Flat mature cap is not approved as the default
+giant mushroom. No catalog admission. Next inspect rounder Fly Agaric variant from
+same already-downloaded licensed archive with proven tools. Prior full conversion attempt was stopped
 at its time bound without artifacts; do not repeat a broad investigation.
 
 Candidate source: Asset Quest Low Poly Mushroom Kit, bundled CC0 license verified.

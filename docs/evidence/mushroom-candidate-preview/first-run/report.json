@@ -1,0 +1,129 @@
+{
+  "status": "rendered",
+  "scope": "isolated local Three/Playwright visual comparison; no app or catalog integration",
+  "inputs": {
+    "inspection": "docs/evidence/mushroom-candidate-inspection/report.json",
+    "conversion": "docs/evidence/mushroom-candidate-conversion/report.json",
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Meshes/Fly_Agaric_Big.fbx",
+      "sha256": "b3a436902476d2a8e08fc84917ff1da8fff640185064229659f1d8dbbec56d9c",
+      "bytes": 34304
+    },
+    "tga": {
+      "path": "/tmp/orbsie-mushroom-candidate.nIL3N8/selected/Textures/Mushrooms_C.tga",
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "bytes": 50331692
+    },
+    "glb": {
+      "path": "docs/evidence/mushroom-candidate-conversion/prototype.glb",
+      "sha256": "bb55a5e23d3599b4400f30c28f848d70e4ae5cf8981559eab944bbc62c5c16b1",
+      "bytes": 440200
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "devicePixelRatio": 1
+  },
+  "camera": {
+    "front": {
+      "position": [
+        1.7,
+        1.2,
+        2
+      ],
+      "lookAt": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    "rear": {
+      "position": [
+        -1.7,
+        1.2,
+        -2
+      ],
+      "lookAt": [
+        0,
+        0.5,
+        0
+      ]
+    }
+  },
+  "lightsAndBackground": "identical hemisphere + key/fill directional lights and #07110e background",
+  "texture": {
+    "loaded": true,
+    "width": 4096,
+    "height": 4096,
+    "flipY": true,
+    "colorSpace": "srgb",
+    "wrapS": 1000,
+    "wrapT": 1000
+  },
+  "bounds": {
+    "original": {
+      "min": [
+        -0.44676540064093645,
+        0,
+        -0.44676540064093645
+      ],
+      "max": [
+        0.44676540064093645,
+        1,
+        0.44676540064093645
+      ],
+      "size": [
+        0.8935308012818729,
+        1,
+        0.8935308012818729
+      ]
+    },
+    "baked": {
+      "min": [
+        -0.44676539301872253,
+        0,
+        -0.44676539301872253
+      ],
+      "max": [
+        0.44676539301872253,
+        1,
+        0.44676539301872253
+      ],
+      "size": [
+        0.8935307860374451,
+        1,
+        0.8935307860374451
+      ]
+    },
+    "pink": {
+      "min": [
+        -0.44676539301872253,
+        0,
+        -0.44676539301872253
+      ],
+      "max": [
+        0.44676539301872253,
+        1,
+        0.44676539301872253
+      ],
+      "size": [
+        0.8935307860374451,
+        1,
+        0.8935307860374451
+      ]
+    }
+  },
+  "sourceTextureComplete": true,
+  "ready": true,
+  "pageErrors": [],
+  "externalRequests": [],
+  "screenshots": {
+    "front": "docs/evidence/mushroom-candidate-preview/front.png",
+    "rear": "docs/evidence/mushroom-candidate-preview/rear.png"
+  },
+  "appearance": {
+    "status": "review-required",
+    "note": "Screenshots are evidence for human visual review; this probe does not claim fidelity or recognizability."
+  }
+}
