@@ -143,3 +143,16 @@ One worker `/root/story_path_motion` owns only story motion classification,
 effective duration-based slowdown assertions and flagship tests. No live calls
 or browser runs. Root identified unused bounce.speed vs actual path duration
 as the related slowdown-check gap. Reuse captured project for validation.
+
+### Resume-after-creation contract for next bounded task
+
+Existing readFlagshipResumeCheckpoint requires a mushroom message and current
+resume runs only platform edit; it cannot resume the new creation snapshot.
+Add an explicit creation-stage continuation after motion assertion fix: verify
+source snapshot/hash and all assets, reopen exact revision26, then reuse
+runFlagshipStory's selected mushroom and platform edits with a2-call ceiling.
+No replayed/fake creation response, no automatic retry or new initial prompt.
+Report seeded creation separately from live edits; preserve actual undo/reload
+and export checks. Existing one-call post-mushroom resume stays unchanged.
+Current snapshot has zero generated assets, so catalog references must remain
+valid but no GLB reconstruction is needed. This extension is queued, not built.
