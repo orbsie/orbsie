@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Desktop-only acceptance for the saved OpenRouter moving-bounce world.
+// Desktop-only acceptance for a saved moving-bounce world.
 // The ZIP is served byte-for-byte from a local read-only HTTP snapshot. The
 // driver uses real keyboard events and rendered Three.js telemetry; it never
 // writes project/player state or calls a provider/model.
@@ -24,17 +24,58 @@ import {
 } from "./lib/saved-bounce-route.mjs";
 import { validateProjectGame } from "./lib/winning-traversal-contract.mjs";
 
-const DEFAULT_ZIP =
-  "docs/evidence/provider-e2e/openrouter-moving-bounce-guidance/openrouter/world.zip";
-const REQUIRED_ZIP_SHA256 =
-  "70595a54bb59116fd4e7519e2d47e18190361d3fc9e161fc499b70e6f5f112b4";
-const zipPath = resolve(process.env.SAVED_BOUNCE_ROUTE_ZIP ?? DEFAULT_ZIP);
+const sourceName = process.env.SAVED_BOUNCE_ROUTE_SOURCE ?? "openrouter";
+const sourceContracts = {
+  openrouter: {
+    label: "OpenRouter moving-bounce world",
+    zip: "docs/evidence/provider-e2e/openrouter-moving-bounce-guidance/openrouter/world.zip",
+    zipSha256:
+      "70595a54bb59116fd4e7519e2d47e18190361d3fc9e161fc499b70e6f5f112b4",
+    projectId: null,
+    revision: null,
+    platformIds: ["platform1", "platform2", "platform3"],
+    preRouteCollectibleIds: ["crystal1", "crystal2", "crystal3", "crystal4"],
+    preRouteJumpCollectibleIds: new Set(["crystal4"]),
+    postBounceCollectibleId: "crystal5",
+    expectedCollectibleCount: 5,
+  },
+  "gateway-current-seven": {
+    label: "Gateway current seven collectible moving-bounce world",
+    zip: "docs/evidence/provider-e2e/gateway-captured-offline/gateway/world-goal-7.zip",
+    zipSha256:
+      "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
+    projectId: "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+    revision: 37,
+    platformIds: ["platform-1", "platform-2", "platform-3"],
+    // Ground crystals and the two low elevated pickups are collected before
+    // the bounce route. Crystal-3 is high enough to require the route.
+    preRouteCollectibleIds: [
+      "crystal-1",
+      "crystal-2",
+      "crystal-4",
+      "crystal-5",
+      "crystal-6",
+      "crystal-7",
+    ],
+    preRouteJumpCollectibleIds: new Set(["crystal-2", "crystal-4"]),
+    postBounceCollectibleId: "crystal-3",
+    expectedCollectibleCount: 7,
+  },
+};
+const source = sourceContracts[sourceName];
+if (!source) {
+  throw Error(
+    `Unknown SAVED_BOUNCE_ROUTE_SOURCE ${sourceName}; expected ${Object.keys(sourceContracts).join(", ")}.`,
+  );
+}
+const zipPath = resolve(process.env.SAVED_BOUNCE_ROUTE_ZIP ?? source.zip);
+const requiredZipSha256 = source.zipSha256;
 const output = resolve(
   process.argv[2] ?? "docs/evidence/saved-bounce-route-desktop",
 );
 const appSourceCommit = process.env.ORBSIE_APP_SOURCE_COMMIT?.trim() || null;
 const desktopViewport = { width: 1440, height: 1000 };
-const platformIds = ["platform1", "platform2", "platform3"];
+const platformIds = source.platformIds;
 const assetManifestPath = "assets/catalog/manifest.json";
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const rootHead = execFileSync("git", ["rev-parse", "HEAD"], {
@@ -45,8 +86,8 @@ const zipBytes = await readFile(zipPath);
 const zipSha256 = sha256(zipBytes);
 assert.equal(
   zipSha256,
-  REQUIRED_ZIP_SHA256,
-  `Saved route ZIP changed: expected ${REQUIRED_ZIP_SHA256}, got ${zipSha256}.`,
+  requiredZipSha256,
+  `Saved route ZIP changed: expected ${requiredZipSha256}, got ${zipSha256}.`,
 );
 const files = unzipSync(zipBytes);
 const projectBytes = files["project.json"];
@@ -62,15 +103,17 @@ const catalogAssets = new Map(
   catalogManifest.assets.map((asset) => [asset.id, asset]),
 );
 const contract = validateProjectGame(project, {
-  expectedCollectibleCount: 5,
+  expectedCollectibleCount: source.expectedCollectibleCount,
   portalComparison: "gte",
 });
+assert.equal(project.id, source.projectId ?? project.id);
+assert.equal(project.revision, source.revision ?? project.revision);
 const platforms = platformIds.map((id) => {
   const entity = project.entities.find((candidate) => candidate.id === id);
   assert(entity, `Missing saved route entity ${id}.`);
-  assert.deepEqual(
-    entity.behavior,
-    { type: "bounce" },
+  assert.equal(
+    entity.behavior?.type,
+    "bounce",
     `${id} must remain a bounce platform.`,
   );
   assert.equal(entity.geometry?.kind, "asset");
@@ -448,11 +491,11 @@ function targetPosition(entity) {
 
 const report = {
   status: "running",
-  scope:
-    "Saved OpenRouter ZIP, desktop keyboard only; ground collectibles followed by moving bounce platform1 → 2 → 3, crystal5, and portal when physically reached.",
+  scope: `Saved ${source.label}, desktop keyboard only; pre-route collectibles followed by moving bounce ${platformIds.join(" → ")}, ${source.postBounceCollectibleId}, portal win, and reset when physically reached.`,
   startedAt: new Date().toISOString(),
   finishedAt: null,
   repoHead: rootHead,
+  source: sourceName,
   appSourceCommit,
   sourceCommits: {
     repoHead: rootHead,
@@ -461,7 +504,7 @@ const report = {
   zip: {
     path: zipPath,
     sha256: zipSha256,
-    requiredSha256: REQUIRED_ZIP_SHA256,
+    requiredSha256: requiredZipSha256,
     bytes: zipBytes.byteLength,
     projectSha256: sha256(projectBytes),
     runtimeSha256: sha256(runtimeBytes),
@@ -472,7 +515,7 @@ const report = {
   },
   contract: {
     ...contract,
-    expectedScore: 50,
+    expectedScore: contract.expectedScore,
   },
   platforms: platforms.map((entity) => ({
     id: entity.id,
@@ -690,23 +733,18 @@ try {
   const crystals = project.entities.filter(
     (entity) => entity.behavior?.type === "collect",
   );
-  await collectGroundCrystal(
-    crystals.find((entity) => entity.id === "crystal1"),
-  );
-  await collectGroundCrystal(
-    crystals.find((entity) => entity.id === "crystal2"),
-  );
-  await collectGroundCrystal(
-    crystals.find((entity) => entity.id === "crystal3"),
-  );
-  await collectGroundCrystal(
-    crystals.find((entity) => entity.id === "crystal4"),
-    true,
-  );
+  for (const id of source.preRouteCollectibleIds) {
+    const entity = crystals.find((candidate) => candidate.id === id);
+    assert(entity, `Missing pre-route collectible ${id}.`);
+    await collectGroundCrystal(
+      entity,
+      source.preRouteJumpCollectibleIds.has(id),
+    );
+  }
   report.checks.groundCollectionApproach = true;
 
   const routeRun = {
-    label: "desktop-keyboard-platform1-platform2-platform3-crystal5-portal",
+    label: `desktop-keyboard-${platformIds.join("-")}-${source.postBounceCollectibleId}-portal`,
     viewport: desktopViewport,
     inputMethod: "desktop keyboard",
     platformIds,
@@ -763,16 +801,18 @@ try {
   };
 
   const firstPlatform = platforms[0];
-  let beforeJump = await sample("before-platform1-jump");
+  let beforeJump = await sample(`before-${firstPlatform.id}-jump`);
   let firstTarget = positionForPlatform(beforeJump, firstPlatform.id);
   if (!firstTarget)
-    throw Error("platform1: rendered moving platform position unavailable.");
+    throw Error(
+      `${firstPlatform.id}: rendered moving platform position unavailable.`,
+    );
   // Move under the current platform pose, then start one real keyboard jump.
   if (horizontalDistance(beforeJump, firstTarget[0], firstTarget[1]) > 0.24)
     beforeJump = await moveOnGroundTo(
       firstTarget[0],
       firstTarget[1],
-      "approach-platform1",
+      `approach-${firstPlatform.id}`,
     );
   await release("pre-route-jump-release");
   const platform1Stage = {
@@ -784,9 +824,9 @@ try {
     jumpInputReleasedAt: null,
   };
   routeRun.stages.push(platform1Stage);
-  await setKeys([" "], "jump-platform1");
+  await setKeys([" "], `jump-${firstPlatform.id}`);
   await page.waitForTimeout(80);
-  await release("jump-platform1-release");
+  await release(`jump-${firstPlatform.id}-release`);
   platform1Stage.jumpInputReleasedAt = await page.evaluate(() =>
     performance.now(),
   );
@@ -797,10 +837,14 @@ try {
   const runFirstStage = async () => {
     for (let index = 0; index < 80; index++) {
       await page.waitForTimeout(38);
-      const current = await sample("jump-to-platform1");
+      const current = await sample(`jump-to-${firstPlatform.id}`);
       recordStage(platform1Stage, current);
       const transition = stageContact(platform1Stage, firstPlatform);
-      await steerToPlatform(current, firstPlatform, "steer-platform1");
+      await steerToPlatform(
+        current,
+        firstPlatform,
+        `steer-${firstPlatform.id}`,
+      );
       if (transition) {
         platform1Stage.transition = transition;
         platform1Stage.contactSample =
@@ -812,7 +856,9 @@ try {
         return;
       }
     }
-    throw Error("platform1: no descending contact followed by bounce ascent.");
+    throw Error(
+      `${firstPlatform.id}: no descending contact followed by bounce ascent.`,
+    );
   };
   await runFirstStage();
 
@@ -849,15 +895,25 @@ try {
   const platform2Stage = await runAutoStage(platforms[1], platform1Stage);
   const platform3Stage = await runAutoStage(platforms[2], platform2Stage);
 
-  const crystal5 = crystals.find((entity) => entity.id === "crystal5");
+  const postBounceCollectible = crystals.find(
+    (entity) => entity.id === source.postBounceCollectibleId,
+  );
+  assert(
+    postBounceCollectible,
+    `Missing post-route collectible ${source.postBounceCollectibleId}.`,
+  );
   const portal = project.entities.find(
     (entity) => entity.behavior?.type === "portal",
   );
   const postBounce = {
-    phase: "post-platform3-crystal5-portal",
+    phase: `post-${platformIds.at(-1)}-${source.postBounceCollectibleId}-portal`,
     samples: [],
     scoreAtStart: allSamples.at(-1)?.score ?? null,
-    crystal5: { reached: false, scoreAtContact: null },
+    collectible: {
+      id: source.postBounceCollectibleId,
+      reached: false,
+      scoreAtContact: null,
+    },
     portal: { reached: false, won: false },
   };
   routeRun.postBounce = postBounce;
@@ -865,34 +921,51 @@ try {
     const current = await sample(postBounce.phase);
     postBounce.samples.push(current);
     const player = runtimePlayerCenter(current);
-    const target = postBounce.crystal5.reached
+    const target = postBounce.collectible.reached
       ? portal?.position
-      : crystal5?.position;
+      : postBounceCollectible.position;
     if (target && player)
       await setKeys(
         movementKeys(target[0] - player[0], target[2] - player[2]),
-        postBounce.crystal5.reached ? "steer-portal" : "steer-crystal5",
+        postBounce.collectible.reached
+          ? "steer-portal"
+          : `steer-${postBounce.collectible.id}`,
       );
-    if (!postBounce.crystal5.reached && current.score >= 50) {
-      postBounce.crystal5.reached = true;
-      postBounce.crystal5.scoreAtContact = current.score;
-      postBounce.crystal5.sample = current;
+    if (
+      !postBounce.collectible.reached &&
+      current.score >= contract.expectedScore
+    ) {
+      postBounce.collectible.reached = true;
+      postBounce.collectible.scoreAtContact = current.score;
+      postBounce.collectible.sample = current;
     }
     const bodyText = await page.locator("body").innerText();
-    if (/Play again|Final score:\s*50|You win/i.test(bodyText)) {
+    if (/Play again|Final score:/i.test(bodyText)) {
       postBounce.portal.reached = true;
-      postBounce.portal.won = current.score >= 50;
+      postBounce.portal.won = current.score >= contract.expectedScore;
       postBounce.portal.sample = current;
       break;
     }
-    if (runtimePlayerCenter(current)?.[1] <= 0.5) break;
     await page.waitForTimeout(38);
   }
   await release("route-end-release");
+  const finalBounceAscentAt =
+    routeRun.stages.at(-1)?.transition?.ascentAtPerformanceMs;
   routeRun.groundContactSamples = groundSamplesAfter(
     allSamples,
     firstTakeoffAt,
   );
+  routeRun.postRouteGroundContactSamples = Number.isFinite(finalBounceAscentAt)
+    ? routeRun.groundContactSamples.filter(
+        (sample) => sample.atPerformanceMs > finalBounceAscentAt,
+      )
+    : [];
+  routeRun.noGroundInterval = {
+    fromTakeoffAt: firstTakeoffAt,
+    throughFinalBounceAscentAt: finalBounceAscentAt ?? null,
+    meaning:
+      "No sampled ground reset is required from the first jump release through the third bounce ascent; later ground travel to the portal is recorded separately.",
+  };
   routeRun.postReleaseJumpEvents = jumpDownEventsAfter(
     (await read()).keyEvents,
     firstTakeoffAt,
@@ -900,7 +973,12 @@ try {
   routeRun.routeAnalysis = sequentialRouteAnalysis(
     routeRun.stages,
     allSamples,
-    { firstTakeoffAt, jumpEvents: (await read()).keyEvents },
+    {
+      firstTakeoffAt,
+      groundObservationEndAt: finalBounceAscentAt ?? Infinity,
+      expectedStageIds: platformIds,
+      jumpEvents: (await read()).keyEvents,
+    },
   );
   routeRun.noGroundContactObserved =
     routeRun.routeAnalysis.noGroundResetObserved;
@@ -908,13 +986,28 @@ try {
   routeRun.status =
     routeRun.routeAnalysis.passed &&
     routeRun.postReleaseJumpEvents.length === 0 &&
-    postBounce.crystal5.reached &&
+    postBounce.collectible.reached &&
     postBounce.portal.won
       ? "passed"
       : "failed";
+  if (routeRun.status === "passed") {
+    await expect(
+      page.getByText("Adventure complete", { exact: true }),
+    ).toBeVisible({
+      timeout: 5000,
+    });
+    await page.getByRole("button", { name: "Play again", exact: true }).click();
+    await expect.poll(score, { timeout: 5000 }).toBe(0);
+    const winVisible = await page
+      .getByText("Adventure complete", { exact: true })
+      .isVisible()
+      .catch(() => false);
+    routeRun.reset = { score: await score(), winStatusVisible: winVisible };
+    routeRun.status =
+      routeRun.reset.score === 0 && !winVisible ? "passed" : "failed";
+  }
   if (routeRun.status !== "passed")
-    routeRun.failure =
-      "The bounded desktop route did not prove all three bounce transitions, score50 crystal5 collection, and portal victory without sampled ground reset.";
+    routeRun.failure = `The bounded desktop route did not prove all three bounce transitions, ${source.postBounceCollectibleId} collection (score ${contract.expectedScore}), portal victory, and reset. The no-ground assertion covers only the interval from the first jump release through the third bounce ascent; later ground travel is recorded separately.`;
   await page.screenshot({ path: join(output, "desktop-route-final.png") });
   if (routeRun.status !== "passed")
     await page.screenshot({ path: join(output, "desktop-route-failure.png") });

@@ -165,3 +165,24 @@ requests. Luna `gateway_bounce_route` now owns at most2 offline real-keyboard
 route attempts on this unchanged ZIP; no app/model-output changes permitted.
 Codex quota freshly observed82% remaining on September12; stop below20%.
 Owner-dependent ChatGPT and real-device gates above remain.
+
+## Reviewed Gateway moving-bounce route milestone
+
+Luna gateway_bounce_route finished two bounded offline attempts on exact
+revision37 ZIP sha33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a.
+Attempt1 reached all3 bounce contacts and score7, then stopped before portal;
+attempt2 missed platform3 at a different path phase. Zero model/external/
+mutating requests. Root reviewed raw contacts, keyboard releases, screenshot,
+and replayed existing telemetry with corrected source IDs:106 samples and no
+sampled ground contact between initial release and third ascent. This proves
+a partial desktop route, not win/reset or repeatability across phases.
+
+Harness now explicitly selects Gateway/OpenRouter immutable source contracts,
+limits no-ground assertion to bounce sequence (later ground travel allowed),
+and checks reset only after actual victory. Root caught missing source IDs
+and invalid interval bounds;9 focused tests passed after corrections. Raw
+reports remain immutable and final reviewed-trace.json labels offline analysis.
+No worker remains active. Next gameplay task should complete portal approach
+following the established route without requiring airborne travel to portal;
+retain actual-input and unchanged-world constraints. Owner ChatGPT sign-in,
+physical mobile, visual quality and full original acceptance gates remain.

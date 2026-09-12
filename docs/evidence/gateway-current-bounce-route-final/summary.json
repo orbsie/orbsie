@@ -1,0 +1,15 @@
+{
+  "rawRunCommit": "6a4f29d7b7737ee9fcb67f9270be8e91442f058c",
+  "finalHarnessCommitBase": "6a4f29d7b7737ee9fcb67f9270be8e91442f058c",
+  "finalHarnessState": "uncommitted",
+  "finalHarnessFiles": {
+    "scripts/verify-saved-bounce-route.mjs": "484cfc33fb1aaa9afa66cf7d16cc50c167fa6e0da4f94f9d3e16811004b3309a",
+    "scripts/lib/saved-bounce-route.mjs": "537ff8986a523cef557e180844797331aefd8341a3f903ae7c2a18d9cc86469c",
+    "tests/saved-bounce-route.test.ts": "73fdfd36d9d85cde19f19b70cce402f7670ee6e5e8d7c5be4a898a84570b78f5"
+  },
+  "focusedTests": { "passed": 7, "failed": 0 },
+  "browserAttemptsUsed": 2,
+  "browserAttemptsRemaining": 0,
+  "rawRunStatus": "partial-failure",
+  "unresolved": "Portal win and Play again reset remain unverified; no third browser attempt is authorized."
+}

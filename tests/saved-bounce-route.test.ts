@@ -145,4 +145,63 @@ describe("saved moving-bounce route evidence", () => {
     expect(emptyRoute.finiteSampleInterval).toBe(false);
     expect(emptyRoute.passed).toBe(false);
   });
+
+  it("bounds the no-ground interval at the final bounce ascent", () => {
+    const route = sequentialRouteAnalysis(
+      [
+        {
+          id: "platform1",
+          jumpInputReleasedAt: 0,
+          transition: {
+            contactIndex: 1,
+            contactAtPerformanceMs: 40,
+            ascentAtPerformanceMs: 80,
+            velocityDirectionReversal: true,
+          },
+        },
+      ],
+      [sample(0, 1.1), sample(1, 1.4), sample(2, 1.7), sample(3, 0.42)],
+      {
+        firstTakeoffAt: 0,
+        groundObservationEndAt: 80,
+        expectedStageIds: ["platform1"],
+        jumpEvents: [],
+      },
+    );
+    expect(route.noGroundResetObserved).toBe(true);
+    expect(route.groundContactSamples).toHaveLength(0);
+    expect(route.passed).toBe(true);
+    expect(route.limitation).toContain("final bounce ascent");
+    expect(route.groundObservationBoundCoversFinalAscent).toBe(true);
+  });
+
+  it.each([40, NaN, -Infinity])(
+    "rejects invalid or premature no-ground bound %s",
+    (groundObservationEndAt) => {
+      const route = sequentialRouteAnalysis(
+        [
+          {
+            id: "platform1",
+            jumpInputReleasedAt: 0,
+            transition: {
+              contactIndex: 1,
+              contactAtPerformanceMs: 40,
+              ascentAtPerformanceMs: 80,
+              velocityDirectionReversal: true,
+            },
+          },
+        ],
+        [sample(0, 1.1), sample(1, 1.4), sample(2, 1.7), sample(3, 0.42)],
+        {
+          firstTakeoffAt: 0,
+          groundObservationEndAt,
+          expectedStageIds: ["platform1"],
+          jumpEvents: [],
+        },
+      );
+      expect(route.noGroundResetObserved).toBe(true);
+      expect(route.groundObservationBoundCoversFinalAscent).toBe(false);
+      expect(route.passed).toBe(false);
+    },
+  );
 });

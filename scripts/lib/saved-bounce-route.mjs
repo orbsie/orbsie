@@ -163,6 +163,7 @@ export function sequentialRouteAnalysis(
   samples,
   {
     firstTakeoffAt = -Infinity,
+    groundObservationEndAt = Infinity,
     groundThreshold = GROUND_CENTER_Y,
     expectedStageIds = ["platform1", "platform2", "platform3"],
     jumpEvents = [],
@@ -173,7 +174,17 @@ export function sequentialRouteAnalysis(
     .map((stage) => stage?.transition)
     .filter(Boolean);
   const stageIds = routeStages.map((stage) => stage?.id);
-  const ground = groundSamplesAfter(samples, firstTakeoffAt, groundThreshold);
+  const finalAscentAt = contacts.at(-1)?.ascentAtPerformanceMs;
+  const groundObservationBoundCoversFinalAscent =
+    Number.isFinite(finalAscentAt) &&
+    (groundObservationEndAt === Infinity ||
+      (Number.isFinite(groundObservationEndAt) &&
+        groundObservationEndAt >= finalAscentAt));
+  const ground = groundSamplesAfter(
+    samples,
+    firstTakeoffAt,
+    groundThreshold,
+  ).filter((sample) => sampleTime(sample) <= groundObservationEndAt);
   const expectedIds = [...expectedStageIds];
   const finiteSampleTimes = (samples ?? [])
     .map((sample) => sampleTime(sample))
@@ -213,8 +224,10 @@ export function sequentialRouteAnalysis(
     transitions: contacts,
     groundContactSamples: ground,
     noGroundResetObserved: ground.length === 0,
-    limitation:
-      "Sampled telemetry cannot prove absence of ground contact between rendered frames.",
+    groundObservationBoundCoversFinalAscent,
+    limitation: Number.isFinite(groundObservationEndAt)
+      ? "Sampled telemetry cannot prove absence of ground contact between rendered frames; the bounded no-ground interval ends at the final bounce ascent."
+      : "Sampled telemetry cannot prove absence of ground contact between rendered frames.",
     passed:
       exactStageSet &&
       contacts.length === expectedIds.length &&
@@ -222,6 +235,7 @@ export function sequentialRouteAnalysis(
       releaseBeforeContact &&
       postReleaseJumpEvents.length === 0 &&
       finiteSampleInterval &&
+      groundObservationBoundCoversFinalAscent &&
       contacts.every((contact) => contact.velocityDirectionReversal) &&
       ground.length === 0,
   };

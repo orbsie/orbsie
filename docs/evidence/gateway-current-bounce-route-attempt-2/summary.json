@@ -1,0 +1,17 @@
+{
+  "sourceZipSha256": "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
+  "projectId": "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+  "revision": 37,
+  "attempt": 2,
+  "input": "real desktop keyboard",
+  "modelCalls": 0,
+  "externalRequests": 0,
+  "pageErrors": 0,
+  "platformTransitions": [
+    { "id": "platform-1", "contactAtMs": 25807.2, "ascentAtMs": 25940.3 },
+    { "id": "platform-2", "contactAtMs": 28827.2, "ascentAtMs": 28982.0 }
+  ],
+  "platform3": "no descending contact followed by bounce ascent",
+  "status": "partial-failure",
+  "limitation": "Moving path phase changed between attempts; p3 was not reached. No third browser attempt was authorized."
+}

@@ -1,0 +1,38 @@
+{
+  "source": {
+    "provider": "vercel-ai-gateway",
+    "zip": "docs/evidence/provider-e2e/gateway-captured-offline/gateway/world-goal-7.zip",
+    "zipSha256": "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
+    "projectSha256": "9886bff93cecfd654368c461fdc8ae6783c399bf24ff45f67d41843b64b688eb",
+    "runtimeSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+    "runtimeCssSha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182",
+    "projectId": "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+    "revision": 37,
+    "collectibleCount": 7,
+    "platformIds": ["platform-1", "platform-2", "platform-3"]
+  },
+  "attempt": 1,
+  "input": "real desktop keyboard",
+  "modelCalls": 0,
+  "externalRequests": 0,
+  "pageErrors": 0,
+  "preRouteScore": 6,
+  "platformTransitions": [
+    { "id": "platform-1", "contactAtMs": 24646.1, "ascentAtMs": 24775.4 },
+    { "id": "platform-2", "contactAtMs": 26689.7, "ascentAtMs": 26819.7 },
+    { "id": "platform-3", "contactAtMs": 29729.5, "ascentAtMs": 29854.5 }
+  ],
+  "postRouteCollectible": {
+    "id": "crystal-3",
+    "score": 7,
+    "atMs": 30709.0
+  },
+  "postRouteGroundSample": {
+    "atMs": 31169.3,
+    "center": [0.2934722864, 0.4260155404, -0.4965094488]
+  },
+  "portalWin": false,
+  "reset": false,
+  "status": "partial-failure",
+  "limitation": "Attempt reached score 7 after proving all three bounce transitions, then returned to ground before portal contact. The second bounded attempt missed platform-3 under a different moving-path phase. No third browser attempt was authorized."
+}

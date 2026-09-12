@@ -1,0 +1,24 @@
+{
+  "sourceReport": "docs/evidence/gateway-current-bounce-route-attempt-1/report.json",
+  "sourceSha256": "d4f126c0fe6bc30e3c8fcd4ae29c82dec908e62fe9f4d74bb0c97552ce833b6c",
+  "mode": "offline-analysis-of-existing-telemetry",
+  "newBrowserRuns": 0,
+  "newModelCalls": 0,
+  "routePassed": true,
+  "stageIds": [
+    "platform-1",
+    "platform-2",
+    "platform-3"
+  ],
+  "interval": [
+    23080.700000001118,
+    29854.5
+  ],
+  "samplesInInterval": 106,
+  "groundSamples": 0,
+  "jumpPressesAfterRelease": 0,
+  "finalScore": 7,
+  "portalWin": false,
+  "reset": false,
+  "limitation": "Sampled telemetry cannot prove absence of ground contact between rendered frames; the bounded no-ground interval ends at the final bounce ascent."
+}
