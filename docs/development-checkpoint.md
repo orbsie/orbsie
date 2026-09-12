@@ -325,3 +325,12 @@ responses and performs logout before starting a fresh device flow on user click.
 response parsing; they do not prove the actual reconnect button. One Luna worker
 is extending the intercepted browser fixture to check request ordering, no
 automatic reconnect, and no start following failed logout. No live model calls.
+
+### Stale reconnect browser validation accepted
+
+Local production build from `fd1caea` and all 12 intercepted hosted ChatGPT UI
+scenarios passed. Actual reconnect buttons prove no automatic logout/start,
+logout before start, and no start after failed logout; status and models stale
+responses both reach the action. Root reviewed the harness and report. Evidence:
+`docs/evidence/chatgpt-stale-reconnect`. Local server stopped, zero external
+requests or live model calls. Ready for deployment; live consent remains open.

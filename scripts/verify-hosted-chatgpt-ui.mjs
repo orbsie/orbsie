@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 const base = process.env.TEST_URL || "http://localhost:3047";
 const origin = new URL(base).origin;
-const out = "test-results/hosted-chatgpt-ui";
+const out =
+  process.env.ORBSIE_CHATGPT_UI_EVIDENCE_DIR ||
+  "test-results/hosted-chatgpt-ui";
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
   args: [
@@ -22,6 +24,9 @@ try {
     "expired",
     "malformed",
     "malformed-logout",
+    "stale-status",
+    "stale-models",
+    "stale-logout-failure",
     "reopen",
     "mobile",
   ]) {
@@ -39,6 +44,7 @@ try {
       cancels = 0,
       logouts = 0,
       polls = 0;
+    const controlEvents = [];
     const unexpected = [],
       errors = [];
     const expiresAt = Date.now() + (scenario === "expired" ? 4000 : 60000);
@@ -62,6 +68,7 @@ try {
             publishing: false,
             google: false,
             chatgptHosted: scenario !== "disabled",
+            chatgptGeneration: scenario === "stale-models",
           },
         });
       if (p === "/api/auth/get-session")
@@ -81,6 +88,7 @@ try {
       if (p === "/api/models") return route.fulfill({ json: { models: [] } });
       if (p === "/api/chatgpt/start") {
         starts++;
+        controlEvents.push("start");
         assert.equal(route.request().postData(), null);
         phase = "pending";
         return route.fulfill({
@@ -89,6 +97,19 @@ try {
       }
       if (p === "/api/chatgpt/status") {
         polls++;
+        if (["stale-status", "stale-logout-failure"].includes(scenario))
+          return route.fulfill({
+            status: 409,
+            json: {
+              code: "CHATGPT_CONNECTION_STALE",
+              error:
+                "Your ChatGPT connection needs an update. Reconnect to continue.",
+            },
+          });
+        if (scenario === "stale-models")
+          return route.fulfill({
+            json: { lifecycle: "completed", authStatus: "connected" },
+          });
         if (
           phase === "pending" &&
           ["connected", "mobile", "malformed-logout"].includes(scenario)
@@ -107,11 +128,31 @@ try {
           },
         });
       }
+      if (p === "/api/chatgpt/models") {
+        if (scenario === "stale-models")
+          return route.fulfill({
+            status: 409,
+            json: {
+              code: "CHATGPT_CONNECTION_STALE",
+              error:
+                "Your ChatGPT connection needs an update. Reconnect to continue.",
+            },
+          });
+        return route.fulfill({ json: { models: [] } });
+      }
       if (p === "/api/chatgpt/cancel" || p === "/api/chatgpt/logout") {
         assert.equal(route.request().postData(), null);
         if (p.endsWith("cancel")) cancels++;
-        else logouts++;
+        else {
+          logouts++;
+          controlEvents.push("logout");
+        }
         await new Promise((r) => setTimeout(r, 250));
+        if (scenario === "stale-logout-failure")
+          return route.fulfill({
+            status: 502,
+            json: { error: "ChatGPT request could not be completed." },
+          });
         phase = "idle";
         if (scenario === "malformed-logout")
           return route.fulfill({ json: { bad: "data" } });
@@ -129,6 +170,8 @@ try {
       .getByRole("button", { name: "Connections", exact: true })
       .click();
     const section = page.getByRole("region", { name: "ChatGPT subscription" });
+    if (scenario !== "disabled")
+      await expect(section).toHaveCount(1, { timeout: 10000 });
     if (scenario === "disabled") {
       await expect(section).toHaveCount(0);
       assert.equal(starts, 0);
@@ -139,87 +182,129 @@ try {
       assert.equal(starts, 0);
       assert.equal(polls, 0);
     } else {
-      await expect(
-        section.getByRole("button", { name: "Connect ChatGPT", exact: true }),
-      ).toBeVisible();
-      assert.equal(starts, 0);
-      await section
-        .getByRole("button", { name: "Connect ChatGPT", exact: true })
-        .click();
-      if (scenario === "malformed") {
-        await expect(section.getByText(/could not be completed/)).toBeVisible();
-      } else {
-        await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+      const staleScenario = [
+        "stale-status",
+        "stale-models",
+        "stale-logout-failure",
+      ].includes(scenario);
+      if (staleScenario) {
         await expect(
-          section.getByRole("link", { name: "Open ChatGPT sign-in" }),
-        ).toHaveAttribute("href", "https://auth.openai.com/codex/device");
+          section.getByRole("button", {
+            name: "Reconnect ChatGPT",
+            exact: true,
+          }),
+        ).toBeVisible({ timeout: 10000 });
+        await expect(
+          section.getByText(
+            "Your ChatGPT connection needs an update. Reconnect to continue.",
+          ),
+        ).toBeVisible();
+        assert.equal(starts, 0);
+        assert.equal(logouts, 0);
+        assert.deepEqual(controlEvents, []);
+        await page.screenshot({ path: `${out}/${scenario}-before-click.png` });
         await section
-          .getByRole("button", { name: "Copy one-time code" })
+          .getByRole("button", { name: "Reconnect ChatGPT", exact: true })
           .click();
-        await expect
-          .poll(
-            () =>
-              page.evaluate(() =>
-                navigator.clipboard
-                  .readText()
-                  .catch(() => "clipboard-unavailable"),
-              ),
-            { timeout: 3000 },
-          )
-          .toBe("SYNTH-CODE");
-        await page.screenshot({ path: `${out}/${scenario}.png` });
-        if (scenario === "cancel") {
-          await section.getByRole("button", { name: "Cancel sign-in" }).click();
-          await expect(
-            section.getByRole("button", {
-              name: "Connect ChatGPT",
-              exact: true,
-            }),
-          ).toBeVisible();
-          assert.equal(cancels, 1);
-        } else if (
-          ["connected", "mobile", "malformed-logout"].includes(scenario)
-        ) {
-          await expect(section.getByText(/Signed in to ChatGPT/)).toBeVisible({
-            timeout: 10000,
-          });
-          await expect(
-            section.getByText(
-              /Generation is not available in this environment yet/,
-            ),
-          ).toBeVisible();
-          await section
-            .getByRole("button", { name: "Disconnect ChatGPT" })
-            .click();
-          if (scenario === "malformed-logout") {
-            await expect(section.getByRole("alert")).toBeVisible();
-            await expect(section.getByText(/Signed in to ChatGPT/)).toHaveCount(
-              0,
-            );
-            await section.getByRole("button", { name: "Try again" }).click();
-          }
-          await expect(
-            section.getByRole("button", {
-              name: "Connect ChatGPT",
-              exact: true,
-            }),
-          ).toBeVisible();
-          assert.equal(logouts, 1);
-        } else if (scenario === "expired") {
-          await expect(section.getByText(/code expired/)).toBeVisible({
-            timeout: 5000,
-          });
+        if (scenario === "stale-logout-failure") {
+          await expect(section.getByRole("alert")).toBeVisible();
           await expect(section.locator("code")).toHaveCount(0);
-        } else if (scenario === "reopen") {
-          await page.getByRole("button", { name: "Close dialog" }).click();
-          const before = polls;
-          await page.waitForTimeout(3500);
-          assert.equal(polls, before);
-          await page
-            .getByRole("button", { name: "Connections", exact: true })
-            .click();
+          assert.deepEqual(controlEvents, ["logout"]);
+          assert.equal(starts, 0);
+        } else {
           await expect(section.locator("code")).toHaveText("SYNTH-CODE");
-          assert.equal(starts, 1);
+          assert.deepEqual(controlEvents, ["logout", "start"]);
+        }
+        await page.screenshot({ path: `${out}/${scenario}-after-click.png` });
+      } else {
+        await expect(
+          section.getByRole("button", { name: "Connect ChatGPT", exact: true }),
+        ).toBeVisible();
+        assert.equal(starts, 0);
+        await section
+          .getByRole("button", { name: "Connect ChatGPT", exact: true })
+          .click();
+        if (scenario === "malformed") {
+          await expect(
+            section.getByText(/could not be completed/),
+          ).toBeVisible();
+        } else {
+          await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+          await expect(
+            section.getByRole("link", { name: "Open ChatGPT sign-in" }),
+          ).toHaveAttribute("href", "https://auth.openai.com/codex/device");
+          await section
+            .getByRole("button", { name: "Copy one-time code" })
+            .click();
+          await expect
+            .poll(
+              () =>
+                page.evaluate(() =>
+                  navigator.clipboard
+                    .readText()
+                    .catch(() => "clipboard-unavailable"),
+                ),
+              { timeout: 3000 },
+            )
+            .toBe("SYNTH-CODE");
+          await page.screenshot({ path: `${out}/${scenario}.png` });
+          if (scenario === "cancel") {
+            await section
+              .getByRole("button", { name: "Cancel sign-in" })
+              .click();
+            await expect(
+              section.getByRole("button", {
+                name: "Connect ChatGPT",
+                exact: true,
+              }),
+            ).toBeVisible();
+            assert.equal(cancels, 1);
+          } else if (
+            ["connected", "mobile", "malformed-logout"].includes(scenario)
+          ) {
+            await expect(section.getByText(/Signed in to ChatGPT/)).toBeVisible(
+              {
+                timeout: 10000,
+              },
+            );
+            await expect(
+              section.getByText(
+                /Generation is not available in this environment yet/,
+              ),
+            ).toBeVisible();
+            await section
+              .getByRole("button", { name: "Disconnect ChatGPT" })
+              .click();
+            if (scenario === "malformed-logout") {
+              await expect(section.getByRole("alert")).toBeVisible();
+              await expect(
+                section.getByText(/Signed in to ChatGPT/),
+              ).toHaveCount(0);
+              await section.getByRole("button", { name: "Try again" }).click();
+            }
+            await expect(
+              section.getByRole("button", {
+                name: "Connect ChatGPT",
+                exact: true,
+              }),
+            ).toBeVisible();
+            assert.equal(logouts, 1);
+          } else if (scenario === "expired") {
+            await expect(section.getByText(/code expired/)).toBeVisible({
+              timeout: 5000,
+            });
+            await expect(section.locator("code")).toHaveCount(0);
+          } else if (scenario === "reopen") {
+            await page.getByRole("button", { name: "Close dialog" }).click();
+            const before = polls;
+            await page.waitForTimeout(3500);
+            assert.equal(polls, before);
+            await page
+              .getByRole("button", { name: "Connections", exact: true })
+              .click();
+            await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+            assert.equal(starts, 1);
+          }
         }
       }
       const storage = await page.evaluate(() =>
