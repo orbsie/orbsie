@@ -182,3 +182,13 @@ is a new semantic failure, not evidence of duplicate/unreachable node IDs.
 Non-strict provider schema guidance is insufficient for reliable commands.
 Next worker investigates strict-schema compatibility offline; no further live
 prompt-only retry. Codex allowance last checked:70% remaining.
+
+### Recovery architecture follow-up
+
+Root inspected store.ts: server error records currently throw only record.error;
+the bounded diagnostic is discarded, unlike browser modelingFeedback. After
+strict-schema compatibility work, add validated project-scoped generation
+feedback to explicit retry/continuation requests so a model can correct its
+previous schema error. No automatic paid retry. Clear stale feedback on success,
+project/revision changes, and recovery dismissal; never forward raw payloads or
+provider messages. This is pending work, not implemented acceptance.
