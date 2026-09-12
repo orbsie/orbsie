@@ -11,4 +11,6 @@ CREATE TABLE IF NOT EXISTS chatgpt_hosts (
   CHECK ((state = 'provisioning' AND sandbox_name IS NULL AND capability_ciphertext IS NULL)
       OR (state = 'ready' AND sandbox_name IS NOT NULL AND capability_ciphertext IS NOT NULL))
 );
+-- Added after the initial table so existing host records remain readable but stale.
+ALTER TABLE chatgpt_hosts ADD COLUMN IF NOT EXISTS artifact_digest text;
 CREATE INDEX IF NOT EXISTS chatgpt_hosts_expiry_idx ON chatgpt_hosts(expires_at);

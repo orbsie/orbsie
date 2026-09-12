@@ -1,4 +1,5 @@
 import { APIError, Sandbox } from "@vercel/sandbox";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -15,6 +16,16 @@ const routes = {
   logout: ["POST", "/logout"],
 } as const;
 const validName = (name: string) => /^orbsie-chatgpt-[a-f0-9-]{36}$/.test(name);
+
+export function computeChatGPTArtifactDigest(
+  files: readonly { path: string; content: Uint8Array }[],
+) {
+  const hash = createHash("sha256");
+  for (const file of files) {
+    hash.update(file.path).update("\0").update(file.content).update("\0");
+  }
+  return hash.digest("hex");
+}
 
 /** Credentials are injected by the trusted server, never taken from requests. */
 export function createChatGPTSandboxBackend(options: {
@@ -63,29 +74,38 @@ export function createChatGPTSandboxBackend(options: {
       ]),
     });
   }
+
+  async function readArtifacts() {
+    const files = await Promise.all(
+      ["server.mjs", "package.json"].map(async (path) => ({
+        path,
+        // Deployment files are explicitly traced in next.config.ts.
+        content: await readFile(
+          /* turbopackIgnore: true */ join(
+            /* turbopackIgnore: true */ options.artifactDirectory,
+            path,
+          ),
+        ),
+      })),
+    );
+    return { files, digest: computeChatGPTArtifactDigest(files) };
+  }
+
   return {
     request,
+    async artifactDigest() {
+      return (await readArtifacts()).digest;
+    },
     async provision(input: {
       name: string;
       capability: string;
       expiresAt: Date;
-    }) {
+    }): Promise<string> {
       if (!validName(input.name)) throw Error("Invalid ChatGPT host.");
       const timeout = Math.min(600_000, input.expiresAt.getTime() - Date.now());
       if (timeout < 60_000) throw Error("ChatGPT host reservation expired.");
       // Read artifacts before creating a metered resource.
-      const files = await Promise.all(
-        ["server.mjs", "package.json"].map(async (path) => ({
-          path,
-          // Deployment files are explicitly traced in next.config.ts.
-          content: await readFile(
-            /* turbopackIgnore: true */ join(
-              /* turbopackIgnore: true */ options.artifactDirectory,
-              path,
-            ),
-          ),
-        })),
-      );
+      const { files, digest } = await readArtifacts();
       const sandbox = await Sandbox.create({
         ...options.credentials,
         name: input.name,
@@ -134,7 +154,7 @@ export function createChatGPTSandboxBackend(options: {
               value.authStatus === "disconnected" &&
               value.lifecycle === "idle"
             )
-              return;
+              return digest;
             throw Error("Fresh ChatGPT host has unexpected account state.");
           }
           await response.body?.cancel();

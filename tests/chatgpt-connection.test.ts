@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  CHATGPT_STALE_CONNECTION_ACTION,
+  CHATGPT_STALE_CONNECTION_MESSAGE,
   CHATGPT_DEVICE_URL,
+  isChatGPTStaleConnectionError,
   parseChatGPTChallenge,
   parseChatGPTModels,
   parseChatGPTSnapshot,
@@ -14,6 +17,29 @@ const challenge = {
 };
 
 describe("ChatGPT connection response guards", () => {
+  it("recognizes only the bounded stale-runtime response for reconnect UI", () => {
+    expect(
+      isChatGPTStaleConnectionError({
+        code: "CHATGPT_CONNECTION_STALE",
+        error: CHATGPT_STALE_CONNECTION_MESSAGE,
+        sandboxName: "must-not-leak",
+      }),
+    ).toBe(true);
+    expect(CHATGPT_STALE_CONNECTION_ACTION).toBe("Reconnect ChatGPT");
+    expect(
+      isChatGPTStaleConnectionError({
+        code: "CHATGPT_CONNECTION_REQUIRED",
+        error: CHATGPT_STALE_CONNECTION_MESSAGE,
+      }),
+    ).toBe(false);
+    expect(
+      isChatGPTStaleConnectionError({
+        code: "CHATGPT_CONNECTION_STALE",
+        error: "older deployment details",
+      }),
+    ).toBe(false);
+  });
+
   it("accepts the exact device URL and strips provider identifiers", () => {
     expect(parseChatGPTChallenge(challenge)).toEqual({
       userCode: "ABCD-EFGH",

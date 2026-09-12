@@ -3,6 +3,8 @@ const mocks = vi.hoisted(() => ({
   expired: vi.fn(),
   sessionHost: vi.fn(),
   release: vi.fn(),
+  read: vi.fn(),
+  readForDisconnect: vi.fn(),
   destroy: vi.fn(),
   ensure: vi.fn(),
   disconnect: vi.fn(),
@@ -13,16 +15,22 @@ vi.mock("../src/lib/server/chatgpt-host-registry", () => ({
   releaseChatGPTHost: mocks.release,
   claimChatGPTHost: vi.fn(),
   completeChatGPTHost: vi.fn(),
-  readChatGPTHost: vi.fn(),
+  readChatGPTHost: mocks.read,
 }));
 vi.mock("../src/lib/server/chatgpt-sandbox-backend", () => ({
   createChatGPTSandboxBackend: () => ({
     destroy: mocks.destroy,
+    artifactDigest: vi.fn(async () => "a".repeat(64)),
     provision: vi.fn(),
     request: vi.fn(),
   }),
 }));
 vi.mock("../src/lib/server/chatgpt-host-service", () => ({
+  ChatGPTHostStaleError: class extends Error {
+    constructor() {
+      super("Your ChatGPT connection needs an update. Reconnect to continue.");
+    }
+  },
   createChatGPTHostService: () => ({
     ensure: mocks.ensure,
     disconnect: mocks.disconnect,
@@ -32,6 +40,7 @@ import { createChatGPTHostManager } from "../src/lib/server/chatgpt-host-manager
 const identity = { ownerId: "owner", sessionId: "session" };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.read.mockResolvedValue(null);
   mocks.expired.mockResolvedValue({
     attemptId: "old",
     sandboxName: "orbsie-chatgpt-old",
@@ -71,6 +80,48 @@ test("disconnect cleans an expired host without reading its capability", async (
     ),
   ).resolves.toBe(true);
   expect(mocks.disconnect).not.toHaveBeenCalled();
+});
+
+test("marks a host from another deployed artifact as stale before reuse", async () => {
+  mocks.read.mockResolvedValue({
+    attemptId: "attempt-1",
+    sandboxName: "orbsie-chatgpt-attempt-1",
+    capability: "private",
+    expiresAt: new Date(Date.now() + 60_000),
+    artifactDigest: "b".repeat(64),
+  });
+  const manager = createChatGPTHostManager({ artifactDirectory: "unused" });
+  await expect(manager.read(identity)).rejects.toThrow(
+    "needs an update",
+  );
+  expect(mocks.read).toHaveBeenCalledWith(identity);
+});
+
+test("treats pre-provenance registry rows as stale", async () => {
+  mocks.read.mockResolvedValue({
+    attemptId: "attempt-legacy",
+    sandboxName: "orbsie-chatgpt-attempt-legacy",
+    capability: "private",
+    expiresAt: new Date(Date.now() + 60_000),
+    artifactDigest: null,
+  });
+  await expect(
+    createChatGPTHostManager({ artifactDirectory: "unused" }).read(identity),
+  ).rejects.toThrow("needs an update");
+});
+
+test("reuses a host with the current deployed artifact digest", async () => {
+  const host = {
+    attemptId: "attempt-1",
+    sandboxName: "orbsie-chatgpt-attempt-1",
+    capability: "private",
+    expiresAt: new Date(Date.now() + 60_000),
+    artifactDigest: "a".repeat(64),
+  };
+  mocks.read.mockResolvedValue(host);
+  await expect(
+    createChatGPTHostManager({ artifactDirectory: "unused" }).read(identity),
+  ).resolves.toBe(host);
 });
 
 test("session teardown destroys provisioning or expired runtime before releasing its claim", async () => {

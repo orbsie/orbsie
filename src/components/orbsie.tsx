@@ -42,6 +42,7 @@ import {
   connectionNoticeCopy,
   noticeForGenerationCode,
 } from "@/lib/connection-messages";
+import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 import { modelModes, type CatalogModel } from "@/lib/model-modes";
 import { modelRankingMetadata } from "@/lib/model-rankings";
 import {
@@ -817,7 +818,8 @@ export default function Orbsie() {
       const providerFailure = useOrb.getState().generationErrorCode;
       if (
         selectedConnection.provider === "chatgpt-hosted" &&
-        providerFailure === "CHATGPT_CONNECTION_REQUIRED" &&
+        (providerFailure === "CHATGPT_CONNECTION_REQUIRED" ||
+          providerFailure === CHATGPT_STALE_CONNECTION_CODE) &&
         generationWorld() &&
         connectionVersion.current === selectedConnectionVersion &&
         submission.current.sequence === sequence

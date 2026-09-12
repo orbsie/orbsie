@@ -62,12 +62,14 @@ try {
   assert.equal(claims.filter(Boolean).length, 1);
   const claim = claims.find(Boolean);
   const capability = randomBytes(32).toString("hex");
+  const artifactDigest = "a".repeat(64);
   assert.equal(
     await registry.completeChatGPTHost(
       other,
       claim.attemptId,
       "orbsie-chatgpt-test",
       capability,
+      artifactDigest,
     ),
     false,
   );
@@ -77,11 +79,16 @@ try {
       claim.attemptId,
       "orbsie-chatgpt-test",
       capability,
+      artifactDigest,
     ),
     true,
   );
   assert.equal(await registry.readChatGPTHost(other), null);
   assert.equal((await registry.readChatGPTHost(owner)).capability, capability);
+  assert.equal(
+    (await registry.readChatGPTHost(owner)).artifactDigest,
+    artifactDigest,
+  );
   const stored = await client.query(
     "SELECT capability_ciphertext FROM chatgpt_hosts",
   );

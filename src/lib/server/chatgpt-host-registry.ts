@@ -37,21 +37,31 @@ export async function completeChatGPTHost(
   attemptId: string,
   sandboxName: string,
   capability: string,
+  artifactDigest: string,
 ) {
   if (!/^orbsie-chatgpt-[a-z0-9-]{1,80}$/.test(sandboxName))
     throw new HttpError(400, "Invalid ChatGPT host name.");
+  if (!/^[a-f0-9]{64}$/.test(artifactDigest))
+    throw new HttpError(400, "Invalid ChatGPT artifact digest.");
   const ciphertext = sealHostCapability(
     capability,
     { ...identity, attemptId },
     secret(),
   );
   const result = await database().query(
-    `UPDATE chatgpt_hosts h SET state='ready',sandbox_name=$4,capability_ciphertext=$5
+    `UPDATE chatgpt_hosts h SET state='ready',sandbox_name=$4,capability_ciphertext=$5,artifact_digest=$6
      FROM "session" s WHERE h.session_id=$1 AND h.owner_id=$2 AND h.attempt_id=$3
      AND h.state='provisioning' AND h.expires_at>now()
      AND s.id=h.session_id AND s."userId"=h.owner_id AND s."expiresAt">now()
      RETURNING h.attempt_id`,
-    [identity.sessionId, identity.ownerId, attemptId, sandboxName, ciphertext],
+    [
+      identity.sessionId,
+      identity.ownerId,
+      attemptId,
+      sandboxName,
+      ciphertext,
+      artifactDigest,
+    ],
   );
   return result.rows.length === 1;
 }
@@ -59,7 +69,7 @@ export async function completeChatGPTHost(
 /** Internal only. Never serialize this result to a browser response. */
 export async function readChatGPTHost(identity: Identity) {
   const result = await database().query(
-    `SELECT h.attempt_id,h.sandbox_name,h.capability_ciphertext,h.expires_at
+    `SELECT h.attempt_id,h.sandbox_name,h.capability_ciphertext,h.expires_at,h.artifact_digest
      FROM chatgpt_hosts h JOIN "session" s ON s.id=h.session_id AND s."userId"=h.owner_id
      WHERE h.session_id=$1 AND h.owner_id=$2 AND h.state='ready'
      AND h.expires_at>now() AND s."expiresAt">now()`,
@@ -71,6 +81,8 @@ export async function readChatGPTHost(identity: Identity) {
     attemptId: row.attempt_id as string,
     sandboxName: row.sandbox_name as string,
     expiresAt: row.expires_at as Date,
+    artifactDigest:
+      typeof row.artifact_digest === "string" ? row.artifact_digest : null,
     capability: openHostCapability(
       row.capability_ciphertext,
       { ...identity, attemptId: row.attempt_id },

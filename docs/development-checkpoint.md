@@ -298,3 +298,30 @@ app journal/replay and stop/reload semantics for current provider transports,
 using intercepted fixtures first and only the authorized bounded Luna calls
 at the combined cloud/publication milestone. No additional live calls were
 made during this inspection.
+
+### Hosted runtime provenance review and migration
+
+The bounded server patch passed 50 targeted tests and typechecking. Root
+review found stale status would enter an error UI with only a refresh button,
+preventing the instructed disconnect/reconnect; Luna is correcting that path
+and the analogous model-list response before acceptance. No deployment yet.
+
+Root ran `node --env-file=.env.local scripts/verify-chatgpt-host-registry.mjs`:
+real PostgreSQL temporary-table/rollback verification passed ownership, claim
+serialization, encrypted capability and artifact digest roundtrip, expiry and
+stale release checks. Applied only the additive `artifact_digest text` column
+with `ADD COLUMN IF NOT EXISTS` to development and production via their existing
+local env files; information_schema verified the text column in each. No
+credentials were printed and no model calls made. This migration is compatible
+with the currently deployed code, which ignores the nullable column.
+
+### Runtime provenance code review accepted; browser action check pending
+
+Root reviewed the stale-code guard, nullable digest migration, exact provisioned
+artifact hashing, explicit cleanup, shared safe error code/message and generation
+error routing. The UI now exposes Reconnect ChatGPT for stale status/models/start
+responses and performs logout before starting a fresh device flow on user click.
+60 targeted tests and typechecking passed. These tests cover server guards and
+response parsing; they do not prove the actual reconnect button. One Luna worker
+is extending the intercepted browser fixture to check request ordering, no
+automatic reconnect, and no start following failed logout. No live model calls.

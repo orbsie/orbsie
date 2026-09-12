@@ -36,6 +36,7 @@ vi.mock("@/lib/server/chatgpt-host-manager", () => ({
 }));
 
 import { GET, POST } from "../src/app/api/chatgpt/[action]/route";
+import { ChatGPTHostStaleError } from "../src/lib/server/chatgpt-host-service";
 
 const identity = { ownerId: "user-1", sessionId: "session-1" };
 const host = {
@@ -78,6 +79,8 @@ describe("authenticated ChatGPT routes", () => {
     );
     mocks.disconnect.mockResolvedValue(true);
     mocks.createManager.mockReturnValue({
+      read: mocks.readHost,
+      readForDisconnect: mocks.readHost,
       ensure: mocks.ensure,
       request: mocks.request,
       disconnect: mocks.disconnect,
@@ -124,6 +127,16 @@ describe("authenticated ChatGPT routes", () => {
     expect(mocks.readHost).toHaveBeenCalledWith(identity);
     expect(mocks.ensure).not.toHaveBeenCalled();
     expect(mocks.request).not.toHaveBeenCalled();
+  });
+
+  it("reports stale runtime provenance with reconnect guidance", async () => {
+    mocks.readHost.mockRejectedValueOnce(new ChatGPTHostStaleError());
+    const response = await GET(request("status"), context("status"));
+    expect(response.status).toBe(409);
+    expect(await body(response)).toEqual({
+      code: "CHATGPT_CONNECTION_STALE",
+      error: "Your ChatGPT connection needs an update. Reconnect to continue.",
+    });
   });
 
   it.each([
@@ -214,6 +227,21 @@ describe("authenticated ChatGPT routes", () => {
     expect(await body(response)).toEqual({
       error: "ChatGPT request could not be completed.",
     });
+    expect(mocks.disconnect).toHaveBeenCalledWith(identity);
+  });
+
+  it("disconnects stale runtimes without sending them a control RPC", async () => {
+    mocks.readHost.mockRejectedValueOnce(new ChatGPTHostStaleError());
+    const response = await POST(
+      request("cancel", { method: "POST" }),
+      context("cancel"),
+    );
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({
+      lifecycle: "idle",
+      authStatus: "disconnected",
+    });
+    expect(mocks.request).not.toHaveBeenCalled();
     expect(mocks.disconnect).toHaveBeenCalledWith(identity);
   });
 

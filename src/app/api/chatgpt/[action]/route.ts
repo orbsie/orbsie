@@ -1,8 +1,10 @@
 import { validateChatGPTModels } from "@/lib/server/chatgpt-models";
 import { resolve } from "node:path";
 import { checkOrigin, getAuth, HttpError } from "@/lib/server/auth";
-import { readChatGPTHost } from "@/lib/server/chatgpt-host-registry";
+import type { readChatGPTHost } from "@/lib/server/chatgpt-host-registry";
 import { createChatGPTHostManager } from "@/lib/server/chatgpt-host-manager";
+import { ChatGPTHostStaleError } from "@/lib/server/chatgpt-host-service";
+import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -46,6 +48,11 @@ function failure(status: number, message: string): never {
 function publicError(error: unknown): Response {
   if (error instanceof RouteFailure)
     return json({ error: error.message }, error.status);
+  if (error instanceof ChatGPTHostStaleError)
+    return json(
+      { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
+      409,
+    );
   if (error instanceof HttpError) {
     const mapped =
       error.status === 401
@@ -253,7 +260,7 @@ async function run(
   });
 
   if (action === "models") {
-    const host = await readChatGPTHost(identity);
+    const host = await manager.read(identity);
     if (!host) failure(409, "Connect your ChatGPT account first.");
     const value = await hostResponse(manager, host, "models");
     const models = validateChatGPTModels(
@@ -264,7 +271,7 @@ async function run(
     return json({ models });
   }
   if (action === "status") {
-    const host = await readChatGPTHost(identity);
+    const host = await manager.read(identity);
     if (!host) return json(disconnected());
     return json(snapshot(await hostResponse(manager, host, "status")));
   }
@@ -277,9 +284,11 @@ async function run(
   let host: NonNullable<Host> | null = null;
   let remoteFailed = false;
   try {
-    host = await readChatGPTHost(identity);
-  } catch {
-    remoteFailed = true;
+    host = await manager.read(identity);
+  } catch (error) {
+    // A stale runtime may still be explicitly disconnected, but must never
+    // receive a cancel/logout RPC from a newer deployment.
+    if (!(error instanceof ChatGPTHostStaleError)) remoteFailed = true;
   }
   let remote: unknown;
   if (host) {

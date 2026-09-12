@@ -1,10 +1,16 @@
 import { afterEach, expect, test, vi } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 const sdk = vi.hoisted(() => ({ get: vi.fn(), create: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
   Sandbox: sdk,
   APIError: class extends Error {},
 }));
-import { createChatGPTSandboxBackend } from "../src/lib/server/chatgpt-sandbox-backend";
+import {
+  computeChatGPTArtifactDigest,
+  createChatGPTSandboxBackend,
+} from "../src/lib/server/chatgpt-sandbox-backend";
 const name = "orbsie-chatgpt-11111111-1111-4111-8111-111111111111";
 const host = {
   sandboxName: name,
@@ -59,6 +65,28 @@ test("missing artifacts fail before creating a metered sandbox", async () => {
     }),
   ).rejects.toThrow();
   expect(sdk.create).not.toHaveBeenCalled();
+});
+
+test("derives provenance from the exact traced host artifacts", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "orbsie-chatgpt-artifact-"));
+  try {
+    const server = Buffer.from("server-v1");
+    const packageJSON = Buffer.from('{"version":"1"}');
+    await writeFile(join(directory, "server.mjs"), server);
+    await writeFile(join(directory, "package.json"), packageJSON);
+    const backend = createChatGPTSandboxBackend({
+      artifactDirectory: directory,
+    });
+    const expected = computeChatGPTArtifactDigest([
+      { path: "server.mjs", content: server },
+      { path: "package.json", content: packageJSON },
+    ]);
+    await expect(backend.artifactDigest()).resolves.toBe(expected);
+    await writeFile(join(directory, "server.mjs"), "server-v2");
+    await expect(backend.artifactDigest()).resolves.not.toBe(expected);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 test("unrelated sandbox names cannot be fetched or deleted", async () => {
   await expect(backend.destroy("another-project")).rejects.toThrow("Invalid");

@@ -10,6 +10,15 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import {
+  CHATGPT_STALE_CONNECTION_CODE,
+  CHATGPT_STALE_CONNECTION_MESSAGE,
+} from "../lib/chatgpt-connection-errors";
+
+export {
+  CHATGPT_STALE_CONNECTION_CODE,
+  CHATGPT_STALE_CONNECTION_MESSAGE,
+} from "../lib/chatgpt-connection-errors";
 
 export const CHATGPT_DEVICE_URL = "https://auth.openai.com/codex/device";
 
@@ -148,10 +157,11 @@ type View =
   | { phase: "idle"; message?: string }
   | { phase: "pending"; challenge: ChatGPTChallenge; message?: string }
   | { phase: "connected"; message?: string }
-  | { phase: "error"; message: string };
+  | { phase: "error"; message: string; stale?: boolean };
 
 const initialView: View = { phase: "checking" };
 const genericError = "ChatGPT connection could not be completed. Try again.";
+export const CHATGPT_STALE_CONNECTION_ACTION = "Reconnect ChatGPT";
 const safeErrors = new Set([
   "ChatGPT connection could not be completed.",
   "ChatGPT host is unavailable.",
@@ -164,9 +174,23 @@ const safeErrors = new Set([
   "ChatGPT account status could not be checked.",
   "ChatGPT sign-out could not be completed.",
   "Unauthorized.",
+  CHATGPT_STALE_CONNECTION_MESSAGE,
 ]);
 
+export function isChatGPTStaleConnectionError(
+  value: unknown,
+): value is { code: typeof CHATGPT_STALE_CONNECTION_CODE; error: string } {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    (value as { code?: unknown }).code === CHATGPT_STALE_CONNECTION_CODE &&
+    (value as { error?: unknown }).error === CHATGPT_STALE_CONNECTION_MESSAGE
+  );
+}
+
 function errorMessage(value: unknown): string {
+  if (isChatGPTStaleConnectionError(value))
+    return CHATGPT_STALE_CONNECTION_MESSAGE;
   if (
     value &&
     typeof value === "object" &&
@@ -363,7 +387,12 @@ export default function ChatGPTConnection({
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
           return;
-        setView({ phase: "error", message: errorMessage(error) });
+        const stale = isChatGPTStaleConnectionError(error);
+        setView({
+          phase: "error",
+          message: errorMessage(error),
+          ...(stale ? { stale: true } : {}),
+        });
       });
   }, [beginRequest, onDisconnect, signedIn]);
 
@@ -402,9 +431,59 @@ export default function ChatGPTConnection({
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
           return;
-        setView({ phase: "idle", message: errorMessage(error) });
+        const stale = isChatGPTStaleConnectionError(error);
+        setView(
+          stale
+            ? {
+                phase: "error",
+                message: CHATGPT_STALE_CONNECTION_MESSAGE,
+                stale: true,
+              }
+            : { phase: "idle", message: errorMessage(error) },
+        );
       });
   }, [beginRequest, onSignIn, signedIn]);
+
+  const reconnect = useCallback(() => {
+    if (!signedIn) {
+      onSignIn();
+      return;
+    }
+    const { controller, current } = beginRequest();
+    setView({ phase: "checking" });
+    void requestJSON("logout", "POST", controller.signal)
+      .then((data) => {
+        if (!currentRequest(controller, current)) return undefined;
+        const snapshot = parseChatGPTSnapshot(data);
+        if (!snapshot || snapshot.authStatus !== "disconnected")
+          throw Error("ChatGPT sign-out could not be completed.");
+        onDisconnect();
+        return requestJSON("start", "POST", controller.signal);
+      })
+      .then((data) => {
+        if (!data || !currentRequest(controller, current)) return;
+        const challenge = parseChatGPTChallenge(data);
+        if (!challenge) {
+          setView({ phase: "error", message: genericError });
+          return;
+        }
+        setView({ phase: "pending", challenge });
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted || !currentRequest(controller, current))
+          return;
+        const stale = isChatGPTStaleConnectionError(error);
+        setView(
+          stale
+            ? {
+                phase: "error",
+                message: CHATGPT_STALE_CONNECTION_MESSAGE,
+                stale: true,
+              }
+            : { phase: "error", message: errorMessage(error) },
+        );
+      });
+  }, [beginRequest, onDisconnect, onSignIn, signedIn]);
 
   const cancel = useCallback(() => {
     if (!signedIn) return;
@@ -552,8 +631,16 @@ export default function ChatGPTConnection({
             : (next[0]?.model ?? ""),
         );
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!controller.signal.aborted) {
+          if (isChatGPTStaleConnectionError(error)) {
+            setView({
+              phase: "error",
+              message: CHATGPT_STALE_CONNECTION_MESSAGE,
+              stale: true,
+            });
+            return;
+          }
           setModels([]);
           setSelectedModel("");
           setSelectedEffort("");
@@ -705,9 +792,15 @@ export default function ChatGPTConnection({
       ) : view.phase === "error" ? (
         <div className="setup-note" role="alert">
           {view.message}
-          <button className="text-button" onClick={refresh}>
-            Try again
-          </button>
+          {view.stale ? (
+            <button className="primary full" onClick={reconnect}>
+              {CHATGPT_STALE_CONNECTION_ACTION}
+            </button>
+          ) : (
+            <button className="text-button" onClick={refresh}>
+              Try again
+            </button>
+          )}
         </div>
       ) : (
         <div className="setup-note">

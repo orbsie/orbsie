@@ -5,8 +5,9 @@ import {
   boundedJSON,
   HttpError,
 } from "@/lib/server/auth";
-import { readChatGPTHost } from "@/lib/server/chatgpt-host-registry";
 import { createChatGPTHostManager } from "@/lib/server/chatgpt-host-manager";
+import { ChatGPTHostStaleError } from "@/lib/server/chatgpt-host-service";
+import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 import { chatGPTSceneRequestSchema } from "@/lib/server/chatgpt-scene-stream";
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -39,11 +40,11 @@ export async function POST(request: Request) {
       ownerId: session.user.id,
       sessionId: session.session.id,
     };
-    const host = await readChatGPTHost(identity);
-    if (!host) throw new HttpError(409, "Connect your ChatGPT account first.");
     const manager = createChatGPTHostManager({
       artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
     });
+    const host = await manager.read(identity);
+    if (!host) throw new HttpError(409, "Connect your ChatGPT account first.");
     const response = await manager.request(host, "generate", {
       input: input.data,
       signal: request.signal,
@@ -68,6 +69,11 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof ChatGPTHostStaleError)
+      return Response.json(
+        { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
+        { status: 409, headers },
+      );
     return Response.json(
       {
         ...(error instanceof HttpError && [401, 409].includes(error.status)

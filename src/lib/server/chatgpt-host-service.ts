@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { CHATGPT_STALE_CONNECTION_MESSAGE } from "../chatgpt-connection-errors";
 
 export type ChatGPTHostIdentity = { ownerId: string; sessionId: string };
 export type ChatGPTHost = {
@@ -6,9 +7,22 @@ export type ChatGPTHost = {
   sandboxName: string;
   capability: string;
   expiresAt: Date;
+  artifactDigest: string | null;
 };
+export class ChatGPTHostStaleError extends Error {
+  constructor() {
+    super(
+      CHATGPT_STALE_CONNECTION_MESSAGE,
+    );
+    this.name = "ChatGPTHostStaleError";
+  }
+}
 export type ChatGPTHostServiceDeps = {
   read(
+    identity: ChatGPTHostIdentity,
+  ): ChatGPTHost | null | Promise<ChatGPTHost | null>;
+  /** Used only to remove a stale runtime; it never authorizes generation. */
+  readForDisconnect?(
     identity: ChatGPTHostIdentity,
   ): ChatGPTHost | null | Promise<ChatGPTHost | null>;
   claim(
@@ -22,6 +36,7 @@ export type ChatGPTHostServiceDeps = {
     attemptId: string,
     sandboxName: string,
     capability: string,
+    artifactDigest: string,
   ): boolean | Promise<boolean>;
   release(
     identity: ChatGPTHostIdentity,
@@ -31,7 +46,7 @@ export type ChatGPTHostServiceDeps = {
     name: string;
     capability: string;
     expiresAt: Date;
-  }): Promise<void>;
+  }): Promise<string>;
   destroy(name: string): Promise<void>;
 };
 
@@ -42,16 +57,22 @@ const idOkay = (value: unknown): value is string =>
   typeof value === "string" && /^[A-Za-z0-9_-]{1,256}$/.test(value);
 const capabilityOkay = (value: unknown): value is string =>
   typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+const artifactDigestOkay = (value: unknown): value is string =>
+  typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 function checkIdentity(value: ChatGPTHostIdentity) {
   if (!identityOkay(value?.ownerId) || !identityOkay(value?.sessionId))
     throw error("ChatGPT host identity is invalid.");
 }
-function validHost(value: ChatGPTHost | null): value is ChatGPTHost {
+function validHost(
+  value: ChatGPTHost | null,
+  requireArtifactDigest = true,
+): value is ChatGPTHost {
   return (
     !!value &&
     idOkay(value.attemptId) &&
     value.sandboxName === `orbsie-chatgpt-${value.attemptId}` &&
     capabilityOkay(value.capability) &&
+    (!requireArtifactDigest || artifactDigestOkay(value.artifactDigest)) &&
     value.expiresAt instanceof Date &&
     Number.isFinite(value.expiresAt.getTime()) &&
     value.expiresAt.getTime() > Date.now()
@@ -92,7 +113,8 @@ export function createChatGPTHostService(deps: ChatGPTHostServiceDeps) {
     let existing: ChatGPTHost | null;
     try {
       existing = await deps.read(identity);
-    } catch {
+    } catch (failure) {
+      if (failure instanceof ChatGPTHostStaleError) throw failure;
       throw error("ChatGPT host could not be read.");
     }
     if (validHost(existing)) return existing;
@@ -107,17 +129,20 @@ export function createChatGPTHostService(deps: ChatGPTHostServiceDeps) {
     const capability = randomBytes(32).toString("hex");
     const sandboxName = `orbsie-chatgpt-${claimed.attemptId}`;
     try {
-      await deps.provision({
+      const artifactDigest = await deps.provision({
         name: sandboxName,
         capability,
         expiresAt: claimed.expiresAt,
       });
+      if (!artifactDigestOkay(artifactDigest))
+        throw error("ChatGPT host artifact provenance is unavailable.");
       if (
         !(await deps.complete(
           identity,
           claimed.attemptId,
           sandboxName,
           capability,
+          artifactDigest,
         ))
       )
         throw error("ChatGPT host could not be finalized.");
@@ -126,6 +151,7 @@ export function createChatGPTHostService(deps: ChatGPTHostServiceDeps) {
         sandboxName,
         capability,
         expiresAt: claimed.expiresAt,
+        artifactDigest,
       };
     } catch (failure) {
       try {
@@ -146,11 +172,11 @@ export function createChatGPTHostService(deps: ChatGPTHostServiceDeps) {
     checkIdentity(identity);
     let host: ChatGPTHost | null;
     try {
-      host = await deps.read(identity);
+      host = await (deps.readForDisconnect ?? deps.read)(identity);
     } catch {
       throw error("ChatGPT host could not be read.");
     }
-    if (!validHost(host)) return false;
+    if (!validHost(host, false)) return false;
     return cleanup(identity, host.attemptId, host.sandboxName);
   }
   return { ensure, disconnect };

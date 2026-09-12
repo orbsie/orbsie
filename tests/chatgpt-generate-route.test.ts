@@ -25,13 +25,17 @@ vi.mock("@/lib/server/chatgpt-host-registry", () => ({
   readChatGPTHost: mocks.read,
 }));
 vi.mock("@/lib/server/chatgpt-host-manager", () => ({
-  createChatGPTHostManager: () => ({ request: mocks.request }),
+  createChatGPTHostManager: () => ({
+    read: mocks.read,
+    request: mocks.request,
+  }),
 }));
 vi.mock(
   "@/lib/server/chatgpt-scene-stream",
   () => import("../src/lib/server/chatgpt-scene-stream"),
 );
 import { POST } from "../src/app/api/chatgpt/generate/route";
+import { ChatGPTHostStaleError } from "../src/lib/server/chatgpt-host-service";
 const payload = () => ({
   model: "gpt-5.6-luna",
   effort: "low",
@@ -91,6 +95,16 @@ describe("hosted ChatGPT generation route", () => {
     expect(missingHost.status).toBe(409);
     expect(await missingHost.json()).toMatchObject({
       code: "CHATGPT_CONNECTION_REQUIRED",
+    });
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
+  it("fails stale deployed hosts before sending a generation request", async () => {
+    mocks.read.mockRejectedValueOnce(new ChatGPTHostStaleError());
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      code: "CHATGPT_CONNECTION_STALE",
+      error: "Your ChatGPT connection needs an update. Reconnect to continue.",
     });
     expect(mocks.request).not.toHaveBeenCalled();
   });

@@ -1,5 +1,8 @@
 import { createChatGPTSandboxBackend } from "./chatgpt-sandbox-backend";
-import { createChatGPTHostService } from "./chatgpt-host-service";
+import {
+  ChatGPTHostStaleError,
+  createChatGPTHostService,
+} from "./chatgpt-host-service";
 import {
   claimChatGPTHost,
   completeChatGPTHost,
@@ -13,8 +16,19 @@ export function createChatGPTHostManager(
   options: Parameters<typeof createChatGPTSandboxBackend>[0],
 ) {
   const backend = createChatGPTSandboxBackend(options);
+  const readCurrentHost = async (
+    identity: Parameters<typeof readChatGPTHost>[0],
+  ) => {
+    const host = await readChatGPTHost(identity);
+    if (!host) return null;
+    const artifactDigest = await backend.artifactDigest();
+    if (host.artifactDigest !== artifactDigest)
+      throw new ChatGPTHostStaleError();
+    return host;
+  };
   const service = createChatGPTHostService({
-    read: readChatGPTHost,
+    read: readCurrentHost,
+    readForDisconnect: readChatGPTHost,
     claim: claimChatGPTHost,
     complete: completeChatGPTHost,
     release: releaseChatGPTHost,
@@ -40,6 +54,7 @@ export function createChatGPTHostManager(
       await cleanupExpired(identity);
       return service.ensure(identity);
     },
+    read: readCurrentHost,
     async disconnect(identity: Parameters<typeof readChatGPTHost>[0]) {
       if (await cleanupExpired(identity)) return true;
       return service.disconnect(identity);

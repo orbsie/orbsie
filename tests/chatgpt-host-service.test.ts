@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  ChatGPTHostStaleError,
   createChatGPTHostService,
   type ChatGPTHostServiceDeps,
 } from "../src/lib/server/chatgpt-host-service";
 
 const identity = { ownerId: "owner-1", sessionId: "session-1" };
+const artifactDigest = "d".repeat(64);
 const future = () => new Date(Date.now() + 60_000);
 
 function deps(overrides: Partial<ChatGPTHostServiceDeps> = {}) {
@@ -13,7 +15,7 @@ function deps(overrides: Partial<ChatGPTHostServiceDeps> = {}) {
     claim: vi.fn(() => ({ attemptId: "attempt-1", expiresAt: future() })),
     complete: vi.fn(() => true),
     release: vi.fn(() => true),
-    provision: vi.fn(async () => undefined),
+    provision: vi.fn(async () => artifactDigest),
     destroy: vi.fn(async () => undefined),
     ...overrides,
   } satisfies ChatGPTHostServiceDeps;
@@ -26,6 +28,7 @@ describe("ChatGPT host service", () => {
       sandboxName: "orbsie-chatgpt-attempt-1",
       capability: "a".repeat(64),
       expiresAt: future(),
+      artifactDigest,
     };
     const d = deps({ read: vi.fn(() => host) });
     await expect(createChatGPTHostService(d).ensure(identity)).resolves.toBe(
@@ -42,13 +45,15 @@ describe("ChatGPT host service", () => {
         order.push("provision");
         expect(input.name).toBe("orbsie-chatgpt-attempt-1");
         expect(input.capability).toMatch(/^[a-f0-9]{64}$/);
+        return artifactDigest;
       }),
-      complete: vi.fn((owner, attempt, name, capability) => {
+      complete: vi.fn((owner, attempt, name, capability, digest) => {
         order.push("complete");
         expect(owner).toEqual(identity);
         expect(attempt).toBe("attempt-1");
         expect(name).toBe("orbsie-chatgpt-attempt-1");
         expect(capability).toMatch(/^[a-f0-9]{64}$/);
+        expect(digest).toBe(artifactDigest);
         return true;
       }),
     });
@@ -64,6 +69,19 @@ describe("ChatGPT host service", () => {
     await expect(createChatGPTHostService(d).ensure(identity)).rejects.toThrow(
       "Another ChatGPT host attempt is already active.",
     );
+    expect(d.provision).not.toHaveBeenCalled();
+  });
+
+  it("does not replace a host when the guarded read marks it stale", async () => {
+    const d = deps({
+      read: vi.fn(() => {
+        throw new ChatGPTHostStaleError();
+      }),
+    });
+    await expect(createChatGPTHostService(d).ensure(identity)).rejects.toThrow(
+      "needs an update",
+    );
+    expect(d.claim).not.toHaveBeenCalled();
     expect(d.provision).not.toHaveBeenCalled();
   });
 
@@ -119,6 +137,7 @@ describe("ChatGPT host service", () => {
       sandboxName: "orbsie-chatgpt-attempt-1",
       capability: "b".repeat(64),
       expiresAt: future(),
+      artifactDigest,
     };
     const d = deps({
       read: vi.fn(() => host),
@@ -160,6 +179,7 @@ describe("ChatGPT host service", () => {
         sandboxName: "orbsie-chatgpt-attempt-1",
         capability: "b".repeat(64),
         expiresAt: future(),
+        artifactDigest,
       })),
       release: vi.fn(async () => false),
     });
@@ -168,12 +188,29 @@ describe("ChatGPT host service", () => {
     ).resolves.toBe(false);
   });
 
+  it("allows disconnect to remove a legacy host without provenance", async () => {
+    const d = deps({
+      read: vi.fn(async () => ({
+        attemptId: "attempt-1",
+        sandboxName: "orbsie-chatgpt-attempt-1",
+        capability: "b".repeat(64),
+        expiresAt: future(),
+        artifactDigest: null,
+      })),
+    });
+    await expect(
+      createChatGPTHostService(d).disconnect(identity),
+    ).resolves.toBe(true);
+    expect(d.destroy).toHaveBeenCalledWith("orbsie-chatgpt-attempt-1");
+  });
+
   it("leaves expired hosts for later cleanup and does not release them", async () => {
     const host = {
       attemptId: "attempt-1",
       sandboxName: "orbsie-chatgpt-attempt-1",
       capability: "c".repeat(64),
       expiresAt: new Date(Date.now() - 1),
+      artifactDigest,
     };
     const d = deps({ read: vi.fn(() => host) });
     await expect(
