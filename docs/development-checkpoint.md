@@ -187,3 +187,14 @@ continuity, not merely assert emitted CDP arguments. Existing player-input
 unit tests cover same-action pointer retention but not this browser driver.
 Run against a saved local fixture/export with zero inference, then integrate
 into meaningful mobile route acceptance. This is queued, not implemented.
+
+## Active mobile driver correction
+
+Luna `/root/multitouch_traversal` owns winning-verifier touch input, optional
+shared helper, focused tests and `traversal-multitouch/` evidence. One local
+browser check, zero model/external/account calls. Product simultaneous-input
+behavior already has partial lifecycle evidence; this task verifies the new
+driver specifically. Root will review partial-release semantics and trusted
+pointer-event evidence. Do not repeat the broad lifecycle suite.
+Saved-bounce task is finished at568b408; its two attempts are exhausted and
+three-platform route remains failed.
