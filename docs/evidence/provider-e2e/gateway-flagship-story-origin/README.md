@@ -12,3 +12,17 @@ Earlier retained directories record pre-provider configuration failures:
 `gateway-flagship-story-bounded` made one app request rejected by checkOrigin
 before provider execution. They must not be counted as successful model calls.
 The private temporary credential file was removed after the terminal run.
+
+## Visual diagnosis
+
+Root inspected `gateway/failure.png`: the scene visibly contains trees labelled
+Friendly Oak, Sunny Pine, and Little Oak. The friendly-tree assertion searched
+only label plus geometry kind, so catalog assets with `kind: asset` could be
+missed. This is a classifier defect, not evidence that Gateway omitted trees.
+The report records 29 operations, 6 catalog entities, 2 procedural entities,
+5 generated entities, and a visible seed. These facts do not prove either
+subsequent edit, undo, reload, or the complete flagship story.
+
+The current harness persisted the created project after the semantic assertion;
+therefore this failed assertion did not retain the full project JSON. Fixing
+that evidence ordering is required before another meaningful acceptance run.
