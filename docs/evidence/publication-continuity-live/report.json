@@ -1,0 +1,701 @@
+{
+  "status": "passed",
+  "base": "https://orbsie.com",
+  "republish": true,
+  "startedAt": "2026-09-12T07:34:22.037Z",
+  "account": {
+    "email": "orbsie-continuity-mty2k8r0-a071d5394f4c39d4c0@example.com"
+  },
+  "world": {
+    "id": "pub-accept-mty2kgut",
+    "title": "A tiny island to share",
+    "revision": 0
+  },
+  "progress": {
+    "account": {
+      "email": "orbsie-continuity-mty2k8r0-a071d5394f4c39d4c0@example.com"
+    },
+    "world": {
+      "id": "pub-accept-mty2kgut",
+      "revision": 2,
+      "title": "A tiny island to share — Sunset crystal garden"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "pub-accept-mty2kgut",
+          "revision": 1,
+          "title": "A tiny island to share"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_HsRtQ7CaCz9u5ReXJyiiben6NSZH",
+        "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mty2kgut",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+        "world": {
+          "id": "pub-accept-mty2kgut",
+          "revision": 1,
+          "title": "A tiny island to share"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mty2kgut",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "A tiny island to share",
+          "materialColor": "#a1f0d7"
+        }
+      },
+      {
+        "step": "cloud save revision 2",
+        "status": 200,
+        "ok": true,
+        "revision": 2,
+        "world": {
+          "id": "pub-accept-mty2kgut",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      },
+      {
+        "step": "publish revision 2",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "servedRevision": 1,
+        "deploymentId": "dpl_FtPdA6LWDicpzJRV5Ykqyih1FWyH",
+        "deploymentUrl": "https://orb-864d1efdd17428485572-nhflqk3hf-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mty2kgut",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+        "world": {
+          "id": "pub-accept-mty2kgut",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      },
+      {
+        "step": "previous public release during republish page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "previous public release during republish browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "previous public release during republish snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "A tiny island to share",
+          "materialColor": "#a1f0d7"
+        }
+      },
+      {
+        "step": "republish pending-window observed",
+        "pendingWindow": {
+          "observed": true,
+          "state": "INITIALIZING",
+          "servedRevision": 1,
+          "previousRelease": {
+            "deploymentId": "dpl_HsRtQ7CaCz9u5ReXJyiiben6NSZH",
+            "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+            "browser": {
+              "status": 200,
+              "ready": true,
+              "canvas": true,
+              "pageErrorCount": 0
+            },
+            "snapshot": {
+              "version": 1,
+              "id": "pub-accept-mty2kgut",
+              "title": "A tiny island to share",
+              "seed": 42,
+              "revision": 1,
+              "entities": [
+                {
+                  "id": "tree-accept",
+                  "label": "Friendly tree",
+                  "position": [
+                    -2,
+                    0,
+                    1
+                  ],
+                  "scale": [
+                    1.25,
+                    1.35,
+                    1.25
+                  ],
+                  "color": "#6d9d58",
+                  "geometry": {
+                    "kind": "tree",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "static"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-accept",
+                  "label": "Glowing crystal",
+                  "position": [
+                    1.5,
+                    0.8,
+                    -1
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ],
+                  "color": "#a1f0d7",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "portal-accept",
+                  "label": "Sunlight portal",
+                  "position": [
+                    0,
+                    0,
+                    -3.5
+                  ],
+                  "scale": [
+                    1.2,
+                    1.2,
+                    1.2
+                  ],
+                  "color": "#eddbb7",
+                  "geometry": {
+                    "kind": "arch",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "portal"
+                  },
+                  "stage": "ready"
+                }
+              ],
+              "environment": {
+                "sky": "#dceee9",
+                "ground": "#91b977",
+                "water": "#59bdbb"
+              },
+              "messages": []
+            }
+          }
+        }
+      },
+      {
+        "step": "publish revision 2 status",
+        "status": 200,
+        "ok": true,
+        "state": "BUILDING",
+        "servedRevision": 1,
+        "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+      },
+      {
+        "step": "publish revision 2 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 2,
+        "deploymentUrl": "https://orb-864d1efdd17428485572-nhflqk3hf-grappeggias-projects.vercel.app",
+        "url": "/o/pub-accept-mty2kgut",
+        "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+      },
+      {
+        "step": "final public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "final public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "final public release snapshot",
+        "snapshot": {
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden",
+          "materialColor": "#ff8f6b"
+        }
+      }
+    ],
+    "last": {
+      "step": "final public release snapshot",
+      "snapshot": {
+        "revision": 2,
+        "title": "A tiny island to share — Sunset crystal garden",
+        "materialColor": "#ff8f6b"
+      }
+    }
+  },
+  "checks": {
+    "signup": "passed",
+    "cloudSave": {
+      "revision": 1
+    },
+    "publishSubmitted": {
+      "state": "INITIALIZING",
+      "url": "/o/pub-accept-mty2kgut",
+      "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+      "deploymentId": "dpl_HsRtQ7CaCz9u5ReXJyiiben6NSZH",
+      "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+    },
+    "publicationReady": {
+      "state": "READY",
+      "publicUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+      "sharingPage": "https://orbsie.com/o/pub-accept-mty2kgut",
+      "servedRevision": 1,
+      "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4"
+    },
+    "signedOutStatus": 200,
+    "signedOutDataReady": true,
+    "signedOutTitle": "A tiny island to share",
+    "first": {
+      "revision": 1,
+      "title": "A tiny island to share",
+      "projectId": "pub-accept-mty2kgut",
+      "state": "INITIALIZING",
+      "publicUrl": "/o/pub-accept-mty2kgut",
+      "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+      "deploymentId": "dpl_HsRtQ7CaCz9u5ReXJyiiben6NSZH",
+      "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "postVercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "getVercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "servedRevision": 1,
+      "signedOutSnapshot": {
+        "version": 1,
+        "id": "pub-accept-mty2kgut",
+        "title": "A tiny island to share",
+        "seed": 42,
+        "revision": 1,
+        "entities": [
+          {
+            "id": "tree-accept",
+            "label": "Friendly tree",
+            "position": [
+              -2,
+              0,
+              1
+            ],
+            "scale": [
+              1.25,
+              1.35,
+              1.25
+            ],
+            "color": "#6d9d58",
+            "geometry": {
+              "kind": "tree",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "static"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "crystal-accept",
+            "label": "Glowing crystal",
+            "position": [
+              1.5,
+              0.8,
+              -1
+            ],
+            "scale": [
+              0.6,
+              0.6,
+              0.6
+            ],
+            "color": "#a1f0d7",
+            "geometry": {
+              "kind": "crystal",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "collect"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "portal-accept",
+            "label": "Sunlight portal",
+            "position": [
+              0,
+              0,
+              -3.5
+            ],
+            "scale": [
+              1.2,
+              1.2,
+              1.2
+            ],
+            "color": "#eddbb7",
+            "geometry": {
+              "kind": "arch",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "portal"
+            },
+            "stage": "ready"
+          }
+        ],
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        },
+        "messages": []
+      }
+    },
+    "republish": {
+      "revision": 2,
+      "title": "A tiny island to share — Sunset crystal garden",
+      "materialColor": "#ff8f6b",
+      "projectId": "pub-accept-mty2kgut",
+      "state": "INITIALIZING",
+      "vercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "deploymentId": "dpl_FtPdA6LWDicpzJRV5Ykqyih1FWyH",
+      "publicUrl": "/o/pub-accept-mty2kgut",
+      "deploymentUrl": "https://orb-864d1efdd17428485572-nhflqk3hf-grappeggias-projects.vercel.app",
+      "servedRevision": 2,
+      "postVercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "getVercelProjectId": "prj_UbvjrBIcE5hhmmC8k8Zxfru962K4",
+      "previousRelease": {
+        "version": 1,
+        "id": "pub-accept-mty2kgut",
+        "title": "A tiny island to share",
+        "seed": 42,
+        "revision": 1,
+        "entities": [
+          {
+            "id": "tree-accept",
+            "label": "Friendly tree",
+            "position": [
+              -2,
+              0,
+              1
+            ],
+            "scale": [
+              1.25,
+              1.35,
+              1.25
+            ],
+            "color": "#6d9d58",
+            "geometry": {
+              "kind": "tree",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "static"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "crystal-accept",
+            "label": "Glowing crystal",
+            "position": [
+              1.5,
+              0.8,
+              -1
+            ],
+            "scale": [
+              0.6,
+              0.6,
+              0.6
+            ],
+            "color": "#a1f0d7",
+            "geometry": {
+              "kind": "crystal",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "collect"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "portal-accept",
+            "label": "Sunlight portal",
+            "position": [
+              0,
+              0,
+              -3.5
+            ],
+            "scale": [
+              1.2,
+              1.2,
+              1.2
+            ],
+            "color": "#eddbb7",
+            "geometry": {
+              "kind": "arch",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "portal"
+            },
+            "stage": "ready"
+          }
+        ],
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        },
+        "messages": []
+      },
+      "pendingWindow": {
+        "observed": true,
+        "state": "INITIALIZING",
+        "servedRevision": 1,
+        "previousRelease": {
+          "deploymentId": "dpl_HsRtQ7CaCz9u5ReXJyiiben6NSZH",
+          "deploymentUrl": "https://orb-864d1efdd17428485572-e68wk6tle-grappeggias-projects.vercel.app",
+          "browser": {
+            "status": 200,
+            "ready": true,
+            "canvas": true,
+            "pageErrorCount": 0
+          },
+          "snapshot": {
+            "version": 1,
+            "id": "pub-accept-mty2kgut",
+            "title": "A tiny island to share",
+            "seed": 42,
+            "revision": 1,
+            "entities": [
+              {
+                "id": "tree-accept",
+                "label": "Friendly tree",
+                "position": [
+                  -2,
+                  0,
+                  1
+                ],
+                "scale": [
+                  1.25,
+                  1.35,
+                  1.25
+                ],
+                "color": "#6d9d58",
+                "geometry": {
+                  "kind": "tree",
+                  "detail": "refined"
+                },
+                "behavior": {
+                  "type": "static"
+                },
+                "stage": "ready"
+              },
+              {
+                "id": "crystal-accept",
+                "label": "Glowing crystal",
+                "position": [
+                  1.5,
+                  0.8,
+                  -1
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ],
+                "color": "#a1f0d7",
+                "geometry": {
+                  "kind": "crystal",
+                  "detail": "refined"
+                },
+                "behavior": {
+                  "type": "collect"
+                },
+                "stage": "ready"
+              },
+              {
+                "id": "portal-accept",
+                "label": "Sunlight portal",
+                "position": [
+                  0,
+                  0,
+                  -3.5
+                ],
+                "scale": [
+                  1.2,
+                  1.2,
+                  1.2
+                ],
+                "color": "#eddbb7",
+                "geometry": {
+                  "kind": "arch",
+                  "detail": "refined"
+                },
+                "behavior": {
+                  "type": "portal"
+                },
+                "stage": "ready"
+              }
+            ],
+            "environment": {
+              "sky": "#dceee9",
+              "ground": "#91b977",
+              "water": "#59bdbb"
+            },
+            "messages": []
+          }
+        }
+      },
+      "finalSnapshot": {
+        "version": 1,
+        "id": "pub-accept-mty2kgut",
+        "title": "A tiny island to share — Sunset crystal garden",
+        "seed": 42,
+        "revision": 2,
+        "entities": [
+          {
+            "id": "tree-accept",
+            "label": "Friendly tree",
+            "position": [
+              -2,
+              0,
+              1
+            ],
+            "scale": [
+              1.25,
+              1.35,
+              1.25
+            ],
+            "color": "#6d9d58",
+            "geometry": {
+              "kind": "tree",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "static"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "crystal-accept",
+            "label": "Glowing crystal",
+            "position": [
+              1.5,
+              0.8,
+              -1
+            ],
+            "scale": [
+              0.6,
+              0.6,
+              0.6
+            ],
+            "color": "#ff8f6b",
+            "geometry": {
+              "kind": "crystal",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "collect"
+            },
+            "stage": "ready"
+          },
+          {
+            "id": "portal-accept",
+            "label": "Sunlight portal",
+            "position": [
+              0,
+              0,
+              -3.5
+            ],
+            "scale": [
+              1.2,
+              1.2,
+              1.2
+            ],
+            "color": "#eddbb7",
+            "geometry": {
+              "kind": "arch",
+              "detail": "refined"
+            },
+            "behavior": {
+              "type": "portal"
+            },
+            "stage": "ready"
+          }
+        ],
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        },
+        "messages": []
+      }
+    }
+  },
+  "finishedAt": "2026-09-12T07:34:49.742Z"
+}

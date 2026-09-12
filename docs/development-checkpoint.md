@@ -476,3 +476,16 @@ then rethrows, with no retry. Root reviewed both changes and the regression
 proving evidence survives subsequent polling failure. Twenty harness tests,
 typecheck, syntax/format and diff checks passed. No live deployment was run;
 previous-release availability during a live pending window remains unverified.
+
+### Live pending publication continuity passed
+
+At harness source 17797d6, one production test account and Orb completed two
+publication POSTs without retries or model calls. Revision 1 remained browser
+ready with its original snapshot after revision 2 submission; a subsequent
+status still reported BUILDING with servedRevision 1. Revision 2 then became
+READY with the changed snapshot in the same Vercel project. Both signed-out
+browser checks had a ready canvas and zero page errors. Evidence:
+`docs/evidence/publication-continuity-live/report.json`. Root reviewed the
+ordered observations. Temporary credentials were deleted after success. This
+proves bounded pending-release continuity, not gameplay or failed-live-deploy
+continuity, which remain separate requirements.
