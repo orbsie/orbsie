@@ -3,5 +3,7 @@
   "status": "complete",
   "models": [],
   "missing": [],
-  "totalBytes": 0
+  "totalBytes": 0,
+  "sourceSnapshot": "docs/evidence/provider-e2e/gateway-current-full-story/gateway/story-created-project.json",
+  "sourceSnapshotSha256": "7864935f73834b7b44620158930a72784738783d910dc17fbb00a80331f6773e"
 }
