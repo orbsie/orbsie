@@ -49,6 +49,11 @@ import {
   modelingFeedbackForFailure,
   type ModelingFeedback,
 } from "./modeling-feedback";
+import {
+  generationFeedbackForFailure,
+  generationFeedbackMatchesProject,
+  type GenerationFeedback,
+} from "./generation-feedback";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -66,6 +71,7 @@ export type GenerationRecovery = {
   prompt: string;
   selected?: string;
   checkpoint: Project;
+  feedback?: GenerationFeedback;
 };
 function browserModelingAvailable() {
   return typeof Worker !== "undefined" && typeof WebAssembly !== "undefined";
@@ -131,6 +137,7 @@ interface State {
     prompt: string,
     connection?: GenerationConnection,
     journal?: GenerationJournalConnection,
+    generationFeedback?: GenerationFeedback,
   ) => Promise<void>;
   stop: () => void;
   undo: () => void;
@@ -609,6 +616,7 @@ export const useOrb = create<State>((setState, getState) => ({
     prompt,
     connection = { provider: "free", model: "", key: "" },
     journal,
+    generationFeedback,
   ) {
     if (!activateWriter(getState().project.id)) {
       setState({
@@ -628,6 +636,12 @@ export const useOrb = create<State>((setState, getState) => ({
       getState().phase === "landing"
         ? blankProject()
         : committed(getState().project, baseline);
+    const retryFeedback = generationFeedbackMatchesProject(
+      generationFeedback,
+      before.id,
+    )
+      ? generationFeedback
+      : undefined;
     const ruleRestartsBeforeGeneration = getState().ruleRestartCount;
     baseline = before;
     const initial = before.entities.length === 0;
@@ -695,6 +709,7 @@ export const useOrb = create<State>((setState, getState) => ({
       seen: new Set(),
     };
     let durableRun: GenerationRun | undefined;
+    let failureFeedback: GenerationFeedback | undefined;
     const journalCurrent = () =>
       !signal.aborted &&
       active === controller &&
@@ -906,10 +921,12 @@ export const useOrb = create<State>((setState, getState) => ({
             getState().modelingFeedback?.projectId === project.id
               ? getState().modelingFeedback
               : undefined,
+          generationFeedback: retryFeedback,
         });
         const response = await fetch(request.url, { ...request.init, signal });
         if (!response.ok) {
-          const body = await response.json();
+          const body = await response.json().catch(() => ({}));
+          failureFeedback = generationFeedbackForFailure(project.id, body);
           if (active === controller && !signal.aborted)
             setState({
               generationErrorCode:
@@ -921,6 +938,18 @@ export const useOrb = create<State>((setState, getState) => ({
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let pending = "";
+        const consumeRecord = async (record: unknown) => {
+          const feedback = generationFeedbackForFailure(project.id, record);
+          if (feedback) failureFeedback = feedback;
+          if (
+            record &&
+            typeof record === "object" &&
+            !Array.isArray(record) &&
+            typeof (record as Record<string, unknown>).error === "string"
+          )
+            throw Error((record as Record<string, unknown>).error as string);
+          return apply(record as ModelCommand);
+        };
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -932,14 +961,14 @@ export const useOrb = create<State>((setState, getState) => ({
           for (const line of lines) {
             if (!line.trim()) continue;
             const record = JSON.parse(line);
-            if (record.error) throw Error(record.error);
-            if (!(await apply(record))) {
+            if (!(await consumeRecord(record))) {
               await reader.cancel().catch(() => undefined);
               return;
             }
           }
         }
-        if (pending.trim() && !(await apply(JSON.parse(pending)))) return;
+        if (pending.trim() && !(await consumeRecord(JSON.parse(pending))))
+          return;
         if (lastAppliedCommand !== "commit_revision")
           throw Error(
             "The connection ended before committing the scene. Finished objects are safe; try continuing your request.",
@@ -978,6 +1007,7 @@ export const useOrb = create<State>((setState, getState) => ({
             prompt,
             ...(recoverySelected ? { selected: recoverySelected } : {}),
             checkpoint,
+            ...(failureFeedback ? { feedback: failureFeedback } : {}),
           },
           error: signal.aborted
             ? ""

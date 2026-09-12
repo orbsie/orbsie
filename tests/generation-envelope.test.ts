@@ -167,6 +167,37 @@ describe("structured generation envelopes", () => {
     expect(body.messages[0].content).toContain("unscaled local bounds");
   });
 
+  it("adds only bounded retry feedback to the server correction instruction", async () => {
+    const fetcher = vi.fn(async () =>
+      responseFor(JSON.stringify({ commands: [commit] })),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const project = blankProject();
+
+    await generateCommands({
+      ...generationOptions("json-object"),
+      project,
+      generationFeedback: {
+        version: 1,
+        projectId: project.id,
+        code: "INVALID_SCENE_UPDATE",
+        finishReason: "stop",
+        issues: [
+          {
+            code: "invalid_type",
+            path: ["geometry", "job", "recipe"],
+            reason: "unreachable_recipe_node",
+          },
+        ],
+      },
+    });
+
+    const body = bodyOf(fetcher);
+    expect(body.messages[0].content).toContain("INVALID_SCENE_UPDATE");
+    expect(body.messages[0].content).toContain("unreachable_recipe_node");
+    expect(body.messages[1].content).not.toContain("generationFeedback");
+  });
+
   it("requests the capability-specific non-strict JSON schema", async () => {
     const fetcher = vi.fn(async () =>
       responseFor(JSON.stringify({ commands: [commit] })),

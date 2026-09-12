@@ -30,6 +30,11 @@ import {
   type ModelingFeedback,
 } from "../modeling-feedback";
 import {
+  generationFeedbackInstruction,
+  generationFeedbackSchema,
+  type GenerationFeedback,
+} from "../generation-feedback";
+import {
   SceneCommandEnvelopeDecoder,
   SceneCommandEnvelopeError,
 } from "./scene-command-envelope";
@@ -177,6 +182,7 @@ export async function generateCommands({
   localModeling = false,
   browserModeling = false,
   modelingFeedback,
+  generationFeedback,
   outputFormat = "ndjson",
 }: {
   provider: "openrouter" | "gateway";
@@ -190,6 +196,7 @@ export async function generateCommands({
   localModeling?: boolean;
   browserModeling?: boolean;
   modelingFeedback?: ModelingFeedback;
+  generationFeedback?: GenerationFeedback;
   outputFormat?: GenerationOutputFormat;
 }) {
   const assetPolicy = deriveAssetPolicy(prompt, selected, project);
@@ -208,6 +215,9 @@ export async function generateCommands({
     localModeling,
     browserModeling,
   );
+  const validatedGenerationFeedback = generationFeedback
+    ? generationFeedbackSchema.parse(generationFeedback)
+    : undefined;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -229,11 +239,16 @@ export async function generateCommands({
       messages: [
         {
           role: "system",
-          content: systemPromptForCapabilities(
-            localModeling,
-            browserModeling,
-            outputFormat,
-          ),
+          content: [
+            systemPromptForCapabilities(
+              localModeling,
+              browserModeling,
+              outputFormat,
+            ),
+            generationFeedbackInstruction(validatedGenerationFeedback),
+          ]
+            .filter(Boolean)
+            .join(" "),
         },
         {
           role: "user",

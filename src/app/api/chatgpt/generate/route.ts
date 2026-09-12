@@ -30,6 +30,11 @@ export async function POST(request: Request) {
       await boundedJSON(request, 512 * 1024),
     );
     if (!input.success) throw new HttpError(400, "Invalid generation request.");
+    if (
+      input.data.generationFeedback &&
+      input.data.generationFeedback.projectId !== input.data.project.id
+    )
+      throw new HttpError(400, "Invalid generation request.");
     const identity = {
       ownerId: session.user.id,
       sessionId: session.session.id,

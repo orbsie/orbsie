@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 import { createChatGPTSceneStream } from "../src/lib/server/chatgpt-scene-stream";
+import { generationFeedbackForFailure } from "../src/lib/generation-feedback";
 type Input = Parameters<
   Parameters<typeof createChatGPTSceneStream>[1]["generate"]
 >[0];
@@ -102,6 +103,82 @@ describe("hosted ChatGPT scene stream", () => {
     );
     expect(result).toContain('"commit_revision"');
     expect(JSON.parse(input!.input).modelingFeedback).toEqual(feedback);
+  });
+  it("forwards safe generation feedback as a correction instruction", async () => {
+    const project = blankProject();
+    let input: Input | undefined;
+    const result = await output(
+      createChatGPTSceneStream(
+        {
+          ...request(),
+          project,
+          generationFeedback: {
+            version: 1,
+            projectId: project.id,
+            code: "INVALID_SCENE_UPDATE",
+            finishReason: "stop",
+            issues: [
+              {
+                code: "invalid_type",
+                path: ["geometry", "job", "recipe"],
+                reason: "unreachable_recipe_node",
+              },
+            ],
+          },
+        },
+        {
+          generate: async (value) => {
+            input = value;
+            value.onText(commit + "\n");
+          },
+        },
+      ),
+    );
+    expect(result).toContain('"commit_revision"');
+    expect(input?.instructions).toContain("INVALID_SCENE_UPDATE");
+    expect(input?.instructions).toContain("unreachable_recipe_node");
+    expect(input?.input).not.toContain("generationFeedback");
+  });
+  it("turns a hosted validation failure into safe feedback for an explicit retry", async () => {
+    const project = blankProject();
+    const failed = JSON.parse(
+      await output(
+        createChatGPTSceneStream(
+          { ...request(), project },
+          {
+            generate: async (value) => {
+              value.onText(
+                JSON.stringify({
+                  type: "execute_shell",
+                  command: "private-secret",
+                }),
+              );
+            },
+          },
+        ),
+      ),
+    );
+    expect(failed.code).toBe("INVALID_SCENE_UPDATE");
+    expect(failed.diagnostic).toBeDefined();
+    expect(JSON.stringify(failed)).not.toContain("private-secret");
+
+    const feedback = generationFeedbackForFailure(project.id, failed);
+    expect(feedback).toBeDefined();
+    let retryInput: Input | undefined;
+    const retried = await output(
+      createChatGPTSceneStream(
+        { ...request(), project, generationFeedback: feedback },
+        {
+          generate: async (value) => {
+            retryInput = value;
+            value.onText(commit + "\n");
+          },
+        },
+      ),
+    );
+    expect(retried).toContain('"commit_revision"');
+    expect(retryInput?.instructions).toContain("INVALID_SCENE_UPDATE");
+    expect(retryInput?.input).not.toContain("generationFeedback");
   });
   it("rejects invalid scene commands and missing commits", async () => {
     for (const text of [

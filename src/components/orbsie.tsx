@@ -796,9 +796,13 @@ export default function Orbsie() {
           }
         : undefined;
       useOrb.getState().set({ selected: selectedId });
+      const retryFeedback =
+        retrying && current.generationRecovery?.projectId === originProjectId
+          ? current.generationRecovery.feedback
+          : undefined;
       const generation = useOrb
         .getState()
-        .run(instruction, selectedConnection, journal);
+        .run(instruction, selectedConnection, journal, retryFeedback);
       const generationWorld = captureCloudRequest();
       submission.current.checking = false;
       await generation;
@@ -2325,9 +2329,7 @@ export default function Orbsie() {
                           setSignInHint(
                             "Sign in first — ChatGPT connects right after your sign-in.",
                           );
-                          document
-                            .getElementById("account-email")
-                            ?.focus();
+                          document.getElementById("account-email")?.focus();
                         }}
                       >
                         <ProviderLogo provider="chatgpt" />

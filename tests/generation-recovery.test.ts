@@ -283,6 +283,88 @@ it("keeps the last valid increments for explicit recovery and clears stale recov
   expect(orb.getState().generationRecovery).toBeUndefined();
 });
 
+it("retains safe server diagnostics for an explicit retry without automatic calls", async () => {
+  const project = readyProject();
+  await orb.getState().load(project);
+  const failure = {
+    error: "raw provider detail and secret-node must not be forwarded",
+    code: "INVALID_SCENE_UPDATE",
+    diagnostic: {
+      operation: 2,
+      finishReason: "stop",
+      issues: [
+        {
+          code: "invalid_type",
+          path: ["geometry", "job", "recipe", "nodes", 2],
+          reason: "unreachable_recipe_node",
+        },
+      ],
+    },
+  };
+  const commit = { type: "commit_revision", message: "Ready." };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(JSON.stringify(failure)))
+    .mockResolvedValueOnce(new Response(`${JSON.stringify(commit)}\n`));
+  vi.stubGlobal("fetch", fetcher);
+
+  await orb.getState().run("Repair the selected shape");
+
+  expect(fetcher).toHaveBeenCalledOnce();
+  const failed = orb.getState();
+  const feedback = failed.generationRecovery?.feedback;
+  expect(feedback).toEqual({
+    version: 1,
+    projectId: project.id,
+    code: "INVALID_SCENE_UPDATE",
+    finishReason: "stop",
+    issues: [
+      {
+        code: "invalid_type",
+        path: ["geometry", "job", "recipe", "nodes", 2],
+        reason: "unreachable_recipe_node",
+      },
+    ],
+  });
+  expect(JSON.stringify(feedback)).not.toContain("secret-node");
+
+  // No retry is started until this explicit second run.
+  await orb
+    .getState()
+    .run("Repair the selected shape", undefined, undefined, feedback);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  const retryPayload = JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(retryPayload.generationFeedback).toEqual(feedback);
+  expect(JSON.stringify(retryPayload)).not.toContain("secret-node");
+  expect(orb.getState().generationRecovery).toBeUndefined();
+});
+
+it("does not reuse failure feedback for a new prompt or a switched project", async () => {
+  const project = readyProject();
+  await orb.getState().load(project);
+  const failure = {
+    error: "invalid scene",
+    code: "INVALID_SCENE_JSON",
+    diagnostic: { finishReason: null, issues: [] },
+  };
+  const commit = { type: "commit_revision", message: "Ready." };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(`${JSON.stringify(failure)}\n`))
+    .mockResolvedValueOnce(new Response(`${JSON.stringify(commit)}\n`));
+  vi.stubGlobal("fetch", fetcher);
+
+  await orb.getState().run("First prompt");
+  expect(orb.getState().generationRecovery?.feedback).toBeDefined();
+  const nextProject = readyProject({ id: crypto.randomUUID() });
+  await orb.getState().load(nextProject);
+  expect(orb.getState().generationRecovery).toBeUndefined();
+
+  await orb.getState().run("Unrelated new prompt");
+  const newPromptPayload = JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(newPromptPayload.generationFeedback).toBeUndefined();
+});
+
 it("does not let a delayed old save mark a switched world or draft pointer", async () => {
   const oldProject = readyProject({ title: "Old world" });
   const nextProject = readyProject({

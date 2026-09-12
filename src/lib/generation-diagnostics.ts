@@ -7,12 +7,19 @@ const MAX_UNION_DEPTH = 4;
 const MAX_CANDIDATES = 256;
 const MAX_OPERATION_COUNT = 251;
 
-const knownDiagnosticReasons = new Set([
+export const generationDiagnosticCodes = [
+  "INVALID_SCENE_UPDATE",
+  "INVALID_SCENE_JSON",
+  "INVALID_SCENE_PROTOCOL",
+  "TRUNCATED_SCENE_STREAM",
+  "PROVIDER_STREAM_ERROR",
+] as const;
+export const generationDiagnosticReasons = [
   "duplicate_recipe_node_id",
   "unreachable_recipe_node",
-]);
+] as const;
 
-const knownPathKeys = new Set([
+export const generationDiagnosticPathKeys = [
   "type",
   "version",
   "revision",
@@ -96,9 +103,9 @@ const knownPathKeys = new Set([
   "duration",
   "loop",
   "delta",
-]);
+] as const;
 
-const knownIssueCodes = new Set([
+export const generationDiagnosticIssueCodes = [
   "invalid_type",
   "too_big",
   "too_small",
@@ -110,14 +117,12 @@ const knownIssueCodes = new Set([
   "invalid_element",
   "invalid_value",
   "custom",
-]);
+] as const;
+const knownDiagnosticReasons = new Set<string>(generationDiagnosticReasons);
+const knownPathKeys = new Set<string>(generationDiagnosticPathKeys);
+const knownIssueCodes = new Set<string>(generationDiagnosticIssueCodes);
 
-type DiagnosticCode =
-  | "INVALID_SCENE_UPDATE"
-  | "INVALID_SCENE_JSON"
-  | "INVALID_SCENE_PROTOCOL"
-  | "TRUNCATED_SCENE_STREAM"
-  | "PROVIDER_STREAM_ERROR";
+type DiagnosticCode = (typeof generationDiagnosticCodes)[number];
 
 export type GenerationFinishReason =
   | "stop"

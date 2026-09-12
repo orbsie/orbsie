@@ -179,6 +179,56 @@ it("passes the strict Gateway operator assertion through the route", async () =>
   );
 });
 
+it("accepts project-scoped bounded retry feedback", async () => {
+  const project = blankProject();
+  setup(modelWith(false, false));
+  const response = await POST(
+    request("openrouter", {
+      project,
+      generationFeedback: {
+        version: 1,
+        projectId: project.id,
+        code: "INVALID_SCENE_UPDATE",
+        finishReason: "stop",
+        issues: [
+          {
+            code: "invalid_type",
+            path: ["geometry", "job", "recipe"],
+            reason: "unreachable_recipe_node",
+          },
+        ],
+      },
+    }),
+  );
+  expect(response.status).toBe(200);
+  expect(deps.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      generationFeedback: expect.objectContaining({ projectId: project.id }),
+    }),
+  );
+});
+
+it("rejects malformed or cross-project retry feedback before preflight", async () => {
+  const project = blankProject();
+  setup();
+  const response = await POST(
+    request("openrouter", {
+      project,
+      generationFeedback: {
+        version: 1,
+        projectId: "other-project",
+        code: "INVALID_SCENE_UPDATE",
+        finishReason: "stop",
+        issues: [{ code: "secret", path: ["raw-node"] }],
+      },
+    }),
+  );
+  expect(response.status).toBe(400);
+  expect(await response.text()).not.toContain("raw-node");
+  expect(deps.preflight).not.toHaveBeenCalled();
+  expect(deps.generate).not.toHaveBeenCalled();
+});
+
 it("rejects malformed operator configuration before preflight, trial, or inference", async () => {
   vi.stubEnv("ORBSIE_GENERATION_FORMAT_OVERRIDES", "not-json");
   setup();

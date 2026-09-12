@@ -3,6 +3,7 @@ import { z } from "zod";
 import { generationMaxTokens } from "@/lib/server/generation-limits";
 import { projectSchema, entitySchema } from "@/lib/protocol";
 import { modelingFeedbackSchema } from "@/lib/modeling-feedback";
+import { generationFeedbackSchema } from "@/lib/generation-feedback";
 import {
   generateCommands,
   GenerationProviderError,
@@ -44,9 +45,15 @@ export async function POST(request: Request) {
         browserModeling: z.boolean().default(false),
         selected: entitySchema.shape.id.optional(),
         modelingFeedback: modelingFeedbackSchema.optional(),
+        generationFeedback: generationFeedbackSchema.optional(),
       })
       .safeParse(await boundedJSON(request));
     if (!parsed.success)
+      throw new HttpError(400, "Check your connection and world data.");
+    if (
+      parsed.data.generationFeedback &&
+      parsed.data.generationFeedback.projectId !== parsed.data.project.id
+    )
       throw new HttpError(400, "Check your connection and world data.");
     const formatOverrides = parseGenerationFormatOverrides();
     const free = parsed.data.provider === "free";

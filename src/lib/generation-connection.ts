@@ -1,4 +1,5 @@
 import type { ModelingFeedback } from "./modeling-feedback";
+import type { GenerationFeedback } from "./generation-feedback";
 
 export type GenerationConnection = {
   provider: string;
@@ -56,6 +57,11 @@ export function generationRequest(
         : {}),
       ...(source.modelingFeedback
         ? { modelingFeedback: source.modelingFeedback as ModelingFeedback }
+        : {}),
+      ...(source.generationFeedback
+        ? {
+            generationFeedback: source.generationFeedback as GenerationFeedback,
+          }
         : {}),
       browserModeling: source.browserModeling === true,
       localModeling: false,

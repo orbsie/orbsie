@@ -14,6 +14,11 @@ import { assertModelingCommand } from "../modeling-policy";
 import { systemPromptForCapabilities } from "./generation";
 import type { createChatGPTGeneration } from "./chatgpt-generation";
 import { modelingFeedbackSchema } from "../modeling-feedback";
+import { generationDiagnostic } from "../generation-diagnostics";
+import {
+  generationFeedbackInstruction,
+  generationFeedbackSchema,
+} from "../generation-feedback";
 
 export const chatGPTSceneRequestSchema = z
   .object({
@@ -25,6 +30,7 @@ export const chatGPTSceneRequestSchema = z
     browserModeling: z.boolean().default(false),
     localModeling: z.literal(false).default(false),
     modelingFeedback: modelingFeedbackSchema.optional(),
+    generationFeedback: generationFeedbackSchema.optional(),
   })
   .strict();
 
@@ -42,6 +48,11 @@ export function createChatGPTSceneStream(
       !input.project.entities.some((e) => e.id === input.selected))
   )
     throw Error("Invalid selected world.");
+  if (
+    input.generationFeedback &&
+    input.generationFeedback.projectId !== input.project.id
+  )
+    throw Error("Invalid generation feedback.");
   const policy = deriveAssetPolicy(input.prompt, input.selected, input.project);
   const modelInput = JSON.stringify({
     instruction: input.prompt,
@@ -119,10 +130,11 @@ export function createChatGPTSceneStream(
           await generator.generate({
             model: input.model,
             effort: input.effort,
-            instructions: systemPromptForCapabilities(
-              false,
-              input.browserModeling,
-            ),
+            instructions:
+              systemPromptForCapabilities(false, input.browserModeling) +
+              (input.generationFeedback
+                ? ` ${generationFeedbackInstruction(input.generationFeedback)}`
+                : ""),
             input: modelInput,
             signal: combined,
             onText(delta) {
@@ -139,13 +151,15 @@ export function createChatGPTSceneStream(
           combined.throwIfAborted();
           if (!pendingCommit) throw Error("Missing final commit.");
           enqueue(pendingCommit);
-        } catch {
+        } catch (error) {
+          const diagnostic = generationDiagnostic(error, count, null);
           if (!cancelled && !combined.aborted)
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
                   error:
                     "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
+                  ...(diagnostic ?? {}),
                 }) + "\n",
               ),
             );

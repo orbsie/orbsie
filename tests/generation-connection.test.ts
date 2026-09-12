@@ -120,6 +120,38 @@ describe("hosted ChatGPT generation", () => {
     expect(request.init.body).not.toContain("payload-secret");
   });
 
+  it("carries bounded generation feedback on an explicit hosted retry", () => {
+    const generationFeedback = {
+      version: 1 as const,
+      projectId: "world",
+      code: "INVALID_SCENE_UPDATE" as const,
+      finishReason: "stop" as const,
+      issues: [
+        {
+          code: "invalid_type" as const,
+          path: ["geometry", "job", "recipe"],
+          reason: "unreachable_recipe_node" as const,
+        },
+      ],
+    };
+    const request = generationRequest(
+      {
+        provider: "chatgpt-hosted",
+        model: "gpt-5.1",
+        effort: "low",
+        key: "",
+      },
+      {
+        prompt: "Repair the selected shape",
+        project: { id: "world" },
+        generationFeedback,
+      },
+    );
+    expect(JSON.parse(request.init.body as string).generationFeedback).toEqual(
+      generationFeedback,
+    );
+  });
+
   it("does not construct a hosted request without the selected effort", () => {
     expect(() =>
       generationRequest(

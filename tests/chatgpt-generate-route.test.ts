@@ -149,6 +149,43 @@ describe("hosted ChatGPT generation route", () => {
       }),
     );
   });
+  it("retains project-scoped generation feedback through the hosted route", async () => {
+    const project = blankProject();
+    const generationFeedback = {
+      version: 1 as const,
+      projectId: project.id,
+      code: "INVALID_SCENE_JSON" as const,
+      finishReason: null,
+      issues: [],
+    };
+    const response = await POST(
+      request({ ...payload(), project, generationFeedback }),
+    );
+    expect(response.status).toBe(200);
+    expect(mocks.request).toHaveBeenCalledWith(
+      expect.objectContaining({ capability: "private-token" }),
+      "generate",
+      expect.objectContaining({
+        input: expect.objectContaining({ generationFeedback }),
+      }),
+    );
+  });
+  it("rejects cross-project generation feedback before contacting the host", async () => {
+    const response = await POST(
+      request({
+        ...payload(),
+        generationFeedback: {
+          version: 1,
+          projectId: "other-project",
+          code: "INVALID_SCENE_JSON",
+          finishReason: null,
+          issues: [],
+        },
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
   it("redacts non-stream host failures", async () => {
     mocks.request.mockResolvedValueOnce(
       new Response("private provider diagnostic", { status: 500 }),
