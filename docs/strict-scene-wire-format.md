@@ -1,6 +1,9 @@
 # Strict scene wire format implementation contract
 
-Status: implementation in progress; no strict-mode live acceptance yet.
+Status: codec implemented and reviewed in `0705a17`; generation integration
+in progress, with no strict-mode live acceptance yet. Eight focused tests and
+typechecking pass. The projected browser command schema is about29KB, with
+125 object schemas and313 properties (before the commands envelope).
 
 The canonical scene Zod schema and semantic validation remain authoritative.
 Gateway's non-strict JSON Schema tests accepted the request but produced invalid
