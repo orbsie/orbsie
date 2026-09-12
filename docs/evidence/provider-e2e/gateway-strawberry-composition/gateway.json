@@ -1,0 +1,74 @@
+{
+  "checkedAt": "2026-09-12T04:36:23.283Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T04:36:23.283Z",
+    "harness": {
+      "checkoutSHA": "06761d904d29b06627a3d51ef6f2f0fabcbbece9",
+      "dirty": true,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "4884ad0",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "gateway",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3018",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "creation": {
+    "status": "blocked",
+    "operations": 0,
+    "firstReservationMs": 11924,
+    "seedObserved": true
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationDiagnostics": [
+      {
+        "code": "INVALID_SCENE_UPDATE",
+        "diagnostic": "{\"operation\":4,\"issues\":[{\"code\":\"invalid_union\",\"path\":[\"geometry\",\"job\",\"recipe\",\"nodes\",0,\"kind\"]},{\"code\":\"invalid_value\",\"path\":[\"geometry\",\"job\",\"backend\"]},{\"code\":\"invalid_type\",\"path\":[\"geometry\",\"job\",\"source\"]},{\"code\":\"invalid_value\",\"path\":[\"geometry\",\"kind\"]},{\"code\":\"invalid_value\",\"path\":[\"geometry\",\"assetId\"]},{\"code\":\"invalid_union\",\"path\":[\"geometry\",\"job\"]},{\"code\":\"unrecognized_keys\",\"path\":[\"geometry\",\"job\"]},{\"code\":\"invalid_union\",\"path\":[\"geometry\"]}],\"finishReason\":null"
+      }
+    ],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "failure.png"
+  ],
+  "error": "Generation failed before saving: The model returned an invalid scene update. Finished objects are preserved.\nTry again\nUse last working",
+  "acceptanceContext": {
+    "applicationSourceCommit": "4884ad0",
+    "applicationSourceStatus": "operator-supplied-unverified",
+    "configuredUpstreamFormat": "json-schema",
+    "formatEvidence": "exact server-only gateway model override"
+  }
+}

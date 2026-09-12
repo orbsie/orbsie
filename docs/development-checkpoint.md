@@ -172,3 +172,13 @@ prompt, material edit only after success, max two Luna low/default calls at
 4096 output tokens, no retries. OpenRouter is not repeated in this milestone.
 Regular Chrome was rechecked: Orbsie is signed out; its sign-in dialog is open
 and the owner has been asked to sign in before browser ChatGPT acceptance.
+
+### Gateway composition milestone: still failing
+
+Source4884ad0 production build passed; one Gateway JSON Schema create call
+failed at operation4. First diagnostic path is recipe.nodes[0].kind (invalid
+union), followed by alternative-union schema errors. No edit or retry. This
+is a new semantic failure, not evidence of duplicate/unreachable node IDs.
+Non-strict provider schema guidance is insufficient for reliable commands.
+Next worker investigates strict-schema compatibility offline; no further live
+prompt-only retry. Codex allowance last checked:70% remaining.
