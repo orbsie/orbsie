@@ -76,6 +76,7 @@ const STORY_MUSHROOM_LABEL_KINDS = new Set(["generated", "custom"]);
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
+const SOURCE_ROOT = resolve(".");
 const REPORT_MODE = "live-browser";
 const JOURNAL_POLL_TIMEOUT = 120000;
 const INTERRUPTION_METHODS = new Set(["stop", "reload"]);
@@ -200,9 +201,26 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_STORY must be 0 or 1.",
     );
   const flagshipStory = flagshipStoryValue === "1";
+  const flagshipResumeValue = process.env.ORBSIE_FLAGSHIP_RESUME;
+  if (
+    flagshipResumeValue !== undefined &&
+    !["0", "1"].includes(flagshipResumeValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME must be 0 or 1.",
+    );
+  const flagshipResume = flagshipResumeValue === "1";
+  if (flagshipStory && flagshipResume)
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_STORY and ORBSIE_FLAGSHIP_RESUME cannot be combined.",
+    );
   if (flagshipStory && provider !== "gateway")
     throw new HarnessConfigurationError(
       "ORBSIE_FLAGSHIP_STORY=1 is authorized only for the Gateway provider.",
+    );
+  if (flagshipResume && provider !== "gateway")
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME=1 is authorized only for the Gateway provider.",
     );
   if (
     flagshipStory &&
@@ -350,13 +368,15 @@ export function readConfiguration(argv) {
     keyScope,
     expectedModel,
     outputCap,
-    prompt: flagshipStory
+    prompt: flagshipStory || flagshipResume
       ? FLAGSHIP_STORY_PROMPT
       : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
         ? INPUT_GAME_PROMPT
         : process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
     editPrompt: flagshipStory
       ? FLAGSHIP_STORY_MUSHROOM_PROMPT
+      : flagshipResume
+        ? FLAGSHIP_STORY_PLATFORM_PROMPT
       : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
         ? INPUT_GAME_EDIT
         : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
@@ -365,8 +385,9 @@ export function readConfiguration(argv) {
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
-    generationBudget: flagshipStory ? 3 : 2,
+    generationBudget: flagshipStory ? 3 : flagshipResume ? 1 : 2,
     flagshipStory,
+    flagshipResume,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
       : undefined,
@@ -385,9 +406,30 @@ export function readConfiguration(argv) {
     requireProcedural: process.env.ORBSIE_REQUIRE_PROCEDURAL === "1",
   };
 
-  if (flagshipStory && outputCap !== 4096)
+  if (flagshipResume) {
+    const checkpointPath = process.env.ORBSIE_FLAGSHIP_RESUME_CHECKPOINT;
+    const modelsPath = process.env.ORBSIE_FLAGSHIP_RESUME_MODELS;
+    if (!checkpointPath || !modelsPath)
+      throw new HarnessConfigurationError(
+        "Flagship resume requires ORBSIE_FLAGSHIP_RESUME_CHECKPOINT and ORBSIE_FLAGSHIP_RESUME_MODELS.",
+      );
+    try {
+      config.resumeCheckpoint = readFlagshipResumeCheckpoint(
+        checkpointPath,
+        modelsPath,
+      );
+    } catch (error) {
+      throw new HarnessConfigurationError(
+        error instanceof Error
+          ? error.message
+          : "The flagship resume checkpoint could not be validated.",
+      );
+    }
+  }
+
+  if ((flagshipStory || flagshipResume) && outputCap !== 4096)
     throw new HarnessConfigurationError(
-      "Flagship story mode requires ORBSIE_OUTPUT_CAP_TOKENS=4096.",
+      "Flagship story and resume modes require ORBSIE_OUTPUT_CAP_TOKENS=4096.",
     );
   if (
     flagshipStory &&
@@ -396,6 +438,14 @@ export function readConfiguration(argv) {
   )
     throw new HarnessConfigurationError(
       "Flagship story mode requires its fixed mushroom and platform edit prompts.",
+    );
+  if (
+    flagshipResume &&
+    process.env.ORBSIE_EDIT_PROMPT !== undefined &&
+    process.env.ORBSIE_EDIT_PROMPT !== FLAGSHIP_STORY_PLATFORM_PROMPT
+  )
+    throw new HarnessConfigurationError(
+      "Flagship resume mode requires its fixed platform edit prompt.",
     );
   if (
     flagshipStory &&
@@ -412,6 +462,22 @@ export function readConfiguration(argv) {
   )
     throw new HarnessConfigurationError(
       "Flagship story mode cannot be combined with interrupted recovery, input-game, cloud, or publication phases.",
+    );
+  if (
+    flagshipResume &&
+    (config.interruptedRecovery ||
+      config.requireInputGame ||
+      config.requireNewOnly ||
+      config.requireBrowserModel ||
+      config.requireExtrusion ||
+      config.requireRevolution ||
+      config.requireGeometryEdit ||
+      config.requireProcedural ||
+      config.publication ||
+      config.cloudRecovery)
+  )
+    throw new HarnessConfigurationError(
+      "Flagship resume mode cannot be combined with input-game, recovery, publication, or other creation/edit gates.",
     );
 
   if (
@@ -725,6 +791,127 @@ function checkpointShape(project) {
   return true;
 }
 
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function readFlagshipResumeCheckpoint(checkpointArg, modelsArg) {
+  const checkpointPath = resolve(checkpointArg);
+  const modelsDir = resolve(modelsArg);
+  let checkpointBytes;
+  let project;
+  let evidence;
+  try {
+    checkpointBytes = readFileSync(checkpointPath);
+    project = JSON.parse(checkpointBytes.toString("utf8"));
+    evidence = JSON.parse(
+      readFileSync(join(modelsDir, "report.json")).toString("utf8"),
+    );
+  } catch {
+    throw Error("Flagship resume checkpoint or evidence report could not be read.");
+  }
+  if (!checkpointShape(project))
+    throw Error("Flagship resume checkpoint has an invalid project shape.");
+  if (project.revision < 1 || !project.id)
+    throw Error("Flagship resume checkpoint is missing a project revision.");
+  try {
+    assertFlagshipStoryCreation(project);
+    assert(
+      project.messages.some(
+        (message) => message?.text === FLAGSHIP_STORY_PROMPT,
+      ),
+      "Flagship resume checkpoint is missing the original story prompt.",
+    );
+    assert(
+      project.messages.some(
+        (message) => message?.text === FLAGSHIP_STORY_MUSHROOM_PROMPT,
+      ),
+      "Flagship resume checkpoint is missing the mushroom checkpoint prompt.",
+    );
+    assert(
+      project.entities.some((entity) => storyMushroomEvidence(entity)),
+      "Flagship resume checkpoint has no supported mushroom entity.",
+    );
+  } catch (error) {
+    throw Error(
+      error instanceof Error
+        ? error.message
+        : "Flagship resume checkpoint failed its story validation.",
+    );
+  }
+  if (
+    evidence?.status !== "passed" ||
+    evidence?.method !== "reconstructed-from-recipe" ||
+    typeof evidence.sourceSnapshot !== "string" ||
+    resolve(SOURCE_ROOT, evidence.sourceSnapshot) !== checkpointPath ||
+    evidence.sourceSnapshotSha256 !== sha256(checkpointBytes) ||
+    !Array.isArray(evidence.models) ||
+    evidence.models.length !== 5
+  )
+    throw Error("Flagship resume evidence is not bound to the supplied checkpoint.");
+
+  const sourceModels = new Map(
+    project.entities
+      .filter(
+        (entity) =>
+          /^crystal-[1-5]$/.test(entity?.id ?? "") &&
+          entity?.geometry?.kind === "generated" &&
+          entity?.geometry?.model,
+      )
+      .map((entity) => [entity.id, entity.geometry.model]),
+  );
+  if (sourceModels.size !== 5)
+    throw Error("Flagship resume checkpoint does not contain five crystal models.");
+  const seenIds = new Set();
+  const models = [];
+  for (const record of evidence.models) {
+    const id = record?.id;
+    const sourceModel = sourceModels.get(id);
+    const expected = record?.expected;
+    const path = record?.path;
+    if (
+      typeof id !== "string" ||
+      seenIds.has(id) ||
+      !sourceModel ||
+      !expected ||
+      expected.sha256 !== sourceModel.sha256 ||
+      expected.bytes !== sourceModel.bytes ||
+      typeof path !== "string"
+    )
+      throw Error("Flagship resume evidence has mismatched model metadata or path.");
+    if (!/^generated\/[a-f0-9]{64}\.glb$/.test(path))
+      throw Error("Flagship resume evidence contains an unsafe model path.");
+    seenIds.add(id);
+    const modelPath = resolve(modelsDir, path);
+    const modelRelative = relative(modelsDir, modelPath);
+    if (modelRelative !== path || modelRelative.startsWith(".."))
+      throw Error("Flagship resume evidence contains an unsafe model path.");
+    let glb;
+    try {
+      glb = readFileSync(modelPath);
+    } catch {
+      throw Error(`Flagship resume model ${id} could not be read.`);
+    }
+    const actualHash = sha256(glb);
+    if (glb.byteLength !== sourceModel.bytes || actualHash !== sourceModel.sha256)
+      throw Error(`Flagship resume model ${id} failed its hash or byte check.`);
+    models.push({
+      id,
+      metadata: sourceModel,
+      glb: [...glb],
+    });
+  }
+  if (seenIds.size !== sourceModels.size)
+    throw Error("Flagship resume evidence omitted a crystal model.");
+  return {
+    project,
+    models,
+    checkpointPath,
+    modelsDir,
+    sourceSnapshotSha256: sha256(checkpointBytes),
+  };
+}
+
 function checkpointSummary(project) {
   if (!project || typeof project !== "object") return null;
   return {
@@ -881,6 +1068,22 @@ export function emptyReport(config, provenance) {
           },
         }
       : {}),
+    ...(config.flagshipResume
+      ? {
+          flagshipResume: {
+            status: "not-started",
+            generationBudget: config.generationBudget,
+            checkpoint: config.resumeCheckpoint
+              ? {
+                  projectId: config.resumeCheckpoint.project.id,
+                  revision: config.resumeCheckpoint.project.revision,
+                  sourceSnapshotSha256:
+                    config.resumeCheckpoint.sourceSnapshotSha256,
+                }
+              : null,
+          },
+        }
+      : {}),
     freeTrial: config.provider === "free" ? { status: "blocked" } : null,
     localRecovery: "blocked",
     export: "blocked",
@@ -954,7 +1157,8 @@ export async function installTrafficGuard(
       requestURL.pathname === "/api/generate" &&
       route.request().method() === "POST";
     if (isApiGeneration) {
-      if (![2, 3].includes(config.generationBudget)) {
+      const allowedBudgets = config.flagshipResume ? [1] : [2, 3];
+      if (!allowedBudgets.includes(config.generationBudget)) {
         info.generationBudgetViolations ||= [];
         info.generationBudgetViolations.push("invalid-generation-budget");
         await route.abort("blockedbyclient");
@@ -2039,7 +2243,9 @@ function assertGenerationRequests(config, info) {
   assert.equal(
     info.generationRequests,
     expectedCount,
-    config.interruptedRecovery
+    config.flagshipResume
+      ? `Expected exactly one live generation request for the flagship checkpoint resume, observed ${info.generationRequests}.`
+      : config.interruptedRecovery
       ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
       : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
   );
@@ -2795,6 +3001,344 @@ async function runFlagshipStory(
     selectedIdPreserved: true,
   };
   return undone;
+}
+
+async function putIndexedDBValue(page, key, value) {
+  await page.evaluate(
+    ({ key: recordKey, value: recordValue }) =>
+      new Promise((resolve, reject) => {
+        const request = indexedDB.open("keyval-store");
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains("keyval"))
+            request.result.createObjectStore("keyval");
+        };
+        request.onerror = () => reject(request.error ?? Error("IndexedDB open failed"));
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction("keyval", "readwrite");
+          transaction.objectStore("keyval").put(recordValue, recordKey);
+          transaction.onerror = () => reject(transaction.error);
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+        };
+      }),
+    { key, value },
+  );
+}
+
+async function seedFlagshipResume(page, checkpoint) {
+  await putIndexedDBValue(page, "orbsie-draft", {
+    project: checkpoint.project,
+    history: [],
+    future: [],
+    savedAt: Date.now(),
+  });
+  await putIndexedDBValue(page, "orbsie-library", {
+    [checkpoint.project.id]: checkpoint.project,
+  });
+  await putIndexedDBValue(page, "orbsie-history", {
+    [checkpoint.project.id]: {
+      project: checkpoint.project,
+      history: [],
+      future: [],
+    },
+  });
+  for (const model of checkpoint.models)
+    await putIndexedDBValue(page, `orbsie-model:${model.metadata.sha256}`, {
+      metadata: model.metadata,
+      glb: model.glb,
+    });
+  await page.reload({ waitUntil: "domcontentloaded" });
+}
+
+async function openFlagshipResumeProject(page, project) {
+  const continueButton = page.getByRole("button", {
+    name: "Continue your saved world",
+    exact: true,
+  });
+  if (await continueButton.isVisible().catch(() => false)) {
+    await continueButton.click();
+  } else {
+    const worlds = page.getByRole("button", {
+      name: "Your worlds",
+      exact: true,
+    });
+    await expect(worlds).toBeVisible({ timeout: 30000 });
+    await worlds.click();
+    await page
+      .getByRole("button", {
+        name: new RegExp(escapeRegExp(project.title)),
+      })
+      .first()
+      .click();
+  }
+  await expect(page.locator(".workspace-heading h2")).toContainText(
+    project.title,
+    { timeout: 30000 },
+  );
+}
+
+function resumeTrafficEvidence(config, info) {
+  return {
+    generationRequests: info.generationRequests,
+    generationStatuses: info.generationStatuses,
+    generationDiagnostics: info.generationDiagnostics,
+    generationBudgetViolations: info.generationBudgetViolations ?? [],
+    blockedExternalRequests: info.blockedExternalRequests,
+    blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),
+    interceptedGeneration: info.interceptedGeneration,
+    provider: config.provider,
+  };
+}
+
+async function runFlagshipResume(
+  config,
+  report,
+  info,
+  evidenceDir,
+  approvedOrigins,
+) {
+  const browser = await chromium.launch({
+    headless: process.env.ORBSIE_HEADLESS !== "0",
+    args: [
+      "--no-sandbox",
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
+    ],
+  });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
+  await installTrafficGuard(context, config, approvedOrigins, info);
+  const page = await context.newPage();
+  attachRequestEvidence(page, config, info);
+  let lastGoodProject = config.resumeCheckpoint.project;
+  try {
+    await page.goto(config.baseOrigin, { waitUntil: "domcontentloaded" });
+    await seedFlagshipResume(page, config.resumeCheckpoint);
+    await setupOutputCap(page, config);
+    await configureApiProvider(page, config, report, info, evidenceDir);
+    await prepareObserver(page);
+    await installGenerationDiagnosticObserver(page);
+    await openFlagshipResumeProject(page, config.resumeCheckpoint.project);
+    const checkpointSnapshot = await storageSnapshot(page);
+    assert.deepEqual(
+      persistenceJSON(checkpointSnapshot.project),
+      persistenceJSON(config.resumeCheckpoint.project),
+      "The seeded flagship checkpoint did not reopen exactly.",
+    );
+    for (const model of config.resumeCheckpoint.models) {
+      const stored = await readStoredGeneratedModelDigest(
+        page,
+        model.metadata.sha256,
+      );
+      assert(stored, `Seeded checkpoint model ${model.id} was not reopened.`);
+      assert.equal(stored.sha256, model.metadata.sha256);
+      assert.equal(stored.bytes, model.metadata.bytes);
+    }
+    await assertNoStoredKey(page, config);
+    report.flagshipResume = {
+      status: "checkpoint-restored",
+      checkpoint: {
+        projectId: config.resumeCheckpoint.project.id,
+        revision: config.resumeCheckpoint.project.revision,
+        sourceSnapshotSha256: config.resumeCheckpoint.sourceSnapshotSha256,
+        models: config.resumeCheckpoint.models.map((model) => ({
+          id: model.id,
+          sha256: model.metadata.sha256,
+          bytes: model.metadata.bytes,
+        })),
+      },
+      generationBudget: 1,
+    };
+
+    const clearSelection = page.getByRole("button", {
+      name: "Clear selected object",
+      exact: true,
+    });
+    if (await clearSelection.isVisible().catch(() => false))
+      await clearSelection.click();
+    await page.locator("#prompt").fill(config.editPrompt);
+    await page.getByRole("button", { name: "Change this", exact: true }).click();
+    await expect
+      .poll(() => info.generationRequests, { timeout: 30000 })
+      .toBe(1);
+    assert.equal(
+      info.generationBodies.at(-1)?.projectId,
+      config.resumeCheckpoint.project.id,
+    );
+    assert.equal(
+      info.generationBodies.at(-1)?.projectRevision,
+      config.resumeCheckpoint.project.revision,
+    );
+    assert.equal(
+      info.generationBodies.at(-1)?.selectedId ?? null,
+      null,
+      "Flagship resume unexpectedly sent a selected entity.",
+    );
+    const edited = await waitForSavedProject(
+      page,
+      config.resumeCheckpoint.project.revision + 1,
+      config.resumeCheckpoint.project.messages.filter(
+        (message) => message.role === "assistant",
+      ).length + 1,
+    );
+    report.flagshipStory = {
+      status: "checkpoint-resumed",
+      visualReview: "pending",
+      phases: { resumed: { status: "observed", revision: edited.revision } },
+    };
+    await persistFlagshipStoryPhase(
+      report,
+      evidenceDir,
+      "resumed",
+      edited,
+      page,
+    );
+    const platformCheck = assertFlagshipStoryPlatform(
+      config.resumeCheckpoint.project,
+      edited,
+      storyPlatforms(config.resumeCheckpoint.project)[1].id,
+    );
+    lastGoodProject = edited;
+    report.flagshipStory.phases.resumed = {
+      status: "passed",
+      revision: edited.revision,
+      ...platformCheck,
+    };
+    await page.screenshot({
+      path: join(evidenceDir, "resume-edited.png"),
+      fullPage: true,
+    });
+    report.evidence.push("resume-edited.png");
+    report.flagshipResume.edited = {
+      revision: edited.revision,
+      platform: platformCheck,
+      collectibles: storyCollectibles(edited).length,
+    };
+
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.locator(".game-hud")).toBeVisible();
+    await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
+    await page.screenshot({
+      path: join(evidenceDir, "resume-goal-7.png"),
+      fullPage: true,
+    });
+    report.evidence.push("resume-goal-7.png");
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await openFlagshipResumeProject(page, edited);
+    const reloadedEdited = await waitForSavedProject(page, edited.revision);
+    assert.deepEqual(
+      persistenceJSON(reloadedEdited),
+      persistenceJSON(edited),
+      "The goal-7 checkpoint did not survive reload.",
+    );
+    report.localRecovery = "passed";
+
+    await page.getByRole("button", { name: "Edit", exact: true }).click().catch(() => undefined);
+    await page
+      .getByRole("button", { name: "Undo last change", exact: true })
+      .click();
+    await expect(
+      page.getByText("Previous change restored.", { exact: true }),
+    ).toBeVisible();
+    const undone = await waitForSavedProject(
+      page,
+      edited.revision + 1,
+      config.resumeCheckpoint.project.messages.filter(
+        (message) => message.role === "assistant",
+      ).length,
+    );
+    assert.deepEqual(
+      storyComparable(undone),
+      storyComparable(config.resumeCheckpoint.project),
+      "Resume undo did not restore the seeded mushroom checkpoint.",
+    );
+    assert.equal(storyCollectibles(undone).length, 5);
+    report.flagshipResume.undo = {
+      restoredRevision: undone.revision,
+      restoredCheckpoint: true,
+      restoredCollectibles: storyCollectibles(undone).length,
+    };
+    lastGoodProject = undone;
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await openFlagshipResumeProject(page, undone);
+    const reloadedUndone = await waitForSavedProject(page, undone.revision);
+    assert.deepEqual(
+      storyComparable(reloadedUndone),
+      storyComparable(config.resumeCheckpoint.project),
+      "The restored checkpoint did not survive reload.",
+    );
+
+    await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: /^Download your world/ }),
+    ).toBeVisible({ timeout: 30000 });
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: /^Download your world/ }).click();
+    const download = await downloadPromise;
+    const zip = await extractZip(
+      download,
+      config,
+      reloadedUndone.revision,
+      evidenceDir,
+    );
+    assert.deepEqual(
+      storyComparable(zip.project),
+      storyComparable(config.resumeCheckpoint.project),
+      "The resume export did not preserve the restored five-crystal checkpoint.",
+    );
+    assert.equal(storyCollectibles(zip.project).length, 5);
+    report.flagshipResume.exportedGoal = 5;
+    report.flagshipResume.exportedRevision = zip.project.revision;
+    report.evidence.push("world.zip");
+    report.export = "passed";
+    await verifyStandalone(browser, zip, config, report, evidenceDir);
+    report.standalonePlayback = "passed";
+    await assertNoStoredKey(page, config);
+    await Promise.allSettled(info.diagnosticReads);
+    assertGenerationRequests(config, info);
+    report.flagshipResume.status = "structural-passed";
+    report.liveInference = true;
+    report.traffic = resumeTrafficEvidence(config, info);
+  } catch (error) {
+    await Promise.allSettled(info.diagnosticReads);
+    const diagnostics = await readGenerationDiagnostics(page).catch(() => []);
+    info.generationDiagnostics.push(
+      ...diagnostics.map((record) => ({
+        code: record.code,
+        diagnostic: sanitizeMessage(record.diagnostic, config),
+      })),
+    );
+    try {
+      await page.screenshot({
+        path: join(evidenceDir, "resume-failure.png"),
+        fullPage: true,
+      });
+      report.evidence.push("resume-failure.png");
+    } catch {
+      // The report retains the sanitized error if the page never loaded.
+    }
+    report.flagshipResume = {
+      ...(report.flagshipResume ?? {}),
+      status: "failed",
+      lastGoodCheckpoint: checkpointSummary(lastGoodProject),
+    };
+    report.error = sanitizedError(error, config);
+    report.traffic = resumeTrafficEvidence(config, info);
+    await writeReport(report, config);
+    throw error;
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+  return report;
 }
 
 async function extractZip(download, config, expectedRevision, evidenceDir) {
@@ -4219,6 +4763,14 @@ async function run(config, report = emptyReport(config)) {
     await writeReport(report, config);
     throw error;
   }
+  if (config.flagshipResume)
+    return runFlagshipResume(
+      config,
+      report,
+      info,
+      evidenceDir,
+      approvedOrigins,
+    );
   const browser = await chromium.launch({
     headless: process.env.ORBSIE_HEADLESS !== "0",
     args: [

@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import {
   assertFlagshipStoryCreation,
   assertFlagshipStoryMushroom,
@@ -18,6 +21,9 @@ const ENV_NAMES = [
   "ORBSIE_OUTPUT_CAP_TOKENS",
   "ORBSIE_KEY_SCOPE",
   "ORBSIE_FLAGSHIP_STORY",
+  "ORBSIE_FLAGSHIP_RESUME",
+  "ORBSIE_FLAGSHIP_RESUME_CHECKPOINT",
+  "ORBSIE_FLAGSHIP_RESUME_MODELS",
   "ORBSIE_CREATION_PROMPT",
   "ORBSIE_EDIT_PROMPT",
   "ORBSIE_REQUIRE_INPUT_GAME",
@@ -50,6 +56,23 @@ function gatewayStoryEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_KEY_SCOPE: "local-only",
     ORBSIE_FLAGSHIP_STORY: "1",
     AI_GATEWAY_TEST_KEY: "test-gateway-key",
+    ...overrides,
+  });
+}
+
+const RESUME_CHECKPOINT = resolve(
+  "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-mushroom-project.json",
+);
+const RESUME_MODELS = resolve(
+  "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/reconstructed-models",
+);
+
+function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
+  gatewayStoryEnvironment({
+    ORBSIE_FLAGSHIP_STORY: "0",
+    ORBSIE_FLAGSHIP_RESUME: "1",
+    ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: RESUME_CHECKPOINT,
+    ORBSIE_FLAGSHIP_RESUME_MODELS: RESUME_MODELS,
     ...overrides,
   });
 }
@@ -157,6 +180,88 @@ describe("flagship provider story contract", () => {
       prompt:
         "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond.",
     });
+  });
+
+  it("enables only the explicit one-call Gateway checkpoint resume", () => {
+    gatewayResumeEnvironment();
+    const config = readConfiguration(["--provider", "gateway"]);
+    expect(config).toMatchObject({
+      provider: "gateway",
+      expectedModel: "openai/gpt-5.6-luna",
+      outputCap: 4096,
+      generationBudget: 1,
+      flagshipStory: false,
+      flagshipResume: true,
+      editPrompt: "Make the middle platform slower and add two more crystals",
+    });
+    expect(config.resumeCheckpoint.project.revision).toBeGreaterThan(0);
+    expect(config.resumeCheckpoint.models).toHaveLength(5);
+  });
+
+  it("keeps the ordinary story budget and rejects resume for another provider", () => {
+    gatewayStoryEnvironment();
+    expect(readConfiguration(["--provider", "gateway"]).generationBudget).toBe(
+      3,
+    );
+    gatewayResumeEnvironment();
+    expect(() => readConfiguration(["--provider", "openrouter"])).toThrow(
+      /Gateway provider/,
+    );
+  });
+
+  it("rejects a checkpoint/report binding mismatch and an unsafe model path", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "orbsie-resume-test-"));
+    try {
+      const report = JSON.parse(
+        readFileSync(join(RESUME_MODELS, "report.json"), "utf8"),
+      );
+      report.sourceSnapshot =
+        "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-created-project.json";
+      await writeFile(
+        join(temporary, "report.json"),
+        JSON.stringify(report),
+      );
+      gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /bound to the supplied checkpoint/,
+      );
+
+      const safeReport = JSON.parse(
+        readFileSync(join(RESUME_MODELS, "report.json"), "utf8"),
+      );
+      safeReport.models[0].path = "generated/../outside.glb";
+      await writeFile(join(temporary, "report.json"), JSON.stringify(safeReport));
+      gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /unsafe model path/,
+      );
+
+      const goodReport = JSON.parse(
+        readFileSync(join(RESUME_MODELS, "report.json"), "utf8"),
+      );
+      await mkdir(join(temporary, "generated"), { recursive: true });
+      for (const [index, model] of goodReport.models.entries()) {
+        const bytes = Buffer.from(
+          readFileSync(join(RESUME_MODELS, model.path)),
+        );
+        if (index === 0) bytes[0] ^= 0xff;
+        await writeFile(join(temporary, model.path), bytes);
+      }
+      await writeFile(join(temporary, "report.json"), JSON.stringify(goodReport));
+      gatewayResumeEnvironment({ ORBSIE_FLAGSHIP_RESUME_MODELS: temporary });
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /hash or byte check/,
+      );
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects resume when the output cap is not the authorized 4096", () => {
+    gatewayResumeEnvironment({ ORBSIE_OUTPUT_CAP_TOKENS: "512" });
+    expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+      /require ORBSIE_OUTPUT_CAP_TOKENS=4096/,
+    );
   });
 
   it("rejects story mode for other providers and incompatible phases", () => {
