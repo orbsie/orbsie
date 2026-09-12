@@ -1,0 +1,149 @@
+{
+  "status": "passed",
+  "scope": "Read-only verification of submitted Gateway recovery publication revision 10; no authentication or writes",
+  "mode": "read-only-resume",
+  "sourceCommit": "9b63cb6486a82aa0bfea5baa4b6680bab4809014",
+  "baseOrigin": "http://127.0.0.1:3017",
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "sourceRevision": 9,
+  "targetRevision": 10,
+  "generationCalls": 0,
+  "generationRoutesBlocked": 0,
+  "artifact": {
+    "path": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    "sha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    "bytes": 7545,
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "title": "Create a complete tiny scene with exactl…",
+    "entityCount": 2,
+    "gameRuleCount": 3
+  },
+  "currentRuntime": {
+    "runtimeJS": {
+      "bytes": 1787031,
+      "sha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917"
+    },
+    "runtimeCSS": {
+      "bytes": 2436,
+      "sha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+    },
+    "viewportMeta": "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">"
+  },
+  "preflight": null,
+  "save": null,
+  "publication": {
+    "status": "READ_ONLY_VERIFIED",
+    "revision": 10,
+    "deploymentId": "dpl_BrHgxz6AhGdqVYbVBEdsbthhLqSS",
+    "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-jp58uek10-grappeggias-projects.vercel.app",
+    "vercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi",
+    "runtime": {
+      "indexViewportFitCover": true,
+      "runtimeJS": {
+        "local": {
+          "bytes": 1787031,
+          "sha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917"
+        },
+        "public": {
+          "bytes": 1787031,
+          "sha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917"
+        }
+      },
+      "runtimeCSS": {
+        "local": {
+          "bytes": 2436,
+          "sha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+        },
+        "public": {
+          "bytes": 2436,
+          "sha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+        }
+      }
+    },
+    "snapshot": {
+      "status": "passed",
+      "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+      "revision": 10,
+      "messages": 0
+    },
+    "requestMode": "public GET only"
+  },
+  "browser": {
+    "status": "passed",
+    "ready": true,
+    "canvas": true,
+    "scoreRight": 7,
+    "win": true,
+    "loss": true,
+    "restart": true,
+    "generationRoutes": 0,
+    "externalRoutes": 0,
+    "cookies": 0,
+    "pageErrors": 0,
+    "modes": [
+      {
+        "name": "desktop-keyboard",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "touch": false,
+        "ready": true,
+        "canvas": true,
+        "scoreRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true,
+        "generationRoutes": 0,
+        "externalRoutes": 0,
+        "cookies": 0,
+        "pageErrors": 0
+      },
+      {
+        "name": "portrait-touch",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "touch": true,
+        "ready": true,
+        "canvas": true,
+        "scoreRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true,
+        "generationRoutes": 0,
+        "externalRoutes": 0,
+        "cookies": 0,
+        "pageErrors": 0
+      },
+      {
+        "name": "landscape-touch",
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "touch": true,
+        "ready": true,
+        "canvas": true,
+        "scoreRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true,
+        "generationRoutes": 0,
+        "externalRoutes": 0,
+        "cookies": 0,
+        "pageErrors": 0
+      }
+    ]
+  },
+  "recordedPublication": {
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "vercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi",
+    "revision": 10,
+    "deploymentId": "dpl_BrHgxz6AhGdqVYbVBEdsbthhLqSS",
+    "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-jp58uek10-grappeggias-projects.vercel.app"
+  },
+  "finishedAt": "2026-09-12T07:20:25.218Z"
+}

@@ -1,0 +1,74 @@
+{
+  "status": "failed",
+  "scope": "Existing Gateway recovery project CAS revision 10 publication; no generation",
+  "sourceCommit": "9b63cb6486a82aa0bfea5baa4b6680bab4809014",
+  "baseOrigin": "http://127.0.0.1:3017",
+  "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+  "sourceRevision": 9,
+  "targetRevision": 10,
+  "generationCalls": 0,
+  "generationRoutesBlocked": 0,
+  "artifact": {
+    "path": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    "sha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    "bytes": 7545,
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "title": "Create a complete tiny scene with exactl…",
+    "entityCount": 2,
+    "gameRuleCount": 3
+  },
+  "currentRuntime": {
+    "runtimeJS": {
+      "bytes": 1787031,
+      "sha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917"
+    },
+    "runtimeCSS": {
+      "bytes": 2436,
+      "sha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182"
+    },
+    "viewportMeta": "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">"
+  },
+  "preflight": {
+    "status": "passed",
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "targetRevision": 10,
+    "comparedAs": "publishable snapshot (messages cleared like export/publication)",
+    "snapshotTokenPresent": true,
+    "existingPublication": {
+      "state": "READY",
+      "servedRevision": 9,
+      "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-ant5977ut-grappeggias-projects.vercel.app",
+      "deploymentId": "dpl_8SXrutydgMwHjWxZxqSnsb2Z6WDf",
+      "vercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi"
+    }
+  },
+  "save": {
+    "status": "CAS_VERIFIED",
+    "sourceRevision": 9,
+    "targetRevision": 10,
+    "snapshotTokenPresent": true
+  },
+  "publication": {
+    "status": "SUBMITTED",
+    "revision": 10,
+    "deploymentId": "dpl_BrHgxz6AhGdqVYbVBEdsbthhLqSS",
+    "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-jp58uek10-grappeggias-projects.vercel.app",
+    "postVercelProjectId": "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi",
+    "oldDeploymentId": "dpl_8SXrutydgMwHjWxZxqSnsb2Z6WDf",
+    "oldDeploymentUrl": "https://orb-c8952b5b6fd77ac951a4-ant5977ut-grappeggias-projects.vercel.app",
+    "requestPaths": [
+      "/api/projects",
+      "/api/publish",
+      "/api/projects",
+      "/api/projects",
+      "/api/publish",
+      "/api/publish",
+      "/api/publish"
+    ]
+  },
+  "browser": null,
+  "error": "signed-out snapshot matches target CAS snapshot\n+ actual - expected\n... Skipped lines\n\n  {\n    entities: [\n      {\n        assetPolicy: 'new-only',\n        behavior: {\n...\n    id: '4a5d7783-c7fd-44e0-bf19-864bab9f9b08',\n+   messages: [],\n-   messages: [\n-     {\n-       role: 'user',\n-       text: 'Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use browser-manifold recipes (including custom mesh) or browser procedural/custom geometry only; do not use catalog assets, native Blender jobs, or remote URLs. Finish both entities as ready refined geometry, and preserve a simple playable presentation. Then define exactly three input game rules: right adds score 7, up wins, and left loses. Use no timers, collection triggers, or collection scoring. Commit the world.'\n-     },\n-     {\n-       role: 'user',\n-       text: 'Continue this request from the recovered world. Preserve completed objects and finish only what remains: Create a complete tiny scene with exactly two genuinely original geometry objects: one tree and one mushroom. Use browser-manifold recipes (including custom mesh) or browser procedural/custom geometry only; do n",
+  "finishedAt": "2026-09-12T07:16:19.141Z"
+}

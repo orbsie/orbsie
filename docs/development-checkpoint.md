@@ -438,3 +438,19 @@ Production build/typecheck and release smoke passed; exact safe-area player CSS
 hash verified separately. Evidence: docs/evidence/player-safe-area-release.
 Existing immutable game deployments still retain their old runtime until a
 reviewed republish; no model calls were made for this release.
+
+### Gateway revision 10 republish verified
+
+The existing Gateway recovery world was saved with CAS from revision 9 to 10
+and published once to deployment dpl_BrHgxz6AhGdqVYbVBEdsbthhLqSS. The first
+harness comparison incorrectly retained private messages in its expected public
+snapshot; that failure is preserved. The corrected read-only resume verified
+the existing deployment without repeating authentication, writes or model calls.
+
+Public JS/CSS hashes match the current player, viewport-fit=cover is present,
+and the exact revision-10 publishable snapshot matches. Signed-out desktop,
+portrait touch and landscape touch passed scoring, win, loss and restart with
+zero cookies, external requests, generation requests or page errors. Evidence:
+`docs/evidence/provider-e2e/gateway-reload-recovery-republish-resume/report.json`.
+Root reviewed the diff and assertions. Physical mobile and flagship quality
+remain unproven. Codex quota check reports 64% remaining.

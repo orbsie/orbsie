@@ -17,12 +17,17 @@ const SOURCE_REVISION = 9;
 const TARGET_REVISION = 10;
 const EXPECTED_VERCEL_PROJECT_ID = "prj_2sG67u1U0jO8mDEWT2lMWMkm64zi";
 const EXPECTED_OLD_DEPLOYMENT_ID = "dpl_8SXrutydgMwHjWxZxqSnsb2Z6WDf";
+const EXPECTED_NEW_DEPLOYMENT_ID = "dpl_BrHgxz6AhGdqVYbVBEdsbthhLqSS";
+const EXPECTED_NEW_DEPLOYMENT_URL =
+  "https://orb-c8952b5b6fd77ac951a4-jp58uek10-grappeggias-projects.vercel.app";
 const DEFAULT_BASE = "http://127.0.0.1:3017";
 const DEFAULT_FIXTURE = ".vercel/dev-generated-cloud-state.json";
 const DEFAULT_ZIP =
   "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip";
 const DEFAULT_EVIDENCE =
   "docs/evidence/provider-e2e/gateway-reload-recovery-republish";
+const DEFAULT_RESUME_EVIDENCE = `${DEFAULT_EVIDENCE}-resume`;
+const DEFAULT_RESUME_REPORT = `${DEFAULT_EVIDENCE}/report.json`;
 const GENERATION_PATHS = new Set([
   "/api/generate",
   "/api/chatgpt/generate",
@@ -183,6 +188,12 @@ async function loadArtifact(zipPath) {
     sha256: createHash("sha256").update(projectBytes).digest("hex"),
     bytes: projectBytes.byteLength,
   };
+}
+
+function targetProjectFromArtifact(artifact) {
+  const target = structuredClone(artifact.project);
+  target.revision = TARGET_REVISION;
+  return target;
 }
 
 async function writeReport(path, report) {
@@ -369,19 +380,139 @@ async function validateSignedOutGameplay(deploymentUrl, evidenceDir, report) {
   }
 }
 
+async function validateReadOnlyResume(
+  deploymentUrl,
+  evidenceDir,
+  report,
+  artifact,
+  recordedReport,
+) {
+  const recordedPublication = recordedReport?.publication;
+  if (!recordedPublication || typeof recordedPublication !== "object")
+    throw new PublicationAcceptanceError(
+      "Read-only resume report omitted the submitted publication handle.",
+    );
+  assert.equal(recordedReport.status, "failed");
+  assert.equal(recordedReport.save?.status, "CAS_VERIFIED");
+  assert.equal(recordedReport.projectId, EXPECTED_PROJECT_ID);
+  assert.equal(recordedReport.sourceRevision, SOURCE_REVISION);
+  assert.equal(recordedReport.targetRevision, TARGET_REVISION);
+  assert.equal(recordedPublication.revision, TARGET_REVISION);
+  assert.equal(recordedPublication.status, "SUBMITTED");
+  assert.equal(
+    recordedPublication.postVercelProjectId,
+    EXPECTED_VERCEL_PROJECT_ID,
+  );
+  assert.equal(recordedPublication.deploymentId, EXPECTED_NEW_DEPLOYMENT_ID);
+  assert.equal(recordedPublication.deploymentUrl, EXPECTED_NEW_DEPLOYMENT_URL);
+  assert.equal(deploymentUrl, recordedPublication.deploymentUrl);
+
+  const targetProject = targetProjectFromArtifact(artifact);
+  const transport = createPublicationTransport(new URL(deploymentUrl).origin);
+  const publicIndex = await publicText(
+    transport,
+    deploymentUrl,
+    "index.html",
+    "read-only published runtime",
+  );
+  const publicRuntimeJS = await publicText(
+    transport,
+    deploymentUrl,
+    "runtime.js",
+    "read-only published runtime",
+  );
+  const publicRuntimeCSS = await publicText(
+    transport,
+    deploymentUrl,
+    "runtime.css",
+    "read-only published runtime",
+  );
+  assert.match(
+    publicIndex,
+    /<meta name="viewport" content="[^"]*viewport-fit=cover[^"]*">/,
+  );
+  const digest = (value) => createHash("sha256").update(value).digest("hex");
+  assert.equal(digest(publicRuntimeJS), report.currentRuntime.runtimeJS.sha256);
+  assert.equal(
+    digest(publicRuntimeCSS),
+    report.currentRuntime.runtimeCSS.sha256,
+  );
+  const publicProject = JSON.parse(
+    await publicText(
+      transport,
+      deploymentUrl,
+      "project.json",
+      "read-only published project snapshot",
+    ),
+  );
+  assert.deepEqual(
+    publicProject,
+    publishableSnapshot(targetProject),
+    "read-only snapshot matches target publishable snapshot",
+  );
+  report.recordedPublication = {
+    projectId: EXPECTED_PROJECT_ID,
+    vercelProjectId: EXPECTED_VERCEL_PROJECT_ID,
+    revision: TARGET_REVISION,
+    deploymentId: recordedPublication.deploymentId,
+    deploymentUrl,
+  };
+  report.publication = {
+    status: "READ_ONLY_VERIFIED",
+    revision: TARGET_REVISION,
+    deploymentId: recordedPublication.deploymentId,
+    deploymentUrl,
+    vercelProjectId: EXPECTED_VERCEL_PROJECT_ID,
+    runtime: {
+      indexViewportFitCover: true,
+      runtimeJS: {
+        local: report.currentRuntime.runtimeJS,
+        public: {
+          bytes: Buffer.byteLength(publicRuntimeJS),
+          sha256: digest(publicRuntimeJS),
+        },
+      },
+      runtimeCSS: {
+        local: report.currentRuntime.runtimeCSS,
+        public: {
+          bytes: Buffer.byteLength(publicRuntimeCSS),
+          sha256: digest(publicRuntimeCSS),
+        },
+      },
+    },
+    snapshot: {
+      status: "passed",
+      projectId: publicProject.id,
+      revision: publicProject.revision,
+      messages: Array.isArray(publicProject.messages)
+        ? publicProject.messages.length
+        : null,
+    },
+    requestMode: "public GET only",
+  };
+  await validateSignedOutGameplay(deploymentUrl, evidenceDir, report);
+  report.generationRoutesBlocked = report.browser?.generationRoutes ?? 0;
+}
+
 async function main() {
   assertLivePublicationOptIn();
   const base = process.env.ORBSIE_TEST_URL ?? DEFAULT_BASE;
   const fixturePath = process.env.ORBSIE_CLOUD_FIXTURE ?? DEFAULT_FIXTURE;
   const zipPath = process.env.ORBSIE_GATEWAY_ARTIFACT ?? DEFAULT_ZIP;
+  const resumeOnly = process.env.ORBSIE_PUBLICATION_RESUME_ONLY === "1";
+  const recordedReportPath =
+    process.env.ORBSIE_PUBLICATION_RESUME_REPORT ?? DEFAULT_RESUME_REPORT;
   const evidenceDir =
-    process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR ?? DEFAULT_EVIDENCE;
+    process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR ??
+    (resumeOnly ? DEFAULT_RESUME_EVIDENCE : DEFAULT_EVIDENCE);
   const prepareOnly = process.env.ORBSIE_PUBLICATION_PREPARE_ONLY === "1";
   const execute = process.env.ORBSIE_PUBLICATION_EXECUTE === "1";
   const report = {
     status: "running",
-    scope:
-      "Existing Gateway recovery project CAS revision 10 publication; no generation",
+    scope: resumeOnly
+      ? "Read-only verification of submitted Gateway recovery publication revision 10; no authentication or writes"
+      : "Existing Gateway recovery project CAS revision 10 publication; no generation",
+    mode: resumeOnly ? "read-only-resume" : "mutation-preparation",
     sourceCommit: currentSourceCommit(),
     baseOrigin: new URL(base).origin,
     projectId: EXPECTED_PROJECT_ID,
@@ -398,7 +529,7 @@ async function main() {
   };
   await mkdir(evidenceDir, { recursive: true });
   try {
-    assertLocalTarget(base);
+    if (!resumeOnly) assertLocalTarget(base);
     const artifact = await loadArtifact(zipPath);
     report.artifact = {
       path: zipPath,
@@ -411,6 +542,33 @@ async function main() {
       gameRuleCount: artifact.project.game.rules.length,
     };
     report.currentRuntime = await loadCurrentPlayerRuntime();
+    if (resumeOnly) {
+      if (execute)
+        throw new PublicationAcceptanceError(
+          "Read-only resume cannot run with ORBSIE_PUBLICATION_EXECUTE=1.",
+        );
+      if (prepareOnly)
+        throw new PublicationAcceptanceError(
+          "Read-only resume cannot combine with prepare-only mode.",
+        );
+      let recordedReport;
+      try {
+        recordedReport = JSON.parse(await readFile(recordedReportPath, "utf8"));
+      } catch {
+        throw new PublicationAcceptanceError(
+          "Read-only resume could not load the recorded publication report.",
+        );
+      }
+      await validateReadOnlyResume(
+        EXPECTED_NEW_DEPLOYMENT_URL,
+        evidenceDir,
+        report,
+        artifact,
+        recordedReport,
+      );
+      report.status = "passed";
+      return report;
+    }
     if (prepareOnly) {
       report.status = "prepared";
       return report;
@@ -780,8 +938,8 @@ async function main() {
     );
     assert.deepEqual(
       publicProject,
-      targetProject,
-      "signed-out snapshot matches target CAS snapshot",
+      publishableSnapshot(targetProject),
+      "signed-out snapshot matches target publishable snapshot",
     );
     report.publication = {
       ...report.publication,
