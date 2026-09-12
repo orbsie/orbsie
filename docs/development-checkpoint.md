@@ -358,3 +358,15 @@ This is harness readiness, not proof of live recovery. Gateway's earlier owner
 allowance is up to5 calls/test; OpenRouter's most recent explicit milestone
 authorization is2 calls, so a3-call OpenRouter recovery run needs approval.
 Owner ChatGPT login/consent and Android Chrome terms remain pending.
+
+### Gateway live reload recovery passed
+
+Source `c586d74`: one bounded3-call Luna low/default run at4096 output tokens
+per call passed actual reload interruption, durable checkpoint recovery,
+explicit continuation, selected edit, input-game playback, ZIP/standalone and
+fresh cookie-only cloud reopen. No retries/budget violations/fallback.
+Evidence: `docs/evidence/provider-e2e/gateway-reload-recovery`. Root reviewed
+report/image and scanned text/ZIP for key patterns; private key deleted.
+Initial missing-cloud-state preflight made0 calls; corrected run was the sole
+provider attempt. Publication/free trial/full visual quality remain unproven.
+OpenRouter3-call approval and owner ChatGPT sign-in remain pending.

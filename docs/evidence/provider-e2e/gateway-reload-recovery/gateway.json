@@ -1,0 +1,181 @@
+{
+  "checkedAt": "2026-09-12T06:17:25.400Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T06:17:25.400Z",
+    "harness": {
+      "checkoutSHA": "c586d745d7186ff6668bf969404e88892643e2ce",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "c586d74",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "gateway",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3017",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationBudget": 3,
+  "creation": {
+    "status": "passed",
+    "operations": 7,
+    "firstReservationMs": 9305,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 0,
+    "generatedEntities": 2
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "real",
+    "status": "passed",
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "expectedRevision": 9,
+    "phases": [
+      "latest-journal-complete",
+      "account-ui-recovery-complete",
+      "recovered-indexeddb-verified",
+      "cloud-save-200-same-revision",
+      "fresh-cookie-only-context-cloud-open",
+      "fresh-indexeddb-verified"
+    ],
+    "interruptedRecovery": {
+      "mode": "real",
+      "status": "passed",
+      "method": "reload",
+      "phases": [
+        "ready-checkpoint-sequence-observed",
+        "ready-checkpoint-observer-captured",
+        "page-reloaded-while-journal-running",
+        "gateway-reconnected",
+        "account-cloud-baseline",
+        "account-ui-opened-for-recovery",
+        "account-ui-recovery-terminal-noncomplete",
+        "terminal-cancelled",
+        "terminal-checkpoint-persistence-equal",
+        "continuation-prompt-original-and-selection-restored",
+        "continuation-submitted"
+      ],
+      "requestCounts": [
+        {
+          "phase": "initial-generation-started",
+          "count": 1
+        },
+        {
+          "phase": "ready-checkpoint",
+          "count": 1
+        },
+        {
+          "phase": "reload-before-account-recovery",
+          "count": 1
+        },
+        {
+          "phase": "terminal-cancelled",
+          "count": 1
+        },
+        {
+          "phase": "recovery-installed-before-continuation",
+          "count": 1
+        },
+        {
+          "phase": "continuation-submitted",
+          "count": 2
+        }
+      ],
+      "checkpointSequence": 3,
+      "checkpointRevision": 3,
+      "readyEntityCount": 1,
+      "preReloadObserverStageCount": 3,
+      "reloadRestoredVia": "account-cloud-baseline",
+      "runId": "8be4b6b8-5400-433c-a6c3-bdcfef26a690",
+      "terminalState": "cancelled",
+      "terminalSequence": 3,
+      "recoveryCheckpointUsed": "recoveryCheckpoint",
+      "continuationPromptIncludesOriginal": true,
+      "selectedRestored": true,
+      "continuationContextVerified": true,
+      "completedEntitiesPreserved": true
+    },
+    "freshContextTraffic": {
+      "generationRequests": 0,
+      "blockedExternalRequests": 0,
+      "blockedExternalOrigins": [],
+      "pageErrors": []
+    },
+    "runId": "2d6a0f3a-817d-4200-865d-639999778192"
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 3,
+    "generationStatuses": [
+      200,
+      200,
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "connection-model.png",
+    "interrupted-recovery.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-input-ready.png",
+    "standalone-input-right.png",
+    "standalone-input-win.png",
+    "standalone-input-loss.png",
+    "standalone-playback.png",
+    "cloud-recovery.png",
+    "cloud-recovery-fresh-context.png"
+  ],
+  "inputGame": {
+    "status": "passed",
+    "entityCount": 2,
+    "treeAndMushroom": true,
+    "refinedGeometry": true,
+    "exactRuleCount": true,
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "noTimersOrCollectionScoring": true,
+    "preservedAcrossEdit": true,
+    "preservedAcrossReload": true,
+    "preservedInZip": true
+  },
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 5880.600000023842,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": {
+      "ready": true,
+      "rightAdds7": true,
+      "heldRightDeduplicated": true,
+      "upWins": true,
+      "restartResetsScore": true,
+      "leftLoses": true
+    }
+  }
+}
