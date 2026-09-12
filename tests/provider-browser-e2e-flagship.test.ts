@@ -4,12 +4,14 @@ import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { zipSync } from "fflate";
 import {
   assertFlagshipStoryCreation,
   assertFlagshipStoryGoalSeven,
   assertFlagshipStoryMushroom,
   assertFlagshipStoryPlatform,
   buildGeneratedModelEvidence,
+  extractZip,
   installTrafficGuard,
   persistFlagshipStoryPhase,
   readConfiguration,
@@ -192,6 +194,53 @@ function initialProject() {
 }
 
 describe("flagship provider story contract", () => {
+  it("keeps the edited goal-7 ZIP separate from the baseline export", async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "orbsie-goal7-export-test-"));
+    try {
+      const requiredNames = [
+        "index.html",
+        "project.json",
+        "runtime.js",
+        "runtime.css",
+        "package.json",
+        "README.md",
+        "build.mjs",
+        "src/runtime.ts",
+      ];
+      const archive = zipSync(
+        Object.fromEntries(
+          requiredNames.map((name) => [
+            name,
+            new TextEncoder().encode(
+              name === "project.json"
+                ? JSON.stringify({ revision: 40 })
+                : "fixture",
+            ),
+          ]),
+        ),
+      );
+      const download = {
+        saveAs: async (target: string) => writeFile(target, archive),
+      };
+      const goal7 = await extractZip(
+        download,
+        {},
+        40,
+        temporary,
+        "world-goal-7.zip",
+      );
+      expect(goal7.project.revision).toBe(40);
+      expect(readFileSync(join(temporary, "world-goal-7.zip"))).toEqual(
+        Buffer.from(archive),
+      );
+      await expect(
+        extractZip(download, {}, 40, temporary, "../world-goal-7.zip"),
+      ).rejects.toThrow(/simple ZIP filename/);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
   it("enables exactly three Gateway generations with the fixed story prompt", () => {
     gatewayStoryEnvironment();
     const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;

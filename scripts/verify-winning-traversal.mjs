@@ -14,6 +14,41 @@ const published = process.env.WIN_PUBLISHED === "1";
 const gameZipPath = process.env.WIN_GAME_ZIP;
 const gameZip = Boolean(gameZipPath);
 const output = process.env.WIN_OUTPUT ?? "/tmp/orbsie-winning-traversal";
+const firstDefinedEnvironmentValue = (names) => {
+  const supplied = names
+    .map((name) => [name, process.env[name]])
+    .filter(([, value]) => value !== undefined);
+  if (
+    supplied.length > 1 &&
+    new Set(supplied.map(([, value]) => value)).size > 1
+  )
+    throw Error(
+      `Conflicting traversal options: ${supplied.map(([name]) => name).join(", ")}.`,
+    );
+  return supplied[0]?.[1];
+};
+const expectedCollectibleCountValue = firstDefinedEnvironmentValue([
+  "WIN_EXPECTED_COLLECTIBLE_COUNT",
+  "WIN_EXPECTED_COUNT",
+  "WIN_EXPECTED_COLLECTIBLES",
+]);
+const expectedCollectibleCount =
+  expectedCollectibleCountValue === undefined
+    ? 5
+    : Number(expectedCollectibleCountValue);
+if (
+  !Number.isSafeInteger(expectedCollectibleCount) ||
+  expectedCollectibleCount < 1
+)
+  throw Error(
+    "WIN_EXPECTED_COLLECTIBLE_COUNT must be a positive integer when supplied.",
+  );
+const portalComparison =
+  firstDefinedEnvironmentValue(["WIN_PORTAL_COMPARISON", "WIN_COMPARISON"]) ??
+  "eq";
+if (!new Set(["eq", "gte"]).has(portalComparison))
+  throw Error("WIN_PORTAL_COMPARISON must be eq or gte when supplied.");
+const traversalOptions = { expectedCollectibleCount, portalComparison };
 await mkdir(output, { recursive: true });
 const temp = await mkdtemp(join(tmpdir(), "orbsie-win-"));
 let world, project, standaloneServer, standaloneOrigin;
@@ -32,7 +67,7 @@ async function openStandaloneSnapshot(zipPath) {
   if (!projectBytes || !runtimeBytes || !runtimeCssBytes)
     throw Error("Saved standalone ZIP is missing project or runtime files.");
   const loadedProject = JSON.parse(strFromU8(projectBytes));
-  const contract = validateProjectGame(loadedProject);
+  const contract = validateProjectGame(loadedProject, traversalOptions);
   traversalContract = contract;
   snapshot = {
     zipPath: absoluteZipPath,
@@ -107,7 +142,8 @@ if (published) {
   project = await response.json();
   if (!Array.isArray(project.entities))
     throw Error("Published project snapshot has no entity list.");
-  if (project.game) traversalContract = validateProjectGame(project);
+  if (project.game)
+    traversalContract = validateProjectGame(project, traversalOptions);
 } else if (gameZip) {
   ({ project } = await openStandaloneSnapshot(gameZipPath));
 } else {
@@ -146,6 +182,7 @@ const report = {
       : "fixture-input-traversal",
   projectRevision: project.revision,
   entities: project.entities.length,
+  traversalOptions,
   inferenceCalls: 0,
   errors: [],
   externalRequests: [],
@@ -195,6 +232,67 @@ try {
               visible: player.visible,
             }
           : null;
+      };
+      window.__orbReadObjectBounds = (target) => {
+        let best;
+        const include = (object) => {
+          const geometry = object.geometry;
+          if (!geometry || !geometry.attributes?.position) return;
+          if (!geometry.boundingBox && geometry.computeBoundingBox)
+            geometry.computeBoundingBox();
+          const bounds = geometry.boundingBox;
+          const matrix = object.matrixWorld?.elements;
+          if (!bounds || !matrix) return;
+          const min = [Infinity, Infinity, Infinity];
+          const max = [-Infinity, -Infinity, -Infinity];
+          for (const x of [bounds.min.x, bounds.max.x])
+            for (const y of [bounds.min.y, bounds.max.y])
+              for (const z of [bounds.min.z, bounds.max.z]) {
+                const world = [
+                  matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12],
+                  matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13],
+                  matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14],
+                ];
+                for (let axis = 0; axis < 3; axis++) {
+                  min[axis] = Math.min(min[axis], world[axis]);
+                  max[axis] = Math.max(max[axis], world[axis]);
+                }
+              }
+          const dx =
+            target.x < min[0]
+              ? min[0] - target.x
+              : target.x > max[0]
+                ? target.x - max[0]
+                : 0;
+          const dz =
+            target.z < min[2]
+              ? min[2] - target.z
+              : target.z > max[2]
+                ? target.z - max[2]
+                : 0;
+          const distanceXZ = Math.hypot(dx, dz);
+          if (distanceXZ > 0.8) return;
+          const height = max[1] - min[1];
+          if (
+            !best ||
+            distanceXZ < best.distanceXZ ||
+            (distanceXZ === best.distanceXZ && height > best.height)
+          )
+            best = {
+              geometryType: geometry.type,
+              min,
+              max,
+              distanceXZ,
+              height,
+            };
+        };
+        for (const scene of observed) {
+          scene.traverse((object) => {
+            object.updateWorldMatrix?.(true, false);
+            include(object);
+          });
+        }
+        return best ?? null;
       };
     });
     const page = await context.newPage();
@@ -346,22 +444,23 @@ try {
             { x: -Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["a", "w"] },
           ]),
     ];
-    const targets = [
-      ...(program
+    const collectibleTargets = (
+      program
         ? traversalContract.collectibleIds.map((id) =>
             project.entities.find((entity) => entity.id === id),
           )
         : project.entities.filter(
             (entity) => entity.behavior?.type === "collect",
-          )),
-      project.entities.find(
-        (entity) =>
-          entity.id ===
-          (program
-            ? traversalContract.portalId
-            : project.entities.find((e) => e.behavior?.type === "portal")?.id),
-      ),
-    ].filter(Boolean);
+          )
+    ).filter(Boolean);
+    const portalTarget = project.entities.find(
+      (entity) =>
+        entity.id ===
+        (program
+          ? traversalContract.portalId
+          : project.entities.find((e) => e.behavior?.type === "portal")?.id),
+    );
+    const targets = [...collectibleTargets, portalTarget].filter(Boolean);
     expect(targets).toHaveLength(
       program
         ? traversalContract.collectibleIds.length + 1
@@ -370,88 +469,183 @@ try {
               e.behavior?.type === "collect" || e.behavior?.type === "portal",
           ).length,
     );
-    let expectedCollected = 0;
-    for (const target of targets) {
-      const approach = async () => {
-        let arrived = false;
-        for (let i = 0; i < 180; i++) {
-          const position = await read();
-          if (
-            program &&
-            target.id === traversalContract.portalId &&
-            (await page
-              .getByText("Adventure complete", { exact: true })
-              .isVisible()
-              .catch(() => false))
-          ) {
-            arrived = true;
-            break;
-          }
-          if (gameZip && position) {
-            const nearMovingPlatform = project.entities.some((entity) => {
-              if (entity.behavior?.type !== "move") return false;
-              const [x, y, z] = entity.position;
-              const [amplitudeX, amplitudeZ] =
-                entity.behavior.axis === "x"
-                  ? [entity.behavior.amplitude ?? 0.5, 0]
-                  : entity.behavior.axis === "z"
-                    ? [0, entity.behavior.amplitude ?? 0.5]
-                    : [0, 0];
-              return (
-                Math.abs(position.x - x) <= amplitudeX + 1.2 &&
-                Math.abs(position.z - z) <= amplitudeZ + 1.2 &&
-                Math.abs(position.y - 1.44) <= 0.15
-              );
-            });
-            if (nearMovingPlatform) {
-              run.platformSupport.nearMovingPlatformHeightSamples++;
-              run.platformSupport._candidateStreak =
-                (run.platformSupport._candidateStreak ?? 0) + 1;
-              run.platformSupport.maximumProximityCandidateStreak = Math.max(
-                run.platformSupport.maximumProximityCandidateStreak,
-                run.platformSupport._candidateStreak,
-              );
-            } else run.platformSupport._candidateStreak = 0;
-          }
-          const dx = target.position[0] - position.x,
-            dz = target.position[2] - position.z;
-          if (Math.hypot(dx, dz) < (published ? 0.16 : gameZip ? 0.3 : 0.42)) {
-            arrived = true;
-            break;
-          }
-          // Invert the runtime's fixed camera-relative movement rotation.
-          const inputX = Math.cos(0.5) * dx - Math.sin(0.5) * dz;
-          const inputZ = Math.sin(0.5) * dx + Math.cos(0.5) * dz;
-          const best = choices.reduce((a, b) =>
-            a.x * inputX + a.z * inputZ > b.x * inputX + b.z * inputZ ? a : b,
-          );
-          await setKeys(best.keys);
-          run.inputSteps++;
-          const distance = Math.hypot(dx, dz);
-          await page.waitForTimeout(
-            published || gameZip
-              ? mobile && program
-                ? Math.max(12, Math.min(70, distance * 60))
-                : Math.max(20, Math.min(110, distance * 120))
-              : 110,
-          );
+    const approach = async (target, { stopOnWin = true } = {}) => {
+      let arrived = false;
+      for (let i = 0; i < 180; i++) {
+        const position = await read();
+        if (
+          program &&
+          target.id === traversalContract.portalId &&
+          stopOnWin &&
+          (await page
+            .getByText("Adventure complete", { exact: true })
+            .isVisible()
+            .catch(() => false))
+        ) {
+          arrived = true;
+          break;
         }
-        await setKeys([]);
-        if (!arrived)
-          throw Error(
-            `${label} could not reach ${target.id}: ${JSON.stringify(await read())}`,
-          );
+        if (gameZip && position) {
+          const nearMovingPlatform = project.entities.some((entity) => {
+            if (entity.behavior?.type !== "move") return false;
+            const [x, y, z] = entity.position;
+            const [amplitudeX, amplitudeZ] =
+              entity.behavior.axis === "x"
+                ? [entity.behavior.amplitude ?? 0.5, 0]
+                : entity.behavior.axis === "z"
+                  ? [0, entity.behavior.amplitude ?? 0.5]
+                  : [0, 0];
+            return (
+              Math.abs(position.x - x) <= amplitudeX + 1.2 &&
+              Math.abs(position.z - z) <= amplitudeZ + 1.2 &&
+              Math.abs(position.y - 1.44) <= 0.15
+            );
+          });
+          if (nearMovingPlatform) {
+            run.platformSupport.nearMovingPlatformHeightSamples++;
+            run.platformSupport._candidateStreak =
+              (run.platformSupport._candidateStreak ?? 0) + 1;
+            run.platformSupport.maximumProximityCandidateStreak = Math.max(
+              run.platformSupport.maximumProximityCandidateStreak,
+              run.platformSupport._candidateStreak,
+            );
+          } else run.platformSupport._candidateStreak = 0;
+        }
+        const dx = target.position[0] - position.x,
+          dz = target.position[2] - position.z;
+        if (Math.hypot(dx, dz) < (published ? 0.16 : gameZip ? 0.3 : 0.42)) {
+          arrived = true;
+          break;
+        }
+        // Invert the runtime's fixed camera-relative movement rotation.
+        const inputX = Math.cos(0.5) * dx - Math.sin(0.5) * dz;
+        const inputZ = Math.sin(0.5) * dx + Math.cos(0.5) * dz;
+        const best = choices.reduce((a, b) =>
+          a.x * inputX + a.z * inputZ > b.x * inputX + b.z * inputZ ? a : b,
+        );
+        await setKeys(best.keys);
+        run.inputSteps++;
+        const distance = Math.hypot(dx, dz);
+        await page.waitForTimeout(
+          published || gameZip
+            ? mobile && program
+              ? Math.max(12, Math.min(70, distance * 60))
+              : Math.max(20, Math.min(110, distance * 120))
+            : 110,
+        );
+      }
+      await setKeys([]);
+      if (!arrived)
+        throw Error(
+          `${label} could not reach ${target.id}: ${JSON.stringify(await read())}`,
+        );
+    };
+    const readPortalContact = async () => {
+      const player = await read();
+      const bounds = await page.evaluate(
+        (target) => window.__orbReadObjectBounds(target),
+        {
+          x: portalTarget.position[0],
+          y: portalTarget.position[1],
+          z: portalTarget.position[2],
+        },
+      );
+      if (!player || !bounds)
+        throw Error(`${label} could not observe the portal collision bounds.`);
+      const horizontalX =
+        player.x < bounds.min[0]
+          ? bounds.min[0] - player.x
+          : player.x > bounds.max[0]
+            ? player.x - bounds.max[0]
+            : 0;
+      const horizontalZ =
+        player.z < bounds.min[2]
+          ? bounds.min[2] - player.z
+          : player.z > bounds.max[2]
+            ? player.z - bounds.max[2]
+            : 0;
+      const playerLow = player.y - 0.42;
+      const playerHigh = player.y + 0.42;
+      const verticalOverlap =
+        Math.min(playerHigh, bounds.max[1]) -
+        Math.max(playerLow, bounds.min[1]);
+      const horizontalGap = Math.hypot(horizontalX, horizontalZ);
+      return {
+        player,
+        bounds,
+        horizontalGap,
+        verticalOverlap,
+        contact: horizontalGap <= 0.22 && verticalOverlap > 0,
       };
-      await approach();
+    };
+    const settlePortalContact = async () => {
+      let lastContact;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        await setKeys([]);
+        await page.waitForTimeout(120);
+        lastContact = await readPortalContact();
+        if (lastContact.contact)
+          return {
+            ...lastContact,
+            collected: await score(),
+            settledTicks: attempt + 1,
+          };
+        await setKeys([" "]);
+        await page.waitForTimeout(180);
+        await setKeys([]);
+        await page.waitForTimeout(120);
+      }
+      throw Error(
+        `${label} reached the portal X/Z position without a settled 3D contact: ${JSON.stringify(lastContact)}`,
+      );
+    };
+
+    // The portal must be reachable before the collectibles are complete, but
+    // its rule must leave the run unwon. This is an observed browser check;
+    // contract validation only establishes which saved IDs and gate to use.
+    if (program) {
+      await approach(portalTarget, { stopOnWin: false });
+      const earlyContact = await settlePortalContact();
+      const earlyScore = await score();
+      await page.waitForTimeout(120);
+      const earlyWin = await page
+        .getByText("Adventure complete", { exact: true })
+        .isVisible()
+        .catch(() => false);
+      expect(earlyContact.collected).toBeLessThan(
+        traversalContract.collectibleIds.length,
+      );
+      expect(earlyScore).toBeLessThan(traversalContract.collectibleIds.length);
+      expect(earlyWin).toBe(false);
+      run.portalBeforeCollectibles = {
+        reached: true,
+        contact: earlyContact,
+        collected: earlyScore,
+        winStatusVisible: earlyWin,
+      };
+      run.checkpoints.push({
+        phase: "portal-before-collectibles",
+        target: portalTarget.id,
+        position: await read(),
+        collected: earlyScore,
+        hud: await scoreLocator.innerText(),
+      });
+    }
+
+    for (const target of collectibleTargets) {
+      const beforeTargetScore = await score();
+      await approach(target);
       if ((published || gameZip) && target.behavior?.type === "collect") {
-        expectedCollected++;
+        // The early portal route can pass over a collectible. If the score is
+        // already ahead, preserve that observed collection and continue. The
+        // final portal check still requires the complete expected count.
         for (
           let attempt = 0;
-          attempt < 3 && (await score()) < expectedCollected;
+          attempt < 3 && (await score()) === beforeTargetScore;
           attempt++
         ) {
           await page.waitForTimeout(900);
-          await approach();
+          await approach(target);
           const beforeJump = await read();
           await setKeys([" "]);
           await page.waitForTimeout(450);
@@ -466,8 +660,10 @@ try {
             collected: await score(),
           });
         }
-        await expect.poll(score).toBe(expectedCollected);
-        run.collectedIds.push(target.id);
+        const afterTargetScore = await score();
+        if (afterTargetScore > beforeTargetScore) {
+          run.collectedIds.push(target.id);
+        }
       }
       const checkpoint = {
         target: target.id,
@@ -477,6 +673,23 @@ try {
       };
       run.checkpoints.push(checkpoint);
       console.log(label, JSON.stringify(checkpoint));
+    }
+    if (portalTarget) {
+      await approach(portalTarget);
+      const finalPortalContact = program
+        ? await settlePortalContact()
+        : undefined;
+      const finalPortalCheckpoint = {
+        phase: "portal-after-collectibles",
+        target: portalTarget.id,
+        position: await read(),
+        collected: await score(),
+        hud: await scoreLocator.innerText(),
+      };
+      if (finalPortalContact)
+        finalPortalCheckpoint.contact = finalPortalContact;
+      run.checkpoints.push(finalPortalCheckpoint);
+      console.log(label, JSON.stringify(finalPortalCheckpoint));
     }
     if (gameZip) {
       delete run.platformSupport._candidateStreak;

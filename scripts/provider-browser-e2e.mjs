@@ -3484,6 +3484,47 @@ async function runFlagshipResume(
       fullPage: true,
     });
     report.evidence.push("resume-goal-7.png");
+
+    // Capture the exact edited goal-7 revision before undo. Keep this ZIP
+    // separate from the restored baseline export below so traversal can run
+    // against the seven-crystal saved program and its seven generated models.
+    await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: /^Download your world/ }),
+    ).toBeVisible({ timeout: 30000 });
+    const editedDownloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: /^Download your world/ }).click();
+    const editedDownload = await editedDownloadPromise;
+    const editedZip = await extractZip(
+      editedDownload,
+      config,
+      edited.revision,
+      evidenceDir,
+      "world-goal-7.zip",
+    );
+    assert.deepEqual(
+      storyComparable(editedZip.project),
+      storyComparable(edited),
+      "The goal-7 export did not preserve the edited checkpoint.",
+    );
+    assert.equal(storyCollectibles(editedZip.project).length, 7);
+    const editedGeneratedModels = editedZip.names.filter((name) =>
+      /^models\/generated\/[a-f0-9]{64}\.glb$/.test(name),
+    );
+    assert.equal(
+      editedGeneratedModels.length,
+      7,
+      "The goal-7 export must include seven generated crystal models.",
+    );
+    report.flagshipResume.editedExport = {
+      status: "goal-7",
+      revision: editedZip.project.revision,
+      collectibles: storyCollectibles(editedZip.project).length,
+      generatedModels: editedGeneratedModels.length,
+      file: "world-goal-7.zip",
+    };
+    report.evidence.push("world-goal-7.zip");
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
     await page.getByRole("button", { name: "Edit", exact: true }).click();
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -3694,6 +3735,46 @@ async function runFlagshipResumeOffline(
     );
     report.localRecovery = "offline-edited-reload-passed";
 
+    // Preserve the exact edited goal-7 export before seeded undo restores the
+    // baseline. The existing world.zip remains the separate goal-5 export.
+    await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: /^Download your world/ }),
+    ).toBeVisible({ timeout: 30000 });
+    const editedDownloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: /^Download your world/ }).click();
+    const editedDownload = await editedDownloadPromise;
+    const editedZip = await extractZip(
+      editedDownload,
+      config,
+      artifacts.edited.revision,
+      evidenceDir,
+      "world-goal-7.zip",
+    );
+    assert.deepEqual(
+      storyComparable(editedZip.project),
+      storyComparable(artifacts.edited),
+      "The offline goal-7 export did not preserve the edited checkpoint.",
+    );
+    assert.equal(storyCollectibles(editedZip.project).length, 7);
+    const editedGeneratedModels = editedZip.names.filter((name) =>
+      /^models\/generated\/[a-f0-9]{64}\.glb$/.test(name),
+    );
+    assert.equal(
+      editedGeneratedModels.length,
+      7,
+      "The offline goal-7 export must include seven generated crystal models.",
+    );
+    report.flagshipResume.editedExport = {
+      status: "goal-7",
+      revision: editedZip.project.revision,
+      collectibles: storyCollectibles(editedZip.project).length,
+      generatedModels: editedGeneratedModels.length,
+      file: "world-goal-7.zip",
+    };
+    report.evidence.push("world-goal-7.zip");
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+
     await page
       .getByRole("button", { name: "Edit", exact: true })
       .click()
@@ -3813,7 +3894,17 @@ async function runFlagshipResumeOffline(
   return report;
 }
 
-async function extractZip(download, config, expectedRevision, evidenceDir) {
+export async function extractZip(
+  download,
+  config,
+  expectedRevision,
+  evidenceDir,
+  artifactName = "world.zip",
+) {
+  assert(
+    /^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(artifactName),
+    "Export evidence filename must be a simple ZIP filename.",
+  );
   const tempDir = await mkdtemp(join(tmpdir(), "orbsie-provider-e2e-"));
   const zipPath = join(tempDir, "world.zip");
   await download.saveAs(zipPath);
@@ -3861,8 +3952,7 @@ async function extractZip(download, config, expectedRevision, evidenceDir) {
     !config.builderToken || !joined.includes(config.builderToken),
     "Builder capability appeared in exported ZIP.",
   );
-  const sanitizedName = "world.zip";
-  await writeFile(join(evidenceDir, sanitizedName), bytes, { mode: 0o600 });
+  await writeFile(join(evidenceDir, artifactName), bytes, { mode: 0o600 });
   return { tempDir, names, project };
 }
 
