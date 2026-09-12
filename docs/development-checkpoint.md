@@ -120,3 +120,16 @@ route capability selection remain unchanged until reviewed and live-verified.
 The schema transport uses non-strict schema guidance, not an unsupported claim
 of full strict-schema compatibility. Final commit must wait for complete valid
 envelope syntax and a non-truncated provider result. No live calls in this task.
+
+### Streaming transport review accepted
+
+`122e9a4` integrates optional JSON object / non-strict JSON Schema output with
+the existing validation pipeline. All 39 focused generation/diagnostics/envelope
+tests and typechecking passed. Final commit is withheld until complete valid
+syntax and provider finish `stop`; truncation, refusal, missing finish and
+commands after commit cannot commit. Existing NDJSON remains the default.
+
+The next worker task selects formats from precise catalog parameters and adds
+an exact provider/model operator override for controlled Gateway acceptance.
+Unknown capabilities retain NDJSON. Override validation must happen before
+free-prompt consumption. No production deployment or additional live calls yet.
