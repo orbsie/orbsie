@@ -1,0 +1,79 @@
+{
+  "checkedAt": "2026-09-12T17:53:50.146Z",
+  "provenance": {
+    "checkedAt": "2026-09-12T17:53:50.146Z",
+    "harness": {
+      "checkoutSHA": "dbd3e9632951b9239842bfae9818621abaa27b2d",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "7c0eec7",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3068",
+  "model": "openai/gpt-5.6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationBudget": 2,
+  "creation": {
+    "status": "passed",
+    "operations": 29,
+    "firstReservationMs": 4672,
+    "seedObserved": true,
+    "catalogEntities": 6,
+    "proceduralEntities": 7,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 6014.899999999441,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  }
+}

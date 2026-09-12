@@ -78,6 +78,15 @@ pass; keep separate evidence scopes. Root sent this criterion to the worker.
 Publication terminal-state regression a49c84e passed26 targeted tests; live
 failed-deployment continuity remains unverified.
 
+## Latest live OpenRouter milestone
+
+`provider-e2e/openrouter-moving-bounce-guidance/` passed exactly2 Luna low/default
+calls at4096 cap, local app7c0eec7, existing local-only key. Original flagship
+creation + selected color edit, reload, ZIP and standalone load passed.
+Saved13 objects include3 bounce entities and3 move_path actions; confirms
+structural guidance adoption, not actual3-platform route/giant edit/full story.
+No worker/test process active. Full goal still incomplete.
+
 ## Current Gateway flagship evidence
 
 Four live Luna calls across stopped runs/resume produced saved revision40;
