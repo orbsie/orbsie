@@ -142,5 +142,5 @@ it("does not return raw malformed provider stream diagnostics", async () => {
   const response = await generate(request(input()));
   const text = await response.text();
   expect(text).not.toContain("private-upstream");
-  expect(text).toContain("invalid scene update");
+  expect(text).toContain('"code":"INVALID_SCENE_PROTOCOL"');
 });
