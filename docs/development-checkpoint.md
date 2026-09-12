@@ -406,3 +406,13 @@ and controls, zero external/inference requests or page errors. Evidence:
 screenshot. Initial fixture root404 is retained. Physical devices/safe-area and
 real mobile performance remain separate acceptance gates. Not yet deployed;
 existing immutable published game still uses the prior player bundle.
+
+### Standalone touch fix platform release verified
+
+Source b13b0b4 deployed as dpl_7WoACnTsvcZai4G2h2Z8cBnqEdA4 to orbsie.com.
+Production build/typecheck and GET/HEAD smoke passed; root additionally verified
+exact player CSS hash because touch visibility depends on the stylesheet.
+Evidence: docs/evidence/player-touch-release. Future exports/publications use
+the new bundle; existing immutable deployments retain their bundled version.
+One Luna read-only audit is checking standalone safe areas and touch interruption
+against shared input handling; no extra live model calls.
