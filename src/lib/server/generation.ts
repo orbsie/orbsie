@@ -29,6 +29,12 @@ import {
   modelingFeedbackSchema,
   type ModelingFeedback,
 } from "../modeling-feedback";
+import {
+  SceneCommandEnvelopeDecoder,
+  SceneCommandEnvelopeError,
+} from "./scene-command-envelope";
+
+export type GenerationOutputFormat = "ndjson" | "json-object" | "json-schema";
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
@@ -71,16 +77,66 @@ function providerFailure(status: number) {
   return new GenerationProviderError(code, message);
 }
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
-const baseSystemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use recentConversation only as context for references and prior preferences; the current instruction and current project snapshot govern this turn. Output ONLY newline-delimited JSON, one complete command per line, without Markdown. Each line must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. For generated geometry, reserve first, optionally provide a procedural coarse preview, then send one refined generated job; objects referenced by project.game must receive refined replacements directly so their saved gameplay remains valid. Use reusable kinds or custom parts to invent varied objects. Scene hierarchy: create_group creates a stable non-rendered group (id,label,position,scale, optional rotation and parentId). Parents must be existing group IDs. Reserve child entities with parentId to group them while retaining their individual IDs and geometry. set_group_transform edits a group; set_transform edits one entity. These authoring transforms are parent-local, in meters with XYZ Euler rotation in radians and Y up. Group scales must be positive. set_parent targets an entity or group and requires parentId (group ID or null) and explicit keepWorldTransform: true preserves placement if representable as local TRS, false preserves local coordinates. Unsupported shear reparenting, cycles, and nonempty group removal are rejected atomically. Use remove_group only after explicitly moving or removing its children. Legacy move axes and game path positions remain root/world-space. Keep descendant world positions on the island and preserve unrelated groups and entities during targeted edits. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. For composable games use set_game with the complete data-only program: variables, ordered rules, start/click/collision/collect/input/timer triggers, conditions, and actions including score, win/lose/reset and movement paths. Finish referenced entities to ready before set_game. Replace or clear rules with set_game before removing a referenced object. game:null removes the program. Keep unrelated rules when editing; use the current project.game as the baseline. A game program owns score and outcomes; define them explicitly instead of relying on the legacy portal auto-win. Never include arbitrary code, URLs, credentials, scripts, or external assets. The only code-like output permitted is the typed browser-procedural source object when browserModeling is true and its capability instructions explicitly permit it. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message.`;
+const baseSystemPrompt = `You create playful, coherent 3D worlds for Orbsie. Use recentConversation only as context for references and prior preferences; the current instruction and current project snapshot govern this turn. Return only scene command JSON without Markdown. Each command must match the provided command schema. Reserve only NEW entities FIRST with a new stable ID, label, position, scale, color, stage seed. For edits to an existing entity ID, use setters directly; NEVER reserve that ID again or remove/recreate it. Preserve the existing ID and all unrelated entities. For generated geometry, reserve first, optionally provide a procedural coarse preview, then send one refined generated job; objects referenced by project.game must receive refined replacements directly so their saved gameplay remains valid. Use reusable kinds or custom parts to invent varied objects. Scene hierarchy: create_group creates a stable non-rendered group (id,label,position,scale, optional rotation and parentId). Parents must be existing group IDs. Reserve child entities with parentId to group them while retaining their individual IDs and geometry. set_group_transform edits a group; set_transform edits one entity. These authoring transforms are parent-local, in meters with XYZ Euler rotation in radians and Y up. Group scales must be positive. set_parent targets an entity or group and requires parentId (group ID or null) and explicit keepWorldTransform: true preserves placement if representable as local TRS, false preserves local coordinates. Unsupported shear reparenting, cycles, and nonempty group removal are rejected atomically. Use remove_group only after explicitly moving or removing its children. Legacy move axes and game path positions remain root/world-space. Keep descendant world positions on the island and preserve unrelated groups and entities during targeted edits. Coordinates: x/z ground plane, y up; playable circular island radius 8, start at [0,0,5]. Keep all objects on island. Use max 70 objects, max 16 parts/object. Trees ~2 units tall. Supported behaviors: static, collect (crystal), move (platform, axis/speed/amplitude), portal (unlocks when all collect entities are collected), bloom (click), bounce. For composable games use set_game with the complete data-only program: variables, ordered rules, start/click/collision/collect/input/timer triggers, conditions, and actions including score, win/lose/reset and movement paths. Finish referenced entities to ready before set_game. Replace or clear rules with set_game before removing a referenced object. game:null removes the program. Keep unrelated rules when editing; use the current project.game as the baseline. A game program owns score and outcomes; define them explicitly instead of relying on the legacy portal auto-win. Never include arbitrary code, URLs, credentials, scripts, or external assets. The only code-like output permitted is the typed browser-procedural source object when browserModeling is true and its capability instructions explicitly permit it. You may use known local catalog IDs supplied in assetCatalog via kind asset and assetId. Prefer a useful mix of catalog models and newly generated procedural/custom shapes, alternating where they fit the request; never force an unsuitable substitution. Explicit new-only policy prohibits catalog reuse for that scope, including follow-up edits. Preserve original catalog material colors unless recoloring is requested; use set_material for an explicit tint. For object edits, preserve all unrelated entities. Conclude with commit_revision with a brief friendly message.`;
 
 const modelingFeedbackInstruction =
   "If modelingFeedback is present, it is a bounded browser-side rejection report. Repair the reported entity or node in response to the current instruction, preserve stable IDs and unrelated finished geometry, and change the rejected recipe instead of repeating it.";
 
+function modelingInstructionsForOutputFormat(
+  localModeling: boolean,
+  browserModeling: boolean,
+  outputFormat: GenerationOutputFormat,
+) {
+  const instructions = modelingInstructions(localModeling, browserModeling);
+  if (outputFormat === "ndjson") return instructions;
+  return instructions.replace(
+    /Keep each command as one complete compact NDJSON line:[^.]*\./,
+    "Keep each command as one complete object in the commands array in authoring order: close the recipe, then job and geometry, then the command-level assetPolicy and final command brace before the next array entry.",
+  );
+}
+
+function outputFormatInstruction(outputFormat: GenerationOutputFormat) {
+  if (outputFormat === "ndjson")
+    return "Output ONLY newline-delimited JSON, one complete command per line, without Markdown.";
+  return "Output exactly one JSON object with only a commands array, without Markdown or other root keys. Put complete command objects in authoring order; the server validates each object incrementally and accepts the envelope only after its closing braces.";
+}
+
 export function systemPromptForCapabilities(
   localModeling = false,
   browserModeling = false,
+  outputFormat: GenerationOutputFormat = "ndjson",
 ) {
-  return `${baseSystemPrompt} ${modelingFeedbackInstruction} ${modelingInstructions(localModeling, browserModeling)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+  return `${baseSystemPrompt} ${outputFormatInstruction(outputFormat)} ${modelingFeedbackInstruction} ${modelingInstructionsForOutputFormat(localModeling, browserModeling, outputFormat)} You may only use commands matching this schema: ${JSON.stringify(modelCommandJSONSchemaForCapabilities(localModeling, browserModeling))}`;
+}
+
+function responseFormatFor(
+  outputFormat: GenerationOutputFormat,
+  localModeling: boolean,
+  browserModeling: boolean,
+) {
+  if (outputFormat === "ndjson") return undefined;
+  if (outputFormat === "json-object") return { type: "json_object" as const };
+  return {
+    type: "json_schema" as const,
+    json_schema: {
+      name: "orbsie_scene_commands",
+      strict: false,
+      schema: {
+        type: "object",
+        properties: {
+          commands: {
+            type: "array",
+            items: modelCommandJSONSchemaForCapabilities(
+              localModeling,
+              browserModeling,
+            ),
+          },
+        },
+        required: ["commands"],
+        additionalProperties: false,
+      },
+    },
+  };
 }
 
 export const systemPrompt = systemPromptForCapabilities();
@@ -96,6 +152,7 @@ export async function generateCommands({
   localModeling = false,
   browserModeling = false,
   modelingFeedback,
+  outputFormat = "ndjson",
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -108,6 +165,7 @@ export async function generateCommands({
   localModeling?: boolean;
   browserModeling?: boolean;
   modelingFeedback?: ModelingFeedback;
+  outputFormat?: GenerationOutputFormat;
 }) {
   const assetPolicy = deriveAssetPolicy(prompt, selected, project);
   const endpoint =
@@ -116,6 +174,15 @@ export async function generateCommands({
       : "https://ai-gateway.vercel.sh/v1/chat/completions";
   const providerRouting =
     provider === "openrouter" ? openrouterProviderRouting(model) : undefined;
+  const structuredOpenRouterRouting =
+    provider === "openrouter" && outputFormat !== "ndjson"
+      ? { ...(providerRouting ?? {}), require_parameters: true }
+      : providerRouting;
+  const responseFormat = responseFormatFor(
+    outputFormat,
+    localModeling,
+    browserModeling,
+  );
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -130,11 +197,18 @@ export async function generateCommands({
       stream: true,
       max_tokens: maxTokens,
       ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
-      ...(providerRouting ? { provider: providerRouting } : {}),
+      ...(structuredOpenRouterRouting
+        ? { provider: structuredOpenRouterRouting }
+        : {}),
+      ...(responseFormat ? { response_format: responseFormat } : {}),
       messages: [
         {
           role: "system",
-          content: systemPromptForCapabilities(localModeling, browserModeling),
+          content: systemPromptForCapabilities(
+            localModeling,
+            browserModeling,
+            outputFormat,
+          ),
         },
         {
           role: "user",
@@ -175,6 +249,10 @@ export async function generateCommands({
         working = project,
         count = 0,
         lastCommandType = "";
+      const structuredOutput = outputFormat !== "ndjson";
+      let pendingCommit:
+        Extract<ModelCommand, { type: "commit_revision" }> | undefined;
+      let refusalSeen = false;
       let finishReason: GenerationFinishReason = null;
       let cursor: Cursor = {
         runId: crypto.randomUUID(),
@@ -187,6 +265,31 @@ export async function generateCommands({
         value && typeof value === "object" && !Array.isArray(value)
           ? (value as Record<string, unknown>)
           : undefined;
+      function applyAndEnqueue(command: ModelCommand) {
+        let applied: ReturnType<typeof applyModelOperation>;
+        try {
+          applied = applyModelOperation(
+            working,
+            {
+              version: 1,
+              projectId: working.id,
+              runId: cursor.runId,
+              operationId: crypto.randomUUID(),
+              sequence: cursor.sequence + 1,
+              baseRevision: working.revision,
+              command,
+            },
+            cursor,
+          );
+        } catch (error) {
+          if (error instanceof z.ZodError) throw error;
+          throw new SceneProtocolError(finishReason);
+        }
+        working = applied.project;
+        cursor = applied.cursor;
+        lastCommandType = command.type;
+        controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
+      }
       function emit(line: string) {
         if (!line.trim()) return;
         if (++count > 250)
@@ -226,30 +329,20 @@ export async function generateCommands({
             error instanceof Error ? error.message : undefined,
           );
         }
-        let applied: ReturnType<typeof applyModelOperation>;
-        try {
-          applied = applyModelOperation(
-            working,
-            {
-              version: 1,
-              projectId: working.id,
-              runId: cursor.runId,
-              operationId: crypto.randomUUID(),
-              sequence: cursor.sequence + 1,
-              baseRevision: working.revision,
-              command,
-            },
-            cursor,
+        if (structuredOutput && pendingCommit)
+          throw new SceneProtocolError(
+            finishReason,
+            "No scene commands may follow commit_revision.",
           );
-        } catch (error) {
-          if (error instanceof z.ZodError) throw error;
-          throw new SceneProtocolError(finishReason);
+        if (structuredOutput && command.type === "commit_revision") {
+          pendingCommit = command;
+          return;
         }
-        working = applied.project;
-        cursor = applied.cursor;
-        lastCommandType = command.type;
-        controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
+        applyAndEnqueue(command);
       }
+      const envelopeDecoder = structuredOutput
+        ? new SceneCommandEnvelopeDecoder({ onCommand: emit })
+        : undefined;
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -276,22 +369,63 @@ export async function generateCommands({
               : undefined;
             if (choice) {
               const reason = choice.finish_reason;
+              if (reason === "refusal") refusalSeen = true;
               if (reason !== undefined && reason !== null)
                 finishReason = normalizeFinishReason(reason);
             }
             if (record.error)
               throw new ProviderStreamError(record.error, finishReason);
-            const delta = objectRecord(choice?.delta)?.content;
+            const deltaRecord = objectRecord(choice?.delta);
+            if (typeof deltaRecord?.refusal === "string") refusalSeen = true;
+            const delta = deltaRecord?.content;
             if (typeof delta !== "string") continue;
-            records += delta;
-            if (records.length > 100000)
-              throw Error("Scene command exceeded the size limit.");
-            const complete = records.split("\n");
-            records = complete.pop()!;
-            for (const record of complete) emit(record);
+            if (structuredOutput) {
+              try {
+                envelopeDecoder!.push(delta);
+              } catch (error) {
+                if (error instanceof SceneCommandEnvelopeError)
+                  throw new SceneJSONError(finishReason);
+                throw error;
+              }
+            } else {
+              records += delta;
+              if (records.length > 100000)
+                throw Error("Scene command exceeded the size limit.");
+              const complete = records.split("\n");
+              records = complete.pop()!;
+              for (const record of complete) emit(record);
+            }
           }
         }
-        if (records.trim()) emit(records);
+        if (structuredOutput) {
+          try {
+            envelopeDecoder!.finish();
+          } catch (error) {
+            if (
+              error instanceof SceneCommandEnvelopeError &&
+              finishReason === "length"
+            )
+              throw new TruncatedSceneStreamError(finishReason);
+            if (error instanceof SceneCommandEnvelopeError)
+              throw new SceneJSONError(finishReason);
+            throw error;
+          }
+          if (finishReason === "length")
+            throw new TruncatedSceneStreamError(
+              finishReason,
+              "The model response ended before the scene was complete. Finished objects are preserved; retry to continue.",
+            );
+          if (refusalSeen || finishReason !== "stop")
+            throw new SceneProtocolError(
+              finishReason,
+              "The model did not complete this scene update.",
+            );
+          if (pendingCommit) {
+            const commit = pendingCommit;
+            pendingCommit = undefined;
+            applyAndEnqueue(commit);
+          }
+        } else if (records.trim()) emit(records);
         if (!count) {
           if (finishReason === "length")
             throw new TruncatedSceneStreamError(finishReason);
