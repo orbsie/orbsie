@@ -208,6 +208,46 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_STORY must be 0 or 1.",
     );
   const flagshipStory = flagshipStoryValue === "1";
+  const mushroomReplacementValue = process.env.ORBSIE_MUSHROOM_REPLACEMENT;
+  if (
+    mushroomReplacementValue !== undefined &&
+    !["0", "1"].includes(mushroomReplacementValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_MUSHROOM_REPLACEMENT must be 0 or 1.",
+    );
+  const mushroomReplacement = mushroomReplacementValue === "1";
+  if (mushroomReplacement) {
+    if (args.publication)
+      throw new HarnessConfigurationError(
+        "ORBSIE_MUSHROOM_REPLACEMENT=1 cannot be combined with --publication; use the bounded replacement contract instead of a publication phase.",
+      );
+    const incompatible = [
+      "ORBSIE_FLAGSHIP_STORY",
+      "ORBSIE_FLAGSHIP_RESUME",
+      "ORBSIE_REQUIRE_GEOMETRY_EDIT",
+      "ORBSIE_REQUIRE_BROWSER_MODEL",
+      "ORBSIE_REQUIRE_NEW_ONLY",
+      "ORBSIE_REQUIRE_EXTRUSION",
+      "ORBSIE_REQUIRE_REVOLUTION",
+      "ORBSIE_REQUIRE_PROCEDURAL",
+      "ORBSIE_REQUIRE_INPUT_GAME",
+      "ORBSIE_REAL_PUBLICATION",
+      "ORBSIE_VERIFY_CLOUD_RECOVERY",
+      "ORBSIE_VERIFY_INTERRUPTED_RECOVERY",
+      "ORBSIE_BUILDER_URL",
+      "ORBSIE_BUILDER_TOKEN",
+    ].find(
+      (name) =>
+        process.env[name] === "1" ||
+        ((name === "ORBSIE_BUILDER_URL" || name === "ORBSIE_BUILDER_TOKEN") &&
+          process.env[name] !== undefined),
+    );
+    if (incompatible)
+      throw new HarnessConfigurationError(
+        `ORBSIE_MUSHROOM_REPLACEMENT=1 cannot be combined with ${incompatible}; use the bounded replacement contract instead of a generic recipe or recovery gate.`,
+      );
+  }
   const flagshipResumeValue = process.env.ORBSIE_FLAGSHIP_RESUME;
   if (
     flagshipResumeValue !== undefined &&
@@ -230,7 +270,7 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_RESUME_STAGE requires ORBSIE_FLAGSHIP_RESUME=1.",
     );
   const flagshipResumeStage = flagshipResume
-    ? flagshipResumeStageValue ?? "mushroom"
+    ? (flagshipResumeStageValue ?? "mushroom")
     : undefined;
   const flagshipResumeArtifactModeValue =
     process.env.ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE;
@@ -246,7 +286,7 @@ export function readConfiguration(argv) {
       "ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE requires ORBSIE_FLAGSHIP_RESUME=1.",
     );
   const flagshipResumeArtifactMode = flagshipResume
-    ? flagshipResumeArtifactModeValue ?? "reconstructed"
+    ? (flagshipResumeArtifactModeValue ?? "reconstructed")
     : undefined;
   const flagshipResumeOfflineValue = process.env.ORBSIE_FLAGSHIP_RESUME_OFFLINE;
   if (
@@ -430,33 +470,41 @@ export function readConfiguration(argv) {
     keyScope,
     expectedModel,
     outputCap,
-    prompt: flagshipStory || flagshipResume
-      ? FLAGSHIP_STORY_PROMPT
-      : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
-        ? INPUT_GAME_PROMPT
-        : process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
-    editPrompt: flagshipStory
-      ? FLAGSHIP_STORY_MUSHROOM_PROMPT
-      : flagshipResume
-        ? FLAGSHIP_STORY_PLATFORM_PROMPT
-      : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
-        ? INPUT_GAME_EDIT
-        : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
+    prompt: mushroomReplacement
+      ? process.env.ORBSIE_CREATION_PROMPT ||
+        "Build a tiny island with one friendly tree standing on the ground. Keep it simple and commit the world."
+      : flagshipStory || flagshipResume
+        ? FLAGSHIP_STORY_PROMPT
+        : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+          ? INPUT_GAME_PROMPT
+          : process.env.ORBSIE_CREATION_PROMPT || DEFAULT_PROMPT,
+    editPrompt: mushroomReplacement
+      ? process.env.ORBSIE_EDIT_PROMPT || "Make this a giant pink mushroom"
+      : flagshipStory
+        ? FLAGSHIP_STORY_MUSHROOM_PROMPT
+        : flagshipResume
+          ? FLAGSHIP_STORY_PLATFORM_PROMPT
+          : process.env.ORBSIE_REQUIRE_INPUT_GAME === "1"
+            ? INPUT_GAME_EDIT
+            : process.env.ORBSIE_EDIT_PROMPT || DEFAULT_EDIT,
     publication:
       args.publication || process.env.ORBSIE_REAL_PUBLICATION === "1",
     cloudRecovery: process.env.ORBSIE_VERIFY_CLOUD_RECOVERY === "1",
     interruptedRecovery: process.env.ORBSIE_VERIFY_INTERRUPTED_RECOVERY === "1",
     interruptionMethod: process.env.ORBSIE_INTERRUPTION_METHOD ?? "stop",
-    generationBudget: flagshipStory
-      ? 3
-      : flagshipResumeOffline
-        ? 0
-        : flagshipResume
-          ? flagshipResumeStage === "creation"
-            ? 2
-            : 1
-          : 2,
+    generationBudget: mushroomReplacement
+      ? 2
+      : flagshipStory
+        ? 3
+        : flagshipResumeOffline
+          ? 0
+          : flagshipResume
+            ? flagshipResumeStage === "creation"
+              ? 2
+              : 1
+            : 2,
     flagshipStory,
+    mushroomReplacement,
     flagshipResume,
     flagshipResumeStage,
     flagshipResumeArtifactMode,
@@ -1776,12 +1824,24 @@ export function emptyReport(config, provenance) {
     },
     edit: {
       status: "blocked",
-      type: config.requireGeometryEdit ? "geometry" : "material",
+      type: config.mushroomReplacement
+        ? "mushroom-replacement"
+        : config.requireGeometryEdit
+          ? "geometry"
+          : "material",
       selectedIdPreserved: false,
     },
     ...(config.flagshipStory
       ? {
           flagshipStory: {
+            status: "not-started",
+            generationBudget: config.generationBudget,
+          },
+        }
+      : {}),
+    ...(config.mushroomReplacement
+      ? {
+          mushroomReplacement: {
             status: "not-started",
             generationBudget: config.generationBudget,
           },
@@ -2247,57 +2307,56 @@ const GENERATED_MODEL_EVIDENCE_WAIT_MS = 30000;
 async function readStoredGeneratedModelDigest(page, hash, includeBytes = false) {
   return page.evaluate(
     async ({ storageKey, includeBytes: shouldIncludeBytes, maxBytes }) => {
-    const record = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("keyval-store");
-      request.onupgradeneeded = () => request.transaction?.abort();
-      request.onerror = () =>
-        reject(request.error || Error("IndexedDB open failed"));
-      request.onsuccess = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains("keyval")) {
-          db.close();
-          resolve(null);
-          return;
-        }
-        const transaction = db.transaction("keyval", "readonly");
-        const getRequest = transaction.objectStore("keyval").get(storageKey);
-        getRequest.onerror = () =>
-          reject(getRequest.error || Error("IndexedDB read failed"));
-        getRequest.onsuccess = () => {
-          const value = getRequest.result;
-          db.close();
-          resolve(value ?? null);
+      const record = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("keyval-store");
+        request.onupgradeneeded = () => request.transaction?.abort();
+        request.onerror = () =>
+          reject(request.error || Error("IndexedDB open failed"));
+        request.onsuccess = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains("keyval")) {
+            db.close();
+            resolve(null);
+            return;
+          }
+          const transaction = db.transaction("keyval", "readonly");
+          const getRequest = transaction.objectStore("keyval").get(storageKey);
+          getRequest.onerror = () =>
+            reject(getRequest.error || Error("IndexedDB read failed"));
+          getRequest.onsuccess = () => {
+            const value = getRequest.result;
+            db.close();
+            resolve(value ?? null);
+          };
         };
-      };
-    });
-    const value = record && typeof record === "object" ? record.glb : null;
-    if (!value) return null;
-    const declaredBytes =
-      Number.isSafeInteger(value?.byteLength) && value.byteLength >= 0
-        ? value.byteLength
-        : Array.isArray(value) && value.length;
-    if (
-      Number.isSafeInteger(declaredBytes) &&
-      declaredBytes > maxBytes
-    )
-      return { bytes: declaredBytes, sha256: null, tooLarge: true };
-    const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-    if (bytes.byteLength > maxBytes)
+      });
+      const value = record && typeof record === "object" ? record.glb : null;
+      if (!value) return null;
+      const declaredBytes =
+        Number.isSafeInteger(value?.byteLength) && value.byteLength >= 0
+          ? value.byteLength
+          : Array.isArray(value) && value.length;
+      if (Number.isSafeInteger(declaredBytes) && declaredBytes > maxBytes)
+        return { bytes: declaredBytes, sha256: null, tooLarge: true };
+      const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+      const digest = new Uint8Array(
+        await crypto.subtle.digest("SHA-256", bytes),
+      );
+      if (bytes.byteLength > maxBytes)
+        return {
+          bytes: bytes.byteLength,
+          sha256: [...digest]
+            .map((byte) => byte.toString(16).padStart(2, "0"))
+            .join(""),
+          tooLarge: true,
+        };
       return {
         bytes: bytes.byteLength,
         sha256: [...digest]
           .map((byte) => byte.toString(16).padStart(2, "0"))
           .join(""),
-        tooLarge: true,
+        ...(shouldIncludeBytes ? { glb: [...bytes] } : {}),
       };
-    return {
-      bytes: bytes.byteLength,
-      sha256: [...digest]
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join(""),
-      ...(shouldIncludeBytes ? { glb: [...bytes] } : {}),
-    };
     },
     {
       storageKey: `orbsie-model:${hash}`,
@@ -3703,6 +3762,163 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
   };
 }
 
+export function assertMushroomReplacement(before, after, treeId) {
+  const check = assertFlagshipStoryMushroom(before, after, treeId);
+  const afterEntity = storyEntityMap(after).get(treeId);
+  const geometry = afterEntity?.geometry;
+  const supportedCatalog =
+    geometry?.kind === "asset" &&
+    check.mushroomEvidence === "catalog-mushroom-tag";
+  const supportedBrowserModel =
+    geometry?.kind === "generated" &&
+    geometry.job?.backend === "browser-manifold" &&
+    geometry.model?.source === "browser-manifold";
+  assert(
+    supportedCatalog || supportedBrowserModel,
+    "Mushroom replacement must use a catalog mushroom or trusted browser-generated geometry.",
+  );
+  assert.equal(
+    check.dimensions.status,
+    "observed",
+    "Mushroom replacement did not provide before/after physical bounds.",
+  );
+  assert(
+    check.transformedBoundsExpanded,
+    "Mushroom replacement did not expand any scaled physical dimension.",
+  );
+  assert.deepEqual(
+    after.game,
+    before.game,
+    "Mushroom replacement changed the game program.",
+  );
+  assert.deepEqual(
+    after.groups,
+    before.groups,
+    "Mushroom replacement changed unrelated scene groups.",
+  );
+  assert.equal(
+    after.id,
+    before.id,
+    "Mushroom replacement changed project identity.",
+  );
+  assert.equal(
+    after.seed,
+    before.seed,
+    "Mushroom replacement changed project seed.",
+  );
+  return {
+    ...check,
+    supportedGeometry: supportedCatalog ? "catalog" : "browser-generated",
+    physicalSizeExpansion: check.transformedBoundsExpanded,
+    sizeVisualReview: "pending",
+  };
+}
+
+export function selectMushroomReplacementTree(project) {
+  const tree = project?.entities?.find(
+    (entity) => entity.stage === "ready" && storyTreeEvidence(entity),
+  );
+  assert(tree, "Mushroom replacement creation must contain a ready tree.");
+  return { tree };
+}
+
+function pickSnapshotFields(value, fields) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    fields.flatMap((field) =>
+      Object.prototype.hasOwnProperty.call(value, field)
+        ? [[field, persistenceJSON(value[field])]]
+        : [],
+    ),
+  );
+}
+
+function sanitizedSnapshotGeometry(geometry) {
+  if (!geometry || typeof geometry !== "object") return geometry;
+  const base = pickSnapshotFields(geometry, [
+    "kind",
+    "detail",
+    "tint",
+    "assetId",
+    "collision",
+    "parts",
+  ]);
+  if (geometry.kind === "generated") {
+    if (geometry.job)
+      base.job = pickSnapshotFields(geometry.job, [
+        "backend",
+        "version",
+        "parts",
+        "recipe",
+        "authoring",
+      ]);
+    if (geometry.model)
+      base.model = pickSnapshotFields(geometry.model, [
+        "version",
+        "sha256",
+        "bytes",
+        "source",
+        "kernelVersion",
+        "blenderVersion",
+        "bounds",
+        "createdAt",
+      ]);
+  }
+  return base;
+}
+
+export function sanitizedMushroomReplacementSnapshot(project) {
+  const snapshot = pickSnapshotFields(project, [
+    "version",
+    "id",
+    "title",
+    "seed",
+    "revision",
+    "groups",
+    "environment",
+    "game",
+    "messages",
+  ]);
+  snapshot.entities = Array.isArray(project?.entities)
+    ? project.entities.map((entity) => {
+        const sanitized = pickSnapshotFields(entity, [
+          "id",
+          "label",
+          "position",
+          "scale",
+          "rotation",
+          "parentId",
+          "color",
+          "behavior",
+          "assetPolicy",
+          "stage",
+        ]);
+        if (entity.geometry)
+          sanitized.geometry = sanitizedSnapshotGeometry(entity.geometry);
+        return sanitized;
+      })
+    : [];
+  return snapshot;
+}
+
+export async function persistMushroomReplacementSnapshot(
+  report,
+  evidenceDir,
+  phase,
+  project,
+) {
+  const filename = `mushroom-replacement-${phase}.json`;
+  const snapshot = sanitizedMushroomReplacementSnapshot(project);
+  assert(snapshot, `Mushroom replacement ${phase} snapshot is empty.`);
+  await writeFile(
+    join(evidenceDir, filename),
+    `${JSON.stringify(snapshot, null, 2)}\n`,
+    { encoding: "utf8", mode: 0o600 },
+  );
+  if (!report.evidence.includes(filename)) report.evidence.push(filename);
+  return filename;
+}
+
 export function assertFlagshipStoryPlatform(before, after, platformId) {
   const beforeMap = storyEntityMap(before);
   const afterMap = storyEntityMap(after);
@@ -4156,6 +4372,79 @@ async function runFlagshipStory(
     selectedIdPreserved: true,
   };
   return undone;
+}
+
+async function runMushroomReplacement(
+  page,
+  config,
+  report,
+  info,
+  evidenceDir,
+  created,
+  onGoodProject,
+) {
+  const { tree } = selectMushroomReplacementTree(created);
+  const targetIndex = created.entities.findIndex(
+    (entity) => entity.id === tree.id,
+  );
+  assert(
+    targetIndex >= 0,
+    "Mushroom replacement tree is not in the created scene.",
+  );
+  const targetRow = page.locator(".object-list button").nth(targetIndex);
+  await expect(targetRow).toHaveCount(1);
+  await targetRow.click();
+  await expect(page.locator(".selection-chip")).toContainText(tree.label);
+  await page.locator("#prompt").fill(config.editPrompt);
+  await page.getByRole("button", { name: "Change this", exact: true }).click();
+  await expect.poll(() => info.generationRequests, { timeout: 30000 }).toBe(2);
+  assert.equal(
+    info.generationBodies.at(-1)?.selectedId,
+    tree.id,
+    "Mushroom replacement did not target the selected tree.",
+  );
+  let edited = await waitForSavedProject(
+    page,
+    created.revision + 1,
+    created.messages.filter((message) => message.role === "assistant").length +
+      1,
+  );
+  // Persist the acquired edit before optional baking so a bake failure still
+  // leaves the provider's committed scene available for diagnosis.
+  await persistMushroomReplacementSnapshot(
+    report,
+    evidenceDir,
+    "after",
+    edited,
+  );
+  const editedTree = edited.entities.find((entity) => entity.id === tree.id);
+  if (
+    editedTree?.geometry?.kind === "generated" &&
+    editedTree.geometry.job?.backend === "browser-manifold"
+  )
+    edited = await waitForTrustedBrowserBake(page, tree.id);
+  await persistMushroomReplacementSnapshot(
+    report,
+    evidenceDir,
+    "after",
+    edited,
+  );
+  // The snapshot above is persisted before semantic assertions so later
+  // failures retain the acquired scene.
+  const mushroomCheck = assertMushroomReplacement(created, edited, tree.id);
+  onGoodProject(edited);
+  report.mushroomReplacement = {
+    status: "passed",
+    targetId: tree.id,
+    targetLabel: tree.label,
+    ...mushroomCheck,
+  };
+  report.edit = {
+    status: "passed",
+    type: "mushroom-replacement",
+    selectedIdPreserved: true,
+  };
+  return edited;
 }
 
 async function putIndexedDBValue(page, key, value) {
@@ -6413,202 +6702,241 @@ async function run(config, report = emptyReport(config)) {
       };
     }
     if (!creationContinuation) {
-    projectBefore = await storageSnapshot(
-      page,
-      (config.key ?? config.companionToken)
-        ? storageKeyDigest(config.key ?? config.companionToken)
-        : undefined,
-    );
-    lastGoodProject = projectBefore.project;
-    assert.equal(projectBefore.sensitive, false);
-    const prompt = page.getByPlaceholder("What experience to build?");
-    await expect(prompt).toBeVisible({ timeout: 30000 });
-    await prompt.fill(config.prompt);
-    await page.getByRole("button", { name: "Create", exact: true }).click();
-    await expect
-      .poll(() => info.generationRequests, { timeout: 30000 })
-      .toBeGreaterThan(0);
-    const showObjects = page.getByRole("button", {
-      name: "Show objects",
-      exact: true,
-    });
-    await expect(showObjects).toBeVisible({ timeout: 30000 });
-    await showObjects.click();
-    const interrupted = config.interruptedRecovery
-      ? await verifyInterruptedRecovery(
+      projectBefore = await storageSnapshot(
+        page,
+        (config.key ?? config.companionToken)
+          ? storageKeyDigest(config.key ?? config.companionToken)
+          : undefined,
+      );
+      lastGoodProject = projectBefore.project;
+      assert.equal(projectBefore.sensitive, false);
+      const prompt = page.getByPlaceholder("What experience to build?");
+      await expect(prompt).toBeVisible({ timeout: 30000 });
+      await prompt.fill(config.prompt);
+      await page.getByRole("button", { name: "Create", exact: true }).click();
+      await expect
+        .poll(() => info.generationRequests, { timeout: 30000 })
+        .toBeGreaterThan(0);
+      const showObjects = page.getByRole("button", {
+        name: "Show objects",
+        exact: true,
+      });
+      await expect(showObjects).toBeVisible({ timeout: 30000 });
+      await showObjects.click();
+      const interrupted = config.interruptedRecovery
+        ? await verifyInterruptedRecovery(
+            page,
+            config,
+            report,
+            info,
+            info.generationBodies[0].projectId,
+            evidenceDir,
+          )
+        : null;
+      // A rejected request cannot reserve an entity. Surface that response now
+      // instead of spending the entire first-object timeout on an empty scene.
+      const firstObject = page.locator(".object-list button").first();
+      const reservationDeadline = Date.now() + 180000;
+      while (!(await firstObject.isVisible())) {
+        const rejectedStatus = info.generationStatuses.find(
+          (status) => status >= 400,
+        );
+        if (rejectedStatus)
+          throw new Error(
+            `Generation request returned HTTP ${rejectedStatus} before the first entity reservation.`,
+          );
+        const streamFailure = await page.evaluate(() => {
+          const code = window.__orbsieDiagnosticObserver?.records?.[0]?.code;
+          return [
+            "INVALID_SCENE_UPDATE",
+            "INVALID_SCENE_JSON",
+            "INVALID_SCENE_PROTOCOL",
+            "TRUNCATED_SCENE_STREAM",
+            "PROVIDER_STREAM_ERROR",
+          ].includes(code)
+            ? code
+            : null;
+        });
+        if (streamFailure)
+          throw new Error(
+            `Generation stream reported ${streamFailure} before the first entity reservation.`,
+          );
+        if (Date.now() >= reservationDeadline)
+          throw new Error("No entity reservation appeared within 180 seconds.");
+        await page.waitForTimeout(100);
+      }
+      const firstEvidence =
+        interrupted?.observerEvidence ?? (await observerEvidence(page));
+      const seedObserved = Boolean(
+        firstEvidence?.stages?.some((entry) =>
+          ["seed", "coarse"].includes(entry.stage),
+        ),
+      );
+      report.creation.firstReservationMs = seedObserved
+        ? Math.max(0, Math.round(firstEvidence.stages[0].at))
+        : null;
+      report.creation.seedObserved = seedObserved;
+      if (!interrupted) {
+        report.evidence.push("intermediate-seed.png");
+        await page.screenshot({
+          path: join(evidenceDir, "intermediate-seed.png"),
+          fullPage: true,
+        });
+      }
+      projectAfterCreation = await waitForSavedProject(
+        page,
+        interrupted ? interrupted.checkpoint.revision + 1 : 1,
+        1,
+      );
+      lastGoodProject = projectAfterCreation;
+      if (config.requireBrowserModel) {
+        const bakedEntity = projectAfterCreation.entities.find(
+          (entity) =>
+            entity.geometry?.kind === "generated" &&
+            entity.geometry.job?.backend === "browser-manifold",
+        );
+        assert(
+          bakedEntity,
+          "The committed project did not expose a browser-manifold entity to bake.",
+        );
+        projectAfterCreation = await waitForTrustedBrowserBake(
+          page,
+          bakedEntity.id,
+        );
+      }
+      if (config.mushroomReplacement) {
+        await persistMushroomReplacementSnapshot(
+          report,
+          evidenceDir,
+          "before",
+          projectAfterCreation,
+        );
+        const treeEntity = projectAfterCreation.entities.find(
+          (entity) => entity.stage === "ready" && storyTreeEvidence(entity),
+        );
+        if (
+          treeEntity?.geometry?.kind === "generated" &&
+          treeEntity.geometry.job?.backend === "browser-manifold"
+        )
+          projectAfterCreation = await waitForTrustedBrowserBake(
+            page,
+            treeEntity.id,
+          );
+        await persistMushroomReplacementSnapshot(
+          report,
+          evidenceDir,
+          "before",
+          projectAfterCreation,
+        );
+      }
+      if (interrupted) {
+        for (const finished of readyCheckpointEntities(
+          interrupted.checkpoint,
+        )) {
+          assert.deepEqual(
+            persistenceJSON(
+              projectAfterCreation.entities.find(
+                (entity) => entity.id === finished.id,
+              ),
+            ),
+            persistenceJSON(finished),
+            "Continuation replaced or altered an already finished entity.",
+          );
+        }
+        report.cloudRecovery.interruptedRecovery.completedEntitiesPreserved = true;
+        report.cloudRecovery.interruptedRecovery.status = "passed";
+      }
+      if (config.requireInputGame) {
+        report.inputGame = {
+          status: "checking-creation",
+          ...assertInputGameProject(
+            projectAfterCreation,
+            "Created project",
+            info.projectValidator,
+          ),
+        };
+        projectAfterCreation = await verifyInputGameBrowserBakes(
+          page,
+          projectAfterCreation,
+        );
+      }
+      assert.equal(
+        seedObserved,
+        true,
+        "No browser-visible entity reservation/seed was observed.",
+      );
+      assert(
+        projectAfterCreation.messages.some(
+          (message) => message.role === "assistant",
+        ),
+        "The creation stream did not commit an assistant response.",
+      );
+      await assertNoStoredKey(page, config);
+      report.creation.status = "passed";
+      report.creation.operations = projectAfterCreation.revision;
+      report.creation.catalogEntities = projectAfterCreation.entities.filter(
+        (entity) => entity.geometry?.kind === "asset",
+      ).length;
+      report.creation.proceduralEntities = projectAfterCreation.entities.filter(
+        (entity) =>
+          entity.geometry &&
+          !["asset", "generated"].includes(entity.geometry.kind),
+      ).length;
+
+      report.creation.generatedEntities = projectAfterCreation.entities.filter(
+        (entity) =>
+          entity.geometry?.kind === "generated" && entity.geometry.model,
+      ).length;
+      if (config.requireNewOnly)
+        assert.equal(
+          report.creation.catalogEntities,
+          0,
+          "The explicit new-only creation produced a catalog entity.",
+        );
+      if (config.builderURL)
+        assert(
+          report.creation.generatedEntities > 0,
+          "The live model did not build a local Blender asset.",
+        );
+
+      const browserEntities = projectAfterCreation.entities.filter(
+        (entity) =>
+          entity.geometry?.kind === "generated" &&
+          entity.geometry.job?.backend === "browser-manifold" &&
+          entity.geometry.model?.source === "browser-manifold",
+      );
+      if (config.requireBrowserModel) {
+        assert(
+          browserEntities.length > 0,
+          "The live model did not produce a browser-manifold asset.",
+        );
+        report.creation.browserGeneratedEntities = browserEntities.length;
+      }
+      if (config.flagshipStory) {
+        projectAfterEdit = await runFlagshipStory(
           page,
           config,
           report,
           info,
-          info.generationBodies[0].projectId,
           evidenceDir,
-        )
-      : null;
-    // A rejected request cannot reserve an entity. Surface that response now
-    // instead of spending the entire first-object timeout on an empty scene.
-    const firstObject = page.locator(".object-list button").first();
-    const reservationDeadline = Date.now() + 180000;
-    while (!(await firstObject.isVisible())) {
-      const rejectedStatus = info.generationStatuses.find(
-        (status) => status >= 400,
-      );
-      if (rejectedStatus)
-        throw new Error(
-          `Generation request returned HTTP ${rejectedStatus} before the first entity reservation.`,
-        );
-      const streamFailure = await page.evaluate(() => {
-        const code = window.__orbsieDiagnosticObserver?.records?.[0]?.code;
-        return [
-          "INVALID_SCENE_UPDATE",
-          "INVALID_SCENE_JSON",
-          "INVALID_SCENE_PROTOCOL",
-          "TRUNCATED_SCENE_STREAM",
-          "PROVIDER_STREAM_ERROR",
-        ].includes(code)
-          ? code
-          : null;
-      });
-      if (streamFailure)
-        throw new Error(
-          `Generation stream reported ${streamFailure} before the first entity reservation.`,
-        );
-      if (Date.now() >= reservationDeadline)
-        throw new Error("No entity reservation appeared within 180 seconds.");
-      await page.waitForTimeout(100);
-    }
-    const firstEvidence =
-      interrupted?.observerEvidence ?? (await observerEvidence(page));
-    const seedObserved = Boolean(
-      firstEvidence?.stages?.some((entry) =>
-        ["seed", "coarse"].includes(entry.stage),
-      ),
-    );
-    report.creation.firstReservationMs = seedObserved
-      ? Math.max(0, Math.round(firstEvidence.stages[0].at))
-      : null;
-    report.creation.seedObserved = seedObserved;
-    if (!interrupted) {
-      report.evidence.push("intermediate-seed.png");
-      await page.screenshot({
-        path: join(evidenceDir, "intermediate-seed.png"),
-        fullPage: true,
-      });
-    }
-    projectAfterCreation = await waitForSavedProject(
-      page,
-      interrupted ? interrupted.checkpoint.revision + 1 : 1,
-      1,
-    );
-    lastGoodProject = projectAfterCreation;
-    if (config.requireBrowserModel) {
-      const bakedEntity = projectAfterCreation.entities.find(
-        (entity) =>
-          entity.geometry?.kind === "generated" &&
-          entity.geometry.job?.backend === "browser-manifold",
-      );
-      assert(
-        bakedEntity,
-        "The committed project did not expose a browser-manifold entity to bake.",
-      );
-      projectAfterCreation = await waitForTrustedBrowserBake(
-        page,
-        bakedEntity.id,
-      );
-    }
-    if (interrupted) {
-      for (const finished of readyCheckpointEntities(interrupted.checkpoint)) {
-        assert.deepEqual(
-          persistenceJSON(
-            projectAfterCreation.entities.find(
-              (entity) => entity.id === finished.id,
-            ),
-          ),
-          persistenceJSON(finished),
-          "Continuation replaced or altered an already finished entity.",
-        );
-      }
-      report.cloudRecovery.interruptedRecovery.completedEntitiesPreserved = true;
-      report.cloudRecovery.interruptedRecovery.status = "passed";
-    }
-    if (config.requireInputGame) {
-      report.inputGame = {
-        status: "checking-creation",
-        ...assertInputGameProject(
           projectAfterCreation,
-          "Created project",
-          info.projectValidator,
-        ),
-      };
-      projectAfterCreation = await verifyInputGameBrowserBakes(
-        page,
-        projectAfterCreation,
-      );
-    }
-    assert.equal(
-      seedObserved,
-      true,
-      "No browser-visible entity reservation/seed was observed.",
-    );
-    assert(
-      projectAfterCreation.messages.some(
-        (message) => message.role === "assistant",
-      ),
-      "The creation stream did not commit an assistant response.",
-    );
-    await assertNoStoredKey(page, config);
-    report.creation.status = "passed";
-    report.creation.operations = projectAfterCreation.revision;
-    report.creation.catalogEntities = projectAfterCreation.entities.filter(
-      (entity) => entity.geometry?.kind === "asset",
-    ).length;
-    report.creation.proceduralEntities = projectAfterCreation.entities.filter(
-      (entity) =>
-        entity.geometry &&
-        !["asset", "generated"].includes(entity.geometry.kind),
-    ).length;
-
-    report.creation.generatedEntities = projectAfterCreation.entities.filter(
-      (entity) =>
-        entity.geometry?.kind === "generated" && entity.geometry.model,
-    ).length;
-    if (config.requireNewOnly)
-      assert.equal(
-        report.creation.catalogEntities,
-        0,
-        "The explicit new-only creation produced a catalog entity.",
-      );
-    if (config.builderURL)
-      assert(
-        report.creation.generatedEntities > 0,
-        "The live model did not build a local Blender asset.",
-      );
-
-    const browserEntities = projectAfterCreation.entities.filter(
-      (entity) =>
-        entity.geometry?.kind === "generated" &&
-        entity.geometry.job?.backend === "browser-manifold" &&
-        entity.geometry.model?.source === "browser-manifold",
-    );
-    if (config.requireBrowserModel) {
-      assert(
-        browserEntities.length > 0,
-        "The live model did not produce a browser-manifold asset.",
-      );
-      report.creation.browserGeneratedEntities = browserEntities.length;
-    }
-    if (config.flagshipStory) {
-      projectAfterEdit = await runFlagshipStory(
-        page,
-        config,
-        report,
-        info,
-        evidenceDir,
-        projectAfterCreation,
-        (project) => {
-          lastGoodProject = project;
-        },
-      );
-    } else {
+          (project) => {
+            lastGoodProject = project;
+          },
+        );
+      } else if (config.mushroomReplacement) {
+        projectAfterEdit = await runMushroomReplacement(
+          page,
+          config,
+          report,
+          info,
+          evidenceDir,
+          projectAfterCreation,
+          (project) => {
+            lastGoodProject = project;
+          },
+        );
+      } else {
     const targetBefore = config.requireBrowserModel
       ? browserEntities[0]
       : config.builderURL
@@ -6947,7 +7275,7 @@ async function run(config, report = emptyReport(config)) {
       type: config.requireGeometryEdit ? "geometry" : "material",
       selectedIdPreserved: true,
     };
-    }
+      }
     } else {
       projectAfterEdit = await runFlagshipStory(
         page,
