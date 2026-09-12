@@ -15,7 +15,17 @@ import { posix as posixPath, resolve, join } from "node:path";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import {
+  CONTACT_HORIZONTAL_TOLERANCE,
+  DEFAULT_JUMP_REACH_MARGIN,
+  GRAVITY,
+  JUMP_SPEED,
   PLAYER_HALF_HEIGHT,
+  PLAYER_MOVE_SPEED,
+  horizontalGapToPlatform,
+  jumpReachModel,
+  movingTargetMotionBound,
+  renderedDimensionsMatchSource,
+  sourcePlatformContact,
   sourceLandingEvidence,
 } from "./lib/flagship-platforms-verifier.mjs";
 
@@ -456,16 +466,23 @@ function dimensions(bounds) {
 }
 
 function chooseCandidates(telemetry) {
-  const candidates = telemetry.groups.filter(
-    (candidate) => candidate.childCount >= 2,
-  );
+  const candidates = telemetry.groups
+    .map((candidate) => ({
+      ...candidate,
+      size: dimensions(candidate.worldBounds),
+    }))
+    .filter((candidate) => candidate.childCount >= 2);
   const remaining = new Set(candidates.map((candidate) => candidate.uuid));
   const mapping = {};
   for (const entity of platforms) {
     const expected = entity.scale;
+    const asset = catalogAssets.get(entity.geometry.assetId);
     const ranked = [...remaining]
       .map((uuid) => candidates.find((candidate) => candidate.uuid === uuid))
       .filter(Boolean)
+      .filter((candidate) =>
+        renderedDimensionsMatchSource(candidate, entity, asset),
+      )
       .map((candidate) => {
         const scaleError = candidate.scale.reduce(
           (sum, value, axis) => sum + Math.abs(value - expected[axis]),
@@ -803,6 +820,20 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
   };
   const groundContact = (sample) =>
     Boolean(sample.player && sample.player.center[1] <= 0.5);
+  const sourceCarried = (sample, entity, asset) => {
+    const rendered = sample.platforms[entity.id];
+    const player = sample.player;
+    const source = sourcePlatformContact(entity, rendered, asset);
+    if (!player || !rendered || !source) return false;
+    return (
+      playerOnPlatform(player, rendered) &&
+      Math.abs(player.center[1] - source.contactY) <= 0.1 &&
+      Math.abs(player.center[0] - source.center[0]) <=
+        source.halfX + CONTACT_HORIZONTAL_TOLERANCE &&
+      Math.abs(player.center[2] - source.center[2]) <=
+        source.halfZ + CONTACT_HORIZONTAL_TOLERANCE
+    );
+  };
   const recordSample = (samples, value) => {
     samples.push(value);
     if (groundContact(value)) run.groundContactSamples.push(value);
@@ -856,17 +887,119 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     await release("pre-jump-platform-1");
     await page.waitForTimeout(70);
 
+    const waitForFavorableGap = async (carrier, target, stage) => {
+      const carrierAsset = catalogAssets.get(carrier.geometry.assetId);
+      const targetAsset = catalogAssets.get(target.geometry.assetId);
+      const maxWaitMs = 5000;
+      const pollMs = 70;
+      const startedAtPerformanceMs = await page.evaluate(() =>
+        performance.now(),
+      );
+      const baseReach = jumpReachModel({
+        margin: DEFAULT_JUMP_REACH_MARGIN,
+      });
+      const targetMotionMargin = movingTargetMotionBound(
+        target,
+        baseReach.flightTime,
+      );
+      const wait = {
+        carrierId: carrier.id,
+        targetId: target.id,
+        phase: `carried-${carrier.id}-before-jump-${target.id}`,
+        status: "waiting",
+        maxWaitMs,
+        pollMs,
+        startedAtPerformanceMs,
+        reachModel: {
+          ...jumpReachModel({
+            margin: DEFAULT_JUMP_REACH_MARGIN,
+            targetMotionMargin,
+          }),
+          moveSpeed: PLAYER_MOVE_SPEED,
+          jumpSpeed: JUMP_SPEED,
+          gravity: GRAVITY,
+          note: "Derived from src/lib/gameplay.ts; base margin reserves sampling time and targetMotionMargin bounds target travel during flight.",
+        },
+        samples: [],
+      };
+      stage.favorableGapWait = wait;
+      const deadline = Date.now() + maxWaitMs;
+      let last;
+      while (Date.now() <= deadline) {
+        const current = await sample("favorable-gap-wait");
+        const gap = horizontalGapToPlatform(
+          current.player?.center,
+          current.platforms[target.id],
+          target,
+          targetAsset,
+          {
+            margin: DEFAULT_JUMP_REACH_MARGIN,
+            targetMotionMargin,
+          },
+        );
+        const carried = sourceCarried(current, carrier, carrierAsset);
+        const onGround = groundContact(current);
+        last = {
+          atPerformanceMs: current.atPerformanceMs,
+          playerCenter: current.player?.center ?? null,
+          carrierCenter: current.platforms[carrier.id]?.center ?? null,
+          targetCenter: current.platforms[target.id]?.center ?? null,
+          gap: gap?.gap ?? null,
+          maxReach: gap?.maxTravel ?? null,
+          reachable: gap?.reachable ?? false,
+          carried,
+          groundContact: onGround,
+        };
+        wait.samples.push(last);
+        if (onGround) {
+          run.groundContactSamples.push(current);
+          wait.status = "failed-ground-contact";
+          wait.final = last;
+          throw Error(
+            `Sequential favorable-gap wait reached ground before ${target.id}.`,
+          );
+        }
+        if (!carried) {
+          wait.status = "failed-carrier-lost";
+          wait.final = last;
+          throw Error(
+            `Sequential favorable-gap wait lost carried support on ${carrier.id}.`,
+          );
+        }
+        if (gap?.reachable) {
+          wait.status = "ready";
+          wait.final = last;
+          wait.waitedMs = Math.max(
+            0,
+            current.atPerformanceMs - startedAtPerformanceMs,
+          );
+          return current;
+        }
+        await page.waitForTimeout(pollMs);
+      }
+      wait.status = "timeout";
+      wait.final = last ?? null;
+      wait.waitedMs = maxWaitMs;
+      throw Error(
+        `Sequential favorable-gap wait timed out before ${target.id}; ` +
+          `gap ${last?.gap ?? "unknown"} exceeds reachable ${last?.maxReach ?? "unknown"}.`,
+      );
+    };
+
     const landAndCarry = async (entity, index) => {
       const asset = catalogAssets.get(entity.geometry.assetId);
       const stage = {
         id: entity.id,
         label: entity.label,
         behavior: entity.behavior,
-        beforeJump: await sample(`before-jump-${index + 1}`),
+        beforeJump: null,
         landingSamples: [],
         carrySamples: [],
       };
       run.stages.push(stage);
+      if (index > 0)
+        await waitForFavorableGap(ordered[index - 1], entity, stage);
+      stage.beforeJump = await sample(`before-jump-${index + 1}`);
       const previousBeforeJump = stage.beforeJump;
       if (index === 0)
         run.firstTakeoff = {

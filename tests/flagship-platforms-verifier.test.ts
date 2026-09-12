@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { strFromU8, unzipSync } from "fflate";
 import { expect, it } from "vitest";
-import { sourceLandingEvidence } from "../scripts/lib/flagship-platforms-verifier.mjs";
+import {
+  horizontalGapToPlatform,
+  jumpReachModel,
+  movingTargetMotionBound,
+  renderedDimensionsMatchSource,
+  sourceLandingEvidence,
+  transformedAssetDimensions,
+} from "../scripts/lib/flagship-platforms-verifier.mjs";
 
 const zip = unzipSync(
   readFileSync(
@@ -83,4 +90,55 @@ it("rejects platform2's retained airborne release while accepting source contact
   expect(platform1Contact?.sample.atPerformanceMs).toBeCloseTo(2353.2, 0);
   expect(platform3Contact?.evidence.accepted).toBe(true);
   expect(platform3Contact?.sample.atPerformanceMs).toBeCloseTo(6008.8, 0);
+});
+
+it("accepts settled catalog dimensions and rejects the transient formation dimensions", () => {
+  const platform = entityFor("platform-1");
+  const settled = transformedAssetDimensions(platform, asset);
+  expect(settled).toEqual([
+    expect.closeTo(1.2504759722, 6),
+    expect.closeTo(0.02062499895, 8),
+    expect.closeTo(0.57913566, 6),
+  ]);
+  expect(
+    renderedDimensionsMatchSource(
+      { size: [1.2504759669, 0.02062499896, 0.5791356564] },
+      platform,
+      asset,
+    ),
+  ).toBe(true);
+  expect(
+    renderedDimensionsMatchSource(
+      { size: [1.4, 0.2499999925, 0.7799423218] },
+      platform,
+      asset,
+    ),
+  ).toBe(false);
+});
+
+it("computes a bounded jump reach from the gameplay movement model", () => {
+  const platform = entityFor("platform-2");
+  const rendered = {
+    center: [2, 0.9978125, 5],
+    size: transformedAssetDimensions(platform, asset),
+  };
+  const reach = jumpReachModel();
+  expect(reach.flightTime).toBeCloseTo(0.8, 8);
+  expect(reach.maxTravel).toBeCloseTo(3, 8);
+  expect(movingTargetMotionBound(platform, reach.flightTime)).toBeCloseTo(
+    1.44,
+    8,
+  );
+  expect(
+    jumpReachModel({
+      margin: 0.2,
+      targetMotionMargin: movingTargetMotionBound(platform, reach.flightTime),
+    }).maxTravel,
+  ).toBeCloseTo(1.56, 8);
+  expect(
+    horizontalGapToPlatform([0, 1.440625, 5], rendered, platform, asset),
+  ).toMatchObject({ reachable: true });
+  expect(
+    horizontalGapToPlatform([-3, 1.440625, 5], rendered, platform, asset),
+  ).toMatchObject({ reachable: false });
 });

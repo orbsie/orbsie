@@ -4,6 +4,120 @@
 
 export const PLAYER_HALF_HEIGHT = 0.42;
 export const LANDING_CROSSING_TOLERANCE = 0.08;
+// Keep these in sync with src/lib/gameplay.ts. They are used only to decide
+// whether a moving-platform handoff is currently feasible for this verifier.
+export const PLAYER_MOVE_SPEED = 4;
+export const JUMP_SPEED = 6;
+export const GRAVITY = 15;
+export const CONTACT_HORIZONTAL_TOLERANCE = 0.22;
+
+export const DEFAULT_JUMP_REACH_MARGIN = 0.2;
+export const DEFAULT_DIMENSION_RELATIVE_TOLERANCE = 0.08;
+export const DEFAULT_DIMENSION_ABSOLUTE_TOLERANCE = 0.015;
+
+export function movingTargetMotionBound(entity, flightTime) {
+  const behavior = entity?.behavior;
+  if (
+    behavior?.type !== "move" ||
+    !Number.isFinite(flightTime) ||
+    flightTime < 0
+  )
+    return 0;
+  const amplitude = Math.abs(behavior.amplitude ?? 0.5);
+  const speed = Math.abs(behavior.speed ?? 1);
+  // Bound a sinusoid over the flight by both its full excursion and its
+  // maximum local speed. This is conservative and avoids assuming a phase.
+  return Math.min(amplitude * 2, amplitude * speed * flightTime);
+}
+
+export function transformedAssetDimensions(entity, asset) {
+  if (!entity?.scale || !asset?.bounds?.min || !asset?.bounds?.max) return null;
+  return [0, 1, 2].map(
+    (axis) =>
+      Math.abs(asset.bounds.max[axis] - asset.bounds.min[axis]) *
+      Math.abs(entity.scale[axis]),
+  );
+}
+
+export function renderedDimensionsMatchSource(
+  renderedPlatform,
+  entity,
+  asset,
+  {
+    relativeTolerance = DEFAULT_DIMENSION_RELATIVE_TOLERANCE,
+    absoluteTolerance = DEFAULT_DIMENSION_ABSOLUTE_TOLERANCE,
+  } = {},
+) {
+  const expected = transformedAssetDimensions(entity, asset);
+  const actual = renderedPlatform?.size;
+  if (
+    !expected ||
+    !actual ||
+    expected.length !== 3 ||
+    actual.length !== 3 ||
+    !expected.every(Number.isFinite) ||
+    !actual.every(Number.isFinite)
+  )
+    return false;
+  return expected.every(
+    (value, axis) =>
+      Math.abs(actual[axis] - value) <=
+      Math.max(absoluteTolerance, value * relativeTolerance),
+  );
+}
+
+export function jumpReachModel({
+  margin = DEFAULT_JUMP_REACH_MARGIN,
+  targetMotionMargin = 0,
+} = {}) {
+  const flightTime = (2 * JUMP_SPEED) / GRAVITY;
+  return {
+    moveSpeed: PLAYER_MOVE_SPEED,
+    jumpSpeed: JUMP_SPEED,
+    gravity: GRAVITY,
+    flightTime,
+    margin,
+    targetMotionMargin,
+    // Reserve base margin for driver sampling; target motion is passed as a
+    // separate bound and the target footprint/contact tolerance are handled by
+    // horizontalGapToPlatform.
+    maxTravel: Math.max(
+      0,
+      PLAYER_MOVE_SPEED * flightTime - margin - targetMotionMargin,
+    ),
+  };
+}
+
+export function horizontalGapToPlatform(
+  playerCenter,
+  renderedPlatform,
+  entity,
+  asset,
+  { margin = DEFAULT_JUMP_REACH_MARGIN, targetMotionMargin = 0 } = {},
+) {
+  const source = sourcePlatformContact(entity, renderedPlatform, asset);
+  if (!source || !playerCenter) return null;
+  const reach = jumpReachModel({ margin, targetMotionMargin });
+  const expandedHalfX = source.halfX + CONTACT_HORIZONTAL_TOLERANCE;
+  const expandedHalfZ = source.halfZ + CONTACT_HORIZONTAL_TOLERANCE;
+  const dx = Math.max(
+    Math.abs(playerCenter[0] - source.center[0]) - expandedHalfX,
+    0,
+  );
+  const dz = Math.max(
+    Math.abs(playerCenter[2] - source.center[2]) - expandedHalfZ,
+    0,
+  );
+  const gap = Math.hypot(dx, dz);
+  return {
+    gap,
+    reachable: gap <= reach.maxTravel,
+    maxTravel: reach.maxTravel,
+    margin: reach.margin,
+    flightTime: reach.flightTime,
+    source,
+  };
+}
 
 function scaledBounds(entity, asset) {
   const low = asset.bounds.min.map((value, axis) =>
