@@ -171,3 +171,17 @@ launches with no intervening ground reset, then collection/win if reachable.
 Root reviewed mobile input source independently: product supports pointer IDs,
 but existing winning touch driver supplies only one touch and no diagonals.
 Quota fresh read: primary used15%, remaining85%;20% stop rule unchanged.
+
+### Next mobile verifier contract (after route worker)
+
+Repair `verify-winning-traversal.mjs` single-touch `setKeys` and omitted mobile
+diagonals. Reuse the stable touch-ID/coordinate-hit pattern already present in
+`verify-flagship-platforms.mjs` runSequentialPlatforms and real pointer-event
+observation in `verify-touch-input-lifecycle.mjs`; do not change product input
+without a demonstrated bug. Preserve held direction when adding/releasing
+jump, release only intended fingers, and release all on cleanup. Focused
+evidence must observe simultaneous direction/diagonal/jump and partial-release
+continuity, not merely assert emitted CDP arguments. Existing player-input
+unit tests cover same-action pointer retention but not this browser driver.
+Run against a saved local fixture/export with zero inference, then integrate
+into meaningful mobile route acceptance. This is queued, not implemented.
