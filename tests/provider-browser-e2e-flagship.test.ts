@@ -75,13 +75,21 @@ function initialProject() {
     messages: [],
     environment: { sky: "sunny" },
     entities: [
-      entity("tree-a", "Friendly tree", {
-        kind: "tree",
+      entity("tree-a", "Friendly Oak", {
+        kind: "asset",
+        assetId: "kenney.nature.tree-default",
         detail: "refined",
-        model: { bounds: { min: [-0.5, 0, -0.5], max: [0.5, 1, 0.5] } },
       }),
-      entity("tree-b", "Friendly tree 2", { kind: "tree", detail: "refined" }),
-      entity("tree-c", "Friendly tree 3", { kind: "tree", detail: "refined" }),
+      entity("tree-b", "Sunny Pine", {
+        kind: "asset",
+        assetId: "kenney.nature.tree-pine-tall-a",
+        detail: "refined",
+      }),
+      entity("tree-c", "Little Oak", {
+        kind: "asset",
+        assetId: "kenney.nature.tree-default",
+        detail: "refined",
+      }),
       entity(
         "platform-a",
         "Moving platform west",
@@ -164,6 +172,11 @@ describe("flagship provider story contract", () => {
     const before = initialProject();
     const initial = assertFlagshipStoryCreation(before);
     expect(initial.middlePlatform.id).toBe("platform-b");
+    expect(initial.trees.map((candidate: any) => candidate.label)).toEqual([
+      "Friendly Oak",
+      "Sunny Pine",
+      "Little Oak",
+    ]);
 
     const mushroom = structuredClone(before);
     const tree = mushroom.entities.find(
@@ -182,8 +195,8 @@ describe("flagship provider story contract", () => {
       mushroom,
       "tree-a",
     );
-    expect(mushroomCheck.rawBoundsExpanded).toBe(true);
-    expect(mushroomCheck.transformedBoundsExpanded).toBe(true);
+    expect(mushroomCheck.rawBoundsExpanded).toBe(false);
+    expect(mushroomCheck.transformedBoundsExpanded).toBe(false);
     expect(mushroomCheck.sizeVisualReview).toBe("pending");
 
     const goal7 = structuredClone(mushroom);
@@ -236,6 +249,35 @@ describe("flagship provider story contract", () => {
     tree.geometry = { kind: "mushroom", detail: "refined" };
     const check = assertFlagshipStoryMushroom(before, after, tree.id);
     expect(check.rawBoundsExpanded).toBe(false);
+    expect(check.transformedBoundsExpanded).toBe(false);
+    expect(check.sizeVisualReview).toBe("pending");
+  });
+
+  it("does not treat larger raw bounds as a larger transformed model", () => {
+    const before = initialProject();
+    const beforeTree = before.entities.find(
+      (candidate) => candidate.id === "tree-a",
+    )!;
+    beforeTree.geometry = {
+      kind: "tree",
+      detail: "refined",
+      model: { bounds: { min: [-0.5, 0, -0.5], max: [0.5, 1, 0.5] } },
+    };
+    beforeTree.scale = [2, 2, 2];
+    const after = structuredClone(before);
+    const afterTree = after.entities.find(
+      (candidate) => candidate.id === "tree-a",
+    )!;
+    afterTree.label = "Giant pink mushroom";
+    afterTree.color = "#ed99b5";
+    afterTree.geometry = {
+      kind: "mushroom",
+      detail: "refined",
+      model: { bounds: { min: [-0.75, 0, -0.75], max: [0.75, 1.5, 0.75] } },
+    };
+    afterTree.scale = [1, 1, 1];
+    const check = assertFlagshipStoryMushroom(before, after, afterTree.id);
+    expect(check.rawBoundsExpanded).toBe(true);
     expect(check.transformedBoundsExpanded).toBe(false);
     expect(check.sizeVisualReview).toBe("pending");
   });
@@ -311,5 +353,34 @@ describe("flagship provider story contract", () => {
     expect(() =>
       assertFlagshipStoryPlatform(before, extraEntity, middle.id),
     ).toThrow(/exactly two entities/);
+  });
+
+  it("rejects an unknown catalog asset even when its label says Oak", () => {
+    const project = initialProject();
+    const tree = project.entities.find(
+      (candidate) => candidate.id === "tree-a",
+    )!;
+    tree.geometry.assetId = "unknown.tree-oak";
+    for (const id of ["tree-b", "tree-c"]) {
+      const otherTree = project.entities.find(
+        (candidate) => candidate.id === id,
+      )!;
+      otherTree.geometry = {
+        kind: "asset",
+        assetId: "kenney.nature.rock-large-a",
+        detail: "refined",
+      };
+    }
+    expect(() => assertFlagshipStoryCreation(project)).toThrow(/friendly tree/);
+  });
+
+  it("accepts a generated tree when its supported label carries the tree evidence", () => {
+    const project = initialProject();
+    const tree = project.entities.find(
+      (candidate) => candidate.id === "tree-a",
+    )!;
+    tree.geometry = { kind: "generated", detail: "refined" };
+    tree.label = "Generated tree canopy";
+    expect(assertFlagshipStoryCreation(project).tree.id).toBe(tree.id);
   });
 });

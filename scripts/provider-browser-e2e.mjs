@@ -34,6 +34,7 @@ import {
  * credential environment variable is read.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -65,6 +66,12 @@ const FLAGSHIP_STORY_PROMPT =
 const FLAGSHIP_STORY_MUSHROOM_PROMPT = "Make this a giant pink mushroom";
 const FLAGSHIP_STORY_PLATFORM_PROMPT =
   "Make the middle platform slower and add two more crystals";
+const STORY_CATALOG_ASSETS = new Map(
+  JSON.parse(readFileSync(resolve("assets/catalog/manifest.json"), "utf8")).assets.map(
+    (asset) => [asset.id, asset],
+  ),
+);
+const STORY_TREE_LABEL_KINDS = new Set(["generated", "custom"]);
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
@@ -2028,6 +2035,21 @@ function storyEntityText(entity) {
   return `${entity?.label ?? ""} ${entity?.geometry?.kind ?? ""}`.toLowerCase();
 }
 
+function storyTreeEvidence(entity) {
+  const geometry = entity?.geometry;
+  if (geometry?.kind === "tree") return "supported-geometry-kind";
+  if (
+    STORY_TREE_LABEL_KINDS.has(geometry?.kind) &&
+    /\btree\b/i.test(String(entity.label ?? ""))
+  )
+    return "supported-kind-tree-label";
+  if (geometry?.kind !== "asset") return null;
+  const asset = STORY_CATALOG_ASSETS.get(geometry.assetId);
+  if (!asset) return null;
+  if (asset.tags?.includes("tree")) return "catalog-tree-tag";
+  return null;
+}
+
 function storyCollectibles(project) {
   return project.entities.filter(
     (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
@@ -2055,9 +2077,7 @@ export function assertFlagshipStoryCreation(project) {
     project && Array.isArray(project.entities),
     "Story project has no entities.",
   );
-  const trees = project.entities.filter((entity) =>
-    /\btree\b/.test(storyEntityText(entity)),
-  );
+  const trees = project.entities.filter((entity) => storyTreeEvidence(entity));
   const platforms = storyPlatforms(project);
   const collectibles = storyCollectibles(project);
   const ponds = project.entities.filter((entity) =>
@@ -2283,6 +2303,15 @@ async function runFlagshipStory(
   created,
   onGoodProject,
 ) {
+  report.flagshipStory = {
+    ...(report.flagshipStory ?? {}),
+    status: "creation-observed",
+    visualReview: "pending",
+    phases: {
+      creation: { revision: created.revision },
+    },
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "created", created);
   const initialStory = assertFlagshipStoryCreation(created);
   assert.equal(
     created.messages[0]?.text,
@@ -2291,13 +2320,10 @@ async function runFlagshipStory(
   );
   onGoodProject(created);
   report.flagshipStory = {
+    ...report.flagshipStory,
     status: "running",
     visualReview: "pending",
-    phases: {
-      creation: { revision: created.revision },
-    },
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "created", created);
   const treeRow = page
     .locator(".object-list button")
     .filter({ hasText: initialStory.tree.label })
@@ -2316,6 +2342,11 @@ async function runFlagshipStory(
     "Story mushroom edit did not target the selected tree.",
   );
   const mushroom = await waitForSavedProject(page, created.revision + 1, 2);
+  report.flagshipStory.phases.mushroom = {
+    status: "observed",
+    revision: mushroom.revision,
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom);
   const mushroomCheck = assertFlagshipStoryMushroom(
     created,
     mushroom,
@@ -2323,10 +2354,10 @@ async function runFlagshipStory(
   );
   onGoodProject(mushroom);
   report.flagshipStory.phases.mushroom = {
+    status: "passed",
     revision: mushroom.revision,
     ...mushroomCheck,
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom);
   await page.screenshot({
     path: join(evidenceDir, "story-mushroom.png"),
     fullPage: true,
@@ -2345,6 +2376,11 @@ async function runFlagshipStory(
     "Story platform edit unexpectedly retained a selected entity.",
   );
   const goal7 = await waitForSavedProject(page, mushroom.revision + 1, 3);
+  report.flagshipStory.phases.goal7 = {
+    status: "observed",
+    revision: goal7.revision,
+  };
+  await persistFlagshipStoryPhase(report, evidenceDir, "goal7", goal7);
   const platformCheck = assertFlagshipStoryPlatform(
     mushroom,
     goal7,
@@ -2352,10 +2388,10 @@ async function runFlagshipStory(
   );
   onGoodProject(goal7);
   report.flagshipStory.phases.goal7 = {
+    status: "passed",
     revision: goal7.revision,
     ...platformCheck,
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "goal7", goal7);
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.locator(".game-hud")).toBeVisible();
   await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
