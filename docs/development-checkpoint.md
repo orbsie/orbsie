@@ -128,8 +128,9 @@ physical mobile or complete provider story. No publication job remains live.
 
 ## Runtime and other accepted milestones
 
-Latest production source a5b2769 at orbsie.com; smoke evidence in
-`replacement-sizing-release/`. Current local server3068/session18186 uses build7c0eec7; revalidate before reuse. Temporary Gateway key file deleted;
+Latest production source0292df7 at orbsie.com; deployment and HTTP200 smoke
+evidence in `moving-bounce-guidance-release/deployment.json`. Production build
+and TypeScript passed; no post-deployment model calls or browser acceptance. Current local server3068/session18186 uses build7c0eec7; revalidate before reuse. Temporary Gateway key file deleted;
 do not assume Vercel env pull contains a usable key.
 OpenRouter/Gateway input-game create/edit/reload/export/play passed separately.
 Gateway explicit continuation/cloud recovery/publication have separate reports.
