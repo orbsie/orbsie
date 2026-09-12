@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve, posix as posixPath } from "node:path";
 import { pathToFileURL } from "node:url";
 import { strFromU8, unzipSync } from "fflate";
+import { validateProjectGame } from "./lib/winning-traversal-contract.mjs";
 
 const base = process.env.TEST_URL ?? "https://orbsie.com";
 const published = process.env.WIN_PUBLISHED === "1";
@@ -17,59 +18,9 @@ await mkdir(output, { recursive: true });
 const temp = await mkdtemp(join(tmpdir(), "orbsie-win-"));
 let world, project, standaloneServer, standaloneOrigin;
 let snapshot;
+let traversalContract;
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
-
-function validateProjectGame(project) {
-  if (!project.game || !Array.isArray(project.game.rules))
-    throw Error("Flagship snapshot must contain a project.game program.");
-  const collectibles = project.entities.filter(
-    (entity) => entity.behavior?.type === "collect",
-  );
-  const collectibleIds = collectibles.map((entity) => entity.id);
-  if (collectibleIds.length !== 5 || new Set(collectibleIds).size !== 5)
-    throw Error(
-      `Flagship snapshot must contain five unique collect entities; got ${collectibleIds.join(", ")}.`,
-    );
-  const collectRuleIds = project.game.rules
-    .filter((rule) => rule.trigger?.type === "collect")
-    .map((rule) => rule.trigger.entityId);
-  if (
-    collectRuleIds.length !== 5 ||
-    new Set(collectRuleIds).size !== 5 ||
-    collectibleIds.some((id) => !collectRuleIds.includes(id))
-  )
-    throw Error(
-      `Flagship game must collect each crystal exactly once; got ${collectRuleIds.join(", ")}.`,
-    );
-  const portal = project.entities.find(
-    (entity) => entity.behavior?.type === "portal",
-  );
-  if (!portal) throw Error("Flagship snapshot must contain a portal entity.");
-  const portalWin = project.game.rules.find(
-    (rule) =>
-      rule.trigger?.type === "collision" &&
-      rule.trigger.entityId === portal.id &&
-      rule.actions?.some((action) => action.type === "win"),
-  );
-  if (!portalWin)
-    throw Error(`Flagship game must win on portal collision (${portal.id}).`);
-  const portalGate = portalWin.conditions?.some(
-    (condition) =>
-      condition.operand?.type === "variable" &&
-      condition.operand.name === "crystals" &&
-      condition.comparison === "eq" &&
-      condition.value === 5,
-  );
-  if (!portalGate)
-    throw Error("Flagship portal win rule must be gated by crystals == 5.");
-  return {
-    collectibleIds,
-    collectRuleIds,
-    portalId: portal.id,
-    ruleCount: project.game.rules.length,
-  };
-}
 
 async function openStandaloneSnapshot(zipPath) {
   const absoluteZipPath = resolve(zipPath);
@@ -82,6 +33,7 @@ async function openStandaloneSnapshot(zipPath) {
     throw Error("Saved standalone ZIP is missing project or runtime files.");
   const loadedProject = JSON.parse(strFromU8(projectBytes));
   const contract = validateProjectGame(loadedProject);
+  traversalContract = contract;
   snapshot = {
     zipPath: absoluteZipPath,
     zipSha256: sha256(zipBytes),
@@ -153,10 +105,9 @@ if (published) {
   });
   if (!response.ok) throw Error(`Published project HTTP ${response.status}`);
   project = await response.json();
-  if (!Array.isArray(project.entities) || project.game)
-    throw Error(
-      "This traversal requires the collectible/portal game contract.",
-    );
+  if (!Array.isArray(project.entities))
+    throw Error("Published project snapshot has no entity list.");
+  if (project.game) traversalContract = validateProjectGame(project);
 } else if (gameZip) {
   ({ project } = await openStandaloneSnapshot(gameZipPath));
 } else {
@@ -173,6 +124,7 @@ if (published) {
   });
   ({ world, project } = await import(pathToFileURL(join(temp, "fixture.mjs"))));
 }
+const program = Boolean(traversalContract);
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -188,7 +140,9 @@ const report = {
   mode: gameZip
     ? "flagship-project-game-standalone-traversal"
     : published
-      ? "published-signed-out-input-traversal"
+      ? program
+        ? "published-flagship-game-traversal"
+        : "published-signed-out-input-traversal"
       : "fixture-input-traversal",
   projectRevision: project.revision,
   entities: project.entities.length,
@@ -199,6 +153,7 @@ const report = {
   runs: [],
 };
 if (snapshot) report.snapshot = snapshot;
+if (traversalContract) report.contract = traversalContract;
 try {
   const modes =
     process.env.WIN_INPUT === "mobile"
@@ -392,8 +347,8 @@ try {
           ]),
     ];
     const targets = [
-      ...(gameZip
-        ? snapshot.contract.collectibleIds.map((id) =>
+      ...(program
+        ? traversalContract.collectibleIds.map((id) =>
             project.entities.find((entity) => entity.id === id),
           )
         : project.entities.filter(
@@ -402,14 +357,14 @@ try {
       project.entities.find(
         (entity) =>
           entity.id ===
-          (gameZip
-            ? snapshot.contract.portalId
+          (program
+            ? traversalContract.portalId
             : project.entities.find((e) => e.behavior?.type === "portal")?.id),
       ),
     ].filter(Boolean);
     expect(targets).toHaveLength(
-      gameZip
-        ? 6
+      program
+        ? traversalContract.collectibleIds.length + 1
         : project.entities.filter(
             (e) =>
               e.behavior?.type === "collect" || e.behavior?.type === "portal",
@@ -422,8 +377,8 @@ try {
         for (let i = 0; i < 180; i++) {
           const position = await read();
           if (
-            gameZip &&
-            target.id === snapshot.contract.portalId &&
+            program &&
+            target.id === traversalContract.portalId &&
             (await page
               .getByText("Adventure complete", { exact: true })
               .isVisible()
@@ -475,7 +430,7 @@ try {
           const distance = Math.hypot(dx, dz);
           await page.waitForTimeout(
             published || gameZip
-              ? mobile && gameZip
+              ? mobile && program
                 ? Math.max(12, Math.min(70, distance * 60))
                 : Math.max(20, Math.min(110, distance * 120))
               : 110,
@@ -539,8 +494,8 @@ try {
       ),
     ).toBeVisible();
     expect(await score()).toBe(
-      gameZip
-        ? snapshot.contract.collectibleIds.length
+      program
+        ? traversalContract.collectibleIds.length
         : project.entities.filter((e) => e.behavior?.type === "collect").length,
     );
     run.won = true;
