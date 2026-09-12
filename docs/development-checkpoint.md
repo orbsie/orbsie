@@ -334,3 +334,13 @@ logout before start, and no start after failed logout; status and models stale
 responses both reach the action. Root reviewed the harness and report. Evidence:
 `docs/evidence/chatgpt-stale-reconnect`. Local server stopped, zero external
 requests or live model calls. Ready for deployment; live consent remains open.
+
+### Hosted runtime provenance release verified
+
+Production source `44c7fa1` deployed successfully as
+`dpl_6UB9SXyPaKwmSRXRKMybikaeJzXN`, aliased to https://orbsie.com.
+Production build/typecheck and GET/HEAD release smoke passed with matching
+player/worker hashes, visible canvas/prompt and no browser errors or external
+requests. Evidence: `docs/evidence/chatgpt-runtime-release/report.json`.
+The databases were migrated before deployment. Real owner ChatGPT consent and
+inference remain unverified; this release adds safe stale-runtime handling.
