@@ -1,5 +1,20 @@
 # Orbsie full scope audit
 
+## Current reconciliation — 2026-09-12
+
+This section supersedes conflicting historical status below; it does not close the full plan.
+
+- OpenRouter input-game acceptance passed in `694c904`: `docs/evidence/provider-e2e/input-game-union-policy/openrouter.json` records exactly two live Luna requests (low/default, 4096 output tokens each), creation, selected material edit, recovery, export, and standalone input win/loss/restart. Application source `905b682` is operator-supplied, not remotely attested. No account, cloud recovery or publication was tested in this run.
+- Gateway's latest live input-game run still failed on overlapping geometry before edit (`docs/evidence/provider-e2e/gateway-input-game-approved/`). The deployed union guidance now has OpenRouter evidence; Gateway requires its own post-fix acceptance.
+- Same-project republishing is verified in `docs/evidence/republishing-browser-live/resume-report.json`: distinct deployments, served revision 2, and signed-out browser readiness. Availability of the previous release during the pending window was not observed.
+- Durable generation journals/checkpoints exist in `src/lib/server/generation-runs.ts` and their focused tests/evidence. Older claims that the journal is absent are obsolete; provider-stream resumption is not promised.
+- Browser-only modeling is the current product requirement (`prompt.md`, browser-first runtime section). Historical portable native Blender packaging gaps are not current product release requirements.
+- Saved OpenRouter flagship evidence verifies keyboard/touch crystal collection and portal win/reset, plus separate carry probes for all three platforms (`flagship-program-traversal`, `flagship-platforms`, `flagship-platform2-corrected`). It does not establish one continuous three-platform traversal.
+- Real browser ChatGPT subscription consent/discovery/inference remains unverified. Historical local-companion tests do not satisfy the browser-only journey. Computer use currently exposes no browser.
+- Representative native-GPU/mobile performance and complete live timing remain open. SwiftShader fixture observations are not representative-device certification.
+- Visible failed-generation retry/last-working controls are being implemented; they are not accepted yet. Broader behavior, catalog, provider-publication and full-plan requirements below still need requirement-specific reconciliation.
+- Current standing owner authorization permits meaningful Luna-only provider milestones, maximum two calls/provider/run and 4096 output tokens/call, with no automatic retries. Users' model selection is unrestricted by this testing policy. Historical requests for Astra live tests are superseded.
+
 ## Current evidence reconciliation — 2026-09-10 (HEAD `39710bd`)
 
 The current deployed release is source `f88bcc9`, recorded by `39710bd`, at `https://orbsie.com`. The stale-load release report records a read-only production smoke, exact player/worker/WASM hashes, anonymous journal `401`, and the real browser placeholder/canvas check. It made no model calls and is not provider acceptance (`docs/evidence/stale-load-release/`).

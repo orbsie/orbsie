@@ -10,6 +10,11 @@ large logs, and copied diffs.
   OpenRouter/Gateway acceptance runs, two calls/provider/run, 4096 output tokens
   per call, no automatic retries. Use meaningful milestones, not repeated calls.
   Owner requests sign-in via computer use; CUA still cannot access Chrome.
+- Post-union OpenRouter input-game passed, evidence commit `694c904`: two HTTP200
+  Luna calls, create/edit, recovery, export, standalone win/loss/restart. Local app
+  source `905b682` is operator-supplied. Gateway post-fix acceptance remains open.
+- Recovery UI worker is implementing explicit retry/last-working controls;
+  review and deterministic browser acceptance remain pending.
 - Live republish: `republishing-browser-live/resume-report.json` proves same
   Vercel project, distinct deployments, served revision2, signed-out browser
   readiness and exact snapshots for revisions1/2. Pending-window observation
@@ -56,7 +61,7 @@ large logs, and copied diffs.
   platform-2 failure came from premature verifier release; corrected detector,
   retained-sample regression, and one focused browser run passed. These are
   isolated saved-snapshot probes, not a continuous three-platform route.
-  No model calls or product changes. No active worker remains.
+  No model calls or product changes in those platform probes.
 - Owner authorized one OpenRouter Luna input-game create/edit run: maximum two
   calls, 4096 output tokens each, using the existing local key (2026-09-11).
 - Run attempted: one HTTP 200 generation, seed at 3830ms, then touching/overlapping
