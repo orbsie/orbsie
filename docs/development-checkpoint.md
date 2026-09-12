@@ -153,3 +153,11 @@ publication passed. These are bounded evidence, not complete provider E2E.
   failed-publication continuity and full requirement audit remain open.
 - Modeling/rendering must use local browser resources with no Blender setup
   surfaced. Preserve catalog/generated asset provenance and licenses.
+
+## Latest saved OpenRouter traversal
+
+`openrouter-moving-bounce-winning/` records one failed desktop run, zero
+model calls. Score40/50, elevated crystal5 missed by ground/pickup-jump driver;
+final portal contact observed with no victory. This does not prove route
+impossibility. Three-platform phase-aware bounce steering remains required.
+Chrome DevTools still shows empty Orbsie sign-in fields; CUA inventory empty.

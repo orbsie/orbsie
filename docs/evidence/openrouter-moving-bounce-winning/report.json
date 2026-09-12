@@ -1,0 +1,572 @@
+{
+  "status": "failed",
+  "url": "http://127.0.0.1:37477",
+  "startedAt": "2026-09-12T18:10:47.552Z",
+  "mode": "flagship-project-game-standalone-traversal",
+  "projectRevision": 31,
+  "entities": 13,
+  "traversalOptions": {
+    "expectedCollectibleCount": 5,
+    "portalComparison": "gte"
+  },
+  "inferenceCalls": 0,
+  "errors": [],
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "runs": [
+    {
+      "label": "desktop-keyboard",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "startedAt": "2026-09-12T18:10:54.466Z",
+      "start": {
+        "x": 0,
+        "y": 0.42,
+        "z": 5,
+        "visible": true
+      },
+      "checkpoints": [
+        {
+          "phase": "portal-before-collectibles",
+          "target": "portal",
+          "position": {
+            "x": 5.846225048161338,
+            "y": 0.42,
+            "z": -4.422852111718757,
+            "visible": true
+          },
+          "collected": 0,
+          "hud": "Score: 0"
+        },
+        {
+          "target": "crystal1",
+          "position": {
+            "x": -4.795544974541472,
+            "y": 0.4315668841979235,
+            "z": 3.8898685759524616,
+            "visible": true
+          },
+          "collected": 20,
+          "hud": "Score: 20"
+        },
+        {
+          "target": "crystal2",
+          "position": {
+            "x": -3.129835007080735,
+            "y": 0.626148599998831,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "collected": 20,
+          "hud": "Score: 20"
+        },
+        {
+          "target": "crystal3",
+          "position": {
+            "x": -0.24293941148485765,
+            "y": 0.46297305708436587,
+            "z": 1.0037644506515357,
+            "visible": true
+          },
+          "collected": 30,
+          "hud": "Score: 30"
+        },
+        {
+          "target": "crystal4",
+          "position": {
+            "x": 2.79536551559758,
+            "y": 0.9727503000054989,
+            "z": -0.7849881172193893,
+            "visible": true
+          },
+          "collected": 40,
+          "hud": "Score: 40"
+        },
+        {
+          "target": "crystal5",
+          "position": {
+            "x": 4.872791483393043,
+            "y": 1.0730165999997419,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "collected": 40,
+          "hud": "Score: 40"
+        },
+        {
+          "phase": "portal-after-collectibles",
+          "target": "portal",
+          "position": {
+            "x": 5.865178272862749,
+            "y": 0.42,
+            "z": -4.2875278114868225,
+            "visible": true
+          },
+          "collected": 40,
+          "hud": "Score: 40",
+          "contact": {
+            "player": {
+              "x": 5.865178272862749,
+              "y": 0.42,
+              "z": -4.2875278114868225,
+              "visible": true
+            },
+            "bounds": {
+              "matchedEntity": "portal",
+              "matchedBy": "portal-entity-render-group-transform",
+              "expectedGeometryKind": "custom",
+              "matchedTransform": {
+                "position": [
+                  6,
+                  0.8,
+                  -4.5
+                ],
+                "scale": [
+                  1.2,
+                  1.6,
+                  1.2
+                ]
+              },
+              "componentCount": 1,
+              "geometryTypes": [
+                "BufferGeometry"
+              ],
+              "min": [
+                4.6320000171661375,
+                0.659995186328888,
+                -5.833701324462891
+              ],
+              "max": [
+                7.3679999828338625,
+                0.9400048136711121,
+                -3.166298675537109
+              ]
+            },
+            "horizontalGap": 0,
+            "verticalOverlap": 0.18000481367111199,
+            "contact": true,
+            "collected": 40,
+            "settledTicks": 2,
+            "observations": [
+              {
+                "player": {
+                  "x": 5.865178272862749,
+                  "y": 0.42,
+                  "z": -4.2875278114868225,
+                  "visible": true
+                },
+                "bounds": {
+                  "matchedEntity": "portal",
+                  "matchedBy": "portal-entity-render-group-transform",
+                  "expectedGeometryKind": "custom",
+                  "matchedTransform": {
+                    "position": [
+                      6,
+                      0.8,
+                      -4.5
+                    ],
+                    "scale": [
+                      1.2,
+                      1.6,
+                      1.2
+                    ]
+                  },
+                  "componentCount": 1,
+                  "geometryTypes": [
+                    "BufferGeometry"
+                  ],
+                  "min": [
+                    4.6320000171661375,
+                    0.659995186328888,
+                    -5.833701324462891
+                  ],
+                  "max": [
+                    7.3679999828338625,
+                    0.9400048136711121,
+                    -3.166298675537109
+                  ]
+                },
+                "horizontalGap": 0,
+                "verticalOverlap": 0.18000481367111199,
+                "contact": true,
+                "collected": 40
+              },
+              {
+                "player": {
+                  "x": 5.865178272862749,
+                  "y": 0.42,
+                  "z": -4.2875278114868225,
+                  "visible": true
+                },
+                "bounds": {
+                  "matchedEntity": "portal",
+                  "matchedBy": "portal-entity-render-group-transform",
+                  "expectedGeometryKind": "custom",
+                  "matchedTransform": {
+                    "position": [
+                      6,
+                      0.8,
+                      -4.5
+                    ],
+                    "scale": [
+                      1.2,
+                      1.6,
+                      1.2
+                    ]
+                  },
+                  "componentCount": 1,
+                  "geometryTypes": [
+                    "BufferGeometry"
+                  ],
+                  "min": [
+                    4.6320000171661375,
+                    0.659995186328888,
+                    -5.833701324462891
+                  ],
+                  "max": [
+                    7.3679999828338625,
+                    0.9400048136711121,
+                    -3.166298675537109
+                  ]
+                },
+                "horizontalGap": 0,
+                "verticalOverlap": 0.18000481367111199,
+                "contact": true,
+                "collected": 40
+              }
+            ]
+          }
+        }
+      ],
+      "inputSteps": 108,
+      "collectedIds": [
+        "crystal1",
+        "crystal3",
+        "crystal4"
+      ],
+      "platformSupport": {
+        "directSupportObserved": false,
+        "method": "read-only player position telemetry",
+        "nearMovingPlatformHeightSamples": 0,
+        "maximumProximityCandidateStreak": 0,
+        "note": "Player position alone cannot distinguish a platform landing/carry from a jump-through trajectory. No support state or transform was injected.",
+        "disposition": "direct-support-not-observed; proximity samples are non-proof"
+      },
+      "jump": {
+        "beforeY": 0.42,
+        "airborneY": 0.9960000000000001
+      },
+      "portalBeforeCollectibles": {
+        "reached": true,
+        "contact": {
+          "player": {
+            "x": 5.846225048161338,
+            "y": 0.42,
+            "z": -4.422852111718757,
+            "visible": true
+          },
+          "bounds": {
+            "matchedEntity": "portal",
+            "matchedBy": "portal-entity-render-group-transform",
+            "expectedGeometryKind": "custom",
+            "matchedTransform": {
+              "position": [
+                6,
+                0.8,
+                -4.5
+              ],
+              "scale": [
+                1.2,
+                1.6,
+                1.2
+              ]
+            },
+            "componentCount": 1,
+            "geometryTypes": [
+              "BufferGeometry"
+            ],
+            "min": [
+              4.6320000171661375,
+              0.659995186328888,
+              -5.833701324462891
+            ],
+            "max": [
+              7.3679999828338625,
+              0.9400048136711121,
+              -3.166298675537109
+            ]
+          },
+          "horizontalGap": 0,
+          "verticalOverlap": 0.18000481367111199,
+          "contact": true,
+          "collected": 0,
+          "settledTicks": 2,
+          "observations": [
+            {
+              "player": {
+                "x": 5.846225048161338,
+                "y": 0.42,
+                "z": -4.422852111718757,
+                "visible": true
+              },
+              "bounds": {
+                "matchedEntity": "portal",
+                "matchedBy": "portal-entity-render-group-transform",
+                "expectedGeometryKind": "custom",
+                "matchedTransform": {
+                  "position": [
+                    6,
+                    0.8,
+                    -4.5
+                  ],
+                  "scale": [
+                    1.2,
+                    1.6,
+                    1.2
+                  ]
+                },
+                "componentCount": 1,
+                "geometryTypes": [
+                  "BufferGeometry"
+                ],
+                "min": [
+                  4.6320000171661375,
+                  0.659995186328888,
+                  -5.833701324462891
+                ],
+                "max": [
+                  7.3679999828338625,
+                  0.9400048136711121,
+                  -3.166298675537109
+                ]
+              },
+              "horizontalGap": 0,
+              "verticalOverlap": 0.18000481367111199,
+              "contact": true,
+              "collected": 0
+            },
+            {
+              "player": {
+                "x": 5.846225048161338,
+                "y": 0.42,
+                "z": -4.422852111718757,
+                "visible": true
+              },
+              "bounds": {
+                "matchedEntity": "portal",
+                "matchedBy": "portal-entity-render-group-transform",
+                "expectedGeometryKind": "custom",
+                "matchedTransform": {
+                  "position": [
+                    6,
+                    0.8,
+                    -4.5
+                  ],
+                  "scale": [
+                    1.2,
+                    1.6,
+                    1.2
+                  ]
+                },
+                "componentCount": 1,
+                "geometryTypes": [
+                  "BufferGeometry"
+                ],
+                "min": [
+                  4.6320000171661375,
+                  0.659995186328888,
+                  -5.833701324462891
+                ],
+                "max": [
+                  7.3679999828338625,
+                  0.9400048136711121,
+                  -3.166298675537109
+                ]
+              },
+              "horizontalGap": 0,
+              "verticalOverlap": 0.18000481367111199,
+              "contact": true,
+              "collected": 0
+            }
+          ]
+        },
+        "collected": 0,
+        "winStatusVisible": false
+      },
+      "pickupJumps": [
+        {
+          "target": "crystal2",
+          "attempt": 0,
+          "beforeJump": {
+            "x": -3.129835007080735,
+            "y": 0.42,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "airborne": {
+            "x": -3.129835007080735,
+            "y": 1.5114057000000918,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "collected": 20
+        },
+        {
+          "target": "crystal2",
+          "attempt": 1,
+          "beforeJump": {
+            "x": -3.129835007080735,
+            "y": 0.42,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "airborne": {
+            "x": -3.129835007080735,
+            "y": 1.5065168999999992,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "collected": 20
+        },
+        {
+          "target": "crystal2",
+          "attempt": 2,
+          "beforeJump": {
+            "x": -3.129835007080735,
+            "y": 0.42,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "airborne": {
+            "x": -3.129835007080735,
+            "y": 1.4851644000002169,
+            "z": 2.5808827024446357,
+            "visible": true
+          },
+          "collected": 20
+        },
+        {
+          "target": "crystal4",
+          "attempt": 0,
+          "beforeJump": {
+            "x": 2.79536551559758,
+            "y": 0.42,
+            "z": -0.7849881172193893,
+            "visible": true
+          },
+          "airborne": {
+            "x": 2.79536551559758,
+            "y": 1.4999626499999457,
+            "z": -0.7849881172193893,
+            "visible": true
+          },
+          "collected": 40
+        },
+        {
+          "target": "crystal5",
+          "attempt": 0,
+          "beforeJump": {
+            "x": 4.872791483393043,
+            "y": 0.42,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "airborne": {
+            "x": 4.872791483393043,
+            "y": 1.5051276000003606,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "collected": 40
+        },
+        {
+          "target": "crystal5",
+          "attempt": 1,
+          "beforeJump": {
+            "x": 4.872791483393043,
+            "y": 0.42,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "airborne": {
+            "x": 4.872791483393043,
+            "y": 1.51037085000033,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "collected": 40
+        },
+        {
+          "target": "crystal5",
+          "attempt": 2,
+          "beforeJump": {
+            "x": 4.872791483393043,
+            "y": 0.42,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "airborne": {
+            "x": 4.872791483393043,
+            "y": 1.5089890499997676,
+            "z": -2.8542317027703565,
+            "visible": true
+          },
+          "collected": 40
+        }
+      ]
+    }
+  ],
+  "snapshot": {
+    "zipPath": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/openrouter-moving-bounce-guidance/openrouter/world.zip",
+    "zipSha256": "70595a54bb59116fd4e7519e2d47e18190361d3fc9e161fc499b70e6f5f112b4",
+    "projectSha256": "0abd5270073ed8b6f9ad1279ca2e305c9ed863e5a6676f0035b51e70bccec2ce",
+    "runtimeSha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+    "runtimeCssSha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182",
+    "projectRevision": 31,
+    "projectId": "a8c240c9-7ade-4ad8-95f6-4972272ab287",
+    "title": "Make a sunny little island game where I…",
+    "contract": {
+      "collectibleIds": [
+        "crystal1",
+        "crystal2",
+        "crystal3",
+        "crystal4",
+        "crystal5"
+      ],
+      "collectRuleIds": [
+        "crystal1",
+        "crystal2",
+        "crystal3",
+        "crystal4",
+        "crystal5"
+      ],
+      "portalId": "portal",
+      "expectedScore": 50,
+      "scorePerCollect": 10,
+      "ruleCount": 9
+    }
+  },
+  "contract": {
+    "collectibleIds": [
+      "crystal1",
+      "crystal2",
+      "crystal3",
+      "crystal4",
+      "crystal5"
+    ],
+    "collectRuleIds": [
+      "crystal1",
+      "crystal2",
+      "crystal3",
+      "crystal4",
+      "crystal5"
+    ],
+    "portalId": "portal",
+    "expectedScore": 50,
+    "scorePerCollect": 10,
+    "ruleCount": 9
+  },
+  "failure": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Adventure complete', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Adventure complete', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Adventure complete', { exact: true })\n"
+}
