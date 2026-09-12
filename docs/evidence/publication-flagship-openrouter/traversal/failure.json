@@ -1,0 +1,12 @@
+{
+  "status": "blocked",
+  "stage": "published-verifier-preflight",
+  "mode": "WIN_PUBLISHED=1",
+  "target": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app",
+  "error": "This traversal requires the collectible/portal game contract.",
+  "browserStarted": false,
+  "targetReadOnlyRequests": 1,
+  "inferenceRequests": 0,
+  "mutatingRequests": 0,
+  "externalRequests": 0
+}

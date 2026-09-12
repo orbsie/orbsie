@@ -536,3 +536,14 @@ with zero cookies, external/API requests and page errors. Root reviewed report
 and exact file hashes. Evidence: docs/evidence/publication-free-strawberry.
 Worker deleted its private password file. This closes this mixed-asset packaging
 and public-loading journey, not full objectives/gameplay or physical mobile.
+
+### OpenRouter flagship independent publication passed
+
+Saved flagship ZIP revision30 was cloned to cloud revision1 and deployed once
+as dpl_HFJEvnuPJeyPjkvyjGTzTPQAQvHx. Five unique generated GLBs, three catalog
+GLBs, license/provenance files and exact public snapshot passed verification.
+One signup/save/publication, no inference or retries. Signed-out readiness
+passed. Evidence: docs/evidence/publication-flagship-openrouter.
+Public traversal stopped before Chromium because the harness rejects project.game
+in published mode while supporting it for ZIP mode. Original failure retained;
+a bounded harness fix is in progress. Public gameplay is not yet proven.
