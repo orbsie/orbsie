@@ -15,3 +15,9 @@ missing-model errors for crystals and placeholders, so it is NOT a successful
 full-world recovery/export acceptance. Preserve this limitation when using the
 screenshots. Use an asset-complete export or captured browser storage for any
 future gameplay/recovery verification; do not infer success from zero pageerrors.
+
+Catalog bounds quantify the size limitation: tree-default height1.70788741 at
+scale1.5 gives2.561831115; mushroom-red height0.2028 at scale10 gives2.028.
+The replacement is approximately21% shorter, although wider. Therefore an
+increased transform scale is not proof of the requested giant size. This is a
+remaining generation-result quality issue distinct from the fixed classifier.

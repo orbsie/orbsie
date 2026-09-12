@@ -72,6 +72,7 @@ const STORY_CATALOG_ASSETS = new Map(
   ),
 );
 const STORY_TREE_LABEL_KINDS = new Set(["generated", "custom"]);
+const STORY_MUSHROOM_LABEL_KINDS = new Set(["generated", "custom"]);
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
@@ -2050,6 +2051,20 @@ function storyTreeEvidence(entity) {
   return null;
 }
 
+function storyMushroomEvidence(entity) {
+  const geometry = entity?.geometry;
+  if (geometry?.kind === "mushroom") return "supported-geometry-kind";
+  if (
+    STORY_MUSHROOM_LABEL_KINDS.has(geometry?.kind) &&
+    /\bmushroom\b/i.test(String(entity.label ?? ""))
+  )
+    return "supported-kind-mushroom-label";
+  if (geometry?.kind !== "asset") return null;
+  const asset = STORY_CATALOG_ASSETS.get(geometry.assetId);
+  if (asset?.tags?.includes("mushroom")) return "catalog-mushroom-tag";
+  return null;
+}
+
 function storyCollectibles(project) {
   return project.entities.filter(
     (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
@@ -2168,10 +2183,10 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
   const beforeEntity = storyEntityMap(before).get(treeId);
   const afterEntity = storyEntityMap(after).get(treeId);
   assert(beforeEntity && afterEntity, "Story mushroom target disappeared.");
-  assert.match(
-    String(afterEntity.label ?? ""),
-    /mushroom/i,
-    "Story mushroom edit did not provide mushroom label evidence.",
+  const mushroomEvidence = storyMushroomEvidence(afterEntity);
+  assert(
+    mushroomEvidence,
+    "Story mushroom edit did not provide supported mushroom evidence.",
   );
   assert.notDeepEqual(
     afterEntity.geometry,
@@ -2204,6 +2219,7 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
   return {
     targetId: treeId,
     label: afterEntity.label,
+    mushroomEvidence,
     rawBoundsExpanded: Boolean(rawBoundsExpanded),
     transformedBoundsExpanded: Boolean(transformedBoundsExpanded),
     sizeVisualReview: "pending",

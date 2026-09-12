@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   assertFlagshipStoryCreation,
   assertFlagshipStoryMushroom,
@@ -197,6 +198,7 @@ describe("flagship provider story contract", () => {
     );
     expect(mushroomCheck.rawBoundsExpanded).toBe(false);
     expect(mushroomCheck.transformedBoundsExpanded).toBe(false);
+    expect(mushroomCheck.mushroomEvidence).toBe("supported-geometry-kind");
     expect(mushroomCheck.sizeVisualReview).toBe("pending");
 
     const goal7 = structuredClone(mushroom);
@@ -382,5 +384,60 @@ describe("flagship provider story contract", () => {
     tree.geometry = { kind: "generated", detail: "refined" };
     tree.label = "Generated tree canopy";
     expect(assertFlagshipStoryCreation(project).tree.id).toBe(tree.id);
+  });
+
+  it("accepts the saved catalog mushroom edit without relying on its label", () => {
+    const before = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-created-project.json",
+        "utf8",
+      ),
+    );
+    const after = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/gateway-flagship-story-catalog/gateway/story-mushroom-project.json",
+        "utf8",
+      ),
+    );
+    const beforeTree = before.entities.find(
+      (candidate: any) => candidate.id === "tree-1",
+    );
+    const afterTree = after.entities.find(
+      (candidate: any) => candidate.id === "tree-1",
+    );
+    expect(beforeTree.geometry).toMatchObject({
+      kind: "asset",
+      assetId: "kenney.nature.tree-default",
+    });
+    expect(afterTree).toMatchObject({
+      label: beforeTree.label,
+      geometry: {
+        kind: "asset",
+        assetId: "kenney.nature.mushroom-red",
+      },
+      color: "#ff69b4",
+      scale: [10, 10, 10],
+    });
+    const check = assertFlagshipStoryMushroom(before, after, "tree-1");
+    expect(check.mushroomEvidence).toBe("catalog-mushroom-tag");
+    expect(check.rawBoundsExpanded).toBe(false);
+    expect(check.transformedBoundsExpanded).toBe(false);
+    expect(check.sizeVisualReview).toBe("pending");
+  });
+
+  it("rejects an unknown mushroom asset even when its label says mushroom", () => {
+    const before = initialProject();
+    const after = structuredClone(before);
+    const tree = after.entities.find((candidate) => candidate.id === "tree-a")!;
+    tree.geometry = {
+      kind: "asset",
+      assetId: "unknown.mushroom",
+      detail: "refined",
+    };
+    tree.label = "Giant pink mushroom";
+    tree.color = "#ed99b5";
+    expect(() => assertFlagshipStoryMushroom(before, after, tree.id)).toThrow(
+      /supported mushroom evidence/,
+    );
   });
 });
