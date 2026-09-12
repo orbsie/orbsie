@@ -179,3 +179,16 @@ resume remains1call. Root corrected earlier motion-test union narrowing;
 TypeScript passes and28 flagship tests pass. Worker also reported38 tests
 across targeted checks. No new browser/model calls yet. Next run uses captured
 revision26 and retained manifest; assess giant dimensions visually afterward.
+
+## Latest Gateway resumed edits
+
+`gateway-creation-continuation-opened/` ran2 Luna calls HTTP200/200 (total3
+with initial creation), no retries. Mushroom revision30 and goal7 revision37
+with two captured GLBs. Path duration2.2→4.4; entities preserved. Root settled
+visual/catalog review supports giant pink replacement:2.44×2.84 vs1.06×2.39.
+Model-only bounds flag false is unavailable catalog data, not a size failure.
+Stopped before undo/reload/export on obsolete /7 HUD selector; program shows
+Score. No worker/test process active, temporary credential removed. First
+creation-continuation attempt had closed-list failure and zero model calls.
+Next: fix HUD/catalog-bound diagnostics and reuse captured snapshots/GLBs
+for offline undo/reload/export; no need to repeat live edits for harness fixes.

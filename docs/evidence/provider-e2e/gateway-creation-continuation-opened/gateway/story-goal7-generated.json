@@ -1,0 +1,26 @@
+{
+  "phase": "goal7",
+  "status": "complete",
+  "models": [
+    {
+      "entityIds": [
+        "crystal-6"
+      ],
+      "sha256": "2b5135a6bab7ba2ee725caeedf6eb7c1ccd13c026239adc8b1c9a10b28d018e3",
+      "bytes": 20504,
+      "path": "generated/2b5135a6bab7ba2ee725caeedf6eb7c1ccd13c026239adc8b1c9a10b28d018e3.glb",
+      "status": "complete"
+    },
+    {
+      "entityIds": [
+        "crystal-7"
+      ],
+      "sha256": "cd6651a365fbaa146c501f41e241ce861b35447009598ce53eb6ed793acffb9a",
+      "bytes": 20504,
+      "path": "generated/cd6651a365fbaa146c501f41e241ce861b35447009598ce53eb6ed793acffb9a.glb",
+      "status": "complete"
+    }
+  ],
+  "missing": [],
+  "totalBytes": 41008
+}

@@ -1,0 +1,26 @@
+{
+  "scope": "Astra review of captured edit snapshots and settled failure screenshot; not full E2E",
+  "sourceTreeSize": [
+    1.0570000756,
+    2.391042374,
+    0.9153886
+  ],
+  "replacementMushroomSize": [
+    2.4355410114,
+    2.8392,
+    2.812319972
+  ],
+  "giantReplacement": "supported by catalog dimensions and settled rendered screenshot",
+  "mushroomPhaseScreenshot": "formation in progress; not settled visual proof",
+  "settledScreenshot": "gateway/failure.png",
+  "harnessSizeFlag": "inconclusive: model.bounds lookup omits catalog bounds",
+  "remainingFailure": "obsolete .game-hud strong span /7 assertion; program HUD shows Score",
+  "liveCalls": 2,
+  "statuses": [
+    200,
+    200
+  ],
+  "model": "openai/gpt-5.6-luna",
+  "outputCapTokens": 4096,
+  "automaticRetries": 0
+}
