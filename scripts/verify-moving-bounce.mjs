@@ -18,12 +18,22 @@ const output = resolve(
 );
 const appSourceCommit = process.env.ORBSIE_APP_SOURCE_COMMIT?.trim() || null;
 const platformId = "moving-bounce-platform";
+const catalogManifest = JSON.parse(
+  await readFile(
+    new URL("../assets/catalog/manifest.json", import.meta.url),
+    "utf8",
+  ),
+);
+const platformAsset = catalogManifest.assets.find(
+  (asset) => asset.id === "kenney.nature.platform-grass",
+);
+assert(platformAsset, "Moving-bounce fixture requires the catalog platform.");
 const evidence = {
   platformId,
   assetId: "kenney.nature.platform-grass",
   bounds: {
-    min: [-0.445000023, 0, -0.3539196],
-    max: [0.4481971, 0.0824999958, 0.369999975],
+    min: [...platformAsset.bounds.min],
+    max: [...platformAsset.bounds.max],
   },
   position: [-0.85, 0.35, 3.2],
   scale: [3, 3, 3],
@@ -473,16 +483,9 @@ function regressionSample(y, index) {
 
 const continuedFall = [1.3, 1.16, 1.03, 0.91].map(regressionSample);
 const flatAtSurface = [1.3, 1.16, 1.03, 1.02, 1.02, 1.02].map(regressionSample);
-const repeatedFrameBounce = [
-  1.3,
-  1.16,
-  1.05,
-  1.02,
-  1.02,
-  1.2,
-  1.2,
-  1.4,
-].map(regressionSample);
+const repeatedFrameBounce = [1.3, 1.16, 1.05, 1.02, 1.02, 1.2, 1.2, 1.4].map(
+  regressionSample,
+);
 const repeatedFrameTransition = bounceTransition(repeatedFrameBounce);
 assert(
   repeatedFrameTransition?.velocityDirectionReversal,
@@ -533,9 +536,7 @@ async function runBounce(page, mode, report) {
   await expect
     .poll(
       async () => {
-        const telemetry = await page.evaluate(() =>
-          window.__orbReadWorld?.(),
-        );
+        const telemetry = await page.evaluate(() => window.__orbReadWorld?.());
         beforeJump = telemetry ? compactTelemetry(telemetry) : null;
         return Boolean(beforeJump?.player?.visible && beforeJump?.platform);
       },

@@ -26,7 +26,10 @@ function finiteVec3(value) {
   );
 }
 
-/** Keep the player inside an inward margin of the strict source footprint. */
+/**
+ * Keep the player inside an inward margin of the strict source footprint.
+ * @param {{playerCenter?: number[], target?: number[], halfX?: number, halfZ?: number, margin?: number}} options
+ */
 export function platformFootprintSteeringNeeded({
   playerCenter,
   target,

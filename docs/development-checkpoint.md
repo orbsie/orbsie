@@ -206,18 +206,28 @@ worker. Avoid repeated random-phase retries or building an unnecessary
 navigation subsystem. Next acceptance still needs actual portal/reset for
 this scene and owner ChatGPT sign-in; physical mobile and visual quality open.
 
-## Latest integration and active visual diagnosis
+## Catalog transformed-bounds fix ready for release
 
-One source-footprint integration with1c78edf reached platform1/2 but missed3
-(`gateway-current-source-footprint-integration/`). No portal/reset and no
-model calls. Stop phase-driven route retries for now; existing once-observed
-three-bounce/score7 proof remains partial. Browser DevTools still shows owner
-Orbsie sign-in form; ChatGPT consent cannot yet be validated.
+Latest route integration1c78edf reached platforms1/2 but missed3; preserve
+`gateway-current-source-footprint-integration/`,5f3af83, no more phase retries.
 
-Single worker gateway_bounce_route was reused for bounded mushroom visual
-diagnosis after host thread limit rejected a fresh worker. It owns only new
-`mushroom-visual-diagnosis/` evidence and a small diagnostic if necessary:
-compare raw mushroom_red.glb with decoder/runtime to distinguish low-poly
-source shape, uniform tint, fallback, or transform error. At most1 offline
-browser comparison, no model/external calls, no speculative app changes.
-Root owns checkpoint and route evidence; no parallel implementation worker.
+Mushroom diagnosis exposed wrong catalog bounds: every selected GLB has an
+omitted-0.05 Y node translation; fence child transforms also change extents.
+At mushroom scale14 the metadata/render difference is0.7. Corrected all10
+manifest bounds/origin notes from active indexed vertices with node transforms.
+Source GLBs, hashes, licenses, IDs and identity scaling unchanged. New catalog
+verifier enforces transformed bounds and rejects external resource loading.
+Root reviewed helper/diff; worker37 targeted tests and catalog audit passed.
+Root TypeScript passes, gameplay/flagship integration checks pass after binding
+archived trace tests to their ZIP's historical manifest and using floating
+precision tolerance. Fresh moving-bounce fixture now reads current bounds.
+
+Evidence `mushroom-visual-diagnosis/` distinguishes metadata defect from
+low-poly silhouette/uniform tint limitations; runtimefallback was not excluded
+by a new browser observation. Existing saved entity placements are unchanged.
+Old ZIP traces retain old runtime/catalog contracts; they do not validate
+updated-runtime contacts. Next: deploy clean committed source and run one
+current-bounds desktop/exported-touch fixture, zero model calls. No worker
+active. Owner ChatGPT sign-in/consent still pending (browser sign-in form);
+physical mobile/visual quality/full provider E2E remain open. Codex81%remaining
+last observed, stop below20%.

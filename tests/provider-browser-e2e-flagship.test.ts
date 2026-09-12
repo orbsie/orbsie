@@ -1203,9 +1203,9 @@ describe("flagship provider story contract", () => {
       source: { before: "catalog", after: "catalog" },
     });
     expect(check.dimensions.before).toEqual([
-      1.0570000756,
-      2.391042374,
-      0.9153886,
+      expect.closeTo(1.0570000756, 6),
+      expect.closeTo(2.391042374, 6),
+      expect.closeTo(0.9153886, 6),
     ]);
     expect(check.dimensions.after).toEqual([
       2.4355410114000002,

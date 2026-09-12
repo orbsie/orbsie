@@ -1,0 +1,52 @@
+{
+  "source": {
+    "id": "kenney.nature.mushroom-red",
+    "path": "public/models/kenney/nature-kit/mushroom_red.glb",
+    "bytes": 6364,
+    "sha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571",
+    "meshes": [
+      {
+        "triangles": 32,
+        "material": "_defaultMat",
+        "color": "ffffff",
+        "bounds": {
+          "min": [-0.08607133, -0.05, -0.09540864],
+          "max": [0.0878958851, 0.1528, 0.105471358]
+        }
+      },
+      {
+        "triangles": 16,
+        "material": "colorRed",
+        "color": "f19398",
+        "bounds": {
+          "min": [-0.08607133, -0.05, -0.09540864],
+          "max": [0.0878958851, 0.1528, 0.105471358]
+        }
+      }
+    ],
+    "bounds": {
+      "min": [-0.08607133, -0.05, -0.09540864],
+      "max": [0.0878958851, 0.1528, 0.105471358]
+    }
+  },
+  "decoded": {
+    "positionCount": 144,
+    "triangleCount": 48,
+    "bounds": {
+      "min": [-0.08607132732868195, -0.05000000074505806, -0.09540864080190659],
+      "max": [0.08789588510990143, 0.15280000865459442, 0.10547135770320892]
+    },
+    "colors": ["0.87843,0.29020,0.31373", "1.00000,1.00000,1.00000"],
+    "formationAttributes": {
+      "positionCount": 2048,
+      "colorCount": 2048
+    },
+    "userData": {
+      "orbsieAssetId": "kenney.nature.mushroom-red",
+      "orbsieAssetPath": "/models/kenney/nature-kit/mushroom_red.glb",
+      "sourceTransformsPreserved": true,
+      "sourceMaterialColorsPreserved": true
+    }
+  },
+  "conclusion": "The checked-in GLB decodes as a two-material low-poly mushroom with preserved node transforms and material regions. The prior manifest omitted the active node's -0.05 Y translation, so at scale 14 it could shift the visible placement by 0.7 units; a screenshot captured before this metadata correction cannot establish a source-shape-only cause. Formation's requested tint also intentionally replaces both material regions with one color, so the corrected scene should be rerendered before choosing a visual fix."
+}

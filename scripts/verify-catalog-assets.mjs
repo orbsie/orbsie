@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { resolve, sep } from "node:path";
+import { transformedCatalogSourceBounds } from "./lib/catalog-source-bounds.mjs";
 
 const root = resolve(new URL("..", import.meta.url).pathname);
 const manifestPath = resolve(root, "assets/catalog/manifest.json");
@@ -22,13 +23,17 @@ if (!Array.isArray(manifest.assets) || manifest.assets.length === 0)
 
 const ids = new Set();
 let totalBytes = 0;
+let boundsAudited = 0;
+const boundsTolerance = 1e-5;
 for (const asset of manifest.assets) {
   if (ids.has(asset.id)) fail(`duplicate asset id ${asset.id}`);
   ids.add(asset.id);
-  if (!asset.path?.startsWith("/models/")) fail(`unsafe public path ${asset.path}`);
+  if (!asset.path?.startsWith("/models/"))
+    fail(`unsafe public path ${asset.path}`);
   if (/^https?:/i.test(asset.path)) fail(`remote asset path ${asset.path}`);
   const path = resolve(root, "public", `.${asset.path}`);
-  if (!within(path, resolve(root, "public"))) fail(`path escapes public: ${asset.path}`);
+  if (!within(path, resolve(root, "public")))
+    fail(`path escapes public: ${asset.path}`);
   const bytes = await readFile(path);
   const metadata = await stat(path);
   if (metadata.size !== asset.sizeBytes)
@@ -49,11 +54,38 @@ for (const asset of manifest.assets) {
     fail(`${asset.id} texture metadata mismatch`);
   if ((gltf.meshes?.length ?? 0) !== asset.gltf.meshes)
     fail(`${asset.id} mesh metadata mismatch`);
+  const source = await transformedCatalogSourceBounds(bytes, asset.path);
+  for (const axis of [0, 1, 2]) {
+    if (
+      !Number.isFinite(asset.bounds?.min?.[axis]) ||
+      !Number.isFinite(asset.bounds?.max?.[axis]) ||
+      !Number.isFinite(asset.bounds?.size?.[axis])
+    )
+      fail(`${asset.id} has invalid bounds metadata`);
+    if (
+      Math.abs(source.bounds.min[axis] - asset.bounds.min[axis]) >
+        boundsTolerance ||
+      Math.abs(source.bounds.max[axis] - asset.bounds.max[axis]) >
+        boundsTolerance
+    )
+      fail(
+        `${asset.id} bounds metadata does not match transformed active source geometry on axis ${axis}`,
+      );
+    const expectedSize = asset.bounds.max[axis] - asset.bounds.min[axis];
+    if (Math.abs(expectedSize - asset.bounds.size[axis]) > boundsTolerance)
+      fail(`${asset.id} bounds size does not match its min/max metadata`);
+  }
+  if (typeof asset.bounds.origin !== "string" || !asset.bounds.origin.trim())
+    fail(`${asset.id} bounds origin note is missing`);
+  boundsAudited += 1;
   totalBytes += metadata.size;
 }
 
 for (const source of manifest.sources) {
-  if (!/^https:\/\//.test(source.sourcePageUrl) || !/^https:\/\//.test(source.downloadUrl))
+  if (
+    !/^https:\/\//.test(source.sourcePageUrl) ||
+    !/^https:\/\//.test(source.downloadUrl)
+  )
     fail(`${source.sourceId} must use HTTPS provenance URLs`);
   const licensePath = resolve(root, source.license.textFile);
   if (!within(licensePath, resolve(root, "assets/catalog")))
@@ -61,7 +93,10 @@ for (const source of manifest.sources) {
   const license = await readFile(licensePath);
   if (sha256(license) !== source.license.textSha256)
     fail(`${source.sourceId} license SHA-256 mismatch`);
-  if (source.license.commercialUse !== true || source.license.redistribution !== true)
+  if (
+    source.license.commercialUse !== true ||
+    source.license.redistribution !== true
+  )
     fail(`${source.sourceId} is not marked commercially redistributable`);
 }
 
@@ -70,5 +105,5 @@ if (Number.isFinite(budget) && totalBytes > budget)
   fail(`model bytes ${totalBytes} exceed budget ${budget}`);
 
 console.log(
-  `Catalog OK: ${manifest.assets.length} GLBs, ${totalBytes} model bytes, ${manifest.sources.length} verified source(s).`,
+  `Catalog OK: ${manifest.assets.length} GLBs, ${totalBytes} model bytes, ${manifest.sources.length} verified source(s), ${boundsAudited} transformed bounds audited.`,
 );

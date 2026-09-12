@@ -19,9 +19,9 @@ const zip = unzipSync(
   ),
 );
 const project = JSON.parse(strFromU8(zip["project.json"]));
-const manifest = JSON.parse(
-  readFileSync("assets/catalog/manifest.json", "utf8"),
-);
+// These traces belong to this immutable export, whose runtime used its own
+// catalog bounds. Current-source geometry is covered by catalog-source-bounds.
+const manifest = JSON.parse(strFromU8(zip["assets/catalog/manifest.json"]));
 const asset = manifest.assets.find(
   (candidate: { id: string }) =>
     candidate.id === "kenney.nature.platform-grass",
