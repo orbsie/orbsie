@@ -4,6 +4,11 @@
 
 export const PLAYER_HALF_HEIGHT = 0.42;
 export const LANDING_CROSSING_TOLERANCE = 0.08;
+// The runtime clamps a successful landing to this source contact height. A
+// sampled frame materially below it is a late pass-through, not proof of a
+// landing, even when the crossing tolerance was satisfied previously. The
+// runtime clamps to this value without an additional gameplay tolerance.
+export const LANDING_CONTACT_HEIGHT_TOLERANCE = 1e-5;
 // Keep these in sync with src/lib/gameplay.ts. They are used only to decide
 // whether a moving-platform handoff is currently feasible for this verifier.
 export const PLAYER_MOVE_SPEED = 4;
@@ -192,6 +197,7 @@ export function sourceLandingEvidence(
       descending: false,
       sourceOverlap: false,
       crossedContactHeight: false,
+      atContactHeight: false,
       source: null,
     };
   const currentY = player.center[1];
@@ -200,14 +206,18 @@ export function sourceLandingEvidence(
   const crossedContactHeight =
     previousY >= source.contactY - LANDING_CROSSING_TOLERANCE &&
     currentY <= source.contactY;
+  const atContactHeight =
+    Math.abs(currentY - source.contactY) <= LANDING_CONTACT_HEIGHT_TOLERANCE;
   const sourceOverlap =
     Math.abs(player.center[0] - source.center[0]) <= source.halfX &&
     Math.abs(player.center[2] - source.center[2]) <= source.halfZ;
   return {
-    accepted: descending && crossedContactHeight && sourceOverlap,
+    accepted:
+      descending && crossedContactHeight && atContactHeight && sourceOverlap,
     descending,
     sourceOverlap,
     crossedContactHeight,
+    atContactHeight,
     currentY,
     previousY,
     source,

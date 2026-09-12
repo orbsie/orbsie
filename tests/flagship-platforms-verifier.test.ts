@@ -88,9 +88,51 @@ it("rejects platform2's retained airborne release while accepting source contact
   const platform1Contact = firstSourceContact("platform-1");
   const platform3Contact = firstSourceContact("platform-3");
   expect(platform1Contact?.evidence.accepted).toBe(true);
+  expect(platform1Contact?.evidence.atContactHeight).toBe(true);
   expect(platform1Contact?.sample.atPerformanceMs).toBeCloseTo(2353.2, 0);
   expect(platform3Contact?.evidence.accepted).toBe(true);
+  expect(platform3Contact?.evidence.atContactHeight).toBe(true);
   expect(platform3Contact?.sample.atPerformanceMs).toBeCloseTo(6008.8, 0);
+});
+
+it("rejects the touch run's late below-platform sample as a false landing", () => {
+  const platform = entityFor("platform-1");
+  const rendered = {
+    center: [0.010184202056393254, 0.9978124992921948, 5.506432151794433],
+    size: transformedAssetDimensions(platform, asset),
+  };
+  const previous = {
+    player: {
+      center: [0.4690660116032427, 1.3914451912980363, 5.88994467081237],
+    },
+    platforms: { "platform-1": rendered },
+  };
+  const current = {
+    player: {
+      center: [0.20926244385788717, 1.1677471698402253, 5.724107329830226],
+    },
+    platforms: { "platform-1": rendered },
+  };
+  const evidence = sourceLandingEvidence(previous, current, platform, asset);
+  expect(evidence.crossedContactHeight).toBe(true);
+  expect(evidence.sourceOverlap).toBe(true);
+  expect(evidence.atContactHeight).toBe(false);
+  expect(evidence.accepted).toBe(false);
+
+  const nearMiss = {
+    player: {
+      center: [0.20926244385788717, 1.43062499895, 5.724107329830226],
+    },
+    platforms: { "platform-1": rendered },
+  };
+  const nearMissEvidence = sourceLandingEvidence(
+    previous,
+    nearMiss,
+    platform,
+    asset,
+  );
+  expect(nearMissEvidence.atContactHeight).toBe(false);
+  expect(nearMissEvidence.accepted).toBe(false);
 });
 
 it("accepts settled catalog dimensions and rejects the transient formation dimensions", () => {
