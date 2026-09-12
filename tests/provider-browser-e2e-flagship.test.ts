@@ -24,12 +24,16 @@ type ResumeConfig = ReturnType<typeof readConfiguration> & {
   resumeCheckpoint: {
     project: { revision: number };
     models: unknown[];
+    sourceSnapshotSha256?: string;
+    artifactMode?: string;
   };
   flagshipResumeOffline?: boolean;
   resumeOffline?: {
     baseline: { revision: number };
     edited: { revision: number };
     models: unknown[];
+    editedSnapshotSha256?: string;
+    artifactMode?: string;
   };
 };
 
@@ -43,6 +47,7 @@ const ENV_NAMES = [
   "ORBSIE_FLAGSHIP_STORY",
   "ORBSIE_FLAGSHIP_RESUME",
   "ORBSIE_FLAGSHIP_RESUME_STAGE",
+  "ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE",
   "ORBSIE_FLAGSHIP_RESUME_CHECKPOINT",
   "ORBSIE_FLAGSHIP_RESUME_MODELS",
   "ORBSIE_FLAGSHIP_RESUME_OFFLINE",
@@ -102,6 +107,15 @@ const CURRENT_GATEWAY_STORY = resolve(
 const CURRENT_GATEWAY_STORY_MODELS = resolve(
   "docs/evidence/provider-e2e/gateway-current-full-story/gateway",
 );
+const CAPTURED_GATEWAY_STORY = resolve(
+  "docs/evidence/provider-e2e/gateway-creation-continuation-opened/gateway/story-mushroom-project.json",
+);
+const CAPTURED_GATEWAY_STORY_MODELS = resolve(
+  "docs/evidence/provider-e2e/gateway-creation-continuation-opened/gateway",
+);
+const CAPTURED_GATEWAY_GOAL7 = resolve(
+  "docs/evidence/provider-e2e/gateway-creation-continuation-opened/gateway/story-goal7-project.json",
+);
 
 function gatewayResumeEnvironment(overrides: Record<string, string> = {}) {
   gatewayStoryEnvironment({
@@ -120,6 +134,20 @@ function gatewayCreationResumeEnvironment(
     ORBSIE_FLAGSHIP_RESUME_STAGE: "creation",
     ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: CURRENT_GATEWAY_STORY,
     ORBSIE_FLAGSHIP_RESUME_MODELS: CURRENT_GATEWAY_STORY_MODELS,
+    ...overrides,
+  });
+}
+
+function gatewayCapturedResumeEnvironment(
+  overrides: Record<string, string> = {},
+) {
+  gatewayResumeEnvironment({
+    ORBSIE_FLAGSHIP_RESUME_OFFLINE: "1",
+    ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE: "captured",
+    ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: CAPTURED_GATEWAY_STORY,
+    ORBSIE_FLAGSHIP_RESUME_MODELS: CAPTURED_GATEWAY_STORY_MODELS,
+    ORBSIE_FLAGSHIP_RESUME_EDITED: CAPTURED_GATEWAY_GOAL7,
+    ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS: CAPTURED_GATEWAY_STORY_MODELS,
     ...overrides,
   });
 }
@@ -566,6 +594,86 @@ describe("flagship provider story contract", () => {
     expect(offline.models).toHaveLength(7);
   });
 
+  it("loads the explicit captured mushroom and goal-7 manifests", () => {
+    gatewayCapturedResumeEnvironment();
+    delete process.env.AI_GATEWAY_TEST_KEY;
+    delete process.env.AI_GATEWAY_API_KEY;
+    const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
+    expect(config).toMatchObject({
+      flagshipResume: true,
+      flagshipResumeOffline: true,
+      flagshipResumeStage: "mushroom",
+      flagshipResumeArtifactMode: "captured",
+      generationBudget: 0,
+      resumeCheckpoint: {
+        project: {
+          id: "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+          revision: 30,
+        },
+        models: [],
+      },
+      resumeOffline: {
+        edited: {
+          id: "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
+          revision: 37,
+        },
+        models: [
+          { id: "crystal-6" },
+          { id: "crystal-7" },
+        ],
+      },
+    });
+    expect(flagshipResumeExecutionMode(config)).toBe("offline");
+    expect(config.resumeCheckpoint.sourceSnapshotSha256).toBe(
+      "025e2d5d40a486dcd9944e0ff08cb921de0f826184f7cc3d6fbef06aa39a9def",
+    );
+    expect(config.resumeOffline?.editedSnapshotSha256).toBe(
+      "38606a52068206da403dd22f85fe7a97dca2eafc51e600249d3445d34b7e2dac",
+    );
+  });
+
+  it("fails closed when a captured goal-7 GLB is corrupt", async () => {
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-captured-offline-model-test-"),
+    );
+    try {
+      await mkdir(join(temporary, "generated"), { recursive: true });
+      for (const filename of [
+        "story-mushroom-generated.json",
+        "story-goal7-generated.json",
+      ]) {
+        await writeFile(
+          join(temporary, filename),
+          readFileSync(join(CAPTURED_GATEWAY_STORY_MODELS, filename)),
+        );
+      }
+      const goal7Manifest = JSON.parse(
+        readFileSync(
+          join(CAPTURED_GATEWAY_STORY_MODELS, "story-goal7-generated.json"),
+          "utf8",
+        ),
+      );
+      for (const [index, record] of goal7Manifest.models.entries()) {
+        const bytes = Buffer.from(
+          readFileSync(join(CAPTURED_GATEWAY_STORY_MODELS, record.path)),
+        );
+        if (index === 0) bytes[0] ^= 0xff;
+        await writeFile(join(temporary, record.path), bytes);
+      }
+      gatewayCapturedResumeEnvironment({
+        ORBSIE_FLAGSHIP_RESUME_MODELS: temporary,
+        ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS: temporary,
+      });
+      delete process.env.AI_GATEWAY_TEST_KEY;
+      delete process.env.AI_GATEWAY_API_KEY;
+      expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
+        /failed its hash or byte check/,
+      );
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  });
+
   it("rejects a corrupt offline model before opening a browser", async () => {
     const temporary = await mkdtemp(
       join(tmpdir(), "orbsie-offline-model-test-"),
@@ -751,8 +859,8 @@ describe("flagship provider story contract", () => {
       mushroom,
       "tree-a",
     );
-    expect(mushroomCheck.rawBoundsExpanded).toBe(false);
-    expect(mushroomCheck.transformedBoundsExpanded).toBe(false);
+    expect(mushroomCheck.rawBoundsExpanded).toBe(true);
+    expect(mushroomCheck.transformedBoundsExpanded).toBe(true);
     expect(mushroomCheck.mushroomEvidence).toBe("supported-geometry-kind");
     expect(mushroomCheck.sizeVisualReview).toBe("pending");
 
@@ -897,6 +1005,10 @@ describe("flagship provider story contract", () => {
     const check = assertFlagshipStoryMushroom(before, after, tree.id);
     expect(check.rawBoundsExpanded).toBe(false);
     expect(check.transformedBoundsExpanded).toBe(false);
+    expect(check.dimensions).toMatchObject({
+      status: "inconclusive",
+      source: { before: "catalog", after: "missing" },
+    });
     expect(check.sizeVisualReview).toBe("pending");
   });
 
@@ -1066,8 +1178,40 @@ describe("flagship provider story contract", () => {
     const check = assertFlagshipStoryMushroom(before, after, "tree-1");
     expect(check.mushroomEvidence).toBe("catalog-mushroom-tag");
     expect(check.rawBoundsExpanded).toBe(false);
-    expect(check.transformedBoundsExpanded).toBe(false);
+    expect(check.transformedBoundsExpanded).toBe(true);
+    expect(check.dimensions).toMatchObject({
+      status: "observed",
+      source: { before: "catalog", after: "catalog" },
+    });
     expect(check.sizeVisualReview).toBe("pending");
+  });
+
+  it("uses catalog bounds for the captured giant mushroom dimensions", () => {
+    const before = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/gateway-current-full-story/gateway/story-created-project.json",
+        "utf8",
+      ),
+    );
+    const after = JSON.parse(
+      readFileSync(CAPTURED_GATEWAY_STORY, "utf8"),
+    );
+    const check = assertFlagshipStoryMushroom(before, after, "tree-1");
+    expect(check.transformedBoundsExpanded).toBe(true);
+    expect(check.dimensions).toMatchObject({
+      status: "observed",
+      source: { before: "catalog", after: "catalog" },
+    });
+    expect(check.dimensions.before).toEqual([
+      1.0570000756,
+      2.391042374,
+      0.9153886,
+    ]);
+    expect(check.dimensions.after).toEqual([
+      2.4355410114000002,
+      2.8392,
+      2.812319972,
+    ]);
   });
 
   it("rejects an unknown mushroom asset even when its label says mushroom", () => {

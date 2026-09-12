@@ -134,71 +134,28 @@ Root reviewed report and screenshot. Do not repeat these green checks. Full boun
 that accounts for platform phase; existing two-attempt task is finished.
 Owner-dependent ChatGPT sign-in and real-device gates remain as listed above.
 
-## Current Gateway story / active worker
+## Current Gateway story and reviewed offline continuation
 
-`gateway-current-full-story/` stopped after1 Luna HTTP200 creation,4096 cap,
-no retries; scene contains3 bounce+move_path platforms but old story classifier
-requires behavior=move. Saved revision26; no edits ran. Temp credential deleted.
-Worker `/root/story_path_motion` finished; root reviewed and removed unrelated
-formatting. Story classification accepts unconditional active bounce paths,
-rejects ambiguous writers; slowdown uses duration for path-driven bounce/move,
-not inert behavior.speed. Added collect rules preserve baseline positive score
-(including10). Portal ID and eq/gte comparison are preserved.24 focused tests
-passed; syntax/diff checks passed. No live calls or browser runs. These are
-structural checks, not proof of actual route playability. Reuse captured scene.
+Gateway creation revision26 used one Luna call; resumed mushroom revision30
+and goal7 revision37 used two more HTTP200 calls, no retries. Path duration
+2.2→4.4; original entities preserved; two generated GLBs captured and bound
+to exact snapshot hashes. Catalog dimensions support giant pink replacement:
+2.44×2.84 vs original1.06×2.39. Five original crystals look mushroom-like;
+visual quality remains open. Creation and edit evidence lives in
+`gateway-current-full-story/` and `gateway-creation-continuation-opened/`.
 
-### Resume-after-creation contract for next bounded task
+Luna captured_story_offline completed explicit captured-manifest support,
+source/hash/byte validation and catalog-bound diagnostics. Worker reported31
+focused tests and TypeScript/syntax checks passing. Root reviewed complete diff,
+report and HUD screenshot, corrected the missed live-story obsolete /7 selector
+to the actual Score HUD, and fixed the evidence README report path. Root syntax
+and diff checks passed; no repeated model or browser run for these corrections.
 
-Existing readFlagshipResumeCheckpoint requires a mushroom message and current
-resume runs only platform edit; it cannot resume the new creation snapshot.
-Add an explicit creation-stage continuation after motion assertion fix: verify
-source snapshot/hash and all assets, reopen exact revision26, then reuse
-runFlagshipStory's selected mushroom and platform edits with a2-call ceiling.
-No replayed/fake creation response, no automatic retry or new initial prompt.
-Report seeded creation separately from live edits; preserve actual undo/reload
-and export checks. Existing one-call post-mushroom resume stays unchanged.
-Current snapshot has zero generated assets, so catalog references must remain
-valid but no GLB reconstruction is needed. This extension is queued, not built.
-
-## Active creation-stage continuation
-
-Luna `/root/creation_checkpoint_resume` owns harness and focused tests for
-explicit creation-stage resume, two edit calls ceiling; no live/browser calls
-during implementation. Preserve existing post-mushroom resume. Root inspected
-physical baseline for later visual review: tree-1 scale1.4 × catalog height
-1.70788741 =2.391042374. Mushroom-red at scale10 is only2.028 tall; raw scale
-and a mushroom label cannot close giant-size acceptance. Existing generation
-guidance already requests transformed dimensions and procedural fallback.
-
-## Creation-stage continuation reviewed
-
-Worker finished. Explicit ORBSIE_FLAGSHIP_RESUME_STAGE=creation validates
-mandatory manifest path/hash, restores exact saved project via UI, and reuses
-story edits with2call cap and no fake creation request. Old mushroom-stage
-resume remains1call. Root corrected earlier motion-test union narrowing;
-TypeScript passes and28 flagship tests pass. Worker also reported38 tests
-across targeted checks. No new browser/model calls yet. Next run uses captured
-revision26 and retained manifest; assess giant dimensions visually afterward.
-
-## Latest Gateway resumed edits
-
-`gateway-creation-continuation-opened/` ran2 Luna calls HTTP200/200 (total3
-with initial creation), no retries. Mushroom revision30 and goal7 revision37
-with two captured GLBs. Path duration2.2→4.4; entities preserved. Root settled
-visual/catalog review supports giant pink replacement:2.44×2.84 vs1.06×2.39.
-Model-only bounds flag false is unavailable catalog data, not a size failure.
-Stopped before undo/reload/export on obsolete /7 HUD selector; program shows
-Score. No worker/test process active, temporary credential removed. First
-creation-continuation attempt had closed-list failure and zero model calls.
-Next: fix HUD/catalog-bound diagnostics and reuse captured snapshots/GLBs
-for offline undo/reload/export; no need to repeat live edits for harness fixes.
-
-## Active captured offline story task
-
-One Luna `/root/captured_story_offline` owns explicit captured-manifest loading,
-HUD/catalog-bound diagnostics, focused tests and at most1 offline browser
-attempt. Reuse actual rev30 mushroom→rev37 goal7 with2 GLBs; seed history
-explicitly (not original live undo proof). Mandatory bindings committed102c328.
-No model/account/external calls. Root separate visual review: original five
-custom cone+sphere crystals look mushroom-like; scene-quality gate stays open
-even if collectible/undo/export checks pass.
+`gateway-captured-offline/` passed exact revision37 reopen/reload, goal7 export
+with2 generated GLBs, seeded undo to baseline5 at revision38, reload/export and
+standalone playback, with zero model calls. This is seeded captured history,
+not original live undo. HUD screenshot includes formation visuals and is not
+settled asset-quality proof. Live gameplay traversal, publication and mobile
+acceptance of this newest world remain unverified. Next: use its saved
+`gateway/world-goal-7.zip` for actual gameplay acceptance without inference.
+No worker is active. Owner-dependent ChatGPT and real-device gates above remain.

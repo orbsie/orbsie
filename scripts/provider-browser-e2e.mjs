@@ -73,6 +73,7 @@ const STORY_CATALOG_ASSETS = new Map(
 );
 const STORY_TREE_LABEL_KINDS = new Set(["generated", "custom"]);
 const STORY_MUSHROOM_LABEL_KINDS = new Set(["generated", "custom"]);
+const FLAGSHIP_RESUME_ARTIFACT_MODES = new Set(["reconstructed", "captured"]);
 const REPORT_DIR = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ?? "docs/evidence/provider-e2e",
 );
@@ -231,6 +232,22 @@ export function readConfiguration(argv) {
   const flagshipResumeStage = flagshipResume
     ? flagshipResumeStageValue ?? "mushroom"
     : undefined;
+  const flagshipResumeArtifactModeValue =
+    process.env.ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE;
+  if (
+    flagshipResumeArtifactModeValue !== undefined &&
+    !FLAGSHIP_RESUME_ARTIFACT_MODES.has(flagshipResumeArtifactModeValue)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE must be reconstructed or captured.",
+    );
+  if (flagshipResumeArtifactModeValue !== undefined && !flagshipResume)
+    throw new HarnessConfigurationError(
+      "ORBSIE_FLAGSHIP_RESUME_ARTIFACT_MODE requires ORBSIE_FLAGSHIP_RESUME=1.",
+    );
+  const flagshipResumeArtifactMode = flagshipResume
+    ? flagshipResumeArtifactModeValue ?? "reconstructed"
+    : undefined;
   const flagshipResumeOfflineValue = process.env.ORBSIE_FLAGSHIP_RESUME_OFFLINE;
   if (
     flagshipResumeOfflineValue !== undefined &&
@@ -251,6 +268,13 @@ export function readConfiguration(argv) {
   if (flagshipResumeOffline && flagshipResumeStage === "creation")
     throw new HarnessConfigurationError(
       "Creation-stage flagship resume requires live edit calls and cannot use offline resume.",
+    );
+  if (
+    flagshipResumeArtifactMode === "captured" &&
+    (!flagshipResumeOffline || flagshipResumeStage !== "mushroom")
+  )
+    throw new HarnessConfigurationError(
+      "Captured flagship artifacts require offline mushroom-stage resume.",
     );
   if (flagshipStory && provider !== "gateway")
     throw new HarnessConfigurationError(
@@ -435,6 +459,7 @@ export function readConfiguration(argv) {
     flagshipStory,
     flagshipResume,
     flagshipResumeStage,
+    flagshipResumeArtifactMode,
     flagshipResumeOffline,
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
@@ -466,6 +491,7 @@ export function readConfiguration(argv) {
         checkpointPath,
         modelsPath,
         flagshipResumeStage,
+        flagshipResumeArtifactMode,
       );
       if (flagshipResumeOffline) {
         const editedPath = process.env.ORBSIE_FLAGSHIP_RESUME_EDITED;
@@ -479,6 +505,7 @@ export function readConfiguration(argv) {
           config.resumeCheckpoint,
           editedPath,
           editedModelsPath,
+          flagshipResumeArtifactMode,
         );
       }
     } catch (error) {
@@ -1022,10 +1049,135 @@ function readFlagshipCreationCheckpointEvidence(
   };
 }
 
+function readFlagshipCapturedPhaseEvidence(
+  checkpointPath,
+  modelsDir,
+  project,
+  checkpointBytes,
+  phase,
+) {
+  let evidence;
+  try {
+    evidence = JSON.parse(
+      readFileSync(join(modelsDir, `story-${phase}-generated.json`)),
+    );
+  } catch {
+    throw Error(
+      `Flagship captured ${phase} checkpoint or generated-model manifest could not be read.`,
+    );
+  }
+  assertFlagshipStoryAssetReferences(project);
+  assertFlagshipResumeSourceBinding(evidence, checkpointPath, checkpointBytes);
+  assert.equal(
+    evidence?.phase,
+    phase,
+    `Flagship captured evidence has an unexpected ${phase} phase.`,
+  );
+  assert.equal(
+    evidence?.status,
+    "complete",
+    `Flagship captured ${phase} evidence is incomplete.`,
+  );
+  assert(
+    Array.isArray(evidence.models) && Array.isArray(evidence.missing),
+    `Flagship captured ${phase} evidence has an invalid generated-model manifest.`,
+  );
+  assert.equal(
+    evidence.missing.length,
+    0,
+    `Flagship captured ${phase} evidence contains missing generated assets.`,
+  );
+  const { references, invalid } = generatedModelReferences(project);
+  assert.equal(
+    invalid.length,
+    0,
+    `Flagship captured ${phase} checkpoint contains unsupported generated asset metadata.`,
+  );
+  assert.equal(
+    evidence.models.length,
+    references.length,
+    references.length
+      ? `Flagship captured ${phase} evidence omitted a generated asset.`
+      : `Flagship captured ${phase} evidence contains an unexpected generated asset.`,
+  );
+  const expectedByHash = new Map(
+    references.map((reference) => [reference.sha256, reference]),
+  );
+  const seen = new Set();
+  const models = [];
+  let totalBytes = 0;
+  for (const record of evidence.models) {
+    const expected = expectedByHash.get(record?.sha256);
+    const path = record?.path;
+    assert(
+      expected &&
+        !seen.has(record.sha256) &&
+        record.status === "complete" &&
+        record.bytes === expected.expectedBytes &&
+        Array.isArray(record.entityIds) &&
+        [...new Set(record.entityIds)].sort().join("\0") ===
+          [...expected.entityIds].sort().join("\0") &&
+        typeof path === "string",
+      `Flagship captured ${phase} evidence has mismatched generated-model metadata.`,
+    );
+    assert(
+      /^generated\/[a-f0-9]{64}\.glb$/.test(path),
+      `Flagship captured ${phase} evidence contains an unsafe model path.`,
+    );
+    const modelPath = resolve(modelsDir, path);
+    const modelRelative = relative(modelsDir, modelPath);
+    assert(
+      modelRelative === path && !modelRelative.startsWith(".."),
+      `Flagship captured ${phase} evidence contains an unsafe model path.`,
+    );
+    let glb;
+    try {
+      glb = readFileSync(modelPath);
+    } catch {
+      throw Error(
+        `Flagship captured ${phase} generated model ${record.sha256} could not be read; generated bytes cannot be reconstructed.`,
+      );
+    }
+    assert(
+      glb.byteLength === expected.expectedBytes &&
+        sha256(glb) === expected.sha256,
+      `Flagship captured ${phase} generated model ${record.sha256} failed its hash or byte check.`,
+    );
+    const modelEntity = project.entities.find(
+      (entity) =>
+        expected.entityIds.includes(entity.id) &&
+        entity.geometry?.model?.sha256 === expected.sha256,
+    );
+    assert(
+      modelEntity?.geometry?.model,
+      `Flagship captured ${phase} generated model ${record.sha256} has no project metadata.`,
+    );
+    seen.add(record.sha256);
+    totalBytes += glb.byteLength;
+    models.push({
+      id: expected.entityIds.length === 1 ? expected.entityIds[0] : record.sha256,
+      entityIds: expected.entityIds,
+      metadata: modelEntity.geometry.model,
+      glb: [...glb],
+    });
+  }
+  assert.equal(
+    totalBytes,
+    evidence.totalBytes,
+    `Flagship captured ${phase} evidence has an incorrect generated-model byte total.`,
+  );
+  return {
+    models,
+    sourceSnapshotSha256: sha256(checkpointBytes),
+    phase,
+  };
+}
+
 export function readFlagshipResumeCheckpoint(
   checkpointArg,
   modelsArg,
   stage = "mushroom",
+  artifactMode = "reconstructed",
 ) {
   const checkpointPath = resolve(checkpointArg);
   const modelsDir = resolve(modelsArg);
@@ -1039,7 +1191,11 @@ export function readFlagshipResumeCheckpoint(
       readFileSync(
         join(
           modelsDir,
-          stage === "creation" ? "story-created-generated.json" : "report.json",
+          artifactMode === "captured"
+            ? "story-mushroom-generated.json"
+            : stage === "creation"
+              ? "story-created-generated.json"
+              : "report.json",
         ),
       ).toString("utf8"),
     );
@@ -1050,6 +1206,58 @@ export function readFlagshipResumeCheckpoint(
     throw Error("Flagship resume checkpoint has an invalid project shape.");
   if (project.revision < 1 || !project.id)
     throw Error("Flagship resume checkpoint is missing a project revision.");
+  if (!FLAGSHIP_RESUME_ARTIFACT_MODES.has(artifactMode))
+    throw Error(
+      "Flagship resume artifact mode must be reconstructed or captured.",
+    );
+  if (artifactMode === "captured") {
+    assert.equal(
+      stage,
+      "mushroom",
+      "Captured flagship artifacts require mushroom-stage resume.",
+    );
+    try {
+      assertFlagshipStoryCreation(project);
+      assert(
+        project.messages.some(
+          (message) => message?.text === FLAGSHIP_STORY_PROMPT,
+        ),
+        "Flagship captured checkpoint is missing the original story prompt.",
+      );
+      assert(
+        project.messages.some(
+          (message) => message?.text === FLAGSHIP_STORY_MUSHROOM_PROMPT,
+        ),
+        "Flagship captured checkpoint is missing the mushroom checkpoint prompt.",
+      );
+      assert(
+        project.entities.some((entity) => storyMushroomEvidence(entity)),
+        "Flagship captured checkpoint has no supported mushroom entity.",
+      );
+      const evidence = readFlagshipCapturedPhaseEvidence(
+        checkpointPath,
+        modelsDir,
+        project,
+        checkpointBytes,
+        "mushroom",
+      );
+      return {
+        project,
+        models: evidence.models,
+        checkpointPath,
+        modelsDir,
+        sourceSnapshotSha256: evidence.sourceSnapshotSha256,
+        stage,
+        artifactMode,
+      };
+    } catch (error) {
+      throw Error(
+        error instanceof Error
+          ? error.message
+          : "Flagship captured checkpoint failed its story validation.",
+      );
+    }
+  }
   if (stage === "creation") {
     try {
       assertFlagshipStoryCreation(project);
@@ -1072,6 +1280,7 @@ export function readFlagshipResumeCheckpoint(
         modelsDir,
         sourceSnapshotSha256: evidence.sourceSnapshotSha256,
         stage,
+        artifactMode,
       };
     } catch (error) {
       throw Error(
@@ -1182,6 +1391,7 @@ export function readFlagshipResumeCheckpoint(
     modelsDir,
     sourceSnapshotSha256: sha256(checkpointBytes),
     stage,
+    artifactMode,
   };
 }
 
@@ -1265,6 +1475,7 @@ export function readFlagshipResumeOfflineArtifacts(
   checkpoint,
   editedArg,
   modelsArg,
+  artifactMode = "reconstructed",
 ) {
   const editedPath = resolve(editedArg);
   const modelsDir = resolve(modelsArg);
@@ -1275,7 +1486,15 @@ export function readFlagshipResumeOfflineArtifacts(
     editedBytes = readFileSync(editedPath);
     edited = JSON.parse(editedBytes.toString("utf8"));
     evidence = JSON.parse(
-      readFileSync(join(modelsDir, "story-resumed-generated.json"), "utf8"),
+      readFileSync(
+        join(
+          modelsDir,
+          artifactMode === "captured"
+            ? "story-goal7-generated.json"
+            : "story-resumed-generated.json",
+        ),
+        "utf8",
+      ),
     );
   } catch {
     throw Error(
@@ -1306,6 +1525,33 @@ export function readFlagshipResumeOfflineArtifacts(
         ? error.message
         : "Offline flagship resume edited snapshot failed validation.",
     );
+  }
+  if (artifactMode === "captured") {
+    try {
+      const captured = readFlagshipCapturedPhaseEvidence(
+        editedPath,
+        modelsDir,
+        edited,
+        editedBytes,
+        "goal7",
+      );
+      return {
+        baseline: checkpoint.project,
+        baselineModels: checkpoint.models,
+        edited,
+        editedSnapshotSha256: sha256(editedBytes),
+        models: captured.models,
+        checkpointPath: checkpoint.checkpointPath,
+        modelsDir,
+        artifactMode,
+      };
+    } catch (error) {
+      throw Error(
+        error instanceof Error
+          ? error.message
+          : "Offline captured flagship resume artifacts failed validation.",
+      );
+    }
   }
   if (
     evidence?.status !== "complete" ||
@@ -1381,6 +1627,7 @@ export function readFlagshipResumeOfflineArtifacts(
     models: [...modelByEntity.values()],
     checkpointPath: checkpoint.checkpointPath,
     modelsDir,
+    artifactMode,
   };
 }
 
@@ -3138,6 +3385,20 @@ function scaledModelBoundsSize(bounds, scale) {
   );
 }
 
+function storyEntityBounds(entity) {
+  const modelBounds = entity?.geometry?.model?.bounds;
+  if (scaledModelBoundsSize(modelBounds, [1, 1, 1]))
+    return { bounds: modelBounds, source: "model" };
+  if (entity?.geometry?.kind === "asset") {
+    const catalogBounds = STORY_CATALOG_ASSETS.get(
+      entity.geometry.assetId,
+    )?.bounds;
+    if (scaledModelBoundsSize(catalogBounds, [1, 1, 1]))
+      return { bounds: catalogBounds, source: "catalog" };
+  }
+  return { bounds: null, source: "missing" };
+}
+
 function storyPortalWinRule(rule, portalId) {
   return (
     rule?.trigger?.type === "collision" &&
@@ -3397,8 +3658,10 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
     beforeEntity.geometry,
     "Story mushroom edit did not change geometry.",
   );
-  const beforeBounds = beforeEntity.geometry?.model?.bounds;
-  const afterBounds = afterEntity.geometry?.model?.bounds;
+  const beforeBoundsEvidence = storyEntityBounds(beforeEntity);
+  const afterBoundsEvidence = storyEntityBounds(afterEntity);
+  const beforeBounds = beforeBoundsEvidence.bounds;
+  const afterBounds = afterBoundsEvidence.bounds;
   const rawBoundsExpanded =
     beforeBounds &&
     afterBounds &&
@@ -3413,6 +3676,15 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
     beforeSize &&
     afterSize &&
     afterSize.some((size, axis) => size > beforeSize[axis]);
+  const dimensions = {
+    status: beforeSize && afterSize ? "observed" : "inconclusive",
+    source: {
+      before: beforeBoundsEvidence.source,
+      after: afterBoundsEvidence.source,
+    },
+    before: beforeSize,
+    after: afterSize,
+  };
   assert(
     isPink(afterEntity.color) || isPink(afterEntity.geometry?.tint),
     "Story mushroom edit did not produce a pink material.",
@@ -3426,6 +3698,7 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
     mushroomEvidence,
     rawBoundsExpanded: Boolean(rawBoundsExpanded),
     transformedBoundsExpanded: Boolean(transformedBoundsExpanded),
+    dimensions,
     sizeVisualReview: "pending",
   };
 }
@@ -3832,7 +4105,9 @@ async function runFlagshipStory(
   };
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.locator(".game-hud")).toBeVisible();
-  await expect(page.locator(".game-hud strong span")).toHaveText(/\/\s*7/);
+  await expect(page.locator(".game-hud strong")).toHaveText("0");
+  await expect(page.locator(".game-hud")).toContainText("Score");
+  report.flagshipStory.phases.goal7.hud = "game-score-starts-at-zero";
   await page.screenshot({
     path: join(evidenceDir, "story-goal-7.png"),
     fullPage: true,
@@ -4329,6 +4604,7 @@ async function runFlagshipResumeOffline(
     report.flagshipResume = {
       ...(report.flagshipResume ?? {}),
       status: "offline-checkpoint-restored",
+      artifactMode: artifacts.artifactMode ?? "reconstructed",
       source: {
         baselineRevision: artifacts.baseline.revision,
         editedRevision: artifacts.edited.revision,
@@ -4404,14 +4680,15 @@ async function runFlagshipResumeOffline(
     );
     assert.equal(
       editedGeneratedModels.length,
-      7,
-      "The offline goal-7 export must include seven generated crystal models.",
+      artifacts.models.length,
+      `The offline goal-7 export must include ${artifacts.models.length} generated crystal models.`,
     );
     report.flagshipResume.editedExport = {
       status: "goal-7",
       revision: editedZip.project.revision,
       collectibles: storyCollectibles(editedZip.project).length,
       generatedModels: editedGeneratedModels.length,
+      artifactMode: artifacts.artifactMode ?? "reconstructed",
       file: "world-goal-7.zip",
     };
     report.evidence.push("world-goal-7.zip");
