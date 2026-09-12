@@ -19,13 +19,14 @@ supported model choice. GitHub actions use computer use. Never print secrets.
 
 ## Current task and bounce acceptance
 
-One worker active: `/root/multitouch_traversal`, correcting the single-touch
-winning traversal driver. Owns verifier/helper/tests and one local browser
-check; no model/external/account calls. Root review requested maxTouchPoints≥3,
-cleanup release, shared diagonals and no unrelated formatting. Acceptance
-requires actual pointer delivery and held movement after Jump release.
-Existing `input-touch-lifecycle/` supports product simultaneous touch but is
-partial for a separate capture-loss observation; don't repeat the broad suite.
+No worker active. `/root/multitouch_traversal` finished: winning traversal now
+uses stable independent touch IDs, shared diagonal choices, five touch points,
+hit-tested controls and normal/failure cleanup. Root reviewed integration and
+screenshot. One focused test passed. One local saved-world390x844 browser
+check passed: trusted Right/Back/Jump pointer IDs2/3/4, Jump-only release,
+continued movement, then no held touches. No model/external calls or page
+errors. Reproduction/source hashes in `traversal-multitouch/`. This closes the
+driver defect, not full mobile route or physical-device acceptance.
 
 Moving bounce generation guidance3439f33 explains behavior=bounce plus start
 move_path;20 focused tests passed. `moving-bounce-browser-frame-aware/` at7c0eec7
@@ -124,9 +125,9 @@ publication passed. These are bounded evidence, not complete provider E2E.
 - Modeling/rendering must use local browser resources with no Blender setup
   surfaced. Preserve catalog/generated asset provenance and licenses.
 
-## Next mobile handoff
+## Next integration milestone
 
-Finish/review the active driver's one bounded local browser check, then commit.
-If it passes, use it at a meaningful saved-game mobile milestone. Product input
-already supports independent pointer IDs; no product fix is justified solely
-by the old driver's keys[0] restriction. No new provider calls are needed.
+Use corrected touch driver at a meaningful saved-game mobile milestone; do
+not repeat its passing focused check. Full bounce route still needs steering
+that accounts for platform phase; existing two-attempt task is finished.
+Owner-dependent ChatGPT sign-in and real-device gates remain as listed above.

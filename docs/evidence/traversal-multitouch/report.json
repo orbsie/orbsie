@@ -1,0 +1,117 @@
+{
+  "status": "passed",
+  "mode": "local-saved-world-traversal-touch-driver",
+  "sourceZip": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+  "sourceZipSha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
+  "driverHelper": "scripts/lib/traversal-touch-input.mjs",
+  "driverHelperSha256": "4434ebcb5fbc2802eb489647a9ca577ed928d20a2f10aea45f51c7512af94a70",
+  "modelCalls": 0,
+  "externalOrAccountCalls": 0,
+  "requestScope": "saved ZIP served by an isolated local HTTP server; nonlocal and mutating requests blocked",
+  "reproductionScript": "docs/evidence/traversal-multitouch/browser-check.mjs",
+  "reproductionCommand": "node docs/evidence/traversal-multitouch/browser-check.mjs",
+  "projectRevision": 30,
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "trustedPointerEvents": [
+    {
+      "type": "pointerdown",
+      "pointerId": 2,
+      "target": "Right",
+      "isTrusted": true
+    },
+    {
+      "type": "pointerdown",
+      "pointerId": 3,
+      "target": "Back",
+      "isTrusted": true
+    },
+    {
+      "type": "pointerdown",
+      "pointerId": 4,
+      "target": "Jump",
+      "isTrusted": true
+    },
+    {
+      "type": "pointerup",
+      "pointerId": 4,
+      "target": "Jump",
+      "isTrusted": true
+    },
+    {
+      "type": "pointerup",
+      "pointerId": 2,
+      "target": "Right",
+      "isTrusted": true
+    },
+    {
+      "type": "pointerup",
+      "pointerId": 3,
+      "target": "Back",
+      "isTrusted": true
+    }
+  ],
+  "inputEvents": [
+    {
+      "key": "d",
+      "down": true
+    },
+    {
+      "key": "s",
+      "down": true
+    },
+    {
+      "key": " ",
+      "down": true
+    },
+    {
+      "key": " ",
+      "down": false
+    },
+    {
+      "key": "d",
+      "down": false
+    },
+    {
+      "key": "s",
+      "down": false
+    }
+  ],
+  "checkpoints": {
+    "beforeDirection": {
+      "x": 0,
+      "y": 0.42,
+      "z": 5,
+      "visible": true
+    },
+    "beforeJump": {
+      "x": 0.8246314366826938,
+      "y": 0.42834640568684745,
+      "z": 5.040038668979188,
+      "visible": true
+    },
+    "airborne": {
+      "x": 1.65137939787187,
+      "y": 1.1455751887532188,
+      "z": 5.282613129010058,
+      "visible": true
+    },
+    "afterJumpRelease": {
+      "x": 1.8912668053680677,
+      "y": 1.312574662942015,
+      "z": 5.352998011795733,
+      "visible": true
+    },
+    "afterHeldMovement": {
+      "x": 3.4468886655022697,
+      "y": 1.1762268264297706,
+      "z": 5.809429899685117,
+      "visible": true
+    },
+    "heldKeysAfterCleanup": []
+  },
+  "externalRequests": [],
+  "pageErrors": []
+}

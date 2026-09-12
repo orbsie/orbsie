@@ -8,6 +8,10 @@ import { join, resolve, posix as posixPath } from "node:path";
 import { pathToFileURL } from "node:url";
 import { strFromU8, unzipSync } from "fflate";
 import { validateProjectGame } from "./lib/winning-traversal-contract.mjs";
+import {
+  createTraversalTouchInput,
+  TRAVERSAL_TOUCH_LABELS,
+} from "./lib/traversal-touch-input.mjs";
 
 const base = process.env.TEST_URL ?? "https://orbsie.com";
 const published = process.env.WIN_PUBLISHED === "1";
@@ -54,6 +58,7 @@ const temp = await mkdtemp(join(tmpdir(), "orbsie-win-"));
 let world, project, standaloneServer, standaloneOrigin;
 let snapshot;
 let traversalContract;
+let releaseActiveTouchInput = async () => {};
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -434,44 +439,54 @@ try {
       };
     report.runs.push(run);
     const cdp = mobile ? await context.newCDPSession(page) : null;
+    if (cdp)
+      await cdp.send("Emulation.setTouchEmulationEnabled", {
+        enabled: true,
+        maxTouchPoints: 5,
+      });
     const held = new Set();
-    let touchHeld;
+    const touchInput = cdp
+      ? createTraversalTouchInput({
+          cdp,
+          touchPoint: async (key, id) => {
+            const label =
+              gameZip || published
+                ? TRAVERSAL_TOUCH_LABELS[key]
+                : key === " "
+                  ? "Jump"
+                  : `Move ${key}`;
+            const box = await page
+              .getByRole("button", {
+                name: label,
+                exact: true,
+              })
+              .boundingBox();
+            if (!box) throw Error(`Missing touch control ${key}`);
+            const point = {
+              x: box.x + box.width / 2,
+              y: box.y + box.height / 2,
+              id,
+            };
+            const hit = await page.evaluate(
+              ({ x, y, label }) =>
+                document
+                  .elementFromPoint(x, y)
+                  ?.closest("button")
+                  ?.getAttribute("aria-label") === label,
+              { ...point, label },
+            );
+            if (!hit) throw Error(`Touch coordinate missed control ${label}`);
+            return point;
+          },
+        })
+      : null;
+    releaseActiveTouchInput = async () => {
+      await touchInput?.releaseAll().catch(() => {});
+    };
     const setKeys = async (keys) => {
       if (mobile) {
-        const key = keys[0];
-        if (touchHeld === key) return;
-        if (touchHeld)
-          await cdp.send("Input.dispatchTouchEvent", {
-            type: "touchEnd",
-            touchPoints: [],
-          });
-        touchHeld = key;
-        if (key) {
-          const box = await page
-            .getByRole("button", {
-              name:
-                gameZip || published
-                  ? {
-                      w: "Forward",
-                      a: "Left",
-                      s: "Back",
-                      d: "Right",
-                      " ": "Jump",
-                    }[key]
-                  : key === " "
-                    ? "Jump"
-                    : `Move ${key}`,
-              exact: true,
-            })
-            .boundingBox();
-          if (!box) throw Error(`Missing touch control ${key}`);
-          await cdp.send("Input.dispatchTouchEvent", {
-            type: "touchStart",
-            touchPoints: [
-              { x: box.x + box.width / 2, y: box.y + box.height / 2, id: 1 },
-            ],
-          });
-        }
+        if (!touchInput) throw Error("Touch input driver is unavailable.");
+        await touchInput.setKeys(keys);
       } else {
         for (const key of held)
           if (!keys.includes(key)) {
@@ -498,14 +513,10 @@ try {
       { x: -1, z: 0, keys: ["a"] },
       { x: 0, z: 1, keys: ["s"] },
       { x: 0, z: -1, keys: ["w"] },
-      ...(mobile
-        ? []
-        : [
-            { x: Math.SQRT1_2, z: Math.SQRT1_2, keys: ["d", "s"] },
-            { x: Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["d", "w"] },
-            { x: -Math.SQRT1_2, z: Math.SQRT1_2, keys: ["a", "s"] },
-            { x: -Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["a", "w"] },
-          ]),
+      { x: Math.SQRT1_2, z: Math.SQRT1_2, keys: ["d", "s"] },
+      { x: Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["d", "w"] },
+      { x: -Math.SQRT1_2, z: Math.SQRT1_2, keys: ["a", "s"] },
+      { x: -Math.SQRT1_2, z: -Math.SQRT1_2, keys: ["a", "w"] },
     ];
     const collectibleTargets = (
       program
@@ -829,6 +840,8 @@ try {
       run.signedOut = (await context.cookies()).length === 0;
       expect(run.signedOut).toBe(true);
     }
+    await releaseActiveTouchInput();
+    releaseActiveTouchInput = async () => {};
     await context.close();
   }
   expect(report.errors).toEqual([]);
@@ -839,6 +852,7 @@ try {
   report.failure = String(error).slice(0, 2000);
   throw error;
 } finally {
+  await releaseActiveTouchInput();
   await browser.close();
   if (standaloneServer)
     await new Promise((resolveServer) => standaloneServer.close(resolveServer));
