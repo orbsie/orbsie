@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "orbsie.mushroom-placement-comparison/v1",
+  "checkedAt": "2026-09-12T20:43:41.361Z",
+  "sourceCommit": "8a9cf01362056fd660ee7c83d7b6446a657e1031",
+  "passed": false,
+  "scope": "One bounded local browser comparison through the shared World renderer; no provider, model, account, or external calls.",
+  "browserAttemptsUsed": 1,
+  "providerCalls": 0,
+  "modelCalls": 0,
+  "accountCalls": 0,
+  "externalRequests": [],
+  "sourceAsset": {
+    "id": "kenney.nature.mushroom-red",
+    "path": "/models/kenney/nature-kit/mushroom_red.glb",
+    "bytes": 6364,
+    "sha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571",
+    "manifestBytes": 6364,
+    "manifestSha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571",
+    "manifestBounds": {
+      "min": [-0.08607133, -0.05, -0.09540864],
+      "max": [0.0878958851, 0.1528, 0.105471358],
+      "size": [0.1739672151, 0.2028, 0.200879998],
+      "origin": "source node transform; geometry base at y=-0.05"
+    },
+    "sourceToRuntime": {
+      "axis": "Y-up",
+      "units": "Kenney scene units",
+      "sourceToRuntime": 1,
+      "normalization": "identity; preserve source origin"
+    }
+  },
+  "targetTransform": {
+    "positionXZ": [-5, -1.8],
+    "scale": [14, 14, 14],
+    "rotation": [0, 0, 0],
+    "parent": null,
+    "tint": "#ff69b4",
+    "savedY": 0,
+    "groundedY": 0.7000000000000001,
+    "savedExpectedMinY": -0.7000000000000001,
+    "groundedExpectedMinY": 0,
+    "groundingRule": "y = -bounds.minY * scaleY; root Y-up, no rotation or parent"
+  },
+  "conditions": [],
+  "runOutcome": {
+    "browserComparisonAttempted": true,
+    "browserComparisonCaptured": false,
+    "runHarnessVersion": "initial fixture readiness predicate required particleBridge=false",
+    "currentHarnessVersion": "readiness requires the visible settled mesh; particleBridge provenance may remain true",
+    "readinessFailure": "The real World renderer did not report ready within 30 seconds because particleBridge remains true after the solid mesh becomes visible.",
+    "networkAuditCompleted": false,
+    "hardwareLimitations": "The permitted run used local Chromium with SwiftShader at a 1280x800 viewport; renderer details were unavailable because readiness timed out.",
+    "actualRenderedMeshMinimumYObserved": false,
+    "visualConclusion": "Unestablished: this bounded run produced no placement screenshots, so it cannot determine whether grounded pink retains a recognizable cap/stem."
+  },
+  "staticValidation": {
+    "catalogVerifier": "passed: 10 transformed bounds audited",
+    "targetedTests": "passed: catalog-source-bounds and mushroom-visual-diagnosis (3 tests)"
+  },
+  "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate"
+}

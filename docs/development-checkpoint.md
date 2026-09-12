@@ -246,3 +246,20 @@ worker/test active. Owner ChatGPT sign-in/consent remains pending; physical
 mobile, actual new model placement after corrected metadata, visual quality,
 full provider route/portal/reset and all original E2E gates remain open.
 Codex81%remaining last observed; stop below20%.
+
+## Mushroom comparison accepted; model placement still open
+
+Luna completed one corrected offline browser comparison through shared World.
+Root reviewed both screenshots, exact GLB response hash/bytes, raw camera
+position/quaternion, source settling semantics and runtime/presentation bounds.
+Saved y=0 renders minimumY=-0.7000000104; grounded y=0.7 renders minimumY near0.
+Both parent transforms are settled and bounds agree. No model/external calls or
+page errors. Prior harness-timeout report remains separately preserved. Root
+syntax/diff checks pass. Uniform pink still looks angular/gem-like: placement
+proof does not close visual-quality or fresh model-placement acceptance.
+
+No worker remains active. Next: rebuild stale local Next server before one
+bounded live OpenRouter create/edit placement milestone (Luna only, explicit
+4096-token raised cap, at most2 calls, no retries); preserve user model freedom.
+ChatGPT owner authorization remains pending. Full goal and physical mobile
+acceptance remain incomplete. See mushroom-placement-comparison evidence.
