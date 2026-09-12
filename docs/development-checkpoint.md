@@ -269,3 +269,19 @@ for selected edits; it does not weaken the application guard.
 Evidence:docs/evidence/generation-retry-feedback-browser. Root reviewed harness
 diff, report and bundled-source consistency. These recovery changes are still
 local; production remains source0c2381c until the next deployment.
+
+### Retry feedback production release verified
+
+Production now serves source `ec48831`, deployment
+`dpl_FiPeTt1ytHJbCZhAoYtjU6etg381`, aliased to https://orbsie.com.
+Vercel inspect confirmed Ready; the existing GET/HEAD release smoke passed
+with matching player and five geometry worker hashes, visible canvas/prompt,
+no page errors, no external requests and no mutation requests. Evidence:
+`docs/evidence/retry-feedback-release/report.json`. This verifies deployment
+and loading, not live free-trial or ChatGPT generation acceptance.
+
+Codex quota was rechecked: 32% used / 68% remaining. A read-only audit found
+existing hosted ChatGPT runtimes lack bundle provenance checks and can retain
+old code for their remaining ten-minute lifetime; one Luna worker is adding
+stale-runtime detection with focused tests. Owner sign-in and Android Chrome
+terms consent remain pending.
