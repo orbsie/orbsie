@@ -1,0 +1,1343 @@
+{
+  "status": "passed",
+  "base": "https://orbsie.com",
+  "startedAt": "2026-09-12T16:44:34.643Z",
+  "account": {
+    "email": "orbsie-gateway-seven-20260912@example.com"
+  },
+  "harness": {
+    "commit": "1c5d08692bcd802be77e5924820dfad97fdc20db",
+    "dirty": false
+  },
+  "source": {
+    "zipPath": "docs/evidence/provider-e2e/gateway-flagship-seven-export/gateway/world-goal-7.zip",
+    "sourceZipSha256": "4460108481bbd9b7b3153afff9a948b41c51a69499b0b5035fc6d5accd02ecfd",
+    "sourceProjectId": "d149cb1c-de74-437b-98cb-36ede3beb578",
+    "sourceRevision": 40,
+    "publicationProjectId": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+    "publicationRevision": 1,
+    "expectedReferencedFiles": [
+      {
+        "file": "assets/catalog/used-assets.json",
+        "kind": "catalog-provenance",
+        "bytes": 7385,
+        "sha256": "904b821de5467a9103e44d80cf58419a693b860b21b56d650c938bbe4c1c96be"
+      },
+      {
+        "file": "models/kenney/nature-kit/mushroom_red.glb",
+        "kind": "catalog-glb",
+        "bytes": 6364,
+        "sha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571"
+      },
+      {
+        "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+        "kind": "catalog-license",
+        "bytes": 611,
+        "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+      },
+      {
+        "file": "models/kenney/nature-kit/tree_pineTallA.glb",
+        "kind": "catalog-glb",
+        "bytes": 7200,
+        "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+      },
+      {
+        "file": "models/kenney/nature-kit/tree_default.glb",
+        "kind": "catalog-glb",
+        "bytes": 9428,
+        "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+      },
+      {
+        "file": "models/kenney/nature-kit/platform_grass.glb",
+        "kind": "catalog-glb",
+        "bytes": 12568,
+        "sha256": "74105fc9912c97e7809264dd69621863e0ddfd6ab92136f05918eda436ee898b"
+      },
+      {
+        "file": "models/generated/d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099.glb",
+        "kind": "generated-glb",
+        "bytes": 3616,
+        "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099"
+      },
+      {
+        "file": "models/generated/848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517.glb",
+        "kind": "generated-glb",
+        "bytes": 3620,
+        "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517"
+      },
+      {
+        "file": "models/generated/283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110.glb",
+        "kind": "generated-glb",
+        "bytes": 3612,
+        "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110"
+      },
+      {
+        "file": "models/generated/31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4.glb",
+        "kind": "generated-glb",
+        "bytes": 3620,
+        "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4"
+      },
+      {
+        "file": "models/generated/358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b.glb",
+        "kind": "generated-glb",
+        "bytes": 3612,
+        "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b"
+      },
+      {
+        "file": "models/generated/13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5.glb",
+        "kind": "generated-glb",
+        "bytes": 3620,
+        "sha256": "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5"
+      },
+      {
+        "file": "models/generated/2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27.glb",
+        "kind": "generated-glb",
+        "bytes": 3616,
+        "sha256": "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27"
+      },
+      {
+        "file": "models/generated/manifest.json",
+        "kind": "generated-provenance",
+        "bytes": 3653,
+        "sha256": "2337bc0edf4ba900e6a05aa09277f52bd87e6b30e0d0a6b8ea9ae60df495a524"
+      }
+    ]
+  },
+  "plan": {
+    "accountSignup": 1,
+    "generatedModelUploads": 7,
+    "cloudProjectSaves": 1,
+    "publicationSubmissions": 1,
+    "inferenceCalls": 0,
+    "republishSubmissions": 0
+  },
+  "mutations": {
+    "accountSignup": 1,
+    "generatedModelUploads": 7,
+    "generatedModelHashes": [
+      "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+      "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+      "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+      "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+      "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+      "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5",
+      "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27"
+    ],
+    "cloudProjectSaves": 1,
+    "publicationSubmissions": 1
+  },
+  "progress": {
+    "account": {
+      "email": "orbsie-gateway-seven-20260912@example.com"
+    },
+    "world": {
+      "id": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+      "revision": 1,
+      "title": "Make a sunny little island game where I…"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+          "revision": 1,
+          "title": "Make a sunny little island game where I…"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL",
+        "deploymentUrl": "https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+        "vercelProjectId": "prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9",
+        "world": {
+          "id": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+          "revision": 1,
+          "title": "Make a sunny little island game where I…"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL",
+        "vercelProjectId": "prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentId": "dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL",
+        "deploymentUrl": "https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+        "vercelProjectId": "prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "Make a sunny little island game where I…"
+        }
+      }
+    ],
+    "last": {
+      "step": "first public release snapshot",
+      "snapshot": {
+        "revision": 1,
+        "title": "Make a sunny little island game where I…"
+      }
+    }
+  },
+  "checks": {
+    "signup": "passed",
+    "generatedModelUploads": 7,
+    "cloudSave": {
+      "revision": 1
+    },
+    "publicationSubmitted": {
+      "deploymentId": "dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL",
+      "deploymentUrl": "https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app",
+      "vercelProjectId": "prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9"
+    },
+    "signedOut": {
+      "version": 1,
+      "id": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+      "title": "Make a sunny little island game where I…",
+      "seed": 42,
+      "revision": 1,
+      "entities": [
+        {
+          "id": "tree-1",
+          "label": "Sunny Tree One",
+          "position": [
+            -5,
+            0,
+            -1
+          ],
+          "scale": [
+            10,
+            10,
+            10
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "color": "#ff69b4",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.mushroom-red",
+            "detail": "refined",
+            "tint": "#ff69b4"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "tree-2",
+          "label": "Sunny Tree Two",
+          "position": [
+            5,
+            0,
+            -2
+          ],
+          "scale": [
+            1.4,
+            1.4,
+            1.4
+          ],
+          "color": "#3f874c",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.tree-pine-tall-a",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "tree-3",
+          "label": "Sunny Tree Three",
+          "position": [
+            -4,
+            0,
+            4
+          ],
+          "scale": [
+            1.3,
+            1.3,
+            1.3
+          ],
+          "color": "#5ba85e",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.tree-default",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "pond",
+          "label": "Sparkling Pond",
+          "position": [
+            3,
+            0,
+            3
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "color": "#42c9dc",
+          "geometry": {
+            "kind": "custom",
+            "parts": [
+              {
+                "shape": "cylinder",
+                "position": [
+                  0,
+                  0.04,
+                  0
+                ],
+                "scale": [
+                  2.2,
+                  0.08,
+                  1.5
+                ],
+                "color": "#42c9dc"
+              },
+              {
+                "shape": "torus",
+                "position": [
+                  0,
+                  0.09,
+                  0
+                ],
+                "scale": [
+                  2.2,
+                  1,
+                  1.5
+                ],
+                "color": "#9be8e7"
+              }
+            ],
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "static"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-1",
+          "label": "Glow Crystal One",
+          "position": [
+            -3,
+            0.35,
+            1
+          ],
+          "scale": [
+            0.35,
+            0.7,
+            0.35
+          ],
+          "color": "#8cf7ff",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.28,
+                        -0.3
+                      ],
+                      [
+                        0.18,
+                        0.35
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099",
+              "bytes": 3616,
+              "bounds": {
+                "min": [
+                  -0.2800000011920929,
+                  -0.7000000029802322,
+                  -0.2800000011920929
+                ],
+                "max": [
+                  0.2800000011920929,
+                  0.7000000029802322,
+                  0.2800000011920929
+                ]
+              },
+              "createdAt": "2026-09-12T09:51:29.854Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-2",
+          "label": "Glow Crystal Two",
+          "position": [
+            -1,
+            0.4,
+            3
+          ],
+          "scale": [
+            0.3,
+            0.8,
+            0.3
+          ],
+          "color": "#b59cff",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.3,
+                        -0.25
+                      ],
+                      [
+                        0.16,
+                        0.4
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517",
+              "bytes": 3620,
+              "bounds": {
+                "min": [
+                  -0.29999999701976776,
+                  -0.7000000029802322,
+                  -0.29999999701976776
+                ],
+                "max": [
+                  0.29999999701976776,
+                  0.7000000029802322,
+                  0.29999999701976776
+                ]
+              },
+              "createdAt": "2026-09-12T09:51:30.974Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-3",
+          "label": "Glow Crystal Three",
+          "position": [
+            1,
+            0.35,
+            -1
+          ],
+          "scale": [
+            0.35,
+            0.7,
+            0.35
+          ],
+          "color": "#ffe27a",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.28,
+                        -0.3
+                      ],
+                      [
+                        0.18,
+                        0.35
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110",
+              "bytes": 3612,
+              "bounds": {
+                "min": [
+                  -0.2800000011920929,
+                  -0.7000000029802322,
+                  -0.2800000011920929
+                ],
+                "max": [
+                  0.2800000011920929,
+                  0.7000000029802322,
+                  0.2800000011920929
+                ]
+              },
+              "createdAt": "2026-09-12T09:51:31.530Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-4",
+          "label": "Glow Crystal Four",
+          "position": [
+            4,
+            0.4,
+            0
+          ],
+          "scale": [
+            0.3,
+            0.8,
+            0.3
+          ],
+          "color": "#ff9be8",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.3,
+                        -0.25
+                      ],
+                      [
+                        0.16,
+                        0.4
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4",
+              "bytes": 3620,
+              "bounds": {
+                "min": [
+                  -0.29999999701976776,
+                  -0.7000000029802322,
+                  -0.29999999701976776
+                ],
+                "max": [
+                  0.29999999701976776,
+                  0.7000000029802322,
+                  0.29999999701976776
+                ]
+              },
+              "createdAt": "2026-09-12T09:51:32.427Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-5",
+          "label": "Glow Crystal Five",
+          "position": [
+            5,
+            0.35,
+            4
+          ],
+          "scale": [
+            0.35,
+            0.7,
+            0.35
+          ],
+          "color": "#9dffab",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.28,
+                        -0.3
+                      ],
+                      [
+                        0.18,
+                        0.35
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b",
+              "bytes": 3612,
+              "bounds": {
+                "min": [
+                  -0.2800000011920929,
+                  -0.7000000029802322,
+                  -0.2800000011920929
+                ],
+                "max": [
+                  0.2800000011920929,
+                  0.7000000029802322,
+                  0.2800000011920929
+                ]
+              },
+              "createdAt": "2026-09-12T09:51:33.257Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "platform-1",
+          "label": "Moving Platform One",
+          "position": [
+            -1,
+            0.8,
+            5
+          ],
+          "scale": [
+            1.5,
+            1,
+            1
+          ],
+          "color": "#79b95d",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.platform-grass",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "move",
+            "speed": 1,
+            "amplitude": 2,
+            "axis": "x"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "platform-2",
+          "label": "Moving Platform Two",
+          "position": [
+            2,
+            1.2,
+            5.5
+          ],
+          "scale": [
+            1.5,
+            1,
+            1
+          ],
+          "color": "#79b95d",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.platform-grass",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "move",
+            "speed": 0.6,
+            "amplitude": 1.8,
+            "axis": "x"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "platform-3",
+          "label": "Moving Platform Three",
+          "position": [
+            5,
+            1.6,
+            5
+          ],
+          "scale": [
+            1.5,
+            1,
+            1
+          ],
+          "color": "#79b95d",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.platform-grass",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "move",
+            "speed": 0.9,
+            "amplitude": 1.5,
+            "axis": "z"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "portal",
+          "label": "Rainbow Portal",
+          "position": [
+            6,
+            0.8,
+            5.5
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "color": "#b56cff",
+          "geometry": {
+            "kind": "custom",
+            "parts": [
+              {
+                "shape": "torus",
+                "position": [
+                  0,
+                  1,
+                  0
+                ],
+                "scale": [
+                  1.2,
+                  1.2,
+                  1.2
+                ],
+                "color": "#b56cff"
+              },
+              {
+                "shape": "sphere",
+                "position": [
+                  0,
+                  1,
+                  0
+                ],
+                "scale": [
+                  0.75,
+                  0.75,
+                  0.25
+                ],
+                "color": "#6a4cc4"
+              }
+            ],
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "portal"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-6",
+          "label": "Glow Crystal Six",
+          "position": [
+            -5,
+            0.4,
+            3
+          ],
+          "scale": [
+            0.3,
+            0.8,
+            0.3
+          ],
+          "color": "#7ad7ff",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.3,
+                        -0.25
+                      ],
+                      [
+                        0.16,
+                        0.4
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5",
+              "bytes": 3620,
+              "bounds": {
+                "min": [
+                  -0.29999999701976776,
+                  -0.7000000029802322,
+                  -0.29999999701976776
+                ],
+                "max": [
+                  0.29999999701976776,
+                  0.7000000029802322,
+                  0.29999999701976776
+                ]
+              },
+              "createdAt": "2026-09-12T10:27:50.829Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-7",
+          "label": "Glow Crystal Seven",
+          "position": [
+            2,
+            0.35,
+            2
+          ],
+          "scale": [
+            0.35,
+            0.7,
+            0.35
+          ],
+          "color": "#ffd36e",
+          "geometry": {
+            "kind": "generated",
+            "collision": "none",
+            "job": {
+              "backend": "browser-manifold",
+              "recipe": {
+                "version": 1,
+                "revision": 0,
+                "output": "crystal",
+                "nodes": [
+                  {
+                    "id": "crystal",
+                    "kind": "revolve",
+                    "profile": [
+                      [
+                        0,
+                        -0.7
+                      ],
+                      [
+                        0.28,
+                        -0.3
+                      ],
+                      [
+                        0.18,
+                        0.35
+                      ],
+                      [
+                        0,
+                        0.7
+                      ]
+                    ],
+                    "segments": 8
+                  }
+                ]
+              }
+            },
+            "model": {
+              "version": 1,
+              "sha256": "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27",
+              "bytes": 3616,
+              "bounds": {
+                "min": [
+                  -0.2800000011920929,
+                  -0.7000000029802322,
+                  -0.2800000011920929
+                ],
+                "max": [
+                  0.2800000011920929,
+                  0.7000000029802322,
+                  0.2800000011920929
+                ]
+              },
+              "createdAt": "2026-09-12T10:27:52.180Z",
+              "source": "browser-manifold",
+              "kernelVersion": "3.3.2"
+            },
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "assetPolicy": "new-only",
+          "stage": "ready"
+        }
+      ],
+      "environment": {
+        "sky": "#8fd8ff",
+        "ground": "#8bcf72",
+        "water": "#4dbbd0"
+      },
+      "game": {
+        "variables": [
+          {
+            "name": "crystals",
+            "initial": 0
+          }
+        ],
+        "rules": [
+          {
+            "id": "collect-1",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-1"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-2",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-2"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-3",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-3"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-4",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-4"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-5",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-5"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-6",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-6"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-7",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-7"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "bounce-1",
+            "trigger": {
+              "type": "collision",
+              "entityId": "platform-1"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "set_position",
+                "entityId": "platform-1",
+                "position": [
+                  -1,
+                  1.2,
+                  5
+                ]
+              }
+            ]
+          },
+          {
+            "id": "portal-win",
+            "trigger": {
+              "type": "collision",
+              "entityId": "portal"
+            },
+            "conditions": [
+              {
+                "operand": {
+                  "type": "variable",
+                  "name": "crystals"
+                },
+                "comparison": "gte",
+                "value": 7
+              }
+            ],
+            "actions": [
+              {
+                "type": "win"
+              }
+            ]
+          }
+        ]
+      },
+      "messages": []
+    },
+    "artifact": {
+      "projectId": "pub-free-8bc2d8ff-87bf-4706-afd2-b23ef8127e2b",
+      "revision": 1,
+      "files": [
+        {
+          "file": "assets/catalog/used-assets.json",
+          "kind": "catalog-provenance",
+          "bytes": 7385,
+          "sha256": "904b821de5467a9103e44d80cf58419a693b860b21b56d650c938bbe4c1c96be"
+        },
+        {
+          "file": "models/kenney/nature-kit/mushroom_red.glb",
+          "kind": "catalog-glb",
+          "bytes": 6364,
+          "sha256": "843e2de43dce78920a5675a67bac4b72f500e6220315e713fe08381642cfc571"
+        },
+        {
+          "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+          "kind": "catalog-license",
+          "bytes": 611,
+          "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+        },
+        {
+          "file": "models/kenney/nature-kit/tree_pineTallA.glb",
+          "kind": "catalog-glb",
+          "bytes": 7200,
+          "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+        },
+        {
+          "file": "models/kenney/nature-kit/tree_default.glb",
+          "kind": "catalog-glb",
+          "bytes": 9428,
+          "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+        },
+        {
+          "file": "models/kenney/nature-kit/platform_grass.glb",
+          "kind": "catalog-glb",
+          "bytes": 12568,
+          "sha256": "74105fc9912c97e7809264dd69621863e0ddfd6ab92136f05918eda436ee898b"
+        },
+        {
+          "file": "models/generated/d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099.glb",
+          "kind": "generated-glb",
+          "bytes": 3616,
+          "sha256": "d2c064d1bf549c67501e963bd9296847a019ee094c546058703c47fdca53a099"
+        },
+        {
+          "file": "models/generated/848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517.glb",
+          "kind": "generated-glb",
+          "bytes": 3620,
+          "sha256": "848eff75537d9290dff2ea29de224065a17b741f749d8288f268485117a98517"
+        },
+        {
+          "file": "models/generated/283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110.glb",
+          "kind": "generated-glb",
+          "bytes": 3612,
+          "sha256": "283d1416ddf017f33f1a9e48e76a32fe627b601dd7119010231b4660bc25b110"
+        },
+        {
+          "file": "models/generated/31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4.glb",
+          "kind": "generated-glb",
+          "bytes": 3620,
+          "sha256": "31f35214e102963f202bdb9d6141a83ac36a26ad58ee986e9c2a79c901efebe4"
+        },
+        {
+          "file": "models/generated/358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b.glb",
+          "kind": "generated-glb",
+          "bytes": 3612,
+          "sha256": "358c4178bedf12c41d66295e8e67f9248fbc2d0bfbb3c142058f097c9410e51b"
+        },
+        {
+          "file": "models/generated/13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5.glb",
+          "kind": "generated-glb",
+          "bytes": 3620,
+          "sha256": "13722366ddd28171d03263c03cfece886d0c8f220353afce1936e83f4578c4a5"
+        },
+        {
+          "file": "models/generated/2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27.glb",
+          "kind": "generated-glb",
+          "bytes": 3616,
+          "sha256": "2bde6879aeb63ec011eaab9d293644705469acf096e55b73fcbfb57752d20e27"
+        },
+        {
+          "file": "models/generated/manifest.json",
+          "kind": "generated-provenance",
+          "bytes": 3653,
+          "sha256": "2337bc0edf4ba900e6a05aa09277f52bd87e6b30e0d0a6b8ea9ae60df495a524"
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-09-12T16:45:37.578Z"
+}

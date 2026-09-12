@@ -38,15 +38,16 @@ or mutating requests. Evidence `gateway-seven-gameplay-portal-bound/` and
 winning screenshot. No worker task currently active. Next meaningful step:
 independent publication of this exact edited revision and signed-out gameplay,
 without new inference; preserve separate physical-mobile/platform/size gaps.
-Publication milestone now running in exec session20868. Evidence updates at
-`docs/evidence/publication-gateway-seven/report.json`. One signup, seven
-uploads, one cloud save and one publication submitted; no inference/retries.
-Deployment dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL, Vercel project
-prj_e0cxArDZnCwVUGjVVkibsP8ViFQ9; last observed INITIALIZING. Re-poll same
-session/handle; never resubmit due timeout. Temporary test password exists at
-/tmp/orbsie-gateway-publication-password; do not print; remove after completion
-or retain privately only if authenticated recovery is needed. Run signed-out
-public gameplay after publication/assets pass; saved-ZIP evidence is separate.
+Gateway seven-crystal publication passed: evidence
+`docs/evidence/publication-gateway-seven/`, one signup/sevenGLBuploads/save/publish,
+no inference/retries. Deployment dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL,
+https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app .
+Exact cloned snapshot/assets/licenses verified. Signed-out desktop and390x844
+CDP touch passed portal-at-score0/no-win, then7/win/reset. Root reviewed.
+Temporary password removed. No publication process or worker remains active.
+Remaining next priorities: full platform sequence/visual sizing and broader
+mobile acceptance; browser ChatGPT owner sign-in and OpenRouter recovery
+approval remain pending. No new inference is authorized by these passes.
 Local server3068 session41341 uses build e0dff7c; revalidate before use.
 
 Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
