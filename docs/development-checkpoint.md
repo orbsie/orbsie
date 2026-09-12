@@ -205,3 +205,19 @@ retained separately; prior three-bounce/score7 proof remains valid. No active
 worker. Avoid repeated random-phase retries or building an unnecessary
 navigation subsystem. Next acceptance still needs actual portal/reset for
 this scene and owner ChatGPT sign-in; physical mobile and visual quality open.
+
+## Latest integration and active visual diagnosis
+
+One source-footprint integration with1c78edf reached platform1/2 but missed3
+(`gateway-current-source-footprint-integration/`). No portal/reset and no
+model calls. Stop phase-driven route retries for now; existing once-observed
+three-bounce/score7 proof remains partial. Browser DevTools still shows owner
+Orbsie sign-in form; ChatGPT consent cannot yet be validated.
+
+Single worker gateway_bounce_route was reused for bounded mushroom visual
+diagnosis after host thread limit rejected a fresh worker. It owns only new
+`mushroom-visual-diagnosis/` evidence and a small diagnostic if necessary:
+compare raw mushroom_red.glb with decoder/runtime to distinguish low-poly
+source shape, uniform tint, fallback, or transform error. At most1 offline
+browser comparison, no model/external calls, no speculative app changes.
+Root owns checkpoint and route evidence; no parallel implementation worker.
