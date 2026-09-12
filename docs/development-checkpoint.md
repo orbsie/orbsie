@@ -499,3 +499,17 @@ with structural-only scope, and preserves the original error. Root reviewed
 these limitations and restricted trial refresh to free-provider failures. Ten
 focused tests, typecheck, syntax/format and diff checks passed. No live calls
 were used for this harness change; production free inference is still pending.
+
+### Production free strawberry create/edit passed
+
+Harness 731462f against orbsie.com completed the exact prompt “a tree with blue
+strawberries” and selected material edit with two HTTP200 Luna calls capped at
+4096 output tokens each. Trial remaining moved 2→1→0; no retries or quota bypass.
+Creation produced 11 operations, one catalog entity and four generated entities;
+local reload, ZIP export and standalone readiness passed without external
+requests or page errors. Evidence: docs/evidence/provider-e2e/free-strawberry-current.
+Root reviewed report and edit screenshot and scanned JSON/ZIP text for credential
+patterns. App source a2ffe54 is operator supplied, not independently attested by
+this harness. This closes this bounded free creation/edit journey, not failure
+preservation, input-game objectives, full visual quality or mobile acceptance.
+The rendering remains visually sparse; do not claim flagship quality.
