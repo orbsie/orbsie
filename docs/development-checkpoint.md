@@ -216,3 +216,20 @@ deleted, local server stopped. Visual quality remains small/sparse and open.
 Next release validation precedes deployment with the accepted exact Gateway
 Luna strict override. Live free-trial, cloud/publication and ChatGPT gates are
 not proven by this BYOK result.
+
+## Current production release
+
+Source0c2381c is deployed at https://orbsie.com as deployment
+BKUuZkkhGMpAfs1e3UR5xRFQ68Kg. Production exact Gateway Luna override is
+json-schema-strict. This includes provider logos, mobile landscape/input fixes,
+validated JSON transports and catalog-aware composition guidance.
+Release validation:987 tests passed across127 files;7 tests in2 files skipped;
+typecheck passed. Production build and GET/HEAD smoke passed, with matching
+runtime/five worker hashes, canvas/prompt presence, no page errors and all
+provider SVGs served200. Evidence:docs/evidence/strict-generation-release.
+
+OpenRouter JSON-object and Gateway strict local production BYOK create/edit,
+recovery/export/standalone passed. Production live free-trial, cloud/publication
+provider matrix, browser ChatGPT consent/inference, physical mobile and full
+visual/performance targets remain unproven. User sign-in and emulator terms
+answers remain pending. No physical/emulated Android currently attached.
