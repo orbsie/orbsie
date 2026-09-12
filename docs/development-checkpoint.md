@@ -430,3 +430,11 @@ A publication recovery regression initially failed because its fixture hashed
 pre-change HTML. Baseline test passed; updating only that fixture to the new
 HTML restored22/22 publication+HTML tests. No route logic change was needed.
 Typecheck/diff checks passed and player CSS rebuilt. Codex65% remains.
+
+### Safe-area platform release verified
+
+Source a2ffe54 deployed as dpl_FGqCJb3J8xarCcKLcRg6Z3pShE61 to orbsie.com.
+Production build/typecheck and release smoke passed; exact safe-area player CSS
+hash verified separately. Evidence: docs/evidence/player-safe-area-release.
+Existing immutable game deployments still retain their old runtime until a
+reviewed republish; no model calls were made for this release.
