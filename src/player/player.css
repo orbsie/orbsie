@@ -11,6 +11,10 @@ main {
   height: 100dvh;
   overflow: hidden;
   background: radial-gradient(ellipse at 45% 25%, #fff8e4, #d0e8df);
+  --player-safe-top: env(safe-area-inset-top, 0px);
+  --player-safe-right: env(safe-area-inset-right, 0px);
+  --player-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --player-safe-left: env(safe-area-inset-left, 0px);
 }
 .canvas {
   position: absolute;
@@ -18,9 +22,9 @@ main {
 }
 header {
   position: absolute;
-  left: 25px;
-  right: 25px;
-  top: 22px;
+  left: calc(25px + var(--player-safe-left));
+  right: calc(25px + var(--player-safe-right));
+  top: calc(22px + var(--player-safe-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,17 +50,17 @@ header span {
 }
 .score {
   position: absolute;
-  top: 82px;
-  right: 25px;
+  top: calc(82px + var(--player-safe-top));
+  right: calc(25px + var(--player-safe-right));
   background: #ffffeccc;
   border-radius: 14px;
   padding: 15px;
 }
 footer {
   position: absolute;
-  bottom: 24px;
-  left: 0;
-  right: 0;
+  bottom: calc(24px + var(--player-safe-bottom));
+  left: var(--player-safe-left);
+  right: var(--player-safe-right);
   text-align: center;
   font-size: 11px;
   color: #6e8d7b;
@@ -93,8 +97,8 @@ footer {
   text-align: center;
 }
 main.touch-layout header {
-  left: 15px;
-  right: 15px;
+  left: calc(15px + var(--player-safe-left));
+  right: calc(15px + var(--player-safe-right));
 }
 main.touch-layout header span {
   font-size: 10px;
@@ -102,9 +106,9 @@ main.touch-layout header span {
 main.touch-layout .controls {
   display: flex;
   position: absolute;
-  bottom: 30px;
-  left: 20px;
-  right: 20px;
+  bottom: calc(30px + var(--player-safe-bottom));
+  left: calc(20px + var(--player-safe-left));
+  right: calc(20px + var(--player-safe-right));
   gap: 6px;
 }
 main.touch-layout .controls button {
@@ -118,14 +122,14 @@ main.touch-layout .controls button:last-child {
   margin-left: auto;
 }
 main.touch-layout footer {
-  bottom: 90px;
+  bottom: calc(90px + var(--player-safe-bottom));
   font-size: 9px;
 }
 @media (max-width: 700px) and (pointer: fine),
   (max-width: 700px) and (pointer: none) {
   header {
-    left: 15px;
-    right: 15px;
+    left: calc(15px + var(--player-safe-left));
+    right: calc(15px + var(--player-safe-right));
   }
   header span {
     font-size: 10px;

@@ -416,3 +416,17 @@ Evidence: docs/evidence/player-touch-release. Future exports/publications use
 the new bundle; existing immutable deployments retain their bundled version.
 One Luna read-only audit is checking standalone safe areas and touch interruption
 against shared input handling; no extra live model calls.
+
+### Standalone safe-area changes accepted
+
+Export/publication HTML now includes viewport-fit=cover; header, score, footer
+and touch controls use browser safe-area inset variables. Root reviewed CSS,
+metadata, fixture assertions and landscape screenshot. Four CDP touch scenarios
+passed (portrait/landscape, each zero and synthetic asymmetric notch/home
+insets), including score/win/loss/restart,0 external/model calls/page errors.
+Synthetic injection is explicitly not physical-device certification.
+
+A publication recovery regression initially failed because its fixture hashed
+pre-change HTML. Baseline test passed; updating only that fixture to the new
+HTML restored22/22 publication+HTML tests. No route logic change was needed.
+Typecheck/diff checks passed and player CSS rebuilt. Codex65% remains.

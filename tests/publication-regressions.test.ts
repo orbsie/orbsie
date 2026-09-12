@@ -185,7 +185,7 @@ function publishArtifact() {
   const files: PublicationFile[] = [
     {
       file: "index.html",
-      data: '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbsie world</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>',
+      data: '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Orbsie world</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>',
     },
     { file: "project.json", data: JSON.stringify(publishSnapshot()) },
     {
@@ -816,6 +816,10 @@ it("republishes a legacy READY deployment with a new integrity manifest", async 
   const body = JSON.parse(String(deploymentCall?.init?.body));
   expect(body.meta).toMatchObject({ orbId: "orb", orbRevision: "2" });
   expect(body.meta.artifactDigest).toMatch(/^[a-f0-9]{64}$/);
+  const deployedHtml = body.files.find(
+    (file: { file?: string }) => file.file === "index.html",
+  );
+  expect(deployedHtml?.data).toContain("viewport-fit=cover");
   expect(body.files).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ file: PUBLICATION_MANIFEST_FILE }),

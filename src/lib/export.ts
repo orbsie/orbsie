@@ -33,7 +33,7 @@ export function shareWorld(project: Project) {
   return `${location.origin}/#orb=${encodeWorld(project)}`;
 }
 export function playerHTML(title: string) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title.replace(/[<>&"']/g, "")} — Orbsie</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${title.replace(/[<>&"']/g, "")} — Orbsie</title><link rel="stylesheet" href="runtime.css"></head><body><div id="root"></div><script type="module" src="runtime.js"></script></body></html>`;
 }
 export async function exportWorld(project: Project) {
   if (

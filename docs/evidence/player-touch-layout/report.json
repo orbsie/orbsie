@@ -6,6 +6,11 @@
   "revision": 9,
   "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
   "inferenceCalls": 0,
+  "safeAreaEvidence": {
+    "kind": "synthetic-css-variable-injection",
+    "physicalDeviceCertification": false,
+    "note": "Representative notch and home-indicator insets were injected into the player CSS variables; this does not certify a physical device."
+  },
   "modes": [
     {
       "name": "portrait-touch",
@@ -14,12 +19,45 @@
         "height": 844
       },
       "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
-      "controls": true,
-      "footer": "Use the controls below to move and jump",
-      "scoreRight": 7,
-      "win": true,
-      "loss": true,
-      "restart": true,
+      "scenarios": [
+        {
+          "name": "default",
+          "insets": null,
+          "safeArea": {
+            "top": "0px",
+            "right": "0px",
+            "bottom": "0px",
+            "left": "0px"
+          },
+          "controls": true,
+          "footer": "Use the controls below to move and jump",
+          "scoreRight": 7,
+          "win": true,
+          "loss": true,
+          "restart": true
+        },
+        {
+          "name": "synthetic-safe-area",
+          "insets": {
+            "top": 47,
+            "right": 0,
+            "bottom": 34,
+            "left": 0
+          },
+          "safeArea": {
+            "top": "47px",
+            "right": "0px",
+            "bottom": "34px",
+            "left": "0px"
+          },
+          "controls": true,
+          "footer": "Use the controls below to move and jump",
+          "scoreRight": 7,
+          "win": true,
+          "loss": true,
+          "restart": true
+        }
+      ],
       "generationRequests": 0,
       "externalRequests": 0,
       "pageErrors": 0
@@ -31,17 +69,50 @@
         "height": 390
       },
       "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
-      "controls": true,
-      "footer": "Use the controls below to move and jump",
-      "scoreRight": 7,
-      "win": true,
-      "loss": true,
-      "restart": true,
+      "scenarios": [
+        {
+          "name": "default",
+          "insets": null,
+          "safeArea": {
+            "top": "0px",
+            "right": "0px",
+            "bottom": "0px",
+            "left": "0px"
+          },
+          "controls": true,
+          "footer": "Use the controls below to move and jump",
+          "scoreRight": 7,
+          "win": true,
+          "loss": true,
+          "restart": true
+        },
+        {
+          "name": "synthetic-safe-area",
+          "insets": {
+            "top": 0,
+            "right": 0,
+            "bottom": 21,
+            "left": 44
+          },
+          "safeArea": {
+            "top": "0px",
+            "right": "0px",
+            "bottom": "21px",
+            "left": "44px"
+          },
+          "controls": true,
+          "footer": "Use the controls below to move and jump",
+          "scoreRight": 7,
+          "win": true,
+          "loss": true,
+          "restart": true
+        }
+      ],
       "generationRequests": 0,
       "externalRequests": 0,
       "pageErrors": 0
     }
   ],
   "pageErrors": [],
-  "finishedAt": "2026-09-12T06:47:19.312Z"
+  "finishedAt": "2026-09-12T06:57:15.863Z"
 }
