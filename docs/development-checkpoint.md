@@ -18,12 +18,16 @@ Keep this handoff compact and update it in place. Never include secrets.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
   Recovery and diagnostic changes are deployed; read-only production smoke passed.
-- Active worker: `/root/republish_acceptance_harness`, mobile touch-input lifecycle
-  in editor and standalone player: cancellation, multitouch, blur/background,
-  typing and play/edit transitions. No live calls/deployment; review before commit.
-- Root review rejected synthetic touch browser acceptance: harness overrode pointer
-  capture after CDP events failed to arrive. Worker must restore actual browser
-  touch/capture or report an unresolved gap; unit/synthetic coverage is separate.
+- Active worker: `/root/republish_acceptance_harness`, fixing mobile toast overlap
+  with touch controls in portrait/landscape and composer states. No live calls or
+  deployment; require real hit-test/touch evidence while toast remains visible.
+- Input fixes committed `43c7482`: pointer identities, keyboard aliases, cancellation,
+  lifecycle clearing, focused-button Space release. Real CDP multitouch/capture,
+  ordinary release, touchCancel and synthetic-blur checks passed in editor/player.
+  `input-touch-lifecycle/report.json` stays partial: direct releasePointerCapture
+  did not emit a loss event even after movement; actual Android/iOS tests remain.
+  Earlier mocked capture report is retained separately, not accepted as real touch.
+  First real-touch failure was a success-toast overlap, now assigned for product fix.
 - Owner authorized Android emulator installation. Isolated AVD `orbsie_api35_phone`
   is booted as `emulator-5580` (root process session4786), Android35 Google Play
   x86_64, Pixel6 profile, KVM, SwiftShader,3GiB/2cores. Use SDK adb at
