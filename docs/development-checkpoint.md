@@ -285,3 +285,16 @@ existing hosted ChatGPT runtimes lack bundle provenance checks and can retain
 old code for their remaining ten-minute lifetime; one Luna worker is adding
 stale-runtime detection with focused tests. Owner sign-in and Android Chrome
 terms consent remain pending.
+
+### Remaining recovery harness coverage gap
+
+Read-only inspection of `scripts/provider-browser-e2e.mjs` found the
+`interruptedRecovery` configuration still explicitly rejects providers other
+than `chatgpt-local` (around lines 430–433). Modern hosted ChatGPT has separate
+configuration handling that must be inspected before changing this guard.
+Do not treat the historical companion recovery result as current browser
+provider acceptance. Next bounded harness task should support and prove the
+app journal/replay and stop/reload semantics for current provider transports,
+using intercepted fixtures first and only the authorized bounded Luna calls
+at the combined cloud/publication milestone. No additional live calls were
+made during this inspection.
