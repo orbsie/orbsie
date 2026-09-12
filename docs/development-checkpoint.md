@@ -159,3 +159,13 @@ Report seeded creation separately from live edits; preserve actual undo/reload
 and export checks. Existing one-call post-mushroom resume stays unchanged.
 Current snapshot has zero generated assets, so catalog references must remain
 valid but no GLB reconstruction is needed. This extension is queued, not built.
+
+## Active creation-stage continuation
+
+Luna `/root/creation_checkpoint_resume` owns harness and focused tests for
+explicit creation-stage resume, two edit calls ceiling; no live/browser calls
+during implementation. Preserve existing post-mushroom resume. Root inspected
+physical baseline for later visual review: tree-1 scale1.4 × catalog height
+1.70788741 =2.391042374. Mushroom-red at scale10 is only2.028 tall; raw scale
+and a mushroom label cannot close giant-size acceptance. Existing generation
+guidance already requests transformed dimensions and procedural fallback.
