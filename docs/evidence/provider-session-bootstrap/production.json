@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "28a1219",
+  "deployment": "https://orbsie-onchbepae-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "build": "passed including TypeScript",
+  "firstAttempt": {
+    "sessionGet": 500,
+    "bootstrap": 503,
+    "cause": "Production database missing user.isAnonymous; local DB differed"
+  },
+  "correction": "Applied additive isAnonymous boolean DEFAULT false on production DB using restricted production env pull",
+  "liveOwnerChrome": {
+    "bootstrap": 200,
+    "chatgptStart": 200,
+    "statusPolling": 200,
+    "realDeviceCodeDisplayed": true,
+    "orbsiePasswordRequired": false,
+    "authorizationLinkClicked": true
+  },
+  "providerAuthorizationComplete": false,
+  "inferenceCalls": 0
+}

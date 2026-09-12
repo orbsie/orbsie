@@ -32,7 +32,12 @@ check with real bootstrap/mocked ChatGPT passed start1/cancel1/email0/draft pres
 Signedout OpenRouter OAuth destination(mocked) and Gateway entry also passed with
 zero email requests. Evidence docs/evidence/provider-session-bootstrap. Existing
 OpenAI device-code/link step remains; automatic external redirect not implemented.
-Deployment pending; owner's Chrome still runs OLD version until release. Local
+Deployed28a1219 to orbsie.com via orbsie-onchbepae-grappeggias-projects.vercel.app.
+Production build/tsc passed. Initial live bootstrap503 exposed different production
+DB missing isAnonymous; additive migration then applied to production. OwnerChrome
+bootstrap200, real ChatGPT/start200 and status200; actual device code displayed
+without Orbsie password. Authorization link clicked. Owner authorization/inference
+still pending; don't claim Connected. Production evidence provider-session-bootstrap/production.json. Local
 Next dev3070 session75807. Do not tell owner fix is live before deploy verification.
 
 Asset task is paused: conforming bake worker finished with reported0 Tjunctions
