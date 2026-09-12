@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-12 against HEAD `7c0eec7`; full goal remains incomplete.
+Updated 2026-09-12 against HEAD `9304276`; full goal remains incomplete.
 Historical reports and rejected evidence are retained in `docs/evidence/` and
 `docs/scope-audit.md`. This file records current state, not conversation history.
 
@@ -11,69 +11,39 @@ browser-only ChatGPT subscription workflows. Astra reviews/integrates; one
 Luna xhigh/default bounded worker, no nested delegation, concise context.
 Fast off. Targeted checks per change; full/live checks only at milestones.
 Stop agents/tests below20% remaining Codex usage. Fresh App Server quota read
-2026-09-12: primary usedPercent12, 88% remaining, weekly10080-minute window.
+2026-09-12: primary usedPercent15, 85% remaining, weekly10080-minute window.
 Goal token totals are not quota. Live tests Luna only, low/default,4096 output
 maximum per call, no automatic retries; Gateway up to5 calls/test, OpenRouter
 2/run. Proposed OpenRouter3-call recovery remains pending. End users retain
 supported model choice. GitHub actions use computer use. Never print secrets.
 
-## Active bounded task
+## Current task and bounce acceptance
 
-Luna `/root/gateway_platform_contact` completed the verifier correction; root
-reviewed source binding and ran one local acceptance. Eight targeted tests
-passed. Formation local matrix and Player local center now share gameplay
-coordinates; malformed matrices fail closed and authored-Y false landings
-are rejected. Provider metadata correctly identifies Gateway.
+One worker active: `/root/multitouch_traversal`, correcting the single-touch
+winning traversal driver. Owns verifier/helper/tests and one local browser
+check; no model/external/account calls. Root review requested maxTouchPoints≥3,
+cleanup release, shared diagonals and no unrelated formatting. Acceptance
+requires actual pointer delivery and held movement after Jump release.
+Existing `input-touch-lifecycle/` supports product simultaneous touch but is
+partial for a separate capture-loss observation; don't repeat the broad suite.
 
-`gateway-seven-platforms-runtime-contact/` still fails platform1 landing:
-effective position[-1,1.2,5] from saved bounce-1 set_position rule yields
-contactY1.7025, above observed apex1.50 and ideal ground-jump apex1.62.
-Zero inference/external/mutating requests/page errors. This is a generated
-playability defect for this ground jump, not proof all routes are impossible.
-Luna `/root/moving_bounce_authoring` completed the bounded follow-up; root
-reviewed the diff. Existing bounce behavior + start move_path works: actual
-GameSession/runtimeEntityMatrix/stepGameplay integration proves downward
-contact gives velocityY7.08 without jump input, path continues and unrelated
-tree is preserved.20 focused tests/typecheck/format/diff checks passed.
-Generation guidance now teaches composition and ground-jump reach margin;
-set_position repositions the entity and cancels its path, not a player launch.
-No schema/runtime behavior changed. Browser worker stopped after four local
-fixture attempts; no worker/process remains active. New verify-moving-bounce
-script and moving-bounce-browser* evidence preserve failures. Current raw
-report fails desktop ascent, before export/touch. Root reviewed code and
-recorded independent arithmetic in root-trace-review.json: samples24→26
-fall to1.0175,27 stays there,28→29 rise, all after recorded jump release.
-This is partial retained evidence, not a fresh passing rerun. Current script
-fixes catalog-vs-visible contact height, scans later candidates and closes
-contexts before video save; synthetic fall/flat cases reject. Syntax passes.
-Root corrected run in moving-bounce-browser-corrected passed desktop rebound,
-continued path, UI reload/ZIP, then failed immediate touch platform readiness.
-Luna added bounded player+matched-platform readiness; root reviewed and ran
-once in moving-bounce-browser-ready. Desktop/export passed, touch59 samples
-show ascent after release but proof fails. Root reviewed input/trajectory.
-Luna corrected duplicate-frame ascent handling offline; root reviewed final
-diff and ran one new fixture browser milestone. moving-bounce-browser-frame-aware
-PASSED editor create/reload, desktop bounce/path, exact ZIP export, standalone
-390x844 CDP touch bounce/path. Root reviewed actual direction reversal, no
-post-release jump events and touch screenshot. Zero provider/model/external
-requests/page errors. No worker or owned test process remains active. This
-closes one fixture composition path, not three-platform route/live provider
-story/physical mobile. Next meaningful step: deploy/test current authoring
-guidance in an authorized fresh provider milestone, preserving all failures.
-Production build at7c0eec7 passed. Old idle server81664 stopped; new server3068
-session18186 serves this build with local env and output cap4096. No model
-calls started. Existing .env.openrouter.local contains nonempty test key,
-model and cap variables; values were not printed. Main env files and current
-environment contain no Gateway test key. OpenRouter remains local-only,
-2calls/run4096 maximum, Luna low/default/no retries;3-call request pending. Do not
-rebuild .next while server in use. Live provider effectiveness remains open.
-Earlier failure `gateway-seven-platforms-sequential/` remains retained.
-Acceptance distinction: existing verify-flagship-platforms asserts landing
-then560ms carried support. That is appropriate for moving nonbounce platforms,
-not automatic bounce. A bounce browser contract must instead show descending
-contact followed by upward launch with no jump input, continued platform path,
-and sequential reachable contact. Do not weaken carry checks to call a bounce
-pass; keep separate evidence scopes. Root sent this criterion to the worker.
+Moving bounce generation guidance3439f33 explains behavior=bounce plus start
+move_path;20 focused tests passed. `moving-bounce-browser-frame-aware/` at7c0eec7
+passed editor creation/reload, desktop automatic rebound/path, exact ZIP and
+390x844 CDP-touch standalone rebound/path. One fixture platform only. Earlier
+failed attempts remain retained. Carry and automatic-bounce verifiers are
+separate contracts; do not weaken either to claim the other.
+
+Saved Gateway platform1 contact still fails (`gateway-seven-platforms-runtime-contact/`):
+a set_position rule raises it to contactY1.7025, above ground-jump ideal1.62.
+This is a ground-route playability defect, not proof all routes impossible.
+
+Saved OpenRouter route task finished at568b408. Two attempts exhausted:
+first harness ID error; second observed platform1 descending contact/rebound,
+then missed platform2 and returned to ground, score40/50. Root reviewed raw
+keyboard history,267 samples and screenshot. Helper corrections pass5 tests;
+no model calls. `saved-bounce-route-second/README.md` records exact limitations.
+Full three-platform sequence/fifth crystal/win remains unverified.
 
 Publication terminal-state regression a49c84e passed26 targeted tests; live
 failed-deployment continuity remains unverified.
@@ -154,47 +124,9 @@ publication passed. These are bounded evidence, not complete provider E2E.
 - Modeling/rendering must use local browser resources with no Blender setup
   surfaced. Preserve catalog/generated asset provenance and licenses.
 
-## Latest saved OpenRouter traversal
+## Next mobile handoff
 
-`openrouter-moving-bounce-winning/` records one failed desktop run, zero
-model calls. Score40/50, elevated crystal5 missed by ground/pickup-jump driver;
-final portal contact observed with no victory. This does not prove route
-impossibility. Three-platform phase-aware bounce steering remains required.
-Chrome DevTools still shows empty Orbsie sign-in fields; CUA inventory empty.
-
-## Active bounded route task
-
-Luna `/root/saved_bounce_route` finished and is idle. New route driver/helper
-and5 focused passing tests retain two attempts (limit exhausted). First had
-ID argument bug; second observed platform1 automatic bounce then missed
-platform2/returned to ground, score40. Root reviewed screenshot/raw trace and
-corrected review gaps in contact settling, route stages and keyboard event
-shape. See `saved-bounce-route-second/README.md`. No model/external calls.
-No route or full-game pass; no browser processes remain. Root reviewed mobile input source independently: product supports pointer IDs,
-but existing winning touch driver supplies only one touch and no diagonals.
-Quota fresh read: primary used15%, remaining85%;20% stop rule unchanged.
-
-### Next mobile verifier contract (after route worker)
-
-Repair `verify-winning-traversal.mjs` single-touch `setKeys` and omitted mobile
-diagonals. Reuse the stable touch-ID/coordinate-hit pattern already present in
-`verify-flagship-platforms.mjs` runSequentialPlatforms and real pointer-event
-observation in `verify-touch-input-lifecycle.mjs`; do not change product input
-without a demonstrated bug. Preserve held direction when adding/releasing
-jump, release only intended fingers, and release all on cleanup. Focused
-evidence must observe simultaneous direction/diagonal/jump and partial-release
-continuity, not merely assert emitted CDP arguments. Existing player-input
-unit tests cover same-action pointer retention but not this browser driver.
-Run against a saved local fixture/export with zero inference, then integrate
-into meaningful mobile route acceptance. This is queued, not implemented.
-
-## Active mobile driver correction
-
-Luna `/root/multitouch_traversal` owns winning-verifier touch input, optional
-shared helper, focused tests and `traversal-multitouch/` evidence. One local
-browser check, zero model/external/account calls. Product simultaneous-input
-behavior already has partial lifecycle evidence; this task verifies the new
-driver specifically. Root will review partial-release semantics and trusted
-pointer-event evidence. Do not repeat the broad lifecycle suite.
-Saved-bounce task is finished at568b408; its two attempts are exhausted and
-three-platform route remains failed.
+Finish/review the active driver's one bounded local browser check, then commit.
+If it passes, use it at a meaningful saved-game mobile milestone. Product input
+already supports independent pointer IDs; no product fix is justified solely
+by the old driver's keys[0] restriction. No new provider calls are needed.
