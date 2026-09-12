@@ -164,11 +164,13 @@ Chrome DevTools still shows empty Orbsie sign-in fields; CUA inventory empty.
 
 ## Active bounded route task
 
-Luna `/root/saved_bounce_route` owns new saved-bounce route driver/helper/tests
-and its evidence only. At most2 browser attempts; no model/external calls or
-world mutation. Requires sequential descending contacts/automatic upward
-launches with no intervening ground reset, then collection/win if reachable.
-Root reviewed mobile input source independently: product supports pointer IDs,
+Luna `/root/saved_bounce_route` finished and is idle. New route driver/helper
+and5 focused passing tests retain two attempts (limit exhausted). First had
+ID argument bug; second observed platform1 automatic bounce then missed
+platform2/returned to ground, score40. Root reviewed screenshot/raw trace and
+corrected review gaps in contact settling, route stages and keyboard event
+shape. See `saved-bounce-route-second/README.md`. No model/external calls.
+No route or full-game pass; no browser processes remain. Root reviewed mobile input source independently: product supports pointer IDs,
 but existing winning touch driver supplies only one touch and no diagonals.
 Quota fresh read: primary used15%, remaining85%;20% stop rule unchanged.
 
