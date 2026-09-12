@@ -21,13 +21,19 @@ Keep this handoff compact and update it in place. Never include secrets.
   Eleven targeted tests, typecheck, production build, seven-request fixture browser
   regression passed. Evidence: `docs/evidence/generation-failure-recovery/`.
   Recovery and diagnostic changes are deployed; read-only production smoke passed.
-- Mobile toast/control correction accepted in `db12ed8`: portrait and coarse
-  landscape composer layouts keep notices and touch controls separate, with a
-  viewport-sized landscape canvas. Settled atomic layout assertions and screenshots
-  passed with two fixture requests and no live inference. Root reviewed screenshots;
-  landscape toolbar/HUD crowding remains for the broader mobile usability pass.
-  Worker `/root/republish_acceptance_harness` is idle. Production build and its
-  TypeScript check passed after integration; this mobile change is not deployed.
+- Priority bug: exact owner prompt `a tree with blue strawberries` failed on
+  production free path (browser request confirmed). Gateway BYOK reproduction
+  `57fee42` used one Luna low/default call,4096; HTTP200, seed5948ms, operation4
+  INVALID_SCENE_JSON with finishReason null. No edit/retry; private key deleted.
+  Sole worker `/root/republish_acceptance_harness` investigates parser/framing
+  offline and diagnostic gaps; no more live calls assigned yet.
+- Provider-logo request: official assets committed `fe5b647` in public/providers;
+  connection-button UI hookup still queued after the generation failure.
+- Mobile layout accepted in `db12ed8` and `042c486`: settled atomic checks cover
+  portrait plus 844x390/667x375 landscape composer states, toolbar/HUD, recovery,
+  touch controls and composer. Root visually reviewed. Two fixture requests,
+  zero live calls. Physical-device and capture-loss limitations remain open.
+  Earlier production build passed; latest mobile changes are not deployed.
 - Input fixes committed `43c7482`: pointer identities, keyboard aliases, cancellation,
   lifecycle clearing, focused-button Space release. Real CDP multitouch/capture,
   ordinary release, touchCancel and synthetic-blur checks passed in editor/player.
