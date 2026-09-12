@@ -61,6 +61,12 @@ export type GenerationJournalConnection = {
 export type Phase = "landing" | "descending" | "editing";
 type LocalHistory = { project: Project; history: Project[]; future: Project[] };
 const HISTORY_LIMIT = 20;
+export type GenerationRecovery = {
+  projectId: string;
+  prompt: string;
+  selected?: string;
+  checkpoint: Project;
+};
 function browserModelingAvailable() {
   return typeof Worker !== "undefined" && typeof WebAssembly !== "undefined";
 }
@@ -112,6 +118,7 @@ interface State {
   notice: string;
   error: string;
   generationErrorCode?: string;
+  generationRecovery?: GenerationRecovery;
   modelingFeedback?: ModelingFeedback;
   saved: boolean;
   recovered?: Project;
@@ -272,7 +279,13 @@ export const useOrb = create<State>((setState, getState) => ({
   reset: 0,
   set(patch) {
     if ("project" in patch || "reset" in patch) invalidatePendingLoad();
-    if ("project" in patch) patch = { ...patch, modelingFeedback: undefined };
+    if ("project" in patch)
+      patch = {
+        ...patch,
+        generationRecovery: undefined,
+        modelingFeedback: undefined,
+      };
+    if ("reset" in patch) patch = { ...patch, generationRecovery: undefined };
     setState(patch);
   },
   async save() {
@@ -490,6 +503,7 @@ export const useOrb = create<State>((setState, getState) => ({
       drafts: [],
       draftHistory: {},
       recovered: undefined,
+      generationRecovery: undefined,
       modelingFeedback: undefined,
     });
   },
@@ -532,6 +546,7 @@ export const useOrb = create<State>((setState, getState) => ({
       history: history?.history ?? [],
       future: history?.future ?? [],
       recovered: undefined,
+      generationRecovery: undefined,
       modelingFeedback: undefined,
       readOnly: !writer,
       ...(!writer
@@ -557,6 +572,7 @@ export const useOrb = create<State>((setState, getState) => ({
       phase: s.phase === "descending" ? "editing" : s.phase,
       building: false,
       project: committedWorld,
+      generationRecovery: undefined,
       notice: "Stopped. Finished objects are safe.",
     });
     if (
@@ -573,6 +589,7 @@ export const useOrb = create<State>((setState, getState) => ({
       future: [s.project, ...s.future].slice(0, HISTORY_LIMIT),
       history: s.history.slice(0, -1),
       selected: undefined,
+      generationRecovery: undefined,
       notice: "Previous change restored.",
     });
     void getState().save();
@@ -584,6 +601,7 @@ export const useOrb = create<State>((setState, getState) => ({
       project: { ...s.future[0], revision: s.project.revision + 1 },
       history: [...s.history, s.project].slice(-HISTORY_LIMIT),
       future: s.future.slice(1),
+      generationRecovery: undefined,
     });
     void getState().save();
   },
@@ -663,6 +681,7 @@ export const useOrb = create<State>((setState, getState) => ({
       building: true,
       error: "",
       generationErrorCode: undefined,
+      generationRecovery: undefined,
       notice: "",
       saved: false,
       history: initial
@@ -935,6 +954,7 @@ export const useOrb = create<State>((setState, getState) => ({
             getState().ruleRestartCount !== ruleRestartsBeforeGeneration
               ? GAME_RULES_RESTART_NOTICE
               : "Your world is saved on this device.",
+          generationRecovery: undefined,
           modelingFeedback: undefined,
         });
         await getState().save();
@@ -943,9 +963,22 @@ export const useOrb = create<State>((setState, getState) => ({
     } catch (error) {
       if (active === controller && !signal.aborted) {
         finishRunExperience("error");
+        const checkpoint = committed(getState().project, baseline);
+        const recoverySelected =
+          selected &&
+          checkpoint.entities.some((entity) => entity.id === selected)
+            ? selected
+            : undefined;
         setState({
           building: false,
-          project: committed(getState().project, baseline),
+          project: checkpoint,
+          selected: recoverySelected,
+          generationRecovery: {
+            projectId: project.id,
+            prompt,
+            ...(recoverySelected ? { selected: recoverySelected } : {}),
+            checkpoint,
+          },
           error: signal.aborted
             ? ""
             : error instanceof ZodError

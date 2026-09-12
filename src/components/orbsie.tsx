@@ -627,7 +627,12 @@ export default function Orbsie() {
     dictation.cancel();
   }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);
   const submission = useRef({ checking: false, sequence: 0 });
-  const submit = async (e?: FormEvent, text = prompt) => {
+  const submit = async (
+    e?: FormEvent,
+    text = prompt,
+    selectedOverride?: string | null,
+    retrying = false,
+  ) => {
     e?.preventDefault();
     if (submission.current.checking) return;
     dictation.cancel();
@@ -635,6 +640,7 @@ export default function Orbsie() {
     if (!instruction) return;
     submission.current.checking = true;
     const sequence = ++submission.current.sequence;
+    const current = useOrb.getState();
     const originalWorld = captureCloudRequest();
     const selectedConnectionVersion = connectionVersion.current;
     try {
@@ -647,7 +653,7 @@ export default function Orbsie() {
         const allowance = await refreshTrial();
         if (
           !originalWorld() ||
-          textarea.current?.value !== text ||
+          (!retrying && textarea.current?.value !== text) ||
           connectionVersion.current !== selectedConnectionVersion
         )
           return;
@@ -672,7 +678,20 @@ export default function Orbsie() {
       }
       setPrompt("");
       const accountVersion = accountGeneration.current;
-      const originProjectId = s.project.id;
+      const originProjectId = current.project.id;
+      const requestProject = useOrb.getState().project;
+      const selectedCandidate =
+        selectedOverride !== undefined
+          ? selectedOverride
+          : useOrb.getState().selected;
+      const selectedId =
+        requestProject.id === originProjectId &&
+        selectedCandidate &&
+        requestProject.entities.some(
+          (entity) => entity.id === selectedCandidate,
+        )
+          ? selectedCandidate
+          : undefined;
       const journal = user
         ? {
             isCurrent: () => accountGeneration.current === accountVersion,
@@ -739,10 +758,21 @@ export default function Orbsie() {
             },
           }
         : undefined;
-      const generation = s.run(instruction, selectedConnection, journal);
+      useOrb.getState().set({ selected: selectedId });
+      const generation = useOrb
+        .getState()
+        .run(instruction, selectedConnection, journal);
       const generationWorld = captureCloudRequest();
       submission.current.checking = false;
       await generation;
+      const failedRecovery = useOrb.getState().generationRecovery;
+      if (
+        failedRecovery?.projectId === originProjectId &&
+        failedRecovery.projectId === useOrb.getState().project.id &&
+        generationWorld() &&
+        !textarea.current?.value
+      )
+        setPrompt(failedRecovery.prompt);
       const providerFailure = useOrb.getState().generationErrorCode;
       if (
         selectedConnection.provider === "chatgpt-hosted" &&
@@ -807,6 +837,58 @@ export default function Orbsie() {
       if (submission.current.sequence === sequence)
         submission.current.checking = false;
     }
+  };
+  const generationRecovery =
+    s.generationRecovery?.projectId === s.project.id
+      ? s.generationRecovery
+      : undefined;
+  const dismissGenerationFailure = () => {
+    s.set({
+      error: "",
+      notice: "",
+      generationErrorCode: undefined,
+      generationRecovery: undefined,
+    });
+  };
+  const restoreLastWorking = () => {
+    const current = useOrb.getState();
+    const recovery = current.generationRecovery;
+    if (!recovery || recovery.projectId !== current.project.id) return;
+    const selectedId =
+      recovery.selected &&
+      recovery.checkpoint.entities.some(
+        (entity) => entity.id === recovery.selected,
+      )
+        ? recovery.selected
+        : undefined;
+    current.set({
+      project: recovery.checkpoint,
+      selected: selectedId,
+      error: "",
+      notice: "Last working world restored.",
+      generationErrorCode: undefined,
+      generationRecovery: undefined,
+    });
+    void useOrb.getState().save();
+  };
+  const retryFailedGeneration = () => {
+    const current = useOrb.getState();
+    const recovery = current.generationRecovery;
+    if (
+      !recovery ||
+      recovery.projectId !== current.project.id ||
+      current.building ||
+      submission.current.checking
+    )
+      return;
+    const selectedId =
+      recovery.selected &&
+      current.project.entities.some((entity) => entity.id === recovery.selected)
+        ? recovery.selected
+        : undefined;
+    current.set({ selected: selectedId, error: "", notice: "" });
+    setPrompt(recovery.prompt);
+    void submit(undefined, recovery.prompt, selectedId ?? null, true);
   };
   const reset = () =>
     s.set({
@@ -1532,10 +1614,30 @@ export default function Orbsie() {
       )}
       {(s.error || s.notice) && (
         <div className={`toast ${s.error ? "error" : ""}`} role="status">
-          {s.error || s.notice}
+          <span className="toast-copy">{s.error || s.notice}</span>
+          {s.error && generationRecovery && (
+            <div className="toast-actions">
+              <button
+                type="button"
+                className="toast-action retry"
+                disabled={s.building}
+                onClick={retryFailedGeneration}
+              >
+                Try again
+              </button>
+              <button
+                type="button"
+                className="toast-action"
+                onClick={restoreLastWorking}
+              >
+                Use last working
+              </button>
+            </div>
+          )}
           <button
+            type="button"
             aria-label="Dismiss message"
-            onClick={() => s.set({ error: "", notice: "" })}
+            onClick={dismissGenerationFailure}
           >
             <X size={15} />
           </button>

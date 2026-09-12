@@ -733,6 +733,34 @@ kbd {
   background: transparent;
   padding: 0;
 }
+.toast-copy {
+  flex: 1;
+}
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.toast-action {
+  border: 1px solid #d2dfca;
+  border-radius: 7px;
+  padding: 6px 8px !important;
+  color: #587259;
+  background: #fff;
+  white-space: nowrap;
+}
+.toast-action:hover {
+  background: #f1f6e8;
+}
+.toast-action.retry {
+  border-color: #517b62;
+  color: #fff;
+  background: #517b62;
+}
+.toast-action:disabled {
+  opacity: 0.55;
+}
 .modal {
   border: 1px solid #e8efdf;
   border-radius: 23px;

@@ -1,0 +1,206 @@
+{
+  "mode": "fixture-generation-failure-recovery-real-editor",
+  "fixture": {
+    "transport": "intercepted /api/generate NDJSON",
+    "liveInference": false,
+    "serverFundedCalls": false,
+    "databaseMutations": false,
+    "treeId": "tree-0",
+    "unrelatedId": "rock-0",
+    "pendingId": "pending-0"
+  },
+  "requests": [
+    {
+      "prompt": "Build the recovery fixture",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree amber",
+      "selected": "tree-0",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 9,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree violet",
+      "selected": "tree-0",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 10,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 11,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "projectRevision": 12,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    }
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "POST",
+      "path": "/api/generate"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    }
+  ],
+  "blocked": [],
+  "unexpectedApi": [],
+  "pageErrors": [],
+  "checks": {
+    "created": {
+      "projectId": "3b448978-5691-48f2-88a8-e82a5822521c",
+      "revision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    "unselectedRetryPreserved": {
+      "failedRequestSelected": null,
+      "retryRequestSelected": null,
+      "promptRestoredExactly": true,
+      "unrelatedPreserved": true
+    },
+    "dismissal": {
+      "requestCountAfterDismiss": 4
+    },
+    "lastWorkingPreservedLatestIncrement": {
+      "treeColor": "#c982df",
+      "unrelatedPreserved": true,
+      "requestCountAfterRestore": 5
+    },
+    "selectedRetryPreserved": {
+      "failedRequestSelected": "tree-0",
+      "retryRequestSelected": "tree-0",
+      "changedSelectionBeforeRetry": "rock-0",
+      "noAutomaticExtraRequest": true
+    }
+  },
+  "status": "passed"
+}

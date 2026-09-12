@@ -232,6 +232,57 @@ it("keeps unfinished reservations out of an interrupted checkpoint", async () =>
   await generation;
 });
 
+it("keeps the last valid increments for explicit recovery and clears stale recovery on undo/redo", async () => {
+  const project = readyProject({ entities: fixtureEntities().slice(0, 2) });
+  await orb.getState().load(project);
+  orb.getState().set({ selected: "tree-0" });
+  const commands: Command[] = [
+    { type: "set_material", id: "tree-0", color: "#ff66aa" },
+    {
+      type: "reserve_entity",
+      entity: {
+        ...fixtureEntities()[2],
+        id: "unfinished-new",
+        stage: "seed",
+        geometry: undefined,
+      },
+    },
+    { type: "set_material", id: "missing-object", color: "#ffffff" },
+  ];
+  const fetcher = vi.fn<typeof fetch>(
+    async () =>
+      new Response(
+        `${commands.map((command) => JSON.stringify(command)).join("\n")}\n`,
+      ),
+  );
+  vi.stubGlobal("fetch", fetcher);
+
+  await orb.getState().run("Make the selected tree pink");
+
+  const failed = orb.getState();
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(failed.building).toBe(false);
+  expect(failed.project.entities).toHaveLength(2);
+  expect(failed.project.entities[0].color).toBe("#ff66aa");
+  expect(failed.project.entities[1]).toEqual(project.entities[1]);
+  expect(failed.generationRecovery).toEqual({
+    projectId: project.id,
+    prompt: "Make the selected tree pink",
+    selected: "tree-0",
+    checkpoint: failed.project,
+  });
+
+  // A later selection alone must not make the failed request recover against
+  // that object. Undoing or redoing the local revision invalidates the stale
+  // checkpoint before a recovery action can restore it.
+  orb.getState().set({ selected: "tree-1" });
+  expect(orb.getState().generationRecovery).toBeDefined();
+  orb.getState().undo();
+  expect(orb.getState().generationRecovery).toBeUndefined();
+  orb.getState().redo();
+  expect(orb.getState().generationRecovery).toBeUndefined();
+});
+
 it("does not let a delayed old save mark a switched world or draft pointer", async () => {
   const oldProject = readyProject({ title: "Old world" });
   const nextProject = readyProject({
