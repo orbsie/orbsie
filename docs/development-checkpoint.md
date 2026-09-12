@@ -1,133 +1,92 @@
 # Development checkpoint
 
-Updated 2026-09-12; verified against HEAD `b004e99` and current worktree.
-Keep this compact; historical evidence lives in `docs/scope-audit.md` and
-`docs/evidence/`. Never include credentials.
+Updated 2026-09-12 against HEAD `4b7b365`; full goal remains incomplete.
+Historical reports and rejected evidence are retained in `docs/evidence/` and
+`docs/scope-audit.md`. This file records current state, not conversation history.
 
-## Objective and execution
+## Execution policy
 
-Implement all of `prompt.md`, with E2E OpenRouter, Vercel AI Gateway and
-browser-only ChatGPT subscription workflows. Full acceptance is incomplete.
-Astra low/regular owns architecture, acceptance, finished-diff review and
-integration. One Luna xhigh/regular worker, no nested agents, concise context.
-Use completion notifications; do not spin status-only polls. Batch targeted
-checks; full E2E and live inference only at meaningful milestones. Fast off.
-
-Stop agents/tests below 20% remaining Codex quota. Fresh direct App Server `account/rateLimits/read` on 2026-09-12 returned
-Codex primary usedPercent=8 (92% remaining), weekly window10080 minutes. The
-old temporary helper is absent; a bounded stdio initialize/read/terminate
-request succeeded without inference. Goal token counts are not quota.
-Live tests use Luna only, low/default, maximum 4096 output tokens/call, no
-automatic retries. Gateway standing limit is five calls/test; OpenRouter two
-calls/run. A three-call OpenRouter recovery test remains pending approval.
-End users retain supported model choices. GitHub operations use computer use.
+Implement all of `prompt.md`, including real OpenRouter, Vercel AI Gateway and
+browser-only ChatGPT subscription workflows. Astra reviews/integrates; one
+Luna xhigh/default bounded worker, no nested delegation, concise context.
+Fast off. Targeted checks per change; full/live checks only at milestones.
+Stop agents/tests below20% remaining Codex usage. Fresh App Server quota read
+2026-09-12: primary usedPercent11, 89% remaining, weekly10080-minute window.
+Goal token totals are not quota. Live tests Luna only, low/default,4096 output
+maximum per call, no automatic retries; Gateway up to5 calls/test, OpenRouter
+2/run. Proposed OpenRouter3-call recovery remains pending. End users retain
+supported model choice. GitHub actions use computer use. Never print secrets.
 
 ## Active bounded task
 
-Root ran one local saved Gateway seven-crystal platform sequence at b004e99;
-first landing failed. Evidence `docs/evidence/gateway-seven-platforms-sequential/`.
-No inference/external requests/mutations. Raw report hardcodes OpenRouter
-metadata despite exact Gateway ZIP identity. Rendered platform1 top1.2325
-differs from verifier authored-Y contact model (.8+.0825). This alone does
-not establish a product defect. Luna `/root/gateway_platform_contact` is
-investigating the runtime matrix contact contract and verifier, owns verifier
-and focused tests only; no live calls, no nested workers. Root reviews diff
-and evidence before acceptance. Earlier 'no worker active' notes below are
-historical. Questions on owner sign-in, emulator terms, recovery approval
-and physical device remain unanswered.
+Luna `/root/gateway_platform_contact` is running: investigate saved Gateway
+first-platform landing failure and reconcile verifier with runtime contact.
+Owns `scripts/verify-flagship-platforms.mjs`, its helper and focused tests;
+root owns checkpoint/evidence review. No inference or external requests.
+Root must review finished diff and targeted evidence before browser rerun.
 
-Worker `/root/republish_acceptance_harness` completed the offline continuation.
-Implementation e0dff7c: 20 focused tests, typecheck, syntax/diff checks and root
-production build passed. Root then ran the real browser: zero generation,
-exact edited reload, seeded-history undo, baseline reload/ZIP/standalone passed.
-Evidence: `docs/evidence/provider-e2e/gateway-flagship-offline-continuation/`.
-Original live history, settled visual quality and gameplay remain unverified.
-The saved-gameplay worker completed and root integrated265f026. Corrected
-saved revision40 traversal passed desktop keyboard and390x844 CDP touch:
-portal contact at score0/no win, then score7/win/reset; zero inference/external
-or mutating requests. Evidence `gateway-seven-gameplay-portal-bound/` and
-`gateway-seven-gameplay-touch/`. Root reviewed actual portal bounds and mobile
-winning screenshot. No worker task currently active. Next meaningful step:
-independent publication of this exact edited revision and signed-out gameplay,
-without new inference; preserve separate physical-mobile/platform/size gaps.
-Gateway seven-crystal publication passed: evidence
-`docs/evidence/publication-gateway-seven/`, one signup/sevenGLBuploads/save/publish,
-no inference/retries. Deployment dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL,
-https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app .
-Exact cloned snapshot/assets/licenses verified. Signed-out desktop and390x844
-CDP touch passed portal-at-score0/no-win, then7/win/reset. Root reviewed.
-Temporary password removed. No publication process or worker remains active.
-Remaining next priorities: full platform sequence/visual sizing and broader
-mobile acceptance; browser ChatGPT owner sign-in and OpenRouter recovery
-approval remain pending. No new inference is authorized by these passes.
-Local server3068 session41341 uses build e0dff7c; revalidate before use.
+Failure evidence committed `4b7b365` in `gateway-seven-platforms-sequential/`.
+Exact seven-crystal ZIP, one desktop attempt, no inference/external/mutating
+requests. Report hardcodes incorrect OpenRouter metadata; ZIP identity is
+Gateway. Initial rendered platform1 top1.2325 differs from verifier authored
+Y0.8+catalog0.0825. This alone does not prove a product defect. Raw failure
+must remain preserved. Runtime has a matrix support-surface contact branch.
 
-Live resume harness is committed as `9251381`; partial live evidence `12ce90a`;
-audit reconciliation `7ee6f97`. Evidence directory:
-`docs/evidence/provider-e2e/gateway-flagship-checkpoint-resume/`.
-One Gateway request returned HTTP200 and produced revision40 from revision33:
-platform-2 speed 1.2 → 0.6, crystals6/7 added, unrelated entities preserved.
-All seven GLBs were captured. Saved rules increment crystals and require
-crystals >= 7 at portal collision. This is structural evidence, not runtime
-win-gating proof. The real Play HUD showed only `0 Score`; the `/7` selector
-failed before reload, undo, export or standalone checks.
+## Current Gateway flagship evidence
 
-This milestone has used four calls across the original stopped runs and the
-one-call resume. Do not repeat inference to bypass the HUD check. Offline
-continuation must block inference, omit credentials and report seeded history
-honestly; it cannot prove the original live undo history survived.
-Baseline revision33 and reconstructed five-model evidence are under
-`provider-e2e/gateway-flagship-story-catalog/gateway/` in `docs/evidence/`.
-Use separate original-model and edited-model directories. Prior giant pink
-mushroom is physically shorter than its original tree; size acceptance is open.
+Four live Luna calls across stopped runs/resume produced saved revision40;
+not a fresh uninterrupted story. Baseline revision33 in
+`provider-e2e/gateway-flagship-story-catalog/gateway/`; hash-identical rebuilt
+baseline GLBs are explicitly reconstructed. Revision40 plus seven captured
+GLBs in `provider-e2e/gateway-flagship-checkpoint-resume/` (`12ce90a`).
+Middle platform speed1.2→0.6, two crystals added, other entities preserved.
+Giant mushroom physical size failed: replacement shorter than original tree.
+Sizing guidance deployed `a5b2769`; live effectiveness unverified.
 
-## Next acceptance contract (after current worker completes)
+Offline continuation (`e0dff7c`, evidence `146332f`) proved exact edited reload,
+undo with seeded history, restored reload/export/standalone, zero inference.
+Does not establish original live undo history. Separate revision40 goal7 ZIP:
+`provider-e2e/gateway-flagship-seven-export/gateway/world-goal-7.zip`, SHA256
+4460108481bbd9b7b3153afff9a948b41c51a69499b0b5035fc6d5accd02ecfd.
+`world.zip` alongside is restored revision41 goal5; do not confuse them.
 
-Reuse `scripts/verify-winning-traversal.mjs` for actual goal7 gameplay with
-saved Gateway artifacts and zero inference. Source review found its contract
-helper hardcodes five collectibles and crystals == 5, while the Gateway game
-uses seven and >= 7. Add an explicit expected count/comparison contract with
-regressions preserving the existing five-crystal case. Reject contradictory
-win paths. The driver already traverses contract IDs but visits the portal
-only last: add an early portal collision check proving no win, then collect
-all seven, return, win and reset. Do not substitute structural rules for these
-browser observations. Obtain the exact edited goal7 ZIP separately; the current
-worker's undo/export check intentionally exports restored goal5. Retain source
-hashes, failure evidence, input cleanup and zero-generation traffic checks.
-Previous offline worker completed and was reviewed; this contract is now delegated.
+Verifier `265f026` uniquely binds actual portal bounds and requires two early
+contact samples: desktop/CDP390x844 touch score0/no win, then7/win/reset passed
+(`gateway-seven-gameplay-portal-bound/`, `gateway-seven-gameplay-touch/`).
+Earlier `gateway-seven-gameplay/` used wrong planet bounds: partial only.
 
-## Deployment and established evidence
+Published test clone and signed-out desktop/CDP-touch gameplay passed b004e99:
+`publication-gateway-seven/`, exact assets/licenses, zero inference/retries.
+https://orb-187a1afe648f20a2fde3-bw4hvlfhr-grappeggias-projects.vercel.app
+Deployment dpl_2RCTPEukaT9wZKVK8Yek35h7oqmL; temporary password deleted.
+This does not prove platform sequence, original-project revision continuity,
+physical mobile or complete provider story. No publication job remains live.
 
-Latest recorded production source is `a5b2769` at https://orbsie.com;
-`docs/evidence/replacement-sizing-release/report.json` records smoke checks.
-Sizing prompt effectiveness is not established by deployment smoke.
-The last local acceptance server was port3068, built source9098500; revalidate
-process/build before reuse. Temporary Gateway key file was deleted. Do not
-print keys or assume a Vercel env pull contains a usable value.
+## Runtime and other accepted milestones
 
-Current evidence reconciliation is at the top of `docs/scope-audit.md`.
-Bounded OpenRouter and Gateway input-game create/edit/reload/export/play tests
-passed. Gateway reload/explicit continuation/cloud recovery and independent
-publication have separate evidence. Production free strawberry create/edit
-passed two calls (trial2→1→0), then its mixed assets were published separately.
-Public OpenRouter flagship crystal/portal/reset passed desktop and CDP touch;
-sequential moving platforms passed desktop with sampled carry observations.
-Touch platform sequence remains failed/unverified. These do not establish
-physical-device acceptance or the full live story across every provider.
+Latest production source a5b2769 at orbsie.com; smoke evidence in
+`replacement-sizing-release/`. Last local server port3068/session41341 was
+built e0dff7c; revalidate before reuse. Temporary Gateway key file deleted;
+do not assume Vercel env pull contains a usable key.
+OpenRouter/Gateway input-game create/edit/reload/export/play passed separately.
+Gateway explicit continuation/cloud recovery/publication have separate reports.
+Public OpenRouter flagship crystal/portal/reset passed keyboard and CDP touch;
+platform1→2→3 passed desktop sampled landing/carry, touch sequence still failed.
+Free strawberry production trial2→1→0 create/edit and independent mixed asset
+publication passed. These are bounded evidence, not complete provider E2E.
 
-## Owner-dependent gates and remaining scope
+## Owner-dependent and remaining gates
 
-- Regular Chrome page2 at orbsie.com last showed empty Orbsie sign-in fields.
-  Owner sign-in is needed for browser ChatGPT subscription validation. Historical
-  local-companion tests do not satisfy the no-installation browser requirement.
-- Android Chrome first-run terms acceptance without a Google account awaits
-  specific approval. Emulator installation is authorized; revalidate the AVD
-  before use. Target is recent midrange Android; real iOS/Android checks remain.
-- OpenRouter three-call recovery permission remains pending. No answer is implied
-  by automatic goal continuation.
-- Full flagship gameplay/revisions/undo/publication, browser ChatGPT
-  consent/discovery/inference/recovery, physical mobile workflows, representative
-  GPU performance/long sessions, failed-publication continuity, and complete
-  requirement-by-requirement audit remain open.
-- Product modeling/rendering is browser-only; native Blender experiments do not
-  satisfy or replace that requirement. Preserve asset licenses/provenance.
+- CUA fresh inventory2026-09-12: apps[],browsers[]. Last DevTools Orbsie page2
+  showed empty sign-in fields. Owner sign-in/browser access needed for ChatGPT
+  consent/discovery/inference/recovery. Local companion does not satisfy scope.
+- Android Chrome first-run terms without Google account need specific approval.
+  Emulator installation authorized. Revalidate AVD; physical recent midrange
+  Android model/OS and iOS device availability unanswered.
+- OpenRouter3-call recovery approval pending; continuation is not approval.
+- Complete flagship creation/play-during-stream/targeted revisions/undo and
+  publication across providers, giant sizing, mobile editor and platform routes,
+  actual-device iOS/Android, representative GPU timing/memory/long sessions,
+  failed-publication continuity and full requirement audit remain open.
+- Modeling/rendering must use local browser resources with no Blender setup
+  surfaced. Preserve catalog/generated asset provenance and licenses.
