@@ -569,3 +569,14 @@ displacement, no inference/external/mutating requests or errors. Root reviewed
 provenance and clarified that the verifier reloads between platforms. This is
 three independent interactions on ZIP runtime3d2fa966, not continuous crossing
 of all three or verification of the newer public runtime. Those remain open.
+
+### Sequential local platform route observed
+
+Optional FLAGSHIP_SEQUENTIAL=1 uses a single page and real keyboard input for
+platforms1→2→3, with descending-contact/carry proof at each landing. The bounded
+saved-ZIP run passed with no observed ground contact in sampled telemetry and
+zero external/inference/mutating requests. Root corrected the absolute contact
+claim to sampled observations, and required failed-stage retention/key cleanup.
+Syntax, existing helper test and diff checks passed; no redundant browser rerun.
+Evidence README records the post-run label correction and older runtime limit.
+Public/current-runtime and touch crossing remain unverified.

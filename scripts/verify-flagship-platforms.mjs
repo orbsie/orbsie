@@ -24,6 +24,7 @@ const zipPath = resolve(
 );
 const output = resolve(process.argv[2] ?? "docs/evidence/flagship-platforms");
 const reanalyzeReport = process.env.FLAGSHIP_REANALYZE_REPORT;
+const sequential = process.env.FLAGSHIP_SEQUENTIAL === "1";
 if (!reanalyzeReport) await mkdir(output, { recursive: false });
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -180,7 +181,9 @@ standaloneOrigin = `http://127.0.0.1:${standaloneServer.address().port}`;
 
 const report = {
   status: "running",
-  mode: "saved-openrouter-flagship-desktop-platform-landing-carry",
+  mode: sequential
+    ? "saved-openrouter-flagship-desktop-platform-sequential-landing-carry"
+    : "saved-openrouter-flagship-desktop-platform-landing-carry",
   provider: "openrouter",
   liveProvider: false,
   startedAt,
@@ -225,8 +228,9 @@ const report = {
     },
   })),
   selectedPlatformIds: selectedPlatforms.map((entity) => entity.id),
+  sequential,
   driverExperiments: 0,
-  maxDriverExperiments: selectedPlatforms.length,
+  maxDriverExperiments: sequential ? 1 : selectedPlatforms.length,
   inferenceCalls: 0,
   externalRequests: [],
   mutatingRequests: [],
@@ -734,6 +738,198 @@ async function runPlatform(page, entity, mapping, run, asset) {
   await page.screenshot({ path: join(output, run.screenshot) });
 }
 
+async function runSequentialPlatforms(page, ordered, mapping, run) {
+  const held = new Set();
+  const inputLog = [];
+  const setKeys = async (keys, phase) => {
+    const next = new Set(keys);
+    for (const key of held)
+      if (!next.has(key)) {
+        await page.keyboard.up(key);
+        held.delete(key);
+      }
+    for (const key of next)
+      if (!held.has(key)) {
+        await page.keyboard.down(key);
+        held.add(key);
+      }
+    inputLog.push({
+      atPerformanceMs: await page.evaluate(() => performance.now()),
+      phase,
+      keys: [...held],
+    });
+  };
+  const release = async (phase) => setKeys([], phase);
+  const read = () => page.evaluate(() => window.__orbReadWorld());
+  const sample = async (phase) => {
+    const compact = compactTelemetry(await read(), mapping);
+    compact.phase = phase;
+    return compact;
+  };
+  const groundContact = (sample) =>
+    Boolean(sample.player && sample.player.center[1] <= 0.5);
+  const recordSample = (samples, value) => {
+    samples.push(value);
+    if (groundContact(value)) run.groundContactSamples.push(value);
+  };
+  const releaseHeld = async () => {
+    for (const key of held) await page.keyboard.up(key).catch(() => {});
+    held.clear();
+  };
+
+  const execute = async () => {
+    run.inputLog = inputLog;
+    run.approachSamples = [];
+    run.stages = [];
+    run.groundContactSamples = [];
+    run.groundContactSampling = {
+      method: "rendered player telemetry sampled during jump and carry steps",
+      jumpStepWaitMs: 45,
+      carryStepWaitMs: 70,
+      groundCenterYThreshold: 0.5,
+      limitation:
+        "No sampled telemetry can prove absence of ground contact between frames.",
+    };
+    run.sourceContactModel = ordered.map((entity) => ({
+      id: entity.id,
+      gameplay: "src/lib/gameplay.ts platformTop/isInsidePlatform",
+      assetId: entity.geometry.assetId,
+      catalogBounds: catalogAssets.get(entity.geometry.assetId).bounds,
+      entityPosition: entity.position,
+      entityScale: entity.scale,
+      playerHalfHeight: PLAYER_HALF_HEIGHT,
+    }));
+    await page.mouse.click(1100, 850);
+
+    const first = ordered[0];
+    for (let step = 0; step < 180; step++) {
+      const current = await sample("approach-platform-1");
+      run.approachSamples.push(current);
+      const view = current.platforms[first.id];
+      if (!current.player || !view)
+        throw Error(`Missing rendered telemetry for ${first.id}.`);
+      const dx = view.center[0] - current.player.center[0];
+      const dz = view.center[2] - current.player.center[2];
+      if (Math.hypot(dx, dz) <= 0.22) break;
+      await setKeys(movementKeys(dx, dz), "approach-platform-1");
+      await page.waitForTimeout(55);
+      if (step === 179)
+        throw Error(
+          `Could not approach ${first.id} within the bounded sequential driver window.`,
+        );
+    }
+    await release("pre-jump-platform-1");
+    await page.waitForTimeout(70);
+
+    const landAndCarry = async (entity, index) => {
+      const asset = catalogAssets.get(entity.geometry.assetId);
+      const stage = {
+        id: entity.id,
+        label: entity.label,
+        behavior: entity.behavior,
+        beforeJump: await sample(`before-jump-${index + 1}`),
+        landingSamples: [],
+        carrySamples: [],
+      };
+      run.stages.push(stage);
+      const previousBeforeJump = stage.beforeJump;
+      if (index === 0)
+        run.firstTakeoff = {
+          atPerformanceMs: await page.evaluate(() => performance.now()),
+          from: entity.id,
+        };
+      await setKeys([" "], `jump-platform-${index + 1}`);
+      await page.waitForTimeout(80);
+      await release(`jump-release-platform-${index + 1}`);
+      let previousSample = previousBeforeJump;
+      let landedAt;
+      let landingProof;
+      for (let step = 0; step < 42; step++) {
+        const current = await sample(`jump-platform-${index + 1}`);
+        recordSample(stage.landingSamples, current);
+        const evidence = sourceLandingEvidence(
+          previousSample,
+          current,
+          entity,
+          asset,
+        );
+        current.sourceContact = evidence.source
+          ? {
+              contactY: evidence.source.contactY,
+              descending: evidence.descending,
+              previousY: evidence.previousY,
+              currentY: evidence.currentY,
+              crossedContactHeight: evidence.crossedContactHeight,
+              sourceOverlap: evidence.sourceOverlap,
+              accepted: evidence.accepted,
+            }
+          : null;
+        if (evidence.accepted) {
+          landedAt = current;
+          landingProof = {
+            ...current.sourceContact,
+            source: evidence.source,
+          };
+          await release(`landing-release-platform-${index + 1}`);
+          break;
+        }
+        previousSample = current;
+        const view = current.platforms[entity.id];
+        if (current.player && view) {
+          const dx = view.center[0] - current.player.center[0];
+          const dz = view.center[2] - current.player.center[2];
+          await setKeys(
+            Math.hypot(dx, dz) > 0.12 ? movementKeys(dx, dz) : [],
+            `airborne-correction-platform-${index + 1}`,
+          );
+        }
+        await page.waitForTimeout(45);
+      }
+      stage.landedAt = landedAt ?? null;
+      stage.landingProof = landingProof ?? null;
+      if (!landingProof)
+        throw Error(
+          `Sequential route did not land on ${entity.id} from the prior platform.`,
+        );
+
+      await release(`carry-release-platform-${index + 1}`);
+      for (let sampleIndex = 0; sampleIndex < 8; sampleIndex++) {
+        recordSample(
+          stage.carrySamples,
+          await sample(`carry-platform-${index + 1}`),
+        );
+        await page.waitForTimeout(70);
+      }
+      stage.inputReleasedBeforeCarrySampling = true;
+      stage.analysis = carryAnalysis(
+        [stage.landedAt, ...stage.carrySamples],
+        entity,
+      );
+      if (!stage.analysis.carried)
+        throw Error(
+          `Sequential route landed on ${entity.id} but did not prove rendered carry displacement.`,
+        );
+      stage.status = "passed";
+    };
+
+    for (let index = 0; index < ordered.length; index++)
+      await landAndCarry(ordered[index], index);
+    run.finalLanding = run.stages.at(-1).landingProof;
+    run.noGroundContactObserved = run.groundContactSamples.length === 0;
+    if (!run.noGroundContactObserved)
+      throw Error(
+        `Sequential route observed ground contact in ${run.groundContactSamples.length} sampled frame(s) after the first takeoff.`,
+      );
+    run.screenshot = "sequential-platform-route.png";
+    await page.screenshot({ path: join(output, run.screenshot) });
+  };
+  try {
+    await execute();
+  } finally {
+    await releaseHeld();
+  }
+}
+
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -790,57 +986,83 @@ try {
     .toBe(3);
   report.renderedPlatformMapping = mapping;
   report.initialRenderedTelemetry = compactTelemetry(initial, mapping);
-  for (const entity of selectedPlatforms) {
-    const asset = catalogAssets.get(entity.geometry.assetId);
+  if (sequential) {
+    if (selectedPlatforms.length !== 3)
+      throw Error(
+        "Sequential mode requires all three moving platforms; omit FLAGSHIP_PLATFORM_ID.",
+      );
     report.driverExperiments++;
     const run = {
-      id: entity.id,
-      label: entity.label,
-      behavior: entity.behavior,
-      geometrySource: entity.geometry,
+      id: "sequential-platform-route",
+      label: "Moving platforms 1 → 2 → 3",
+      platformIds: selectedPlatforms.map((entity) => entity.id),
       viewport: desktopViewport,
       inputMethod: "desktop keyboard",
-      mappingUuid: mapping[entity.id],
+      mappingUuid: mapping,
       status: "running",
     };
     report.runs.push(run);
     try {
-      await runPlatform(page, entity, mapping, run, asset);
-      run.status = run.analysis.carried ? "passed" : "failed";
-      if (!run.analysis.carried)
-        run.failure =
-          "The bounded jump/release run did not produce rendered landing and carry displacement evidence.";
+      await runSequentialPlatforms(page, selectedPlatforms, mapping, run);
+      run.status = run.noGroundContactObserved ? "passed" : "failed";
     } catch (error) {
       run.status = "failed";
       run.failure = String(error).slice(0, 2000);
     }
-    // Fresh page state for the next platform; this keeps each jump independent
-    // while retaining the same immutable ZIP bytes and runtime.
-    if (entity !== selectedPlatforms.at(-1)) {
-      await page.reload();
-      await expect(page.locator('main[data-ready="true"]')).toBeVisible({
-        timeout: 30000,
-      });
-      await expect
-        .poll(
-          async () =>
-            (await page.evaluate(() => window.__orbReadWorld())).player
-              ?.visible,
-        )
-        .toBe(true);
-      await expect
-        .poll(
-          async () => {
-            const current = await page.evaluate(() => window.__orbReadWorld());
-            const nextMapping = chooseCandidates(current);
-            if (nextMapping) mapping = nextMapping;
-            return nextMapping ? 3 : 0;
-          },
-          { timeout: 30000 },
-        )
-        .toBe(3);
+  } else
+    for (const entity of selectedPlatforms) {
+      const asset = catalogAssets.get(entity.geometry.assetId);
+      report.driverExperiments++;
+      const run = {
+        id: entity.id,
+        label: entity.label,
+        behavior: entity.behavior,
+        geometrySource: entity.geometry,
+        viewport: desktopViewport,
+        inputMethod: "desktop keyboard",
+        mappingUuid: mapping[entity.id],
+        status: "running",
+      };
+      report.runs.push(run);
+      try {
+        await runPlatform(page, entity, mapping, run, asset);
+        run.status = run.analysis.carried ? "passed" : "failed";
+        if (!run.analysis.carried)
+          run.failure =
+            "The bounded jump/release run did not produce rendered landing and carry displacement evidence.";
+      } catch (error) {
+        run.status = "failed";
+        run.failure = String(error).slice(0, 2000);
+      }
+      // Fresh page state for the next platform; this keeps each jump independent
+      // while retaining the same immutable ZIP bytes and runtime.
+      if (entity !== selectedPlatforms.at(-1)) {
+        await page.reload();
+        await expect(page.locator('main[data-ready="true"]')).toBeVisible({
+          timeout: 30000,
+        });
+        await expect
+          .poll(
+            async () =>
+              (await page.evaluate(() => window.__orbReadWorld())).player
+                ?.visible,
+          )
+          .toBe(true);
+        await expect
+          .poll(
+            async () => {
+              const current = await page.evaluate(() =>
+                window.__orbReadWorld(),
+              );
+              const nextMapping = chooseCandidates(current);
+              if (nextMapping) mapping = nextMapping;
+              return nextMapping ? 3 : 0;
+            },
+            { timeout: 30000 },
+          )
+          .toBe(3);
+      }
     }
-  }
   await context.close();
 } catch (error) {
   report.failure = String(error).slice(0, 2000);
@@ -851,8 +1073,8 @@ try {
   report.finishedAt = new Date().toISOString();
   report.status =
     !report.failure &&
-    report.driverExperiments === selectedPlatforms.length &&
-    report.runs.length === selectedPlatforms.length &&
+    report.driverExperiments === (sequential ? 1 : selectedPlatforms.length) &&
+    report.runs.length === (sequential ? 1 : selectedPlatforms.length) &&
     report.runs.every((run) => run.status === "passed") &&
     report.inferenceCalls === 0 &&
     report.externalRequests.length === 0 &&
