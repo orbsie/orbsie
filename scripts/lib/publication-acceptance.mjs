@@ -134,15 +134,79 @@ function projectSnapshotUrl(deployment) {
   return `${deployment.replace(/\/$/, "")}/project.json`;
 }
 
-function parsePublicText(result, label) {
+function assertPublicStatus(result, label) {
   const status = responseStatus(result);
   if (status < 200 || status >= 300)
     throw new PublicationAcceptanceError(`${label} failed (HTTP ${status}).`, {
       status,
     });
+  return status;
+}
+
+function parsePublicText(result, label) {
+  assertPublicStatus(result, label);
   if (typeof result?.text === "string") return result.text;
   if (typeof result?.body === "string") return result.body;
   return "";
+}
+
+function responseEvidence(result) {
+  const body = responseBody(result);
+  const evidence = {
+    status: responseStatus(result),
+    ok: responseIsOk(result),
+  };
+  const fields = [
+    ["state", body.state],
+    ["error", responseError(result)],
+    ["revision", body.revision],
+    ["servedRevision", body.servedRevision],
+    ["deploymentId", body.deploymentId],
+    ["deploymentUrl", body.deploymentUrl],
+    ["url", body.url],
+    ["vercelProjectId", identity(body)],
+  ];
+  for (const [key, value] of fields) {
+    if (
+      (typeof value === "string" && value.length > 0) ||
+      (typeof value === "number" && Number.isFinite(value))
+    )
+      evidence[key] = value;
+  }
+  return evidence;
+}
+
+function browserEvidence(result) {
+  return {
+    status:
+      typeof result?.status === "number" && Number.isFinite(result.status)
+        ? result.status
+        : null,
+    ready: result?.ready === true,
+    canvas: result?.canvas === true,
+    pageErrorCount: Array.isArray(result?.pageErrors)
+      ? result.pageErrors.length
+      : null,
+  };
+}
+
+function requireBrowserReady(result, label) {
+  if (!result || result.ready !== true)
+    throw new PublicationAcceptanceError(
+      `${label} browser did not reach data-ready state.`,
+    );
+  if (result.canvas !== true)
+    throw new PublicationAcceptanceError(
+      `${label} browser did not render a canvas.`,
+    );
+  if (!Array.isArray(result.pageErrors))
+    throw new PublicationAcceptanceError(
+      `${label} browser did not report page errors.`,
+    );
+  if (result.pageErrors.length > 0)
+    throw new PublicationAcceptanceError(
+      `${label} browser reported ${result.pageErrors.length} page error(s).`,
+    );
 }
 
 async function publicSnapshot(transport, url, label) {
@@ -164,25 +228,61 @@ async function publicSnapshot(transport, url, label) {
   return snapshot;
 }
 
-async function signedOutRelease(transport, release, expected, label) {
+function assertSnapshotMatches(snapshot, expected, label) {
+  assert.equal(snapshot.revision, expected.revision, `${label} revision`);
+  assert.equal(snapshot.title, expected.title, `${label} title`);
+  const expectedMaterial = expected.entities?.find(
+    (entity) => entity.id === "crystal-accept",
+  )?.color;
+  if (expectedMaterial !== undefined) {
+    const actualMaterial = snapshot.entities?.find(
+      (entity) => entity.id === "crystal-accept",
+    )?.color;
+    assert.equal(actualMaterial, expectedMaterial, `${label} material`);
+  }
+}
+
+async function signedOutRelease(
+  transport,
+  release,
+  expected,
+  label,
+  recordStep,
+) {
   const pageResult = await transport.publicGet(
     release.deploymentUrl,
     `${label} page`,
   );
-  const page = parsePublicText(pageResult, `${label} page`);
-  assert.equal(
-    page.includes('data-ready="true"'),
-    true,
-    `${label} page is not data-ready`,
+  assertPublicStatus(pageResult, `${label} page`);
+  await recordStep(`${label} page`, pageResult);
+  const browserResult = await transport.browserReady(
+    release.deploymentUrl,
+    `${label} browser`,
   );
+  await recordStep(`${label} browser`, null, {
+    browser: browserEvidence(browserResult),
+  });
+  requireBrowserReady(browserResult, label);
   const snapshot = await publicSnapshot(
     transport,
     projectSnapshotUrl(release.deploymentUrl),
     `${label} snapshot`,
   );
-  assert.equal(snapshot.revision, expected.revision, `${label} revision`);
-  assert.equal(snapshot.title, expected.title, `${label} title`);
-  return { page, snapshot };
+  await recordStep(`${label} snapshot`, null, {
+    snapshot: {
+      revision: snapshot.revision,
+      title: snapshot.title,
+      materialColor: snapshot.entities?.find(
+        (entity) => entity.id === "crystal-accept",
+      )?.color,
+    },
+  });
+  assertSnapshotMatches(snapshot, expected, label);
+  return {
+    pageStatus: responseStatus(pageResult),
+    browser: browserEvidence(browserResult),
+    snapshot,
+  };
 }
 
 async function waitForReady({
@@ -193,6 +293,7 @@ async function waitForReady({
   pollDelayMs,
   sleep,
   label,
+  recordStep,
 }) {
   let latest;
   for (let attempt = 0; attempt < maxPolls; attempt += 1) {
@@ -202,6 +303,7 @@ async function waitForReady({
       { cookie: cookies },
       `${label} status`,
     );
+    await recordStep(`${label} status`, result);
     latest = requireResponse(`${label} status`, result);
     if (latest.state === "READY") {
       const url = latest.url;
@@ -245,6 +347,7 @@ export async function runPublicationAcceptance({
   maxPolls = 120,
   pollDelayMs = 5000,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  onProgress = async (_progress) => undefined,
 }) {
   if (!transport || typeof transport.request !== "function")
     throw new TypeError("A publication transport is required.");
@@ -252,8 +355,34 @@ export async function runPublicationAcceptance({
     throw new TypeError(
       "Publication acceptance requires a signed-out public transport.",
     );
+  if (typeof transport.browserReady !== "function")
+    throw new TypeError(
+      "Publication acceptance requires an injected signed-out browser transport.",
+    );
   if (!world || typeof world !== "object")
     throw new TypeError("A publication world is required.");
+
+  const progress = {
+    account: { email },
+    world: {
+      id: typeof world.id === "string" ? world.id : null,
+      revision: typeof world.revision === "number" ? world.revision : null,
+      title: typeof world.title === "string" ? world.title : null,
+    },
+    steps: [],
+    last: null,
+  };
+  const recordStep = async (step, response, extra = {}) => {
+    const event = {
+      step,
+      ...(response ? responseEvidence(response) : {}),
+      ...extra,
+    };
+    progress.last = event;
+    progress.steps.push(event);
+    await onProgress(structuredClone(progress));
+  };
+  await recordStep("start", null);
 
   const signupResult = await transport.request(
     "/api/auth/sign-up/email",
@@ -267,11 +396,17 @@ export async function runPublicationAcceptance({
     },
     "sign-up",
   );
+  await recordStep("sign-up", signupResult);
   requireResponse("sign-up", signupResult);
   const cookies = cookieFromSignup(signupResult);
 
   const firstWorld = structuredClone(world);
   firstWorld.revision = 1;
+  progress.world = {
+    id: firstWorld.id,
+    revision: firstWorld.revision,
+    title: firstWorld.title,
+  };
   const saved = await transport.request(
     "/api/projects",
     {
@@ -281,6 +416,13 @@ export async function runPublicationAcceptance({
     },
     "cloud save revision 1",
   );
+  await recordStep("cloud save revision 1", saved, {
+    world: {
+      id: firstWorld.id,
+      revision: firstWorld.revision,
+      title: firstWorld.title,
+    },
+  });
   const savedBody = requireResponse("cloud save revision 1", saved);
   assert.equal(savedBody.revision, 1, "cloud save revision 1");
 
@@ -296,6 +438,13 @@ export async function runPublicationAcceptance({
     },
     "publish revision 1",
   );
+  await recordStep("publish revision 1", submitted, {
+    world: {
+      id: firstWorld.id,
+      revision: firstWorld.revision,
+      title: firstWorld.title,
+    },
+  });
   const submittedBody = requireResponse("publish revision 1", submitted);
   const firstReady = await waitForReady({
     transport,
@@ -305,6 +454,7 @@ export async function runPublicationAcceptance({
     pollDelayMs,
     sleep,
     label: "publish revision 1",
+    recordStep,
   });
   const firstPostProjectId = identity(submittedBody);
   const firstGetProjectId = identity(firstReady);
@@ -330,6 +480,7 @@ export async function runPublicationAcceptance({
     firstRelease,
     firstWorld,
     "first public release",
+    recordStep,
   );
 
   const report = {
@@ -357,6 +508,11 @@ export async function runPublicationAcceptance({
       "Republish mapping could not be verified: publication responses do not expose the Vercel project identity (expected vercelProjectId).",
     );
   const secondWorld = republishWorld(firstWorld);
+  progress.world = {
+    id: secondWorld.id,
+    revision: secondWorld.revision,
+    title: secondWorld.title,
+  };
   const secondSaved = await transport.request(
     "/api/projects",
     {
@@ -368,6 +524,13 @@ export async function runPublicationAcceptance({
     },
     "cloud save revision 2",
   );
+  await recordStep("cloud save revision 2", secondSaved, {
+    world: {
+      id: secondWorld.id,
+      revision: secondWorld.revision,
+      title: secondWorld.title,
+    },
+  });
   const secondSavedBody = requireResponse("cloud save revision 2", secondSaved);
   assert.equal(secondSavedBody.revision, 2, "cloud save revision 2");
 
@@ -383,6 +546,13 @@ export async function runPublicationAcceptance({
     },
     "publish revision 2",
   );
+  await recordStep("publish revision 2", secondSubmitted, {
+    world: {
+      id: secondWorld.id,
+      revision: secondWorld.revision,
+      title: secondWorld.title,
+    },
+  });
   const secondSubmittedBody = requireResponse(
     "publish revision 2",
     secondSubmitted,
@@ -413,6 +583,7 @@ export async function runPublicationAcceptance({
     firstRelease,
     firstWorld,
     "previous public release during republish",
+    recordStep,
   );
 
   const secondReady = await waitForReady({
@@ -423,6 +594,7 @@ export async function runPublicationAcceptance({
     pollDelayMs,
     sleep,
     label: "publish revision 2",
+    recordStep,
   });
   const secondGetProjectId = identity(secondReady);
   compareProjectIdentity(
@@ -459,6 +631,7 @@ export async function runPublicationAcceptance({
     secondRelease,
     secondWorld,
     "final public release",
+    recordStep,
   );
   return {
     ...report,

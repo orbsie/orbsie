@@ -36,6 +36,9 @@ type FixtureOptions = {
   firstPollError?: boolean;
   omitProjectId?: boolean;
   genericProjectId?: boolean;
+  browserReady?: boolean;
+  browserCanvas?: boolean;
+  browserErrors?: string[];
 };
 
 function result(body: unknown, status = 200, cookies?: string) {
@@ -166,11 +169,94 @@ function fixtureTransport(options: FixtureOptions = {}) {
           : secondSnapshot;
         return result(JSON.stringify(snapshot));
       }
-      return { status: 200, text: '<main data-ready="true"></main>' };
+      return { status: 200, text: "<main></main>" };
     },
+    browserReady: async () => ({
+      status: 200,
+      ready: options.browserReady ?? true,
+      canvas: options.browserCanvas ?? true,
+      pageErrors: options.browserErrors ?? [],
+    }),
   };
   return transport;
 }
+
+it("uses browser readiness instead of raw HTML data-ready markup", async () => {
+  const transport = fixtureTransport();
+  const report = await runPublicationAcceptance({
+    transport,
+    world,
+    email: "fixture@example.test",
+    password: "fixture-password",
+    pollDelayMs: 0,
+    sleep: async () => undefined,
+  });
+
+  expect(report.first.signedOutSnapshot).toMatchObject({
+    revision: 1,
+    title: world.title,
+  });
+  expect(transport.publicRequests).toContain("https://deployment-1.vercel.app");
+});
+
+it("fails signed-out acceptance when the browser reports page errors", async () => {
+  const transport = fixtureTransport({ browserErrors: ["render failed"] });
+  const progress: unknown[] = [];
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toThrow(/page error/);
+  const last = progress.at(-1) as {
+    steps: Array<Record<string, unknown>>;
+  };
+  expect(last.steps).toContainEqual(
+    expect.objectContaining({
+      step: "publish revision 1",
+      deploymentId: "deployment-1",
+      deploymentUrl: "https://deployment-1.vercel.app",
+      vercelProjectId: "project-1",
+    }),
+  );
+});
+
+it("preserves sanitized publish evidence through an early failure", async () => {
+  const transport = fixtureTransport({ firstPostStatus: 403 });
+  const progress: unknown[] = [];
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      onProgress: async (snapshot) => {
+        progress.push(snapshot);
+      },
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toMatchObject({ status: 403 });
+  const last = progress.at(-1) as {
+    account: { email: string };
+    world: { id: string };
+    last: {
+      step: string;
+      status: number;
+    };
+  };
+  expect(last.account.email).toBe("fixture@example.test");
+  expect(last.world.id).toBe(world.id);
+  expect(last.last).toMatchObject({ step: "publish revision 1", status: 403 });
+  expect(JSON.stringify(last)).not.toContain("fixture-password");
+});
 
 it("requires an explicit live gate before the harness can run", () => {
   expect(() => assertLivePublicationOptIn({ NODE_ENV: "test" })).toThrow(

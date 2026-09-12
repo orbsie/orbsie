@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import {
   assertLivePublicationOptIn,
@@ -113,6 +114,49 @@ async function publicGet(url, label) {
   return { status: response.status, text: await response.text() };
 }
 
+async function browserReady(url, label) {
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
+    ],
+  });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+  });
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  let status = null;
+  try {
+    const response = await page.goto(url, {
+      waitUntil: "domcontentloaded",
+    });
+    status = response?.status() ?? null;
+    if (!response || !response.ok())
+      throw new PublicationAcceptanceError(
+        `${label} failed (HTTP ${status ?? "unknown"}).`,
+        { status },
+      );
+    await expect(page.locator('main[data-ready="true"]')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+    return { status, ready: true, canvas: true, pageErrors };
+  } catch (error) {
+    if (pageErrors.length > 0)
+      return { status, ready: false, canvas: false, pageErrors };
+    throw new PublicationAcceptanceError(`${label} readiness check failed.`, {
+      cause: error,
+      status,
+    });
+  } finally {
+    await browser.close();
+  }
+}
+
 function reportOrigin(value) {
   try {
     return new URL(value).origin;
@@ -126,16 +170,27 @@ const report = {
   base: reportOrigin(BASE),
   republish: REPUBLISH,
   startedAt: new Date().toISOString(),
+  account: { email: EMAIL },
+  world: { id: world.id, title: world.title, revision: world.revision },
+  progress: null,
   checks: {},
 };
 
 try {
   const result = await runPublicationAcceptance({
-    transport: { request, publicGet },
+    transport: { request, publicGet, browserReady },
     world,
     email: EMAIL,
     password: PASSWORD,
     republish: REPUBLISH,
+    onProgress: async (progress) => {
+      report.progress = progress;
+      await mkdir(EVIDENCE, { recursive: true });
+      await writeFile(
+        `${EVIDENCE}/report.json`,
+        JSON.stringify(report, null, 2) + "\n",
+      );
+    },
   });
   const sharingPage = new URL(result.first.publicUrl, BASE).toString();
   report.checks = {
