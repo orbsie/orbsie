@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-09-13T18:34:39.209914+00:00",
+  "sourceRelease": "7cbd875",
+  "connector": "chrome_devtools",
+  "initialPage": "https://orbsie.com/",
+  "action": "Clicked Connect with OpenRouter in Connections",
+  "observedRedirect": {
+    "origin": "https://openrouter.ai",
+    "path": "/sign-up",
+    "callbackOrigin": "https://orbsie.com",
+    "callbackPath": "/",
+    "pkceMethod": "S256",
+    "statePresent": true,
+    "challengePresent": true
+  },
+  "followup": "Selected existing-account Sign in link; reached /sign-in",
+  "credentialsSubmitted": false,
+  "termsAccepted": false,
+  "oauthGrantCompleted": false,
+  "modelCalls": 0,
+  "stoppingCondition": "Existing account sign-in required; requested owner sign-in through browser UI",
+  "scope": "Real production OAuth entry/navigation only; not consent, callback, key exchange or provider inference acceptance",
+  "redaction": "OAuth state/challenge values and full query URLs deliberately omitted"
+}

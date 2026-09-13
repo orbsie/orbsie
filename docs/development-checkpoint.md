@@ -73,8 +73,11 @@ Do not deploy unreviewed main WIP. No .openai/hosting.json. Frequent local commi
 
 CUA owner surface still fails CUA_REPL_ENABLED_SURFACES is required. Do not bypass
 with raw CDP/cookie copying. Provided chrome_devtools connector works, but its
-profile is signed out of ChatGPT. Pages2orbsie.com (mobile Connections open),
+profile is signed out of ChatGPT. Page2 now OpenRouter /sign-in after actual Connect with OpenRouter navigation;
 3chatgpt.com signed out,4historical published world. Revalidate inventory.
+OAuth entry/PKCE callback origin observed, consent/exchange not completed.
+Evidence openrouter-oauth-entry-20260913; owner asked to sign in through the
+existing OpenRouter and ChatGPT tabs, without sending credentials in chat.
 No owner login/new inference performed. Connector screenshot file save to repo
 was denied; inline viewing is permitted. Do not route around filesystem policy.
 
