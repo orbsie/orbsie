@@ -8,7 +8,7 @@ history/evidence: [archive](checkpoint-history/2026-09-13-before-chatgpt-presets
 
 Astra architecture/review/integration; one Luna xhigh/default worker, no nested
 agents, concise context, Fast off. Reuse `/root/host_session_renewal`.
-Latest measured Codex quota:53% used/47% remaining. Stop worker/live tests below20%
+Latest measured Codex quota:54% used/46% remaining. Stop worker/live tests below20%
 remaining; helper `/home/marcos/.cache/orbsie/read-codex-quota.py`. Goal tokens are
 not subscription quota. Targeted checks; no repeated green/live runs without cause.
 Live tests Luna only, users unrestricted. Owner approved needed calls. API tests
@@ -39,11 +39,11 @@ no Blender installation/connection. Preserve licenses and safe unrelated work.
 
 ## Production and local processes
 
-Production sourceae3a478:
-https://orbsie-434dy7m00-grappeggias-projects.vercel.app, alias https://orbsie.com.
-Local build90664/deploy67411 completed successfully; configHTTP200. Changing host
+Production sourcec84ecbd:
+https://orbsie-byn8nwc6r-grappeggias-projects.vercel.app, alias https://orbsie.com.
+Local build7773/deploy73515 completed successfully; configHTTP200. Changing host
 artifact requires a fresh ChatGPT connection. Preset changes deployed; live ChatGPT generation remains unverified.
-Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detachedae3a478; known
+Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detachedc84ecbd; known
 build-generated next-env.d.ts dirty. Existing Vercel CLI auth, scope
 `grappeggias-projects`; do not print credentials.
 Local servers last confirmed3040(start2303),3091(dev720360/720361); revalidate.
@@ -155,3 +155,16 @@ project/revision. Evidence `fresh-flagship-route-reviewed-software-20260913/` wi
 root-review and exact source hashes. Overall fixture remains false for phone-
 landscape empty sheet handle; mobile and full-provider gates remain open.
 Luna notified browser is free and continues visible activity task. No model calls.
+
+## Visible activity release and current single worker
+
+Activity Task1 c84ecbd deployed: waiting, named construction, real geometry
+preparation, applied updates, completion/cancel/failure; bounded18events, separate
+polite latest announcement and accessible history. Root reviewed everydiff,
+16targeted tests/typecheck, desktop+390px fixture/run8 and screenshots pass. Failed
+runs1–7 retained. Production config/source200 and exported activity helper matches.
+Evidence `visible-authoring-fixture-run8/release.json`. No model inspection claimed.
+No packagingfix needed: build-player automaticallyincludes metafiledependencies.
+Luna now owns Task2a: revision-bound capturebridge + world/softwareintegration and
+focusedtests/fixture. No modelcalls/loop yet; preserve renderer/gameplay continuity.
+Full taskcontract docs/visible-authoring-task.md. Root handles integration/review.

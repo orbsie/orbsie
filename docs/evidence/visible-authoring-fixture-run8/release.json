@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "c84ecbd",
+  "deployment": "https://orbsie-byn8nwc6r-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuildAndDeployment": "passed",
+  "configHttpStatus": 200,
+  "sourceHttpStatus": 200,
+  "exportedActivityHelperMatches": true,
+  "activityHelperSha256": "483a2feae2d841e26bd1aedcf25e2dac8a2671f05995d4ae3f4baee22d49dbff",
+  "validation": "16 targeted tests, typecheck, desktop and narrow-phone delayed-stream/worker fixture passed; root screenshot review",
+  "visualModelReviewImplemented": false,
+  "liveModelCalls": 0
+}
