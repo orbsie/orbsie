@@ -31,7 +31,9 @@ The Codex CLI label is consistent with the actual isolated codex app-server runt
 chatgptDeviceCode (https://learn.chatgpt.com/docs/app-server#3b-log-in-with-chatgpt-device-code-flow).
 Earlier categorical mismatch warning was corrected; label alone does not prove an
 unsupported integration. No inference calls. Next: complete device entry through
-owner UI, verify Connected/catalog, then bounded Luna acceptance after quota check.
+owner UI, verify Connected/catalog. Hosted harness outputCap is null;512KiB/180s
+limits are not4096tokens. Resolve actual authorized/enforceable inference bounds
+before live Luna acceptance; see hosted-chatgpt-acceptance.md reconciliation.
 
 PRIORITY owner correction: no separate Orbsie email/password gate for provider
 connection. Implemented BetterAuth anonymous-session bootstrap with existing

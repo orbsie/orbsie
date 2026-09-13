@@ -52,6 +52,18 @@ ChatGPT uses its own bounded server generation policy; adding the harness does
 not increase that policy or authorize model substitution. End-user model
 selection remains unrestricted among the product's supported models.
 
+## Output-limit reconciliation — 2026-09-13
+
+Source review at36b61a2 found that hosted mode sets `outputCap = null` in
+`scripts/provider-browser-e2e.mjs`. `chatgpt-generation.ts` bounds output at
+512 KiB, deltas at8192 and default duration at180 seconds; these are transport
+and runtime limits, not a4096-token inference ceiling. The RPC policy currently
+sends no maximum-output-token parameter. Two-request enforcement does not imply
+a per-request token bound. Do not report this harness as complying with an
+owner-approved4096-token cap or run it under that assumption. Before live
+acceptance, establish a supported enforceable limit or obtain authorization for
+the actual distinct bounds. This does not restrict end-user model choice.
+
 ## Running the hosted milestone
 
 The hosted mode is implemented and reviewed. Ten focused synthetic tests
