@@ -168,3 +168,15 @@ No packagingfix needed: build-player automaticallyincludes metafiledependencies.
 Luna now owns Task2a: revision-bound capturebridge + world/softwareintegration and
 focusedtests/fixture. No modelcalls/loop yet; preserve renderer/gameplay continuity.
 Full taskcontract docs/visible-authoring-task.md. Root handles integration/review.
+
+
+## Astra quality investigation handoff
+
+Owner-requested Astra low read-only investigation completed; recommendations are
+recorded in docs/visible-authoring-task.md. Main change proposed is a concise
+creative/game rubric plus actual rendered review, evaluated separately for visual
+quality, structural correctness and observed playability. No prompt-quality gains
+or self-review completion claimed. Paused Luna host_session_renewal resumed Task2a
+through followup_task; capture helper remains unfinished WIP. Root verified rebuilt
+player runtime exactly matches deployed c84ecbd build; source manifest has identical
+key/value contents with ordering differences only. Quota55%used/45%remaining.

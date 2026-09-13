@@ -121,3 +121,40 @@ metadata must remain unknown rather than silently claiming visual support. Keep
 end-user model choices unchanged. Tests need explicit image support, explicit
 text-only, absent/invalid metadata, and user-facing limited-review behavior.
 These catalog checks are not successful image-inference acceptance.
+
+## Creative quality follow-up (Astra investigation, 2026-09-13)
+
+Read-only source investigation completed; no quality improvement is claimed yet.
+After capture integration, implement a bounded shared-prompt refactor before the
+controlled live review milestone. Preserve adapter-specific serialization and all
+existing stable-ID, catalog/new-only, geometry and supported-gameplay constraints.
+
+Order semantic sections explicitly: user intent/preservation, artistic intent,
+playable experience, staged authoring, capabilities/output. Guide recognizable
+silhouettes, deliberate proportions, coherent palettes, focal hierarchy, visible
+requested details and believable contact/support without imposing a fixed style.
+For games, prioritize a clear player action, reachable objective, visible feedback
+and completion/reset where appropriate; build the essential route before scenery.
+Retain concrete jump/bounce/path guidance. Label recommended complexity separately
+from schema limits (currently prompt16 custom parts versus schema32).
+
+The existing prompt in generation.ts is largely correctness/serialization policy;
+modeling-policy.ts combines capability limits and a substantial tree-like example.
+Example anchoring is a hypothesis to test, not an established cause of blandness.
+Both adapters currently send complete scene recipes; defer snapshot compression
+until dependency preservation and actual token savings can be measured. Avoid a
+separate planning call or simply increasing output caps.
+
+Capture/review must include actual transformed bounds and relevant game/geometry
+observations, not just image approval: prior giant-mushroom evidence shows a larger
+scale value still produced a physically shorter object. A screenshot cannot prove
+playability. Review returns concrete entity-scoped defects/corrections or acceptance.
+
+Controlled baseline-versus-change evaluation uses Luna only and unchanged call
+caps/settings. Cases: blue-strawberry tree, asymmetric original sculpture, mixed
+catalog garden, explicit new-only edit, giant replacement preserving unrelated IDs,
+collect/bounce/moving-platform route, and input/timer score/reset game. Record every
+attempt. Separate parse/kernel success, blinded visual recognizability/composition/
+requested-detail ratings, observed gameplay completion, preservation, first-object
+latency, total latency and token/cost measurements. Current Gateway malformed JSON
+cause remains unresolved; do not infer it from a different older missing-brace case.
