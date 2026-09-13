@@ -380,3 +380,36 @@ Latest connection UX requirement: Connect → authorize/sign in → return conne
 Firm owner constraint: all AI connection workflows must work entirely in the browser, with no installation, local companion, terminal commands or pasted connection links. Existing local ChatGPT experiments do not satisfy the subscription connector requirement.
 
 Latest modeling requirement: no Blender connection, companion setup, or installation may be required or surfaced. New geometry must execute with resources in the local browser through the browser modeling worker. Native Blender runtime/package work is superseded for product delivery; retain only compatibility with already baked saved assets.
+
+
+## Visible authoring and self-review — owner update 2026-09-13
+
+ChatGPT sign-in and prompts now work in the owner's existing browser. Preserve
+that workflow. Generation must feel observable and iterative, not like a silent
+single response.
+
+- Display concise, high-level activity summaries as real events happen: planning
+  the requested result, constructing named objects, waiting for browser geometry,
+  inspecting the rendered scene, and correcting a specific observed issue. These
+  are action/result summaries, never hidden chain-of-thought or fabricated
+  thinking traces. Do not claim inspection before it actually occurs.
+- Add an actual model-driven inspect-and-revise loop. After browser workers finish
+  a candidate revision, return revision-bound scene/geometry feedback and a
+  rendered view to a vision-capable selected model. The model must assess the
+  result against the user's request and issue targeted corrections when needed.
+  If visual inspection is unsupported, state the limited structural-check scope
+  rather than presenting it as visual review.
+- Keep the world playable during inspection and revisions. Preserve stable IDs,
+  unrelated finished objects, selection and the last good revision. Display the
+  observed reason for each correction and its progress in the same conversation.
+- Bound the loop by cancellation, time, iteration count and the active provider's
+  usage limits. Stop is available throughout; no unlimited automatic retries.
+  Surface a clear partial result when the bound is reached, with an explicit
+  user-driven continuation. Respect free-prompt accounting and show any extra
+  provider usage involved in review.
+- Validate a visible create → browser render → model inspect → targeted revise →
+  final check journey. Cover a deliberately imperfect fixture requiring a real
+  correction, no-change acceptance, cancellation, stale screenshot/revision,
+  unsupported vision, provider failure and preserved gameplay. Then run bounded
+  live Luna acceptance across ChatGPT, OpenRouter and Gateway; distinguish those
+  results from fixtures. End-user model choices remain unrestricted.
