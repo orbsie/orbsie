@@ -18,6 +18,7 @@ import {
   readConfiguration,
   readFlagshipResumeCheckpoint,
   flagshipResumeExecutionMode,
+  runProjectFollowOnPhases,
 } from "../scripts/provider-browser-e2e.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
@@ -43,6 +44,7 @@ const ENV_NAMES = [
   "ORBSIE_TEST_URL",
   "ORBSIE_EXPECTED_MODEL",
   "ORBSIE_OUTPUT_CAP_TOKENS",
+  "ORBSIE_OPENROUTER_RAISED_CAP",
   "ORBSIE_KEY_SCOPE",
   "ORBSIE_FLAGSHIP_STORY",
   "ORBSIE_FLAGSHIP_RESUME",
@@ -55,11 +57,16 @@ const ENV_NAMES = [
   "ORBSIE_FLAGSHIP_RESUME_EDITED_MODELS",
   "ORBSIE_CREATION_PROMPT",
   "ORBSIE_EDIT_PROMPT",
+  "ORBSIE_CHATGPT_TEST_LIMITS",
+  "ORBSIE_ACCOUNT_STORAGE_STATE",
+  "ORBSIE_REAL_PUBLICATION",
+  "ORBSIE_CLOUD_TEST_STATE",
   "ORBSIE_REQUIRE_INPUT_GAME",
   "ORBSIE_VERIFY_CLOUD_RECOVERY",
   "ORBSIE_VERIFY_INTERRUPTED_RECOVERY",
   "AI_GATEWAY_TEST_KEY",
   "AI_GATEWAY_API_KEY",
+  "OPENROUTER_API_KEY",
 ];
 
 const savedEnvironment = new Map(
@@ -85,6 +92,36 @@ function gatewayStoryEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_KEY_SCOPE: "local-only",
     ORBSIE_FLAGSHIP_STORY: "1",
     AI_GATEWAY_TEST_KEY: "test-gateway-key",
+    ...overrides,
+  });
+}
+
+function openRouterStoryEnvironment(overrides: Record<string, string> = {}) {
+  for (const name of ENV_NAMES) delete process.env[name];
+  Object.assign(process.env, {
+    ORBSIE_LIVE_E2E: "1",
+    ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
+    ORBSIE_TEST_URL: "http://127.0.0.1:3018",
+    ORBSIE_EXPECTED_MODEL: "openai/gpt-5.6-luna",
+    ORBSIE_OUTPUT_CAP_TOKENS: "4096",
+    ORBSIE_OPENROUTER_RAISED_CAP: "1",
+    ORBSIE_KEY_SCOPE: "local-only",
+    ORBSIE_FLAGSHIP_STORY: "1",
+    OPENROUTER_API_KEY: "test-openrouter-key",
+    ...overrides,
+  });
+}
+
+function hostedStoryEnvironment(overrides: Record<string, string> = {}) {
+  for (const name of ENV_NAMES) delete process.env[name];
+  Object.assign(process.env, {
+    ORBSIE_LIVE_E2E: "1",
+    ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
+    ORBSIE_TEST_URL: "https://orbsie.example.test",
+    ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
+    ORBSIE_FLAGSHIP_STORY: "1",
+    ORBSIE_CHATGPT_TEST_LIMITS: "3-calls-180s-512kib",
+    ORBSIE_ACCOUNT_STORAGE_STATE: "/private/orbsie-state.json",
     ...overrides,
   });
 }
@@ -373,6 +410,40 @@ describe("flagship provider story contract", () => {
       flagshipStory: true,
       prompt:
         "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond.",
+    });
+  });
+
+  it("enables the same three-call story for OpenRouter with its 4096 cap", () => {
+    openRouterStoryEnvironment();
+    const config = readConfiguration(["--provider", "openrouter"]);
+    expect(config).toMatchObject({
+      provider: "openrouter",
+      expectedModel: "openai/gpt-5.6-luna",
+      outputCap: 4096,
+      generationBudget: 3,
+      flagshipStory: true,
+      prompt:
+        "Make a sunny little island game where I collect five glowing crystals, bounce across three moving platforms, and reach a portal. Add friendly trees and a pond.",
+    });
+  });
+
+  it("enables a separate three-call hosted story contract without a token cap", () => {
+    hostedStoryEnvironment();
+    const config = readConfiguration(["--provider", "chatgpt-hosted"]);
+    expect(config).toMatchObject({
+      provider: "chatgpt-hosted",
+      expectedModel: "gpt-5.6-luna",
+      outputCap: null,
+      generationBudget: 3,
+      flagshipStory: true,
+      hostedTestLimits: "3-calls-180s-512kib",
+      hostedActualBounds: {
+        generationCalls: 3,
+        durationSeconds: 180,
+        responseBytes: 512 * 1024,
+        outputTokenCap: null,
+        providerTokenOrCostGuarantee: false,
+      },
     });
   });
 
@@ -819,10 +890,10 @@ describe("flagship provider story contract", () => {
     );
   });
 
-  it("rejects story mode for other providers and incompatible phases", () => {
-    gatewayStoryEnvironment({ ORBSIE_KEY_SCOPE: "local-only" });
+  it("rejects unsupported story combinations while allowing follow-on cloud phases", () => {
+    openRouterStoryEnvironment({ ORBSIE_REQUIRE_INPUT_GAME: "1" });
     expect(() => readConfiguration(["--provider", "openrouter"])).toThrow(
-      /Gateway provider/,
+      /input-game/,
     );
     gatewayStoryEnvironment({ ORBSIE_REQUIRE_INPUT_GAME: "1" });
     expect(() => readConfiguration(["--provider", "gateway"])).toThrow(
@@ -830,6 +901,100 @@ describe("flagship provider story contract", () => {
     );
     gatewayStoryEnvironment({ ORBSIE_OUTPUT_CAP_TOKENS: "512" });
     expect(() => readConfiguration(["--provider", "gateway"])).toThrow(/4096/);
+
+    hostedStoryEnvironment({ ORBSIE_CHATGPT_TEST_LIMITS: "2-calls-180s-512kib" });
+    expect(() => readConfiguration(["--provider", "chatgpt-hosted"])).toThrow(
+      /3-calls-180s-512kib/,
+    );
+
+    hostedStoryEnvironment({ ORBSIE_REAL_PUBLICATION: "1" });
+    expect(readConfiguration(["--provider", "chatgpt-hosted"]).publication).toBe(
+      true,
+    );
+    hostedStoryEnvironment({ ORBSIE_VERIFY_CLOUD_RECOVERY: "1" });
+    expect(
+      readConfiguration(["--provider", "chatgpt-hosted"]).cloudRecovery,
+    ).toBe(true);
+
+    gatewayStoryEnvironment({
+      ORBSIE_REAL_PUBLICATION: "1",
+      ORBSIE_CLOUD_TEST_STATE: "/private/cloud-state.json",
+    });
+    expect(readConfiguration(["--provider", "gateway"])).toMatchObject({
+      publication: true,
+      cloudRecovery: false,
+      generationBudget: 3,
+    });
+  });
+
+  it("passes the undone project identity and revision through follow-on phases", async () => {
+    const project = { id: "story-project", revision: 42 };
+    const calls: Array<{
+      phase: string;
+      id: string;
+      revision: number;
+    }> = [];
+    const record = (phase: string, value: any, expected: any) => {
+      expect(value).toMatchObject({
+        id: expected.projectId,
+        revision: expected.revision,
+      });
+      calls.push({ phase, id: value.id, revision: value.revision });
+    };
+    const result = await runProjectFollowOnPhases({
+      project,
+      refresh: async (expected: any) => {
+        record("refresh", project, expected);
+        return structuredClone(project);
+      },
+      exportProject: async (refreshed: any, expected: any) => {
+        record("export", refreshed, expected);
+        return { project: structuredClone(refreshed) };
+      },
+      standalonePlayback: async (exported: any, expected: any) => {
+        record("standalone", exported.project, expected);
+      },
+      cloudRecovery: async (current: any, expected: any) => {
+        record("cloud", current, expected);
+      },
+      publication: async (current: any, expected: any) => {
+        record("publication", current, expected);
+      },
+    });
+    expect(result).toEqual({ projectId: project.id, revision: project.revision });
+    expect(calls).toEqual([
+      { phase: "refresh", id: project.id, revision: project.revision },
+      { phase: "export", id: project.id, revision: project.revision },
+      { phase: "standalone", id: project.id, revision: project.revision },
+      { phase: "cloud", id: project.id, revision: project.revision },
+      { phase: "publication", id: project.id, revision: project.revision },
+    ]);
+
+    const failedCalls: string[] = [];
+    await expect(
+      runProjectFollowOnPhases({
+        project,
+        refresh: async () => structuredClone(project),
+        exportProject: async () => {
+          failedCalls.push("export");
+          return { project: { ...project, revision: project.revision + 1 } };
+        },
+        standalonePlayback: async () => failedCalls.push("standalone"),
+        publication: async () => failedCalls.push("publication"),
+      }),
+    ).rejects.toThrow(/Export changed the project revision/);
+    expect(failedCalls).toEqual(["export"]);
+
+    await expect(
+      runProjectFollowOnPhases({
+        project,
+        refresh: async () => structuredClone(project),
+        exportProject: async () => ({
+          project: { ...project, id: "different-project" },
+        }),
+        standalonePlayback: async () => undefined,
+      }),
+    ).rejects.toThrow(/Export changed the project identity/);
   });
 
   it("validates semantic creation, mushroom scope, and platform goal reconciliation", () => {

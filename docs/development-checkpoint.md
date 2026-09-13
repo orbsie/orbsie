@@ -149,11 +149,15 @@ Do not route around that filesystem restriction.
 
 ## Current harness review
 
-Three-provider fresh flagship support and explicit hosted3-call bounds are in the
-worktree. Luna is replacing a source-order test with behavioral project/revision
-continuity evidence; root found no other issue in the provider/bounds/logo diffs.
+Three-provider fresh flagship support and explicit hosted3-call bounds are
+reviewed. Behavioral orchestration checks reject wrong project IDs/revisions;
+55 tests across provider-browser-e2e-flagship, hosted-chatgpt-acceptance and
+provider-browser-e2e-recovery suites pass, plus typecheck/diffcheck. Root reviewed
+helper wiring and provider/bounds/logo diffs. OpenAI logo fix is not yet deployed.
 No live calls this task. Publication currently checks revision/canvas, not exact
 project/runtime identity; the remaining gate is recorded in
 `provider-flagship-harness-followup.md`. Full gameplay traversal remains unverified.
 Latest production browser recheck shows compatibility rendering ready on the
 editor; historical public test deployment still has the old WebGL-only runtime.
+
+Next single Luna task: `provider-publication-acceptance-task.md`; no live calls.

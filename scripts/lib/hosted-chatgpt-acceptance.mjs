@@ -2,6 +2,10 @@ export const HOSTED_PROVIDER = "chatgpt-hosted";
 export const HOSTED_MODEL = "gpt-5.6-luna";
 export const HOSTED_EFFORT = "low";
 export const HOSTED_TEST_LIMITS = "2-calls-180s-512kib";
+// The original hosted milestone remains a bounded two-call journey. The
+// fresh flagship story has a separate acknowledgement because it makes one
+// additional, explicitly described generation request.
+export const HOSTED_FLAGSHIP_TEST_LIMITS = "3-calls-180s-512kib";
 export const HOSTED_ACTUAL_BOUNDS = Object.freeze({
   generationCalls: 2,
   boundScope: "per-generation-request",
@@ -10,6 +14,10 @@ export const HOSTED_ACTUAL_BOUNDS = Object.freeze({
   outputTokenCap: null,
   enforcement: "Orbsie application/harness request and response bounds",
   providerTokenOrCostGuarantee: false,
+});
+export const HOSTED_FLAGSHIP_ACTUAL_BOUNDS = Object.freeze({
+  ...HOSTED_ACTUAL_BOUNDS,
+  generationCalls: 3,
 });
 
 const HOSTED_LIFECYCLES = new Set([
@@ -140,6 +148,7 @@ function validModelingFeedback(value) {
  *   companionConfigured?: boolean,
  *   testLimits?: string,
  *   outputTokenCap?: string | null,
+ *   flagshipStory?: boolean,
  * }} options
  */
 export function assertHostedPreflight({
@@ -153,14 +162,19 @@ export function assertHostedPreflight({
   companionConfigured = false,
   testLimits,
   outputTokenCap,
+  flagshipStory = false,
 }) {
   if (liveE2E !== "1")
     throw new HostedAcceptanceBlockedError(
       "Refusing live hosted ChatGPT acceptance: set ORBSIE_LIVE_E2E=1 explicitly.",
     );
-  if (testLimits !== HOSTED_TEST_LIMITS)
+  const threeCallContract = flagshipStory || interruptedRecovery;
+  const expectedTestLimits = threeCallContract
+    ? HOSTED_FLAGSHIP_TEST_LIMITS
+    : HOSTED_TEST_LIMITS;
+  if (testLimits !== expectedTestLimits)
     throw new HostedAcceptanceBlockedError(
-      `Hosted ChatGPT acceptance requires ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} to acknowledge the actual two-call, 180-second, 512 KiB bounds; no generation was attempted.`,
+      `Hosted ChatGPT acceptance requires ORBSIE_CHATGPT_TEST_LIMITS=${expectedTestLimits} to acknowledge the actual ${threeCallContract ? "three-call" : "two-call"}, 180-second, 512 KiB bounds; no generation was attempted.`,
     );
   if (outputTokenCap !== undefined && outputTokenCap !== null)
     throw new HostedAcceptanceBlockedError(
@@ -212,7 +226,9 @@ export function assertHostedPreflight({
     serviceTier,
     accountStorageStatePath,
     testLimits,
-    actualBounds: HOSTED_ACTUAL_BOUNDS,
+    actualBounds: threeCallContract
+      ? HOSTED_FLAGSHIP_ACTUAL_BOUNDS
+      : HOSTED_ACTUAL_BOUNDS,
     outputTokenCap: null,
   };
 }
@@ -486,6 +502,8 @@ export function hostedRouteDecision({
   consentReady = false,
   catalogReady = false,
   generationBudget = 0,
+  flagshipStory = false,
+  interruptedRecovery = false,
   payload = {},
 }) {
   let requestURL;
@@ -518,7 +536,8 @@ export function hostedRouteDecision({
     return { action: "abort", reason: "generation-before-consent" };
   if (!catalogReady)
     return { action: "abort", reason: "generation-before-catalog" };
-  if (![2, 3].includes(generationBudget))
+  const expectedBudget = flagshipStory || interruptedRecovery ? 3 : 2;
+  if (generationBudget !== expectedBudget)
     return { action: "abort", reason: "invalid-generation-budget" };
   if (generationCount >= generationBudget)
     return {

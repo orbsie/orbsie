@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import {
   HOSTED_EFFORT,
+  HOSTED_FLAGSHIP_TEST_LIMITS,
   HOSTED_MODEL,
   HOSTED_TEST_LIMITS,
   assertHostedGenerationPayload,
@@ -99,6 +100,33 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         target,
       ),
     ).toThrow(/localStorage/);
+  });
+
+  it("requires a separate three-call bounds acknowledgement for the fresh story", () => {
+    const preflight = {
+      liveE2E: "1",
+      baseOrigin: target,
+      expectedModel: HOSTED_MODEL,
+      accountStorageStatePath: "/private/state.json",
+      flagshipStory: true,
+      testLimits: HOSTED_FLAGSHIP_TEST_LIMITS,
+    };
+    expect(assertHostedPreflight(preflight)).toMatchObject({
+      testLimits: HOSTED_FLAGSHIP_TEST_LIMITS,
+      actualBounds: {
+        generationCalls: 3,
+        durationSeconds: 180,
+        responseBytes: 512 * 1024,
+        outputTokenCap: null,
+        providerTokenOrCostGuarantee: false,
+      },
+    });
+    expect(() =>
+      assertHostedPreflight({
+        ...preflight,
+        testLimits: HOSTED_TEST_LIMITS,
+      }),
+    ).toThrow(`ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_FLAGSHIP_TEST_LIMITS}`);
   });
 
   it("requires the exact Luna low catalog entry and browser-only request shape", () => {
@@ -309,6 +337,7 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         catalogReady: true,
         generationCount: 2,
         generationBudget: 3,
+        flagshipStory: true,
         payload: request,
       }),
     ).toMatchObject({ action: "continue" });
@@ -320,12 +349,36 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         catalogReady: true,
         generationCount: 3,
         generationBudget: 3,
+        flagshipStory: true,
         payload: request,
       }),
     ).toMatchObject({
       action: "abort",
       reason: "fourth-generation-forbidden",
     });
+    expect(
+      hostedRouteDecision({
+        ...ready,
+        generationBudget: 3,
+        payload: request,
+      }),
+    ).toMatchObject({ action: "abort", reason: "invalid-generation-budget" });
+    expect(
+      hostedRouteDecision({
+        ...ready,
+        generationBudget: 3,
+        interruptedRecovery: true,
+        payload: request,
+      }),
+    ).toMatchObject({ action: "continue" });
+    expect(
+      hostedRouteDecision({
+        ...ready,
+        flagshipStory: true,
+        generationBudget: 2,
+        payload: request,
+      }),
+    ).toMatchObject({ action: "abort", reason: "invalid-generation-budget" });
   });
 
   it("permits explicit hosted interruption recovery without a companion", () => {
@@ -337,7 +390,7 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         accountStorageStatePath: "/private/state.json",
         interruptedRecovery: true,
         interruptionMethod: "reload",
-        testLimits: HOSTED_TEST_LIMITS,
+        testLimits: HOSTED_FLAGSHIP_TEST_LIMITS,
       }),
     ).not.toThrow();
   });

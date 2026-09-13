@@ -10,6 +10,10 @@ import {
   trialRemainingFromHeaders,
 } from "../scripts/provider-browser-e2e.mjs";
 import { blankProject } from "../src/lib/protocol";
+import {
+  HOSTED_FLAGSHIP_TEST_LIMITS,
+  HOSTED_TEST_LIMITS,
+} from "../scripts/lib/hosted-chatgpt-acceptance.mjs";
 
 const ENV_NAMES = [
   "ORBSIE_LIVE_E2E",
@@ -50,7 +54,7 @@ function setHostedEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
     ORBSIE_SERVICE_TIER: "default",
     ORBSIE_ACCOUNT_STORAGE_STATE: "/private/account-storage.json",
-    ORBSIE_CHATGPT_TEST_LIMITS: "2-calls-180s-512kib",
+    ORBSIE_CHATGPT_TEST_LIMITS: HOSTED_FLAGSHIP_TEST_LIMITS,
     ORBSIE_VERIFY_CLOUD_RECOVERY: "1",
     ORBSIE_VERIFY_INTERRUPTED_RECOVERY: "1",
     ...overrides,
@@ -178,11 +182,14 @@ describe("provider browser interrupted recovery contract", () => {
       provider: "chatgpt-hosted",
       generationBudget: 3,
       interruptedRecovery: true,
+      hostedTestLimits: HOSTED_FLAGSHIP_TEST_LIMITS,
+      hostedActualBounds: { generationCalls: 3 },
     });
 
     setHostedEnvironment({
       ORBSIE_VERIFY_CLOUD_RECOVERY: "0",
       ORBSIE_VERIFY_INTERRUPTED_RECOVERY: "0",
+      ORBSIE_CHATGPT_TEST_LIMITS: HOSTED_TEST_LIMITS,
     });
     expect(readConfiguration(["--provider", "chatgpt-hosted"])).toMatchObject({
       generationBudget: 2,

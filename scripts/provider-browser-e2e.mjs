@@ -5,6 +5,7 @@ import {
 } from "./lib/generation-diagnostic-observer.mjs";
 import {
   HOSTED_EFFORT,
+  HOSTED_FLAGSHIP_TEST_LIMITS,
   HOSTED_MODEL,
   HOSTED_PROVIDER,
   HOSTED_TEST_LIMITS,
@@ -135,7 +136,7 @@ function parseArgs(argv) {
           "  ORBSIE_KEY_SCOPE=local-only|cloud-authorized \\",
           "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> (API-key providers only) \\",
           "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local|chatgpt-hosted",
-          `Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state>, an exact HTTPS ORBSIE_TEST_URL, and ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} after explicit owner approval of the actual bounds; ORBSIE_OUTPUT_CAP_TOKENS must be unset.`,
+          `Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state>, an exact HTTPS ORBSIE_TEST_URL, and ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} (or ${HOSTED_FLAGSHIP_TEST_LIMITS} for the fresh flagship story or interrupted recovery) after explicit owner approval of the actual bounds; ORBSIE_OUTPUT_CAP_TOKENS must be unset.`,
           "",
           "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
@@ -317,9 +318,12 @@ export function readConfiguration(argv) {
     throw new HarnessConfigurationError(
       "Captured flagship artifacts require offline mushroom-stage resume.",
     );
-  if (flagshipStory && provider !== "gateway")
+  if (
+    flagshipStory &&
+    !new Set(["openrouter", "gateway", HOSTED_PROVIDER]).has(provider)
+  )
     throw new HarnessConfigurationError(
-      "ORBSIE_FLAGSHIP_STORY=1 is authorized only for the Gateway provider.",
+      "ORBSIE_FLAGSHIP_STORY=1 is authorized only for OpenRouter, Gateway, or hosted ChatGPT.",
     );
   if (flagshipResume && provider !== "gateway")
     throw new HarnessConfigurationError(
@@ -413,6 +417,7 @@ export function readConfiguration(argv) {
           process.env.ORBSIE_CHATGPT_COMPANION_TOKEN !== undefined,
         testLimits: process.env.ORBSIE_CHATGPT_TEST_LIMITS,
         outputTokenCap: process.env.ORBSIE_OUTPUT_CAP_TOKENS,
+        flagshipStory,
       });
     } catch (error) {
       if (error instanceof HostedAcceptanceBlockedError)
@@ -571,7 +576,11 @@ export function readConfiguration(argv) {
     }
   }
 
-  if ((flagshipStory || flagshipResume) && outputCap !== 4096)
+  if (
+    (flagshipStory || flagshipResume) &&
+    !(flagshipStory && hosted) &&
+    outputCap !== 4096
+  )
     throw new HarnessConfigurationError(
       "Flagship story and resume modes require ORBSIE_OUTPUT_CAP_TOKENS=4096.",
     );
@@ -600,12 +609,10 @@ export function readConfiguration(argv) {
       config.requireExtrusion ||
       config.requireRevolution ||
       config.requireGeometryEdit ||
-      config.requireProcedural ||
-      config.publication ||
-      config.cloudRecovery)
+      config.requireProcedural)
   )
     throw new HarnessConfigurationError(
-      "Flagship story mode cannot be combined with interrupted recovery, input-game, cloud, or publication phases.",
+      "Flagship story mode cannot be combined with interrupted recovery, input-game, or other creation/edit gates.",
     );
   if (
     flagshipResume &&
@@ -1990,6 +1997,8 @@ export async function installTrafficGuard(
         consentReady: info.hostedConsentReady,
         catalogReady: info.hostedCatalogReady,
         generationBudget: config.generationBudget,
+        flagshipStory: config.flagshipStory,
+        interruptedRecovery: config.interruptedRecovery,
         payload,
       });
       if (decision.action === "abort") {
@@ -3040,6 +3049,8 @@ function assertGenerationRequests(config, info) {
         : `Expected exactly one live generation request for the flagship checkpoint resume, observed ${info.generationRequests}.`
       : config.interruptedRecovery
       ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
+      : config.flagshipStory
+      ? `Expected exactly three live generation requests (creation, selected mushroom edit, and platform edit), observed ${info.generationRequests}.`
       : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
   );
   assert.equal(
@@ -4274,6 +4285,11 @@ async function runFlagshipStory(
     created.revision + 1,
     assistantMessageBaseline + 1,
   );
+  assert.equal(
+    mushroom.messages.filter((message) => message.role === "user").at(-1)?.text,
+    FLAGSHIP_STORY_MUSHROOM_PROMPT,
+    "Story mushroom edit did not persist the exact fixed prompt.",
+  );
   report.flagshipStory.phases.mushroom = {
     status: "observed",
     revision: mushroom.revision,
@@ -4313,6 +4329,11 @@ async function runFlagshipStory(
     page,
     mushroom.revision + 1,
     assistantMessageBaseline + 2,
+  );
+  assert.equal(
+    goal7.messages.filter((message) => message.role === "user").at(-1)?.text,
+    FLAGSHIP_STORY_PLATFORM_PROMPT,
+    "Story platform edit did not persist the exact fixed prompt.",
   );
   report.flagshipStory.phases.goal7 = {
     status: "observed",
@@ -4361,6 +4382,7 @@ async function runFlagshipStory(
   report.flagshipStory = {
     ...report.flagshipStory,
     status: "structural-passed",
+    scope: "structural-and-persistence",
     visualReview: "pending",
     initial: {
       trees: initialStory.trees.length,
@@ -4376,6 +4398,9 @@ async function runFlagshipStory(
       restoredMushroomState: true,
       exportedGoal: 5,
     },
+    limitations: [
+      "Interactive traversal to collect crystals, reach the portal, and win remains unverified.",
+    ],
   };
   report.edit = {
     status: "passed",
@@ -6478,6 +6503,76 @@ async function runPublication(
   };
 }
 
+function assertFollowOnProject(value, expected, phase) {
+  const project = value?.project ?? value;
+  assert(
+    project && typeof project === "object",
+    `${phase} did not return a project.`,
+  );
+  assert.equal(
+    project.id,
+    expected.projectId,
+    `${phase} changed the project identity.`,
+  );
+  assert.equal(
+    project.revision,
+    expected.revision,
+    `${phase} changed the project revision.`,
+  );
+  return project;
+}
+
+/**
+ * Keep non-inference phases attached to the exact project returned after the
+ * story's live undo. Callbacks are injected so this identity/revision contract
+ * can be checked without starting a browser or making provider requests.
+ * @param {{
+ *   project: any,
+ *   refresh: (expected: any) => Promise<any>,
+ *   exportProject: (project: any, expected: any) => Promise<any>,
+ *   standalonePlayback: (exported: any, expected: any) => Promise<any>,
+ *   cloudRecovery?: (project: any, expected: any) => Promise<any>,
+ *   publication?: (project: any, expected: any) => Promise<any>,
+ * }} options
+ */
+export async function runProjectFollowOnPhases({
+  project,
+  refresh,
+  exportProject,
+  standalonePlayback,
+  cloudRecovery = undefined,
+  publication = undefined,
+}) {
+  assert(
+    project &&
+      typeof project === "object" &&
+      typeof project.id === "string" &&
+      Number.isInteger(project.revision),
+    "Story undo did not return a project with an ID and revision.",
+  );
+  const expected = {
+    projectId: project.id,
+    revision: project.revision,
+  };
+  const refreshed = assertFollowOnProject(
+    await refresh(expected),
+    expected,
+    "Refresh",
+  );
+  const exported = await exportProject(refreshed, expected);
+  assertFollowOnProject(exported, expected, "Export");
+  await standalonePlayback(exported, expected);
+  if (cloudRecovery) {
+    assertFollowOnProject(project, expected, "Cloud recovery input");
+    await cloudRecovery(project, expected);
+  }
+  if (publication) {
+    assertFollowOnProject(project, expected, "Publication input");
+    await publication(project, expected);
+  }
+  return { projectId: expected.projectId, revision: expected.revision };
+}
+
 async function run(config, report = emptyReport(config)) {
   const evidenceDir = join(REPORT_DIR, config.provider);
   await mkdir(evidenceDir, { recursive: true });
@@ -7322,106 +7417,132 @@ async function run(config, report = emptyReport(config)) {
       report.hosted.generationStatus = "inference-observed";
     }
 
-    const expectedRevision = projectAfterEdit.revision;
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(
-      page.getByRole("button", {
-        name: "Continue your saved world",
-        exact: true,
-      }),
-    ).toBeVisible({ timeout: 30000 });
-    await page
-      .getByRole("button", { name: "Continue your saved world", exact: true })
-      .click();
-    await expect(page.locator(".workspace-heading h2")).toBeVisible({
-      timeout: 30000,
+    const followOn = await runProjectFollowOnPhases({
+      project: projectAfterEdit,
+      refresh: async ({ revision }) => {
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await expect(
+          page.getByRole("button", {
+            name: "Continue your saved world",
+            exact: true,
+          }),
+        ).toBeVisible({ timeout: 30000 });
+        await page
+          .getByRole("button", { name: "Continue your saved world", exact: true })
+          .click();
+        await expect(page.locator(".workspace-heading h2")).toBeVisible({
+          timeout: 30000,
+        });
+        const recovered = await waitForSavedProject(page, revision);
+        if (config.requireInputGame) {
+          assertInputGameProject(
+            recovered,
+            "Reloaded project",
+            info.projectValidator,
+          );
+          assert.deepEqual(
+            recovered.game,
+            projectAfterEdit.game,
+            "The input game program changed after local reload.",
+          );
+          report.inputGame = {
+            ...report.inputGame,
+            preservedAcrossReload: true,
+          };
+        }
+        assert.deepEqual(
+          recovered.entities.map((entity) => entity.id),
+          projectAfterEdit.entities.map((entity) => entity.id),
+        );
+        assert.equal(recovered.messages.length, projectAfterEdit.messages.length);
+        report.localRecovery = "passed";
+        return recovered;
+      },
+      exportProject: async (recovered, { revision }) => {
+        await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+        await expect(
+          page.getByRole("button", { name: /^Download your world/ }),
+        ).toBeVisible({ timeout: 30000 });
+        await page.screenshot({
+          path: join(evidenceDir, "share.png"),
+          fullPage: true,
+        });
+        report.evidence.push("share.png");
+        const downloadPromise = page.waitForEvent("download");
+        await page.getByRole("button", { name: /^Download your world/ }).click();
+        const download = await downloadPromise;
+        const zip = await extractZip(
+          download,
+          config,
+          revision,
+          evidenceDir,
+        );
+        if (config.requireInputGame) {
+          assertInputGameProject(
+            zip.project,
+            "Exported project",
+            info.projectValidator,
+          );
+          assert.deepEqual(
+            zip.project.game,
+            projectAfterEdit.game,
+            "The exported ZIP changed the input game program.",
+          );
+          report.inputGame = {
+            ...report.inputGame,
+            preservedInZip: true,
+          };
+        }
+        report.evidence.push("world.zip");
+        report.export = "passed";
+        return zip;
+      },
+      standalonePlayback: async (zip) => {
+        await verifyStandalone(browser, zip, config, report, evidenceDir);
+        report.standalonePlayback = "passed";
+      },
+      cloudRecovery: config.cloudRecovery
+        ? async (project, { revision }) => {
+            await verifyCloudRecovery(
+              page,
+              browser,
+              config,
+              report,
+              approvedOrigins,
+              project,
+              storageState,
+              evidenceDir,
+            );
+            assert.equal(
+              project.revision,
+              revision,
+              "Cloud recovery changed the story revision binding.",
+            );
+          }
+        : undefined,
+      publication: config.publication
+        ? async (project, { revision }) => {
+            await runPublication(
+              page,
+              browser,
+              config,
+              report,
+              approvedOrigins,
+              revision,
+              evidenceDir,
+            );
+            if (report.publication.mode === "blocked")
+              throw new HarnessBlockedError(
+                `The explicit publication phase was blocked: ${report.publication.status}.`,
+              );
+            assert.equal(
+              project.id,
+              projectAfterEdit.id,
+              "Publication changed the story project identity.",
+            );
+          }
+        : undefined,
     });
-    const recovered = await waitForSavedProject(page, expectedRevision);
-    assert.equal(recovered.revision, expectedRevision);
-    if (config.requireInputGame) {
-      assertInputGameProject(
-        recovered,
-        "Reloaded project",
-        info.projectValidator,
-      );
-      assert.deepEqual(
-        recovered.game,
-        projectAfterEdit.game,
-        "The input game program changed after local reload.",
-      );
-      report.inputGame = {
-        ...report.inputGame,
-        preservedAcrossReload: true,
-      };
-    }
-    assert.deepEqual(
-      recovered.entities.map((entity) => entity.id),
-      projectAfterEdit.entities.map((entity) => entity.id),
-    );
-    assert.equal(recovered.messages.length, projectAfterEdit.messages.length);
-    report.localRecovery = "passed";
-
-    await page.getByRole("button", { name: "Share Orb", exact: true }).click();
-    await expect(
-      page.getByRole("button", { name: /^Download your world/ }),
-    ).toBeVisible({ timeout: 30000 });
-    await page.screenshot({
-      path: join(evidenceDir, "share.png"),
-      fullPage: true,
-    });
-    report.evidence.push("share.png");
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: /^Download your world/ }).click();
-    const download = await downloadPromise;
-    const zip = await extractZip(
-      download,
-      config,
-      expectedRevision,
-      evidenceDir,
-    );
-    if (config.requireInputGame) {
-      assertInputGameProject(
-        zip.project,
-        "Exported project",
-        info.projectValidator,
-      );
-      assert.deepEqual(
-        zip.project.game,
-        projectAfterEdit.game,
-        "The exported ZIP changed the input game program.",
-      );
-      report.inputGame = {
-        ...report.inputGame,
-        preservedInZip: true,
-      };
-    }
-    report.evidence.push("world.zip");
-    report.export = "passed";
-    await verifyStandalone(browser, zip, config, report, evidenceDir);
-    report.standalonePlayback = "passed";
-    await verifyCloudRecovery(
-      page,
-      browser,
-      config,
-      report,
-      approvedOrigins,
-      projectAfterEdit,
-      storageState,
-      evidenceDir,
-    );
-    await runPublication(
-      page,
-      browser,
-      config,
-      report,
-      approvedOrigins,
-      expectedRevision,
-      evidenceDir,
-    );
-    if (config.publication && report.publication.mode === "blocked")
-      throw new HarnessBlockedError(
-        `The explicit publication phase was blocked: ${report.publication.status}.`,
-      );
     await Promise.allSettled(info.ndjsonReads);
     assertGenerationRequests(config, info);
     if (creationContinuation) {

@@ -7,7 +7,6 @@ import {
   Copy,
   LoaderCircle,
   LogOut,
-  Sparkles,
   X,
 } from "lucide-react";
 import {
@@ -720,7 +719,21 @@ export default function ChatGPTConnection({
   return (
     <section className="publish-box" aria-labelledby="chatgpt-connection-title">
       <strong id="chatgpt-connection-title">
-        <Sparkles size={14} aria-hidden="true" /> ChatGPT subscription
+        <img
+          className="provider-logo provider-logo-inline"
+          src="/providers/openai.svg"
+          alt=""
+          aria-hidden="true"
+          width={14}
+          height={14}
+          style={{
+            display: "inline-block",
+            verticalAlign: "middle",
+            marginInlineEnd: 4,
+          }}
+          draggable={false}
+        />
+        ChatGPT subscription
       </strong>
       <p>Connect your ChatGPT account without installing anything.</p>
       {!signedIn ? (
@@ -740,6 +753,15 @@ export default function ChatGPTConnection({
           )}
           {view.phase !== "checking" && (
             <button className="primary full" onClick={start}>
+              <img
+                className="provider-logo"
+                src="/providers/openai.svg"
+                alt=""
+                aria-hidden="true"
+                width={18}
+                height={18}
+                draggable={false}
+              />
               {view.phase === "error" ? "Try again" : "Connect ChatGPT"}
             </button>
           )}
@@ -879,6 +901,15 @@ export default function ChatGPTConnection({
         <div className="setup-note">
           {view.message ?? "ChatGPT is not connected."}
           <button className="primary full" onClick={start}>
+            <img
+              className="provider-logo"
+              src="/providers/openai.svg"
+              alt=""
+              aria-hidden="true"
+              width={18}
+              height={18}
+              draggable={false}
+            />
             Connect ChatGPT
           </button>
         </div>
