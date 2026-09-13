@@ -130,3 +130,11 @@ Root reviewed all code/tests;58focused tests across6suites and root typecheck pa
 No live calls or review UI changes. Next internal transport contract:
 docs/visual-review-transport-task.md; public image requests remain unavailable until
 run authorization/loop integration. Capability detection alone is not ingestion proof.
+
+## Capability live-catalog integration evidence
+
+Root exercised committed catalogModels against the exact public endpoints used by
+preflight. OpenRouter Luna input[file,image,text] and Gateway[text,image,pdf] both
+normalize to imageInput true/catalog. Evidence image-capability-catalog-20260913.
+No credentials/inference used; this proves current metadata mapping, not successful
+image ingestion. Quota now57%used/43%remaining. Transport worker confirmed running.

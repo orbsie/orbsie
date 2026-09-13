@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-09-13T23:26:23.660Z",
+  "checks": [
+    {
+      "provider": "openrouter",
+      "status": 200,
+      "model": "openai/gpt-5.6-luna",
+      "inputMetadata": [
+        "file",
+        "image",
+        "text"
+      ],
+      "imageInput": {
+        "supported": true,
+        "source": "catalog"
+      }
+    },
+    {
+      "provider": "gateway",
+      "status": 200,
+      "model": "openai/gpt-5.6-luna",
+      "inputMetadata": [
+        "text",
+        "image",
+        "pdf"
+      ],
+      "imageInput": {
+        "supported": true,
+        "source": "catalog"
+      }
+    }
+  ],
+  "inferenceCalls": 0,
+  "credentialsUsed": false
+}
