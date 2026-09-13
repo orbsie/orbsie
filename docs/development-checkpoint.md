@@ -89,7 +89,13 @@ corrected evidence mushroom-basic-textured-filter-corrected{,-preview}.
 Typecheck and20hosted/recovery tests passed after correcting texture image types
 and earlier helper optional-parameter typings. No catalog/runtime integration yet.
 Next implement decoder/transfer/cache contract from catalog-texture-integration-plan.md,
-then editor/export integration before asset admission. No active worker.
+then editor/export integration before asset admission.
+Active worker /root/mushroom_color_fidelity owns decoder/worker/queue/cache and
+asset tests for optional typed RGBA atlas descriptor. It may add runtime helper
+and corresponding build-player source allowlist entry. No World/hook/catalog
+changes or player bundle regeneration in this stage. Root must review real-worker
+PNG decode, resource rejection, transfer/cache budget accounting and typecheck.
+Renderer integration remains separate; do not enable textured asset IDs yet.
 
 ## Asset handoff (paused)
 
