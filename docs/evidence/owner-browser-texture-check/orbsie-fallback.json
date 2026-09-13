@@ -1,0 +1,14 @@
+{
+  "status": "failed-product-feedback",
+  "target": "https://orbsie.com/",
+  "browser": "owner extension Chrome Person1",
+  "observed": [
+    "WebGL renderer initialization error in console.",
+    "DOM has no WebGL unavailable message.",
+    "Create button enabled after entering a nonempty test prompt.",
+    "Test prompt cleared without submission."
+  ],
+  "sourceCause": "World hides fallback when onError supplied; Orbsie callback discards the message.",
+  "inferenceCalls": 0,
+  "nextFix": "Persistent graphics error visible on landing/editor and generation blocked while renderer unavailable; preserve draft and provider connection access."
+}

@@ -19,6 +19,14 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+NEXT PRIORITY after in-flight decoder: fix silent production WebGL failure.
+Owner Chrome on orbsie.com emits WebGL initialization errors, DOM has no message,
+Create becomes enabled with a nonempty prompt (cleared without submitting).
+World returns null when onError supplied; Orbsie callback1248 discards message.
+Evidence owner-browser-texture-check/orbsie-fallback.json. Show persistent useful
+error, prevent generation while renderer unavailable, preserve draft and account
+connection access. No graphics settings automation or policy workaround.
+
 Owner-browser check2026-09-13: extension Chrome auth remains accessible but
 local textured fixture fails WebGL context creation (llvmpipe Mesa,
 BindToCurrentSequence failed). Evidence owner-browser-texture-check/report.json.
