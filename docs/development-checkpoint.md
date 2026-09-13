@@ -8,7 +8,7 @@ Gateway and ChatGPT. **Incomplete.** Prior detailed handoff/evidence is in
 
 Astra reviews architecture/diffs/integration; one Luna xhigh/default worker,
 no nested agents, concise contexts, Fast off. Reuse `/root/host_session_renewal`:
-fresh worker creation previously hit thread cap. Latest quota44% used/56% remaining;
+fresh worker creation previously hit thread cap. Latest quota46% used/54% remaining;
 stop workers/live tests below20% remaining. Read actual quota with
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`; goal tokens are not quota.
 Targeted tests; no repeated green/live runs without new evidence need.
@@ -27,7 +27,7 @@ typecheck/diffcheck pass. Original project/content, target-vs-ZIP-vs-deployment
 runtime/worker hashes, bounded anonymous fetches, exact wrapper/iframe origins.
 Root actual production player fetch matches reviewed7cbd875 local build for all
 four files; evidence publication-verifier-local-20260913. Fresh publication itself
-remains unverified. Worker is ready for next bounded gameplay task from
+remains unverified. Worker is executing the bounded gameplay task from
 `docs/provider-live-gameplay-task.md`; no live calls/auth/deploy in this task.
 
 Provider harness7cbd875 accepted: three providers/fresh3call story, exact prompts,
@@ -109,6 +109,18 @@ the fresh-world gameplay driver; publication verification is committedac7268f.
 Gameplay WIP review criteria and outstanding corrections are recorded under
 In-progress review in provider-live-gameplay-task.md. Await worker completion and
 actual browser fixture evidence before accepting/deploying observation changes.
+Root source review confirms null-prototype contact counters, bounded fresh-frame
+waiting, traversal lifecycle checks, and an open-stream check after movement.
+Fixture runs1/3/4 stopped at disabled Create. Run5 reached score5 and portal
+win, then exposed a driver distance-check false negative; corrected with a focused
+regression. Run7 proves movement while stream remains open, five collections and
+portal win, but not platform contacts. Run8 trajectory shows jump never entered
+physics because the focused Play button consumes Space intentionally. Current task
+uses real gameplay-surface clicks before inputs, then one run9; retain platform
+contact/bounce gate. Thirteen focused tests pass; no complete two-renderer fixture
+pass or live-provider claim yet. Setup waits renderer readiness and verifies input;
+hydration-race cause remains unproven. Product Play focus transfer remains a UX
+follow-up, distinct from the explicit canvas-click action in the driver.
 
 Provider prerequisites: OpenRouter key is in .env.openrouter.local. Gateway test
 credential previously supplied by the owner is now stored mode0600 at

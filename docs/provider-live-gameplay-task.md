@@ -71,3 +71,37 @@ Acceptance findings to resolve and cover before handoff:
   handle concurrent promise rejection immediately. No injected player/score state.
 
 These notes are review criteria, not an assertion that the current WIP meets them.
+
+## Follow-on integration gate after the creation driver passes
+
+Source audit: `runFlagshipStory` currently traverses only creation. The goal7
+phase checks persisted objectives and a zero-score HUD; original undo checks
+restored data. `buildFreshGameplayTargets` requires exactly five collectibles.
+These are explicit remaining gaps, not acceptance of the complete story.
+
+Keep the same worker and wait for its current fixture handoff before assigning
+this next bounded task. Ownership stays with the gameplay driver, story harness
+and focused fixture/tests; no provider calls are required for implementation.
+
+- Parameterize the expected objective count by the validated phase (five or
+  seven), while resolving current IDs/positions from that committed revision.
+  Do not reuse creation's five-object target list for the seven-object phase.
+- After the real third response, traverse the seven-crystal world, verify its
+  portal win and reset, then return to Edit and invoke the original UI Undo.
+  Traverse the restored five-crystal world and reset before refresh/export.
+  Preserve the selected mushroom edit and the same project throughout.
+- Persist separate gameplay evidence per phase with revision, expected and
+  collected IDs, actual inputs, win and reset. Structural success alone must
+  not mark these phases gameplay-passed. Reject unreachable targets without
+  model retries, teleportation or changes to the generated world.
+- Exercise deterministic five → seven → original undo → five fixtures with
+  actual inputs and both renderers. Cover wrong counts, stale target IDs and
+  unintended lifecycle changes with targeted tests.
+- Fresh signed-out publication playback is a further integration gate: adapt
+  controls to the standalone UI and bind evidence to the verified published
+  revision/artifacts. Editor traversal or a visible published canvas cannot
+  substitute for signed-out movement, collection, portal win and restart.
+
+Only after local integration passes, run the already authorized fresh three-call
+Luna journey for each available provider. Keep OAuth/subscription login evidence
+separate from API-key generation and preserve each credential's call/output cap.
