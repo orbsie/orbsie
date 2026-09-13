@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-09-13T16:29:10.168303+00:00",
+  "action": "restored original source to durable local cache",
+  "sourceUrl": "https://opengameart.org/sites/default/files/free_mushroom_pack_assetquest.zip",
+  "authorPageUrl": "https://opengameart.org/content/low-poly-mushroom-kit",
+  "cachePath": "/home/marcos/.cache/orbsie/source-archives/free_mushroom_pack_assetquest.zip",
+  "archiveBytes": 54791351,
+  "archiveSha256": "b32c4bf0c9d5471ffcde83747402d0f8355add48c317f9147950c4f44facaffd",
+  "matchesReviewedArchive": true,
+  "selectedFiles": {
+    "Meshes/Fly_Agaric_Basic.fbx": {
+      "archiveEntry": "Meshes/Fly_Agaric_Basic.fbx",
+      "bytes": 33856,
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b"
+    },
+    "Textures/Mushrooms_C.tga": {
+      "archiveEntry": "Textures/Mushrooms_C.tga",
+      "bytes": 50331692,
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680"
+    },
+    "License.txt": {
+      "archiveEntry": "License.txt",
+      "bytes": 567,
+      "sha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6"
+    }
+  },
+  "exactRetainedLicenseMatch": true,
+  "catalogAdmission": false,
+  "runtimeChanges": false
+}

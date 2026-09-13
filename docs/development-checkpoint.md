@@ -55,7 +55,7 @@ click/color, visibility, position/path, score/reset acceptance passed:
 external standalone requests. Fallback/retry/race suite also passed. These are
 focused checks, not full mobile/flagship/performance certification.
 
-Main retains paused unreviewed texture WIP: World Formation, asset hook/texture,
+Main retains active unreviewed texture WIP: World Formation, asset hook/texture,
 formation particles/core and catalog comparison scripts/tests. Do not deploy main
 worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
 `/tmp/orbsie-chatgpt-release-4eb9ce8` is atb880edd with dependencies and project

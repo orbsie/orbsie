@@ -1,7 +1,8 @@
 # Catalog texture integration task contract
 
-Status: proposed architecture, not implemented or accepted. Provider connection
-acceptance remains higher priority. Root source review:0d45bcd.
+Status: decoder/transfer/cache accepted in3d6a839; renderer/export integration
+is active and unaccepted. No textured catalog admission yet. Provider connection
+acceptance remains higher priority when browser access is available.
 
 The Asset Quest mushroom experiment retains its silhouette but loses texture
 fidelity when baked into vertex colors. Raising its refinement budget did not
