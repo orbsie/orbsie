@@ -169,3 +169,8 @@ image capability gates, API multipart and hosted image input, exact process poli
 77 focused tests and typecheck passed; final diffcheck passed. Text-only byte limits
 remain unchanged. Real hosted PNG ingestion is still unproven; no live calls run.
 Quota checked: 43% remaining, above owner 20% stop threshold.
+
+Queued user UX requirement: direct composer model dropdown with Quality/Balanced/
+Budget only as default choices; keep connection settings separate. Contract:
+docs/inline-model-selector-task.md. Execute after session persistence, before
+resuming queued agentic-loop integration.
