@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "6300025",
+  "deployment": "https://orbsie-r0z3rja1o-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "build": "Vercel production build and TypeScript passed",
+  "browser": "extension Chrome Person 1 browser1",
+  "observed": {
+    "graphicsErrorVisible": true,
+    "createDisabled": true,
+    "connectionsVisible": true,
+    "yourWorldsVisible": true
+  },
+  "scope": "Actual owner browser WebGL failure feedback; empty draft, no generation request; not gameplay acceptance"
+}

@@ -19,11 +19,11 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
-WebGL correction committed0fe5d2e: separate Canvas readiness, submission state/ref gates, persistent accessible error and interrupted draft restoration. Typecheck and focused browser verifier passed; strengthened race evidence webgl-failure-1789265408500/report.json. Root saw actual owner Chrome local error feedback. Production deployment next; not yet verified live. Decoder3d6a839 and next texture integration contract70fa2de remain unchanged.
+WebGL correction committed0fe5d2e: separate Canvas readiness, submission state/ref gates, persistent accessible error and interrupted draft restoration. Typecheck and focused browser verifier passed; strengthened race evidence webgl-failure-1789265408500/report.json. Root saw actual owner Chrome local error feedback. Deployed source6300025 to orbsie-r0z3rja1o-grappeggias-projects.vercel.app, aliased orbsie.com. Build/typecheck passed. Actual owner Chrome production shows persistent graphics error and disabled Create; evidence webgl-owner-local/production.json. Gameplay remains blocked by that browser WebGL failure. Decoder3d6a839 and next texture integration contract70fa2de remain unchanged.
 
 Decoder/transfer/cache stage reviewed and accepted: explicit material-index validation corrected; 17 focused tests and typecheck passed. Final actual-worker evidence: mushroom-basic-textured-worker-final/report.json (666 UV vertices, expected samplers, pixel-inclusive accounting). Renderer/export/catalog integration remains incomplete. No deployment or live calls.
 
-NEXT PRIORITY after decoder review: fix silent production WebGL failure.
+NEXT PRIORITY: texture renderer/export integration active with /root/texture_rendering; ChatGPT consent/live acceptance still outstanding. Historical WebGL diagnosis below is resolved by0fe5d2e.
 Owner Chrome on orbsie.com emits WebGL initialization errors, DOM has no message,
 Create becomes enabled with a nonempty prompt (cleared without submitting).
 World returns null when onError supplied; Orbsie callback1248 discards message.
