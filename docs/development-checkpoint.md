@@ -97,7 +97,7 @@ Emulator/desktop emulation is not physical-device or complete gameplay acceptanc
 OpenRouter key `.env.openrouter.local`; raised-cap flag required for4096.
 Gateway key `/home/marcos/.cache/orbsie/provider-tests/gateway.env`, mode0600,
 directory0700; validity not live-tested. Do not repeat Vercel sensitive-env
-retrieval/decryption attempts. Hosted owner browser access still unresolved.
+retrieval/decryption attempts. Hosted owner browser access still unresolved. Public-catalog preflight on 2026-09-13 confirms Luna listed by both providers and both local key files mode0600; no keys read/sent, no inference, and credential validity remains unproven. Evidence `provider-readiness-20260913/report.json`. Catalog integration documentation now distinguishes historical companion evidence from the browser-only hosted release gates.
 
 Remaining full-goal gates include actual ChatGPT create/edit/recovery/>10min
 renewal/reload/export/publish; OpenRouter OAuth consent/callback; fresh same-world

@@ -1,0 +1,45 @@
+{
+  "checkedAt": "2026-09-13T21:54:56.378Z",
+  "checks": [
+    {
+      "provider": "openrouter",
+      "keyFilePresent": true,
+      "keyFileMode": "600",
+      "catalogStatus": 200,
+      "lunaListed": true,
+      "supportedParameters": [
+        "include_reasoning",
+        "max_completion_tokens",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "seed",
+        "structured_outputs",
+        "tool_choice",
+        "tools"
+      ],
+      "credentialValidated": false,
+      "inferenceCalls": 0
+    },
+    {
+      "provider": "gateway",
+      "keyFilePresent": true,
+      "keyFileMode": "600",
+      "catalogStatus": 200,
+      "lunaListed": true,
+      "supportedParameters": [
+        "max_tokens",
+        "temperature",
+        "stop",
+        "tools",
+        "tool_choice",
+        "reasoning",
+        "include_reasoning"
+      ],
+      "credentialValidated": false,
+      "inferenceCalls": 0
+    }
+  ],
+  "note": "Public catalog metadata only; no credentials read or sent. Key validity and end-to-end inference remain unproven."
+}
