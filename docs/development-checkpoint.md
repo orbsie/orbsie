@@ -27,46 +27,28 @@ WebGL correction committed0fe5d2e: separate Canvas readiness, submission state/r
 
 Decoder/transfer/cache stage reviewed and accepted: explicit material-index validation corrected; 17 focused tests and typecheck passed. Final actual-worker evidence: mushroom-basic-textured-worker-final/report.json (666 UV vertices, expected samplers, pixel-inclusive accounting). Renderer/export/catalog integration remains incomplete. No deployment or live calls.
 
-NEXT PRIORITY: texture renderer/export integration active with /root/texture_rendering; ChatGPT consent/live acceptance still outstanding. Historical WebGL diagnosis below is resolved by0fe5d2e.
-Owner Chrome on orbsie.com emits WebGL initialization errors, DOM has no message,
-Create becomes enabled with a nonempty prompt (cleared without submitting).
-World returns null when onError supplied; Orbsie callback1248 discards message.
-Evidence owner-browser-texture-check/orbsie-fallback.json. Show persistent useful
-error, prevent generation while renderer unavailable, preserve draft and account
-connection access. No graphics settings automation or policy workaround.
+### Immediate acceptance and follow-up
 
-Owner-browser check2026-09-13: extension Chrome auth remains accessible but
-local textured fixture fails WebGL context creation (llvmpipe Mesa,
-BindToCurrentSequence failed). Evidence owner-browser-texture-check/report.json.
-chrome://gpu diagnostics blocked by browser URL policy; do not bypass via CDP
-or alternate surfaces. Orbsie has a WebGL2 fallback; owner hardware/browser 3D
-acceptance is unproven. Previous ChatGPT challenge no longer pending; UI is
-Not connected, so old code must not be used. Fresh start requires owner readiness.
+Current priority is the playable Canvas2D fallback in editor and standalone player.
+The first implementation exists but is not accepted or deployed. Root review found
+mesh face dropping, ordering/color errors, pending-asset lifetime concerns, and
+input/reset/terminal-state differences from the shared gameplay runtime. Luna is
+addressing these with targeted checks. Optional acceleration advice must not gate
+creation, score display, or readiness when software rendering succeeds.
 
-Hosted test-limit guard reviewed and integrated: exact
-ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib required before private state
-access/network. Any hosted ORBSIE_OUTPUT_CAP_TOKENS is rejected. Reports record
-outputTokenCap:null and application time/byte bounds without a cost guarantee.
-Owner approved the calls needed for live acceptance on 2026-09-13. Existing two-call milestones may run once consent/session prerequisites are met; per-call safeguards and quota stop remain. Do not infer completed ChatGPT consent from test approval. Hosted+recovery synthetic suites20/20 passed;
-script syntax and diff checks passed. No live calls, no product deployment.
-Worker finished; root reviewed all five changed files. Texture integration task
-contract is docs/catalog-texture-integration-plan.md, not implemented.
+Owner Chrome is extension browser 1, profile Person 1. Use computer use for owner
+acceptance. Its WebGL initialization fails; chrome://gpu diagnostics were blocked
+by browser policy, so do not bypass that restriction. ChatGPT device authorization
+succeeded (see evidence above); no live inference has run. The hosted runtime has
+a source-confirmed ten-minute lifetime without an inspected renewal path; refresh
+connection status through normal UI before testing. See
+`docs/chatgpt-session-lifetime-followup.md`. Never copy browser cookies/auth caches.
 
-Browser handoff 2026-09-13: use CUA extension Chrome profile Person 1 (browser1,
-extension instance9a170aec-060d-42f6-9e37-e4a360ee76a6) for owner testing;
-user explicitly chose this signed-in profile for future work. ChatGPT Pro session
-verified via profile UI; Orbsie tab1618752688 and OpenAI tab1618752689.
-Cloudflare loop did not recur: account selection and Continue reached device-code
-entry. Authorization still incomplete. Extension fill/keyboard attempts left all
-nine code fields empty; do not treat tool actions as successful submission.
-The Codex CLI label is consistent with the actual isolated codex app-server runtime
-(src/lib/server/chatgpt-runtime.ts) and documented account/login/start type
-chatgptDeviceCode (https://learn.chatgpt.com/docs/app-server#3b-log-in-with-chatgpt-device-code-flow).
-Earlier categorical mismatch warning was corrected; label alone does not prove an
-unsupported integration. No inference calls. Next: complete device entry through
-owner UI, verify Connected/catalog. Hosted harness outputCap is null;512KiB/180s
-limits are not4096tokens. Resolve actual authorized/enforceable inference bounds
-before live Luna acceptance; see hosted-chatgpt-acceptance.md reconciliation.
+Owner approved the calls needed for live acceptance. Hosted harness still requires
+`ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib`, with no output-token-cap claim.
+Its two-call milestones may run once session and playable-renderer prerequisites
+are met. End-user model choice remains unrestricted; development live calls use
+Luna. Texture integration is paused, not accepted; decoder stage remains accepted.
 
 PRIORITY owner correction: no separate Orbsie email/password gate for provider
 connection. Implemented BetterAuth anonymous-session bootstrap with existing
