@@ -225,3 +225,13 @@ still a milestone gap, not proven by the desktop fixture. No inference occurred.
 Rebuilt player artifacts after detecting stale software-world source in manifest.
 No deployment yet. Next single Luna task: docs/creative-prompt-task.md, then queued
 capability/transport/loop/evaluation sequence. Full review loop remains incomplete.
+
+## Portrait capture acceptance
+
+Root actual browser fixture scene-review-portrait-root-20260913 passes both renderers
+through initial creation/delayed replacement then390x844 viewport resize. Both
+capture237x512 PNG with preserved canvas ratio/project/revision; WebGL27946bytes,
+software83022bytes, below128KiB. Root inspected software portrait image. Fixture
+source preserved with evidence, no external/modelcalls. This closes phone-viewport
+capture sizing, not physical-device/mobile gameplay certification. Root devserver
+3091 stopped after check. Luna continues creative-prompt-task.md.
