@@ -41,8 +41,8 @@ prove separate worlds; do not label them full fresh-provider acceptance.
 
 ## Production and release
 
-Current source ddafb15 deployed to
-https://orbsie-4g66knnto-grappeggias-projects.vercel.app (alias https://orbsie.com).
+Current source f506f85 deployed to
+https://orbsie-ldv1v4r12-grappeggias-projects.vercel.app (alias https://orbsie.com).
 Local and Vercel production builds pass. All4 current player/runtime worker bytes
 match isolated release build. Provided Chrome390x844 touch smoke: software ready,
 no fatal graphics dialog or horizontal overflow; root viewed inline screenshot.
@@ -146,3 +146,5 @@ Android setup completed under owner approval: Chrome no account, usage-reporting
 Restart/replay commit80db2e2 root-reviewed: editor WebGL/software restart→Space pass; standalone forcedsoftware Restart→Space and Wcollision→win→Play again→focus/reset pass. Worker typecheck,6suites72tests,syntax/format/playerbuild pass. Source manifest mismatch found: only postbuild Prettier button formatting, runtime behavior unchanged; next worker rebuild after final formatting. Replay-specific postresetjump and standaloneWebGL not separately exercised. Preserve failedruns1–5; foreground/closing editor improved sampling, emulator causality unproven. Current worker fixes misleading unavailable text exposed in Android accessibility tree despite healthy WebGL planet. Production stillddafb15.
 
 Graphics accessibility fix root accepted: neutral aria-hidden canvasfallback, realfailure accessible. Desktop actualaria healthy/forcedbothfailure pass (graphics-accessibility-run1); Android local healthy pass b161d03. Worker typecheck,5suites38tests/playerbuild pass; source manifest matches world/main/playerCSS. Existing unrelated testformatwarning retained. Root preparing release of focus+accessibility changes; current quota50%used/50%remaining. Next Luna task route timing from provider-live-gameplay-task.md, then sevenundo/fullreportgate.
+
+Releasef506f85 complete: localbuild20760 and Verceldeploy84568 exit0/aliasorbsie.com. Fourplayerartifacts matchisolatedbuild; providedChrome390x844 software ready/nofataldialog/nooverflow; Androidproduction namedGameplayarea and nofalseGraphicsfailuretext. Evidence focus-accessibility-release-f506f85. Checkout /tmp/orbsie-chatgpt-release-4eb9ce8 nowf506f85, knownnext-env.d.tsdirty. Currentworker route timing correction; no livecalls.

@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "f506f85",
+  "deployment": "https://orbsie-ldv1v4r12-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "playerArtifacts": {
+    "runtime.js": {
+      "bytes": 1822544,
+      "sha256": "6e0ecde5e1ce0a5e60f6b2ccd080667d86163db2399ccc929ba7efd39223f0c8",
+      "matchesReleaseBuild": true
+    },
+    "runtime.css": {
+      "bytes": 4165,
+      "sha256": "7d73ad410ad9ddc54f45d2b75a3a2331229231afc8e908b85795f5e91392c2f5",
+      "matchesReleaseBuild": true
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a",
+      "matchesReleaseBuild": true
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 424237,
+      "sha256": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8",
+      "matchesReleaseBuild": true
+    }
+  },
+  "scope": "Release artifact identity; not full provider or physical-device acceptance",
+  "browserSmoke": {
+    "providedChrome390x844Touch": {
+      "availability": "ready",
+      "softwareCanvas": true,
+      "namedGameplayRegion": true,
+      "fatalDialog": false,
+      "horizontalOverflow": false
+    },
+    "androidEmulatorChrome": {
+      "productionOrigin": true,
+      "namedGameplayRegion": true,
+      "falseGraphicsFailureText": false
+    },
+    "modelCalls": 0
+  }
+}
