@@ -188,3 +188,13 @@ host/server validation. Queued docs/visual-review-capability-task.md with explic
 tri-state normalization, bounded metadata, full catalog propagation and unchanged
 ordinary model availability. This is architecture only; no capability implementation
 or image inference claimed. Existing Luna capture task confirmed running.
+
+## Capture review and image-policy evidence
+
+Root sent Luna four current capture WIP findings: software canvas needs completed
+frame binding, unchanged meshes must not rebuild per revision, empty WebGL scenes
+must become ready, and readiness metadata must reflect committed React state.
+Worker remains responsible for fixes/tests before acceptance.
+Offline process-policy probe confirms hosted generation guard rejects image input
+before RPC; evidence visual-review-policy-20260913/report.json. Added explicit
+bounded policy-change requirement to transport contract. No live inference ran.

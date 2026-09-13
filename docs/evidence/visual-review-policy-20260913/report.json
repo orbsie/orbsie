@@ -1,0 +1,6 @@
+{
+  "textAccepted": true,
+  "textPlusImageAccepted": false,
+  "imageOnlyAccepted": false,
+  "scope": "Offline policy function only; no process spawned, no inference, no runtime image-ingest claim."
+}

@@ -49,3 +49,20 @@ Do not silently raise limits or accept arbitrary remote URLs. Runtime image inge
 needs its own bounded decoder/transport evidence; catalog support alone is not proof.
 The server must independently resolve review capability and enforce free-call
 allowances; a client capability flag is never authorization for extra inference.
+
+### Verified process-policy prerequisite
+
+Root offline probe (docs/evidence/visual-review-policy-20260913/report.json) verifies
+src/lib/server/chatgpt-generation-policy.ts currently accepts the normal text turn
+and rejects text+image/image-only shapes. It requires input.length===1 and exact
+text-only keys. src/lib/server/chatgpt-runtime.ts invokes that guard before sending
+RPC. An adapter-only image change would therefore fail locally before the pinned
+App Server decoder. The probe uses placeholder image data solely to exercise the
+shape guard; it does not validate a PNG or prove runtime image ingestion.
+
+The subsequent transport task must own this process-policy change and its focused
+tests as well as adapter input. Permit only the intended bounded text+local PNG
+payload, retain model/effort/service tier/thread identity and sandbox constraints,
+and reject arbitrary URLs, paths, extra input types/keys and oversized aggregate
+bytes. Do not broadly disable the guard to make images pass. This policy change is
+outside the capability-only task above.
