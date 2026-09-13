@@ -1,0 +1,15 @@
+{
+  "deployment": "https://orbsie-bwx2kdmse-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "sourceCommit": "3b55d33",
+  "buildAndTypecheckPassed": true,
+  "browser": "Owner Chrome Person 1 via computer-use extension",
+  "softwareRendererVisible": true,
+  "fatalGraphicsDialogAbsent": true,
+  "compactAdvisoryVisible": true,
+  "createEnabledWithPrompt": true,
+  "testPromptCleared": true,
+  "generationCalls": 0,
+  "providerAfterReload": "3 free prompts displayed; historical ChatGPT session not retested",
+  "gameplayEvidence": "../game-actions-software-acceptance-final/report.json"
+}

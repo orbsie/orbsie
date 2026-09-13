@@ -21,8 +21,7 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 LATEST USER CORRECTION: WebGL failure must select playable Canvas2D fallback.
 Reviewed implementation committed `1b8698d`; compact guidance/styles `52ee047`;
-standalone artifacts built from isolated source and committed `0ff35ca`. Not yet
-deployed. Main retains paused, unreviewed texture WIP, especially World Formation.
+standalone artifacts built from isolated source and committed `0ff35ca`. Deployed and owner-browser verified (see production evidence below). Main retains paused, unreviewed texture WIP, especially World Formation.
 Do not deploy main worktree directly. Release candidate lives at
 `/tmp/orbsie-graphics-release-7006a72`, server3071, with isolated fallback sources,
 node_modules and rebuilt standalone bundle. Its .vercel/project.json is linked.
@@ -41,9 +40,14 @@ Typecheck passed on isolated release. No live inference used. Full physical-mobi
 large-scene performance, and flagship physics acceptance remain broader-goal work;
 do not represent these focused checks as full prompt.md completion.
 
-Production deployment/owner-browser verification is next. Main texture WIP remains
-paused and must not ship. Reset only the disposable release worktree to the latest
-reviewed commit before deploy; its linked .vercel config remains ignored/preserved.
+Production source `3b55d33` deployed successfully to
+`https://orbsie-bwx2kdmse-grappeggias-projects.vercel.app`, aliased orbsie.com.
+Vercel build/typecheck passed. Owner Chrome production refresh confirms Canvas2D,
+compact advisory, no fatal dialog and Create enabled with nonempty prompt (cleared
+without submitting). Evidence `software-owner-local/production.json`. Reload showed
+3 free prompts rather than the historical ChatGPT selection; no new inference or
+connection claim. Local test tabs closed; owner production tab left ready.
+Main texture WIP remains paused/unreviewed and was excluded from this deployment.
 
 ChatGPT real owner browser connection succeeded2026-09-13 after fresh device authorization. Orbsie Signed in message, real catalog includes Luna, selected gpt-5.6-luna/low and applied connection. Evidence chatgpt-device-owner/connected.json. No inference yet: owner Chrome WebGL unavailable blocks Create. Do not bypass rendering gate or copy browser cookies. Prior rejection preserved, cause unproven; device-code security setting was already enabled.
 
