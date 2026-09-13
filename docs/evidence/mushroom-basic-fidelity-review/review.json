@@ -1,0 +1,84 @@
+{
+  "status": "experiment-rejected",
+  "scope": "offline bounded mushroom color-fidelity experiment; prototype evidence only; no catalog admission",
+  "sourceInspection": "docs/evidence/mushroom-basic-inspection/report.json",
+  "proposedChange": {
+    "file": "scripts/convert-mushroom-candidate.mjs",
+    "parameter": "CONFORMING_REFINEMENT_BUDGET",
+    "reviewedValue": 18000,
+    "experimentValue": 22000,
+    "intent": "Use additional vertex budget for the existing adaptive texture bake while preserving the conforming topology pass."
+  },
+  "experiment": {
+    "artifacts": {
+      "conversionReport": "docs/evidence/mushroom-basic-fidelity-experiment-22000/conversion/report.json",
+      "glb": "docs/evidence/mushroom-basic-fidelity-experiment-22000/conversion/prototype.glb",
+      "previewReport": "docs/evidence/mushroom-basic-fidelity-experiment-22000/preview/report.json",
+      "front": "docs/evidence/mushroom-basic-fidelity-experiment-22000/preview/front.png",
+      "rear": "docs/evidence/mushroom-basic-fidelity-experiment-22000/preview/rear.png"
+    },
+    "conversion": {
+      "vertices": 26340,
+      "triangles": 8780,
+      "bytes": 949524,
+      "sha256": "b1e47e2374adb9978891dcd803d4a1294cfea663339a596057f77a691fb3149c",
+      "finiteOutput": true,
+      "oneMeterHeight": true,
+      "noImages": true,
+      "noExternalUris": true
+    },
+    "preview": {
+      "status": "rendered",
+      "frontAndRear": true,
+      "pageErrors": [],
+      "externalRequests": []
+    },
+    "topology": {
+      "status": "worker-reported-unverified",
+      "tJunctions": 0,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 50,
+      "invertedWindingCount": 0,
+      "note": "No topology report was saved for this transient run; these measurements are preserved from the worker run record and are not independently verifiable here."
+    }
+  },
+  "decision": {
+    "accepted": false,
+    "reason": "The recovered front/rear views still show jagged white-spot edges, so this extra-budget experiment did not demonstrate an improvement. The worker-reported small-area measurement is retained as an unresolved topology concern, not as independently verified evidence."
+  },
+  "retainedEvidence": {
+    "conversion": "docs/evidence/mushroom-basic-fidelity-conversion/report.json",
+    "preview": "docs/evidence/mushroom-basic-fidelity-preview/report.json",
+    "topology": "docs/evidence/mushroom-basic-fidelity-topology/report.json",
+    "retainedGlbSha256": "4e6830f81d24639546b37c94331e46118187d4787835dddad040ca6f2485b61f",
+    "retainedVertices": 25620,
+    "retainedTriangles": 8540,
+    "retainedBytes": 923604,
+    "retainedTopology": {
+      "tJunctions": 0,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 0,
+      "invertedWindingCount": 0
+    }
+  },
+  "visualReview": {
+    "source": "recovered worker-run screenshots",
+    "frontAndRearRendered": true,
+    "pinkSpecklesVisible": false,
+    "whiteSpotEdges": "still visibly jagged",
+    "catalogAdmission": "rejected"
+  },
+  "license": {
+    "spdx": "CC0",
+    "creator": "Asset Quest",
+    "sourceTextSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+    "preservedText": "docs/evidence/mushroom-basic-fidelity-conversion/License.txt"
+  },
+  "recommendedNextStep": "Plan a separate bounded loader/transfer/material/export integration that deliberately preserves texture data or produces a self-contained image-backed GLB, then rerun the same isolated front/rear and topology checks before any catalog admission. This experiment alone does not establish a universal limit for vertex colors.",
+  "rootReview": {
+    "experimentGlbHashVerified": true,
+    "recoveredFrontImageReviewed": true,
+    "decision": "Rejected: front white-spot fringes visibly worse than baseline. No source change retained.",
+    "topology": "Unverified experiment counts are not acceptance evidence."
+  }
+}

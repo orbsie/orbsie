@@ -1,0 +1,169 @@
+{
+  "status": "prototype-generated",
+  "scope": "offline texture-baked derivative; no catalog admission or visual fidelity claim",
+  "sourceInspection": "docs/evidence/mushroom-basic-inspection/report.json",
+  "license": {
+    "spdx": "CC0",
+    "creator": "Asset Quest",
+    "url": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceTextPath": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/License.txt",
+    "sourceTextSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+    "preservedTextPath": "docs/evidence/mushroom-basic-fidelity-conversion/License.txt"
+  },
+  "inputs": {
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Meshes/Fly_Agaric_Basic.fbx",
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b",
+      "bytes": 33856
+    },
+    "tga": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Textures/Mushrooms_C.tga",
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "bytes": 50331692
+    }
+  },
+  "bake": {
+    "subdivisionPasses": 2,
+    "subdivisionLevel": 4,
+    "sourceTriangles": 222,
+    "outputTriangles": 8540,
+    "outputVertices": 25620,
+    "adaptive": {
+      "enabled": true,
+      "initialTriangles": 3552,
+      "finalTriangles": 6000,
+      "initialMaxSampledError": 0.4670088999041672,
+      "finalMaxSampledError": 0.19956422810971441,
+      "refinementCount": 816,
+      "budgetSaturation": true,
+      "depthSaturation": false,
+      "threshold": 0.04,
+      "maxDepth": 4,
+      "maxSplits": 2200,
+      "limitation": "Error is sampled only at edge midpoints and centroids; it is not a guarantee between samples."
+    },
+    "conforming": {
+      "enabled": true,
+      "finalTriangles": 8540,
+      "splitTriangleCount": 757,
+      "reservedRefinementVertices": 18000
+    },
+    "textureSampling": {
+      "transform": "THREE.Texture.transformUv (repeat/offset/wrap/flipY)",
+      "filter": "bilinear",
+      "colorConversion": "sRGB bytes to linear float before bilinear interpolation",
+      "materialColorMultiplied": [
+        0.6038273590529664,
+        0.6038273590529664,
+        0.6038273590529664
+      ]
+    }
+  },
+  "normalization": {
+    "sourceBounds": {
+      "min": [
+        -7.282815933227539,
+        -0.1662549078464508,
+        -7.282815933227539
+      ],
+      "max": [
+        7.282815933227539,
+        18.43482780456543,
+        7.282815933227539
+      ],
+      "size": [
+        14.565631866455078,
+        18.60108271241188,
+        14.565631866455078
+      ]
+    },
+    "sourceMatrixWorld": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "applied": "source matrixWorld, then center X/Z, subtract source min Y, scale total height to 1 meter",
+    "sourceToOutputScale": 0.05376031145395281,
+    "outputUnits": "meters",
+    "outputBaseY": 0,
+    "outputHeight": 1
+  },
+  "output": {
+    "path": "docs/evidence/mushroom-basic-fidelity-conversion/prototype.glb",
+    "bytes": 923604,
+    "sha256": "4e6830f81d24639546b37c94331e46118187d4787835dddad040ca6f2485b61f",
+    "selfContained": true,
+    "hasImages": false,
+    "uris": [],
+    "meshes": [
+      {
+        "name": "Fly_Agaric_Basic_baked",
+        "vertices": 25620,
+        "triangles": 8540,
+        "attributes": [
+          "position",
+          "normal",
+          "color"
+        ],
+        "hasMap": false
+      }
+    ],
+    "bounds": {
+      "min": [
+        -0.391526460647583,
+        0,
+        -0.391526460647583
+      ],
+      "max": [
+        0.391526460647583,
+        1,
+        0.391526460647583
+      ],
+      "size": [
+        0.783052921295166,
+        1,
+        0.783052921295166
+      ]
+    },
+    "colorRange": {
+      "min": [
+        0.18686580657958984,
+        0.0018327789148315787,
+        0.009658999741077423
+      ],
+      "max": [
+        0.5953956246376038,
+        0.5892158150672913,
+        0.5877928733825684
+      ]
+    }
+  },
+  "checks": {
+    "finiteOutput": true,
+    "vertexLimit": "25620 <= 30000",
+    "byteLimit": "923604 <= 2097152",
+    "baseY": true,
+    "oneMeterHeight": true,
+    "noImages": true,
+    "noExternalUris": true,
+    "decodedWithGLTFLoader": true,
+    "transformedBoundsHelper": true
+  },
+  "appearance": {
+    "status": "unverified",
+    "note": "No visual render was performed in this bounded conversion task."
+  }
+}

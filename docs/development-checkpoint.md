@@ -63,9 +63,15 @@ finite normals and no inverted winding. GLB923604 bytes; output SHA and exact
 CC0 license verified. Repair stays opt-in and historical evidence is unchanged.
 Default-color white spots retain visibly jagged fringes: NOT admitted to catalog.
 Next asset quality work must address color fidelity, not repeat topology repair.
-Active bounded worker /root/mushroom_color_fidelity owns converter and new
-mushroom-basic-fidelity evidence only. One experiment under30kvertices/2MiB;
-no model calls or catalog admission. Root review pending.
+Worker /root/mushroom_color_fidelity completed. No source change retained.
+22000 refinement-budget experiment GLB hashb1e47e23 recovered and verified;
+root reviewed recovered front image: white spot outlines worse, rejected.
+Experimental topology counts lack a retained report and are explicitly
+worker-reported/unverified. Baseline fidelity-* artifacts duplicate conforming
+baseline; only experiment-22000 artifacts demonstrate the attempted variant.
+Do not rerun vertex-budget tuning. Next architecture decision: bounded embedded
+texture support across decoder/worker transfer/material/export, or a different
+permissive asset with acceptable vertex-color appearance. No active worker.
 
 ## Asset handoff (paused)
 
