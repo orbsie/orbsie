@@ -88,3 +88,15 @@ concurrent/replayed admissions. Cover both renderers, phone viewport and gamepla
 continuity. Then bounded Luna live milestone per provider with exact saved images,
 commands/verdicts, frame impact and token/latency evidence. Retain all failures.
 Full flagship/physical mobile/publication gates remain required separately.
+
+### Hosted private HTTP wiring
+
+Root source check: scripts/chatgpt-host-server.ts currently wires its private
+/generate handler directly to createChatGPTSceneStream(input,generator,signal).
+The scene request schema and parser are not a generic reviewer transport. The
+review execution task must add an explicitly authorized private review operation
+through host handler/manager/service as well as the public review admission path;
+merely adding reviewImage to createChatGPTGeneration cannot reach the hosted user
+workflow. Preserve private host token validation, request ceilings, abort forwarding
+and renewal/session identity. Test this whole private hop with mocked RPC before
+live acceptance; do not call an internal function test hosted E2E.
