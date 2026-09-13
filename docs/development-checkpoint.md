@@ -106,21 +106,22 @@ Real QuickJS tests plus mocked queues; prior actual-browser worker evidence link
 No blanket security/mobile claim and no model calls. Current single Luna task is
 the fresh-world gameplay driver; publication verification is committedac7268f.
 
-Gameplay WIP review criteria and outstanding corrections are recorded under
-In-progress review in provider-live-gameplay-task.md. Await worker completion and
-actual browser fixture evidence before accepting/deploying observation changes.
-Root source review confirms null-prototype contact counters, bounded fresh-frame
-waiting, traversal lifecycle checks, and an open-stream check after movement.
-Fixture runs1/3/4 stopped at disabled Create. Run5 reached score5 and portal
-win, then exposed a driver distance-check false negative; corrected with a focused
-regression. Run7 proves movement while stream remains open, five collections and
-portal win, but not platform contacts. Run8 trajectory shows jump never entered
-physics because the focused Play button consumes Space intentionally. Current task
-uses real gameplay-surface clicks before inputs, then one run9; retain platform
-contact/bounce gate. Thirteen focused tests pass; no complete two-renderer fixture
-pass or live-provider claim yet. Setup waits renderer readiness and verifies input;
-hydration-race cause remains unproven. Product Play focus transfer remains a UX
-follow-up, distinct from the explicit canvas-click action in the driver.
+Gameplay driver committed a553f02. Root reviewed source and run9 WebGL full
+creation gameplay plus run10 software full gameplay. Run10 original report failed
+only on deliberately injected WebGL initialization error; separate adjudication in
+fresh-flagship-gameplay-review/report.json preserves original report and hashes.
+Both cover actual movement while stream open, all3 moving-platform contacts,
+bounce, five collections, portal win and UI reset. Typecheck and6focused suites
+(95tests) pass; latest helper suite15pass. No live-provider/full-story/mobile claim.
+
+Current single Luna task: fix SoftwareWorld parcel transition/camera/composer.
+Root visual finding: run10 centered panel obscures scene and extends below screen.
+Source: WebGL attaches/steps parcelTransitionController; SoftwareWorld never does
+and has fixed camera. Reuse shared semantics, verify desktop1280x900 andphone390x844,
+phase/resize/back/reopen cleanup, and software gameplay once after correction.
+No model calls/deploy. Play-button keyboard focus remains a separate UX follow-up;
+current accepted keyboard driver explicitly clicks the gameplay surface.
+Seven-crystal and original-undo traversal are queued in provider-live-gameplay-task.
 
 Provider prerequisites: OpenRouter key is in .env.openrouter.local. Gateway test
 credential previously supplied by the owner is now stored mode0600 at
