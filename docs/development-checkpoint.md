@@ -9,7 +9,7 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 41% weekly used, 59% remaining;
+at meaningful milestones. Latest actual quota read 2026-09-13: 42% weekly used, 58% remaining;
 stop workers/tests below20% remaining. Reusable local check:
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
@@ -97,8 +97,8 @@ No post-deploy live calls or browser verification yet. Device auth tabs auto-clo
 on success; never reuse codes.
 chrome://gpu diagnostics and direct /api/chatgpt/status tab navigation were blocked;
 do not bypass via CDP/backend/cookie export. Normal Connections UI works.
-Host initial lifetime is10min, nonpersistent, no renewal implemented. Vercel SDK
-supports extendTimeout, verified locally and official docs; see
+Host starts with10min idle lifetime; bounded active renewal is deployed in0a2fbf6,
+with live continuity still unverified. See
 `docs/chatgpt-session-lifetime-followup.md`. No claim current host remains alive.
 
 ## Remaining major acceptance gaps
@@ -111,7 +111,7 @@ supports extendTimeout, verified locally and official docs; see
 - Physical midrange Android and iOS Safari, touch/orientation/background/long-run
   performance. Prior emulator or narrow desktop tests do not certify mobile.
 - Finish texture/catalog/procedural mix integration, visual quality and offline
-  export/license acceptance. Decoder3d6a839 and WebGL texture stage reviewed; software appearance/admission remain open.
+  export/license acceptance. Decoder3d6a839 and WebGL texture stage reviewed; software appearance accepted; catalog admission remains open.
 - Full prompt.md requirement audit, provider recovery/free exhaustion, GitHub push.
 
 Prior provider evidence remains in archive: OpenRouter3658d7e create/pink edit/
@@ -145,3 +145,15 @@ Fresh current-runtime publication is required; current editor deployment does
 not hot-update immutable old published games. Connector screenshot file save to
 repo denied by its workspace-root policy; inline screenshot viewing worked.
 Do not route around that filesystem restriction.
+
+
+## Current harness review
+
+Three-provider fresh flagship support and explicit hosted3-call bounds are in the
+worktree. Luna is replacing a source-order test with behavioral project/revision
+continuity evidence; root found no other issue in the provider/bounds/logo diffs.
+No live calls this task. Publication currently checks revision/canvas, not exact
+project/runtime identity; the remaining gate is recorded in
+`provider-flagship-harness-followup.md`. Full gameplay traversal remains unverified.
+Latest production browser recheck shows compatibility rendering ready on the
+editor; historical public test deployment still has the old WebGL-only runtime.

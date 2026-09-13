@@ -35,6 +35,32 @@ Do not run live calls merely to test harness configuration.
   modes before live execution. Report each phase and preserved IDs/revisions,
   real model-call count, artifacts and limitations. Physical mobile remains open.
 
-This is an unimplemented harness contract, not completed acceptance. The next
+Implementation review is in progress: all three provider configurations and
+explicit hosted three-call bounds are implemented; a behavioral continuity
+regression is being added. Structural checks are not gameplay acceptance. The next
 hosted live milestone should still diagnose the post-fix create/edit route first;
 full story acceptance follows successful actual generation.
+
+
+## Remaining publication evidence gate
+
+Source review of `runPublication` on 2026-09-13 found that it observes a visible
+canvas and published revision, but does not bind the public snapshot's project ID
+or runtime bytes to the original live world/current editor release. Production
+observation `published-old-runtime-20260913/report.json` shows why this matters:
+an old independent deployment still requires WebGL even though the current editor
+has a software fallback.
+
+The next bounded acceptance change must compare the original project ID and
+revision through cloud save, exported snapshot and anonymous published snapshot;
+compare the published runtime and workers with the exact exported/current-release
+artifacts; retain hashes in the report; and reject stale or mismatched artifacts.
+Use bounded anonymous fetches through approved deployment origins. Existing
+publication manifests already describe project identity and SHA-256 file hashes;
+reuse their format. This is verification of a fresh publication, not permission
+to mutate historical user publications. Source ZIP retention and rebuild evidence
+remain separate from the smaller deployed player artifact.
+
+Actual movement, bounce traversal, collection, portal win and reset still need to
+run in the same fresh provider-created world. A structural pass, visible canvas,
+or separate reconstructed saved-world traversal cannot satisfy that requirement.
