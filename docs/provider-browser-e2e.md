@@ -64,8 +64,9 @@ remains two calls. Keep end-user model choices separate from Luna-only test poli
 Fresh story creation now exercises real movement while generation remains open,
 three moving-platform contacts with a bounce, five collections, portal win and
 UI reset. Local deterministic WebGL and software gameplay evidence is reviewed in
-`docs/evidence/fresh-flagship-gameplay-review/report.json`; software visual layout
-remains open. This fixture evidence is not live-provider acceptance. Seven-crystal
+`docs/evidence/fresh-flagship-gameplay-review/report.json`; software layout is separately verified by the touch-emulated UI-only run at
+`docs/evidence/software-transition-layout-run18-coarse/report.json`. Physical-device
+verification remains open. This fixture evidence is not live-provider acceptance. Seven-crystal
 and original-undo phases still require full traversal integration, as does fresh
 signed-out publication; their structural checks alone do not close those gates.
 

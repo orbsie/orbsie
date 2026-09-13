@@ -1,0 +1,39 @@
+{
+  "sourceCommit": "ddafb15",
+  "deployment": "https://orbsie-4g66knnto-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "playerArtifacts": {
+    "runtime.js": {
+      "bytes": 1822300,
+      "sha256": "87e07ae657dd4b7c9e83a6080ba2873106d106dae6141882bc95d13863b53434",
+      "matchesReleaseBuild": true
+    },
+    "runtime.css": {
+      "bytes": 4088,
+      "sha256": "91c859841df8e3bfc577535c1879fc167f983c48b0b999342700bf6abda45529",
+      "matchesReleaseBuild": true
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a",
+      "matchesReleaseBuild": true
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 424237,
+      "sha256": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8",
+      "matchesReleaseBuild": true
+    }
+  },
+  "browserSmoke": {
+    "tool": "provided Chrome connector",
+    "viewport": "390x844 touch emulation",
+    "rendererAvailability": "ready",
+    "softwareCanvas": true,
+    "fatalGraphicsDialog": false,
+    "horizontalOverflow": false,
+    "modelCalls": 0
+  },
+  "scope": "Release build/artifact identity and initial-page smoke; not full live-provider or physical-device acceptance"
+}

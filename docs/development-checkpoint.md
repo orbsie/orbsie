@@ -41,19 +41,19 @@ prove separate worlds; do not label them full fresh-provider acceptance.
 
 ## Production and release
 
-Current source7cbd875 deployed to
-https://orbsie-bl9a1qn22-grappeggias-projects.vercel.app (alias https://orbsie.com).
-Local/Vercel builds pass. OpenAI logo visible/loaded in Connections heading/button;
-390x844 touch emulation, compatibility renderer ready, no horizontal overflow.
-Root inspected inline screenshot. Evidence provider-harness-release-20260913.
-No physical mobile/live provider claim. Historic public test world still serves
-old WebGL-only independent runtime: published-old-runtime-20260913 evidence.
-Do not mutate old publications or treat main deploy as updating their runtime.
+Current source ddafb15 deployed to
+https://orbsie-4g66knnto-grappeggias-projects.vercel.app (alias https://orbsie.com).
+Local and Vercel production builds pass. All4 current player/runtime worker bytes
+match isolated release build. Provided Chrome390x844 touch smoke: software ready,
+no fatal graphics dialog or horizontal overflow; root viewed inline screenshot.
+Evidence fallback-release-ddafb15/report.json. No inference or physical-device
+claim. Historical publications retain their old independent runtime.
 
-Isolated release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` at7cbd875; known
-next-env.d.ts build-generated change retained. Vercel CLI existing local auth,
-scope grappeggias-projects. Build/deploy completed; no live build handle pending.
-Do not deploy unreviewed main WIP. No .openai/hosting.json. Frequent local commits.
+Isolated checkout /tmp/orbsie-chatgpt-release-4eb9ce8 now detached ddafb15;
+known build-generated next-env.d.ts change retained. Build14774/deploy15400 both
+completed; no active release process. Vercel scope grappeggias-projects. Main
+worker WIP is not deployed. Browser page5 is fresh release smoke context;
+OpenRouter/ChatGPT owner-login tabs preserved.
 
 ## Accepted implementation; remaining live evidence
 
@@ -114,14 +114,20 @@ Both cover actual movement while stream open, all3 moving-platform contacts,
 bounce, five collections, portal win and UI reset. Typecheck and6focused suites
 (95tests) pass; latest helper suite15pass. No live-provider/full-story/mobile claim.
 
-Current single Luna task: fix SoftwareWorld parcel transition/camera/composer.
-Root visual finding: run10 centered panel obscures scene and extends below screen.
-Source: WebGL attaches/steps parcelTransitionController; SoftwareWorld never does
-and has fixed camera. Reuse shared semantics, verify desktop1280x900 andphone390x844,
-phase/resize/back/reopen cleanup, and software gameplay once after correction.
-No model calls/deploy. Play-button keyboard focus remains a separate UX follow-up;
-current accepted keyboard driver explicitly clicks the gameplay surface.
-Seven-crystal and original-undo traversal are queued in provider-live-gameplay-task.
+Software transition/layout fix ddafb15 accepted and deployed. Shared controller
+now drives Canvas2D camera/composer; portrait title and advisory overlaps fixed.
+Root reviewed run18-coarse UI-only pass at1280x900,390x844,844x390: actual coarse
+pointer/taps, sheet open/close, landing/reopen, no document overflow, reachable
+controls. Source typecheck, playerbuild and3focused suites13tests pass. Prior
+run11 fullsoftware gameplay passed before layout assertion; run12 Ccontact failure
+is retained as route timing fragility, not erased by layout pass. Normal-motion
+sheet must settle before fixture fill; early-focus transient is documented inrun17.
+No complete physical-mobile or live-provider acceptance claim.
+
+Current single Luna task: explicit Play transfers focus to named gameplay target,
+so Space jumps without extra canvasclick; preserve button activation, typing
+isolation, Tab navigation, and touch. Root handles release evidence only. No model
+calls/deploy byworker. Seven-crystal/undo and signed-out traversal remain queued.
 
 Provider prerequisites: OpenRouter key is in .env.openrouter.local. Gateway test
 credential previously supplied by the owner is now stored mode0600 at
