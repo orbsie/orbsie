@@ -39,7 +39,9 @@ The target must be supplied as `ORBSIE_TEST_URL` (the existing `TEST_URL` name
 is accepted for compatibility). A `local-only` key is rejected for any
 non-loopback target. The key and, for ChatGPT local, the capability token are
 read only after every gate passes; neither is logged, stored in the report, or
-written to screenshots or ZIP evidence.
+written to screenshots or ZIP evidence. Current browser-only ChatGPT testing uses
+`--provider chatgpt-hosted` and its separate consent/session contract linked above;
+the local companion branch is historical.
 
 For API-key runs the harness waits for the live same-origin
 `/api/models?provider=...` response, requires the exact expected model to be
@@ -47,9 +49,25 @@ present, selects its visible catalog row, fills the key in the in-memory
 settings control, and verifies the two generation requests (creation and
 edit) carry the selected provider/model. It does not choose another model when
 the expected one is absent. The supplied local-only OpenRouter exception is
-enforced as `openai/gpt-5.6-luna` with a maximum explicit cap of 512 output
-tokens; use an explicitly authorized Luna key and the exact expected model for
-the live run.
+enforced as `openai/gpt-5.6-luna`, normally capped at 512 output tokens.
+The owner's authorized flagship/procedural runs may explicitly set
+`ORBSIE_OPENROUTER_RAISED_CAP=1` with `ORBSIE_OUTPUT_CAP_TOKENS=4096`;
+the flag does not permit exceeding 4,096 tokens or authorize automatic retries.
+
+`ORBSIE_FLAGSHIP_STORY=1` selects the exact three-call island story for OpenRouter,
+Gateway or hosted ChatGPT: creation, selected mushroom edit, then slower middle
+platform plus two crystals. API-key runs require the matching 4,096-token server
+cap. Hosted runs use `ORBSIE_CHATGPT_TEST_LIMITS=3-calls-180s-512kib` rather than
+claiming a provider output-token or spending guarantee. Standard creation/edit
+remains two calls. Keep end-user model choices separate from Luna-only test policy.
+
+Fresh story creation now exercises real movement while generation remains open,
+three moving-platform contacts with a bounce, five collections, portal win and
+UI reset. Local deterministic WebGL and software gameplay evidence is reviewed in
+`docs/evidence/fresh-flagship-gameplay-review/report.json`; software visual layout
+remains open. This fixture evidence is not live-provider acceptance. Seven-crystal
+and original-undo phases still require full traversal integration, as does fresh
+signed-out publication; their structural checks alone do not close those gates.
 
 For Gateway BYOK runs, the harness prefers `AI_GATEWAY_TEST_KEY` and accepts
 `AI_GATEWAY_API_KEY` as a backwards-compatible fallback. It never reads

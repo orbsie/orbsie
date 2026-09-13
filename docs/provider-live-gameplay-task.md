@@ -105,3 +105,20 @@ and focused fixture/tests; no provider calls are required for implementation.
 Only after local integration passes, run the already authorized fresh three-call
 Luna journey for each available provider. Keep OAuth/subscription login evidence
 separate from API-key generation and preserve each credential's call/output cap.
+
+## Product keyboard focus follow-up
+
+Run8 established that Space never reached physics while the Play button retained
+focus. Both renderer handlers intentionally preserve native Space/Enter button
+activation, and Orbsie's Play handler currently changes state and closes the
+mobile sheet without moving focus. The accepted driver explicitly clicks the
+gameplay surface; that does not close this product usability gap.
+
+After the software transition correction, give the game a named focus target and
+transfer focus on an explicit Play action so immediate movement/jump works for
+mouse and keyboard users. Preserve normal button activation, typing isolation,
+visible keyboard focus and the ability to Tab back to editor controls. Avoid
+focus stealing on ordinary model updates, geometry commits or window resize.
+Validate Play → Space jump without the harness's extra canvas click, then focus
+the composer and prove typing does not move the player. Cover both renderers and
+leave existing pointer/touch control behavior intact.
