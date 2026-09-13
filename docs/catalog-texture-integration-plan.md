@@ -68,3 +68,40 @@ first visual experiment. Network/resource policy stays deny-by-default.
 World's existing assetRecipe.tint is the explicit recolor signal; ignore the atlas
 when that tint is present. Preserve untinted source appearance and shared-cache
 isolation. Particle samples can use a bounded texture-color lookup in the worker.
+
+## Renderer and export handoff after decoder commit 3d6a839
+
+Source review confirms the editor and standalone player both import World;
+export.ts copies the immutable catalog GLB plus exact source license through
+bundleCatalogAssets. Embedded PNG bytes therefore need no separate texture URL
+or export-side texture fetch. Rebuild the player and its worker only after the
+shared rendering change; verify exported playback, not just source inclusion.
+
+useAssetGeometry currently clones geometry and immediately releases its lease.
+Extend its result with a per-hook DataTexture while retaining the loader lease
+until hook cleanup. Share immutable RGBA storage; never mutate its pixels for
+entity tint. Dispose the hook's GPU texture, cloned geometry and lease exactly
+once on replacement/unmount. An aborted resolution must release without exposing
+stale state. Texture instances must not be stored in geometry.userData.
+
+World Formation currently preserves previousShape only. Pending or failed asset
+replacement must preserve the last committed appearance as well as its geometry;
+do not attach the new atlas to an old mesh or dispose an atlas still displayed.
+Use an explicit retained appearance lifetime for that last-good snapshot. Apply
+assetRecipe.tint by omitting the atlas and replacing vertex/particle colors;
+clearing tint must restore the unchanged source atlas. Game-time color overrides
+already replace diffuseColor after color_fragment; preserve that ordering after
+map_fragment so gameplay tint remains uniform too.
+
+Map changes must update the material's shader variant (needsUpdate where required),
+while ordinary formation frames update uniforms without recompiling each frame.
+Keep particle formation separate: supply bounded UV-sampled atlas colors in the
+worker, multiplied by the source material/vertex colors in linear space. Verify
+texture orientation using the actual decoded candidate, not a symmetric mock.
+
+Next bounded worker owns use-asset-geometry, World appearance helpers, needed
+formation sampling, focused lifetime/render tests and player build integration.
+Do not dispatch until the active WebGL correction is reviewed. Do not add a
+catalog ID yet. Acceptance must cover untinted/pink/restored source views,
+last-good appearance during stale/failed replacement, shared texture isolation,
+cleanup, and offline exported playback with zero provider calls.
