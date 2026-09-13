@@ -32,18 +32,18 @@ no Blender installation/connection. Preserve licenses and safe unrelated work.
    Atomic selection fixes Quality→Budget resets and duplicate pressed states.
    26 targeted tests, typecheck, formatting and synthetic browser fixture pass.
    Fixture verifies actual Luna/low Budget payload; no live inference. Evidence
-   `chatgpt-model-presets-ui-20260913/report.json`. Pending production release.
+   `chatgpt-model-presets-ui-20260913/report.json`. Deployed ae3a478; local and Vercel production builds passed, config HTTP200.
 3. Then route timing correction, seven-crystal/original-undo traversal, complete
    flagship report gate, and fresh signed-out publication gameplay. Contract in
-   `docs/provider-live-gameplay-task.md`. No route WIP was created before pause.
+   `docs/provider-live-gameplay-task.md`. Luna host_session_renewal now owns bounded route timing correction only; no live calls or nested agents. Root reviewed approach/jump loop source before delegation.
 
 ## Production and local processes
 
-Production source83710c4:
-https://orbsie-59aw2ca0h-grappeggias-projects.vercel.app, alias https://orbsie.com.
-Local build99187/deploy61897 completed successfully; configHTTP200. Changing host
-artifact requires a fresh ChatGPT connection. Accepted preset changes are not yet deployed.
-Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detached83710c4; known
+Production sourceae3a478:
+https://orbsie-434dy7m00-grappeggias-projects.vercel.app, alias https://orbsie.com.
+Local build90664/deploy67411 completed successfully; configHTTP200. Changing host
+artifact requires a fresh ChatGPT connection. Preset changes deployed; live ChatGPT generation remains unverified.
+Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detachedae3a478; known
 build-generated next-env.d.ts dirty. Existing Vercel CLI auth, scope
 `grappeggias-projects`; do not print credentials.
 Local servers last confirmed3040(start2303),3091(dev720360/720361); revalidate.

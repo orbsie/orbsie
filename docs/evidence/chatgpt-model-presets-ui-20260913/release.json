@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "ae3a478",
+  "deployment": "https://orbsie-434dy7m00-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localProductionBuild": "passed",
+  "vercelBuildAndDeployment": "passed",
+  "configHttpStatus": 200,
+  "liveChatGPTGenerationVerified": false,
+  "validation": "26 targeted tests, typecheck, synthetic browser fixture; no live inference"
+}
