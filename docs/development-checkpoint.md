@@ -9,7 +9,7 @@ Use raw evidence and current source to verify claims; older exports remain immut
 
 Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
 concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 30% weekly used, 70% remaining. Stop workers
+Latest actual Codex App Server read: 34% weekly used, 66% remaining. Stop workers
 and tests below 20% remaining. Goal token totals are not subscription quota.
 Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
 retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
@@ -19,7 +19,24 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
-LATEST USER CORRECTION: WebGL failure must select playable Canvas2D fallback, not block the game. Supersedes earlier no-software-fallback/WebGL-only gate and guidance-first task. /root/texture_rendering switched to this priority; texture WIP paused unreviewed. Existing graphics guidance partial edits also paused/integrated only as optional advisory. Root isolated clean release worktree /tmp/orbsie-graphics-release-7006a72; pre-guidance texture snapshot /tmp/orbsie-pre-graphics-guidance-d_mlrmvd. Do not deploy unreviewed texture work. prompt.md updated with shared actual gameplay/scene acceptance.
+LATEST USER CORRECTION: WebGL failure must select playable Canvas2D fallback.
+Reviewed implementation committed `1b8698d`; compact guidance/styles `52ee047`;
+standalone artifacts built from isolated source and committed `0ff35ca`. Not yet
+deployed. Main retains paused, unreviewed texture WIP, especially World Formation.
+Do not deploy main worktree directly. Release candidate lives at
+`/tmp/orbsie-graphics-release-7006a72`, server3071, with isolated fallback sources,
+node_modules and rebuilt standalone bundle. Its .vercel/project.json is linked.
+
+/root/texture_rendering is stopped. The only active worker is
+/root/software_acceptance, owning bounded acceptance scripts only. It must report
+product bugs to root before editing runtime. Typecheck and focused unit checks
+passed; actual owner Chrome shows fallback + Create enabled with prompt. Root
+caught/fixed standalone canvas sizing, verified drawing in owner Chrome. Evidence
+`software-owner-local/initial-ui.json` is UI-only, not gameplay acceptance.
+The populated-game verifier previously passed input/variable and click/color
+checks, then failed an overly broad blue-pixel disappearance assertion. Prior
+worker localized that assertion but did not complete rerun. Fresh worker validates
+editor + standalone against3071 and isolated artifacts; no live inference.
 
 ChatGPT real owner browser connection succeeded2026-09-13 after fresh device authorization. Orbsie Signed in message, real catalog includes Luna, selected gpt-5.6-luna/low and applied connection. Evidence chatgpt-device-owner/connected.json. No inference yet: owner Chrome WebGL unavailable blocks Create. Do not bypass rendering gate or copy browser cookies. Prior rejection preserved, cause unproven; device-code security setting was already enabled.
 
@@ -30,10 +47,9 @@ Decoder/transfer/cache stage reviewed and accepted: explicit material-index vali
 ### Immediate acceptance and follow-up
 
 Current priority is the playable Canvas2D fallback in editor and standalone player.
-The first implementation exists but is not accepted or deployed. Root review found
-mesh face dropping, ordering/color errors, pending-asset lifetime concerns, and
-input/reset/terminal-state differences from the shared gameplay runtime. Luna is
-addressing these with targeted checks. Optional acceleration advice must not gate
+The reviewed implementation is committed but not deployed. Initial review issues
+(mesh face dropping, ordering, lifetime, input/reset/terminal semantics) were
+addressed; remaining behavioral acceptance is assigned to the current worker. Optional acceleration advice must not gate
 creation, score display, or readiness when software rendering succeeds.
 
 Owner Chrome is extension browser 1, profile Person 1. Use computer use for owner
