@@ -30,3 +30,46 @@ running sandbox, preserve owner/session/attempt checks and logout cleanup, and
 reserve enough time for an in-flight generation. Passive status polling must not
 silently keep metered runtimes alive indefinitely. No renewal was implemented by
 this investigation.
+
+## Bounded implementation contract (not yet implemented)
+
+Source review2026-09-13: `database()` returns a pg Pool, registry rows already
+have `created_at`, and the installed SDK exposes the actual session `expiresAt`
+in addition to `extendTimeout`. Use these existing interfaces; do not infer a
+running session deadline from the default timeout alone.
+
+- Keep initial/idle allowance10minutes, with a40minute absolute host lifetime
+  measured from registry creation and capped by the owning auth-session expiry.
+  This proposed product cap stays below the previously verified45minute Hobby
+  limit. It does not promise unlimited subscription-session persistence.
+- Renew only on an explicit valid generation request, after owner/session,
+  input, project-feedback identity and artifact checks. Status/model polling,
+  focus and refresh do not extend a metered host. Never create a replacement
+  host or restart inference automatically in this path.
+- Before dispatch, require enough verified runtime headroom for the bounded
+  request plus transport cleanup. If the absolute/session cap leaves too little
+  time, return the existing reconnect-required response before inference and
+  preserve the draft. Account for renewal/acquisition time inside the route's
+  total180second deadline; do not independently reset a175second fetch budget
+  after spending30seconds on acquisition.
+- Serialize renewal across server instances using an owner/session/attempt-scoped
+  registry transaction and row lock. Read the same ready, unexpired host and
+  owning session under that transaction. Bound lock wait and backend duration.
+  Recheck expiry against current time after acquiring the lock; PostgreSQL
+  transaction-start `now()` alone is insufficient after a wait.
+- Read a running sandbox with `resume:false`, validate finite actual expiry,
+  calculate only the positive delta needed to reach the chosen deadline, then
+  extend and verify its resulting expiry. Commit registry expiry only after
+  verified backend success, never beyond the actual sandbox or product/session
+  deadline. Roll back on failure; a backend extension followed by failed DB
+  commit may leave bounded extra runtime, but must not restore authorization.
+- Logout/teardown and expired cleanup retain attempt identity and cannot revive
+  a deleted/newer host. Stop/delete failures never justify credential copying,
+  persistence, unbounded retries or bypassing session revocation.
+
+Focused acceptance must cover no-op headroom, extension, passive reads, idle and
+absolute expiry, insufficient generation headroom, wrong owner/attempt, expired
+session, concurrent renewal, failed extension/DB commit and logout races. A later
+live milestone must exercise a real connected host beyond its original10minute
+expiry, verify the actual backend/registry deadlines and complete a generation.
+Synthetic timers alone will not establish live session continuity.
