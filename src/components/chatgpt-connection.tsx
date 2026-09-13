@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -13,6 +13,11 @@ import {
   CHATGPT_STALE_CONNECTION_CODE,
   CHATGPT_STALE_CONNECTION_MESSAGE,
 } from "../lib/chatgpt-connection-errors";
+import {
+  defaultChatGPTPresetSelection,
+  resolveChatGPTPresetOptions,
+} from "../lib/chatgpt-model-presets";
+import type { ChatGPTPresetLabel } from "../lib/chatgpt-model-presets";
 
 export {
   CHATGPT_STALE_CONNECTION_CODE,
@@ -167,6 +172,16 @@ type View =
 const initialView: View = { phase: "checking" };
 const genericError = "ChatGPT connection could not be completed. Try again.";
 export const CHATGPT_STALE_CONNECTION_ACTION = "Reconnect ChatGPT";
+type ChatGPTSelection = {
+  model: string;
+  effort: string;
+  preset: ChatGPTPresetLabel | null;
+};
+const emptySelection: ChatGPTSelection = {
+  model: "",
+  effort: "",
+  preset: null,
+};
 const safeErrors = new Set([
   "ChatGPT connection could not be completed.",
   "ChatGPT host is unavailable.",
@@ -281,12 +296,6 @@ async function requestModels(signal: AbortSignal): Promise<unknown> {
   }
 }
 
-function preferredEffort(model: ChatGPTModelOption): string {
-  return model.supportedReasoningEfforts.includes("low")
-    ? "low"
-    : model.defaultReasoningEffort;
-}
-
 function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
   if (snapshot.lifecycle === "pending" && snapshot.pending)
     return { phase: "pending", challenge: snapshot.pending, message };
@@ -324,8 +333,7 @@ export default function ChatGPTConnection({
   const [view, setView] = useState<View>(initialView);
   const [copied, setCopied] = useState<"" | "ok" | "fail">("");
   const [models, setModels] = useState<ChatGPTModelOption[]>([]);
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedEffort, setSelectedEffort] = useState("");
+  const [selection, setSelection] = useState<ChatGPTSelection>(emptySelection);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState("");
   const [modelsAttempt, setModelsAttempt] = useState(0);
@@ -668,8 +676,7 @@ export default function ChatGPTConnection({
   useEffect(() => {
     if (!signedIn || !generationEnabled || view.phase !== "connected") {
       setModels([]);
-      setSelectedModel("");
-      setSelectedEffort("");
+      setSelection(emptySelection);
       setModelsError("");
       setModelsLoading(false);
       return;
@@ -683,11 +690,39 @@ export default function ChatGPTConnection({
         const next = parseChatGPTModels(data);
         if (!next) throw Error("invalid catalog");
         setModels(next);
-        setSelectedModel((current) =>
-          current && next.some((model) => model.model === current)
-            ? current
-            : (next[0]?.model ?? ""),
-        );
+        const options = resolveChatGPTPresetOptions(next);
+        const fallback = defaultChatGPTPresetSelection(next);
+        setSelection((current) => {
+          const currentModel = next.find(
+            (model) => model.model === current.model,
+          );
+          if (currentModel) {
+            const currentPreset = current.preset
+              ? options.find((option) => option.label === current.preset)
+              : undefined;
+            if (
+              currentPreset?.available &&
+              currentPreset.model === current.model
+            )
+              return {
+                model: currentPreset.model,
+                effort: currentPreset.effort!,
+                preset: current.preset,
+              };
+            if (
+              current.effort &&
+              currentModel.supportedReasoningEfforts.includes(current.effort)
+            )
+              return { ...current, preset: null };
+            const effort = currentModel.supportedReasoningEfforts.includes(
+              currentModel.defaultReasoningEffort,
+            )
+              ? currentModel.defaultReasoningEffort
+              : (currentModel.supportedReasoningEfforts[0] ?? "");
+            return { model: current.model, effort, preset: null };
+          }
+          return fallback ?? emptySelection;
+        });
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
@@ -700,8 +735,7 @@ export default function ChatGPTConnection({
             return;
           }
           setModels([]);
-          setSelectedModel("");
-          setSelectedEffort("");
+          setSelection(emptySelection);
           setModelsError("ChatGPT models are unavailable. Try again.");
         }
       })
@@ -711,10 +745,13 @@ export default function ChatGPTConnection({
     return () => controller.abort();
   }, [generationEnabled, modelsAttempt, signedIn, view.phase]);
 
+  const selectedModel = selection.model;
+  const selectedEffort = selection.effort;
   const selected = models.find((model) => model.model === selectedModel);
-  useEffect(() => {
-    setSelectedEffort(selected ? preferredEffort(selected) : "");
-  }, [selected]);
+  const presetOptions = useMemo(
+    () => resolveChatGPTPresetOptions(models),
+    [models],
+  );
 
   return (
     <section className="publish-box" aria-labelledby="chatgpt-connection-title">
@@ -796,34 +833,94 @@ export default function ChatGPTConnection({
             ) : models.length ? (
               <>
                 <p className="fine-print">
-                  Choose a model and reasoning level to create with ChatGPT.
+                  Choose a creation quality, or open Advanced for any model and
+                  supported reasoning level in your ChatGPT catalog. Presets use
+                  a supported catalog fallback when their preferred effort is
+                  unavailable.
                 </p>
-                <label htmlFor="chatgpt-model">ChatGPT model</label>
-                <select
-                  id="chatgpt-model"
-                  aria-label="ChatGPT model"
-                  value={selectedModel}
-                  onChange={(event) => setSelectedModel(event.target.value)}
+                <div
+                  className="model-modes"
+                  role="group"
+                  aria-label="ChatGPT creation quality"
                 >
-                  {models.map((model) => (
-                    <option key={model.id} value={model.model}>
-                      {model.displayName}
-                    </option>
+                  {presetOptions.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      aria-pressed={selection.preset === preset.label}
+                      disabled={!preset.available}
+                      title={
+                        preset.available
+                          ? `${preset.label}: ${preset.effort} reasoning${
+                              preset.effort === preset.preferredEffort
+                                ? ""
+                                : " (catalog fallback)"
+                            }`
+                          : `${preset.label} is unavailable in this ChatGPT catalog`
+                      }
+                      onClick={() => {
+                        if (!preset.model || !preset.effort) return;
+                        setSelection({
+                          model: preset.model,
+                          effort: preset.effort,
+                          preset: preset.label,
+                        });
+                      }}
+                    >
+                      <strong>{preset.label}</strong>
+                    </button>
                   ))}
-                </select>
-                <label htmlFor="chatgpt-reasoning">ChatGPT reasoning</label>
-                <select
-                  id="chatgpt-reasoning"
-                  aria-label="ChatGPT reasoning"
-                  value={selectedEffort}
-                  onChange={(event) => setSelectedEffort(event.target.value)}
-                >
-                  {selected?.supportedReasoningEfforts.map((effort) => (
-                    <option key={effort} value={effort}>
-                      {effort}
-                    </option>
-                  ))}
-                </select>
+                </div>
+                <details className="advanced-models">
+                  <summary>Advanced</summary>
+                  <label htmlFor="chatgpt-model">ChatGPT model</label>
+                  <select
+                    id="chatgpt-model"
+                    aria-label="ChatGPT model"
+                    value={selectedModel}
+                    onChange={(event) => {
+                      const model = models.find(
+                        (entry) => entry.model === event.target.value,
+                      );
+                      if (!model) return;
+                      const effort = model.supportedReasoningEfforts.includes(
+                        model.defaultReasoningEffort,
+                      )
+                        ? model.defaultReasoningEffort
+                        : (model.supportedReasoningEfforts[0] ?? "");
+                      setSelection({
+                        model: model.model,
+                        effort,
+                        preset: null,
+                      });
+                    }}
+                  >
+                    {models.map((model) => (
+                      <option key={model.id} value={model.model}>
+                        {model.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor="chatgpt-reasoning">ChatGPT reasoning</label>
+                  <select
+                    id="chatgpt-reasoning"
+                    aria-label="ChatGPT reasoning"
+                    value={selectedEffort}
+                    onChange={(event) =>
+                      setSelection((current) => ({
+                        ...current,
+                        effort: event.target.value,
+                        preset: null,
+                      }))
+                    }
+                  >
+                    {selected?.supportedReasoningEfforts.map((effort) => (
+                      <option key={effort} value={effort}>
+                        {effort}
+                      </option>
+                    ))}
+                  </select>
+                </details>
                 <button
                   className="primary full"
                   disabled={!selectedModel || !selectedEffort}

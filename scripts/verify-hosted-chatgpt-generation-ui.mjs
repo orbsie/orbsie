@@ -109,10 +109,17 @@ try {
         json: {
           models: [
             {
+              id: "gpt-6-astra",
+              model: "gpt-6-astra",
+              displayName: "Astra",
+              supportedReasoningEfforts: ["low", "high"],
+              defaultReasoningEffort: "low",
+            },
+            {
               id: "gpt-5.6-luna",
               model: "gpt-5.6-luna",
               displayName: "Luna",
-              supportedReasoningEfforts: ["low", "xhigh"],
+              supportedReasoningEfforts: ["low", "medium", "xhigh"],
               defaultReasoningEffort: "low",
             },
           ],
@@ -194,6 +201,7 @@ try {
       const d = route.request().postDataJSON();
       assert.equal(d.model, "gpt-5.6-luna");
       assert.equal(d.effort, "low");
+      report.checks.chatGPTBudgetPayload = true;
       assert.equal(d.localModeling, false);
       assert.equal(d.browserModeling, true);
       for (const field of ["key", "provider", "url", "capability"])
@@ -254,12 +262,50 @@ try {
   legacyLink.hash = `chatgpt=${encodeURIComponent(JSON.stringify({ url: "http://127.0.0.1:41000", token: "a".repeat(64) }))}`;
   await page.goto(legacyLink.href);
   await page.getByRole("button", { name: "Connections", exact: true }).click();
-  await page
-    .getByLabel("ChatGPT model", { exact: true })
-    .selectOption("gpt-5.6-luna");
-  await page
-    .getByLabel("ChatGPT reasoning", { exact: true })
-    .selectOption("low");
+  const chatGPTSection = page.getByRole("region", {
+    name: "ChatGPT subscription",
+  });
+  const chatGPTQuality = chatGPTSection.getByRole("group", {
+    name: "ChatGPT creation quality",
+  });
+  const chatGPTPresetButtons = chatGPTQuality.getByRole("button");
+  await expect(chatGPTPresetButtons).toHaveText([
+    "Quality",
+    "Balanced",
+    "Budget",
+  ]);
+  report.checks.chatGPTDefaultPresets =
+    await chatGPTPresetButtons.allTextContents();
+  await expect(
+    chatGPTQuality.getByRole("button", { name: "Balanced", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  report.checks.chatGPTBalancedDefault = true;
+  await expect(
+    page.getByLabel("ChatGPT model", { exact: true }),
+  ).not.toBeVisible();
+  await chatGPTQuality
+    .getByRole("button", { name: "Quality", exact: true })
+    .click();
+  await expect(
+    chatGPTQuality.getByRole("button", { name: "Quality", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await chatGPTQuality
+    .getByRole("button", { name: "Budget", exact: true })
+    .click();
+  await expect(
+    chatGPTQuality.getByRole("button", { name: "Budget", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    chatGPTQuality.getByRole("button", { name: "Balanced", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  report.checks.chatGPTQualityToBudgetSelection = true;
+  await chatGPTSection.locator(".advanced-models > summary").click();
+  await expect(page.getByLabel("ChatGPT model", { exact: true })).toHaveValue(
+    "gpt-5.6-luna",
+  );
+  await expect(
+    page.getByLabel("ChatGPT reasoning", { exact: true }),
+  ).toHaveValue("low");
   await page.getByRole("button", { name: "Use ChatGPT", exact: true }).click();
   await page.locator("#prompt").fill("Create a new triangular prism");
   await page.getByRole("button", { name: "Create", exact: true }).click();

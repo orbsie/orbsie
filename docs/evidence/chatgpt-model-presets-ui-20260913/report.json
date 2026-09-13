@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "syntheticAuthorization": true,
+  "syntheticInference": true,
+  "syntheticCloud": true,
+  "liveLogin": false,
+  "requests": 2,
+  "freeRequests": 0,
+  "errors": [],
+  "unexpected": [],
+  "checks": {
+    "chatGPTDefaultPresets": [
+      "Quality",
+      "Balanced",
+      "Budget"
+    ],
+    "chatGPTBalancedDefault": true,
+    "chatGPTQualityToBudgetSelection": true,
+    "chatGPTBudgetPayload": true,
+    "targetedGeometryEdit": true,
+    "browserGeneratedAssets": true,
+    "expiredConnectionPreservesPrompt": true,
+    "expiredRetryDoesNotUseFree": true,
+    "reload": true,
+    "legacyLinkDoesNotContactCompanion": true
+  }
+}

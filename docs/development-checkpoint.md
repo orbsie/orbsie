@@ -8,7 +8,7 @@ history/evidence: [archive](checkpoint-history/2026-09-13-before-chatgpt-presets
 
 Astra architecture/review/integration; one Luna xhigh/default worker, no nested
 agents, concise context, Fast off. Reuse `/root/host_session_renewal`.
-Latest measured Codex quota:51% used/49% remaining. Stop worker/live tests below20%
+Latest measured Codex quota:52% used/48% remaining. Stop worker/live tests below20%
 remaining; helper `/home/marcos/.cache/orbsie/read-codex-quota.py`. Goal tokens are
 not subscription quota. Targeted checks; no repeated green/live runs without cause.
 Live tests Luna only, users unrestricted. Owner approved needed calls. API tests
@@ -27,13 +27,12 @@ no Blender installation/connection. Preserve licenses and safe unrelated work.
    Original production request HTTP200, journal cancelled within951ms, zero
    commands/entities. Root's later host diagnostics made **zero inference calls**:
    catalog502 then non-JSON sandbox response, not proof Luna was unavailable.
-2. Current Luna task: ChatGPT default choices exactly Quality/Balanced/Budget;
-   arbitrary catalog model/reasoning only inside collapsed Advanced. Validate
-   actual returned IDs/efforts, prefer Balanced initially, never send GLM to
-   ChatGPT. Root found initial selection-effect bug (Quality→Budget overwritten
-   by Balanced), duplicate pressed states on single-effort catalogs, and empty
-   Advanced selection without placeholder. Worker correcting before acceptance.
-   Owned WIP: chatgpt-connection.tsx, chatgpt-model-presets.ts, focused tests.
+2. ChatGPT preset implementation reviewed and accepted: default choices exactly
+   Quality/Balanced/Budget; full catalog and supported reasoning inside Advanced.
+   Atomic selection fixes Quality→Budget resets and duplicate pressed states.
+   26 targeted tests, typecheck, formatting and synthetic browser fixture pass.
+   Fixture verifies actual Luna/low Budget payload; no live inference. Evidence
+   `chatgpt-model-presets-ui-20260913/report.json`. Pending production release.
 3. Then route timing correction, seven-crystal/original-undo traversal, complete
    flagship report gate, and fresh signed-out publication gameplay. Contract in
    `docs/provider-live-gameplay-task.md`. No route WIP was created before pause.
@@ -43,7 +42,7 @@ no Blender installation/connection. Preserve licenses and safe unrelated work.
 Production source83710c4:
 https://orbsie-59aw2ca0h-grappeggias-projects.vercel.app, alias https://orbsie.com.
 Local build99187/deploy61897 completed successfully; configHTTP200. Changing host
-artifact requires a fresh ChatGPT connection. Current preset WIP is not deployed.
+artifact requires a fresh ChatGPT connection. Accepted preset changes are not yet deployed.
 Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detached83710c4; known
 build-generated next-env.d.ts dirty. Existing Vercel CLI auth, scope
 `grappeggias-projects`; do not print credentials.
@@ -76,7 +75,12 @@ approved; original graphics error was main `/`. No unanswered setup permission.
 CUA still fails `CUA_REPL_ENABLED_SURFACES is required`. Provided Chrome connector
 works but refreshed ChatGPT/OpenRouter tabs remain signed out: profile mismatch.
 Alternate Playwright MCP fails headed launch (missing DISPLAY); not owner profile.
-Do not retry unchanged browser adapters or copy cookies/raw CDP to bypass them.
+Owner explicitly requires reusing the existing signed-in tab; do not request a
+new login or create another profile. Installed Chrome browser-client through
+trusted node_repl returns an empty browser inventory on two checks. Official
+checks confirm extension enabled and native-host manifest correct. Awaiting
+connection of that existing Chrome session. Do not retry unchanged adapters or
+copy cookies/raw CDP to bypass them.
 Connector screenshot saving denied earlier; inline viewing allowed.
 
 Android AVDorbsie_api35_phone/API35/Chrome124, emulator5580 session62423;
