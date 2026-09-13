@@ -12,11 +12,13 @@ ChatGPT cookies. A missing or expired account/runtime stops before inference
 and produces a blocked result. Orbsie login alone does not prove ChatGPT consent.
 
 Inputs are an HTTPS Orbsie target, explicit live-test opt-in, exact model
-`gpt-5.6-luna`, and a private Orbsie storage-state file supplied expressly for
-this test. Validate configuration before reading the file. Require permissions
-0600 or stricter and admit only cookies scoped to the exact target host; reject
-foreign-domain credentials and omit local-storage data. Never include session
-contents in console output, reports, screenshots or exported projects.
+`gpt-5.6-luna`, the owner-approved bounds acknowledgement
+`ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib`, and a private Orbsie
+storage-state file supplied expressly for this test. Validate every gate before
+reading the file. Require permissions 0600 or stricter and admit only cookies
+scoped to the exact target host; reject foreign-domain credentials and omit
+local-storage data. Never include session contents in console output, reports,
+screenshots or exported projects.
 
 The real status endpoint must report connected. The real model catalog must
 contain the exact Luna model with low reasoning support. Select that model in
@@ -46,6 +48,14 @@ Reports distinguish:
 - live inference observed and full create/edit/export assertions passed;
 - synthetic harness tests, which never establish live consent or generation.
 
+Hosted reports set `outputTokenCap` and `outputCapTokens` to `null`. They also
+record the acknowledged application bounds: two generation calls, a 180-second
+per-generation-request duration, and a 512 KiB per-generation-request response
+limit. These are Orbsie
+application/harness request and response bounds; they do not provide a
+provider token or cost guarantee. `ORBSIE_OUTPUT_CAP_TOKENS` is rejected for
+hosted mode because this harness does not enforce an output-token ceiling.
+
 The OpenRouter local-only authorization remains separate and unchanged:
 `openai/gpt-5.6-luna`, explicit output cap no greater than 512 tokens. Hosted
 ChatGPT uses its own bounded server generation policy; adding the harness does
@@ -56,35 +66,42 @@ selection remains unrestricted among the product's supported models.
 
 Source review at36b61a2 found that hosted mode sets `outputCap = null` in
 `scripts/provider-browser-e2e.mjs`. `chatgpt-generation.ts` bounds output at
-512 KiB, deltas at8192 and default duration at180 seconds; these are transport
-and runtime limits, not a4096-token inference ceiling. The RPC policy currently
-sends no maximum-output-token parameter. Two-request enforcement does not imply
-a per-request token bound. Do not report this harness as complying with an
-owner-approved4096-token cap or run it under that assumption. Before live
-acceptance, establish a supported enforceable limit or obtain authorization for
-the actual distinct bounds. This does not restrict end-user model choice.
+512 KiB, deltas at8192 and default duration at180 seconds; these are
+application transport and runtime limits, not a provider token or cost
+guarantee. The RPC policy currently sends no maximum-output-token parameter.
+Two-request enforcement does not imply a per-request token bound. The exact
+acknowledgement below is pending owner approval of these actual bounds; do not
+run live acceptance while that approval is pending. This does not restrict
+end-user model choice.
 
 ## Running the hosted milestone
 
-The hosted mode is implemented and reviewed. Ten focused synthetic tests
+The hosted mode is implemented and reviewed. Focused synthetic tests
 pass, including CLI blocked-report creation, request boundaries, stream
 completion and canonical project-schema rejection before dispatch. The schema
 is bundled from the application protocol after private account-state checks;
-the temporary bundle is removed after import. Syntax checks also pass. These checks do not prove real
-subscription consent or inference. The command below is the live invocation,
-not a record of successful subscription acceptance.
+the temporary bundle is removed after import. Syntax checks also pass. These
+checks do not prove real subscription consent or inference. The command below
+is the live invocation, not a record of successful subscription acceptance.
+Owner approval of the actual application bounds is still pending, so do not
+run it yet.
 
-After the owner supplies an expressly authorized, private cookies-only
-Orbsie storage-state file and completes ChatGPT consent in the product:
+After the owner expressly approves the actual bounds, supplies an authorized
+private cookies-only storage-state file, and completes ChatGPT consent in the
+product, add the exact bounds acknowledgement:
 
 ```sh
 ORBSIE_LIVE_E2E=1 \
 ORBSIE_TEST_URL=https://orbsie.com \
 ORBSIE_EXPECTED_MODEL=gpt-5.6-luna \
 ORBSIE_SERVICE_TIER=default \
+ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib \
 ORBSIE_ACCOUNT_STORAGE_STATE=/absolute/private/orbsie-state.json \
 node scripts/provider-browser-e2e.mjs --provider chatgpt-hosted
 ```
+
+Do not set `ORBSIE_OUTPUT_CAP_TOKENS` for hosted mode; the preflight rejects
+it because this harness does not enforce an output-token ceiling.
 
 The path is a placeholder, not an existing credential. Do not commit the state
 file or copy ChatGPT cookies into it. This invocation does not need an API key,

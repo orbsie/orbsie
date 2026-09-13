@@ -7,6 +7,7 @@ import {
   HOSTED_EFFORT,
   HOSTED_MODEL,
   HOSTED_PROVIDER,
+  HOSTED_TEST_LIMITS,
   HostedAcceptanceBlockedError,
   assertHostedGenerationPayload,
   assertHostedModelCatalog,
@@ -132,9 +133,9 @@ function parseArgs(argv) {
           "Usage: ORBSIE_LIVE_E2E=1 ORBSIE_TEST_URL=http://127.0.0.1:3001 \\",
           "  ORBSIE_EXPECTED_MODEL=<exact-catalog-id> \\",
           "  ORBSIE_KEY_SCOPE=local-only|cloud-authorized \\",
-          "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> \\",
+          "  ORBSIE_OUTPUT_CAP_TOKENS=<bounded-cap> (API-key providers only) \\",
           "  node scripts/provider-browser-e2e.mjs --provider openrouter|gateway|free|chatgpt-local|chatgpt-hosted",
-          "Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state> and an exact HTTPS ORBSIE_TEST_URL.",
+          `Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state>, an exact HTTPS ORBSIE_TEST_URL, and ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} after explicit owner approval of the actual bounds; ORBSIE_OUTPUT_CAP_TOKENS must be unset.`,
           "",
           "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
@@ -395,9 +396,10 @@ export function readConfiguration(argv) {
     throw new HarnessConfigurationError(
       "Live tests are authorized for Luna only; user model selection is unaffected.",
     );
+  let hostedPreflight;
   if (hosted) {
     try {
-      assertHostedPreflight({
+      hostedPreflight = assertHostedPreflight({
         liveE2E: process.env.ORBSIE_LIVE_E2E,
         baseOrigin: baseURL.origin,
         expectedModel,
@@ -409,6 +411,8 @@ export function readConfiguration(argv) {
         companionConfigured:
           process.env.ORBSIE_CHATGPT_COMPANION_URL !== undefined ||
           process.env.ORBSIE_CHATGPT_COMPANION_TOKEN !== undefined,
+        testLimits: process.env.ORBSIE_CHATGPT_TEST_LIMITS,
+        outputTokenCap: process.env.ORBSIE_OUTPUT_CAP_TOKENS,
       });
     } catch (error) {
       if (error instanceof HostedAcceptanceBlockedError)
@@ -512,6 +516,8 @@ export function readConfiguration(argv) {
     accountStorageStatePath: hosted
       ? resolve(process.env.ORBSIE_ACCOUNT_STORAGE_STATE)
       : undefined,
+    hostedTestLimits: hosted ? hostedPreflight.testLimits : undefined,
+    hostedActualBounds: hosted ? hostedPreflight.actualBounds : undefined,
     keyEnv:
       provider === "openrouter"
         ? "OPENROUTER_API_KEY"
@@ -1799,6 +1805,8 @@ export function emptyReport(config, provenance) {
     serviceTier: "default",
     keyScope: config.keyScope,
     outputCapTokens: config.outputCap,
+    outputTokenCap:
+      config.provider === HOSTED_PROVIDER ? null : config.outputCap,
     generationBudget: config.generationBudget,
     ...(config.provider === HOSTED_PROVIDER
       ? {
@@ -1813,6 +1821,9 @@ export function emptyReport(config, provenance) {
             lifecycle: "unknown",
             modelsStatus: "not-started",
             generationStatus: "not-started",
+            testLimits: config.hostedTestLimits,
+            actualBounds: config.hostedActualBounds,
+            outputTokenCap: null,
           },
         }
       : {}),

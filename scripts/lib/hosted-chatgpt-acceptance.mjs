@@ -1,6 +1,16 @@
 export const HOSTED_PROVIDER = "chatgpt-hosted";
 export const HOSTED_MODEL = "gpt-5.6-luna";
 export const HOSTED_EFFORT = "low";
+export const HOSTED_TEST_LIMITS = "2-calls-180s-512kib";
+export const HOSTED_ACTUAL_BOUNDS = Object.freeze({
+  generationCalls: 2,
+  boundScope: "per-generation-request",
+  durationSeconds: 180,
+  responseBytes: 512 * 1024,
+  outputTokenCap: null,
+  enforcement: "Orbsie application/harness request and response bounds",
+  providerTokenOrCostGuarantee: false,
+});
 
 const HOSTED_LIFECYCLES = new Set([
   "idle",
@@ -127,10 +137,20 @@ export function assertHostedPreflight({
   interruptedRecovery = false,
   interruptionMethod = "stop",
   companionConfigured = false,
+  testLimits,
+  outputTokenCap,
 }) {
   if (liveE2E !== "1")
     throw new HostedAcceptanceBlockedError(
       "Refusing live hosted ChatGPT acceptance: set ORBSIE_LIVE_E2E=1 explicitly.",
+    );
+  if (testLimits !== HOSTED_TEST_LIMITS)
+    throw new HostedAcceptanceBlockedError(
+      `Hosted ChatGPT acceptance requires ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} to acknowledge the actual two-call, 180-second, 512 KiB bounds; no generation was attempted.`,
+    );
+  if (outputTokenCap !== undefined && outputTokenCap !== null)
+    throw new HostedAcceptanceBlockedError(
+      "This hosted ChatGPT harness does not enforce an output-token ceiling; ORBSIE_OUTPUT_CAP_TOKENS is unsupported for hosted mode and must be unset.",
     );
   let target;
   try {
@@ -177,6 +197,9 @@ export function assertHostedPreflight({
     effort: HOSTED_EFFORT,
     serviceTier,
     accountStorageStatePath,
+    testLimits,
+    actualBounds: HOSTED_ACTUAL_BOUNDS,
+    outputTokenCap: null,
   };
 }
 

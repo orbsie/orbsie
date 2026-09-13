@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import {
   HOSTED_EFFORT,
   HOSTED_MODEL,
+  HOSTED_TEST_LIMITS,
   assertHostedGenerationPayload,
   assertHostedPreflight,
   assertHostedStatusConnected,
@@ -37,6 +38,7 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         baseOrigin: "http://127.0.0.1:3001",
         expectedModel: HOSTED_MODEL,
         accountStorageStatePath: "/private/state.json",
+        testLimits: HOSTED_TEST_LIMITS,
       }),
     ).toThrow(/HTTPS origin/);
   });
@@ -335,8 +337,75 @@ describe("hosted ChatGPT acceptance boundaries", () => {
         accountStorageStatePath: "/private/state.json",
         interruptedRecovery: true,
         interruptionMethod: "reload",
+        testLimits: HOSTED_TEST_LIMITS,
       }),
     ).not.toThrow();
+  });
+
+  it("rejects hosted token caps and exposes only the acknowledged application bounds", () => {
+    const preflight = {
+      liveE2E: "1",
+      baseOrigin: target,
+      expectedModel: HOSTED_MODEL,
+      accountStorageStatePath: "/private/state.json",
+      testLimits: HOSTED_TEST_LIMITS,
+    };
+    expect(() =>
+      assertHostedPreflight({ ...preflight, testLimits: "2-calls-180s-4096" }),
+    ).toThrow(`ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS}`);
+    expect(() =>
+      assertHostedPreflight({ ...preflight, outputTokenCap: "4096" }),
+    ).toThrow(/does not enforce an output-token ceiling/);
+    expect(assertHostedPreflight(preflight)).toMatchObject({
+      testLimits: HOSTED_TEST_LIMITS,
+      outputTokenCap: null,
+      actualBounds: {
+        generationCalls: 2,
+        durationSeconds: 180,
+        responseBytes: 512 * 1024,
+        outputTokenCap: null,
+      },
+    });
+  });
+
+  it("blocks the hosted CLI on missing bounds acknowledgement before reading private state", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "orbsie-hosted-acceptance-preflight-"),
+    );
+    const missingState = join(directory, "missing-storage-state.json");
+    const environment = { ...process.env };
+    for (const name of [
+      "ORBSIE_CHATGPT_TEST_LIMITS",
+      "ORBSIE_OUTPUT_CAP_TOKENS",
+      "ORBSIE_KEY_SCOPE",
+      "OPENROUTER_API_KEY",
+      "AI_GATEWAY_TEST_KEY",
+      "AI_GATEWAY_API_KEY",
+      "ORBSIE_CHATGPT_COMPANION_URL",
+      "ORBSIE_CHATGPT_COMPANION_TOKEN",
+    ])
+      delete environment[name];
+    Object.assign(environment, {
+      ORBSIE_LIVE_E2E: "1",
+      ORBSIE_TEST_URL: target,
+      ORBSIE_EXPECTED_MODEL: HOSTED_MODEL,
+      ORBSIE_ACCOUNT_STORAGE_STATE: missingState,
+    });
+    try {
+      await expect(
+        execFileAsync(
+          process.execPath,
+          ["scripts/provider-browser-e2e.mjs", "--provider", "chatgpt-hosted"],
+          { cwd: process.cwd(), env: environment },
+        ),
+      ).rejects.toMatchObject({
+        stderr: expect.stringContaining(
+          `ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS}`,
+        ),
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("requires a final commit and rejects stream errors even after valid commands", () => {
@@ -370,6 +439,7 @@ describe("hosted ChatGPT acceptance boundaries", () => {
       ORBSIE_TEST_URL: target,
       ORBSIE_EXPECTED_MODEL: HOSTED_MODEL,
       ORBSIE_ACCOUNT_STORAGE_STATE: missingState,
+      ORBSIE_CHATGPT_TEST_LIMITS: HOSTED_TEST_LIMITS,
       ORBSIE_EVIDENCE_DIR: evidence,
     });
     try {
@@ -385,6 +455,15 @@ describe("hosted ChatGPT acceptance boundaries", () => {
       );
       expect(report.liveInference).toBe(false);
       expect(report.reusedConsent).toBe(false);
+      expect(report.outputTokenCap).toBeNull();
+      expect(report.hosted.testLimits).toBe(HOSTED_TEST_LIMITS);
+      expect(report.hosted.actualBounds).toMatchObject({
+        generationCalls: 2,
+        boundScope: "per-generation-request",
+        durationSeconds: 180,
+        responseBytes: 512 * 1024,
+        outputTokenCap: null,
+      });
       expect(report.traffic.hostedGenerationRequests).toBe(0);
       expect(report.traffic.apiGenerationRequests).toBe(0);
       expect(report.traffic.loopbackGenerationRequests).toBe(0);

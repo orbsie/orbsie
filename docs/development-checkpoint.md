@@ -19,6 +19,16 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+Hosted test-limit guard reviewed and integrated: exact
+ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib required before private state
+access/network. Any hosted ORBSIE_OUTPUT_CAP_TOKENS is rejected. Reports record
+outputTokenCap:null and application time/byte bounds without a cost guarantee.
+Owner approval for these actual bounds remains pending; do not set the flag for
+a live run without that answer. Hosted+recovery synthetic suites20/20 passed;
+script syntax and diff checks passed. No live calls, no product deployment.
+Worker finished; root reviewed all five changed files. Texture integration task
+contract is docs/catalog-texture-integration-plan.md, not implemented.
+
 Browser handoff 2026-09-13: use CUA extension Chrome profile Person 1 (browser1,
 extension instance9a170aec-060d-42f6-9e37-e4a360ee76a6) for owner testing;
 user explicitly chose this signed-in profile for future work. ChatGPT Pro session
