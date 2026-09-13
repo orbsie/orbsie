@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-13",
+  "sourceCommit": "6300025",
+  "browser": "Chrome extension Person 1",
+  "observed": {
+    "freshDeviceAuthorizationSucceeded": true,
+    "orbsieSignedInMessage": true,
+    "realCatalogIncludesLuna": true,
+    "selectedModel": "gpt-5.6-luna",
+    "selectedReasoning": "low",
+    "appliedConnectionLabel": "ChatGPT \u00b7 gpt-5.6-luna"
+  },
+  "inferenceCalls": 0,
+  "remaining": "Owner Chrome WebGL unavailable blocks creation; connection acceptance passed, generation/gameplay/export/publication still unverified.",
+  "previousFailure": "Earlier rejected code preserved separately; its cause remains unproven."
+}

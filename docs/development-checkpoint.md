@@ -19,6 +19,8 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+ChatGPT real owner browser connection succeeded2026-09-13 after fresh device authorization. Orbsie Signed in message, real catalog includes Luna, selected gpt-5.6-luna/low and applied connection. Evidence chatgpt-device-owner/connected.json. No inference yet: owner Chrome WebGL unavailable blocks Create. Do not bypass rendering gate or copy browser cookies. Prior rejection preserved, cause unproven; device-code security setting was already enabled.
+
 WebGL correction committed0fe5d2e: separate Canvas readiness, submission state/ref gates, persistent accessible error and interrupted draft restoration. Typecheck and focused browser verifier passed; strengthened race evidence webgl-failure-1789265408500/report.json. Root saw actual owner Chrome local error feedback. Deployed source6300025 to orbsie-r0z3rja1o-grappeggias-projects.vercel.app, aliased orbsie.com. Build/typecheck passed. Actual owner Chrome production shows persistent graphics error and disabled Create; evidence webgl-owner-local/production.json. Gameplay remains blocked by that browser WebGL failure. Decoder3d6a839 and next texture integration contract70fa2de remain unchanged.
 
 Decoder/transfer/cache stage reviewed and accepted: explicit material-index validation corrected; 17 focused tests and typecheck passed. Final actual-worker evidence: mushroom-basic-textured-worker-final/report.json (666 UV vertices, expected samplers, pixel-inclusive accounting). Renderer/export/catalog integration remains incomplete. No deployment or live calls.
