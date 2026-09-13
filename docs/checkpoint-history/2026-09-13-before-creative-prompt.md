@@ -1,0 +1,237 @@
+# Development checkpoint
+
+Updated 2026-09-13. Full goal remains **incomplete**: implement all of `prompt.md`
+with real E2E OpenRouter, Vercel AI Gateway and hosted ChatGPT. Prior detailed
+history/evidence: [archive](checkpoint-history/2026-09-13-before-chatgpt-presets.md).
+
+## Execution
+
+Astra architecture/review/integration; one Luna xhigh/default worker, no nested
+agents, concise context, Fast off. Reuse `/root/host_session_renewal`.
+Latest measured Codex quota:54% used/46% remaining. Stop worker/live tests below20%
+remaining; helper `/home/marcos/.cache/orbsie/read-codex-quota.py`. Goal tokens are
+not subscription quota. Targeted checks; no repeated green/live runs without cause.
+Live tests Luna only, users unrestricted. Owner approved needed calls. API tests
+4096 output tokens/call; Gateway ceiling5/test, flagship3calls. Hosted bounds
+180s/512KiB per request, not a provider token/cost cap. No blind model retries.
+GitHub via computer use; no copied browser/Codex credentials. Browser-only product,
+no Blender installation/connection. Preserve licenses and safe unrelated work.
+
+## Current priorities and worker
+
+1. Owner's hosted ChatGPT gingerbread failure: fix deployed83710c4, real generation
+   after fresh connection still unverified. Pinned App Server0.153.4 rejects legacy
+   `readonly.access` before thread validation. New `readOnly/networkAccess:false`
+   policy reaches validation. Empty-home/no-inference probe plus42targeted tests
+   and typecheck pass. Evidence `chatgpt-gingerbread-failure-20260913/`.
+   Original production request HTTP200, journal cancelled within951ms, zero
+   commands/entities. Root's later host diagnostics made **zero inference calls**:
+   catalog502 then non-JSON sandbox response, not proof Luna was unavailable.
+2. ChatGPT preset implementation reviewed and accepted: default choices exactly
+   Quality/Balanced/Budget; full catalog and supported reasoning inside Advanced.
+   Atomic selection fixes Quality→Budget resets and duplicate pressed states.
+   26 targeted tests, typecheck, formatting and synthetic browser fixture pass.
+   Fixture verifies actual Luna/low Budget payload; no live inference. Evidence
+   `chatgpt-model-presets-ui-20260913/report.json`. Deployed ae3a478; local and Vercel production builds passed, config HTTP200.
+3. Then route timing correction, seven-crystal/original-undo traversal, complete
+   flagship report gate, and fresh signed-out publication gameplay. Contract in
+   `docs/provider-live-gameplay-task.md`. Luna host_session_renewal now owns bounded route timing correction only; no live calls or nested agents. Root reviewed approach/jump loop source before delegation.
+
+## Production and local processes
+
+Production sourcec84ecbd:
+https://orbsie-byn8nwc6r-grappeggias-projects.vercel.app, alias https://orbsie.com.
+Local build7773/deploy73515 completed successfully; configHTTP200. Changing host
+artifact requires a fresh ChatGPT connection. Preset changes deployed; live ChatGPT generation remains unverified.
+Release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` detachedc84ecbd; known
+build-generated next-env.d.ts dirty. Existing Vercel CLI auth, scope
+`grappeggias-projects`; do not print credentials.
+Local servers last confirmed3040(start2303),3091(dev720360/720361); revalidate.
+
+## Accepted recent product evidence
+
+- Play focusbf654aa and restart/replay80db2e2 deployed. Both editor renderers prove
+  real Restart→Space. Standalone forcedsoftware proves Restart→Space and real
+  Wcollision→win→Play again→focus/reset.72targeted tests/typecheck pass. Separate
+  replay-postreset jump and standaloneWebGL were not exercised. Failed fixtures
+  retained; foreground/closing editor improved sampling, emulator causality unproven.
+- Graphics accessibilityf506f85 deployed: transient canvas fallback neutral and
+  hidden; genuine failure remains accessible. Desktop healthy/forced-both-failure
+  aria checks,38tests/typecheck, Android local and production tree checks pass.
+  Evidence graphics-accessibility-run1, android-graphics-accessibility-20260913,
+  focus-accessibility-release-f506f85 (four deployed artifact hashes matched).
+- Software camera/composer/mobile layoutddafb15 deployed. Shared transitions,
+  reachable coarse-pointer UI1280x900/390x844/844x390. Run18coarse UI-only pass;
+  run12 routeC miss retained. Early sheet focus transient remains documented.
+- Fresh creation drivera553f02: WebGLrun9/software run10 actual stream movement,
+  three moving-platform contacts/bounce, five collectibles/portal win/UIreset.
+  Root adjudicated only the deliberately injected WebGL error in software report.
+ 95focused tests; no live-provider/full-story/mobile gameplay claim.
+
+## Browser and Android
+
+Owner answered: signed in to ChatGPT/OpenRouter; Google Android setup terms
+approved; original graphics error was main `/`. No unanswered setup permission.
+CUA still fails `CUA_REPL_ENABLED_SURFACES is required`. Provided Chrome connector
+works but refreshed ChatGPT/OpenRouter tabs remain signed out: profile mismatch.
+Alternate Playwright MCP fails headed launch (missing DISPLAY); not owner profile.
+Owner explicitly requires reusing the existing signed-in tab; do not request a
+new login or create another profile. Installed Chrome browser-client through
+trusted node_repl returns an empty browser inventory on two checks. Official
+checks confirm extension enabled and native-host manifest correct. Awaiting
+connection of that existing Chrome session. Do not retry unchanged adapters or
+copy cookies/raw CDP to bypass them.
+Connector screenshot saving denied earlier; inline viewing allowed.
+
+Android AVDorbsie_api35_phone/API35/Chrome124, emulator5580 session62423;
+host CPU affinity30,31,2virtualcores/3072MiB/SwiftShader. Previous unbounded-emulator
+load1169% CPU corrected. Chrome setup: no account, reporting switch verifiedfalse,
+notifications declined. Owner-approved terms accepted. adb reverse3091 active.
+Main planet/composer, portrait keyboard reachability, landscape draft persistence,
+Connections touch/scroll and ChatGPT device-sign-in link navigation pass. Test
+sign-in cancelled afterward; no inference. Evidence android-main-smoke-20260913.
+Emulator/desktop emulation is not physical-device or complete gameplay acceptance.
+
+## Provider prerequisites and remaining gates
+
+OpenRouter key `.env.openrouter.local`; raised-cap flag required for4096.
+Gateway key `/home/marcos/.cache/orbsie/provider-tests/gateway.env`, mode0600,
+directory0700; current key reached live generation once (see failure below). Do not repeat Vercel sensitive-env
+retrieval/decryption attempts. Hosted owner browser access still unresolved. Public-catalog preflight on 2026-09-13 confirms Luna listed by both providers and both local key files mode0600; no keys read/sent, no inference, and credential validity remains unproven. Evidence `provider-readiness-20260913/report.json`. Catalog integration documentation now distinguishes historical companion evidence from the browser-only hosted release gates.
+
+Remaining full-goal gates include actual ChatGPT create/edit/recovery/>10min
+renewal/reload/export/publish; OpenRouter OAuth consent/callback; fresh same-world
+three-call flagship all providers with playing during generation, platforms/bounce,
+5win/reset, mushroom edit, slow platform+2,7win/reset, original undo5win/reset,
+refresh/export and current-artifact signed-out publication win/restart. API-key
+success does not prove subscription/OAuth. Structural checks cannot count as
+complete gameplay. Publication verifierac7268f checks identity/current artifacts;
+historical immutable published world has old runtime and is not current acceptance.
+
+Also pending: physical midrange Android/iOS Safari complete flows and performance;
+licensed catalog admission/mix/new-only live matrix and measurements; full prompt
+budget/cancellation/recovery/isolation/UX audit; GitHub push. Prior29test procedural
+isolation audit,118test hosted renewal coverage and atlas/offline fixture evidence
+are retained in archive, with their explicit live/performance limitations.
+
+## Latest Gateway integration failure
+
+Current ae3a478 production-build input-game test made one actual Luna call at
+4096 output tokens/default, then stopped: HTTP200 stream emitted a seed and
+INVALID_SCENE_JSON at operation2, issues[], finishReason:null. No edit or retry.
+Evidence `provider-e2e/gateway-input-local-origin-20260913/` includes root review.
+Raw rejected content is not retained; the cause is not established. Next bounded
+task after route correction: capture test-only diagnostic evidence and add a
+reproducing regression before another provider call. Do not weaken validation.
+Production attempt stopped before generation because configured cap differs from
+4096 (`gateway-input-current-20260913`). First local attempt rejected app origin
+before provider execution (`gateway-input-local-current-20260913`); corrected
+BETTER_AUTH_URL for loopback. Those failed attempts remain retained.
+Release server3096/session3562 is running with cap4096 and local origin; revalidate
+before use. Root browser test finished; Luna notified it can run its route fixture.
+
+## Latest owner priority: visible and iterative authoring
+
+Owner confirms ChatGPT login and prompts now work in their existing browser;
+root's controlled live browser acceptance remains separate and unverified.
+Owner wants high-level progress and actual model inspection/correction of output.
+Requirement committed6da260a in prompt.md. Single Luna task now implements truthful
+activity UI from real lifecycle events: contract docs/visible-authoring-task.md.
+Full rendered self-review loop follows; labels alone cannot satisfy it. Root
+verified text-only current hosted input, documented image input plus pinned schema,
+and current thumbnail's missing readiness/revision binding. No new live calls.
+Route WIP parked in driver/harness/tests. Prior16tests pass and software fixture
+traverses3platforms/bounce/5win/reset, but overall failed phone-landscape sheet
+assertion. Latest separate-counter/fresh-recovery/jump-response fixes unverified.
+No route processes remain per worker handoff and process inspection. Root review
+and targeted validation needed before accepting those WIP changes.
+
+## Route correction root verification
+
+Latest parked route fixes now reviewed:16focused tests,4 independent baseline
+assertions and harness syntax passed. Current software fixture confirms movement
+while streaming,3platform contacts/bounce,5collection/portalwin/reset on same
+project/revision. Evidence `fresh-flagship-route-reviewed-software-20260913/` with
+root-review and exact source hashes. Overall fixture remains false for phone-
+landscape empty sheet handle; mobile and full-provider gates remain open.
+Luna notified browser is free and continues visible activity task. No model calls.
+
+## Visible activity release and current single worker
+
+Activity Task1 c84ecbd deployed: waiting, named construction, real geometry
+preparation, applied updates, completion/cancel/failure; bounded18events, separate
+polite latest announcement and accessible history. Root reviewed everydiff,
+16targeted tests/typecheck, desktop+390px fixture/run8 and screenshots pass. Failed
+runs1–7 retained. Production config/source200 and exported activity helper matches.
+Evidence `visible-authoring-fixture-run8/release.json`. No model inspection claimed.
+No packagingfix needed: build-player automaticallyincludes metafiledependencies.
+Luna now owns Task2a: revision-bound capturebridge + world/softwareintegration and
+focusedtests/fixture. No modelcalls/loop yet; preserve renderer/gameplay continuity.
+Full taskcontract docs/visible-authoring-task.md. Root handles integration/review.
+
+
+## Astra quality investigation handoff
+
+Owner-requested Astra low read-only investigation completed; recommendations are
+recorded in docs/visible-authoring-task.md. Main change proposed is a concise
+creative/game rubric plus actual rendered review, evaluated separately for visual
+quality, structural correctness and observed playability. No prompt-quality gains
+or self-review completion claimed. Paused Luna host_session_renewal resumed Task2a
+through followup_task; capture helper remains unfinished WIP. Root verified rebuilt
+player runtime exactly matches deployed c84ecbd build; source manifest has identical
+key/value contents with ordering differences only. Quota55%used/45%remaining.
+
+## Next capability contract ready
+
+Root verified image metadata also disappears in browser parseChatGPTModels, beyond
+host/server validation. Queued docs/visual-review-capability-task.md with explicit
+tri-state normalization, bounded metadata, full catalog propagation and unchanged
+ordinary model availability. This is architecture only; no capability implementation
+or image inference claimed. Existing Luna capture task confirmed running.
+
+## Capture review and image-policy evidence
+
+Root sent Luna four current capture WIP findings: software canvas needs completed
+frame binding, unchanged meshes must not rebuild per revision, empty WebGL scenes
+must become ready, and readiness metadata must reflect committed React state.
+Worker remains responsible for fixes/tests before acceptance.
+Offline process-policy probe confirms hosted generation guard rejects image input
+before RPC; evidence visual-review-policy-20260913/report.json. Added explicit
+bounded policy-change requirement to transport contract. No live inference ran.
+
+## Capture root evidence before final worker handoff
+
+Basic actual-browser capture run3 passes WebGL+software; root visually inspected
+both saved *-review.png files and confirmed scene-only images. This fixture still
+covers initial static creation, not delayed replacement or complete loop acceptance.
+Independent offline encoder check passes portrait aspect preservation and maximum
+five downsize attempts (mock encoder, not actual image quality): evidence
+scene-review-root-encoder-20260913/report.json. Luna's current encoder uses bounded
+512/384/256/192/128 edges. Await final adapter edge-case tests/fixture and diff review
+before accepting or deploying Task2a. No live model calls in these checks.
+
+## Capture implementation accepted for integration
+
+Luna Task2a handoff reviewed: revision/project-bound process-local bridge, WebGL
+resource/formation and frame readiness, software geometry generation plus painted
+frame binding, committed React metadata, failures/cancel/unmount/timeouts, canvas-
+only bounded PNG with aspect-preserving five-step resize. Root independently ran
+10focused tests and typecheck, inspected changed renderer code and run7 replacement
+image; initial/replacement PNG hashes differ and the tree replaces the platform.
+Run7 actual desktop WebGL+software fixture passes delayed replacement with pebble
+remaining ready; earlier failures retained. Encoder mock verifies portrait ratio
+and bounded attempts; actual portrait browser capture/full mobile acceptance is
+still a milestone gap, not proven by the desktop fixture. No inference occurred.
+Rebuilt player artifacts after detecting stale software-world source in manifest.
+No deployment yet. Next single Luna task: docs/creative-prompt-task.md, then queued
+capability/transport/loop/evaluation sequence. Full review loop remains incomplete.
+
+## Portrait capture acceptance
+
+Root actual browser fixture scene-review-portrait-root-20260913 passes both renderers
+through initial creation/delayed replacement then390x844 viewport resize. Both
+capture237x512 PNG with preserved canvas ratio/project/revision; WebGL27946bytes,
+software83022bytes, below128KiB. Root inspected software portrait image. Fixture
+source preserved with evidence, no external/modelcalls. This closes phone-viewport
+capture sizing, not physical-device/mobile gameplay certification. Root devserver
+3091 stopped after check. Luna continues creative-prompt-task.md.
