@@ -1,0 +1,13 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true
+  },
+  "standalone": {},
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator:  locator('.game-hud strong')\nExpected: \"10\"\nReceived: \"7\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveText\" locator('.game-hud strong') with timeout 5000ms\n  - waiting for locator('.game-hud strong')\n    14 × locator resolved to <strong>7</strong>\n       - unexpected value \"7\"\n"
+}

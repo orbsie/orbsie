@@ -27,16 +27,23 @@ Do not deploy main worktree directly. Release candidate lives at
 `/tmp/orbsie-graphics-release-7006a72`, server3071, with isolated fallback sources,
 node_modules and rebuilt standalone bundle. Its .vercel/project.json is linked.
 
-/root/texture_rendering is stopped. The only active worker is
-/root/software_acceptance, owning bounded acceptance scripts only. It must report
-product bugs to root before editing runtime. Typecheck and focused unit checks
-passed; actual owner Chrome shows fallback + Create enabled with prompt. Root
-caught/fixed standalone canvas sizing, verified drawing in owner Chrome. Evidence
-`software-owner-local/initial-ui.json` is UI-only, not gameplay acceptance.
-The populated-game verifier previously passed input/variable and click/color
-checks, then failed an overly broad blue-pixel disappearance assertion. Prior
-worker localized that assertion but did not complete rerun. Fresh worker validates
-editor + standalone against3071 and isolated artifacts; no live inference.
+Both Luna workers are stopped. Final acceptance passed:
+`game-actions-software-acceptance-final/report.json` covers editor and exported
+player variable gates, click/color, hide/non-clickability, position/path movement,
+score and reset. Exactly two induced WebGL constructor errors; zero unexpected
+errors/external standalone requests. Dedicated verifier is
+`scripts/verify-software-game-actions.mjs`; original normal-renderer game-actions
+verifier is preserved. Fallback/gating/retry/race checks passed in
+`webgl-failure-software-acceptance-20260912-2/report.json`; standalone movement
+smoke check in `player-readiness-software-acceptance-20260912-1/unavailable.json`.
+Root shared gameplay/input/readiness unit milestone: 5 files, 43 tests passed.
+Typecheck passed on isolated release. No live inference used. Full physical-mobile,
+large-scene performance, and flagship physics acceptance remain broader-goal work;
+do not represent these focused checks as full prompt.md completion.
+
+Production deployment/owner-browser verification is next. Main texture WIP remains
+paused and must not ship. Reset only the disposable release worktree to the latest
+reviewed commit before deploy; its linked .vercel config remains ignored/preserved.
 
 ChatGPT real owner browser connection succeeded2026-09-13 after fresh device authorization. Orbsie Signed in message, real catalog includes Luna, selected gpt-5.6-luna/low and applied connection. Evidence chatgpt-device-owner/connected.json. No inference yet: owner Chrome WebGL unavailable blocks Create. Do not bypass rendering gate or copy browser cookies. Prior rejection preserved, cause unproven; device-code security setting was already enabled.
 

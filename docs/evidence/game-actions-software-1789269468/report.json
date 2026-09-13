@@ -1,0 +1,14 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true,
+    "clickAndColor": true
+  },
+  "standalone": {},
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: Timeout 5000ms exceeded while waiting on the predicate"
+}

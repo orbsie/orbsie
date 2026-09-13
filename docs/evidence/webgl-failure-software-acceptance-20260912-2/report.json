@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "scope": "One local browser run covers forced WebGL construction failure with a playable Canvas2D fallback, explicit retry failure and recovery, both-renderer gating, active-generation callbacks, and normal readiness with synthetic allowance/provider responses; no live inference.",
+  "url": "http://127.0.0.1:3071",
+  "generationRequests": 2,
+  "pageErrors": [],
+  "expectedFailureErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalRequests": [],
+  "checks": {
+    "forcedFailure": {
+      "visibleAccessibleMessage": true,
+      "softwareFallbackVisible": true,
+      "createRemainsEnabled": true,
+      "retryStillUsesSoftwareFallback": true,
+      "draftRetained": true,
+      "connectionsAccessible": true
+    },
+    "bothRenderersUnavailable": {
+      "fatalGuidanceVisible": true,
+      "createBlocked": true
+    },
+    "retryRecovery": {
+      "failedAttemptStayedPlayable": true,
+      "realWebglReadyAfterExplicitRetry": true,
+      "draftAndConnectionRetained": true
+    },
+    "allowancePreflightFailure": {
+      "rendererFailureDuringAwait": true,
+      "generationBlocked": true,
+      "draftRetained": true
+    },
+    "activeGenerationFailure": {
+      "stopsGeneration": true,
+      "persistentMessage": true,
+      "draftRetained": true
+    },
+    "normalRenderer": {
+      "reachesReady": true,
+      "createEnabled": true,
+      "interceptedGenerationAllowed": true
+    }
+  }
+}

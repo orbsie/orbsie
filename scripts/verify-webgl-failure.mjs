@@ -18,7 +18,7 @@ const origin = new URL(TEST_URL).origin;
 const report = {
   passed: false,
   scope:
-    "One local browser run covers forced WebGL construction failure, an active-generation renderer error callback, and normal renderer readiness with synthetic allowance/provider responses; no live inference.",
+    "One local browser run covers forced WebGL construction failure with a playable Canvas2D fallback, explicit retry failure and recovery, both-renderer gating, active-generation callbacks, and normal readiness with synthetic allowance/provider responses; no live inference.",
   url: TEST_URL,
   generationRequests: 0,
   pageErrors: [],
@@ -47,7 +47,13 @@ function deferred() {
 async function newContext(
   browser,
   forceFailure,
-  { holdTrial = false, holdGeneration = false } = {},
+  {
+    holdTrial = false,
+    holdGeneration = false,
+    recoverOnRetry = false,
+    forceSoftwareFailure = false,
+    userAgent,
+  } = {},
 ) {
   const trialStarted = deferred();
   const trialRelease = deferred();
@@ -94,9 +100,10 @@ async function newContext(
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
     reducedMotion: "reduce",
+    ...(userAgent ? { userAgent } : {}),
   });
   if (forceFailure)
-    await context.addInitScript(() => {
+    await context.addInitScript((allowRetry) => {
       const getContext = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function (kind, attributes) {
         if (
@@ -104,7 +111,15 @@ async function newContext(
           kind === "webgl" ||
           kind === "experimental-webgl"
         )
-          return null;
+          if (!allowRetry || !window.__orbsieTestAllowWebGLRetry) return null;
+        return getContext.call(this, kind, attributes);
+      };
+    }, recoverOnRetry);
+  if (forceSoftwareFailure)
+    await context.addInitScript(() => {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (kind, attributes) {
+        if (kind === "2d") return null;
         return getContext.call(this, kind, attributes);
       };
     });
@@ -149,6 +164,11 @@ async function triggerRendererError(page, message) {
   }, message);
 }
 
+async function openGraphicsOptions(page) {
+  const summary = page.locator(".graphics-guidance details summary");
+  if (await summary.count()) await summary.click();
+}
+
 const browser = await chromium.launch({
   args: [
     "--no-sandbox",
@@ -157,6 +177,8 @@ const browser = await chromium.launch({
   ],
 });
 let failureContext;
+let recoveryContext;
+let fatalContext;
 let normalContext;
 try {
   const failureFixture = await newContext(browser, true);
@@ -169,10 +191,13 @@ try {
   });
   await failurePage.goto(TEST_URL, { waitUntil: "domcontentloaded" });
   await expect(
-    failurePage.locator('main[data-renderer-availability="unavailable"]'),
+    failurePage.locator('main[data-renderer-availability="ready"]'),
   ).toBeVisible({ timeout: 20000 });
+  await expect(failurePage.locator(".software-world")).toBeVisible({
+    timeout: 20000,
+  });
   await expect(failurePage.locator(".graphics-error")).toContainText(
-    "Your world needs WebGL2",
+    "Your world is playable",
   );
   const failurePrompt = failurePage.locator("#prompt");
   await failurePrompt.fill("Keep this draft while graphics recover");
@@ -180,8 +205,12 @@ try {
     name: "Create",
     exact: true,
   });
-  await expect(failureCreate).toBeDisabled();
-  await failurePage.keyboard.press("Enter");
+  await expect(failureCreate).toBeEnabled();
+  await openGraphicsOptions(failurePage);
+  await failurePage.getByRole("button", { name: "Check again" }).click();
+  await expect(failurePage.locator(".software-world")).toBeVisible({
+    timeout: 20000,
+  });
   await expect(failurePrompt).toHaveValue(
     "Keep this draft while graphics recover",
   );
@@ -196,12 +225,92 @@ try {
   ).toBeVisible();
   report.checks.forcedFailure = {
     visibleAccessibleMessage: true,
-    createDisabled: true,
-    keyboardSubmissionBlocked: true,
+    softwareFallbackVisible: true,
+    createRemainsEnabled: true,
+    retryStillUsesSoftwareFallback: true,
     draftRetained: true,
     connectionsAccessible: true,
   };
   assert.equal(report.generationRequests, 0);
+
+  const fatalFixture = await newContext(browser, true, {
+    forceSoftwareFailure: true,
+  });
+  fatalContext = fatalFixture.context;
+  const fatalPage = await fatalContext.newPage();
+  fatalPage.on("pageerror", (error) => {
+    if (error.message.includes("Error creating WebGL context"))
+      report.expectedFailureErrors.push(error.message);
+    else report.pageErrors.push(error.message);
+  });
+  await fatalPage.goto(TEST_URL, { waitUntil: "domcontentloaded" });
+  await expect(
+    fatalPage.locator('main[data-renderer-availability="unavailable"]'),
+  ).toBeVisible({ timeout: 20000 });
+  await expect(fatalPage.locator(".graphics-error")).toContainText(
+    "Neither WebGL2 nor the software canvas renderer could initialize",
+  );
+  await expect(
+    fatalPage.getByRole("button", { name: "Create", exact: true }),
+  ).toBeDisabled();
+  report.checks.bothRenderersUnavailable = {
+    fatalGuidanceVisible: true,
+    createBlocked: true,
+  };
+  await fatalContext.close();
+  fatalContext = undefined;
+
+  const recoveryFixture = await newContext(browser, true, {
+    recoverOnRetry: true,
+  });
+  recoveryContext = recoveryFixture.context;
+  const recoveryPage = await recoveryContext.newPage();
+  recoveryPage.on("pageerror", (error) => {
+    if (error.message.includes("Error creating WebGL context"))
+      report.expectedFailureErrors.push(error.message);
+    else report.pageErrors.push(error.message);
+  });
+  await recoveryPage.goto(TEST_URL, { waitUntil: "domcontentloaded" });
+  await expect(recoveryPage.locator(".software-world")).toBeVisible({
+    timeout: 20000,
+  });
+  const recoveryPrompt = recoveryPage.locator("#prompt");
+  await recoveryPrompt.fill("Keep this retry draft and connection");
+  await recoveryPage
+    .getByRole("button", { name: "Connections", exact: true })
+    .click();
+  await expect(
+    recoveryPage.getByRole("heading", { name: "A little creative power" }),
+  ).toBeVisible();
+  await recoveryPage
+    .getByRole("button", { name: "Close dialog", exact: true })
+    .click();
+  await recoveryPage.evaluate(() => {
+    window.__orbsieTestAllowWebGLRetry = true;
+  });
+  await openGraphicsOptions(recoveryPage);
+  await recoveryPage.getByRole("button", { name: "Check again" }).click();
+  await expect(
+    recoveryPage.locator('main[data-renderer-availability="ready"]'),
+  ).toBeVisible({ timeout: 20000 });
+  await expect(recoveryPage.locator(".software-world")).toHaveCount(0);
+  await expect(recoveryPage.locator(".graphics-error")).toHaveCount(0);
+  await expect(recoveryPrompt).toHaveValue(
+    "Keep this retry draft and connection",
+  );
+  await recoveryPage
+    .getByRole("button", { name: "Connections", exact: true })
+    .click();
+  await expect(
+    recoveryPage.getByRole("heading", { name: "A little creative power" }),
+  ).toBeVisible();
+  report.checks.retryRecovery = {
+    failedAttemptStayedPlayable: true,
+    realWebglReadyAfterExplicitRetry: true,
+    draftAndConnectionRetained: true,
+  };
+  await recoveryContext.close();
+  recoveryContext = undefined;
 
   const preflightFixture = await newContext(browser, false, {
     holdTrial: true,
@@ -329,6 +438,8 @@ try {
   process.exitCode = 1;
 } finally {
   await failureContext?.close().catch(() => {});
+  await recoveryContext?.close().catch(() => {});
+  await fatalContext?.close().catch(() => {});
   await normalContext?.close().catch(() => {});
   await browser.close();
   await writeFile(

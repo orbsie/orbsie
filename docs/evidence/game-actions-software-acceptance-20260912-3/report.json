@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true,
+    "setPositionVisible": true
+  },
+  "standalone": {},
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toBeGreaterThan(expected)\n\nExpected: > 140\nReceived:   6.618399314848375\n\nCall Log:\n- Timeout 15000ms exceeded while waiting on the predicate"
+}

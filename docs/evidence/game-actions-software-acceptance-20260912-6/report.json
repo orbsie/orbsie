@@ -1,0 +1,28 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true,
+    "setPositionVisible": true,
+    "pathMovesVisibleObject": true,
+    "changedVariableClosesGate": true,
+    "restartRestoresColorAndVariables": true
+  },
+  "standalone": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true,
+    "setPositionVisible": true,
+    "pathMovesVisibleObject": true,
+    "changedVariableClosesGate": true,
+    "restartRestoresColorAndVariables": true
+  },
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 1\n+ Received  + 4\n\n- Array []\n+ Array [\n+   \"THREE.WebGLRenderer: Error creating WebGL context.\",\n+   \"THREE.WebGLRenderer: Error creating WebGL context.\",\n+ ]"
+}

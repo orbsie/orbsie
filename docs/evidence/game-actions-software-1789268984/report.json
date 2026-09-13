@@ -1,0 +1,11 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {},
+  "standalone": {},
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 20000ms exceeded while waiting on the predicate"
+}
