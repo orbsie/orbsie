@@ -174,3 +174,14 @@ Queued user UX requirement: direct composer model dropdown with Quality/Balanced
 Budget only as default choices; keep connection settings separate. Contract:
 docs/inline-model-selector-task.md. Execute after session persistence, before
 resuming queued agentic-loop integration.
+
+Mid-session report: generic EOF before commit_revision; cause of owner's run not
+proven. Root found concrete timer mismatch: sandbox renewal extends sandbox only,
+private host-server still closes at original10min. Worker implementing bounded
+fix/regression. First persistence draft reviewed but NOT accepted: global resume
+would revive stopped hosts; ephemeral registry cleanup still loses auth; UI restore
+must confirm owner/auth and reject stale responses without clearing on transient
+failure. Keep this distinction at handoff. Latest quota42% remaining.
+
+User also requests flat progress messages as siblings in parent chat thread, no
+nested activity panel. Included in inline-model-selector-task.md contract.
