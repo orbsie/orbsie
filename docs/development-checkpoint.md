@@ -8,7 +8,7 @@ history: checkpoint-history/2026-09-13-before-creative-prompt.md (and its archiv
 
 Astra low/default architecture/review/integration; one Luna xhigh/default worker,
 no nested agents, concise context, Fast off. Reuse /root/host_session_renewal.
-Worker confirmed running creative-prompt-task.md after capture handoff; root owns
+Creative prompt implementation accepted; next worker task is visual-review-capability-task.md. Root owns
 review, not duplicate investigation. Owner explicitly requested implementing ALL
 Astra recommendations. Sequence: shared creative/game prompt -> image capability
 propagation -> bounded image transport/process policy -> render/inspect/correct/
@@ -99,3 +99,14 @@ Public catalogs list Luna; readiness alone is not successful inference acceptanc
 - Full prompt budget/cancellation/recovery/isolation/UX audit, GitHub push, actual
  visible model inspection/correction and controlled quality evaluation. No completion
  claim until requirement-by-requirement evidence covers all of prompt.md.
+
+## Creative prompt accepted
+
+Shared five-section prompt + runtime-derived browser geometry limits reviewed.
+56tests across5suites/typecheck passed; root caught overbroad ban on removing
+existing IDs. Worker corrected it to permit requested deletion while forbidding
+remove/recreate editing shortcuts;19creative tests/format/diffcheck pass afterward.
+Final base5401bytes vs4100; all variants +1301UTF-8bytes (not measured tokens).
+Full NDJSON no-capability21447bytes; browser36670bytes. No schema/model/call-cap
+changes or live quality claims. Next: capability propagation, then image transport,
+server-bounded loop and controlled Luna eval. Prompt/capture not yet deployed.
