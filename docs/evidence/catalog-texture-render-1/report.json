@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "orbsie.catalog-comparison/v1",
+  "checkedAt": "2026-09-13T16:33:59.678Z",
+  "sourceCommit": "2c21d090557b4155ebd44dae85147a159d865b19",
+  "passed": false,
+  "scope": "Deterministic local WebGL rendering and asset preparation comparison using the shared World renderer.",
+  "providerCalls": 0,
+  "dataSources": {
+    "modelProvider": "none",
+    "externalStorage": "none",
+    "catalog": "checked-in local GLB"
+  },
+  "externalRequests": [],
+  "comparison": {
+    "basis": "rawTimings",
+    "performancePass": "not-evaluated",
+    "statement": "Timings describe this local browser, renderer, and cold-context run; they do not establish a speed claim or device performance guarantee."
+  },
+  "modes": [],
+  "error": "response.body: Protocol error (Network.getResponseBody): No data found for resource with given identifier\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+}

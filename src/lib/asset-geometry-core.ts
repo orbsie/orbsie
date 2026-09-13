@@ -8,7 +8,11 @@ import {
   type CatalogAsset,
 } from "./asset-catalog";
 import { AssetGeometryError } from "./asset-geometry-error";
-import { prepareFormationParticles } from "./formation-particles";
+import {
+  prepareFormationParticles,
+  type FormationTextureSample,
+} from "./formation-particles";
+import { createAssetDataTexture } from "./asset-texture";
 
 /** Typed arrays are transferred to the editor thread without a JSON copy. */
 export type AssetGeometryArray =
@@ -693,33 +697,13 @@ async function decodePngRgba(info: EmbeddedTextureInfo): Promise<Uint8Array> {
   }
 }
 
-function dataTextureFromTransfer(
-  texture: AssetBaseColorTextureTransfer,
-): THREE.DataTexture {
-  const output = new THREE.DataTexture(
-    texture.pixels,
-    texture.width,
-    texture.height,
-    THREE.RGBAFormat,
-    THREE.UnsignedByteType,
-  );
-  output.colorSpace = texture.colorSpace;
-  output.wrapS = texture.wrapS;
-  output.wrapT = texture.wrapT;
-  output.magFilter = texture.magFilter;
-  output.minFilter = texture.minFilter;
-  output.generateMipmaps = texture.generateMipmaps;
-  output.channel = texture.channel;
-  output.needsUpdate = true;
-  return output;
-}
-
 function mergeSourceGeometry(
   gltf: { scene: THREE.Group },
   asset: CatalogAsset,
   maxVertices: number,
   maxGeometryBytes: number,
   preserveUv: boolean,
+  particleTexture?: AssetBaseColorTextureTransfer,
 ): THREE.BufferGeometry {
   gltf.scene.updateMatrixWorld(true);
   const parts: THREE.BufferGeometry[] = [];
@@ -809,7 +793,12 @@ function mergeSourceGeometry(
       );
     merged.computeBoundingBox();
     merged.computeBoundingSphere();
-    prepareFormationParticles(merged);
+    prepareFormationParticles(
+      merged,
+      preserveUv && particleTexture
+        ? (particleTexture satisfies FormationTextureSample)
+        : undefined,
+    );
     const bytes = bytesOfGeometry(merged);
     if (bytes > maxGeometryBytes) {
       merged.dispose();
@@ -922,7 +911,7 @@ export async function decodeAssetGeometry(
         channel: textureInfo.channel,
       };
       baseColorTexture = preparedTexture;
-      decodedTexture = dataTextureFromTransfer(preparedTexture);
+      decodedTexture = createAssetDataTexture(preparedTexture);
       loader.register(() => ({
         name: "orbsie-embedded-base-color",
         loadTexture(textureIndex) {
@@ -942,6 +931,7 @@ export async function decodeAssetGeometry(
         vertexLimit,
         geometryLimit,
         textureInfo !== undefined,
+        baseColorTexture,
       );
       const box = geometry.boundingBox;
       const sphere = geometry.boundingSphere;

@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "orbsie.catalog-comparison/v1",
+  "checkedAt": "2026-09-13T16:57:37.977Z",
+  "sourceCommit": "a070de3352705bed1c8ada720796adebffd00f03",
+  "passed": true,
+  "scope": "Deterministic local WebGL rendering and asset preparation comparison using the shared World renderer.",
+  "providerCalls": 0,
+  "dataSources": {
+    "modelProvider": "none",
+    "externalStorage": "none",
+    "catalog": "approved visual prototype GLB used as a test substitution; no catalog admission"
+  },
+  "externalRequests": [],
+  "comparison": {
+    "basis": "rawTimings",
+    "performancePass": "not-evaluated",
+    "statement": "Timings describe this local browser, renderer, and cold-context run; they do not establish a speed claim or device performance guarantee."
+  },
+  "modes": [
+    {
+      "mode": "textured",
+      "project": {
+        "id": "catalog-comparison",
+        "seed": 42,
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        }
+      },
+      "renderer": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)"
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+        "platform": "Linux x86_64",
+        "hardwareConcurrency": 32,
+        "devicePixelRatio": 1,
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        }
+      },
+      "sceneComplexity": {
+        "scope": "scene geometry inventory, including hidden formation/debug geometry",
+        "entities": 3,
+        "geometrySources": [
+          "asset",
+          "asset",
+          "asset"
+        ],
+        "catalogAssetEntities": 3,
+        "meshGeometryCount": 64,
+        "pointGeometryCount": 3,
+        "triangleCount": 24956,
+        "vertexCount": 22942
+      },
+      "coldCache": {
+        "freshBrowserContext": true,
+        "cacheControl": "no-store",
+        "serviceWorkers": "blocked"
+      },
+      "catalog": {
+        "assetPath": "/models/kenney/nature-kit/tree_default.glb",
+        "bytesExpected": 271396,
+        "bytesRequested": 271396,
+        "requestCount": 1,
+        "workerStarts": [
+          "/player/asset-geometry-worker.js"
+        ],
+        "workerDecoded": 1,
+        "exactSourceBytes": true
+      },
+      "rawTimings": {
+        "submissionToFirstEntityDrawMs": 140.59999999962747,
+        "submissionToAllThreeDrawsMs": 140.90000000037253,
+        "entityDraws": [
+          {
+            "entityId": "tree-1",
+            "acceptedAtMs": 0.09999999962747097,
+            "drawnAtMs": 140.59999999962747,
+            "drawLatencyMs": 140.5
+          },
+          {
+            "entityId": "tree-2",
+            "acceptedAtMs": 0.09999999962747097,
+            "drawnAtMs": 140.79999999981374,
+            "drawLatencyMs": 140.70000000018626
+          },
+          {
+            "entityId": "tree-3",
+            "acceptedAtMs": 0.09999999962747097,
+            "drawnAtMs": 140.90000000037253,
+            "drawLatencyMs": 140.80000000074506
+          }
+        ],
+        "preparationFrameIntervalsMs": [
+          44.99999999981378,
+          16.59999999999991,
+          16.700000000000045,
+          16.700000000000045,
+          16.59999999999991,
+          16.700000000000045,
+          16.600000000000023
+        ],
+        "preparationFrameIntervalSampleCount": 7,
+        "preparationFrameIntervalSampleLimit": 120,
+        "preparationFrameIntervalSampleOverflow": false,
+        "preparationFrameIntervalSamplesTooFew": false
+      },
+      "errors": [],
+      "externalRequests": []
+    }
+  ],
+  "textureAcceptance": {
+    "candidateSubstitution": true,
+    "catalogAdmission": false,
+    "candidate": {
+      "path": "docs/evidence/mushroom-basic-textured-filter-corrected/prototype.glb",
+      "bytes": 271396,
+      "sha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+      "licensePath": "docs/evidence/mushroom-basic-textured-filter-corrected/License.txt",
+      "licenseSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+      "licenseText": "exact candidate License.txt CC0 text; fixture substitution only"
+    },
+    "strictModeLifecycle": true,
+    "settledVisibleMeshPredicate": "all target mesh.visible values are true",
+    "untinted": {
+      "front": "docs/evidence/catalog-texture-render-final-2/untinted-front.png",
+      "rear": "docs/evidence/catalog-texture-render-final-2/untinted-rear.png",
+      "mapCount": 3
+    },
+    "pink": {
+      "front": "docs/evidence/catalog-texture-render-final-2/pink-front.png",
+      "rear": "docs/evidence/catalog-texture-render-final-2/pink-rear.png",
+      "mapCount": 0,
+      "uniformVertexColor": true
+    },
+    "restored": {
+      "front": "docs/evidence/catalog-texture-render-final-2/restored-front.png",
+      "rear": "docs/evidence/catalog-texture-render-final-2/restored-rear.png",
+      "mapCount": 3
+    },
+    "sharedEntityIsolation": {
+      "entityCount": 3,
+      "uniqueTextureInstances": 3,
+      "sharedImmutablePixelStorage": true
+    },
+    "replacement": {
+      "pendingRetainedLastGood": true,
+      "staleRetainedLastGood": true,
+      "failedRetainedLastGood": true
+    }
+  },
+  "exportAcceptance": {
+    "candidateSubstitution": true,
+    "catalogAdmission": false,
+    "candidateLicenseText": "exact candidate License.txt CC0 text included and hash-asserted",
+    "exactCandidateModelBytes": true,
+    "exactCandidateLicenseText": true,
+    "exportedFileCount": 74,
+    "playback": {
+      "ready": true,
+      "screenshot": "docs/evidence/catalog-texture-render-final-2/exported-playback.png",
+      "workerStarted": true,
+      "externalRequests": []
+    },
+    "cleanupReleasedTextureMaps": true,
+    "textureDisposalsObserved": 3
+  }
+}

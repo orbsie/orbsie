@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "orbsie.catalog-comparison/v1",
+  "checkedAt": "2026-09-13T16:35:03.811Z",
+  "sourceCommit": "2c21d090557b4155ebd44dae85147a159d865b19",
+  "passed": true,
+  "scope": "Deterministic local WebGL rendering and asset preparation comparison using the shared World renderer.",
+  "providerCalls": 0,
+  "dataSources": {
+    "modelProvider": "none",
+    "externalStorage": "none",
+    "catalog": "checked-in local GLB"
+  },
+  "externalRequests": [],
+  "comparison": {
+    "basis": "rawTimings",
+    "performancePass": "not-evaluated",
+    "statement": "Timings describe this local browser, renderer, and cold-context run; they do not establish a speed claim or device performance guarantee."
+  },
+  "modes": [
+    {
+      "mode": "textured",
+      "project": {
+        "id": "catalog-comparison",
+        "seed": 42,
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        }
+      },
+      "renderer": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "vendor": "Google Inc. (Google)",
+        "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)"
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+        "platform": "Linux x86_64",
+        "hardwareConcurrency": 32,
+        "devicePixelRatio": 1,
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        }
+      },
+      "sceneComplexity": {
+        "scope": "scene geometry inventory, including hidden formation/debug geometry",
+        "entities": 3,
+        "geometrySources": [
+          "asset",
+          "asset",
+          "asset"
+        ],
+        "catalogAssetEntities": 3,
+        "meshGeometryCount": 64,
+        "pointGeometryCount": 3,
+        "triangleCount": 24956,
+        "vertexCount": 22942
+      },
+      "coldCache": {
+        "freshBrowserContext": true,
+        "cacheControl": "no-store",
+        "serviceWorkers": "blocked"
+      },
+      "catalog": {
+        "assetPath": "/models/kenney/nature-kit/tree_default.glb",
+        "bytesExpected": 271396,
+        "bytesRequested": 271396,
+        "requestCount": 1,
+        "workerStarts": [
+          "/player/asset-geometry-worker.js"
+        ],
+        "workerDecoded": 1
+      },
+      "rawTimings": {
+        "submissionToFirstEntityDrawMs": 173.3000000002794,
+        "submissionToAllThreeDrawsMs": 173.5,
+        "entityDraws": [
+          {
+            "entityId": "tree-1",
+            "acceptedAtMs": 0.20000000018626451,
+            "drawnAtMs": 173.3000000002794,
+            "drawLatencyMs": 173.10000000009313
+          },
+          {
+            "entityId": "tree-2",
+            "acceptedAtMs": 0.20000000018626451,
+            "drawnAtMs": 173.5,
+            "drawLatencyMs": 173.29999999981374
+          },
+          {
+            "entityId": "tree-3",
+            "acceptedAtMs": 0.20000000018626451,
+            "drawnAtMs": 173.5,
+            "drawLatencyMs": 173.29999999981374
+          }
+        ],
+        "preparationFrameIntervalsMs": [
+          75.19999999981371,
+          16.700000000000045,
+          16.600000000000023,
+          16.699999999999932,
+          16.600000000000023,
+          16.700000000000045,
+          16.699999999999932
+        ],
+        "preparationFrameIntervalSampleCount": 7,
+        "preparationFrameIntervalSampleLimit": 120,
+        "preparationFrameIntervalSampleOverflow": false,
+        "preparationFrameIntervalSamplesTooFew": false
+      },
+      "errors": [],
+      "externalRequests": []
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {
   formationParticles,
   prepareFormationParticles,
+  type FormationTextureSample,
 } from "../src/lib/formation-particles";
 
 function triangleGeometry(): THREE.BufferGeometry {
@@ -242,4 +243,43 @@ it("reuses prepared surface attributes without traversing dense triangles", () =
   expect(sampled.getAttribute("position").count).toBe(2048);
   sampled.dispose();
   geometry.dispose();
+});
+
+it("samples bounded atlas pixels into particle colors in linear space", () => {
+  const source = new THREE.BufferGeometry();
+  source.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0], 3),
+  );
+  source.setAttribute(
+    "color",
+    new THREE.Float32BufferAttribute([1, 1, 1, 1, 1, 1, 1, 1, 1], 3),
+  );
+  source.setAttribute(
+    "uv",
+    new THREE.Float32BufferAttribute([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], 2),
+  );
+  source.setIndex([0, 1, 2]);
+  const texture: FormationTextureSample = {
+    // black, red, green, white in row-major RGBA order
+    pixels: new Uint8Array([
+      0, 0, 0, 255, 255, 0, 0, 255, 0, 255, 0, 255, 255, 255, 255, 255,
+    ]),
+    width: 2,
+    height: 2,
+    colorSpace: "srgb-linear",
+    wrapS: THREE.ClampToEdgeWrapping,
+    wrapT: THREE.ClampToEdgeWrapping,
+    magFilter: THREE.LinearFilter,
+    minFilter: THREE.NearestMipmapNearestFilter,
+  };
+  const sampled = formationParticles(source, 32, texture);
+  const color = sampled.getAttribute("color");
+  for (let index = 0; index < color.count; index++) {
+    expect(color.getX(index)).toBeCloseTo(0.5);
+    expect(color.getY(index)).toBeCloseTo(0.5);
+    expect(color.getZ(index)).toBeCloseTo(0.25);
+  }
+  sampled.dispose();
+  source.dispose();
 });

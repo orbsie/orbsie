@@ -5,15 +5,18 @@ import {
   noteSceneUpdate,
 } from "../src/lib/experience-metrics";
 import * as THREE from "three";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { _roots } from "@react-three/fiber";
 import World from "../src/components/world";
 import { useOrb } from "../src/lib/store";
 import { blankProject, type Entity } from "../src/lib/protocol";
 import { isAssetGeometryReady } from "../src/lib/use-asset-geometry";
+import { exportWorld } from "../src/lib/export";
 
 /** Test-only fixture for a local procedural/catalog renderer comparison. */
-export type ComparisonMode = "procedural-only" | "catalog-only" | "mixed";
+export type ComparisonMode =
+  "procedural-only" | "catalog-only" | "mixed" | "textured";
 
 const catalogId = "kenney.nature.tree-default" as const;
 const projectId = "catalog-comparison";
@@ -25,12 +28,17 @@ const positions: [number, number, number][] = [
 const color = "#42b894";
 const mode = (() => {
   const value = new URLSearchParams(location.search).get("mode");
-  if (value === "catalog-only" || value === "mixed") return value;
+  if (value === "catalog-only" || value === "mixed" || value === "textured")
+    return value;
   return "procedural-only";
 })();
 
 function geometryFor(index: number): Entity["geometry"] {
-  if (mode === "catalog-only" || (mode === "mixed" && index === 2))
+  if (
+    mode === "catalog-only" ||
+    mode === "textured" ||
+    (mode === "mixed" && index === 2)
+  )
     return { kind: "asset", assetId: catalogId, detail: "refined" };
   return { kind: "tree", detail: "refined" };
 }
@@ -60,7 +68,11 @@ blank.seed = 42;
 blank.environment = { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" };
 useOrb.getState().load(blank);
 const root = createRoot(document.getElementById("root")!);
-root.render(<World />);
+root.render(
+  <React.StrictMode>
+    <World />
+  </React.StrictMode>,
+);
 await waitForRendererFrame();
 const loaded = useOrb.getState().project;
 const entities: Entity[] = positions.map((position, index) => ({
@@ -74,7 +86,7 @@ const entities: Entity[] = positions.map((position, index) => ({
   geometry: geometryFor(index),
   assetPolicy: "catalog-allowed",
 }));
-const project = { ...loaded, entities };
+let project = { ...loaded, entities };
 const experienceToken = beginExperience(project.id);
 for (const entity of entities) {
   noteReservation(project.id, entity.id, experienceToken);
@@ -106,6 +118,8 @@ const assetsReady = () =>
 const allEntitiesDrawn = () =>
   metrics()?.sceneUpdates.length === entities.length &&
   metrics()?.sceneUpdates.every((sample) => sample.drawnAt !== null);
+let disposedTextureCount = 0;
+const watchedTextures = new WeakSet<THREE.DataTexture>();
 function sampleFrame(now: number) {
   if (previousFrame !== undefined) {
     if (frameIntervals.length < 120) frameIntervals.push(now - previousFrame);
@@ -139,6 +153,165 @@ const rendererDetails = () => {
     ),
   };
 };
+const appearanceDetails = () => {
+  const current = state();
+  const details: {
+    dataTextureMaps: number;
+    pinkVertexColorMeshes: number;
+    meshes: Array<{
+      position: [number, number, number];
+      assetId?: unknown;
+      visible: boolean;
+      map: null | {
+        uuid: string;
+        width: number;
+        height: number;
+        pixelBytes: number;
+        dataIdentity: number;
+      };
+      vertexColor: null | {
+        average: [number, number, number];
+        range: [number, number, number];
+        uniform: boolean;
+      };
+    }>;
+  } = { dataTextureMaps: 0, pinkVertexColorMeshes: 0, meshes: [] };
+  const textureData = new Map<unknown, number>();
+  current?.scene.traverse((object: THREE.Object3D) => {
+    const mesh = object as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const materials: THREE.Material[] = Array.isArray(mesh.material)
+      ? mesh.material
+      : mesh.material
+        ? [mesh.material]
+        : [];
+    const map = materials
+      .map((material) => ("map" in material ? material.map : null))
+      .find(
+        (value): value is THREE.DataTexture =>
+          value instanceof THREE.DataTexture,
+      );
+    if (map) {
+      details.dataTextureMaps++;
+      if (!watchedTextures.has(map)) {
+        watchedTextures.add(map);
+        map.addEventListener("dispose", () => disposedTextureCount++);
+      }
+    }
+    const color = mesh.geometry?.getAttribute("color");
+    let vertexColor: (typeof details.meshes)[number]["vertexColor"] = null;
+    if (color && color.count > 0) {
+      const min = [
+        Number.POSITIVE_INFINITY,
+        Number.POSITIVE_INFINITY,
+        Number.POSITIVE_INFINITY,
+      ];
+      const max = [
+        Number.NEGATIVE_INFINITY,
+        Number.NEGATIVE_INFINITY,
+        Number.NEGATIVE_INFINITY,
+      ];
+      const average = [0, 0, 0];
+      for (let index = 0; index < color.count; index++) {
+        const values = [
+          color.getX(index),
+          color.getY(index),
+          color.getZ(index),
+        ];
+        for (let channel = 0; channel < 3; channel++) {
+          min[channel] = Math.min(min[channel], values[channel]);
+          max[channel] = Math.max(max[channel], values[channel]);
+          average[channel] += values[channel] / color.count;
+        }
+      }
+      const range = max.map((value, channel) => value - min[channel]);
+      const uniform = range.every((value) => value <= 1e-4);
+      vertexColor = {
+        average: average as [number, number, number],
+        range: range as [number, number, number],
+        uniform,
+      };
+      if (
+        uniform &&
+        average[0] > 0.9 &&
+        average[1] < 0.25 &&
+        average[2] > 0.2 &&
+        average[2] < 0.65
+      )
+        details.pinkVertexColorMeshes++;
+    }
+    const position = new THREE.Vector3();
+    mesh.getWorldPosition(position);
+    const dataIdentity = map
+      ? (() => {
+          const data = map.image.data;
+          const existing = textureData.get(data);
+          if (existing !== undefined) return existing;
+          const next = textureData.size + 1;
+          textureData.set(data, next);
+          return next;
+        })()
+      : 0;
+    details.meshes.push({
+      position: [position.x, position.y, position.z],
+      assetId: mesh.geometry?.userData?.orbsieAssetId,
+      visible: mesh.visible,
+      map: map
+        ? {
+            uuid: map.uuid,
+            width: map.image.width,
+            height: map.image.height,
+            pixelBytes: map.image.data?.byteLength ?? 0,
+            dataIdentity,
+          }
+        : null,
+      vertexColor,
+    });
+  });
+  return details;
+};
+
+const setTint = (tint: string | undefined) => {
+  const current = useOrb.getState().project;
+  const entities = current.entities.map((entity) => {
+    if (entity.id !== "tree-1" || entity.geometry?.kind !== "asset")
+      return entity;
+    const { tint: _previous, ...geometry } = entity.geometry;
+    return {
+      ...entity,
+      geometry: tint ? { ...geometry, tint } : geometry,
+    };
+  });
+  project = { ...current, entities };
+  useOrb.setState({ project });
+};
+
+const replacementAssetIds = {
+  pending: "kenney.nature.tree-pine-tall-a",
+  failed: "kenney.nature.fence-gate",
+} as const;
+const replaceAsset = (
+  replacement: keyof typeof replacementAssetIds | "restore",
+) => {
+  const current = useOrb.getState().project;
+  const assetId =
+    replacement === "restore" ? catalogId : replacementAssetIds[replacement];
+  const entities = current.entities.map((entity) =>
+    entity.id === "tree-1"
+      ? {
+          ...entity,
+          geometry: {
+            kind: "asset" as const,
+            assetId,
+            detail: "refined" as const,
+          },
+        }
+      : entity,
+  );
+  project = { ...current, entities };
+  useOrb.setState({ project });
+};
+
 const sceneComplexity = () => {
   const current = state();
   const counts = {
@@ -202,10 +375,21 @@ const sceneComplexity = () => {
       },
       metrics: snapshot,
       assetsReady: assetsReady(),
+      disposedTextureCount,
       preparationReadyAt,
       frameIntervals: [...frameIntervals],
       frameIntervalOverflow,
       renderer: rendererDetails(),
+      appearance: appearanceDetails(),
+      error: useOrb.getState().error,
+      entityGeometry: useOrb.getState().project.entities.map((entity) => ({
+        id: entity.id,
+        kind: entity.geometry?.kind,
+        assetId:
+          entity.geometry?.kind === "asset"
+            ? entity.geometry.assetId
+            : undefined,
+      })),
       browser: {
         userAgent: navigator.userAgent,
         platform: navigator.platform,
@@ -217,5 +401,52 @@ const sceneComplexity = () => {
     };
   },
 };
+
+(
+  window as unknown as {
+    catalogComparisonFixture: {
+      setTint: (tint?: string) => void;
+      replaceAsset: (
+        replacement: keyof typeof replacementAssetIds | "restore",
+      ) => void;
+      cleanup: () => void;
+      renderDirection: (rear?: boolean) => void;
+      exportWorld: () => Promise<void>;
+    };
+  }
+).catalogComparisonFixture.setTint = setTint;
+(
+  window as unknown as {
+    catalogComparisonFixture: {
+      replaceAsset: (
+        replacement: keyof typeof replacementAssetIds | "restore",
+      ) => void;
+    };
+  }
+).catalogComparisonFixture.replaceAsset = replaceAsset;
+(
+  window as unknown as { catalogComparisonFixture: { cleanup: () => void } }
+).catalogComparisonFixture.cleanup = () => root.unmount();
+(
+  window as unknown as {
+    catalogComparisonFixture: {
+      renderDirection: (rear?: boolean) => void;
+    };
+  }
+).catalogComparisonFixture.renderDirection = (rear = false) => {
+  const current = state();
+  if (!current) return;
+  const camera = current.camera;
+  camera.position.set(rear ? -5 : 5, 2.7, rear ? -5 : 5);
+  camera.lookAt(0, 0.5, 0);
+  camera.updateMatrixWorld(true);
+  current.gl.render(current.scene, camera);
+};
+(
+  window as unknown as {
+    catalogComparisonFixture: { exportWorld: () => Promise<void> };
+  }
+).catalogComparisonFixture.exportWorld = () =>
+  exportWorld(useOrb.getState().project);
 previousFrame = performance.now();
 requestAnimationFrame(sampleFrame);

@@ -1,5 +1,4 @@
 "use client";
-import SoftwareWorld from "./software-world";
 import {
   Canvas,
   useFrame,
@@ -71,6 +70,7 @@ import {
   parcelTransitionController,
   type ParcelFrame,
 } from "@/lib/parcel-transition";
+import SoftwareWorld from "./software-world";
 let motionPreference: MediaQueryList | undefined;
 const reduced = () => {
   if (typeof window === "undefined") return false;
@@ -251,6 +251,69 @@ function Planet({
     </group>
   );
 }
+
+interface FormationAppearance {
+  readonly geometry: THREE.BufferGeometry;
+  readonly texture?: THREE.DataTexture;
+  readonly ownsTexture?: boolean;
+  readonly release?: () => void;
+}
+
+// Render can be restarted before a layout effect commits. Keep the initial
+// props resource-free and allocate per-entity geometry/textures after commit.
+const EMPTY_FORMATION_GEOMETRY = (() => {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute([], 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute([], 3));
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+})();
+const EMPTY_FORMATION_PARTICLES = (() => {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute([], 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute([], 3));
+  geometry.setAttribute("aFrom", new THREE.Float32BufferAttribute([], 3));
+  geometry.setAttribute("aFromColor", new THREE.Float32BufferAttribute([], 3));
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+})();
+
+function cloneFormationTexture(texture: THREE.DataTexture): THREE.DataTexture {
+  const clone = texture.clone() as THREE.DataTexture;
+  clone.needsUpdate = true;
+  return clone;
+}
+
+function disposeFormationAppearance(
+  appearance: FormationAppearance | undefined,
+): void {
+  if (!appearance) return;
+  appearance.geometry.dispose();
+  appearance.texture?.dispose();
+  appearance.release?.();
+}
+
+interface FormationResource {
+  readonly appearance: FormationAppearance;
+  readonly particleGeometry: THREE.BufferGeometry;
+  disposed: boolean;
+}
+
+const EMPTY_FORMATION_RESOURCE: FormationResource = {
+  appearance: { geometry: EMPTY_FORMATION_GEOMETRY },
+  particleGeometry: EMPTY_FORMATION_PARTICLES,
+  disposed: false,
+};
+
+function disposeFormationResource(resource: FormationResource): void {
+  if (resource.disposed || resource === EMPTY_FORMATION_RESOURCE) return;
+  resource.disposed = true;
+  disposeFormationAppearance(resource.appearance);
+  resource.particleGeometry.dispose();
+}
+
 function Formation({
   entity,
   session,
@@ -263,7 +326,8 @@ function Formation({
   const group = useRef<THREE.Group>(null);
   const previous = useRef<THREE.BufferGeometry>(undefined);
   const previousParticles = useRef<THREE.BufferGeometry>(undefined);
-  const previousShape = useRef<THREE.BufferGeometry>(undefined);
+  const previousAppearance = useRef<FormationAppearance>(undefined);
+  const displayedTexture = useRef<THREE.DataTexture | undefined>(undefined);
   const progress = useRef({ value: 0 });
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
   const gameTintEnabled = useRef({ value: 0 });
@@ -288,33 +352,63 @@ function Formation({
     assetRecipe?.kind === "generated" ? assetRecipe.model?.sha256 : undefined,
   );
   const asset = assetRecipe?.kind === "generated" ? generated : catalog;
+  const assetTexture =
+    assetRecipe?.kind === "asset" ? catalog?.texture : undefined;
+  const retainAssetAppearance =
+    assetRecipe?.kind === "asset" ? catalog?.retain : undefined;
   const pendingAsset = !!assetRecipe && !asset?.geometry;
   useEffect(() => {
     if (asset?.error)
       useOrb.getState().set({ error: `${entity.label}: ${asset.error}` });
   }, [asset?.error, entity.label]);
-  const geometry = useMemo(() => {
-    const source = assetRecipe
-      ? (asset?.geometry?.clone() ??
-        previousShape.current?.clone() ??
-        entityGeometry({ ...entity, geometry: undefined }))
-      : entityGeometry(entity);
+  const [resource, setResource] = useState<FormationResource>(
+    () => EMPTY_FORMATION_RESOURCE,
+  );
+  const activeResource = useRef(resource);
+  const mountedResource = useRef(false);
+  const allocations = useRef<
+    Set<{
+      resource: FormationResource;
+      cancelled: boolean;
+      committed: boolean;
+    }>
+  >(new Set());
+  useLayoutEffect(() => {
+    if (assetRecipe && !asset?.geometry) return;
+    for (const allocation of allocations.current) {
+      if (allocation.committed) continue;
+      allocation.cancelled = true;
+      allocations.current.delete(allocation);
+      disposeFormationResource(allocation.resource);
+    }
+    let source: THREE.BufferGeometry;
+    let sourceTexture: THREE.DataTexture | undefined;
+    let ownsTexture = false;
+    if (assetRecipe && asset?.geometry) {
+      source = asset.geometry.clone();
+      if (!assetRecipe.tint && assetTexture) {
+        sourceTexture = cloneFormationTexture(assetTexture);
+        ownsTexture = true;
+      }
+    } else {
+      source = assetRecipe
+        ? entityGeometry({ ...entity, geometry: undefined })
+        : entityGeometry(entity);
+    }
     if (assetRecipe?.tint && asset?.geometry) {
       const tint = new THREE.Color(assetRecipe.tint);
       const colors = source.getAttribute("color");
-      for (let i = 0; i < colors.count; i++)
-        colors.setXYZ(i, tint.r, tint.g, tint.b);
-      colors.needsUpdate = true;
+      if (colors) {
+        for (let i = 0; i < colors.count; i++)
+          colors.setXYZ(i, tint.r, tint.g, tint.b);
+        colors.needsUpdate = true;
+      }
       const sampledColors = source.getAttribute("formationColor");
       if (sampledColors) {
         for (let i = 0; i < sampledColors.count; i++)
           sampledColors.setXYZ(i, tint.r, tint.g, tint.b);
         sampledColors.needsUpdate = true;
       }
-    }
-    if (!assetRecipe || asset?.geometry) {
-      previousShape.current?.dispose();
-      previousShape.current = source.clone();
     }
     if (
       entity.geometry &&
@@ -329,13 +423,74 @@ function Formation({
           max: box.max.toArray(),
         });
     }
-    return source;
-  }, [entity.geometry, entity.color, asset?.geometry]);
-  const particleGeometry = useMemo(
-    () => formationParticles(geometry),
-    [geometry],
-  );
+    const nextAppearance = {
+      geometry: source,
+      texture: sourceTexture,
+      ownsTexture,
+    } satisfies FormationAppearance;
+    let nextParticles: THREE.BufferGeometry;
+    try {
+      nextParticles = formationParticles(source);
+    } catch (error) {
+      disposeFormationAppearance(nextAppearance);
+      throw error;
+    }
+    const nextResource: FormationResource = {
+      appearance: nextAppearance,
+      particleGeometry: nextParticles,
+      disposed: false,
+    };
+    const allocation = {
+      resource: nextResource,
+      cancelled: false,
+      committed: false,
+    };
+    allocations.current.add(allocation);
+    setResource((current) => (allocation.cancelled ? current : nextResource));
+    return () => {
+      allocation.cancelled = true;
+      allocations.current.delete(allocation);
+      if (!allocation.committed) disposeFormationResource(nextResource);
+    };
+  }, [
+    entity.geometry,
+    entity.color,
+    assetRecipe,
+    asset?.geometry,
+    assetTexture,
+  ]);
+  const appearance = resource.appearance;
+  const particleGeometry = resource.particleGeometry;
+  const geometry = appearance.geometry;
+  const texture = appearance.texture;
+  const commitsAppearance = !assetRecipe || !!asset?.geometry;
   useLayoutEffect(() => {
+    activeResource.current = resource;
+    if (resource === EMPTY_FORMATION_RESOURCE) return;
+    for (const allocation of allocations.current) {
+      if (allocation.resource === resource) {
+        allocation.committed = true;
+        break;
+      }
+    }
+  }, [resource]);
+  useLayoutEffect(() => {
+    if (!commitsAppearance || geometry === EMPTY_FORMATION_GEOMETRY) return;
+    const retained: FormationAppearance = {
+      geometry: geometry.clone(),
+      texture: texture ? cloneFormationTexture(texture) : undefined,
+      release: texture ? retainAssetAppearance?.() : undefined,
+    };
+    const prior = previousAppearance.current;
+    previousAppearance.current = retained;
+    disposeFormationAppearance(prior);
+  }, [commitsAppearance, geometry, texture, retainAssetAppearance]);
+  useLayoutEffect(() => {
+    if (
+      geometry === EMPTY_FORMATION_GEOMETRY &&
+      particleGeometry === EMPTY_FORMATION_PARTICLES
+    )
+      return;
     const particleSnapshot = previousParticles.current
       ? captureFormationSnapshot(
           previousParticles.current,
@@ -357,6 +512,7 @@ function Formation({
     geometry.userData.particleBridge =
       !prior ||
       (prior.userData.particleBridge && progress.current.value < 1) ||
+      displayedTexture.current !== texture ||
       !sameIndex ||
       prior.getAttribute("position").count !==
         geometry.getAttribute("position").count;
@@ -366,14 +522,33 @@ function Formation({
       : undefined;
     addFormationSource(geometry, visible);
     previous.current = geometry;
+    displayedTexture.current = texture;
     progress.current.value = 0;
     if (mesh.current) mesh.current.visible = !geometry.userData.particleBridge;
     if (particles.current)
       particles.current.visible = geometry.userData.particleBridge;
   }, [geometry, particleGeometry]);
-  useEffect(() => () => particleGeometry.dispose(), [particleGeometry]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-  useEffect(() => () => previousShape.current?.dispose(), []);
+  useEffect(() => {
+    mountedResource.current = true;
+    return () => {
+      mountedResource.current = false;
+      // React development StrictMode immediately replays passive effects. A
+      // microtask lets the replacement setup cancel that replay cleanup while
+      // still disposing on a real replacement or unmount.
+      queueMicrotask(() => {
+        if (!mountedResource.current || activeResource.current !== resource)
+          disposeFormationResource(resource);
+      });
+    };
+  }, [resource]);
+  useEffect(
+    () => () => {
+      disposeFormationAppearance(previousAppearance.current);
+      previousAppearance.current = undefined;
+      displayedTexture.current = undefined;
+    },
+    [],
+  );
   const material = useMemo(() => {
     const m = new THREE.MeshStandardMaterial({
       vertexColors: true,
@@ -406,6 +581,12 @@ function Formation({
     m.customProgramCacheKey = () => "orbsie-formation-v3";
     return m;
   }, []);
+  useLayoutEffect(() => {
+    const nextTexture = texture ?? null;
+    if (material.map === nextTexture) return;
+    material.map = nextTexture;
+    material.needsUpdate = true;
+  }, [material, texture]);
   const particleMaterial = useMemo(() => {
     const points = new THREE.PointsMaterial({
       vertexColors: true,
@@ -437,6 +618,13 @@ function Formation({
     if (particles.current)
       particles.current.visible =
         !!geometry.userData.particleBridge && progress.current.value < 1;
+    const visibilityProbe = (
+      globalThis as typeof globalThis & {
+        __orbsieFormationVisibilityProbe?: Record<string, boolean>;
+      }
+    ).__orbsieFormationVisibilityProbe;
+    if (visibilityProbe)
+      visibilityProbe[entity.id] = mesh.current?.visible === true;
     if (!group.current) return;
     const effective = playing ? session.effectiveEntity(entity) : entity;
     group.current.visible = effective !== null;

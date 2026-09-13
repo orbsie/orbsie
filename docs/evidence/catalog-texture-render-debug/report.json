@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "orbsie.catalog-comparison/v1",
+  "checkedAt": "2026-09-13T16:51:42.050Z",
+  "sourceCommit": "a070de3352705bed1c8ada720796adebffd00f03",
+  "passed": false,
+  "scope": "Deterministic local WebGL rendering and asset preparation comparison using the shared World renderer.",
+  "providerCalls": 0,
+  "dataSources": {
+    "modelProvider": "none",
+    "externalStorage": "none",
+    "catalog": "checked-in local GLB"
+  },
+  "externalRequests": [],
+  "comparison": {
+    "basis": "rawTimings",
+    "performancePass": "not-evaluated",
+    "statement": "Timings describe this local browser, renderer, and cold-context run; they do not establish a speed claim or device performance guarantee."
+  },
+  "modes": [],
+  "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate; fixtureStatus=undefined; workerStarts=[]; workerDecoded=0; errors=[\"React is not defined\"]"
+}

@@ -9,7 +9,7 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 38% weekly used, 62% remaining;
+at meaningful milestones. Latest actual quota read 2026-09-13: 39% weekly used, 61% remaining;
 stop workers/tests below20% remaining. Reusable local check:
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
@@ -19,28 +19,35 @@ Owner approved needed ChatGPT calls; existing harness two-call milestone has
 Use owner Chrome via computer use; GitHub via computer use. No copied browser
 cookies, local Codex credentials, or user Blender installation. Preserve licenses.
 
-## Current task: finish catalog texture renderer integration
+## Current task: investigate reported graphics fallback regression
 
-One Luna worker `/root/texture_renderer_completion` owns the existing texture WIP,
-local fixture/verifier and targeted tests. Contract:
-`docs/catalog-texture-integration-plan.md`, renderer/export handoff. No new catalog
-ID, live calls or deployment. Root reviews final diff and actual visual evidence.
-Initial actual-worker textured draw now passes (`catalog-texture-render-4`),
-but root has not accepted the complete task. Root review requested fixture-only
-manifest substitution with production integrity enabled (remove test-only mutable
-hook configuration) and guarding shared empty geometry against transition mutation.
-Worker remains running; no restart or second worker.
-Acceptance: source/pink/restored views, shared appearance isolation, stale/failed
-replacement preserving last-good geometry/texture, cleanup and offline export.
-Candidate: `mushroom-basic-textured-filter-corrected/prototype.glb`; fixture-only
-catalog substitution must preserve exact candidate CC0 text and be labeled as such.
-Root expanded the same task to SoftwareWorld: precompute approximate vertex
-colors from atlas UV samples in the committed geometry effect, preserve uniform
-recipe/game tint overrides and last-good replacement, no per-frame texture work.
-Forced-WebGL-failure candidate source/pink/restored acceptance is required. This
-is reduced-detail software appearance, not full texture-map fidelity. Root restored
-the exact source archive to /home/marcos/.cache/orbsie/source-archives/; provenance
-report `mushroom-source-restored-20260913/report.json` matches all original hashes.
+Owner reports “Graphics are unavailable” and requires playable fallback. Existing
+Canvas2D fallback is already deployed; do not assume the owner’s new failure is
+resolved by old evidence. Luna worker `/root/texture_renderer_completion` completed the focused investigation.
+Fresh editor forced-failure/retry checks and standalone WebGL-disabled input checks
+passed. Evidence: `webgl-failure-texture-stage-local-20260913/report.json` and
+`player-unavailable-texture-stage-20260913/unavailable.json`. No confirmed product
+regression or new fallback code change. Initial 127.0.0.1 test failed before hydration
+due to Next dev cross-origin policy; localhost passed. Owner error remains
+unreproduced; inspect the affected browser when computer-use access returns.
+No live calls, deployment or nested workers. Root CUA attempt still fails with
+`CUA_REPL_ENABLED_SURFACES is required` before browser access.
+
+WebGL catalog texture stage reviewed: immutable atlas ownership, uniform tint and
+restore, last-good replacement, committed lifecycle cleanup and offline export.
+Final correction moves activeResource ref assignment into committed layout effect.
+Typecheck, player build, 22 focused tests and actual-worker development StrictMode
+candidate verifier pass: `catalog-texture-render-final-5/report.json`. Root
+reviewed settled editor source/pink/restore in final-2 and exported player in
+final-4. Candidate is fixture substitution only, not catalog admission. Changes
+are ready for coherent commit after the completed fallback regression checks.
+
+Software atlas appearance remains a separate unfinished task: precompute UV-sampled
+vertex colors in committed geometry effect, preserve recipe/game tint and last-good
+state, no per-frame texture work. Forced-WebGL-off acceptance required before
+catalog admission. Exact source archive is retained in
+`/home/marcos/.cache/orbsie/source-archives/`; provenance report
+`mushroom-source-restored-20260913/report.json` matches original hashes.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
 reviewed and deployed. Six focused suites78 tests, typecheck and local/Vercel
@@ -67,7 +74,7 @@ click/color, visibility, position/path, score/reset acceptance passed:
 external standalone requests. Fallback/retry/race suite also passed. These are
 focused checks, not full mobile/flagship/performance certification.
 
-Main retains active unreviewed texture WIP: World Formation, asset hook/texture,
+Main retains reviewed, uncommitted texture changes and completed fallback evidence: World Formation, asset hook/texture,
 formation particles/core and catalog comparison scripts/tests. Do not deploy main
 worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
 `/tmp/orbsie-chatgpt-release-4eb9ce8` is atb880edd with dependencies and project
@@ -100,7 +107,7 @@ supports extendTimeout, verified locally and official docs; see
 - Physical midrange Android and iOS Safari, touch/orientation/background/long-run
   performance. Prior emulator or narrow desktop tests do not certify mobile.
 - Finish texture/catalog/procedural mix integration, visual quality and offline
-  export/license acceptance. Decoder3d6a839 accepted; texture WIP not accepted.
+  export/license acceptance. Decoder3d6a839 and WebGL texture stage reviewed; software appearance/admission remain open.
 - Full prompt.md requirement audit, provider recovery/free exhaustion, GitHub push.
 
 Prior provider evidence remains in archive: OpenRouter3658d7e create/pink edit/

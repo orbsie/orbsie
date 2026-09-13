@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "scope": "Actual standalone browser with WebGL disabled and Canvas2D fallback",
+  "softwareFallbackVisible": true,
+  "scoreVisible": true,
+  "movementInputChangedFrame": true,
+  "restartRemainedAvailable": true,
+  "expectedContextErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "unexpectedPageErrors": []
+}

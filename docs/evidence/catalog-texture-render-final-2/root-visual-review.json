@@ -1,0 +1,21 @@
+{
+  "editorViewsAccepted": true,
+  "scope": "settled front/rear source, uniform selected tint, and restored source appearance",
+  "imagesReviewed": [
+    "untinted-front.png",
+    "untinted-rear.png",
+    "pink-front.png",
+    "pink-rear.png",
+    "restored-front.png",
+    "restored-rear.png"
+  ],
+  "findings": [
+    "Recognizable red caps, white spots and pale stems.",
+    "Selected mushroom uniformly pink; unrelated mushrooms retain source appearance.",
+    "Clearing tint restores source atlas appearance."
+  ],
+  "exportedPlaybackAppearanceAccepted": false,
+  "exportedPlaybackReason": "Current exported-playback screenshot still shows particle formation; settled exported capture requested.",
+  "catalogAdmission": false,
+  "fullTaskAccepted": false
+}
