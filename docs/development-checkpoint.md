@@ -9,7 +9,7 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 40% weekly used, 60% remaining;
+at meaningful milestones. Latest actual quota read 2026-09-13: 41% weekly used, 59% remaining;
 stop workers/tests below20% remaining. Reusable local check:
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
@@ -39,10 +39,14 @@ absolute40min capped by auth session, verified actual non-resuming session
 extension, late-client cleanup and one180s route abort signal. Root reviewed
 clock/abort fixes and installed SDK source. Concurrency tests use a stateful
 mock; no actual Postgres or live >10minute continuity claim. Evidence
-`chatgpt-renewal-local-20260913/review.json`. Source ready for commit/release build.
-Worker `/root/host_session_renewal` finished; exact suite list requested, no rerun.
-Next bounded task is full-provider harness work in
-`provider-flagship-harness-followup.md`; fresh story currently Gateway-only.
+`chatgpt-renewal-local-20260913/review.json`. Source committed0a2fbf6 and deployed; local/Vercel builds pass.
+Release evidence `chatgpt-renewal-release-20260913/report.json`; no live renewal
+acceptance.
+Same Luna worker `/root/host_session_renewal` now implements full-provider
+flagship harness support from `provider-flagship-harness-followup.md`. Fresh
+thread creation hit the host thread cap, so the finished worker was reused with
+a concise new task. Only one worker is active. No live calls/credentials/deploy.
+Exact prior118-test suite list requested, no rerun.
 Browser CUA remains unavailable; owner failure not reproduced, no bypass.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
@@ -57,8 +61,9 @@ browser surface restoration. No new model calls during texture work.
 
 ## Production and workspace
 
-Production source2a1a38f (WebGL and software atlas integration, retaining ChatGPT
-fix4eb9ce8) deployed to https://orbsie-812hk6i52-grappeggias-projects.vercel.app,
+Production source0a2fbf6 (bounded hosted session renewal, retaining reviewed
+graphics and ChatGPT completion fixes) deployed to
+https://orbsie-mz306mu2a-grappeggias-projects.vercel.app,
 aliased https://orbsie.com. Local/Vercel builds pass; HTTP200 and exact player
 runtime/source hashes verified in `software-texture-release-20260913/report.json`.
 No new owner-browser or live inference acceptance from this release.
@@ -73,10 +78,10 @@ click/color, visibility, position/path, score/reset acceptance passed:
 external standalone requests. Fallback/retry/race suite also passed. These are
 focused checks, not full mobile/flagship/performance certification.
 
-Main2a1a38f contains reviewed WebGL/software atlas work and fallback evidence;
-host-session-renewal worker changes are not yet reviewed. Do not deploy main
+Main0a2fbf6 contains reviewed rendering and hosted renewal changes;
+full-provider harness worker changes are not yet reviewed. Do not deploy main
 worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
-`/tmp/orbsie-chatgpt-release-4eb9ce8` is at2a1a38f with dependencies and project
+`/tmp/orbsie-chatgpt-release-4eb9ce8` is at0a2fbf6 with dependencies and project
 link. Local production build and Vercel production build passed. Servers3071/3072
 were stopped; local3070 historically exists, verify before use. Deploy reviewed
 commits through isolated worktree. Vercel CLI uses existing local auth; no keys in

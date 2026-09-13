@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-09-13T18:03:27.075973+00:00",
+  "sourceCommit": "0a2fbf6",
+  "deployment": "https://orbsie-mz306mu2a-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuildPassed": true,
+  "vercelBuildPassed": true,
+  "homepageStatus": 200,
+  "homepageSha256": "90df835b31e789785dec2e358b942caf84154b28afcb63cddf4a6efe53f69711",
+  "modelCalls": 0,
+  "browserAcceptance": false,
+  "liveRenewalAcceptance": false,
+  "scope": "Build/deployment and public homepage availability only; authenticated renewal remains unverified live"
+}
