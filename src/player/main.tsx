@@ -14,6 +14,7 @@ import {
   MAX_GENERATED_MODEL_BYTES,
 } from "../lib/generated-models";
 import { playerControlsHelp } from "../lib/player-controls";
+import { GraphicsGuidance } from "../components/graphics-guidance";
 configureGeneratedGeometryResolver(async (hash, signal) => {
   const response = await fetch(`./${generatedModelPath(hash)}`, {
     signal,
@@ -51,9 +52,24 @@ configureGeneratedGeometryResolver(async (hash, signal) => {
 function PlayerApp() {
   const s = useOrb();
   const [error, setError] = useState("");
+  const [graphicsError, setGraphicsError] = useState("");
+  const [graphicsHelpVisible, setGraphicsHelpVisible] = useState(false);
+  const [softwareRenderer, setSoftwareRenderer] = useState(false);
+  const [rendererRetryToken, setRendererRetryToken] = useState(0);
+  const [rendererReady, setRendererReady] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [ready, setReady] = useState(false);
   const [touchDevice, setTouchDevice] = useState(false);
+  const ready = rendererReady && sceneReady;
+  const retryRenderer = () => {
+    if (!graphicsError) return;
+    setGraphicsError("");
+    setGraphicsHelpVisible(false);
+    setSoftwareRenderer(false);
+    setRendererReady(false);
+    setSceneReady(false);
+    setRendererRetryToken((token) => token + 1);
+  };
   const collectibles = s.project.entities.filter(
     (e) => e.stage === "ready" && e.behavior?.type === "collect",
   );
@@ -84,7 +100,33 @@ function PlayerApp() {
       data-ready={ready && !error}
     >
       <div className="canvas">
-        {loaded && <World onReady={() => setReady(true)} onError={setError} />}
+        {loaded && (
+          <World
+            key={rendererRetryToken}
+            rendererRetryToken={rendererRetryToken}
+            onReady={() => setSceneReady(true)}
+            onRendererReady={(renderer) => {
+              setRendererReady(true);
+              if (renderer === "webgl") {
+                setGraphicsError("");
+                setGraphicsHelpVisible(false);
+                setSoftwareRenderer(false);
+              }
+            }}
+            onRendererFallback={(message) => {
+              setGraphicsError(message);
+              setGraphicsHelpVisible(true);
+              setSoftwareRenderer(true);
+            }}
+            onError={(message) => {
+              setGraphicsError(message);
+              setGraphicsHelpVisible(true);
+              setSoftwareRenderer(false);
+              setRendererReady(false);
+              setSceneReady(false);
+            }}
+          />
+        )}
       </div>
       <header>
         <a href="https://orbsie.com">◉ orbsie</a>
@@ -103,10 +145,31 @@ function PlayerApp() {
           ↻ Restart
         </button>
       </header>
-      {(!ready || error) && (
-        <div className="message">{error || "Opening your little world…"}</div>
+      {graphicsError && graphicsHelpVisible ? (
+        <div className="message graphics-player-error" role="status">
+          <GraphicsGuidance
+            standalone
+            advisory={softwareRenderer}
+            detail={graphicsError}
+            onRetry={retryRenderer}
+            onDismiss={
+              softwareRenderer ? () => setGraphicsHelpVisible(false) : undefined
+            }
+          />
+        </div>
+      ) : (
+        (!ready || error) && (
+          <div className="message">{error || "Opening your little world…"}</div>
+        )
       )}
-      <div className="score" hidden={!ready || Boolean(error)}>
+      <div
+        className="score"
+        hidden={
+          !ready ||
+          Boolean(error) ||
+          (!softwareRenderer && Boolean(graphicsError))
+        }
+      >
         {s.project.game ? (
           `Score: ${s.gameScore}`
         ) : (

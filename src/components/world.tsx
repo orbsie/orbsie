@@ -1,4 +1,5 @@
 "use client";
+import SoftwareWorld from "./software-world";
 import {
   Canvas,
   useFrame,
@@ -1132,11 +1133,19 @@ function Scene({
   );
 }
 const webglUnavailableMessage =
-  "Your world needs WebGL2. Try a browser with hardware acceleration enabled.";
+  "Your world needs WebGL2, but WebGL2 could not initialize in this browser.";
 function Unavailable() {
   // R3F mounts fallback inside the canvas even when WebGL works. This markup
   // must never report renderer availability as a side effect.
-  return <div className="webgl-fallback">{webglUnavailableMessage}</div>;
+  return (
+    <div className="webgl-fallback">
+      <strong>Graphics are unavailable</strong>
+      <p>
+        WebGL2 and the software canvas renderer could not initialize. The
+        browser does not expose whether hardware acceleration is disabled.
+      </p>
+    </div>
+  );
 }
 class Boundary extends Component<
   { children: ReactNode; onError?: (message: string) => void },
@@ -1153,10 +1162,10 @@ class Boundary extends Component<
     return this.state.error ? (
       this.props.onError ? null : (
         <div className="webgl-fallback">
-          <strong>Your world needs WebGL2</strong>
+          <strong>Graphics are unavailable</strong>
           <p>
-            Try a recent browser with hardware acceleration enabled. Your saved
-            world is safe.
+            WebGL2 and the software canvas renderer could not initialize. Your
+            saved world is safe.
           </p>
         </div>
       )
@@ -1170,20 +1179,82 @@ export default function World({
   onRendererReady,
   onError,
   onInputLatency,
+  onRendererFallback,
+  rendererRetryToken = 0,
 }: {
   onReady?: () => void;
-  onRendererReady?: () => void;
+  onRendererReady?: (renderer?: "webgl" | "software") => void;
   onError?: (message: string) => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
+  onRendererFallback?: (message: string) => void;
+  rendererRetryToken?: number;
 } = {}) {
-  const [rendererFailed, setRendererFailed] = useState(false);
+  const [failedAttempt, setFailedAttempt] = useState<number | null>(null);
+  const [softwareFailedAttempt, setSoftwareFailedAttempt] = useState<
+    number | null
+  >(null);
+  const attemptRef = useRef(rendererRetryToken);
+  const failedAttemptRef = useRef<number | null>(null);
+  const softwareFailedAttemptRef = useRef<number | null>(null);
+  // A retry creates a new attempt. Late callbacks from the disposed Canvas
+  // must not mark the new attempt ready or revive a failed one.
+  attemptRef.current = rendererRetryToken;
+  if (failedAttemptRef.current !== failedAttempt)
+    failedAttemptRef.current = failedAttempt;
+  const attempt = rendererRetryToken;
+  const notifyPrimaryFailure = (message: string) => {
+    if (attemptRef.current !== attempt || failedAttemptRef.current === attempt)
+      return;
+    failedAttemptRef.current = attempt;
+    setFailedAttempt(attempt);
+    onRendererFallback?.(message);
+  };
+  const notifySoftwareFailure = (message: string) => {
+    if (
+      attemptRef.current !== attempt ||
+      failedAttemptRef.current !== attempt ||
+      softwareFailedAttemptRef.current === attempt
+    )
+      return;
+    softwareFailedAttemptRef.current = attempt;
+    setSoftwareFailedAttempt(attempt);
+    onError?.(message);
+  };
+  const notifyRendererReady = (renderer: "webgl" | "software" = "webgl") => {
+    if (
+      attemptRef.current === attempt &&
+      softwareFailedAttemptRef.current !== attempt &&
+      (renderer === "software" || failedAttemptRef.current !== attempt)
+    )
+      onRendererReady?.(renderer);
+  };
+  const notifySceneReady = () => {
+    if (
+      attemptRef.current === attempt &&
+      softwareFailedAttemptRef.current !== attempt
+    )
+      onReady?.();
+  };
   // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
   // adaptation so typing and scene revisions cannot restore full resolution.
   const [renderDpr, setRenderDpr] = useState(1);
-  if (rendererFailed) return onError ? null : <Unavailable />;
+  if (failedAttempt === attempt) {
+    if (softwareFailedAttempt === attempt)
+      return onError ? null : <Unavailable />;
+    return (
+      <Boundary key={`software-${attempt}`} onError={notifySoftwareFailure}>
+        <SoftwareWorld
+          onReady={notifySceneReady}
+          onRendererReady={() => notifyRendererReady("software")}
+          onError={notifySoftwareFailure}
+        />
+      </Boundary>
+    );
+  }
   return (
-    <Boundary onError={onError}>
+    <Boundary key={attempt} onError={notifyPrimaryFailure}>
       <Canvas
+        key={attempt}
         shadows={{ type: THREE.PCFShadowMap }}
         dpr={renderDpr}
         camera={{ position: [0, 1.8, 10.4], fov: 43, near: 0.1, far: 250 }}
@@ -1198,20 +1269,19 @@ export default function World({
           } catch (error) {
             // R3F configures the renderer asynchronously, outside React's
             // error boundary. Report the actual construction failure here.
-            setRendererFailed(true);
-            onError?.(webglUnavailableMessage);
+            notifyPrimaryFailure(webglUnavailableMessage);
             throw error;
           }
         }}
         fallback={<Unavailable />}
-        onCreated={() => onRendererReady?.()}
+        onCreated={() => notifyRendererReady("webgl")}
         onPointerMissed={() => {
           if (!useOrb.getState().playing)
             useOrb.getState().set({ selected: undefined });
         }}
       >
         <AdaptiveResolution onChange={setRenderDpr} />
-        <Scene onReady={onReady} onInputLatency={onInputLatency} />
+        <Scene onReady={notifySceneReady} onInputLatency={onInputLatency} />
       </Canvas>
     </Boundary>
   );

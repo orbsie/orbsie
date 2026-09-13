@@ -91,6 +91,7 @@ import { parcelTransitionController } from "@/lib/parcel-transition";
 import ChatGPTConnection, {
   type ProviderSessionUser,
 } from "./chatgpt-connection";
+import { GraphicsGuidance } from "./graphics-guidance";
 const World = dynamic(() => import("./world"), {
   ssr: false,
   loading: () => (
@@ -178,16 +179,35 @@ export default function Orbsie() {
   const [rendererAvailability, setRendererAvailability] =
     useState<RendererAvailability>("initializing");
   const [graphicsError, setGraphicsError] = useState("");
+  const [graphicsAdvisory, setGraphicsAdvisory] = useState(false);
+  const [graphicsHelpVisible, setGraphicsHelpVisible] = useState(false);
+  const [rendererRetryToken, setRendererRetryToken] = useState(0);
   const rendererAvailabilityRef = useRef<RendererAvailability>("initializing");
   const submittedPrompt = useRef<string | null>(null);
   const setRendererState = useCallback((next: RendererAvailability) => {
     rendererAvailabilityRef.current = next;
     setRendererAvailability(next);
   }, []);
-  const handleRendererReady = useCallback(() => {
-    if (rendererAvailabilityRef.current === "unavailable") return;
-    setRendererState("ready");
-  }, [setRendererState]);
+  const handleRendererReady = useCallback(
+    (renderer: "webgl" | "software" = "webgl") => {
+      if (rendererAvailabilityRef.current === "unavailable") return;
+      if (renderer === "webgl") {
+        setGraphicsError("");
+        setGraphicsAdvisory(false);
+        setGraphicsHelpVisible(false);
+      } else {
+        setGraphicsAdvisory(true);
+        setGraphicsHelpVisible(true);
+      }
+      setRendererState("ready");
+    },
+    [setRendererState],
+  );
+  const handleRendererFallback = useCallback((message: string) => {
+    setGraphicsError(message);
+    setGraphicsAdvisory(true);
+    setGraphicsHelpVisible(true);
+  }, []);
   const handleRendererError = useCallback(
     (message: string) => {
       const current = useOrb.getState();
@@ -195,6 +215,8 @@ export default function Orbsie() {
       const interruptedPrompt = wasBuilding ? submittedPrompt.current : null;
       setRendererState("unavailable");
       setGraphicsError(message);
+      setGraphicsAdvisory(false);
+      setGraphicsHelpVisible(true);
       parcelTransitionController.markRendererUnavailable();
       if (wasBuilding) current.stop();
       setPrompt((draft) =>
@@ -206,6 +228,15 @@ export default function Orbsie() {
     },
     [setRendererState],
   );
+  const retryRenderer = useCallback(() => {
+    if (rendererAvailabilityRef.current !== "unavailable" && !graphicsAdvisory)
+      return;
+    setGraphicsError("");
+    setGraphicsAdvisory(false);
+    setGraphicsHelpVisible(false);
+    setRendererState("initializing");
+    setRendererRetryToken((token) => token + 1);
+  }, [graphicsAdvisory, setRendererState]);
   const dictation = useDictation(prompt, setPrompt, (message) =>
     s.set({ error: message }),
   );
@@ -1284,18 +1315,29 @@ export default function Orbsie() {
       <div className="cosmic-backdrop" aria-hidden="true" />
       <div className="scene">
         <World
+          key={rendererRetryToken}
+          rendererRetryToken={rendererRetryToken}
           onRendererReady={handleRendererReady}
+          onRendererFallback={handleRendererFallback}
           onError={handleRendererError}
         />
       </div>
-      {rendererAvailability === "unavailable" && (
-        <div className="graphics-error" role="alert" aria-live="assertive">
-          <strong>Graphics are unavailable</strong>
-          <p>{graphicsError || "WebGL2 could not start in this browser."}</p>
-          <p>
-            Your draft is still here. Saved worlds have not been changed. Try a
-            recent browser with hardware acceleration enabled.
-          </p>
+      {(rendererAvailability === "unavailable" ||
+        (graphicsAdvisory && graphicsHelpVisible)) && (
+        <div
+          className={`graphics-error ${graphicsAdvisory ? "is-advisory" : ""}`.trim()}
+          role={graphicsAdvisory ? "status" : "alert"}
+          aria-live={graphicsAdvisory ? "polite" : "assertive"}
+        >
+          <GraphicsGuidance
+            advisory={graphicsAdvisory}
+            detail={graphicsError}
+            onRetry={retryRenderer}
+            onDismiss={
+              graphicsAdvisory ? () => setGraphicsHelpVisible(false) : undefined
+            }
+            onDownload={!publicView ? download : undefined}
+          />
         </div>
       )}
       {landing && (
