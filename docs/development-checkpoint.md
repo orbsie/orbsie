@@ -9,8 +9,9 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 37% weekly used, 63% remaining;
-stop workers/tests below20% remaining. Goal token totals are not quota.
+at meaningful milestones. Latest actual quota read 2026-09-13: 38% weekly used, 62% remaining;
+stop workers/tests below20% remaining. Reusable local check:
+`python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
 Owner approved needed ChatGPT calls; existing harness two-call milestone has
 180s/512KiB per call, no enforceable token cap. OpenRouter4096 output tokens/call,
@@ -24,6 +25,11 @@ One Luna worker `/root/texture_renderer_completion` owns the existing texture WI
 local fixture/verifier and targeted tests. Contract:
 `docs/catalog-texture-integration-plan.md`, renderer/export handoff. No new catalog
 ID, live calls or deployment. Root reviews final diff and actual visual evidence.
+Initial actual-worker textured draw now passes (`catalog-texture-render-4`),
+but root has not accepted the complete task. Root review requested fixture-only
+manifest substitution with production integrity enabled (remove test-only mutable
+hook configuration) and guarding shared empty geometry against transition mutation.
+Worker remains running; no restart or second worker.
 Acceptance: source/pink/restored views, shared appearance isolation, stale/failed
 replacement preserving last-good geometry/texture, cleanup and offline export.
 Candidate: `mushroom-basic-textured-filter-corrected/prototype.glb`; fixture-only
