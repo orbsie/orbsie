@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "a81b83af-9fd8-4818-bde3-b48b5bf3add4",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    },
+    {
+      "projectId": "a81b83af-9fd8-4818-bde3-b48b5bf3add4",
+      "revision": 3,
+      "prompt": "Warm the lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "Building Lantern…",
+      "Lantern is taking shape.",
+      "Preparing Lantern geometry…",
+      "Applied the shape for Lantern.",
+      "Applied the final scene update."
+    ],
+    "workspaceTransitionSettled": true,
+    "narrowActivityBounds": {
+      "x": 23,
+      "y": 640.34375,
+      "width": 344,
+      "height": 136.5
+    },
+    "narrowPhone": {
+      "bounds": {
+        "x": 23,
+        "y": 640.34375,
+        "width": 344,
+        "height": 136.5
+      },
+      "noHorizontalOverflow": true
+    },
+    "cancelled": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:45449/api/generate",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:45449/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "unexpectedRequests": []
+}

@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "f32b016a-b673-44db-ac55-3c03fc2df58d",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "expect(locator).toHaveText(expected) failed\n\nLocator:  locator('.authoring-activity-latest')\nExpected: \"Building Lantern…\"\nReceived: \"This request could not be completed.\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveText\" locator('.authoring-activity-latest') with timeout 5000ms\n  - waiting for locator('.authoring-activity-latest')\n    4 × locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" class=\"authoring-activity-latest is-waiting\">…</div>\n      - unexpected value \"Waiting for a response…\"\n    - locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" class=\"authoring-activity-latest is-applied\">…</div>\n    - unexpected value \"Lantern is taking shape.\"\n    - locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" class=\"authoring-activity-latest is-preparing\">…</div>\n    - unexpected value \"Preparing Lantern geometry…\"\n    8 × locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" class=\"authoring-activity-latest is-failed\">…</div>\n      - unexpected value \"This request could not be completed.\"\n"
+}

@@ -1,0 +1,42 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "87bc6783-5d0d-430f-bc73-b8c1fec3cbf0",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "Building Lantern…",
+      "Lantern is taking shape.",
+      "Preparing Lantern geometry…",
+      "Applied the shape for Lantern.",
+      "Applied the final scene update."
+    ],
+    "narrowActivityBounds": {
+      "x": 23,
+      "y": 640.34375,
+      "width": 344,
+      "height": 136.5
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate"
+}

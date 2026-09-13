@@ -1,0 +1,29 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "e45f24ff-9c72-4640-85ef-d032eea6cefe",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {},
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:39099/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "unexpectedRequests": [],
+  "error": "expect(locator).toHaveText(expected) failed\n\nLocator: locator('.authoring-activity-latest')\nExpected: \"Waiting for a response…\"\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toHaveText\" locator('.authoring-activity-latest') with timeout 5000ms\n  - waiting for locator('.authoring-activity-latest')\n"
+}

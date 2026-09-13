@@ -88,6 +88,7 @@ const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 import { parcelTransitionController } from "@/lib/parcel-transition";
+import { latestAuthoringActivity } from "@/lib/authoring-activity";
 import ChatGPTConnection, {
   type ProviderSessionUser,
 } from "./chatgpt-connection";
@@ -633,6 +634,7 @@ export default function Orbsie() {
       e.behavior?.type === "collect" &&
       s.score.includes(e.id),
   ).length;
+  const latestActivity = latestAuthoringActivity(s.authoringActivity);
   useLayoutEffect(() => {
     parcelTransitionController.setTarget(landing ? 0 : 1);
     return parcelTransitionController.attachUi(composer.current);
@@ -1529,20 +1531,33 @@ export default function Orbsie() {
                     </div>
                   </div>
                 ))}
-                {s.building && (
-                  <div className="building-message">
-                    <span className="pulse-orb" />
-                    <div>
-                      Creating…
-                      <span>
-                        {
-                          s.project.entities.filter((e) => e.stage === "ready")
-                            .length
-                        }{" "}
-                        objects
-                      </span>
+                {latestActivity && (
+                  <section
+                    className="authoring-activity"
+                    aria-label="Creation activity"
+                    data-project-id={latestActivity.projectId}
+                    data-run-id={latestActivity.runId}
+                  >
+                    <div
+                      className={`authoring-activity-latest is-${latestActivity.kind}`}
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {s.building && <span className="pulse-orb" />}
+                      <span>{latestActivity.message}</span>
                     </div>
-                  </div>
+                    <ol aria-label="Recent creation steps" aria-live="off">
+                      {s.authoringActivity.slice(-6, -1).map((activity) => (
+                        <li key={activity.id}>
+                          <span
+                            className={`activity-dot is-${activity.kind}`}
+                          />
+                          {activity.message}
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
                 )}
                 {!s.building && s.project.entities.length > 0 && (
                   <div className="suggested-edits">

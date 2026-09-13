@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "1c724e58-a898-45a1-a025-9d3218b8b84a",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "expect(locator).toContainText(expected) failed\n\nLocator: locator('.authoring-activity li')\nExpected substring: \"Building Lantern…\"\nError: strict mode violation: locator('.authoring-activity li') resolved to 2 elements:\n    1) <li>…</li> aka getByText('Waiting for a response…')\n    2) <li>…</li> aka getByText('Building Lantern…')\n\nCall log:\n  - Expect \"toContainText\" locator('.authoring-activity li') with timeout 5000ms\n  - waiting for locator('.authoring-activity li')\n"
+}

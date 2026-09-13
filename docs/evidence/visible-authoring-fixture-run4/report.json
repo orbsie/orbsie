@@ -1,0 +1,41 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "de05c463-7e79-42f6-a3e1-7ffbc38b7ee5",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "Building Lantern…",
+      "Lantern is taking shape.",
+      "Preparing Lantern geometry…",
+      "Applied the shape for Lantern.",
+      "Applied the final scene update."
+    ]
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:45359/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "unexpectedRequests": [],
+  "error": "The expression evaluated to a falsy value:\n\n  assert(bounds && bounds.left >= 0 && bounds.right <= 390)\n"
+}

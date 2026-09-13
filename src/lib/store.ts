@@ -54,6 +54,12 @@ import {
   generationFeedbackMatchesProject,
   type GenerationFeedback,
 } from "./generation-feedback";
+import {
+  appendAuthoringActivity,
+  authoringEntityLabel,
+  type AuthoringActivity,
+  type AuthoringActivityKind,
+} from "./authoring-activity";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -126,6 +132,7 @@ interface State {
   generationErrorCode?: string;
   generationRecovery?: GenerationRecovery;
   modelingFeedback?: ModelingFeedback;
+  authoringActivity: AuthoringActivity[];
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
@@ -256,6 +263,18 @@ let active: AbortController | undefined;
 let baseline: Project | undefined;
 let loadEpoch = 0;
 let activeExperience: { projectId: string; token: string } | undefined;
+let activeAuthoringRun:
+  | {
+      controller: AbortController;
+      runId: string;
+      projectId: string;
+      publish: (
+        kind: AuthoringActivityKind,
+        message: string,
+        revision?: number,
+      ) => void;
+    }
+  | undefined;
 function invalidatePendingLoad() {
   return ++loadEpoch;
 }
@@ -279,6 +298,7 @@ export const useOrb = create<State>((setState, getState) => ({
   notice: "",
   ruleRestartCount: 0,
   error: "",
+  authoringActivity: [],
   saved: false,
   drafts: [],
   draftHistory: {},
@@ -505,6 +525,10 @@ export const useOrb = create<State>((setState, getState) => ({
   },
   async resetLocalData() {
     invalidatePendingLoad();
+    finishActiveExperience("cancelled");
+    active?.abort();
+    active = undefined;
+    activeAuthoringRun = undefined;
     await clear();
     setState({
       drafts: [],
@@ -512,6 +536,8 @@ export const useOrb = create<State>((setState, getState) => ({
       recovered: undefined,
       generationRecovery: undefined,
       modelingFeedback: undefined,
+      authoringActivity: [],
+      building: false,
     });
   },
   async load(project, play = false, isCurrent = () => true) {
@@ -520,6 +546,7 @@ export const useOrb = create<State>((setState, getState) => ({
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
+    activeAuthoringRun = undefined;
     let history: LocalHistory | undefined;
     if (!play) {
       history = readLocalHistory(getState().draftHistory[project.id], project);
@@ -555,6 +582,7 @@ export const useOrb = create<State>((setState, getState) => ({
       recovered: undefined,
       generationRecovery: undefined,
       modelingFeedback: undefined,
+      authoringActivity: [],
       readOnly: !writer,
       ...(!writer
         ? {
@@ -570,9 +598,18 @@ export const useOrb = create<State>((setState, getState) => ({
     if (!s.score.includes(id)) setState({ score: [...s.score, id] });
   },
   stop() {
+    const run = activeAuthoringRun;
+    const current = getState();
+    if (
+      run &&
+      run.controller === active &&
+      current.project.id === run.projectId
+    )
+      run.publish("cancelled", "Stopped. Finished objects are safe.");
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
+    activeAuthoringRun = undefined;
     const s = getState();
     const committedWorld = committed(s.project, baseline);
     setState({
@@ -688,6 +725,48 @@ export const useOrb = create<State>((setState, getState) => ({
         });
       });
     };
+    const runId = crypto.randomUUID();
+    const publishActivity = (
+      kind: AuthoringActivityKind,
+      message: string,
+      revision = getState().project.revision,
+    ) => {
+      if (signal.aborted || active !== controller) return;
+      setState((state) => {
+        if (
+          signal.aborted ||
+          active !== controller ||
+          activeAuthoringRun?.controller !== controller ||
+          activeAuthoringRun.runId !== runId ||
+          state.project.id !== project.id
+        )
+          return state;
+        const event: AuthoringActivity = {
+          id: crypto.randomUUID(),
+          runId,
+          projectId: project.id,
+          revision: Number.isInteger(revision)
+            ? revision
+            : state.project.revision,
+          kind,
+          message,
+          at: Date.now(),
+        };
+        return {
+          ...state,
+          authoringActivity: appendAuthoringActivity(
+            state.authoringActivity,
+            event,
+          ),
+        };
+      });
+    };
+    activeAuthoringRun = {
+      controller,
+      runId,
+      projectId: project.id,
+      publish: publishActivity,
+    };
     setState({
       project,
       phase: initial ? "descending" : "editing",
@@ -702,9 +781,11 @@ export const useOrb = create<State>((setState, getState) => ({
         ? [before]
         : [...getState().history, before].slice(-HISTORY_LIMIT),
       future: [],
+      authoringActivity: [],
     });
+    publishActivity("waiting", "Waiting for a response…", project.revision);
     let cursor: Cursor = {
-      runId: crypto.randomUUID(),
+      runId,
       sequence: 0,
       seen: new Set(),
     };
@@ -734,11 +815,22 @@ export const useOrb = create<State>((setState, getState) => ({
       );
       assertModelingCommand(modelCommand, false, browserModelingAvailable());
       let command: Command;
+      if (modelCommand.type === "reserve_entity")
+        publishActivity(
+          "constructing",
+          `Building ${authoringEntityLabel(modelCommand.entity.label)}…`,
+          s.project.revision,
+        );
       if (
         modelCommand.type === "set_geometry" &&
         modelCommand.geometry.kind === "generated"
       ) {
         const entityId = modelCommand.id;
+        publishActivity(
+          "preparing",
+          `Preparing ${authoringEntityLabel(s.project.entities.find((entity) => entity.id === entityId)?.label)} geometry…`,
+          s.project.revision,
+        );
         const job = modelCommand.geometry.job;
         if (!("backend" in job))
           throw Error(
@@ -876,6 +968,42 @@ export const useOrb = create<State>((setState, getState) => ({
       }
       setState({ project: result.project });
       if (command.type === "reserve_entity")
+        publishActivity(
+          "applied",
+          `${authoringEntityLabel(command.entity.label)} is taking shape.`,
+          result.project.revision,
+        );
+      else if (command.type === "set_geometry")
+        publishActivity(
+          "applied",
+          `Applied the shape for ${authoringEntityLabel(updatedEntity?.label)}.`,
+          result.project.revision,
+        );
+      else if (command.type === "commit_revision")
+        publishActivity(
+          "applied",
+          "Applied the final scene update.",
+          result.project.revision,
+        );
+      else if (updatedEntity)
+        publishActivity(
+          "applied",
+          `Applied a change to ${authoringEntityLabel(updatedEntity.label)}.`,
+          result.project.revision,
+        );
+      else if (command.type === "set_game")
+        publishActivity(
+          "applied",
+          "Applied the world rules.",
+          result.project.revision,
+        );
+      else if (command.type === "set_environment")
+        publishActivity(
+          "applied",
+          "Applied the world atmosphere.",
+          result.project.revision,
+        );
+      if (command.type === "reserve_entity")
         noteReservation(project.id, command.entity.id, experienceToken);
       const checkpoint =
         (command.type === "set_geometry" &&
@@ -977,6 +1105,11 @@ export const useOrb = create<State>((setState, getState) => ({
       if (active === controller && !signal.aborted) {
         markExperience(project.id, "generationComplete", experienceToken);
         finishRunExperience("success");
+        publishActivity(
+          "completed",
+          "Generation complete. Changes are applied.",
+          getState().project.revision,
+        );
         setState({
           building: false,
           notice:
@@ -992,6 +1125,7 @@ export const useOrb = create<State>((setState, getState) => ({
     } catch (error) {
       if (active === controller && !signal.aborted) {
         finishRunExperience("error");
+        publishActivity("failed", "This request could not be completed.");
         const checkpoint = committed(getState().project, baseline);
         const recoverySelected =
           selected &&
@@ -1029,6 +1163,8 @@ export const useOrb = create<State>((setState, getState) => ({
       if (active === controller) {
         finishRunExperience("cancelled");
         active = undefined;
+        if (activeAuthoringRun?.controller === controller)
+          activeAuthoringRun = undefined;
         setState({ building: false });
       }
     }
