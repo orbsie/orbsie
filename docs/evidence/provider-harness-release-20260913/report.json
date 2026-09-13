@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-09-13T18:27:17.939269+00:00",
+  "sourceCommit": "7cbd875",
+  "deployment": "https://orbsie-bl9a1qn22-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "targetedTests": {
+    "command": "npx vitest run tests/provider-browser-e2e-flagship.test.ts tests/hosted-chatgpt-acceptance.test.ts tests/provider-browser-e2e-recovery.test.ts",
+    "passed": 55,
+    "typecheck": "passed",
+    "evidence": "worker results and root diff review"
+  },
+  "browser": {
+    "connector": "chrome_devtools",
+    "viewport": [
+      390,
+      844
+    ],
+    "physicalDevice": false,
+    "rendererAvailability": "ready",
+    "fallback": "software canvas",
+    "openAILogos": {
+      "heading": "loaded 14x14",
+      "connectButton": "loaded 18x18"
+    },
+    "horizontalOverflow": false,
+    "visualReview": "inline screenshot inspected; no file save due connector workspace policy"
+  },
+  "modelCalls": 0,
+  "limitations": [
+    "No live provider acceptance",
+    "No actual gameplay traversal",
+    "No physical mobile acceptance",
+    "Historical published deployments unchanged"
+  ]
+}

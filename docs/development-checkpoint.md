@@ -153,7 +153,11 @@ Three-provider fresh flagship support and explicit hosted3-call bounds are
 reviewed. Behavioral orchestration checks reject wrong project IDs/revisions;
 55 tests across provider-browser-e2e-flagship, hosted-chatgpt-acceptance and
 provider-browser-e2e-recovery suites pass, plus typecheck/diffcheck. Root reviewed
-helper wiring and provider/bounds/logo diffs. OpenAI logo fix is not yet deployed.
+helper wiring and provider/bounds/logo diffs. OpenAI logo fix deployed in7cbd875; production mobile viewport screenshot and
+loaded heading/button images verified; compatibility renderer remains ready.
+Release evidence: provider-harness-release-20260913/report.json.
+Production now https://orbsie-bl9a1qn22-grappeggias-projects.vercel.app
+(alias orbsie.com). Isolated release checkout is7cbd875; build/deploy passed.
 No live calls this task. Publication currently checks revision/canvas, not exact
 project/runtime identity; the remaining gate is recorded in
 `provider-flagship-harness-followup.md`. Full gameplay traversal remains unverified.
