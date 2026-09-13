@@ -147,3 +147,12 @@ Root used cached postgres:15-alpine in a disposable loopback-only tmpfs containe
 Container stopped/removed; no production DB or modelcalls. Evidence
 review-accounting-db-baseline-20260913. Reuse this isolated setup for forthcoming
 review-allowance contention tests; current pass does not prove new allowances.
+
+## Transport review in progress
+
+Root flagged incomplete PNG acceptance and new size limits accidentally applying
+to text-only inputs. Current worker draft addresses structural chunks/IHDR and
+gates new aggregate caps on image requests. Root actual saved-image corpus check
+passes4desktop/portrait PNGs across both renderers; evidence
+review-image-corpus-20260913 binds validator hash. Not provider decoding/inference
+or full transport acceptance. Worker still owns final tests and handoff.

@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "scope": "Current shared structural validator accepts actual previously captured desktop/portrait PNGs; no provider decoding or inference tested",
+  "checks": [
+    {
+      "path": "docs/evidence/scene-review-portrait-root-20260913/webgl-replacement-review.png",
+      "width": 512,
+      "height": 360,
+      "byteLength": 33890
+    },
+    {
+      "path": "docs/evidence/scene-review-portrait-root-20260913/webgl-portrait-review.png",
+      "width": 237,
+      "height": 512,
+      "byteLength": 27946
+    },
+    {
+      "path": "docs/evidence/scene-review-portrait-root-20260913/software-replacement-review.png",
+      "width": 512,
+      "height": 360,
+      "byteLength": 130386
+    },
+    {
+      "path": "docs/evidence/scene-review-portrait-root-20260913/software-portrait-review.png",
+      "width": 237,
+      "height": 512,
+      "byteLength": 83022
+    }
+  ],
+  "liveModelCalls": 0,
+  "validatorSha256": "202b7650d22416cb026ea50033dc1f791b35651e32c58c5036ae889b3279e6fa"
+}
