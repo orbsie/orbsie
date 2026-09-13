@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-13",
+  "sourceCommit": "6300025",
+  "browser": "Chrome extension Person 1",
+  "flow": [
+    "Orbsie Connect ChatGPT",
+    "OpenAI signed-in account selection",
+    "Codex Continue",
+    "Device code entry via individual field values",
+    "One authorization submission"
+  ],
+  "observed": {
+    "codeMatchedOrbsie": true,
+    "openaiError": "We couldn\u2019t authorize this device. Double-check the code and try again.",
+    "orbsieState": "pending device sign-in",
+    "cloudflareChallenge": false
+  },
+  "inferenceCalls": 0,
+  "limits": "Cause unproven; no authentication codes, callback URLs or credentials retained"
+}
