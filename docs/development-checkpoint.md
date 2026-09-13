@@ -9,7 +9,7 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read: 34% weekly used, 66% remaining;
+at meaningful milestones. Latest actual quota read 2026-09-13: 37% weekly used, 63% remaining;
 stop workers/tests below20% remaining. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
 Owner approved needed ChatGPT calls; existing harness two-call milestone has
@@ -18,32 +18,29 @@ Owner approved needed ChatGPT calls; existing harness two-call milestone has
 Use owner Chrome via computer use; GitHub via computer use. No copied browser
 cookies, local Codex credentials, or user Blender installation. Preserve licenses.
 
-## Current task: diagnose first real hosted ChatGPT generation failure
+## Current task: finish catalog texture renderer integration
 
-Worker `/root/chatgpt_failure_diagnostics` implements bounded safe diagnostics in
-chatgpt-runtime/generation/scene-stream plus narrowly required schema/tests.
-Also fixes exact protocol mismatch root proved against hosted Codex0.153.4:
-`turn/completed` has `{threadId, turn:{id,...}}`, not top-level `turnId`.
-Current generator incorrectly rejects official completion events. Preserve
-cross-thread/turn validation. Diagnostics must only expose closed stage/reason
-codes, bounded numeric RPC code and already-sanitized validation metadata, never
-raw provider text, credentials, IDs, paths or generated content. No live calls,
-deploy or nested agents by worker. Root reviewed the server/protocol diff and
-requested fixes for client acceptance of CHATGPT_GENERATION_ERROR, serialization
-of mutated RPC metadata, and unmatched pre-ack terminal classification. Final
-review accepted those fixes. Six focused suites (78 tests), typecheck, Prettier
-and diff checks passed. No additional live calls. Next: isolated release build
-and deployment, then fresh owner Chrome ChatGPT create/edit acceptance.
+One Luna worker `/root/texture_renderer_completion` owns the existing texture WIP,
+local fixture/verifier and targeted tests. Contract:
+`docs/catalog-texture-integration-plan.md`, renderer/export handoff. No new catalog
+ID, live calls or deployment. Root reviews final diff and actual visual evidence.
+Acceptance: source/pink/restored views, shared appearance isolation, stale/failed
+replacement preserving last-good geometry/texture, cleanup and offline export.
+Candidate: `mushroom-basic-textured-filter-corrected/prototype.glb`; fixture-only
+catalog substitution must preserve exact candidate CC0 text and be labeled as such.
+SoftwareWorld currently averages vertex colors and ignores atlas pixels. This is
+an explicit remaining appearance gap before textured catalog admission; geometry,
+tint and gameplay still work. Do not claim full texture compatibility there.
 
-Real owner Chrome authorization/catalog succeeded again, Luna low applied.
-One live create requested mushroom platforms, moving middle platform, crystals,
-portal win/reset and blue-strawberry tree. POST /api/chatgpt/generate returned200
-at2026-09-13T03:46:24Z, but UI generic generation failure; objects panel empty.
-No edit or retry. Actual failure cause remains unproven: current code erases
-RPC/callback/terminal causes. Evidence `chatgpt-owner-live-20260913/create-failure.json`
-and `completion-schema.json`. Do not attribute that run solely to the protocol
-bug until stronger evidence. Next: review/test fix, isolated deploy, fresh consent
-if required by host expiry/artifact change, then deliberate live create/edit.
+ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
+reviewed and deployed. Six focused suites78 tests, typecheck and local/Vercel
+production builds passed. Official nested turn/completed.turn.id now accepted;
+conflicting IDs rejected, safe stage/reason/RPC metadata retained by client.
+First real owner Chrome auth/catalog succeeded, Luna low applied, but one create
+failed at2026-09-13T03:46:24Z with empty objects. No edit/retry. Cause of that
+pre-fix failure remains unproven. Evidence `chatgpt-owner-live-20260913/`.
+Next provider step is deliberate post-deploy owner Chrome create/edit, pending
+browser surface restoration. No new model calls during texture work.
 
 ## Production and workspace
 

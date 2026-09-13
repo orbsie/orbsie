@@ -1,6 +1,30 @@
 # Orbsie full scope audit
 
-## Current reconciliation — 2026-09-12
+## Current reconciliation — 2026-09-13
+
+This summary supersedes conflicting historical rows below. The full scope is
+still incomplete; resume detailed work from `development-checkpoint.md`.
+
+- Real hosted ChatGPT device authorization and provider catalog succeeded in the
+  owner's Chrome browser. The first Luna create failed with empty objects; no
+  edit/retry occurred. Evidence: `chatgpt-owner-live-20260913/create-failure.json`.
+  The exact hosted protocol completion mismatch and safe diagnostics are fixed
+  in4eb9ce8, deployed with player artifactsb880edd.78 focused tests and production
+  builds passed. Post-fix live inference/recovery/publication is unverified.
+- WebGL failure now falls back to the shared Canvas2D game runtime. Editor and
+  independent-player gameplay checks passed; owner Chrome confirmed software
+  rendering with no fatal graphics dialog. Evidence:
+  `game-actions-software-acceptance-final/report.json` and
+  `software-owner-local/production.json`. This does not prove mobile performance
+  or full visual parity. Fatal graphics failure requires both renderers to fail.
+- Embedded-atlas decoder3d6a839 is accepted. Renderer/lifecycle/export integration
+  remains in progress; no new textured catalog asset has been admitted.
+- Browser control currently fails before access with
+  `CUA_REPL_ENABLED_SURFACES is required`; restoration was requested. The prior
+  browser-login obstacle is no longer the current blocker. No browser credentials
+  are copied to compensate.
+
+## Historical reconciliation — 2026-09-12
 
 OpenRouter targeted catalog replacement now has fresh post-fix grounding evidence:
 openrouter-support-contact at2e04040, two Luna calls, ID/unrelated preservation,
