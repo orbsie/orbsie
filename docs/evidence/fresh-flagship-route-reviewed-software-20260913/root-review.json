@@ -1175,5 +1175,14 @@
     "scripts/lib/fresh-flagship-gameplay.mjs": "6a46d8423dda43859f65bd0b0c7c746b06e9e82d6c17fe5bd50429de3c1f6d6a",
     "scripts/provider-browser-e2e.mjs": "23818e9850c417c1e9d23d9723d28a04e422bfb0bbc100f7586a14a29e1f4dc7",
     "tests/fresh-flagship-gameplay.test.ts": "6604197a22a085491a6a3341ea5b2451a008afe498712210a8036c5693ead9ca"
+  },
+  "landscapeFailureAnalysis": {
+    "observedInput": "pointerCoarse:false, anyPointerCoarse:false, maxTouchPoints:0",
+    "viewport": [
+      844,
+      390
+    ],
+    "source": "verify-fresh-flagship-gameplay always requires sheetHandle with allowClosedComposer; globals.css enables landscape mobile sheet for pointer:coarse",
+    "assessment": "Fixture expectation mismatch is the likely cause; not evidence of a physical-phone defect. Correct the expectation or run the explicitly coarse-pointer fixture before mobile claims."
   }
 }

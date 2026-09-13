@@ -93,3 +93,15 @@ with one worker. The exact contract may be refined after runtime probes; do not
 quietly remove visual review, free-path accounting or final-check acceptance to
 make a smaller test pass. Live acceptance must show an observed visual defect,
 model-proposed targeted correction, subsequent changed render and final verdict.
+
+
+Capture readiness implementation notes: WebGL Formation already knows pendingAsset,
+asset.error and progress.current.value (0.9s formation); source refs must match the
+current recipe before reporting ready. SoftwareGeometryEntry includes ready,
+sourceRecipe and sourceStage, intentionally retaining last-good geometry during
+replacement. Do not treat that retained geometry as the new revision's render.
+The generated loader's global hash readiness alone does not prove a particular
+entity is displayed. Bind capture to the frame after relevant entity resources
+commit, with parcel transition complete; otherwise the model may inspect the
+planet or an old mesh. Keep readiness/capture in renderer refs, not per-frame
+store updates, and invalidate registrations on renderer/project unmount.
