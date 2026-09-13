@@ -19,6 +19,14 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+Owner-browser check2026-09-13: extension Chrome auth remains accessible but
+local textured fixture fails WebGL context creation (llvmpipe Mesa,
+BindToCurrentSequence failed). Evidence owner-browser-texture-check/report.json.
+chrome://gpu diagnostics blocked by browser URL policy; do not bypass via CDP
+or alternate surfaces. Orbsie has a WebGL2 fallback; owner hardware/browser 3D
+acceptance is unproven. Previous ChatGPT challenge no longer pending; UI is
+Not connected, so old code must not be used. Fresh start requires owner readiness.
+
 Hosted test-limit guard reviewed and integrated: exact
 ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib required before private state
 access/network. Any hosted ORBSIE_OUTPUT_CAP_TOKENS is rejected. Reports record

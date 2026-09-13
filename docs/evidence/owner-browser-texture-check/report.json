@@ -1,0 +1,15 @@
+{
+  "status": "blocked-before-render",
+  "scope": "extension-connected owner Chrome Person 1; local accepted texture fixture",
+  "source": "dec6d50",
+  "fixtureUrl": "http://127.0.0.1:3081/",
+  "failure": "WebGL context creation failed: BindToCurrentSequence failed",
+  "reportedRenderer": "ANGLE (Mesa, llvmpipe LLVM20.1.2, OpenGL4.5 Mesa25.2.8)",
+  "renderedPanels": 0,
+  "inferenceCalls": 0,
+  "limitations": [
+    "Does not invalidate isolated SwiftShader prototype screenshots.",
+    "Does not establish working owner-browser 3D rendering."
+  ],
+  "diagnostics": "chrome://gpu navigation blocked by browser URL policy; no workaround attempted"
+}
