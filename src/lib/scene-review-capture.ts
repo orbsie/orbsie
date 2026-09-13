@@ -1,6 +1,12 @@
 "use client";
 
-export type SceneReviewRenderer = "webgl" | "software";
+import {
+  MAX_REVIEW_IMAGE_BYTES,
+  validateReviewImageDataUrl,
+  type SceneReviewRenderer,
+} from "./review-image";
+
+export type { SceneReviewRenderer } from "./review-image";
 
 export type SceneReviewSourceState = {
   renderer: SceneReviewRenderer;
@@ -79,11 +85,7 @@ const MAX_TIMEOUT_MS = 10000;
 // Leave room for this data URL in the existing bounded review request. The
 // cap is on the encoded payload callers actually transport, with a matching
 // decoded cap for the PNG parser.
-const MAX_IMAGE_BYTES = 128 * 1024;
-const MAX_DECODED_IMAGE_BYTES = Math.floor((MAX_IMAGE_BYTES * 3) / 4);
-const MAX_IMAGE_PIXELS = 2_000_000;
 const CAPTURE_EDGES = [512, 384, 256, 192, 128] as const;
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 function captureError(
   code: SceneReviewCaptureErrorCode,
@@ -98,71 +100,24 @@ function assertNotAborted(signal: AbortSignal | undefined): void {
     throw captureError("aborted", "Scene review capture was cancelled.");
 }
 
-function decodeBase64(value: string): Uint8Array {
-  try {
-    const binary = globalThis.atob(value);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index++)
-      bytes[index] = binary.charCodeAt(index);
-    return bytes;
-  } catch {
-    throw captureError(
-      "invalid-image",
-      "Scene review capture is not valid PNG data.",
-    );
-  }
-}
-
 function inspectPng(image: string): {
   width: number;
   height: number;
   byteLength: number;
 } {
-  if (!image.startsWith("data:image/png;base64,"))
+  try {
+    return validateReviewImageDataUrl(image);
+  } catch (error) {
     throw captureError(
       "invalid-image",
-      "Scene review capture must be a local PNG data URL.",
+      error instanceof Error
+        ? error.message
+        : "Scene review capture is not valid PNG data.",
+      error instanceof Error && "code" in error
+        ? { reason: (error as { code?: unknown }).code }
+        : undefined,
     );
-  if (image.length > MAX_IMAGE_BYTES)
-    throw captureError(
-      "invalid-image",
-      "Scene review capture exceeds the image limit.",
-      {
-        byteLength: image.length,
-        maxBytes: MAX_IMAGE_BYTES,
-      },
-    );
-  const bytes = decodeBase64(image.slice("data:image/png;base64,".length));
-  if (bytes.byteLength > MAX_DECODED_IMAGE_BYTES || bytes.byteLength < 24)
-    throw captureError(
-      "invalid-image",
-      "Scene review capture exceeds the image limit.",
-      {
-        byteLength: image.length,
-        decodedByteLength: bytes.byteLength,
-        maxBytes: MAX_IMAGE_BYTES,
-      },
-    );
-  for (let index = 0; index < PNG_SIGNATURE.length; index++)
-    if (bytes[index] !== PNG_SIGNATURE[index])
-      throw captureError(
-        "invalid-image",
-        "Scene review capture is not a PNG image.",
-      );
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const width = view.getUint32(16);
-  const height = view.getUint32(20);
-  if (width < 1 || height < 1 || width * height > MAX_IMAGE_PIXELS)
-    throw captureError(
-      "invalid-image",
-      "Scene review capture exceeds the pixel limit.",
-      {
-        width,
-        height,
-        maxPixels: MAX_IMAGE_PIXELS,
-      },
-    );
-  return { width, height, byteLength: image.length };
+  }
 }
 
 /** Copy one renderer canvas into a bounded, aspect-preserving review image. */
@@ -183,7 +138,10 @@ export function captureSceneCanvas(canvas: HTMLCanvasElement): string {
     context.fillRect(0, 0, width, height);
     context.drawImage(canvas, 0, 0, width, height);
     lastImage = output.toDataURL("image/png");
-    if (lastImage.length <= MAX_IMAGE_BYTES) return lastImage;
+    if (
+      new TextEncoder().encode(lastImage).byteLength <= MAX_REVIEW_IMAGE_BYTES
+    )
+      return lastImage;
   }
   throw new Error("Scene review capture exceeds the image limit.");
 }

@@ -23,6 +23,10 @@ import {
   generationFeedbackInstruction,
   generationFeedbackSchema,
 } from "../generation-feedback";
+import {
+  validateSceneReviewImage,
+  type SceneReviewImage,
+} from "../review-image";
 
 export const chatGPTSceneRequestSchema = z
   .object({
@@ -43,6 +47,8 @@ export function createChatGPTSceneStream(
   raw: unknown,
   generator: ReturnType<typeof createChatGPTGeneration>,
   signal?: AbortSignal,
+  /** Internal loop option; public request schemas remain unchanged. */
+  options?: { reviewImage?: unknown },
 ) {
   const input = chatGPTSceneRequestSchema.parse(raw);
   if (
@@ -57,6 +63,13 @@ export function createChatGPTSceneStream(
     input.generationFeedback.projectId !== input.project.id
   )
     throw Error("Invalid generation feedback.");
+  const reviewImage: SceneReviewImage | undefined =
+    options?.reviewImage === undefined
+      ? undefined
+      : validateSceneReviewImage(options.reviewImage, {
+          projectId: input.project.id,
+          revision: input.project.revision,
+        });
   const policy = deriveAssetPolicy(input.prompt, input.selected, input.project);
   const modelInput = JSON.stringify({
     instruction: input.prompt,
@@ -146,6 +159,7 @@ export function createChatGPTSceneStream(
                 ? ` ${generationFeedbackInstruction(input.generationFeedback)}`
                 : ""),
             input: modelInput,
+            ...(reviewImage ? { reviewImage } : {}),
             signal: combined,
             onText(delta) {
               combined.throwIfAborted();

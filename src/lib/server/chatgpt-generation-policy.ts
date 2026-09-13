@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { validateReviewImageDataUrl } from "../review-image";
 
 export const CHATGPT_GENERATION_CONFIG = Object.freeze({
   web_search: "disabled",
@@ -24,6 +25,35 @@ const id = (v: unknown): v is string =>
   typeof v === "string" && /^[A-Za-z0-9._:/-]{1,256}$/.test(v);
 const text = (v: unknown, max: number): v is string =>
   typeof v === "string" && v.length > 0 && Buffer.byteLength(v, "utf8") <= max;
+
+function validTurnInput(
+  value: unknown,
+): value is Array<Record<string, unknown>> {
+  if (!Array.isArray(value) || (value.length !== 1 && value.length !== 2))
+    return false;
+  const textItem = value[0];
+  if (
+    !record(textItem) ||
+    !keys(textItem, ["type", "text"]) ||
+    textItem.type !== "text" ||
+    !text(textItem.text, 256 * 1024)
+  )
+    return false;
+  if (value.length === 1) return true;
+  const imageItem = value[1];
+  if (
+    !record(imageItem) ||
+    !keys(imageItem, ["type", "url"]) ||
+    imageItem.type !== "image"
+  )
+    return false;
+  try {
+    validateReviewImageDataUrl(imageItem.url);
+    return Buffer.byteLength(JSON.stringify(value), "utf8") <= 256 * 1024;
+  } catch {
+    return false;
+  }
+}
 
 /** Trusted lifecycle arguments are still checked at the process boundary. */
 export function validChatGPTGenerationRequest(
@@ -76,11 +106,6 @@ export function validChatGPTGenerationRequest(
     params.serviceTier === "default" &&
     params.approvalPolicy === "never" &&
     isDeepStrictEqual(params.sandboxPolicy, CHATGPT_READ_POLICY) &&
-    Array.isArray(params.input) &&
-    params.input.length === 1 &&
-    record(params.input[0]) &&
-    keys(params.input[0], ["type", "text"]) &&
-    params.input[0].type === "text" &&
-    text(params.input[0].text, 256 * 1024)
+    validTurnInput(params.input)
   );
 }

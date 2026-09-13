@@ -44,6 +44,13 @@ import {
   StrictSceneSchemaError,
 } from "./strict-scene-schema";
 import type { GenerationOutputFormat } from "./generation-output-format";
+import type { ModelCapabilities } from "../model-capabilities";
+import {
+  ReviewImageValidationError,
+  UnsupportedReviewImageError,
+  validateSceneReviewImage,
+  type SceneReviewImage,
+} from "../review-image";
 
 export class GenerationProviderError extends Error {
   constructor(
@@ -178,6 +185,81 @@ function responseFormatFor(
 }
 
 export const systemPrompt = systemPromptForCapabilities();
+
+const MAX_PROVIDER_REQUEST_BYTES = 512 * 1024;
+
+type ProviderMessage = {
+  role: "system" | "user";
+  content:
+    | string
+    | readonly (
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      )[];
+};
+
+/** Build the provider content while preserving the text-only wire shape. */
+export function buildProviderMessages({
+  prompt,
+  project,
+  selected,
+  localModeling,
+  browserModeling,
+  assetPolicy,
+  modelingFeedback,
+  generationFeedback,
+  outputFormat,
+  reviewImage,
+}: {
+  prompt: string;
+  project: Project;
+  selected?: string;
+  localModeling: boolean;
+  browserModeling: boolean;
+  assetPolicy: ReturnType<typeof deriveAssetPolicy>;
+  modelingFeedback?: ModelingFeedback;
+  generationFeedback?: GenerationFeedback;
+  outputFormat: GenerationOutputFormat;
+  reviewImage?: SceneReviewImage;
+}): ProviderMessage[] {
+  const userText = JSON.stringify({
+    instruction: prompt,
+    recentConversation: authoringHistory(project, prompt),
+    localModeling,
+    browserModeling,
+    assetPolicy,
+    assetCatalog: promptCatalogForPolicy(assetPolicy.requestAssetPolicy),
+    selectedEntityId: selected,
+    ...(modelingFeedback ? { modelingFeedback } : {}),
+    project: { ...project, messages: [] },
+  });
+  const userContent = reviewImage
+    ? [
+        { type: "text" as const, text: userText },
+        {
+          type: "image_url" as const,
+          image_url: { url: reviewImage.image },
+        },
+      ]
+    : userText;
+  return [
+    {
+      role: "system",
+      content: [
+        systemPromptForCapabilities(
+          localModeling,
+          browserModeling,
+          outputFormat,
+        ),
+        generationFeedbackInstruction(generationFeedback),
+      ]
+        .filter(Boolean)
+        .join(" "),
+    },
+    { role: "user", content: userContent },
+  ];
+}
+
 export async function generateCommands({
   provider,
   model,
@@ -192,6 +274,8 @@ export async function generateCommands({
   modelingFeedback,
   generationFeedback,
   outputFormat = "ndjson",
+  reviewImage,
+  capabilities,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -206,7 +290,20 @@ export async function generateCommands({
   modelingFeedback?: ModelingFeedback;
   generationFeedback?: GenerationFeedback;
   outputFormat?: GenerationOutputFormat;
+  /** A server-preflight capability snapshot; never supplied by the client. */
+  capabilities?: ModelCapabilities;
+  /** Internal trusted review capture, bound below to this project snapshot. */
+  reviewImage?: unknown;
 }) {
+  const validatedReviewImage =
+    reviewImage === undefined
+      ? undefined
+      : validateSceneReviewImage(reviewImage, {
+          projectId: project.id,
+          revision: project.revision,
+        });
+  if (validatedReviewImage && capabilities?.imageInput?.supported !== true)
+    throw new UnsupportedReviewImageError();
   const assetPolicy = deriveAssetPolicy(prompt, selected, project);
   const endpoint =
     provider === "openrouter"
@@ -226,6 +323,41 @@ export async function generateCommands({
   const validatedGenerationFeedback = generationFeedback
     ? generationFeedbackSchema.parse(generationFeedback)
     : undefined;
+  const messages = buildProviderMessages({
+    prompt,
+    project,
+    selected,
+    localModeling,
+    browserModeling,
+    assetPolicy,
+    modelingFeedback: modelingFeedback
+      ? modelingFeedbackSchema.parse(modelingFeedback)
+      : undefined,
+    generationFeedback: validatedGenerationFeedback,
+    outputFormat,
+    reviewImage: validatedReviewImage,
+  });
+  const requestBody = {
+    model,
+    stream: true,
+    max_tokens: maxTokens,
+    ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
+    ...(structuredOpenRouterRouting
+      ? { provider: structuredOpenRouterRouting }
+      : {}),
+    ...(responseFormat ? { response_format: responseFormat } : {}),
+    messages,
+  };
+  const serializedRequestBody = JSON.stringify(requestBody);
+  if (
+    validatedReviewImage &&
+    new TextEncoder().encode(serializedRequestBody).byteLength >
+      MAX_PROVIDER_REQUEST_BYTES
+  )
+    throw new ReviewImageValidationError(
+      "payload-too-large",
+      "This review request exceeds the provider input limit.",
+    );
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -235,52 +367,7 @@ export async function generateCommands({
         ? { "HTTP-Referer": "https://orbsie.com", "X-Title": "Orbsie" }
         : {}),
     },
-    body: JSON.stringify({
-      model,
-      stream: true,
-      max_tokens: maxTokens,
-      ...(isRecommendedModel(model) ? { reasoning: { effort: "low" } } : {}),
-      ...(structuredOpenRouterRouting
-        ? { provider: structuredOpenRouterRouting }
-        : {}),
-      ...(responseFormat ? { response_format: responseFormat } : {}),
-      messages: [
-        {
-          role: "system",
-          content: [
-            systemPromptForCapabilities(
-              localModeling,
-              browserModeling,
-              outputFormat,
-            ),
-            generationFeedbackInstruction(validatedGenerationFeedback),
-          ]
-            .filter(Boolean)
-            .join(" "),
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            instruction: prompt,
-            recentConversation: authoringHistory(project, prompt),
-            localModeling,
-            browserModeling,
-            assetPolicy,
-            assetCatalog: promptCatalogForPolicy(
-              assetPolicy.requestAssetPolicy,
-            ),
-            selectedEntityId: selected,
-            ...(modelingFeedback
-              ? {
-                  modelingFeedback:
-                    modelingFeedbackSchema.parse(modelingFeedback),
-                }
-              : {}),
-            project: { ...project, messages: [] },
-          }),
-        },
-      ],
-    }),
+    body: serializedRequestBody,
     signal,
   });
   if (!response.ok) {

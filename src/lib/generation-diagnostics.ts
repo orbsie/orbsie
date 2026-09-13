@@ -138,6 +138,7 @@ export const chatGPTGenerationReasons = [
   "output-bound",
   "runtime-closed",
   "model-unavailable",
+  "image-unsupported",
   "invalid-input",
   "unknown",
 ] as const;

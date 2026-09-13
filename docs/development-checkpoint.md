@@ -8,7 +8,7 @@ history: checkpoint-history/2026-09-13-before-creative-prompt.md (and its archiv
 
 Astra low/default architecture/review/integration; one Luna xhigh/default worker,
 no nested agents, concise context, Fast off. Reuse /root/host_session_renewal.
-Creative prompt implementation accepted; capability propagation also accepted; next worker task is visual-review-transport-task.md. Root owns
+Creative prompt implementation accepted; capability propagation also accepted; image transport accepted; priority worker task is ChatGPT restart persistence. Root owns
 review, not duplicate investigation. Owner explicitly requested implementing ALL
 Astra recommendations. Sequence: shared creative/game prompt -> image capability
 propagation -> bounded image transport/process policy -> render/inspect/correct/
@@ -156,3 +156,16 @@ gates new aggregate caps on image requests. Root actual saved-image corpus check
 passes4desktop/portrait PNGs across both renderers; evidence
 review-image-corpus-20260913 binds validator hash. Not provider decoding/inference
 or full transport acceptance. Worker still owns final tests and handoff.
+
+## Current handoff: ChatGPT restart persistence
+
+Owner reports lost ChatGPT connection after app restart. Luna host_session_renewal
+is tracing cookie identity, ephemeral host expiry, runtime credential lifecycle and
+restoration before fixing. Preserve provider-only login and owner isolation; explicit
+disconnect must clear connection. Agentic accounting/review loop remains queued.
+
+Visual transport accepted after root diff review: bounded identity-bound PNG, trusted
+image capability gates, API multipart and hosted image input, exact process policy.
+77 focused tests and typecheck passed; final diffcheck passed. Text-only byte limits
+remain unchanged. Real hosted PNG ingestion is still unproven; no live calls run.
+Quota checked: 43% remaining, above owner 20% stop threshold.

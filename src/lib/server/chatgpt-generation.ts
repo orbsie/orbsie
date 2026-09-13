@@ -12,6 +12,12 @@ import {
   generationDiagnostic,
   type GenerationDiagnostic,
 } from "../generation-diagnostics";
+import {
+  ReviewImageValidationError,
+  validateSceneReviewImage,
+  type SceneReviewImage,
+} from "../review-image";
+import { imageInputSupport } from "../input-modalities";
 
 const MAX_INSTRUCTIONS = 64 * 1024;
 const MAX_INPUT = 256 * 1024;
@@ -27,15 +33,19 @@ const GENERIC = "ChatGPT generation could not be completed.";
 const CANCELLED = "ChatGPT generation was canceled.";
 const TIMED_OUT = "ChatGPT generation timed out.";
 const MODEL_UNAVAILABLE = "The requested ChatGPT model is unavailable.";
+const IMAGE_UNSUPPORTED =
+  "The selected ChatGPT model does not support image review.";
 const ALREADY_RUNNING = "A ChatGPT generation is already running.";
 const INVALID_INPUT = "ChatGPT generation input is invalid.";
 const ABORTED = Symbol("chatgpt-generation-aborted");
 
-type GenerateInput = {
+export type ChatGPTGenerationInput = {
   model: string;
   effort: string;
   instructions: string;
   input: string;
+  /** Internal trusted capture; validated again at this server boundary. */
+  reviewImage?: SceneReviewImage;
   onText(delta: string): void;
   signal?: AbortSignal;
 };
@@ -72,18 +82,39 @@ function byteLength(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
 
+type ChatGPTInputItem =
+  { type: "text"; text: string } | { type: "image"; url: string };
+
+function hostedInput(
+  textInput: string,
+  reviewImage: SceneReviewImage | undefined,
+): ChatGPTInputItem[] {
+  const items: ChatGPTInputItem[] = [{ type: "text", text: textInput }];
+  if (reviewImage) items.push({ type: "image", url: reviewImage.image });
+  if (reviewImage && byteLength(JSON.stringify(items)) > MAX_INPUT)
+    throw INVALID_INPUT;
+  return items;
+}
+
 function modelAvailable(
   catalog: ChatGPTModel[],
   requestedModel: string,
   effort: string,
-): boolean {
-  return catalog.some(
-    (entry) =>
-      record(entry) !== null &&
-      entry.model === requestedModel &&
-      Array.isArray(entry.supportedReasoningEfforts) &&
-      entry.supportedReasoningEfforts.includes(effort),
+  requiresImage: boolean,
+): "available" | "unavailable" | "image-unsupported" {
+  const entry = catalog.find(
+    (candidate) =>
+      record(candidate) !== null && candidate.model === requestedModel,
   );
+  if (
+    !entry ||
+    !Array.isArray(entry.supportedReasoningEfforts) ||
+    !entry.supportedReasoningEfforts.includes(effort)
+  )
+    return "unavailable";
+  if (requiresImage && imageInputSupport(entry.inputModalities) !== true)
+    return "image-unsupported";
+  return "available";
 }
 
 function awaitAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
@@ -202,20 +233,24 @@ function publicError(
       : (reason ??
         (error === MODEL_UNAVAILABLE
           ? "model-unavailable"
-          : error === INVALID_INPUT
-            ? "invalid-input"
-            : error instanceof ChatGPTRpcError
-              ? "rpc-rejection"
-              : "unknown"));
+          : error === IMAGE_UNSUPPORTED
+            ? "image-unsupported"
+            : error === INVALID_INPUT
+              ? "invalid-input"
+              : error instanceof ChatGPTRpcError
+                ? "rpc-rejection"
+                : "unknown"));
   const message = timedOut
     ? TIMED_OUT
     : cancelled
       ? CANCELLED
       : error === MODEL_UNAVAILABLE
         ? MODEL_UNAVAILABLE
-        : error === INVALID_INPUT
-          ? INVALID_INPUT
-          : GENERIC;
+        : error === IMAGE_UNSUPPORTED
+          ? IMAGE_UNSUPPORTED
+          : error === INVALID_INPUT
+            ? INVALID_INPUT
+            : GENERIC;
   return new ChatGPTGenerationError(stage, finalReason, {
     rpcCode: error instanceof ChatGPTRpcError ? error.rpcCode : undefined,
     sceneDiagnostic,
@@ -241,7 +276,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
   let active = false;
   let unusable = false;
 
-  async function generate(input: GenerateInput): Promise<void> {
+  async function generate(input: ChatGPTGenerationInput): Promise<void> {
     if (unusable) throw Error(GENERIC);
     if (active) throw Error(ALREADY_RUNNING);
     active = true;
@@ -320,6 +355,11 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         throw ABORTED;
       }
 
+      const reviewImage =
+        input.reviewImage === undefined
+          ? undefined
+          : validateSceneReviewImage(input.reviewImage);
+
       operation = new AbortController();
       forwardAbort = () => {
         cancelled = !timedOut;
@@ -340,8 +380,14 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         operation.signal,
       );
       if (!Array.isArray(catalog)) throw MODEL_UNAVAILABLE;
-      if (!modelAvailable(catalog, input.model, input.effort))
-        throw MODEL_UNAVAILABLE;
+      const availability = modelAvailable(
+        catalog,
+        input.model,
+        input.effort,
+        reviewImage !== undefined,
+      );
+      if (availability === "unavailable") throw MODEL_UNAVAILABLE;
+      if (availability === "image-unsupported") throw IMAGE_UNSUPPORTED;
 
       stage = "thread-start";
       const threadResponse = await rpcRequest(
@@ -521,7 +567,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
           model: input.model,
           effort: input.effort,
           serviceTier: "default",
-          input: [{ type: "text", text: input.input }],
+          input: hostedInput(input.input, reviewImage),
           sandboxPolicy: CHATGPT_READ_POLICY,
           approvalPolicy: "never",
         },
@@ -551,6 +597,10 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         if (!finalTerminal || !finalTerminal.ok) throw GENERIC;
       }
     } catch (error) {
+      if (error instanceof ReviewImageValidationError) {
+        failureReason = "invalid-input";
+        error = INVALID_INPUT;
+      }
       if (
         (error === ABORTED || operation?.signal.aborted) &&
         !internalFailure
