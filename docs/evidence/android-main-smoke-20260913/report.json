@@ -24,12 +24,17 @@
     "rootViewedScreenshot": true,
     "planetVisible": true,
     "composerVisible": true,
-    "fatalGraphicsDialogVisible": false
+    "fatalGraphicsDialogVisible": false,
+    "keyboardVisibleComposerAndCreateReachable": true,
+    "draftTypedWithoutSubmission": "a tree"
   },
   "limitations": [
     "No generated-game traversal",
     "No physical-device performance claim",
     "No forced Canvas2D claim; rendered planet seen visually"
   ],
-  "modelCalls": 0
+  "modelCalls": 0,
+  "findings": [
+    "Android accessibility tree exposes Graphics are unavailable fallback text while planet visibly renders; separate fix pending."
+  ]
 }
