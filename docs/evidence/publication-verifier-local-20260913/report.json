@@ -51,5 +51,14 @@
     "typecheck": "passed",
     "source": "worker report; root reviewed integration"
   },
-  "modelCalls": 0
+  "modelCalls": 0,
+  "historicalDeploymentNegativeCheck": {
+    "checkedAt": "2026-09-13T18:58:52.826Z",
+    "deployment": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app",
+    "projectId": "pub-free-30102c5c-f34a-421e-ac0f-654246d79bc6",
+    "revision": 1,
+    "expectedFailure": "published-artifact-manifest-mismatch:runtime.js",
+    "status": "passed",
+    "scope": "Known old immutable runtime rejected against reviewed current target hashes; no publication mutation"
+  }
 }
