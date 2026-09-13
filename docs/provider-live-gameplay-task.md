@@ -50,3 +50,24 @@ fresh story. Targeted tests for route/observation logic; live runs only after
 integration and approved provider auth are available. Owner-browser computer-use
 journeys may supply real acceptance directly; do not export cookies to fit a
 particular test harness transport.
+
+
+## In-progress review2026-09-13
+
+Single Luna worker owns the driver, harness wiring, copied observation bridge,
+World/SoftwareWorld integration and minimal physics contact observations. Root
+review required before commit. No live calls; new browser fixture run required.
+
+Acceptance findings to resolve and cover before handoff:
+- Count only the actual final selected top-surface landing/bounce, not nearby
+  upward motion or superseded overlapping platform candidates. Retain bounded
+  contact evidence across sampling intervals, and prove real platform movement.
+- Observation data must be copied/read-only, internally accumulated and invalidated
+  across project/revision/renderer/reset/session changes. Reject stale samples;
+  avoid default telemetry allocations. Do not label clamped simulation deltas as
+  measured frame-time percentiles.
+- Movement during generation must use actual stream/journal completion, not HTTP
+  header arrival. Permit monotonic incremental revisions for the same run and
+  handle concurrent promise rejection immediately. No injected player/score state.
+
+These notes are review criteria, not an assertion that the current WIP meets them.

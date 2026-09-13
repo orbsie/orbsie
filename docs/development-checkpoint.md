@@ -8,7 +8,7 @@ Gateway and ChatGPT. **Incomplete.** Prior detailed handoff/evidence is in
 
 Astra reviews architecture/diffs/integration; one Luna xhigh/default worker,
 no nested agents, concise contexts, Fast off. Reuse `/root/host_session_renewal`:
-fresh worker creation previously hit thread cap. Latest quota42% used/58% remaining;
+fresh worker creation previously hit thread cap. Latest quota44% used/56% remaining;
 stop workers/live tests below20% remaining. Read actual quota with
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`; goal tokens are not quota.
 Targeted tests; no repeated green/live runs without new evidence need.
@@ -105,3 +105,7 @@ current source; exact hashes in procedural-isolation-audit-20260913/report.json.
 Real QuickJS tests plus mocked queues; prior actual-browser worker evidence linked.
 No blanket security/mobile claim and no model calls. Current single Luna task is
 the fresh-world gameplay driver; publication verification is committedac7268f.
+
+Gameplay WIP review criteria and outstanding corrections are recorded under
+In-progress review in provider-live-gameplay-task.md. Await worker completion and
+actual browser fixture evidence before accepting/deploying observation changes.
