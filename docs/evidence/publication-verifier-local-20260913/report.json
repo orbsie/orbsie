@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-09-13T18:51:16.250Z",
+  "sourceRelease": "7cbd875",
+  "target": "https://orbsie.com",
+  "comparisons": {
+    "runtime.js": {
+      "local": {
+        "bytes": 1818294,
+        "sha256": "308aebbe85589b371af0a57c142a4bf1006327843e0459932f2fb82ce34a54d8"
+      },
+      "production": {
+        "bytes": 1818294,
+        "sha256": "308aebbe85589b371af0a57c142a4bf1006327843e0459932f2fb82ce34a54d8"
+      }
+    },
+    "runtime.css": {
+      "local": {
+        "bytes": 4088,
+        "sha256": "91c859841df8e3bfc577535c1879fc167f983c48b0b999342700bf6abda45529"
+      },
+      "production": {
+        "bytes": 4088,
+        "sha256": "91c859841df8e3bfc577535c1879fc167f983c48b0b999342700bf6abda45529"
+      }
+    },
+    "generated-geometry-worker.js": {
+      "local": {
+        "bytes": 844831,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+      },
+      "production": {
+        "bytes": 844831,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+      }
+    },
+    "asset-geometry-worker.js": {
+      "local": {
+        "bytes": 424237,
+        "sha256": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8"
+      },
+      "production": {
+        "bytes": 424237,
+        "sha256": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8"
+      }
+    }
+  },
+  "scope": "Anonymous current-player retrieval compared to reviewed release build; not fresh publication acceptance",
+  "targetedTests": {
+    "command": "npx vitest run tests/provider-browser-e2e-flagship.test.ts",
+    "passed": 44,
+    "typecheck": "passed",
+    "source": "worker report; root reviewed integration"
+  },
+  "modelCalls": 0
+}

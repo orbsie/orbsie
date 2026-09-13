@@ -11,7 +11,10 @@ import {
   assertFlagshipStoryGoalSeven,
   assertFlagshipStoryMushroom,
   assertFlagshipStoryPlatform,
+  assertPublicationPlaybackOrigins,
+  assertPublicationProjectMatches,
   buildGeneratedModelEvidence,
+  captureCurrentTargetArtifacts,
   extractZip,
   installTrafficGuard,
   persistFlagshipStoryPhase,
@@ -19,6 +22,7 @@ import {
   readFlagshipResumeCheckpoint,
   flagshipResumeExecutionMode,
   runProjectFollowOnPhases,
+  verifyFreshPublicationArtifacts,
 } from "../scripts/provider-browser-e2e.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
@@ -332,6 +336,110 @@ function addGatewayGoalSevenEdit(project: any, durationChange?: number) {
   return edited;
 }
 
+const PUBLICATION_ORIGIN = "https://published.example.test/";
+const PUBLICATION_ARTIFACTS = [
+  "runtime.js",
+  "runtime.css",
+  "generated-geometry-worker.js",
+  "asset-geometry-worker.js",
+];
+
+function publicationFixture({
+  project = initialProject(),
+  runtime = "fresh runtime",
+  manifestRuntime = runtime,
+  missing = [],
+  oversized = undefined,
+  streamOversized = undefined,
+  redirect = undefined,
+  malformedManifest = false,
+}: {
+  project?: any;
+  runtime?: string;
+  manifestRuntime?: string;
+  missing?: string[];
+  oversized?: string;
+  streamOversized?: string;
+  redirect?: string;
+  malformedManifest?: boolean;
+} = {}) {
+  const content: Record<string, Uint8Array> = {
+    "runtime.js": new TextEncoder().encode(runtime),
+    "runtime.css": new TextEncoder().encode("fresh css"),
+    "generated-geometry-worker.js": new TextEncoder().encode("fresh geometry"),
+    "asset-geometry-worker.js": new TextEncoder().encode("fresh assets"),
+  };
+  const expectedContent: Record<string, Uint8Array> = {
+    ...content,
+    "runtime.js": new TextEncoder().encode(manifestRuntime),
+  };
+  const expectedArtifacts: Record<string, { bytes: number; sha256: string }> =
+    Object.fromEntries(
+      PUBLICATION_ARTIFACTS.map((path) => {
+        const bytes = expectedContent[path];
+        return [
+          path,
+          {
+            bytes: bytes.byteLength,
+            sha256: createHash("sha256").update(bytes).digest("hex"),
+          },
+        ];
+      }),
+    );
+  const manifest = {
+    version: 4,
+    projectId: project.id,
+    revision: project.revision,
+    files: PUBLICATION_ARTIFACTS.map((path) => ({
+      file: path,
+      ...expectedArtifacts[path],
+    })),
+  };
+  const calls: Array<{ url: string; init: RequestInit }> = [];
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    calls.push({ url, init: init ?? {} });
+    const path = new URL(url).pathname.slice(1).replace(/^player\//, "");
+    if (path === "publication-manifest.json") {
+      if (malformedManifest) return new Response("{", { status: 200 });
+      return new Response(JSON.stringify(manifest), { status: 200 });
+    }
+    if (path === redirect)
+      return new Response("redirect", {
+        status: 302,
+        headers: { location: "https://outside.example.test/" },
+      });
+    if (missing.includes(path)) return new Response("missing", { status: 404 });
+    const bytes = content[path];
+    if (!bytes) return new Response("missing", { status: 404 });
+    if (path === oversized)
+      return new Response(Buffer.from(bytes), {
+        status: 200,
+        headers: { "content-length": String(2 * 1024 * 1024 + 1) },
+      });
+    if (path === streamOversized) {
+      const chunk = new Uint8Array(2 * 1024 * 1024 + 1);
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(chunk);
+            controller.close();
+          },
+        }),
+        { status: 200 },
+      );
+    }
+    return new Response(Buffer.from(bytes), { status: 200 });
+  };
+  return {
+    calls,
+    content,
+    expectedArtifacts,
+    targetArtifacts: structuredClone(expectedArtifacts),
+    fetchImpl,
+  };
+}
+
 describe("flagship provider story contract", () => {
   it("binds portal contact evidence to its transformed render group", () => {
     const traversal = readFileSync(
@@ -360,6 +468,8 @@ describe("flagship provider story contract", () => {
         "project.json",
         "runtime.js",
         "runtime.css",
+        "generated-geometry-worker.js",
+        "asset-geometry-worker.js",
         "package.json",
         "README.md",
         "build.mjs",
@@ -995,6 +1105,199 @@ describe("flagship provider story contract", () => {
         standalonePlayback: async () => undefined,
       }),
     ).rejects.toThrow(/Export changed the project identity/);
+  });
+
+  it("rejects a same-revision publication from a different project", () => {
+    const expected: any = initialProject();
+    const published = structuredClone(expected);
+    published.messages = [{ role: "assistant", content: "stripped" }];
+    expect(assertPublicationProjectMatches(published, expected)).toBe(published);
+
+    const wrongProject = structuredClone(published);
+    wrongProject.id = "another-project";
+    expect(() =>
+      assertPublicationProjectMatches(wrongProject, expected),
+    ).toThrow(/changed the project identity/);
+  });
+
+  it("keeps the signed-in app wrapper separate from the published deployment iframe", () => {
+    const appOrigin = "https://orbsie.example.test";
+    const deploymentOrigin = PUBLICATION_ORIGIN.slice(0, -1);
+    const approvedOrigins = new Set([appOrigin, deploymentOrigin]);
+    const origins = assertPublicationPlaybackOrigins({
+      wrapperUrl: `${appOrigin}/o/story-publication`,
+      appOrigin,
+      deploymentUrl: PUBLICATION_ORIGIN,
+      iframeUrl: `${deploymentOrigin}/player/index.html`,
+      approvedOrigins,
+    });
+    expect(origins.wrapper.origin).toBe(appOrigin);
+    expect(origins.iframe.origin).toBe(deploymentOrigin);
+    expect(() =>
+      assertPublicationPlaybackOrigins({
+        wrapperUrl: `${deploymentOrigin}/o/story-publication`,
+        appOrigin,
+        deploymentUrl: PUBLICATION_ORIGIN,
+        iframeUrl: `${deploymentOrigin}/player/index.html`,
+        approvedOrigins,
+      }),
+    ).toThrow(/wrapper changed the approved app origin/);
+  });
+
+  it("accepts fresh runtime and geometry worker bytes independently of the manifest", async () => {
+    const expected = initialProject();
+    const fixture = publicationFixture({ project: expected });
+    const evidence = await verifyFreshPublicationArtifacts({
+      deploymentUrl: PUBLICATION_ORIGIN,
+      approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+      projectId: expected.id,
+      revision: expected.revision,
+      expectedArtifacts: fixture.expectedArtifacts,
+      targetArtifacts: fixture.targetArtifacts,
+      fetchImpl: fixture.fetchImpl,
+    });
+    const evidenceFiles = evidence.files as Record<string, unknown>;
+    expect(evidenceFiles["runtime.js"]).toEqual({
+      target: fixture.targetArtifacts["runtime.js"],
+      expected: fixture.expectedArtifacts["runtime.js"],
+      observed: fixture.expectedArtifacts["runtime.js"],
+    });
+    expect(evidenceFiles["generated-geometry-worker.js"]).toEqual({
+      target: fixture.targetArtifacts["generated-geometry-worker.js"],
+      expected: fixture.expectedArtifacts["generated-geometry-worker.js"],
+      observed: fixture.expectedArtifacts["generated-geometry-worker.js"],
+    });
+    expect(fixture.calls.every(({ init }) => init.credentials === "omit")).toBe(
+      true,
+    );
+    expect(fixture.calls.every(({ init }) => init.redirect === "manual")).toBe(
+      true,
+    );
+    expect(fixture.calls.every(({ init }) => init.headers === undefined)).toBe(
+      true,
+    );
+  });
+
+  it("binds the export to independently captured current player bytes", async () => {
+    const fixture = publicationFixture();
+    const targetArtifacts = await captureCurrentTargetArtifacts({
+      appOrigin: PUBLICATION_ORIGIN,
+      approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+      fetchImpl: fixture.fetchImpl,
+    });
+    expect(targetArtifacts).toEqual(fixture.expectedArtifacts);
+
+    const staleExport = structuredClone(fixture.expectedArtifacts);
+    staleExport["runtime.js"] = {
+      bytes: 5,
+      sha256: "0".repeat(64),
+    };
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: PUBLICATION_ORIGIN,
+        approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: staleExport,
+        targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(/fresh-export-target-mismatch:runtime\.js/);
+  });
+
+  it("rejects a stale runtime even when the manifest reports fresh hashes", async () => {
+    const fixture = publicationFixture({
+      runtime: "stale runtime",
+      manifestRuntime: "fresh runtime",
+    });
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: PUBLICATION_ORIGIN,
+        approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: fixture.expectedArtifacts,
+        targetArtifacts: fixture.targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(/published-artifact-mismatch:runtime\.js/);
+  });
+
+  it("rejects a missing geometry worker before publication can pass", async () => {
+    const fixture = publicationFixture({
+      missing: ["asset-geometry-worker.js"],
+    });
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: PUBLICATION_ORIGIN,
+        approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: fixture.expectedArtifacts,
+        targetArtifacts: fixture.targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(/published-artifact-missing:asset-geometry-worker\.js/);
+  });
+
+  it.each([
+    ["malformed manifest", { malformedManifest: true }, /manifest-malformed/],
+    [
+      "oversized runtime",
+      { oversized: "runtime.js" },
+      /response-oversized:runtime\.js/,
+    ],
+    [
+      "oversized streaming runtime without a content length",
+      { streamOversized: "runtime.js" },
+      /response-oversized:runtime\.js/,
+    ],
+  ])("rejects a %s response", async (_label, options, expectedError) => {
+    const fixture = publicationFixture(
+      options as {
+        malformedManifest?: boolean;
+        oversized?: string;
+        streamOversized?: string;
+      },
+    );
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: PUBLICATION_ORIGIN,
+        approvedOrigins: new Set([PUBLICATION_ORIGIN.slice(0, -1)]),
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: fixture.expectedArtifacts,
+        targetArtifacts: fixture.targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(expectedError);
+  });
+
+  it("rejects redirects and deployment origins outside the approved set", async () => {
+    const fixture = publicationFixture({ redirect: "runtime.js" });
+    const approvedOrigins = new Set([PUBLICATION_ORIGIN.slice(0, -1)]);
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: PUBLICATION_ORIGIN,
+        approvedOrigins,
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: fixture.expectedArtifacts,
+        targetArtifacts: fixture.targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(/published-artifact-redirect:runtime\.js/);
+    await expect(
+      verifyFreshPublicationArtifacts({
+        deploymentUrl: "https://outside.example.test/",
+        approvedOrigins,
+        projectId: "project",
+        revision: 1,
+        expectedArtifacts: fixture.expectedArtifacts,
+        targetArtifacts: fixture.targetArtifacts,
+        fetchImpl: fixture.fetchImpl,
+      }),
+    ).rejects.toThrow(/origin-not-approved/);
   });
 
   it("validates semantic creation, mushroom scope, and platform goal reconciliation", () => {

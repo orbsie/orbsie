@@ -41,3 +41,10 @@ product/auth changes, no generated credentials, no live calls or deployment.
 This does not implement physical traversal. Follow-up must reuse real inputs and
 read-only telemetry in the same fresh provider world for collect/bounce/win/reset;
 existing verify-saved-bounce-route.mjs only proves separate saved-world playback.
+
+## Implementation evidence
+
+Implemented and reviewed2026-09-13.44 focused tests/typecheck pass; actual public
+player capture matches all four reviewed release files. Evidence:
+`docs/evidence/publication-verifier-local-20260913/report.json`. No fresh
+publication or gameplay pass is claimed.

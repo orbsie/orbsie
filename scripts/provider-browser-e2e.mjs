@@ -82,6 +82,15 @@ const REPORT_DIR = resolve(
 const SOURCE_ROOT = resolve(".");
 const REPORT_MODE = "live-browser";
 const JOURNAL_POLL_TIMEOUT = 120000;
+const PUBLICATION_MANIFEST_FILE = "publication-manifest.json";
+const PUBLICATION_ARTIFACT_PATHS = [
+  "runtime.js",
+  "runtime.css",
+  "generated-geometry-worker.js",
+  "asset-geometry-worker.js",
+];
+const PUBLICATION_ARTIFACT_MAX_BYTES = 2 * 1024 * 1024;
+const PUBLICATION_FETCH_TIMEOUT_MS = 5000;
 const INTERRUPTION_METHODS = new Set(["stop", "reload"]);
 const INTERRUPTED_RECOVERY_PROVIDERS = new Set([
   "openrouter",
@@ -948,6 +957,304 @@ function checkpointShape(project) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function publicationProjectComparable(project) {
+  if (!project || typeof project !== "object") return null;
+  const { messages: _messages, ...rest } = project;
+  return rest;
+}
+
+/**
+ * Verify the signed-out publication against the exact project that reached
+ * the follow-on phases. Publication intentionally strips chat messages, so
+ * those are the only fields omitted from the structural comparison.
+ */
+export function assertPublicationProjectMatches(
+  actual,
+  expected,
+  label = "Published project",
+) {
+  assert(
+    actual && typeof actual === "object",
+    `${label} is missing or malformed.`,
+  );
+  assert.equal(actual.id, expected?.id, `${label} changed the project identity.`);
+  assert.equal(
+    actual.revision,
+    expected?.revision,
+    `${label} changed the project revision.`,
+  );
+  assert.deepEqual(
+    publicationProjectComparable(actual),
+    publicationProjectComparable(expected),
+    `${label} changed the published world content.`,
+  );
+  return actual;
+}
+
+function approvedPublicationOrigin(
+  originValue,
+  approvedOrigins,
+  { deployment = false } = {},
+) {
+  let parsed;
+  try {
+    parsed = new URL(originValue);
+  } catch {
+    throw new HarnessBlockedError("published-artifact-origin-invalid");
+  }
+  if (
+    (deployment
+      ? parsed.protocol !== "https:"
+      : !(
+          parsed.protocol === "https:" ||
+          (parsed.protocol === "http:" && isLoopbackHostname(parsed.hostname))
+        )) ||
+    parsed.username ||
+    parsed.password ||
+    parsed.pathname !== "/" ||
+    parsed.search ||
+    parsed.hash ||
+    !approvedOrigins?.has(parsed.origin)
+  )
+    throw new HarnessBlockedError("published-artifact-origin-not-approved");
+  return parsed;
+}
+
+function publicationDeploymentOrigin(deploymentUrl, approvedOrigins) {
+  return approvedPublicationOrigin(deploymentUrl, approvedOrigins, {
+    deployment: true,
+  });
+}
+
+export function assertPublicationPlaybackOrigins({
+  wrapperUrl,
+  appOrigin,
+  deploymentUrl,
+  iframeUrl,
+  approvedOrigins,
+}) {
+  const app = new URL(appOrigin);
+  const wrapper = new URL(wrapperUrl, app.origin);
+  assert.equal(
+    wrapper.origin,
+    app.origin,
+    "Published wrapper changed the approved app origin.",
+  );
+  const deployment = publicationDeploymentOrigin(
+    deploymentUrl,
+    approvedOrigins,
+  );
+  const iframe = new URL(iframeUrl, wrapper.href);
+  assert.equal(
+    iframe.origin,
+    deployment.origin,
+    "Published playback iframe changed the approved deployment origin.",
+  );
+  return { wrapper, deployment, iframe };
+}
+
+async function readBoundedPublicationResponse(response, path) {
+  const rawLength = response.headers?.get?.("content-length");
+  if (rawLength !== null && rawLength !== undefined) {
+    const trimmed = rawLength.trim();
+    if (!/^\d+$/.test(trimmed))
+      throw new HarnessBlockedError("published-artifact-response-malformed");
+    if (Number(trimmed) > PUBLICATION_ARTIFACT_MAX_BYTES)
+      throw new HarnessBlockedError(
+        `published-artifact-response-oversized:${path}`,
+      );
+  }
+  if (!response.body) {
+    let bytes;
+    try {
+      bytes = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      throw new HarnessBlockedError("published-artifact-response-malformed");
+    }
+    if (bytes.byteLength > PUBLICATION_ARTIFACT_MAX_BYTES)
+      throw new HarnessBlockedError(
+        `published-artifact-response-oversized:${path}`,
+      );
+    return bytes;
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+      total += chunk.byteLength;
+      if (total > PUBLICATION_ARTIFACT_MAX_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        throw new HarnessBlockedError(
+          `published-artifact-response-oversized:${path}`,
+        );
+      }
+      chunks.push(chunk);
+    }
+  } catch (error) {
+    if (error instanceof HarnessBlockedError) throw error;
+    throw new HarnessBlockedError("published-artifact-response-malformed");
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+async function fetchAnonymousPublicationArtifact(
+  deploymentOrigin,
+  path,
+  fetchImpl,
+) {
+  const url = new URL(path, deploymentOrigin);
+  let response;
+  try {
+    response = await fetchImpl(url.href, {
+      credentials: "omit",
+      redirect: "manual",
+      signal: AbortSignal.timeout(PUBLICATION_FETCH_TIMEOUT_MS),
+    });
+  } catch {
+    throw new HarnessBlockedError(`published-artifact-fetch-failed:${path}`);
+  }
+  if (response.status >= 300 && response.status < 400)
+    throw new HarnessBlockedError(`published-artifact-redirect:${path}`);
+  if (!response.ok)
+    throw new HarnessBlockedError(`published-artifact-missing:${path}`);
+  return readBoundedPublicationResponse(response, path);
+}
+
+function assertPublicationArtifactRecordsMatch(
+  actual,
+  expected,
+  reason = "fresh-export-target-mismatch",
+) {
+  if (!actual || typeof actual !== "object")
+    throw new HarnessBlockedError("fresh-target-artifacts-unavailable");
+  for (const path of PUBLICATION_ARTIFACT_PATHS) {
+    const left = actual[path];
+    const right = expected?.[path];
+    if (
+      !left ||
+      !right ||
+      left.bytes !== right.bytes ||
+      left.sha256 !== right.sha256
+    )
+      throw new HarnessBlockedError(`${reason}:${path}`);
+  }
+}
+
+/**
+ * Capture the current application's player files independently of an export
+ * download. The ZIP and publication must both remain bound to these bytes.
+ */
+export async function captureCurrentTargetArtifacts({
+  appOrigin,
+  approvedOrigins,
+  fetchImpl = fetch,
+}) {
+  const origin = approvedPublicationOrigin(appOrigin, approvedOrigins);
+  const artifacts = {};
+  for (const path of PUBLICATION_ARTIFACT_PATHS) {
+    const bytes = await fetchAnonymousPublicationArtifact(
+      origin,
+      `player/${path}`,
+      fetchImpl,
+    );
+    artifacts[path] = { bytes: bytes.byteLength, sha256: sha256(bytes) };
+  }
+  return artifacts;
+}
+
+/**
+ * Compare anonymously downloaded deployment files to bytes independently
+ * captured from the fresh export ZIP. The deployment manifest is checked for
+ * identity and consistency, but never serves as the source of expected bytes.
+ */
+export async function verifyFreshPublicationArtifacts({
+  deploymentUrl,
+  approvedOrigins,
+  projectId,
+  revision,
+  expectedArtifacts,
+  targetArtifacts,
+  fetchImpl = fetch,
+}) {
+  const origin = publicationDeploymentOrigin(deploymentUrl, approvedOrigins);
+  if (!expectedArtifacts || typeof expectedArtifacts !== "object")
+    throw new HarnessBlockedError("fresh-export-artifacts-unavailable");
+  assertPublicationArtifactRecordsMatch(expectedArtifacts, targetArtifacts);
+  const manifestBytes = await fetchAnonymousPublicationArtifact(
+    origin,
+    PUBLICATION_MANIFEST_FILE,
+    fetchImpl,
+  );
+  let manifest;
+  try {
+    manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
+  } catch {
+    throw new HarnessBlockedError("published-artifact-manifest-malformed");
+  }
+  if (
+    !manifest ||
+    typeof manifest !== "object" ||
+    manifest.projectId !== projectId ||
+    manifest.revision !== revision ||
+    !Array.isArray(manifest.files)
+  )
+    throw new HarnessBlockedError("published-artifact-manifest-identity-mismatch");
+  const manifestFiles = new Map(
+    manifest.files
+      .filter((entry) => entry && typeof entry === "object")
+      .map((entry) => [entry.file, entry]),
+  );
+  const files = {};
+  for (const path of PUBLICATION_ARTIFACT_PATHS) {
+    const expected = expectedArtifacts[path];
+    if (
+      !expected ||
+      !Number.isInteger(expected.bytes) ||
+      expected.bytes < 0 ||
+      typeof expected.sha256 !== "string"
+    )
+      throw new HarnessBlockedError(`fresh-export-artifact-missing:${path}`);
+    const manifestEntry = manifestFiles.get(path);
+    if (
+      !manifestEntry ||
+      manifestEntry.bytes !== expected.bytes ||
+      manifestEntry.sha256 !== expected.sha256
+    )
+      throw new HarnessBlockedError(`published-artifact-manifest-mismatch:${path}`);
+    const bytes = await fetchAnonymousPublicationArtifact(
+      origin,
+      path,
+      fetchImpl,
+    );
+    const observed = { bytes: bytes.byteLength, sha256: sha256(bytes) };
+    files[path] = { target: targetArtifacts[path], expected, observed };
+    if (
+      observed.bytes !== expected.bytes ||
+      observed.sha256 !== expected.sha256
+    )
+      throw new HarnessBlockedError(`published-artifact-mismatch:${path}`);
+  }
+  return {
+    manifest: {
+      bytes: manifestBytes.byteLength,
+      sha256: sha256(manifestBytes),
+      projectId: manifest.projectId,
+      revision: manifest.revision,
+    },
+    files,
+  };
 }
 
 export function assertFlagshipStoryAssetReferences(project) {
@@ -5160,6 +5467,8 @@ export async function extractZip(
     "project.json",
     "runtime.js",
     "runtime.css",
+    "generated-geometry-worker.js",
+    "asset-geometry-worker.js",
     "package.json",
     "README.md",
     "build.mjs",
@@ -5197,7 +5506,13 @@ export async function extractZip(
     "Builder capability appeared in exported ZIP.",
   );
   await writeFile(join(evidenceDir, artifactName), bytes, { mode: 0o600 });
-  return { tempDir, names, project };
+  const publicationArtifacts = Object.fromEntries(
+    PUBLICATION_ARTIFACT_PATHS.map((path) => [
+      path,
+      { bytes: files[path].byteLength, sha256: sha256(files[path]) },
+    ]),
+  );
+  return { tempDir, names, project, publicationArtifacts };
 }
 
 async function serveStaticDirectory(directory) {
@@ -6315,8 +6630,18 @@ async function runPublication(
   approvedOrigins,
   expectedRevision,
   evidenceDir,
+  expectedProject,
+  expectedArtifacts,
+  targetArtifacts,
 ) {
   if (!config.publication) return;
+  if (!expectedProject || !expectedArtifacts || !targetArtifacts) {
+    report.publication = {
+      mode: "blocked",
+      status: "fresh-export-artifacts-unavailable",
+    };
+    return;
+  }
   // The explicit state was supplied when the original context was created, so
   // this page retains the exact local IndexedDB draft produced by the provider
   // run while also carrying the authorized account cookies.
@@ -6345,6 +6670,17 @@ async function runPublication(
       .catch(() => undefined);
     return;
   }
+  const saveRequestPromise = page.waitForRequest(
+    (request) => {
+      const url = new URL(request.url());
+      return (
+        url.origin === config.baseOrigin &&
+        url.pathname === "/api/projects" &&
+        request.method() === "PUT"
+      );
+    },
+    { timeout: 30000 },
+  );
   const saveResponsePromise = page.waitForResponse(
     (response) => {
       const url = new URL(response.url());
@@ -6357,6 +6693,25 @@ async function runPublication(
     { timeout: 30000 },
   );
   await save.click();
+  const saveRequest = await saveRequestPromise;
+  try {
+    const requestBody = saveRequest.postDataJSON();
+    assertPublicationProjectMatches(
+      requestBody?.project,
+      expectedProject,
+      "Cloud save project",
+    );
+  } catch {
+    report.publication = {
+      mode: "blocked",
+      status: "cloud-save-project-mismatch",
+    };
+    await page
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click()
+      .catch(() => undefined);
+    return;
+  }
   const saveResponse = await saveResponsePromise;
   let saveBody = {};
   try {
@@ -6423,12 +6778,21 @@ async function runPublication(
     };
     return;
   }
-  if (typeof publishBody.deploymentUrl === "string") {
-    try {
-      approvedOrigins.add(new URL(publishBody.deploymentUrl).origin);
-    } catch {
-      // The browser will fail closed if the deployment URL is malformed.
-    }
+  if (typeof publishBody.deploymentUrl !== "string") {
+    report.publication = {
+      mode: "blocked",
+      status: "publication-deployment-unavailable",
+    };
+    return;
+  }
+  try {
+    approvedOrigins.add(new URL(publishBody.deploymentUrl).origin);
+  } catch {
+    report.publication = {
+      mode: "blocked",
+      status: "published-artifact-origin-invalid",
+    };
+    return;
   }
   const readyLink = page.getByRole("link", {
     name: "Open published Orb",
@@ -6448,6 +6812,16 @@ async function runPublication(
     href && !href.includes("#"),
     "Published URL must not contain a capability or snapshot hash.",
   );
+  const publishedUrl = new URL(href, config.baseOrigin);
+  const deploymentOrigin = publicationDeploymentOrigin(
+    publishBody.deploymentUrl,
+    approvedOrigins,
+  ).origin;
+  assert.equal(
+    publishedUrl.origin,
+    config.baseOrigin,
+    "Published wrapper changed the approved app origin.",
+  );
   const publicContext = await browser.newContext({
     viewport: { width: 1280, height: 800 },
   });
@@ -6461,30 +6835,84 @@ async function runPublication(
   const publicPage = await publicContext.newPage();
   const publicApiRequests = [];
   let publishedRevision;
+  let publishedProject;
+  let publishedProjectMalformed = false;
   publicPage.on("request", (request) => {
     const path = new URL(request.url()).pathname;
     if (path.startsWith("/api/") || path === "/generate" || path === "/health")
       publicApiRequests.push(path);
   });
   publicPage.on("response", async (response) => {
-    if (new URL(response.url()).pathname !== "/project.json") return;
+    const responseUrl = new URL(response.url());
+    if (
+      responseUrl.origin !== deploymentOrigin ||
+      responseUrl.pathname !== "/project.json"
+    )
+      return;
     try {
       const value = await response.json();
+      publishedProject = value;
       if (Number.isInteger(value.revision)) publishedRevision = value.revision;
     } catch {
-      // The assertion below reports an unavailable deployment artifact.
+      publishedProjectMalformed = true;
     }
   });
-  await publicPage.goto(new URL(href, config.baseOrigin).href, {
+  await publicPage.goto(publishedUrl.href, {
     waitUntil: "domcontentloaded",
   });
-  await expect(publicPage.locator("iframe")).toBeVisible({ timeout: 60000 });
+  const iframe = publicPage.locator("iframe");
+  await expect(iframe).toBeVisible({ timeout: 60000 });
+  const iframeSrc = await iframe.getAttribute("src");
+  assert(iframeSrc, "Published playback iframe has no source.");
+  assertPublicationPlaybackOrigins({
+    wrapperUrl: publishedUrl.href,
+    appOrigin: config.baseOrigin,
+    deploymentUrl: publishBody.deploymentUrl,
+    iframeUrl: iframeSrc,
+    approvedOrigins,
+  });
   await expect(publicPage.frameLocator("iframe").locator("canvas")).toBeVisible(
     { timeout: 60000 },
   );
+  if (publishedProjectMalformed) {
+    report.publication = {
+      mode: "blocked",
+      status: "published-project-mismatch",
+    };
+    await publicContext.close();
+    return;
+  }
   await expect
     .poll(() => publishedRevision ?? -1, { timeout: 60000 })
     .toBe(expectedRevision);
+  let artifactEvidence;
+  try {
+    assertPublicationProjectMatches(
+      publishedProject,
+      expectedProject,
+      "Published project",
+    );
+    artifactEvidence = await verifyFreshPublicationArtifacts({
+      deploymentUrl: publishBody.deploymentUrl,
+      approvedOrigins,
+      projectId: expectedProject.id,
+      revision: expectedProject.revision,
+      expectedArtifacts,
+      targetArtifacts,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    report.publication = {
+      mode: "blocked",
+      status:
+        message.startsWith("published-artifact") ||
+        message.startsWith("fresh-export")
+          ? message
+          : "published-project-mismatch",
+    };
+    await publicContext.close();
+    return;
+  }
   assert.deepEqual(
     publicApiRequests,
     [],
@@ -6499,7 +6927,9 @@ async function runPublication(
   report.publication = {
     mode: "real",
     status: "READY",
+    projectId: expectedProject.id,
     revision: expectedRevision,
+    artifactEvidence,
   };
 }
 
@@ -6532,7 +6962,7 @@ function assertFollowOnProject(value, expected, phase) {
  *   exportProject: (project: any, expected: any) => Promise<any>,
  *   standalonePlayback: (exported: any, expected: any) => Promise<any>,
  *   cloudRecovery?: (project: any, expected: any) => Promise<any>,
- *   publication?: (project: any, expected: any) => Promise<any>,
+ *   publication?: (project: any, expected: any, exported: any) => Promise<any>,
  * }} options
  */
 export async function runProjectFollowOnPhases({
@@ -6568,7 +6998,7 @@ export async function runProjectFollowOnPhases({
   }
   if (publication) {
     assertFollowOnProject(project, expected, "Publication input");
-    await publication(project, expected);
+    await publication(project, expected, exported);
   }
   return { projectId: expected.projectId, revision: expected.revision };
 }
@@ -7477,6 +7907,12 @@ async function run(config, report = emptyReport(config)) {
           revision,
           evidenceDir,
         );
+        if (config.publication)
+          assertPublicationProjectMatches(
+            zip.project,
+            recovered,
+            "Exported project",
+          );
         if (config.requireInputGame) {
           assertInputGameProject(
             zip.project,
@@ -7494,6 +7930,28 @@ async function run(config, report = emptyReport(config)) {
           };
         }
         report.evidence.push("world.zip");
+        if (config.publication) {
+          try {
+            zip.targetArtifacts = await captureCurrentTargetArtifacts({
+              appOrigin: config.baseOrigin,
+              approvedOrigins,
+            });
+            assertPublicationArtifactRecordsMatch(
+              zip.publicationArtifacts,
+              zip.targetArtifacts,
+            );
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "";
+            report.publication = {
+              mode: "blocked",
+              status: message.startsWith("published-artifact") ||
+                message.startsWith("fresh-")
+                ? message
+                : "fresh-export-target-mismatch",
+            };
+            throw error;
+          }
+        }
         report.export = "passed";
         return zip;
       },
@@ -7521,7 +7979,7 @@ async function run(config, report = emptyReport(config)) {
           }
         : undefined,
       publication: config.publication
-        ? async (project, { revision }) => {
+        ? async (project, { revision }, exported) => {
             await runPublication(
               page,
               browser,
@@ -7530,6 +7988,9 @@ async function run(config, report = emptyReport(config)) {
               approvedOrigins,
               revision,
               evidenceDir,
+              project,
+              exported.publicationArtifacts,
+              exported.targetArtifacts,
             );
             if (report.publication.mode === "blocked")
               throw new HarnessBlockedError(

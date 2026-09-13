@@ -22,18 +22,21 @@ User product runs in browser, no Blender installation/connection. Preserve licen
 
 ## Current task
 
-Single Luna worker `/root/host_session_renewal` is RUNNING publication verification
-from `docs/provider-publication-acceptance-task.md`. Owns harness/helper/tests;
-no live calls/auth/deploy/historical-world mutations. Root reviews before commit.
-Next task contract: `docs/provider-live-gameplay-task.md` (not implemented).
+Publication verifier implemented and root-reviewed:44 targeted flagship tests,
+typecheck/diffcheck pass. Original project/content, target-vs-ZIP-vs-deployment
+runtime/worker hashes, bounded anonymous fetches, exact wrapper/iframe origins.
+Root actual production player fetch matches reviewed7cbd875 local build for all
+four files; evidence publication-verifier-local-20260913. Fresh publication itself
+remains unverified. Worker is ready for next bounded gameplay task from
+`docs/provider-live-gameplay-task.md`; no live calls/auth/deploy in this task.
 
 Provider harness7cbd875 accepted: three providers/fresh3call story, exact prompts,
 original undo, refresh/export/cloud/publication follow-on. Behavioral helper
 rejects wrong project IDs/revisions.55 tests across provider-browser-e2e-flagship,
 hosted-chatgpt-acceptance, provider-browser-e2e-recovery pass; typecheck passes.
 Structural coverage is not actual collect/bounce/portal-win/reset traversal.
-Publication previously observed revision/canvas only; worker is closing identity
-and current runtime/worker byte verification gap. Saved ZIP traversal scripts
+Publication previously observed revision/canvas only; verifier now closes the identity
+and current runtime/worker byte checking gap, pending a real publication run. Saved ZIP traversal scripts
 prove separate worlds; do not label them full fresh-provider acceptance.
 
 ## Production and release
