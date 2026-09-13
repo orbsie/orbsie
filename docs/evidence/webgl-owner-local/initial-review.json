@@ -1,0 +1,18 @@
+{
+  "scope": "Owner extension-connected Chrome local in-progress WebGL fix",
+  "url": "http://127.0.0.1:3070/",
+  "browserId": "1",
+  "tabId": "1618752698",
+  "observed": {
+    "message": "Graphics are unavailable",
+    "detail": "WebGL2 could not start in this browser. Your draft and saved worlds are unchanged. Try a recent browser with hardware acceleration enabled.",
+    "createDisabled": true,
+    "yourWorldsPresent": true,
+    "connectionsPresent": true
+  },
+  "limits": [
+    "Empty draft only; nonempty draft and interaction checks pending",
+    "In-progress worktree, not deployed",
+    "No generation submitted"
+  ]
+}
