@@ -158,3 +158,23 @@ attempt. Separate parse/kernel success, blinded visual recognizability/compositi
 requested-detail ratings, observed gameplay completion, preservation, first-object
 latency, total latency and token/cost measurements. Current Gateway malformed JSON
 cause remains unresolved; do not infer it from a different older missing-brace case.
+
+### Existing trial transaction integration point
+
+Root source review: api/generate/route.ts claims claimTrial(identity) for every
+free request before generateCommands. trial.ts atomically locks sorted visitor,
+network/day and global/day usage buckets, then increments all three. It currently
+has no authoring-run or review-call identity. Reusing that route three times would
+consume three trial prompts; trusting a client `review` flag would permit bypass.
+
+For the loop task, extend the existing transaction to create a server-owned run
+allowance when claiming the initial prompt (same transaction, not a later insert
+that can fail after charging). Review admissions atomically consume bounded slots
+on that run, tied to visitor identity, project, original request/model and expected
+revision with expiry. Preserve the global spending ceiling: explicitly reserve or
+account for bounded review inference in the server budget; changing a prompt from
+one call to three must not silently triple the shared-key daily budget. No client
+keys or rendered images should be stored in accounting rows. Cancellation and
+failed calls cannot mint replacement slots; define expiry/replay tests and retain
+last-good scene semantics. Migration/real database concurrency evidence belongs to
+that task, not capture or capability acceptance.
