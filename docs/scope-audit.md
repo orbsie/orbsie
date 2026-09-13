@@ -14,10 +14,15 @@ snapshot and served revision/URL retained with fresh signed-out browser readines
 This supersedes older statements that no terminal-failure run exists; actual
 ERROR-state deployment and full gameplay/mobile are separate scopes.
 
-Latest source/UI review (after7cd343e): regular Chrome remains on Orbsie sign-in.
-Clicking Connect with ChatGPT displays “Sign in first — ChatGPT connects right
-after your sign-in.” Owner sign-in is a verified current gate, not proof of
-successful subscription authorization. Local acceptance server returns HTTP200.
+Provider connection reconciliation — 2026-09-13: production28a1219 removes the
+Orbsie email/password gate through isolated guest-session bootstrap. Production
+schema migration and live bootstrap/start/status are verified in
+`provider-session-bootstrap/production.json`; no ChatGPT inference yet. CUA now
+controls the owner's extension-connected Chrome Person 1, with a signed-in
+ChatGPT Pro session. Account selection reaches OpenAI device-code entry without
+the previous Cloudflare loop. Code entry remains incomplete. Orbsie uses actual
+isolated Codex App Server device authorization; the OpenAI Codex label matches
+that documented transport, but does not prove successful account connection.
 
 Performance inventory correction: src/lib/experience-metrics.ts already records
 all seven named milestone slots plus accepted-update→draw samples, with bounded
@@ -62,7 +67,7 @@ This section supersedes conflicting historical status below; it does not close t
 - Durable generation journals/checkpoints exist in `src/lib/server/generation-runs.ts` and their focused tests/evidence. Older claims that the journal is absent are obsolete; provider-stream resumption is not promised.
 - Browser-only modeling is the current product requirement (`prompt.md`, browser-first runtime section). Historical portable native Blender packaging gaps are not current product release requirements.
 - Saved OpenRouter flagship evidence verifies keyboard/touch crystal collection and portal win/reset, plus separate carry probes for all three platforms (`flagship-program-traversal`, `flagship-platforms`, `flagship-platform2-corrected`). The later public `publication-flagship-openrouter/platforms-sequential-phase-aware/report.json` proves one desktop keyboard sequence across platforms 1 → 2 → 3 with landing/carry checks and no ground contact observed at its sampling intervals; it does not establish per-frame absence of ground contact. The mobile-touch sequence in `publication-flagship-openrouter/platforms-sequential-touch/report.json` failed the first-platform carry check, so that acceptance remains open.
-- Real browser ChatGPT subscription consent/discovery/inference remains unverified. Historical local-companion tests do not satisfy the browser-only journey. Chrome DevTools snapshot/click control now works; Orbsie sign-in is open awaiting owner credential entry. CUA itself still exposes no browser.
+- Real browser ChatGPT subscription consent/discovery/inference remains unverified. Historical local-companion tests do not satisfy the browser-only journey. Owner extension-connected Chrome now works through CUA; device-code completion and real subscription acceptance remain pending, as reconciled above.
 - Memory-cap evidence is strengthened in `71c50c8`: a valid recipe succeeds after a 4 MiB allocation and rejects an 8 MiB + 1 allocation with execution error rather than timeout; all 13 procedural tests pass. Real-worker host API isolation, timeout, cancellation and recovery are separately recorded in `browser-procedural-foundation-worker/report.json`. This closes the specific weak allocation assertion identified in `33ee035`, not the whole geometry/isolation gate. Native Blender budget reports do not establish browser behavior.
 - Representative native-GPU/mobile performance and complete live timing remain open. SwiftShader fixture observations are not representative-device certification.
 - Visible failed-generation retry/last-working controls are accepted in `60f91c7`: eleven targeted tests, typecheck, production build and a seven-request deterministic browser regression passed (`docs/evidence/generation-failure-recovery/`). They are deployed in `7e74569`, with read-only smoke evidence in `docs/evidence/recovery-diagnostics-release/`. Broader behavior, catalog, provider-publication and full-plan requirements below still need requirement-specific reconciliation.

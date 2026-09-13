@@ -9,7 +9,7 @@ Use raw evidence and current source to verify claims; older exports remain immut
 
 Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
 concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 25% weekly used, 75% remaining. Stop workers
+Latest actual Codex App Server read: 28% weekly used, 72% remaining. Stop workers
 and tests below 20% remaining. Goal token totals are not subscription quota.
 Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
 retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
@@ -61,6 +61,9 @@ finite normals and no inverted winding. GLB923604 bytes; output SHA and exact
 CC0 license verified. Repair stays opt-in and historical evidence is unchanged.
 Default-color white spots retain visibly jagged fringes: NOT admitted to catalog.
 Next asset quality work must address color fidelity, not repeat topology repair.
+Active bounded worker /root/mushroom_color_fidelity owns converter and new
+mushroom-basic-fidelity evidence only. One experiment under30kvertices/2MiB;
+no model calls or catalog admission. Root review pending.
 
 ## Asset handoff (paused)
 
