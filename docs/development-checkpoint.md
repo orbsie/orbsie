@@ -85,10 +85,7 @@ No owner login/new inference performed. Connector screenshot file save to repo
 was denied; inline viewing is permitted. Do not route around filesystem policy.
 
 Android read-only AVD orbsie_api35_phone, emulator-5580, API35, Chrome124.
-Exec16021 historically running; revalidate before using. Google US terms effective
-2026-07-30 awaiting specific owner approval; do not accept/bypass first-run.
-Owner asked to approve terms/continue without account/disable reporting and provide
-URL of graphics error; both answers pending. No physical device attached.
+Exec16021 historically running; revalidate before using. Owner approved Google Android setup terms on2026-09-13, continuing without an account and with reporting disabled. Original graphics error was the main / page. Terms approval is no longer pending. No physical device attached.
 
 ## Full-goal gaps
 
@@ -141,3 +138,5 @@ no automatic retries. Owner's broader Gateway ceiling remains5calls/test.
 Play focus fix accepted: root reviewed finished diff and both gameplay-focus-*-run1 reports. Click Play and real Tab→Enter Play focus the named region; fresh positive vertical velocity plus raised Y proves Space jump. Composer isolation and Tab return pass. Worker reports typecheck,6focused suites60tests,syntax/format pass. Editor-only change; no player rebuild/live calls. Next bounded task is restart/replay focus in editor and standalone, then queued route timing recovery (contract23463f3), then actual seven-crystal/undo traversal. Production remains ddafb15 until next release.
 
 2026-09-13 resource correction: root identified emulator pid381254/AVD orbsie_api35_phone/port5580 consuming1169% CPU while Android setup was pending. adb emu kill returned OK; emulator deliberately stopped, not an unexpected missing session. Restart only for Android work after setup approval. Restart-focus standalone run2 showed >7s observation gap; contention removed but causal link unproven. Current worker continues diagnosis. Root docs commits7c6847f/92423e8 add complete flagship evidence gate and correct Luna/browser-only test guidance.
+
+Owner answered all three pending questions: signed in, Android terms approved, graphicsfailure on main/. Available connector ChatGPT still displays Log in and OpenRouter tab remains sign-in; treat as browser-profile access mismatch, not unanswered user question. Main production / snapshot currently shows working software compatibility mode and composer, no fatal Graphics unavailable dialog. Owner CUA initialization remains unavailable. Restart worker checkpoint: all test processes terminal; local servers3040/3091 remain. Resume one diagnostic-informed standalone attempt then editor checks; repeated stall requires scheduling diagnosis, not blind retries.
