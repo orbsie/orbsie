@@ -110,8 +110,11 @@ Gameplay WIP review criteria and outstanding corrections are recorded under
 In-progress review in provider-live-gameplay-task.md. Await worker completion and
 actual browser fixture evidence before accepting/deploying observation changes.
 
-Provider prerequisites rechecked: .env.openrouter.local contains the OpenRouter
-test key (value not printed). Vercel lists AI_GATEWAY_TEST_KEY in production, but
-env run and a private temporary env pull did not expose a usable local value;
-no Gateway model request made. Temporary production env file was deleted. Do not
-claim local Gateway readiness yet or ask owner to paste credentials in chat.
+Provider prerequisites: OpenRouter key is in .env.openrouter.local. Gateway test
+credential previously supplied by the owner is now stored mode0600 at
+/home/marcos/.cache/orbsie/provider-tests/gateway.env (directory0700).
+Vercel metadata confirms production variable type=sensitive; supported retrieval
+returns no value, so no further decryption attempts. Production variable unchanged.
+Local Gateway credential validity not yet tested; no model calls during setup.
+Next fresh API-provider test remains Luna only,3calls,4096 output tokens/call,
+no automatic retries. Owner's broader Gateway ceiling remains5calls/test.
