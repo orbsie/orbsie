@@ -8,7 +8,7 @@ history/evidence: [archive](checkpoint-history/2026-09-13-before-chatgpt-presets
 
 Astra architecture/review/integration; one Luna xhigh/default worker, no nested
 agents, concise context, Fast off. Reuse `/root/host_session_renewal`.
-Latest measured Codex quota:52% used/48% remaining. Stop worker/live tests below20%
+Latest measured Codex quota:53% used/47% remaining. Stop worker/live tests below20%
 remaining; helper `/home/marcos/.cache/orbsie/read-codex-quota.py`. Goal tokens are
 not subscription quota. Targeted checks; no repeated green/live runs without cause.
 Live tests Luna only, users unrestricted. Owner approved needed calls. API tests
@@ -129,3 +129,19 @@ before provider execution (`gateway-input-local-current-20260913`); corrected
 BETTER_AUTH_URL for loopback. Those failed attempts remain retained.
 Release server3096/session3562 is running with cap4096 and local origin; revalidate
 before use. Root browser test finished; Luna notified it can run its route fixture.
+
+## Latest owner priority: visible and iterative authoring
+
+Owner confirms ChatGPT login and prompts now work in their existing browser;
+root's controlled live browser acceptance remains separate and unverified.
+Owner wants high-level progress and actual model inspection/correction of output.
+Requirement committed6da260a in prompt.md. Single Luna task now implements truthful
+activity UI from real lifecycle events: contract docs/visible-authoring-task.md.
+Full rendered self-review loop follows; labels alone cannot satisfy it. Root
+verified text-only current hosted input, documented image input plus pinned schema,
+and current thumbnail's missing readiness/revision binding. No new live calls.
+Route WIP parked in driver/harness/tests. Prior16tests pass and software fixture
+traverses3platforms/bounce/5win/reset, but overall failed phone-landscape sheet
+assertion. Latest separate-counter/fresh-recovery/jump-response fixes unverified.
+No route processes remain per worker handoff and process inspection. Root review
+and targeted validation needed before accepting those WIP changes.
