@@ -1,0 +1,17 @@
+{
+  "deployment": "https://orbsie-eer17l2tm-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "releaseCommit": "a68cac4",
+  "sourceCommits": [
+    "a9975fd",
+    "bfb82d7"
+  ],
+  "configStatus": 200,
+  "sourceStatus": 200,
+  "checked": {
+    "src/lib/scene-review-capture.ts": "c387d0521efdd0d843cb18c15ed589889de48f54b9c75b5d82fd178724897e87",
+    "src/lib/modeling-policy.ts": "0c4e9ac7ba0306b2f582d299c179e30e8f57e6a2f2c0892c54a567d5cfab1e17"
+  },
+  "liveModelCalls": 0,
+  "scope": "Production build/deploy and published capture/modeling sources; no generation-quality or self-review acceptance."
+}

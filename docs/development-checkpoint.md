@@ -25,7 +25,7 @@ Browser-only product, no Blender installation/connection surfaced. Preserve lice
 and safe unrelated edits. Frequent coherent commits; targeted checks, full/live
 E2E at meaningful milestones.
 
-## Accepted implementation, not deployed yet
+## Accepted implementation
 
 Capture a9975fd: project/revision-bound game canvas, committed resource/frame
 readiness in both renderers, stale/cancel/failure/timeout rejection,128KiB encoded
@@ -40,14 +40,14 @@ Player artifacts rebuilt after capture; root devserver3091/session48628 stopped.
 
 ## Production
 
-Current production c84ecbd: https://orbsie.com alias for
-https://orbsie-byn8nwc6r-grappeggias-projects.vercel.app. Includes ChatGPT presets,
+Current production release a68cac4 (main source a9975fd+bfb82d7): https://orbsie.com
+alias for https://orbsie-eer17l2tm-grappeggias-projects.vercel.app. Includes ChatGPT presets,
 sandbox policy gingerbread fix, graphics/focus/replay/accessibility fixes and real
-activity UI. Capture/new prompt/review loop not deployed. Activity is truthful
+activity UI. Capture and creative prompt now deployed; review loop not implemented. Activity is truthful
 waiting/building/preparing/applied/completed/cancelled/failed, bounded18events,
 accessible latest/history and stale-run guards;16tests+desktop/390px fixture pass.
 It is not model reasoning or visual inspection.
-Release checkout /tmp/orbsie-chatgpt-release-4eb9ce8 detachedc84ecbd; known generated
+Release checkout /tmp/orbsie-chatgpt-release-4eb9ce8 detacheda68cac4; known generated
 next-env.d.ts dirty. Existing Vercel CLI auth/scope grappeggias-projects. Do not
 print credentials. Other old local process handles must be revalidated before use.
 
@@ -109,4 +109,14 @@ remove/recreate editing shortcuts;19creative tests/format/diffcheck pass afterwa
 Final base5401bytes vs4100; all variants +1301UTF-8bytes (not measured tokens).
 Full NDJSON no-capability21447bytes; browser36670bytes. No schema/model/call-cap
 changes or live quality claims. Next: capability propagation, then image transport,
-server-bounded loop and controlled Luna eval. Prompt/capture not yet deployed.
+server-bounded loop and controlled Luna eval. Prompt/capture deployed in a68cac4; see release evidence below.
+
+## Capture/creative release verification
+
+Local production build57730 and Vercel83371 exited0; alias updated. Root verified
+config200 and published capture/modeling-policy source equality. Evidence
+capture-creative-release-20260913/report.json. Prior release generated dirt preserved
+in git stash before integration; cherry-pick conflicts limited to checkpoint and
+regenerable player artifacts, resolved with accepted source then rebuilt. Main
+player artifacts synced to released build. No live model calls. Luna continues
+image capability task, excluded from this isolated release.
