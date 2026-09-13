@@ -42,3 +42,18 @@ selection without opening dialog, draft preservation, unavailable/loading/error,
 keyboard dismiss/focus and stale catalog result. Browser fixture desktop + phone
 show direct dropdown and one-step choice. No live model calls required. Typecheck
 and relevant targeted suites once; report changed files/results/remaining risks.
+
+## Same chat UX handoff: flatten progress messages
+
+User additionally requests each progress update as an individual chat message in
+the parent thread, removing the nested activity box. Current orbsie.tsx1534 renders
+a bordered section with latest status above a nested historical list; globals.css561
+styles that extra panel. Replace with sibling assistant-style message rows directly
+in chat-messages, chronological events once each, bounded existing activity history.
+Reuse normal message visual language; remove obsolete panel/list styling. Keep
+project/run identity and stale guards, announce only newest event politely (do not
+reannounce whole history), preserve scroll/touch behavior and clear active/completed/
+failed states. Show factual high-level activity summaries, never private reasoning.
+Do not persist transient progress into exported project chat or double-render latest.
+Verify desktop/phone streaming and completion, chronological order, no nested
+activity panel, accessibility latest announcement, and unchanged draft/gameplay.
