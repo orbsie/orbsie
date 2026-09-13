@@ -122,3 +122,26 @@ focus stealing on ordinary model updates, geometry commits or window resize.
 Validate Play → Space jump without the harness's extra canvas click, then focus
 the composer and prove typing does not move the player. Cover both renderers and
 leave existing pointer/touch control behavior intact.
+
+## Route timing correction before the next live story
+
+Root reviewed the recorded run12 software trajectory. Platform B contact was
+observed, but the sample labeled `landing` was still airborne at y=2.709 with
+velocityY=-0.748 and no groundedOn. The driver then approached C too late in
+that jump. At C it was below the required top surface, fell to ground, and
+repeated ground jumps that could not reach that height. This failure is retained
+in `fresh-flagship-gameplay-fixture-run12-software-transition/report.json`.
+
+Before the seven/undo traversal integration, make elevated-route transitions
+depend on current support and jump phase rather than historical contact counts
+plus fixed delays. Release jump after contact, recover stable support on the
+preceding reachable platform, then initiate a fresh jump toward the next one.
+If support is lost, use a bounded recovery route; do not repeat impossible
+ground jumps or alter the generated platform layout. Keep trace labels factual:
+an arbitrary post-wait observation must not be called a landing or apex unless
+the recorded motion supports that event.
+
+Validate the observed failure with targeted controller cases, then one meaningful
+browser traversal under the affected timing conditions. Do not replace the hard
+three-contact/bounce gate or discard failed live attempts. The current creation
+fixture pass proves one successful route; it does not establish timing robustness.
