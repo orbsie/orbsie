@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "scope": "Independent offline canvas-encoder control-flow review, mocked encoding; not browser image quality proof",
+  "portraitDimensions": [
+    [
+      237,
+      512
+    ],
+    [
+      177,
+      384
+    ]
+  ],
+  "oversizedAttempts": 5,
+  "liveModelCalls": 0
+}

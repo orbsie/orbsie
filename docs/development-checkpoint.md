@@ -198,3 +198,14 @@ Worker remains responsible for fixes/tests before acceptance.
 Offline process-policy probe confirms hosted generation guard rejects image input
 before RPC; evidence visual-review-policy-20260913/report.json. Added explicit
 bounded policy-change requirement to transport contract. No live inference ran.
+
+## Capture root evidence before final worker handoff
+
+Basic actual-browser capture run3 passes WebGL+software; root visually inspected
+both saved *-review.png files and confirmed scene-only images. This fixture still
+covers initial static creation, not delayed replacement or complete loop acceptance.
+Independent offline encoder check passes portrait aspect preservation and maximum
+five downsize attempts (mock encoder, not actual image quality): evidence
+scene-review-root-encoder-20260913/report.json. Luna's current encoder uses bounded
+512/384/256/192/128 edges. Await final adapter edge-case tests/fixture and diff review
+before accepting or deploying Task2a. No live model calls in these checks.
