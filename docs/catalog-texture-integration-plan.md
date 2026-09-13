@@ -50,3 +50,21 @@ retain the self-contained atlas and exact license, with no editor service calls.
 Implement sequentially with one Luna worker: decoder/transfer/cache contract,
 then renderer/export integration, then derivative asset admission after review.
 Do not enable the new catalog ID until all corresponding paths are ready.
+
+## Interface decisions for the decoder task
+
+Use a typed optional texture descriptor alongside geometry, not a THREE.Texture
+hidden in geometry.userData (BufferGeometry.clone serializes userData). Extend
+AssetGeometryTransfer, prepared result, loader lease and hook together. Descriptor:
+RGBA Uint8Array, width/height, color-space and wrapping/filter metadata. Transfer
+pixel buffers once; count their byte length in each existing memory/cache budget.
+Create/release GPU textures at the rendering ownership boundary. Preserve stable
+asset leases while a texture is in use, including cancellation and replacement.
+
+Initial image support is PNG bufferView only, one distinct base-color map, max
+1024x1024 decoded pixels. Validate PNG dimensions before image decode; reject
+multiple atlases/unsupported extensions explicitly. A512x512 candidate is the
+first visual experiment. Network/resource policy stays deny-by-default.
+World's existing assetRecipe.tint is the explicit recolor signal; ignore the atlas
+when that tint is present. Preserve untinted source appearance and shared-cache
+isolation. Particle samples can use a bounded texture-color lookup in the worker.

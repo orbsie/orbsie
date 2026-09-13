@@ -81,7 +81,9 @@ worker-reported/unverified. Baseline fidelity-* artifacts duplicate conforming
 baseline; only experiment-22000 artifacts demonstrate the attempted variant.
 Do not rerun vertex-budget tuning. Next architecture decision: bounded embedded
 texture support across decoder/worker transfer/material/export, or a different
-permissive asset with acceptable vertex-color appearance. No active worker.
+permissive asset with acceptable vertex-color appearance. Active worker /root/mushroom_color_fidelity now owns a NEW offline512x512
+embedded-PNG GLB prototype and isolated comparison only. No production source
+or catalog edits. First artifact must be retained; root visual review pending.
 
 ## Asset handoff (paused)
 
