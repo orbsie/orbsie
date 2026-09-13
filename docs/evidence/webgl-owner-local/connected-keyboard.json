@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-13",
+  "url": "https://orbsie.com",
+  "browser": "Chrome extension Person 1",
+  "connection": "ChatGPT gpt-5.6-luna low",
+  "checks": {
+    "webglUnavailable": true,
+    "nonemptyDraftCreateDisabled": true,
+    "enterRetainedDraftIncludingWhitespace": true,
+    "temporaryDraftClearedAfterCheck": true
+  },
+  "scope": "Observed production UI behavior; no gameplay or successful inference claim"
+}
