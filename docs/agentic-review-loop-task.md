@@ -35,6 +35,11 @@ Do not call a label, schema check, fixture or catalog entry visual inspection.
 
 ## Handoff 1: atomic server run accounting
 
+Use a separate authoring-run allowance ledger: existing generation_runs requires
+an owned saved orb and owner_id, so reusing it would block anonymous free prompts.
+Bind anonymous runs to the existing signed visitor identity and authenticated runs
+to their existing secure identity; never require email signup or a saved cloud orb.
+
 Current api/generate calls claimTrial once per HTTP request. Extend that transaction
 to create an expiring opaque authoring-run record with identity, project, original
 request fingerprint, provider/model, initial revision, remaining review slots and
