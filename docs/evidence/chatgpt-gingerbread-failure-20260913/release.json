@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "83710c4",
+  "deployment": "https://orbsie-59aw2ca0h-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "configHttpStatus": 200,
+  "builtHostSha256": "d73b8f14f67026a0a2043b1a8fed2e3332ae8e30f84a2382ad334f0f19301553",
+  "validation": "Pinned decoder regression plus42targetedtests andproductionbuild",
+  "liveGeneration": "unverified; fresh ChatGPT connection required",
+  "modelCalls": 0
+}

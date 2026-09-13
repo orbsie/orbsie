@@ -41,8 +41,8 @@ prove separate worlds; do not label them full fresh-provider acceptance.
 
 ## Production and release
 
-Current source f506f85 deployed to
-https://orbsie-ldv1v4r12-grappeggias-projects.vercel.app (alias https://orbsie.com).
+Current source 83710c4 deployed to
+https://orbsie-59aw2ca0h-grappeggias-projects.vercel.app (alias https://orbsie.com).
 Local and Vercel production builds pass. All4 current player/runtime worker bytes
 match isolated release build. Provided Chrome390x844 touch smoke: software ready,
 no fatal graphics dialog or horizontal overflow; root viewed inline screenshot.
@@ -152,3 +152,5 @@ Releasef506f85 complete: localbuild20760 and Verceldeploy84568 exit0/aliasorbsie
 Owner priorities changed: hostedChatGPT Build a gingerbread house fails immediately afterlogin; investigate/fix first. Production HTTP200, journalcancelled within951ms/sequence0/entities0, hostreadyrenewed. Read-onlyevidence chatgpt-gingerbread-failure-20260913; no livecalls. CurrentLuna traces runtime/stream path, rootlogs/DB. Awaiting selectedmodel/effort answer; existingownerbrowser mismatch blocksreadingclientdiagnostic. Next queued userchange: ChatGPT default exactlyQuality/Balanced/Budget; rawmodel/effort onlyAdvanced, catalog-validatedpresets. Route timing then sevenundo remainqueued; noWIP onthese.
 
 Gingerbread rootcauseconfirmed by pinned0.153.4 empty-home/no-inference RPCprobe: oldreadonly.access rejected beforethreadvalidation, newreadOnly/networkAccessfalse accepted tothreadvalidation. Root reviewedpolicy+42targetedtests/typecheck evidence; deploying hostartifactfix. Rootproductionhostdiagnostic had0modelcalls: catalog502 then nonJSONsandboxresponse, not genuineLunaabsence. Hostartifactchange requires freshChatGPTconnection; livecreationnotyetproven. Currentworker next3presetChatGPT UI.
+
+Gingerbread policyfix83710c4 deployed(aliasorbsie.com), build99187/deploy61897 exit0, configHTTP200. Evidence chatgpt-gingerbread-failure-20260913/release.json. FreshChatGPTconnectionrequiredforupdatedhostartifact; livecreate/editnotyetverified. Currentworker3presetUI; routetimingqueued.
