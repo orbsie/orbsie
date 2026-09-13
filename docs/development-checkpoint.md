@@ -1,167 +1,95 @@
 # Development checkpoint
 
-Updated 2026-09-13. Full goal: implement all `prompt.md`, with real E2E workflows
-for OpenRouter, Vercel AI Gateway and ChatGPT. **Incomplete.** Requirements remain
-in `prompt.md`; do not substitute focused milestones for full acceptance.
-Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-after-software-fallback.md).
+Updated 2026-09-13. Goal: entirety of `prompt.md`, real E2E OpenRouter, Vercel AI
+Gateway and ChatGPT. **Incomplete.** Prior detailed handoff/evidence is in
+[archive](checkpoint-history/2026-09-13-before-publication-identity.md).
 
-## Execution policy
+## Execution
 
-Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
-no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 42% weekly used, 58% remaining;
-stop workers/tests below20% remaining. Reusable local check:
-`python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
-Live tests use Luna only; users retain unrestricted supported model choice.
-Owner approved needed ChatGPT calls; existing harness two-call milestone has
-180s/512KiB per call, no enforceable token cap. OpenRouter4096 output tokens/call,
-2-call milestones; Gateway up to5/test. No automatic blind retries.
-Use owner Chrome via computer use; GitHub via computer use. No copied browser
-cookies, local Codex credentials, or user Blender installation. Preserve licenses.
+Astra reviews architecture/diffs/integration; one Luna xhigh/default worker,
+no nested agents, concise contexts, Fast off. Reuse `/root/host_session_renewal`:
+fresh worker creation previously hit thread cap. Latest quota42% used/58% remaining;
+stop workers/live tests below20% remaining. Read actual quota with
+`python3 /home/marcos/.cache/orbsie/read-codex-quota.py`; goal tokens are not quota.
+Targeted tests; no repeated green/live runs without new evidence need.
 
-## Current handoff: software atlas accepted; hosted session continuity next
+Live tests Luna only; users retain model choice. Owner approved needed calls.
+API-key tests4096 output tokens/call; Gateway up to5/test. Fresh flagship3calls.
+Hosted application bounds180s/512KiB per call, no provider token/cost guarantee:
+2-calls-180s-512kib regular contract; 3-calls-180s-512kib flagship/interrupted recovery.
+No blind retries. GitHub via computer use, no copied browser/Codex credentials.
+User product runs in browser, no Blender installation/connection. Preserve licenses.
 
-Software atlas work is reviewed:20 focused tests, typecheck, player build and
-software-only actual-worker/offline exported browser checks pass. Root inspected
-source/pink/restored/export screenshots in
-`software-texture-fallback-final-20260913/`; reduced-detail vertex-color rendering
-accepted, no catalog admission or mobile performance claim. Fixture inspection
-code is injected only into test builds. Source/tint/other objects, last-good
-replacements and exact candidate model/license retention are verified.
+## Current task
 
-WebGL stage ff61fbc remains accepted (`catalog-texture-render-final-5/`). Candidate
-is still fixture substitution. Catalog admission awaits remaining owner/device
-performance and corresponding policy/integration gates.
+Single Luna worker `/root/host_session_renewal` is RUNNING publication verification
+from `docs/provider-publication-acceptance-task.md`. Owns harness/helper/tests;
+no live calls/auth/deploy/historical-world mutations. Root reviews before commit.
+Next task contract: `docs/provider-live-gameplay-task.md` (not implemented).
 
-Hosted session renewal source is now reviewed:118 focused tests across11suites,
-typecheck and diff check pass. It uses an owner/session/attempt lock, idle10min,
-absolute40min capped by auth session, verified actual non-resuming session
-extension, late-client cleanup and one180s route abort signal. Root reviewed
-clock/abort fixes and installed SDK source. Concurrency tests use a stateful
-mock; no actual Postgres or live >10minute continuity claim. Evidence
-`chatgpt-renewal-local-20260913/review.json`. Source committed0a2fbf6 and deployed; local/Vercel builds pass.
-Release evidence `chatgpt-renewal-release-20260913/report.json`; no live renewal
-acceptance.
-Same Luna worker `/root/host_session_renewal` now implements full-provider
-flagship harness support from `provider-flagship-harness-followup.md`. Fresh
-thread creation hit the host thread cap, so the finished worker was reused with
-a concise new task. Only one worker is active. No live calls/credentials/deploy.
-Exact prior118-test suite list requested, no rerun.
-Browser CUA remains unavailable; owner failure not reproduced, no bypass.
+Provider harness7cbd875 accepted: three providers/fresh3call story, exact prompts,
+original undo, refresh/export/cloud/publication follow-on. Behavioral helper
+rejects wrong project IDs/revisions.55 tests across provider-browser-e2e-flagship,
+hosted-chatgpt-acceptance, provider-browser-e2e-recovery pass; typecheck passes.
+Structural coverage is not actual collect/bounce/portal-win/reset traversal.
+Publication previously observed revision/canvas only; worker is closing identity
+and current runtime/worker byte verification gap. Saved ZIP traversal scripts
+prove separate worlds; do not label them full fresh-provider acceptance.
 
-ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
-reviewed and deployed. Six focused suites78 tests, typecheck and local/Vercel
-production builds passed. Official nested turn/completed.turn.id now accepted;
-conflicting IDs rejected, safe stage/reason/RPC metadata retained by client.
-First real owner Chrome auth/catalog succeeded, Luna low applied, but one create
-failed at2026-09-13T03:46:24Z with empty objects. No edit/retry. Cause of that
-pre-fix failure remains unproven. Evidence `chatgpt-owner-live-20260913/`.
-Next provider step is deliberate post-deploy owner Chrome create/edit, pending
-browser surface restoration. No new model calls during texture work.
+## Production and release
 
-## Production and workspace
+Current source7cbd875 deployed to
+https://orbsie-bl9a1qn22-grappeggias-projects.vercel.app (alias https://orbsie.com).
+Local/Vercel builds pass. OpenAI logo visible/loaded in Connections heading/button;
+390x844 touch emulation, compatibility renderer ready, no horizontal overflow.
+Root inspected inline screenshot. Evidence provider-harness-release-20260913.
+No physical mobile/live provider claim. Historic public test world still serves
+old WebGL-only independent runtime: published-old-runtime-20260913 evidence.
+Do not mutate old publications or treat main deploy as updating their runtime.
 
-Production source0a2fbf6 (bounded hosted session renewal, retaining reviewed
-graphics and ChatGPT completion fixes) deployed to
-https://orbsie-mz306mu2a-grappeggias-projects.vercel.app,
-aliased https://orbsie.com. Local/Vercel builds pass; HTTP200 and exact player
-runtime/source hashes verified in `software-texture-release-20260913/report.json`.
-No new owner-browser or live inference acceptance from this release.
-Build/typecheck passed. Read-only deployed HTTP200 and exact player runtime/source
-hashes passed: `chatgpt-completion-release-20260913/report.json`. No post-fix live
-inference yet. Graphics fallback source1b8698d, advice52ee047,
-standalone bundle0ff35ca. Owner Chrome now renders Canvas2D and enables Create
-with prompt; no fatal dialog. Evidence `software-owner-local/production.json`.
-43 shared gameplay/input/readiness unit tests passed. Editor+standalone variable,
-click/color, visibility, position/path, score/reset acceptance passed:
-`game-actions-software-acceptance-final/report.json`. Zero unexpected errors or
-external standalone requests. Fallback/retry/race suite also passed. These are
-focused checks, not full mobile/flagship/performance certification.
+Isolated release checkout `/tmp/orbsie-chatgpt-release-4eb9ce8` at7cbd875; known
+next-env.d.ts build-generated change retained. Vercel CLI existing local auth,
+scope grappeggias-projects. Build/deploy completed; no live build handle pending.
+Do not deploy unreviewed main WIP. No .openai/hosting.json. Frequent local commits.
 
-Main0a2fbf6 contains reviewed rendering and hosted renewal changes;
-full-provider harness worker changes are not yet reviewed. Do not deploy main
-worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
-`/tmp/orbsie-chatgpt-release-4eb9ce8` is at0a2fbf6 with dependencies and project
-link. Local production build and Vercel production build passed. Servers3071/3072
-were stopped; local3070 historically exists, verify before use. Deploy reviewed
-commits through isolated worktree. Vercel CLI uses existing local auth; no keys in
-chat/evidence. Root commits frequently and preserves failed unique-run evidence.
+## Accepted implementation; remaining live evidence
 
-## Browser handoff
+- Hosted completion4eb9ce8 handles official nested turn/completed.turn.id, identity
+  checks and safe diagnostics.78 tests/build pass. Pre-fix owner create failed;
+  post-fix real create/edit not yet exercised (chatgpt-owner-live-20260913).
+- Hosted renewal0a2fbf6: owner/session/attempt lock,10min idle/40min absolute capped
+  by auth, actual non-resuming runtime extension, late-client cleanup,180s abort.
+  118 focused tests/mock concurrency and build pass; real >10min continuity and
+  actual Postgres contention remain unverified. chatgpt-renewal-local/release evidence.
+- WebGL atlasff61fbc and software atlas2a1a38f accepted. Software reduced-detail
+  vertex colors, actual-worker/offline export checks, exact model/license retention.
+  software-texture-fallback-final-20260913 and catalog-texture-render-final-5.
+  Candidate still fixture-only; no catalog admission/performance claim.
+- Canvas2D fallback runs shared gameplay/input/physics;43 shared tests and focused
+  editor/standalone action checks pass (game-actions-software-acceptance-final).
+  Full fresh-world traversal and physical mobile performance remain open.
 
-CUA extension Chrome browser1, Person1, instance9a170aec-060d-42f6-9e37-e4a360ee76a6.
-Production tab1618752702; ChatGPT signed-in tab1618750689. Claim/mark handoff in
-current turn as needed. Latest CUA call failed before browser access with
-`CUA_REPL_ENABLED_SURFACES is required`; owner asked to re-enable the surface.
-No post-deploy live calls or browser verification yet. Device auth tabs auto-close
-on success; never reuse codes.
-chrome://gpu diagnostics and direct /api/chatgpt/status tab navigation were blocked;
-do not bypass via CDP/backend/cookie export. Normal Connections UI works.
-Host starts with10min idle lifetime; bounded active renewal is deployed in0a2fbf6,
-with live continuity still unverified. See
-`docs/chatgpt-session-lifetime-followup.md`. No claim current host remains alive.
+## Browser and Android
 
-## Remaining major acceptance gaps
+CUA owner surface still fails CUA_REPL_ENABLED_SURFACES is required. Do not bypass
+with raw CDP/cookie copying. Provided chrome_devtools connector works, but its
+profile is signed out of ChatGPT. Pages2orbsie.com (mobile Connections open),
+3chatgpt.com signed out,4historical published world. Revalidate inventory.
+No owner login/new inference performed. Connector screenshot file save to repo
+was denied; inline viewing is permitted. Do not route around filesystem policy.
 
-- ChatGPT real creation/edit/recovery/export/publish; active-session continuity.
-- OpenRouter real OAuth consent; API-key evidence is not OAuth acceptance.
-- Same persistent flagship game per provider: incremental creation while playing,
-  three moving bouncy mushrooms, collection/portal win/reset, giant pink targeted
-  edit, slower middle+two crystals, original live undo, refresh and publish.
-- Physical midrange Android and iOS Safari, touch/orientation/background/long-run
-  performance. Prior emulator or narrow desktop tests do not certify mobile.
-- Finish texture/catalog/procedural mix integration, visual quality and offline
-  export/license acceptance. Decoder3d6a839 and WebGL texture stage reviewed; software appearance accepted; catalog admission remains open.
-- Full prompt.md requirement audit, provider recovery/free exhaustion, GitHub push.
+Android read-only AVD orbsie_api35_phone, emulator-5580, API35, Chrome124.
+Exec16021 historically running; revalidate before using. Google US terms effective
+2026-07-30 awaiting specific owner approval; do not accept/bypass first-run.
+Owner asked to approve terms/continue without account/disable reporting and provide
+URL of graphics error; both answers pending. No physical device attached.
 
-Prior provider evidence remains in archive: OpenRouter3658d7e create/pink edit/
-reload/export/contact passed with visual-quality gap; Gateway input-game39b8c90
-and3-call cloud recovery passed; free blue-strawberry2→1→0 passed. Do not repeat
-those isolated checks as a substitute for missing full same-world milestones.
+## Full-goal gaps
 
-## Android preflight2026-09-13
-
-Existing orbsie_api35_phone AVD booted read-only on emulator-5580 using2cores,
-3072MiB and SwiftShader. Installed Chrome124 first-run requires Google US terms
-effective2026-07-30; async specific approval requested, no terms accepted or
-Orbsie page tested. Evidence `android-emulator-preflight-20260913/`. Native
-physical devices remain absent; this older Chrome does not certify current mobile.
-Emulator exec session16021 is running, pending consent; inspect authoritative
-ADB/process state before continuing, do not bypass first-run.
-
-## Alternate browser connector discovery2026-09-13
-
-Provided chrome_devtools tools work (discover via ALL_TOOLS); CUA still lacks
-CUA_REPL_ENABLED_SURFACES. This profile is signed out of ChatGPT. No raw CDP,
-cookie copying, new login or model call. Tabs:2orbsie.com (mobile390x844,
-Connections open, test draft cleared);3chatgpt.com signed out;4historical published
-world in isolated context orbsie-public-release. Full inventory via list_pages.
-Current editor software-ready/mobile layout/Create enablement passed, evidence
-`production-mobile-viewport-20260913/report.json`. Actual ChatGPT connect buttons
-lack the existing OpenAI logo; assigned tiny fix to current worker.
-Historical published revision1 still has pre-fallback independent runtime and
-shows WebGL2 unavailable, evidence `published-old-runtime-20260913/report.json`.
-Fresh current-runtime publication is required; current editor deployment does
-not hot-update immutable old published games. Connector screenshot file save to
-repo denied by its workspace-root policy; inline screenshot viewing worked.
-Do not route around that filesystem restriction.
-
-
-## Current harness review
-
-Three-provider fresh flagship support and explicit hosted3-call bounds are
-reviewed. Behavioral orchestration checks reject wrong project IDs/revisions;
-55 tests across provider-browser-e2e-flagship, hosted-chatgpt-acceptance and
-provider-browser-e2e-recovery suites pass, plus typecheck/diffcheck. Root reviewed
-helper wiring and provider/bounds/logo diffs. OpenAI logo fix deployed in7cbd875; production mobile viewport screenshot and
-loaded heading/button images verified; compatibility renderer remains ready.
-Release evidence: provider-harness-release-20260913/report.json.
-Production now https://orbsie-bl9a1qn22-grappeggias-projects.vercel.app
-(alias orbsie.com). Isolated release checkout is7cbd875; build/deploy passed.
-No live calls this task. Publication currently checks revision/canvas, not exact
-project/runtime identity; the remaining gate is recorded in
-`provider-flagship-harness-followup.md`. Full gameplay traversal remains unverified.
-Latest production browser recheck shows compatibility rendering ready on the
-editor; historical public test deployment still has the old WebGL-only runtime.
-
-Next single Luna task: `provider-publication-acceptance-task.md`; no live calls.
+Real ChatGPT creation/edit/export/publication and >10min renewal; actual OpenRouter
+OAuth (API-key tests are separate); fresh same-project flagship gameplay across
+all providers, including playing during generation and original undo; current
+artifact signed-out publication; midrange physical Android and iOS Safari touch,
+orientation/background/long-run performance; licensed catalog admission/mix/new-only
+matrix and measurements; full prompt audit/free exhaustion/provider recovery and
+GitHub push. Scope remains prompt.md, not merely these implementation milestones.
