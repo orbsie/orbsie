@@ -96,7 +96,7 @@ Emulator/desktop emulation is not physical-device or complete gameplay acceptanc
 
 OpenRouter key `.env.openrouter.local`; raised-cap flag required for4096.
 Gateway key `/home/marcos/.cache/orbsie/provider-tests/gateway.env`, mode0600,
-directory0700; validity not live-tested. Do not repeat Vercel sensitive-env
+directory0700; current key reached live generation once (see failure below). Do not repeat Vercel sensitive-env
 retrieval/decryption attempts. Hosted owner browser access still unresolved. Public-catalog preflight on 2026-09-13 confirms Luna listed by both providers and both local key files mode0600; no keys read/sent, no inference, and credential validity remains unproven. Evidence `provider-readiness-20260913/report.json`. Catalog integration documentation now distinguishes historical companion evidence from the browser-only hosted release gates.
 
 Remaining full-goal gates include actual ChatGPT create/edit/recovery/>10min
@@ -113,3 +113,19 @@ licensed catalog admission/mix/new-only live matrix and measurements; full promp
 budget/cancellation/recovery/isolation/UX audit; GitHub push. Prior29test procedural
 isolation audit,118test hosted renewal coverage and atlas/offline fixture evidence
 are retained in archive, with their explicit live/performance limitations.
+
+## Latest Gateway integration failure
+
+Current ae3a478 production-build input-game test made one actual Luna call at
+4096 output tokens/default, then stopped: HTTP200 stream emitted a seed and
+INVALID_SCENE_JSON at operation2, issues[], finishReason:null. No edit or retry.
+Evidence `provider-e2e/gateway-input-local-origin-20260913/` includes root review.
+Raw rejected content is not retained; the cause is not established. Next bounded
+task after route correction: capture test-only diagnostic evidence and add a
+reproducing regression before another provider call. Do not weaken validation.
+Production attempt stopped before generation because configured cap differs from
+4096 (`gateway-input-current-20260913`). First local attempt rejected app origin
+before provider execution (`gateway-input-local-current-20260913`); corrected
+BETTER_AUTH_URL for loopback. Those failed attempts remain retained.
+Release server3096/session3562 is running with cap4096 and local origin; revalidate
+before use. Root browser test finished; Luna notified it can run its route fixture.

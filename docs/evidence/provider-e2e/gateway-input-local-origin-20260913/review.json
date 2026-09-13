@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "ae3a478",
+  "testScope": "fresh Gateway Luna input-game creation/edit with production build on loopback",
+  "providerCallsObserved": 1,
+  "editCalls": 0,
+  "retriesAfterProviderFailure": 0,
+  "maxOutputTokensPerCall": 4096,
+  "serviceTier": "default",
+  "result": "incomplete-invalid-scene-json",
+  "diagnostic": {
+    "code": "INVALID_SCENE_JSON",
+    "operation": 2,
+    "issues": [],
+    "finishReason": null
+  },
+  "cause": "Unproven: diagnostic does not retain rejected provider content. Do not infer malformed recipe versus stream framing without further evidence.",
+  "priorPreflights": [
+    {
+      "directory": "../gateway-input-current-20260913",
+      "result": "Production output cap did not match 4096; zero generation requests."
+    },
+    {
+      "directory": "../gateway-input-local-current-20260913",
+      "result": "Local app origin rejected with checkOrigin message visible in screenshot; zero provider calls."
+    }
+  ],
+  "nextAction": "Capture bounded test-only failure evidence and create a deterministic regression before another live call. Preserve all three attempts."
+}
