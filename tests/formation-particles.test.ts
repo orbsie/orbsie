@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {
   formationParticles,
   prepareFormationParticles,
+  sampleTexture,
   type FormationTextureSample,
 } from "../src/lib/formation-particles";
 
@@ -282,4 +283,22 @@ it("samples bounded atlas pixels into particle colors in linear space", () => {
   }
   sampled.dispose();
   source.dispose();
+});
+
+it("exports the atlas sampler with declared filtering and color space", () => {
+  const texture: FormationTextureSample = {
+    pixels: new Uint8Array([255, 0, 0, 255, 0, 128, 0, 255]),
+    width: 2,
+    height: 1,
+    colorSpace: "srgb",
+    wrapS: THREE.ClampToEdgeWrapping,
+    wrapT: THREE.ClampToEdgeWrapping,
+    magFilter: THREE.NearestFilter,
+    minFilter: THREE.NearestFilter,
+  };
+  expect(sampleTexture(texture, [0.25, 0.5])).toEqual([1, 0, 0]);
+  const second = sampleTexture(texture, [0.75, 0.5]);
+  expect(second[0]).toBe(0);
+  expect(second[1]).toBeCloseTo(0.21586050011389926, 10);
+  expect(second[2]).toBe(0);
 });

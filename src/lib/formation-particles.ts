@@ -8,7 +8,7 @@ const TRIANGLE_PROBE_RATIO = 0.7548776662466927;
 type FormationAttribute =
   THREE.BufferAttribute | THREE.InterleavedBufferAttribute;
 type Vec3 = readonly [number, number, number];
-type Vec2 = readonly [number, number];
+export type FormationTextureUv = readonly [number, number];
 
 export interface FormationTextureSample {
   readonly pixels: Uint8Array;
@@ -24,7 +24,9 @@ export interface FormationTextureSample {
 interface SurfaceTriangle {
   readonly position: readonly [Vec3, Vec3, Vec3];
   readonly color: readonly [Vec3, Vec3, Vec3];
-  readonly uv: readonly [Vec2, Vec2, Vec2] | undefined;
+  readonly uv:
+    | readonly [FormationTextureUv, FormationTextureUv, FormationTextureUv]
+    | undefined;
   readonly from: readonly [Vec3, Vec3, Vec3];
   readonly fromColor: readonly [Vec3, Vec3, Vec3];
   readonly area: number;
@@ -102,7 +104,7 @@ function writeInterpolation(
 function readPair(
   attribute: FormationAttribute | undefined,
   index: number,
-): Vec2 | undefined {
+): FormationTextureUv | undefined {
   if (
     !attribute ||
     attribute.itemSize < 2 ||
@@ -110,7 +112,10 @@ function readPair(
     index >= attribute.count
   )
     return undefined;
-  const value: Vec2 = [attribute.getX(index), attribute.getY(index)];
+  const value: FormationTextureUv = [
+    attribute.getX(index),
+    attribute.getY(index),
+  ];
   return value.every(Number.isFinite) ? value : undefined;
 }
 
@@ -173,7 +178,11 @@ function texel(texture: FormationTextureSample, x: number, y: number): Vec3 {
     : channels;
 }
 
-function sampleTexture(texture: FormationTextureSample, uv: Vec2): Vec3 {
+/** Sample one atlas UV in the same bounded, linear-space way as formation particles. */
+export function sampleTexture(
+  texture: FormationTextureSample,
+  uv: FormationTextureUv,
+): Vec3 {
   const u = wrapCoordinate(uv[0], texture.wrapS);
   const v = wrapCoordinate(uv[1], texture.wrapT);
   const x = u * texture.width - 0.5;
@@ -266,7 +275,8 @@ function makeTriangle(
       [1, 1, 1],
       [1, 1, 1],
     ],
-    uv: textureUv as [Vec2, Vec2, Vec2] | undefined,
+    uv: textureUv as
+      [FormationTextureUv, FormationTextureUv, FormationTextureUv] | undefined,
     from: resolvedSource,
     fromColor: resolvedSourceColor,
     area,
@@ -381,7 +391,7 @@ export function formationParticles(
     writeInterpolation(positions, offset, triangle.position, weights);
     writeInterpolation(colors, offset, triangle.color, weights);
     if (texture && triangle.uv) {
-      const uv: Vec2 = [
+      const uv: FormationTextureUv = [
         triangle.uv[0][0] * weights[0] +
           triangle.uv[1][0] * weights[1] +
           triangle.uv[2][0] * weights[2],

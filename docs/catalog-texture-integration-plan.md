@@ -1,7 +1,8 @@
 # Catalog texture integration task contract
 
 Status: decoder/transfer/cache accepted in3d6a839; WebGL renderer/export
-integration accepted inff61fbc. Software atlas appearance is in progress. No textured catalog admission yet. Provider connection
+integration accepted inff61fbc. Software atlas appearance is reviewed and accepted; final evidence is
+`software-texture-fallback-final-20260913/report.json`. No textured catalog admission yet. Provider connection
 acceptance remains higher priority when browser access is available.
 
 The Asset Quest mushroom experiment retains its silhouette but loses texture
@@ -123,3 +124,8 @@ last-good colors paired with geometry, recipe and collision stage on replacement
 Validate source/pink/restored appearance through the actual worker with WebGL
 disabled and offline exported playback. This is reduced-detail software rendering;
 it does not claim full per-pixel texture mapping or mobile performance acceptance.
+
+Software acceptance:20 focused tests, typecheck, player build and software-only
+actual-worker browser checks passed. Root reviewed all four full-size captures.
+Appearance is vertex-color approximation; owner/mobile performance and catalog
+admission gates remain open.

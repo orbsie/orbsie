@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "orbsie.catalog-comparison/v1",
+  "checkedAt": "2026-09-13T17:37:02.451Z",
+  "sourceCommit": "79745fe2e278e4ad8b5095a990dd350fc4822185",
+  "passed": true,
+  "scope": "Deterministic local WebGL and software canvas rendering with shared asset preparation.",
+  "providerCalls": 0,
+  "dataSources": {
+    "modelProvider": "none",
+    "externalStorage": "none",
+    "catalog": "approved visual prototype GLB used as a test substitution; no catalog admission"
+  },
+  "externalRequests": [],
+  "comparison": {
+    "basis": "rawTimings",
+    "performancePass": "not-evaluated",
+    "statement": "Timings describe this local browser, renderer, and cold-context run; they do not establish a speed claim or device performance guarantee."
+  },
+  "modes": [
+    {
+      "mode": "software-textured",
+      "project": {
+        "id": "catalog-comparison",
+        "seed": 42,
+        "environment": {
+          "sky": "#dceee9",
+          "ground": "#91b977",
+          "water": "#59bdbb"
+        }
+      },
+      "renderer": {
+        "renderer": "software-canvas",
+        "webglVersion": "forced-unavailable"
+      },
+      "browser": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+        "platform": "Linux x86_64",
+        "hardwareConcurrency": 32,
+        "devicePixelRatio": 1,
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        }
+      },
+      "sceneComplexity": {
+        "scope": "scene geometry inventory, including hidden formation/debug geometry",
+        "entities": 3,
+        "geometrySources": [
+          "asset",
+          "asset",
+          "asset"
+        ],
+        "catalogAssetEntities": 3,
+        "meshGeometryCount": 0,
+        "pointGeometryCount": 0,
+        "triangleCount": 0,
+        "vertexCount": 0
+      },
+      "coldCache": {
+        "freshBrowserContext": true,
+        "cacheControl": "no-store",
+        "serviceWorkers": "blocked"
+      },
+      "catalog": {
+        "assetPath": "/models/kenney/nature-kit/tree_default.glb",
+        "bytesExpected": 271396,
+        "bytesRequested": 271396,
+        "requestCount": 1,
+        "workerStarts": [
+          "/player/asset-geometry-worker.js"
+        ],
+        "workerDecoded": 1,
+        "exactSourceBytes": true
+      },
+      "rawTimings": {
+        "submissionToFirstEntityDrawMs": null,
+        "submissionToAllThreeDrawsMs": null,
+        "entityDraws": [],
+        "preparationFrameIntervalsMs": [
+          14.100000000000023,
+          16.599999999999966,
+          66.69999999999999,
+          16.700000000000045,
+          16.599999999999966
+        ],
+        "preparationFrameIntervalSampleCount": 5,
+        "preparationFrameIntervalSampleLimit": 120,
+        "preparationFrameIntervalSampleOverflow": false,
+        "preparationFrameIntervalSamplesTooFew": false,
+        "preparationFrameIntervalSampleNote": "Software fallback appearance check does not instrument WebGL scene metrics."
+      },
+      "errors": [],
+      "externalRequests": []
+    }
+  ],
+  "softwareAcceptance": {
+    "forcedWebglOff": true,
+    "source": {
+      "screenshot": "docs/evidence/software-texture-fallback-final-20260913/software-untinted.png",
+      "bakedAtlasColorRange": [
+        [
+          0.381962314248085,
+          0.5358151422115043,
+          0.5084940912202001
+        ],
+        [
+          0.381962314248085,
+          0.5358151422115043,
+          0.5084940912202001
+        ],
+        [
+          0.381962314248085,
+          0.5358151422115043,
+          0.5084940912202001
+        ]
+      ],
+      "uniqueGeometryClones": 3
+    },
+    "pink": {
+      "screenshot": "docs/evidence/software-texture-fallback-final-20260913/software-pink.png",
+      "changedFromSource": true
+    },
+    "restored": {
+      "screenshot": "docs/evidence/software-texture-fallback-final-20260913/software-restored.png",
+      "exactSourcePixels": true
+    },
+    "replacement": {
+      "pendingRetainedLastGood": true,
+      "staleRetainedLastGood": true,
+      "failedRetainedLastGood": true
+    },
+    "export": {
+      "exactCandidateModelBytes": true,
+      "exactCandidateLicenseText": true,
+      "playbackScreenshot": "docs/evidence/software-texture-fallback-final-20260913/software-exported-playback.png",
+      "softwareCanvasVisible": true,
+      "workerStarted": true,
+      "externalRequests": []
+    }
+  }
+}

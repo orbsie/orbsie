@@ -1,0 +1,12 @@
+{
+  "reviewed": true,
+  "scope": "Software atlas approximation only; no catalog admission or full provider/mobile acceptance",
+  "visuals": [
+    "software-untinted.png",
+    "software-pink.png",
+    "software-restored.png",
+    "software-exported-playback.png"
+  ],
+  "findings": "Recognizable cap/stem colors; selected uniform pink; other objects unchanged; restoration and exported objects visible. Faceted vertex-color approximation accepted for compatibility renderer.",
+  "sourceReview": "Committed clone sampling, shared linear sampler, fixture-only inspection, exact model/license export checks, immutable source tests and replacement assertions reviewed."
+}

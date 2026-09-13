@@ -16,7 +16,11 @@ import { exportWorld } from "../src/lib/export";
 
 /** Test-only fixture for a local procedural/catalog renderer comparison. */
 export type ComparisonMode =
-  "procedural-only" | "catalog-only" | "mixed" | "textured";
+  | "procedural-only"
+  | "catalog-only"
+  | "mixed"
+  | "textured"
+  | "software-textured";
 
 const catalogId = "kenney.nature.tree-default" as const;
 const projectId = "catalog-comparison";
@@ -28,7 +32,12 @@ const positions: [number, number, number][] = [
 const color = "#42b894";
 const mode = (() => {
   const value = new URLSearchParams(location.search).get("mode");
-  if (value === "catalog-only" || value === "mixed" || value === "textured")
+  if (
+    value === "catalog-only" ||
+    value === "mixed" ||
+    value === "textured" ||
+    value === "software-textured"
+  )
     return value;
   return "procedural-only";
 })();
@@ -37,6 +46,7 @@ function geometryFor(index: number): Entity["geometry"] {
   if (
     mode === "catalog-only" ||
     mode === "textured" ||
+    mode === "software-textured" ||
     (mode === "mixed" && index === 2)
   )
     return { kind: "asset", assetId: catalogId, detail: "refined" };
@@ -48,6 +58,7 @@ const state = () => {
   if (!canvas) return undefined;
   return _roots.get(canvas)?.store.getState();
 };
+const softwareMode = mode === "software-textured";
 async function waitForRendererFrame() {
   const started = performance.now();
   while (performance.now() - started < 10_000) {
@@ -55,6 +66,13 @@ async function waitForRendererFrame() {
       requestAnimationFrame(() => resolve()),
     );
     if ((state()?.gl.info.render.frame ?? 0) > 0) return;
+    if (
+      softwareMode &&
+      document.querySelector(".software-world-status") &&
+      (document.querySelector(".software-world canvas") as HTMLCanvasElement)
+        ?.width > 0
+    )
+      return;
   }
   throw Error("Blank World renderer did not produce an initial frame.");
 }
@@ -67,6 +85,12 @@ blank.id = projectId;
 blank.seed = 42;
 blank.environment = { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" };
 useOrb.getState().load(blank);
+if (softwareMode)
+  (
+    globalThis as typeof globalThis & {
+      __orbsieSoftwareWorldProbe?: { read?: () => unknown };
+    }
+  ).__orbsieSoftwareWorldProbe = {};
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
@@ -116,8 +140,10 @@ const assetsReady = () =>
       isAssetGeometryReady(entity.geometry.assetId),
   );
 const allEntitiesDrawn = () =>
-  metrics()?.sceneUpdates.length === entities.length &&
-  metrics()?.sceneUpdates.every((sample) => sample.drawnAt !== null);
+  softwareMode
+    ? !!document.querySelector(".software-world canvas")
+    : metrics()?.sceneUpdates.length === entities.length &&
+      metrics()?.sceneUpdates.every((sample) => sample.drawnAt !== null);
 let disposedTextureCount = 0;
 const watchedTextures = new WeakSet<THREE.DataTexture>();
 function sampleFrame(now: number) {
@@ -133,6 +159,11 @@ function sampleFrame(now: number) {
 
 const rendererDetails = () => {
   const renderer = state()?.gl;
+  if (softwareMode)
+    return {
+      renderer: "software-canvas",
+      webglVersion: "forced-unavailable",
+    };
   const context = renderer?.getContext();
   if (!renderer || !context)
     return { renderer: "unavailable", webglVersion: "unavailable" };
@@ -154,6 +185,31 @@ const rendererDetails = () => {
   };
 };
 const appearanceDetails = () => {
+  if (softwareMode) {
+    const meshes = (
+      globalThis as typeof globalThis & {
+        __orbsieSoftwareWorldProbe?: { read?: () => unknown };
+      }
+    ).__orbsieSoftwareWorldProbe?.read?.() as
+      Array<Record<string, unknown>> | undefined;
+    return {
+      dataTextureMaps: 0,
+      pinkVertexColorMeshes: 0,
+      meshes: Array.isArray(meshes)
+        ? meshes.map((mesh) => ({
+            ...mesh,
+            visible: true,
+            assetId: "software-baked",
+            map: null,
+            vertexColor: {
+              average: [0, 0, 0],
+              range: (mesh.colorRange as number[] | undefined) ?? [0, 0, 0],
+              uniform: false,
+            },
+          }))
+        : [],
+    };
+  }
   const current = state();
   const details: {
     dataTextureMaps: number;
@@ -360,7 +416,9 @@ const sceneComplexity = () => {
 ).catalogComparisonFixture = {
   mode,
   ready: () =>
-    !!state() &&
+    (softwareMode
+      ? !!document.querySelector(".software-world canvas")
+      : !!state()) &&
     assetsReady() &&
     allEntitiesDrawn() &&
     preparationReadyAt !== null,

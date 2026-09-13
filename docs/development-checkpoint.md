@@ -9,7 +9,7 @@ Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-afte
 
 Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
 no nested agents, concise context, Fast off. Targeted checks; full/live runs only
-at meaningful milestones. Latest actual quota read 2026-09-13: 39% weekly used, 61% remaining;
+at meaningful milestones. Latest actual quota read 2026-09-13: 40% weekly used, 60% remaining;
 stop workers/tests below20% remaining. Reusable local check:
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`. Goal token totals are not quota.
 Live tests use Luna only; users retain unrestricted supported model choice.
@@ -19,28 +19,27 @@ Owner approved needed ChatGPT calls; existing harness two-call milestone has
 Use owner Chrome via computer use; GitHub via computer use. No copied browser
 cookies, local Codex credentials, or user Blender installation. Preserve licenses.
 
-## Current task: software atlas appearance
+## Current handoff: software atlas accepted; hosted session continuity next
 
-Previous turn made progress: reviewed and committed WebGL texture integration
-and fresh fallback evidence inff61fbc. Owner graphics error remains unreproduced;
-forced-WebGL-off editor/retry and standalone input checks pass. CUA remains
-unavailable before browser access; no auth workaround is authorized.
+Software atlas work is reviewed:20 focused tests, typecheck, player build and
+software-only actual-worker/offline exported browser checks pass. Root inspected
+source/pink/restored/export screenshots in
+`software-texture-fallback-final-20260913/`; reduced-detail vertex-color rendering
+accepted, no catalog admission or mobile performance claim. Fixture inspection
+code is injected only into test builds. Source/tint/other objects, last-good
+replacements and exact candidate model/license retention are verified.
 
-One Luna worker `/root/software_texture` implements precomputed approximate
-UV-sampled vertex colors in SoftwareEntity’s committed effect, shared sampler,
-uniform tint overrides and last-good appearance. Owns focused source/tests/browser
-fixture changes and player rebuild. No catalog admission, live calls or deployment.
-Root owns review and documentation. Contract: `catalog-texture-integration-plan.md`.
-Acceptance: actual worker with WebGL disabled, source/pink/restored editor views
-and offline exported playback, targeted sampler tests and typecheck.
+WebGL stage ff61fbc remains accepted (`catalog-texture-render-final-5/`). Candidate
+is still fixture substitution. Catalog admission awaits remaining owner/device
+performance and corresponding policy/integration gates.
 
-WebGL texture stage ff61fbc includes immutable atlas ownership, uniform tint and
-restore, last-good replacement and committed lifecycle cleanup. Typecheck, player
-build,22 focused tests and actual-worker StrictMode verifier pass:
-`catalog-texture-render-final-5/report.json`. Root reviewed settled editor views
-in final-2 and exported player in final-4. Candidate remains fixture substitution.
-Source archive retained in `/home/marcos/.cache/orbsie/source-archives/`; provenance
-`mushroom-source-restored-20260913/report.json` matches original hashes.
+Next bounded implementation: hosted ChatGPT active-session renewal, using
+`chatgpt-session-lifetime-followup.md`. Root rechecked registry/backend/manager
+and generate route:10minute host, no renewal, separate30s acquisition+175s fetch
+budgets. Preserve owner/session/attempt revocation and a total request deadline.
+No worker assigned to this next task yet. Follow with full-provider harness work
+in `provider-flagship-harness-followup.md`; fresh story currently Gateway-only.
+Browser CUA remains unavailable; owner failure not reproduced, no bypass.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
 reviewed and deployed. Six focused suites78 tests, typecheck and local/Vercel

@@ -4,7 +4,7 @@ import { chromium, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { unzipSync } from "fflate";
@@ -13,12 +13,19 @@ import { createHash } from "node:crypto";
 const texturedAssetPath = process.env.TEXTURED_ASSET_PATH;
 const directory =
   process.env.TEXTURE_EVIDENCE_DIR ?? "docs/evidence/catalog-comparison";
+const requestedMode = process.env.CATALOG_COMPARISON_MODE;
 const temporary = await mkdtemp(join(tmpdir(), "orbsie-catalog-comparison-"));
 const catalogPath = "/models/kenney/nature-kit/tree_default.glb";
 const pendingCatalogPath = "/models/kenney/nature-kit/tree_pineTallA.glb";
 const modes = texturedAssetPath
-  ? ["textured"]
+  ? requestedMode
+    ? [requestedMode]
+    : ["textured", "software-textured"]
   : ["procedural-only", "catalog-only", "mixed"];
+if (requestedMode && !["textured", "software-textured"].includes(requestedMode))
+  throw Error(
+    "CATALOG_COMPARISON_MODE must be textured or software-textured when TEXTURED_ASSET_PATH is set.",
+  );
 const report = {
   schemaVersion: "orbsie.catalog-comparison/v1",
   checkedAt: new Date().toISOString(),
@@ -27,7 +34,7 @@ const report = {
   }).trim(),
   passed: false,
   scope:
-    "Deterministic local WebGL rendering and asset preparation comparison using the shared World renderer.",
+    "Deterministic local WebGL and software canvas rendering with shared asset preparation.",
   providerCalls: 0,
   dataSources: {
     modelProvider: "none",
@@ -106,6 +113,77 @@ const candidateManifestPlugin = candidateManifest
       },
     }
   : undefined;
+const softwareProbePlugin = {
+  name: "catalog-comparison-software-probe",
+  setup(build) {
+    build.onLoad({ filter: /[\\/]software-world\.tsx$/ }, async (args) => {
+      const source = (await readFile(args.path)).toString("utf8");
+      const anchor = "/* __ORBSIE_SOFTWARE_WORLD_FIXTURE_PROBE__ */";
+      assert.equal(
+        source.split(anchor).length - 1,
+        1,
+        "software fixture probe anchor must occur exactly once",
+      );
+      const probe = `useEffect(() => {
+    const surface = (
+      globalThis as typeof globalThis & {
+        __orbsieSoftwareWorldProbe?: { read?: () => unknown };
+      }
+    ).__orbsieSoftwareWorldProbe;
+    if (!surface) return;
+    const read = () =>
+      Array.from(geometriesRef.current, ([id, entry]) => {
+        const colors = entry.geometry.getAttribute("color");
+        const sample = colors
+          ? Array.from(colors.array as ArrayLike<number>).slice(0, 12)
+          : [];
+        const minimum = [
+          Number.POSITIVE_INFINITY,
+          Number.POSITIVE_INFINITY,
+          Number.POSITIVE_INFINITY,
+        ];
+        const maximum = [
+          Number.NEGATIVE_INFINITY,
+          Number.NEGATIVE_INFINITY,
+          Number.NEGATIVE_INFINITY,
+        ];
+        let colorHash = 2166136261;
+        if (colors)
+          for (let index = 0; index < colors.count; index++)
+            for (let channel = 0; channel < 3; channel++) {
+              const value = colors.getComponent(index, channel);
+              minimum[channel] = Math.min(minimum[channel], value);
+              maximum[channel] = Math.max(maximum[channel], value);
+              colorHash = Math.imul(
+                colorHash ^ Math.round(value * 1_000_000),
+                16777619,
+              ) >>> 0;
+            }
+        return {
+          id,
+          geometryUuid: entry.geometry.uuid,
+          ready: entry.ready,
+          tint: entry.tint ?? null,
+          colorSample: sample,
+          colorHash,
+          colorRange: maximum.map((value, channel) =>
+            Number.isFinite(value) ? value - minimum[channel] : 0,
+          ),
+        };
+      });
+    surface.read = read;
+    return () => {
+      if (surface.read === read) delete surface.read;
+    };
+  }, []);`;
+      return {
+        contents: source.replace(anchor, probe),
+        loader: "tsx",
+        resolveDir: dirname(args.path),
+      };
+    });
+  },
+};
 const playerFiles = new Map();
 if (texturedAssetPath) {
   const checkedInAssetSha256 =
@@ -175,7 +253,7 @@ try {
     // Development React enables StrictMode's setup/cleanup replay, which
     // exercises ownership of unpublished formation allocations in this test.
     define: { "process.env.NODE_ENV": '"development"' },
-    plugins: candidateManifestPlugin ? [candidateManifestPlugin] : [],
+    plugins: [candidateManifestPlugin, softwareProbePlugin].filter(Boolean),
   });
   await build({
     entryPoints: ["src/lib/asset-geometry-worker.ts"],
@@ -235,7 +313,7 @@ try {
     } else if (path === "/") {
       response.setHeader("Content-Type", "text/html");
       response.end(
-        '<!doctype html><title>Catalog comparison fixture</title><style>html,body,#root{margin:0;width:100%;height:100%;overflow:hidden;background:#07100f}</style><div id="root"></div><script type="module" src="/fixture.js"></script>',
+        '<!doctype html><title>Catalog comparison fixture</title><style>html,body,#root{margin:0;width:100%;height:100%;overflow:hidden;background:#07100f}.software-world{position:absolute;inset:0;overflow:hidden}.software-world canvas{display:block;width:100%;height:100%}</style><div id="root"></div><script type="module" src="/fixture.js"></script>',
       );
     } else {
       response.writeHead(404);
@@ -266,24 +344,41 @@ try {
       return route.abort();
     });
     const page = await context.newPage();
-    await page.addInitScript((candidate) => {
-      if (candidate) window.__orbsieCatalogComparisonCandidate = candidate;
-      window.__orbsieFormationVisibilityProbe = {};
-      const starts = [];
-      let decoded = 0;
-      window.__catalogComparisonWorkerStarts = starts;
-      window.__catalogComparisonWorkerDecoded = () => decoded;
-      const NativeWorker = window.Worker;
-      window.Worker = class extends NativeWorker {
-        constructor(scriptURL, options) {
-          starts.push(String(scriptURL));
-          super(scriptURL, options);
-          this.addEventListener("message", (event) => {
-            if (event.data?.decoded) decoded++;
-          });
+    const softwareMode = mode === "software-textured";
+    const forceWebglOff = softwareMode;
+    await page.addInitScript(
+      ({ candidate, forceWebglOff }) => {
+        if (candidate) window.__orbsieCatalogComparisonCandidate = candidate;
+        window.__orbsieFormationVisibilityProbe = {};
+        if (forceWebglOff) {
+          const getContext = HTMLCanvasElement.prototype.getContext;
+          HTMLCanvasElement.prototype.getContext = function (kind, attributes) {
+            if (
+              kind === "webgl2" ||
+              kind === "webgl" ||
+              kind === "experimental-webgl"
+            )
+              return null;
+            return getContext.call(this, kind, attributes);
+          };
         }
-      };
-    }, candidateSubstitution);
+        const starts = [];
+        let decoded = 0;
+        window.__catalogComparisonWorkerStarts = starts;
+        window.__catalogComparisonWorkerDecoded = () => decoded;
+        const NativeWorker = window.Worker;
+        window.Worker = class extends NativeWorker {
+          constructor(scriptURL, options) {
+            starts.push(String(scriptURL));
+            super(scriptURL, options);
+            this.addEventListener("message", (event) => {
+              if (event.data?.decoded) decoded++;
+            });
+          }
+        };
+      },
+      { candidate: candidateSubstitution, forceWebglOff },
+    );
     const errors = [];
     const modelResponses = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -353,20 +448,31 @@ try {
     report.externalRequests.push(...modeExternalRequests);
     const updates = status.metrics?.sceneUpdates ?? [];
     assert.equal(status.mode, mode);
-    assert.equal(updates.length, 3);
-    assert.ok(updates.every((sample) => Number.isFinite(sample.acceptedAt)));
-    assert.ok(
-      updates.every(
-        (sample) =>
-          Number.isFinite(sample.drawnAt) &&
-          Number.isFinite(sample.latencyMs) &&
-          sample.drawnAt >= sample.acceptedAt &&
-          sample.latencyMs >= 0,
-      ),
-      `${mode} has an incomplete or nonfinite entity draw sample`,
-    );
-    assert.deepEqual(errors, [], `${mode} reported browser errors`);
-    const initialErrors = [...errors];
+    if (mode === "software-textured") {
+      assert.equal(updates.length, 3);
+      assert.ok(updates.every((sample) => sample.drawnAt === null));
+      assert.equal(status.renderer.renderer, "software-canvas");
+    } else {
+      assert.equal(updates.length, 3);
+      assert.ok(updates.every((sample) => Number.isFinite(sample.acceptedAt)));
+      assert.ok(
+        updates.every(
+          (sample) =>
+            Number.isFinite(sample.drawnAt) &&
+            Number.isFinite(sample.latencyMs) &&
+            sample.drawnAt >= sample.acceptedAt &&
+            sample.latencyMs >= 0,
+        ),
+        `${mode} has an incomplete or nonfinite entity draw sample`,
+      );
+    }
+    const unexpectedErrors = softwareMode
+      ? errors.filter(
+          (message) => !message.includes("Error creating WebGL context."),
+        )
+      : errors;
+    assert.deepEqual(unexpectedErrors, [], `${mode} reported browser errors`);
+    const initialErrors = [...unexpectedErrors];
     assert.deepEqual(
       modeExternalRequests,
       [],
@@ -781,30 +887,357 @@ try {
           afterCleanup.disposedTextureCount - cleanupBaseline,
       };
     }
+    if (mode === "software-textured") {
+      const softwareMeshes = () =>
+        page.evaluate(
+          () => window.catalogComparisonFixture.status().appearance.meshes,
+        );
+      const softwareTarget = async () =>
+        (await softwareMeshes()).find((mesh) => mesh.id === "tree-1");
+      const softwareCanvas = page.locator(".software-world canvas");
+      await expect(softwareCanvas).toBeVisible();
+      const initial = await softwareMeshes();
+      assert.equal(initial.length, 3, "software fallback lost an entity mesh");
+      assert.ok(
+        initial.every(
+          (mesh) =>
+            mesh.ready &&
+            mesh.tint === null &&
+            mesh.colorRange.some((value) => value > 0.01),
+        ),
+        "software fallback did not bake nonuniform atlas colors",
+      );
+      assert.equal(
+        new Set(initial.map((mesh) => mesh.geometryUuid)).size,
+        3,
+        "software entities share a mutable geometry clone",
+      );
+      const initialSnapshots = new Map(
+        initial.map((mesh) => [
+          mesh.id,
+          {
+            geometryUuid: mesh.geometryUuid,
+            colorHash: mesh.colorHash,
+            colorSample: mesh.colorSample,
+            colorRange: mesh.colorRange,
+            tint: mesh.tint,
+          },
+        ]),
+      );
+      const captureSoftware = async (label) => {
+        const path = `${directory}/${label}.png`;
+        const bytes = await softwareCanvas.screenshot({ path });
+        return {
+          path,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+        };
+      };
+      const untinted = await captureSoftware("software-untinted");
+      const sourceTarget = await softwareTarget();
+      await page.evaluate(() =>
+        window.catalogComparisonFixture.setTint("#ff69b4"),
+      );
+      await expect
+        .poll(async () => (await softwareTarget())?.tint, { timeout: 10_000 })
+        .toBe("#ff69b4");
+      const pink = await captureSoftware("software-pink");
+      const pinkTarget = await softwareTarget();
+      assert.notEqual(
+        pink.sha256,
+        untinted.sha256,
+        "software recipe tint did not dominate the baked atlas appearance",
+      );
+      assert.deepEqual(
+        pinkTarget?.colorSample,
+        sourceTarget?.colorSample,
+        "software recipe tint mutated baked source colors",
+      );
+      assert.equal(
+        pinkTarget?.colorHash,
+        sourceTarget?.colorHash,
+        "software recipe tint changed the full baked color hash",
+      );
+      const pinkMeshes = await softwareMeshes();
+      for (const mesh of pinkMeshes.filter((value) => value.id !== "tree-1"))
+        assert.deepEqual(
+          {
+            geometryUuid: mesh.geometryUuid,
+            colorHash: mesh.colorHash,
+            colorSample: mesh.colorSample,
+            colorRange: mesh.colorRange,
+            tint: mesh.tint,
+          },
+          initialSnapshots.get(mesh.id),
+          `software tint changed unrelated entity ${mesh.id}`,
+        );
+      await page.evaluate(() => window.catalogComparisonFixture.setTint());
+      await expect
+        .poll(async () => (await softwareTarget())?.tint, { timeout: 10_000 })
+        .toBe(null);
+      const restored = await captureSoftware("software-restored");
+      const restoredTarget = await softwareTarget();
+      assert.equal(
+        restored.sha256,
+        untinted.sha256,
+        "clearing the software tint did not restore the source appearance",
+      );
+      assert.deepEqual(
+        restoredTarget?.colorSample,
+        sourceTarget?.colorSample,
+        "clearing the software tint changed baked source colors",
+      );
+      assert.equal(
+        restoredTarget?.colorHash,
+        sourceTarget?.colorHash,
+        "clearing the software tint changed the full baked color hash",
+      );
+
+      await page.evaluate(() =>
+        window.catalogComparisonFixture.replaceAsset("pending"),
+      );
+      await page.waitForTimeout(80);
+      const pending = await softwareTarget();
+      assert.equal(
+        pending?.geometryUuid,
+        restoredTarget?.geometryUuid,
+        "pending replacement blanked the software last-good appearance",
+      );
+      assert.deepEqual(
+        pending?.colorSample,
+        sourceTarget?.colorSample,
+        "pending replacement changed software baked colors",
+      );
+      assert.equal(
+        pending?.colorHash,
+        sourceTarget?.colorHash,
+        "pending replacement changed the full baked color hash",
+      );
+      await page.evaluate(() =>
+        window.catalogComparisonFixture.replaceAsset("restore"),
+      );
+      await page.waitForTimeout(700);
+      const afterStale = await softwareTarget();
+      assert.deepEqual(
+        afterStale?.colorSample,
+        sourceTarget?.colorSample,
+        "stale replacement changed the software last-good appearance",
+      );
+      assert.equal(
+        afterStale?.colorHash,
+        sourceTarget?.colorHash,
+        "stale replacement changed the full baked color hash",
+      );
+      await page.evaluate(() =>
+        window.catalogComparisonFixture.replaceAsset("failed"),
+      );
+      await expect
+        .poll(
+          async () =>
+            (
+              await page.evaluate(() =>
+                window.catalogComparisonFixture.status(),
+              )
+            ).error,
+          { timeout: 10_000 },
+        )
+        .toMatch(/Tree 1: This model could not be loaded/);
+      const failed = await softwareTarget();
+      assert.deepEqual(
+        failed?.colorSample,
+        sourceTarget?.colorSample,
+        "failed replacement changed the software last-good appearance",
+      );
+      assert.equal(
+        failed?.colorHash,
+        sourceTarget?.colorHash,
+        "failed replacement changed the full baked color hash",
+      );
+      await page.evaluate(() =>
+        window.catalogComparisonFixture.replaceAsset("restore"),
+      );
+      await page.waitForTimeout(700);
+
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        page.evaluate(() => window.catalogComparisonFixture.exportWorld()),
+      ]);
+      const downloadPath = await download.path();
+      assert.ok(downloadPath, "software export did not produce a download");
+      const exportedZip = unzipSync(await readFile(downloadPath));
+      for (const [name, bytes] of Object.entries(exportedZip))
+        exportedFiles.set(name, bytes);
+      assert.deepEqual(
+        Buffer.from(exportedFiles.get(catalogPath.slice(1))),
+        Buffer.from(catalogBytes),
+        "software export did not contain the exact candidate model bytes",
+      );
+      assert.deepEqual(
+        Buffer.from(
+          exportedFiles.get(
+            "assets/catalog/licenses/kenney-nature-kit-License.txt",
+          ),
+        ),
+        Buffer.from(candidateLicenseBytes),
+        "software export did not contain the candidate license text",
+      );
+      const playbackContext = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+        serviceWorkers: "block",
+      });
+      const playbackExternalRequests = [];
+      await playbackContext.route("**/*", (route) => {
+        const requestOrigin = new URL(route.request().url()).origin;
+        if (requestOrigin === origin) return route.continue();
+        playbackExternalRequests.push(route.request().url());
+        return route.abort();
+      });
+      const playbackPage = await playbackContext.newPage();
+      const playbackErrors = [];
+      const playbackWorkerStarts = [];
+      await playbackPage.addInitScript(() => {
+        const getContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (kind, attributes) {
+          if (
+            kind === "webgl2" ||
+            kind === "webgl" ||
+            kind === "experimental-webgl"
+          )
+            return null;
+          return getContext.call(this, kind, attributes);
+        };
+        const starts = [];
+        window.__catalogComparisonPlaybackWorkerStarts = starts;
+        const NativeWorker = window.Worker;
+        window.Worker = class extends NativeWorker {
+          constructor(scriptURL, options) {
+            starts.push(String(scriptURL));
+            super(scriptURL, options);
+          }
+        };
+      });
+      playbackPage.on("pageerror", (error) =>
+        playbackErrors.push(error.message),
+      );
+      playbackPage.on("console", (message) => {
+        if (message.type() === "error") playbackErrors.push(message.text());
+      });
+      await playbackPage.goto(`${origin}/export/index.html`);
+      await expect(playbackPage.locator("main[data-ready='true']")).toBeVisible(
+        { timeout: 30_000 },
+      );
+      assert.deepEqual(
+        playbackErrors.filter(
+          (message) => !message.includes("Error creating WebGL context."),
+        ),
+        [],
+        "software export playback errors",
+      );
+      assert.deepEqual(
+        playbackExternalRequests,
+        [],
+        "software export playback made an external request",
+      );
+      const playbackCanvas = playbackPage.locator(".software-world canvas");
+      await expect(playbackCanvas).toBeVisible();
+      await expect
+        .poll(
+          async () =>
+            playbackPage.evaluate(() => {
+              const canvas = document.querySelector(".software-world canvas");
+              const context = canvas?.getContext("2d");
+              if (!canvas || !context) return 0;
+              const pixels = context.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+              ).data;
+              let darkPixels = 0;
+              for (let offset = 0; offset < pixels.length; offset += 4)
+                if (
+                  pixels[offset] < 140 &&
+                  pixels[offset + 1] < 155 &&
+                  pixels[offset + 2] < 155
+                )
+                  darkPixels++;
+              return darkPixels;
+            }),
+          { timeout: 10_000 },
+        )
+        .toBeGreaterThan(100);
+      const playbackScreenshot = `${directory}/software-exported-playback.png`;
+      await playbackPage.screenshot({ path: playbackScreenshot });
+      const playbackStatus = await playbackPage.evaluate(() => ({
+        workerStarts: window.__catalogComparisonPlaybackWorkerStarts ?? [],
+      }));
+      assert.ok(
+        playbackStatus.workerStarts.some((url) =>
+          url.endsWith("asset-geometry-worker.js"),
+        ),
+        `software export playback did not start the bundled asset worker: ${JSON.stringify(playbackStatus.workerStarts)}`,
+      );
+      await playbackContext.close();
+      report.softwareAcceptance = {
+        forcedWebglOff: true,
+        source: {
+          screenshot: untinted.path,
+          bakedAtlasColorRange: initial.map((mesh) => mesh.colorRange),
+          uniqueGeometryClones: 3,
+        },
+        pink: { screenshot: pink.path, changedFromSource: true },
+        restored: { screenshot: restored.path, exactSourcePixels: true },
+        replacement: {
+          pendingRetainedLastGood: true,
+          staleRetainedLastGood: true,
+          failedRetainedLastGood: true,
+        },
+        export: {
+          exactCandidateModelBytes: true,
+          exactCandidateLicenseText: true,
+          playbackScreenshot,
+          softwareCanvasVisible: true,
+          workerStarted: true,
+          externalRequests: playbackExternalRequests,
+        },
+      };
+    }
     const drawnAt = updates.map((sample) => sample.drawnAt);
     const frameIntervals = status.frameIntervals.filter(
       (interval) => Number.isFinite(interval) && interval >= 0,
     );
     assert.equal(frameIntervals.length, status.frameIntervals.length);
-    const rawTimings = {
-      submissionToFirstEntityDrawMs: Math.min(...drawnAt),
-      submissionToAllThreeDrawsMs: Math.max(...drawnAt),
-      entityDraws: updates.map((sample) => ({
-        entityId: sample.entityId,
-        acceptedAtMs: sample.acceptedAt,
-        drawnAtMs: sample.drawnAt,
-        drawLatencyMs: sample.latencyMs,
-      })),
-      preparationFrameIntervalsMs: frameIntervals,
-      preparationFrameIntervalSampleCount: frameIntervals.length,
-      preparationFrameIntervalSampleLimit: 120,
-      preparationFrameIntervalSampleOverflow: status.frameIntervalOverflow,
-      preparationFrameIntervalSamplesTooFew: frameIntervals.length < 3,
-      preparationFrameIntervalSampleNote:
-        frameIntervals.length < 3
-          ? "Fewer than three intervals were observed before readiness; retained as an explicit raw sample limitation."
-          : undefined,
-    };
+    const rawTimings = softwareMode
+      ? {
+          submissionToFirstEntityDrawMs: null,
+          submissionToAllThreeDrawsMs: null,
+          entityDraws: [],
+          preparationFrameIntervalsMs: frameIntervals,
+          preparationFrameIntervalSampleCount: frameIntervals.length,
+          preparationFrameIntervalSampleLimit: 120,
+          preparationFrameIntervalSampleOverflow: status.frameIntervalOverflow,
+          preparationFrameIntervalSamplesTooFew: frameIntervals.length < 3,
+          preparationFrameIntervalSampleNote:
+            "Software fallback appearance check does not instrument WebGL scene metrics.",
+        }
+      : {
+          submissionToFirstEntityDrawMs: Math.min(...drawnAt),
+          submissionToAllThreeDrawsMs: Math.max(...drawnAt),
+          entityDraws: updates.map((sample) => ({
+            entityId: sample.entityId,
+            acceptedAtMs: sample.acceptedAt,
+            drawnAtMs: sample.drawnAt,
+            drawLatencyMs: sample.latencyMs,
+          })),
+          preparationFrameIntervalsMs: frameIntervals,
+          preparationFrameIntervalSampleCount: frameIntervals.length,
+          preparationFrameIntervalSampleLimit: 120,
+          preparationFrameIntervalSampleOverflow: status.frameIntervalOverflow,
+          preparationFrameIntervalSamplesTooFew: frameIntervals.length < 3,
+          preparationFrameIntervalSampleNote:
+            frameIntervals.length < 3
+              ? "Fewer than three intervals were observed before readiness; retained as an explicit raw sample limitation."
+              : undefined,
+        };
     report.modes.push({
       mode,
       project: status.project,

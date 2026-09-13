@@ -24,6 +24,10 @@ import {
   runtimeEntityMatrix,
   usesSceneHierarchy,
 } from "@/lib/scene-runtime";
+import {
+  sampleTexture,
+  type FormationTextureSample,
+} from "@/lib/formation-particles";
 import type { Entity, Project } from "@/lib/protocol";
 
 export type SoftwareGeometryEntry = {
@@ -81,6 +85,61 @@ function readColor(
   return [attribute.getX(index), attribute.getY(index), attribute.getZ(index)];
 }
 
+function textureSample(
+  texture: THREE.DataTexture,
+): FormationTextureSample | undefined {
+  const image = texture.image;
+  const pixels = image?.data;
+  if (
+    !(pixels instanceof Uint8Array) ||
+    !Number.isSafeInteger(image?.width) ||
+    !Number.isSafeInteger(image?.height) ||
+    image.width <= 0 ||
+    image.height <= 0 ||
+    pixels.byteLength !== image.width * image.height * 4 ||
+    !["", "srgb", "srgb-linear"].includes(texture.colorSpace)
+  )
+    return undefined;
+  return {
+    pixels,
+    width: image.width,
+    height: image.height,
+    colorSpace: texture.colorSpace as FormationTextureSample["colorSpace"],
+    wrapS: texture.wrapS,
+    wrapT: texture.wrapT,
+    magFilter: texture.magFilter,
+    minFilter: texture.minFilter,
+  };
+}
+
+/** Bake a bounded atlas approximation into committed software vertex colors. */
+export function bakeSoftwareTextureColors(
+  geometry: THREE.BufferGeometry,
+  texture: THREE.DataTexture | undefined,
+): THREE.BufferGeometry {
+  if (!texture) return geometry;
+  const sample = textureSample(texture);
+  const position = geometry.getAttribute("position");
+  const uv = geometry.getAttribute("uv");
+  if (!sample || !position || !uv || uv.itemSize < 2) return geometry;
+  const sourceColors = geometry.getAttribute("color");
+  const colors = new Float32Array(position.count * 3);
+  for (let index = 0; index < position.count; index++) {
+    const source = readColor(sourceColors, index);
+    const sampled =
+      index < uv.count &&
+      Number.isFinite(uv.getX(index)) &&
+      Number.isFinite(uv.getY(index))
+        ? sampleTexture(sample, [uv.getX(index), uv.getY(index)])
+        : ([1, 1, 1] as const);
+    colors[index * 3] = source[0] * sampled[0];
+    colors[index * 3 + 1] = source[1] * sampled[1];
+    colors[index * 3 + 2] = source[2] * sampled[2];
+  }
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  return geometry;
+}
+
 function makeEntityGeometry(entity: Entity): SoftwareGeometryEntry {
   const geometry = entityGeometry(
     entity.geometry?.kind === "asset" || entity.geometry?.kind === "generated"
@@ -121,12 +180,18 @@ function SoftwareEntity({
     recipe?.kind === "generated" ? recipe.model?.sha256 : undefined,
   );
   const loaded = recipe?.kind === "generated" ? generated : catalog;
+  const loadedTexture = recipe?.kind === "asset" ? catalog?.texture : undefined;
+  useEffect(() => {
+    if (loaded?.error)
+      useOrb.getState().set({ error: `${entity.label}: ${loaded.error}` });
+  }, [entity.label, loaded?.error]);
   useEffect(() => {
     // Clone/build only after React commits this entity. That keeps discarded
     // concurrent renders from allocating geometries that have no owner.
-    const entry = loaded?.geometry
+    const geometry = loaded?.geometry?.clone();
+    const entry = geometry
       ? {
-          geometry: loaded.geometry.clone(),
+          geometry: bakeSoftwareTextureColors(geometry, loadedTexture),
           tint: recipe?.tint,
           ready: true,
           sourceRecipe: entity.geometry,
@@ -148,6 +213,7 @@ function SoftwareEntity({
     entity.color,
     entity.stage,
     loaded?.geometry,
+    loadedTexture,
     onChange,
     recipe?.tint,
   ]);
@@ -547,6 +613,8 @@ export default function SoftwareWorld({
     },
     [],
   );
+
+  /* __ORBSIE_SOFTWARE_WORLD_FIXTURE_PROBE__ */
 
   useEffect(() => {
     const canvas = canvasRef.current;
