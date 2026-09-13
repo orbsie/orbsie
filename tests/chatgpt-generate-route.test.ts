@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   origin: vi.fn(),
   read: vi.fn(),
+  acquire: vi.fn(),
   request: vi.fn(),
   HttpError: class extends Error {
     constructor(
@@ -27,6 +28,7 @@ vi.mock("@/lib/server/chatgpt-host-registry", () => ({
 vi.mock("@/lib/server/chatgpt-host-manager", () => ({
   createChatGPTHostManager: () => ({
     read: mocks.read,
+    acquireForGeneration: mocks.acquire,
     request: mocks.request,
   }),
 }));
@@ -67,6 +69,11 @@ describe("hosted ChatGPT generation route", () => {
       capability: "private-token",
       expiresAt: new Date(Date.now() + 60000),
     });
+    mocks.acquire.mockResolvedValue({
+      sandboxName: "private-host",
+      capability: "private-token",
+      expiresAt: new Date(Date.now() + 60000),
+    });
     mocks.request.mockResolvedValue(
       new Response('{"type":"commit_revision","message":"ready"}\n', {
         headers: { "content-type": "application/x-ndjson" },
@@ -89,8 +96,8 @@ describe("hosted ChatGPT generation route", () => {
     expect(await signedOut.json()).toMatchObject({
       code: "CHATGPT_CONNECTION_REQUIRED",
     });
-    expect(mocks.read).not.toHaveBeenCalled();
-    mocks.read.mockResolvedValueOnce(null);
+    expect(mocks.acquire).not.toHaveBeenCalled();
+    mocks.acquire.mockResolvedValueOnce(null);
     const missingHost = await POST(request());
     expect(missingHost.status).toBe(409);
     expect(await missingHost.json()).toMatchObject({
@@ -99,7 +106,7 @@ describe("hosted ChatGPT generation route", () => {
     expect(mocks.request).not.toHaveBeenCalled();
   });
   it("fails stale deployed hosts before sending a generation request", async () => {
-    mocks.read.mockRejectedValueOnce(new ChatGPTHostStaleError());
+    mocks.acquire.mockRejectedValueOnce(new ChatGPTHostStaleError());
     const response = await POST(request());
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({
@@ -126,10 +133,13 @@ describe("hosted ChatGPT generation route", () => {
     const response = await POST(request());
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("commit_revision");
-    expect(mocks.read).toHaveBeenCalledWith({
-      ownerId: "owner",
-      sessionId: "session",
-    });
+    expect(mocks.acquire).toHaveBeenCalledWith(
+      {
+        ownerId: "owner",
+        sessionId: "session",
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
     expect(mocks.request).toHaveBeenCalledWith(
       expect.objectContaining({ capability: "private-token" }),
       "generate",

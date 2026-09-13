@@ -11,6 +11,7 @@ import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 import { chatGPTSceneRequestSchema } from "@/lib/server/chatgpt-scene-stream";
 export const runtime = "nodejs";
 export const maxDuration = 180;
+const ROUTE_DEADLINE_MS = 180_000;
 const headers = { "Cache-Control": "private, no-store" };
 export async function POST(request: Request) {
   if (
@@ -18,6 +19,10 @@ export async function POST(request: Request) {
     process.env.ORBSIE_CHATGPT_GENERATION !== "1"
   )
     return Response.json({ error: "Not found." }, { status: 404, headers });
+  const routeSignal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(ROUTE_DEADLINE_MS),
+  ]);
   try {
     checkOrigin(request);
     if (new URL(request.url).search)
@@ -43,11 +48,15 @@ export async function POST(request: Request) {
     const manager = createChatGPTHostManager({
       artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
     });
-    const host = await manager.read(identity);
+    routeSignal.throwIfAborted();
+    const host = await manager.acquireForGeneration(identity, {
+      signal: routeSignal,
+    });
     if (!host) throw new HttpError(409, "Connect your ChatGPT account first.");
+    routeSignal.throwIfAborted();
     const response = await manager.request(host, "generate", {
       input: input.data,
-      signal: request.signal,
+      signal: routeSignal,
     });
     if (
       !response.ok ||

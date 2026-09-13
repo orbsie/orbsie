@@ -16,6 +16,19 @@ const routes = {
   logout: ["POST", "/logout"],
 } as const;
 const validName = (name: string) => /^orbsie-chatgpt-[a-f0-9-]{36}$/.test(name);
+export const CHATGPT_GENERATION_TIMEOUT_MS = 175_000;
+export const CHATGPT_TRANSPORT_CLEANUP_MS = 5_000;
+export const CHATGPT_GENERATION_HEADROOM_MS =
+  CHATGPT_GENERATION_TIMEOUT_MS + CHATGPT_TRANSPORT_CLEANUP_MS;
+const HOST_LOOKUP_TIMEOUT_MS = 30_000;
+const HOST_RENEWAL_TIMEOUT_MS = 30_000;
+
+function signalFor(signal: AbortSignal | undefined, timeoutMs: number) {
+  return AbortSignal.any([
+    AbortSignal.timeout(timeoutMs),
+    ...(signal ? [signal] : []),
+  ]);
+}
 
 export function computeChatGPTArtifactDigest(
   files: readonly { path: string; content: Uint8Array }[],
@@ -32,13 +45,13 @@ export function createChatGPTSandboxBackend(options: {
   artifactDirectory: string;
   credentials?: Credentials;
 }) {
-  async function get(name: string) {
+  async function get(name: string, signal?: AbortSignal) {
     if (!validName(name)) throw Error("Invalid ChatGPT host.");
     return Sandbox.get({
       ...options.credentials,
       name,
       resume: false,
-      signal: AbortSignal.timeout(30_000),
+      signal: signalFor(signal, HOST_LOOKUP_TIMEOUT_MS),
     });
   }
   async function request(
@@ -55,7 +68,7 @@ export function createChatGPTSandboxBackend(options: {
       throw Error("Unexpected request body.");
     if (host.expiresAt.getTime() <= Date.now())
       throw Error("ChatGPT host expired.");
-    const sandbox = await get(host.sandboxName);
+    const sandbox = await get(host.sandboxName, options.signal);
     if (sandbox.status !== "running")
       throw Error("ChatGPT host is unavailable.");
     const [method, path] = routes[operation];
@@ -68,11 +81,55 @@ export function createChatGPTSandboxBackend(options: {
       body,
       redirect: "error",
       cache: "no-store",
-      signal: AbortSignal.any([
-        AbortSignal.timeout(operation === "generate" ? 175_000 : 35_000),
-        ...(options.signal ? [options.signal] : []),
-      ]),
+      signal: signalFor(
+        options.signal,
+        operation === "generate" ? CHATGPT_GENERATION_TIMEOUT_MS : 35_000,
+      ),
     });
+  }
+
+  async function renew(
+    host: Host,
+    targetExpiresAt: Date,
+    signal?: AbortSignal,
+  ): Promise<Date> {
+    const renewalSignal = signalFor(signal, HOST_RENEWAL_TIMEOUT_MS);
+    renewalSignal.throwIfAborted();
+    if (
+      !(targetExpiresAt instanceof Date) ||
+      !Number.isFinite(targetExpiresAt.getTime())
+    )
+      throw Error("ChatGPT host renewal deadline is invalid.");
+    const now = Date.now();
+    if (targetExpiresAt.getTime() <= now)
+      throw Error("ChatGPT host renewal deadline has expired.");
+    const sandbox = await get(host.sandboxName, renewalSignal);
+    if (sandbox.status !== "running")
+      throw Error("ChatGPT host is unavailable.");
+    const actual = sandbox.expiresAt;
+    if (!(actual instanceof Date) || !Number.isFinite(actual.getTime()))
+      throw Error("ChatGPT host expiry could not be verified.");
+    if (actual.getTime() <= Date.now()) throw Error("ChatGPT host expired.");
+    if (targetExpiresAt.getTime() <= Date.now())
+      throw Error("ChatGPT host renewal deadline has expired.");
+    if (actual.getTime() < targetExpiresAt.getTime()) {
+      const delta = targetExpiresAt.getTime() - actual.getTime();
+      if (delta <= 0) throw Error("ChatGPT host renewal delta is invalid.");
+      // Call the current running Session directly. Sandbox.extendTimeout uses
+      // its resume wrapper, which could restart a host after a stop race.
+      await sandbox.currentSession().extendTimeout(delta, {
+        signal: renewalSignal,
+      });
+    }
+    renewalSignal.throwIfAborted();
+    const verified = sandbox.expiresAt;
+    if (
+      !(verified instanceof Date) ||
+      !Number.isFinite(verified.getTime()) ||
+      verified.getTime() < targetExpiresAt.getTime()
+    )
+      throw Error("ChatGPT host expiry could not be verified.");
+    return verified;
   }
 
   async function readArtifacts() {
@@ -93,6 +150,7 @@ export function createChatGPTSandboxBackend(options: {
 
   return {
     request,
+    renew,
     async artifactDigest() {
       return (await readArtifacts()).digest;
     },

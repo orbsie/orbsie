@@ -1,5 +1,9 @@
 # Hosted ChatGPT session lifetime follow-up
 
+Current status2026-09-13: bounded implementation reviewed;118 focused tests
+and typecheck passed. Source history below explains the prior10minute limit.
+Live continuity is still unverified. See `evidence/chatgpt-renewal-local-20260913/review.json`.
+
 Source inspection after real device authorization succeeded (e853a94):
 
 - src/lib/server/chatgpt-host-registry.ts sets HOST_LIFETIME_MS to 10 minutes.
@@ -31,7 +35,7 @@ reserve enough time for an in-flight generation. Passive status polling must not
 silently keep metered runtimes alive indefinitely. No renewal was implemented by
 this investigation.
 
-## Bounded implementation contract (not yet implemented)
+## Bounded implementation contract (implemented; live acceptance open)
 
 Source review2026-09-13: `database()` returns a pg Pool, registry rows already
 have `created_at`, and the installed SDK exposes the actual session `expiresAt`
@@ -73,3 +77,7 @@ session, concurrent renewal, failed extension/DB commit and logout races. A late
 live milestone must exercise a real connected host beyond its original10minute
 expiry, verify the actual backend/registry deadlines and complete a generation.
 Synthetic timers alone will not establish live session continuity.
+
+Implementation uses currentSession().extendTimeout to avoid the installed SDK
+Sandbox.extendTimeout auto-resume wrapper. Root verified the installed3.2.2
+source. The existing session snapshot supplies the verified updated expiry.

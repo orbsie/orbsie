@@ -1,0 +1,26 @@
+{
+  "scope": "Bounded hosted session renewal source and focused mocked integration review",
+  "acceptedImplementation": true,
+  "targetedTestsReportedPassed": 118,
+  "suitesReported": 11,
+  "typecheckPassed": true,
+  "modelCalls": 0,
+  "liveSandboxContinuity": false,
+  "realPostgresConcurrency": false,
+  "reviewedInvariants": [
+    "Validated generation only; passive reads do not renew",
+    "Owner/session/attempt/artifact match under row lock",
+    "Idle10min; absolute40min capped by auth session",
+    "Actual running sandbox expiry and positive delta verified without auto-resume",
+    "Post-lookup and post-renewal clock checks",
+    "Abort and late client exactly-once release",
+    "Failed extension/commit rolls back",
+    "Shared180second route abort signal"
+  ],
+  "sdkEvidence": "Installed @vercel/sandbox3.2.2 sandbox.js extendTimeout uses withResume; currentSession returns existing Session; Session.extendTimeout updates snapshot directly; expiresAt derives updated session timeout.",
+  "limitations": [
+    "Concurrency tests use a stateful mock; no real PostgreSQL contention experiment",
+    "Live connected host beyond original10minutes remains open",
+    "No provider E2E acceptance from mocked tests"
+  ]
+}

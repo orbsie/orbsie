@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   destroy: vi.fn(),
   ensure: vi.fn(),
   disconnect: vi.fn(),
+  renew: vi.fn(),
 }));
 vi.mock("../src/lib/server/chatgpt-host-registry", () => ({
   readExpiredChatGPTHost: mocks.expired,
@@ -16,13 +17,16 @@ vi.mock("../src/lib/server/chatgpt-host-registry", () => ({
   claimChatGPTHost: vi.fn(),
   completeChatGPTHost: vi.fn(),
   readChatGPTHost: mocks.read,
+  renewChatGPTHost: mocks.renew,
 }));
 vi.mock("../src/lib/server/chatgpt-sandbox-backend", () => ({
+  CHATGPT_GENERATION_HEADROOM_MS: 180_000,
   createChatGPTSandboxBackend: () => ({
     destroy: mocks.destroy,
     artifactDigest: vi.fn(async () => "a".repeat(64)),
     provision: vi.fn(),
     request: vi.fn(),
+    renew: vi.fn(),
   }),
 }));
 vi.mock("../src/lib/server/chatgpt-host-service", () => ({
@@ -91,9 +95,7 @@ test("marks a host from another deployed artifact as stale before reuse", async 
     artifactDigest: "b".repeat(64),
   });
   const manager = createChatGPTHostManager({ artifactDirectory: "unused" });
-  await expect(manager.read(identity)).rejects.toThrow(
-    "needs an update",
-  );
+  await expect(manager.read(identity)).rejects.toThrow("needs an update");
   expect(mocks.read).toHaveBeenCalledWith(identity);
 });
 
@@ -122,6 +124,53 @@ test("reuses a host with the current deployed artifact digest", async () => {
   await expect(
     createChatGPTHostManager({ artifactDirectory: "unused" }).read(identity),
   ).resolves.toBe(host);
+  expect(mocks.renew).not.toHaveBeenCalled();
+});
+
+test("acquires generation through the lock-held renewal path", async () => {
+  const host = {
+    attemptId: "attempt-1",
+    sandboxName: "orbsie-chatgpt-attempt-1",
+    capability: "private",
+    expiresAt: new Date(Date.now() + 60_000),
+    artifactDigest: "a".repeat(64),
+  };
+  const renewed = { ...host, expiresAt: new Date(Date.now() + 600_000) };
+  mocks.read.mockResolvedValue(host);
+  mocks.renew.mockResolvedValue({ kind: "ready", host: renewed });
+  const controller = new AbortController();
+  await expect(
+    createChatGPTHostManager({
+      artifactDirectory: "unused",
+    }).acquireForGeneration(identity, { signal: controller.signal }),
+  ).resolves.toBe(renewed);
+  expect(mocks.renew).toHaveBeenCalledWith(
+    identity,
+    "attempt-1",
+    "a".repeat(64),
+    expect.objectContaining({
+      minHeadroomMs: 180_000,
+      signal: controller.signal,
+      renew: expect.any(Function),
+    }),
+  );
+});
+
+test("turns a locked renewal artifact mismatch into the existing stale response", async () => {
+  const host = {
+    attemptId: "attempt-1",
+    sandboxName: "orbsie-chatgpt-attempt-1",
+    capability: "private",
+    expiresAt: new Date(Date.now() + 60_000),
+    artifactDigest: "a".repeat(64),
+  };
+  mocks.read.mockResolvedValue(host);
+  mocks.renew.mockResolvedValue({ kind: "stale" });
+  await expect(
+    createChatGPTHostManager({
+      artifactDirectory: "unused",
+    }).acquireForGeneration(identity),
+  ).rejects.toThrow("needs an update");
 });
 
 test("session teardown destroys provisioning or expired runtime before releasing its claim", async () => {

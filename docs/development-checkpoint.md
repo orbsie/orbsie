@@ -33,17 +33,16 @@ WebGL stage ff61fbc remains accepted (`catalog-texture-render-final-5/`). Candid
 is still fixture substitution. Catalog admission awaits remaining owner/device
 performance and corresponding policy/integration gates.
 
-Next bounded implementation: hosted ChatGPT active-session renewal, using
-`chatgpt-session-lifetime-followup.md`. Root rechecked registry/backend/manager
-and generate route:10minute host, no renewal, separate30s acquisition+175s fetch
-budgets. Preserve owner/session/attempt revocation and a total request deadline.
-One Luna worker `/root/host_session_renewal` now owns this bounded backend/route
-and focused-test task, with no live calls, deployment or nested agents.
-Initial root review of renewal WIP requests fresh post-backend clock/headroom
-checks, abort-aware bounded DB acquisition/pre-read with late-resource cleanup,
-and rejection of already-expired actual sandbox deadlines. Worker is applying
-these findings; no source accepted or deployed yet. Follow with full-provider harness work
-in `provider-flagship-harness-followup.md`; fresh story currently Gateway-only.
+Hosted session renewal source is now reviewed:118 focused tests across11suites,
+typecheck and diff check pass. It uses an owner/session/attempt lock, idle10min,
+absolute40min capped by auth session, verified actual non-resuming session
+extension, late-client cleanup and one180s route abort signal. Root reviewed
+clock/abort fixes and installed SDK source. Concurrency tests use a stateful
+mock; no actual Postgres or live >10minute continuity claim. Evidence
+`chatgpt-renewal-local-20260913/review.json`. Source ready for commit/release build.
+Worker `/root/host_session_renewal` finished; exact suite list requested, no rerun.
+Next bounded task is full-provider harness work in
+`provider-flagship-harness-followup.md`; fresh story currently Gateway-only.
 Browser CUA remains unavailable; owner failure not reproduced, no bypass.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are

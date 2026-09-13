@@ -9,8 +9,10 @@ import {
   readChatGPTHost,
   readExpiredChatGPTHost,
   readSessionChatGPTHost,
+  renewChatGPTHost,
   releaseChatGPTHost,
 } from "./chatgpt-host-registry";
+import { CHATGPT_GENERATION_HEADROOM_MS } from "./chatgpt-sandbox-backend";
 
 export function createChatGPTHostManager(
   options: Parameters<typeof createChatGPTSandboxBackend>[0],
@@ -18,10 +20,15 @@ export function createChatGPTHostManager(
   const backend = createChatGPTSandboxBackend(options);
   const readCurrentHost = async (
     identity: Parameters<typeof readChatGPTHost>[0],
+    readOptions: Parameters<typeof readChatGPTHost>[1] = {},
   ) => {
-    const host = await readChatGPTHost(identity);
+    readOptions.signal?.throwIfAborted();
+    const host = readOptions.signal
+      ? await readChatGPTHost(identity, readOptions)
+      : await readChatGPTHost(identity);
     if (!host) return null;
     const artifactDigest = await backend.artifactDigest();
+    readOptions.signal?.throwIfAborted();
     if (host.artifactDigest !== artifactDigest)
       throw new ChatGPTHostStaleError();
     return host;
@@ -55,6 +62,28 @@ export function createChatGPTHostManager(
       return service.ensure(identity);
     },
     read: readCurrentHost,
+    async acquireForGeneration(
+      identity: Parameters<typeof readChatGPTHost>[0],
+      options: { signal?: AbortSignal } = {},
+    ) {
+      const host = await readCurrentHost(identity, options);
+      if (!host) return null;
+      if (!host.artifactDigest) throw new ChatGPTHostStaleError();
+      const renewed = await renewChatGPTHost(
+        identity,
+        host.attemptId,
+        host.artifactDigest,
+        {
+          minHeadroomMs: CHATGPT_GENERATION_HEADROOM_MS,
+          signal: options.signal,
+          renew: (lockedHost, targetExpiresAt, signal) =>
+            backend.renew(lockedHost, targetExpiresAt, signal),
+        },
+      );
+      if (renewed.kind === "stale") throw new ChatGPTHostStaleError();
+      if (renewed.kind !== "ready") return null;
+      return renewed.host;
+    },
     async disconnect(identity: Parameters<typeof readChatGPTHost>[0]) {
       if (await cleanupExpired(identity)) return true;
       return service.disconnect(identity);
