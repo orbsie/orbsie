@@ -9,6 +9,7 @@ import { ContactShadows, OrbitControls, Stars } from "@react-three/drei";
 import {
   useEffect,
   useLayoutEffect,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -31,6 +32,13 @@ import {
 import { collectGameProgramEntityIds } from "@/lib/game-program";
 import { formationParticles } from "@/lib/formation-particles";
 import { registerPublicationThumbnail } from "@/lib/publication-thumbnail";
+import {
+  notifySceneReviewCaptureChanged,
+  captureSceneReview,
+  captureSceneCanvas,
+  registerSceneReviewCaptureSource,
+  type SceneReviewSourceState,
+} from "@/lib/scene-review-capture";
 import type { Entity } from "@/lib/protocol";
 import { GameSession, GAME_RULES_RESTART_NOTICE } from "@/lib/game-session";
 import {
@@ -311,6 +319,16 @@ const EMPTY_FORMATION_RESOURCE: FormationResource = {
   disposed: false,
 };
 
+type FormationReviewSnapshot = {
+  ready: boolean;
+  pending: boolean;
+  failed: boolean;
+  renderedRevision: number;
+  error?: string;
+};
+
+type FormationReviewState = () => FormationReviewSnapshot;
+
 function disposeFormationResource(resource: FormationResource): void {
   if (resource.disposed || resource === EMPTY_FORMATION_RESOURCE) return;
   resource.disposed = true;
@@ -321,9 +339,13 @@ function disposeFormationResource(resource: FormationResource): void {
 function Formation({
   entity,
   session,
+  revision,
+  onReviewState,
 }: {
   entity: Entity;
   session: GameSession;
+  revision: number;
+  onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const particles = useRef<THREE.Points>(null);
@@ -333,6 +355,8 @@ function Formation({
   const previousAppearance = useRef<FormationAppearance>(undefined);
   const displayedTexture = useRef<THREE.DataTexture | undefined>(undefined);
   const progress = useRef({ value: 0 });
+  const renderedRevision = useRef(-1);
+  const reviewComplete = useRef(false);
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
   const gameTintEnabled = useRef({ value: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -490,6 +514,43 @@ function Formation({
     disposeFormationAppearance(prior);
   }, [commitsAppearance, geometry, texture, retainAssetAppearance]);
   useLayoutEffect(() => {
+    if (resource === EMPTY_FORMATION_RESOURCE || !commitsAppearance) return;
+    renderedRevision.current = revision;
+    notifySceneReviewCaptureChanged();
+  }, [commitsAppearance, resource, revision]);
+  useLayoutEffect(() => {
+    const state: FormationReviewState = () => {
+      const failed = typeof asset?.error === "string" && asset.error.length > 0;
+      const pending =
+        !failed &&
+        (resource === EMPTY_FORMATION_RESOURCE ||
+          !commitsAppearance ||
+          renderedRevision.current !== revision ||
+          progress.current.value < 1);
+      return {
+        ready: !failed && !pending,
+        pending,
+        failed,
+        renderedRevision: renderedRevision.current,
+        error: failed ? asset.error : undefined,
+      };
+    };
+    onReviewState?.(entity.id, state);
+    notifySceneReviewCaptureChanged();
+    return () => {
+      onReviewState?.(entity.id, undefined);
+      notifySceneReviewCaptureChanged();
+    };
+  }, [
+    asset?.error,
+    commitsAppearance,
+    entity.id,
+    entity.geometry,
+    onReviewState,
+    resource,
+    revision,
+  ]);
+  useLayoutEffect(() => {
     if (
       geometry === EMPTY_FORMATION_GEOMETRY &&
       particleGeometry === EMPTY_FORMATION_PARTICLES
@@ -614,6 +675,11 @@ function Formation({
       1,
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
+    const complete = progress.current.value >= 1;
+    if (complete !== reviewComplete.current) {
+      reviewComplete.current = complete;
+      notifySceneReviewCaptureChanged();
+    }
     // Point correspondence has no triangle connectivity to tear between topologies.
     // Solidify only when every interpolated point has reached its target.
     if (mesh.current)
@@ -1142,10 +1208,123 @@ function Scene({
   const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
   const phase = useOrb((s) => s.phase),
+    revision = useOrb((s) => s.project.revision),
     entities = useOrb((s) => s.project.entities),
     environment = useOrb((s) => s.project.environment),
     playing = useOrb((s) => s.playing);
   const { camera, size, gl, scene } = useThree();
+  const reviewEntitiesRef = useRef(entities);
+  const reviewFrameRef = useRef<
+    | {
+        projectId: string;
+        revision: number;
+      }
+    | undefined
+  >(undefined);
+  const reviewFramePendingRef = useRef<
+    { projectId: string; revision: number } | undefined
+  >(undefined);
+  const reviewMetaRef = useRef({ projectId, revision, phase });
+  useLayoutEffect(() => {
+    reviewEntitiesRef.current = entities;
+    reviewMetaRef.current = { projectId, revision, phase };
+    notifySceneReviewCaptureChanged();
+  }, [entities, phase, projectId, revision]);
+  const formationReviewStates = useRef(new Map<string, FormationReviewState>());
+  const reviewMounted = useRef(false);
+  const reviewTransitionSettled = useRef(false);
+  const setFormationReviewState = useCallback(
+    (id: string, state: FormationReviewState | undefined) => {
+      if (state) formationReviewStates.current.set(id, state);
+      else formationReviewStates.current.delete(id);
+      notifySceneReviewCaptureChanged();
+    },
+    [],
+  );
+  useEffect(() => {
+    reviewMounted.current = true;
+    const source = {
+      renderer: "webgl",
+      getState: (): SceneReviewSourceState => {
+        const meta = reviewMetaRef.current;
+        const expectedIds = reviewEntitiesRef.current.map(
+          (entity) => entity.id,
+        );
+        const states = expectedIds.map((id) =>
+          formationReviewStates.current.get(id)?.(),
+        );
+        const pendingAssetIds = expectedIds.filter((_, index) => {
+          const state = states[index];
+          return !state || state.pending;
+        });
+        const failedAssetIds = expectedIds.filter(
+          (_, index) => states[index]?.failed,
+        );
+        const readyAssetIds = expectedIds.filter(
+          (_, index) => states[index]?.ready,
+        );
+        const errors = states.flatMap((state) =>
+          state?.error ? [state.error] : [],
+        );
+        const formationsReady =
+          states.length === expectedIds.length && states.every(Boolean);
+        const formationRevision = formationsReady
+          ? expectedIds.length > 0
+            ? Math.min(...states.map((state) => state!.renderedRevision))
+            : meta.revision
+          : -1;
+        const renderedRevision =
+          reviewFrameRef.current?.projectId === meta.projectId &&
+          reviewFrameRef.current.revision === meta.revision
+            ? formationRevision
+            : -1;
+        return {
+          renderer: "webgl",
+          projectId: meta.projectId,
+          revision: meta.revision,
+          renderedRevision,
+          transitionSettled:
+            meta.phase === "editing" &&
+            reviewTransitionSettled.current &&
+            parcelTransitionController.snapshot.settled,
+          mounted: reviewMounted.current,
+          readyAssetIds,
+          pendingAssetIds,
+          failedAssetIds,
+          errors,
+        };
+      },
+      capture: () => {
+        gl.render(scene, camera);
+        return captureSceneCanvas(gl.domElement);
+      },
+    } as const;
+    const unregister = registerSceneReviewCaptureSource(source);
+    const fixtureProbe = (
+      globalThis as typeof globalThis & {
+        __orbsieSceneReviewFixture?: {
+          webgl?: {
+            capture: typeof captureSceneReview;
+            read: () => SceneReviewSourceState;
+          };
+        };
+      }
+    ).__orbsieSceneReviewFixture;
+    const fixtureEntry = {
+      capture: captureSceneReview,
+      read: source.getState,
+    };
+    if (fixtureProbe) fixtureProbe.webgl = fixtureEntry;
+    notifySceneReviewCaptureChanged();
+    return () => {
+      reviewMounted.current = false;
+      reviewFramePendingRef.current = undefined;
+      reviewFrameRef.current = undefined;
+      if (fixtureProbe?.webgl === fixtureEntry) delete fixtureProbe.webgl;
+      unregister();
+      notifySceneReviewCaptureChanged();
+    };
+  }, [camera, gl, scene]);
   useEffect(
     () =>
       registerPublicationThumbnail(() => {
@@ -1232,12 +1411,18 @@ function Scene({
     spin.current = parcelTransitionController.snapshot.spin;
     progress.current = parcelTransitionController.snapshot.progress;
     initialized.current = false;
+    notifySceneReviewCaptureChanged();
   }, [phase, projectId]);
   useEffect(() => parcelTransitionController.attachRenderer(), []);
   useFrame((_, dt) => {
     const target = phase === "landing" ? 0 : 1;
     parcelTransitionController.setTarget(target);
     const snapshot = parcelTransitionController.step(dt, reduced());
+    const transitionSettled = phase === "editing" && snapshot.settled;
+    if (transitionSettled !== reviewTransitionSettled.current) {
+      reviewTransitionSettled.current = transitionSettled;
+      notifySceneReviewCaptureChanged();
+    }
     progress.current = snapshot.progress;
     spin.current = snapshot.spin;
     const t = progress.current;
@@ -1260,6 +1445,31 @@ function Scene({
       const current = useOrb.getState();
       if (current.project.id === projectId && current.phase === "descending")
         current.set({ phase: "editing" });
+    }
+    const currentProject = useOrb.getState().project;
+    const paintedFrame = reviewFrameRef.current;
+    if (
+      (paintedFrame?.projectId !== currentProject.id ||
+        paintedFrame.revision !== currentProject.revision) &&
+      !(
+        reviewFramePendingRef.current?.projectId === currentProject.id &&
+        reviewFramePendingRef.current.revision === currentProject.revision
+      )
+    ) {
+      const nextFrame = {
+        projectId: currentProject.id,
+        revision: currentProject.revision,
+      };
+      reviewFramePendingRef.current = nextFrame;
+      // R3F runs useFrame callbacks before its renderer call. Commit this
+      // marker in a microtask so a source cannot claim a painted revision
+      // before the current frame has reached the GPU.
+      queueMicrotask(() => {
+        if (reviewFramePendingRef.current !== nextFrame) return;
+        reviewFramePendingRef.current = undefined;
+        reviewFrameRef.current = nextFrame;
+        notifySceneReviewCaptureChanged();
+      });
     }
     if (island.current) {
       const blend = patchBlend(t);
@@ -1338,6 +1548,8 @@ function Scene({
             key={`${projectId}/${e.id}`}
             entity={e}
             session={session}
+            revision={revision}
+            onReviewState={setFormationReviewState}
           />
         ))}
         <Player

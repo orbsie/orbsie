@@ -1,0 +1,17 @@
+{
+  "passed": false,
+  "scope": "local revision-bound game-canvas capture in WebGL and software renderers",
+  "liveModelCalls": 0,
+  "externalRequests": [],
+  "rendererResults": {},
+  "pageErrors": {
+    "webgl": []
+  },
+  "consoleErrors": {
+    "webgl": []
+  },
+  "requestFailures": {
+    "webgl": []
+  },
+  "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByPlaceholder('What experience to build?')\u001b[22m\n"
+}

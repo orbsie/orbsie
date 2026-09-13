@@ -1,0 +1,76 @@
+{
+  "passed": true,
+  "scope": "local revision-bound game-canvas capture in WebGL and software renderers",
+  "liveModelCalls": 0,
+  "externalRequests": [],
+  "rendererResults": {
+    "webgl": {
+      "projectId": "546971a6-fb66-4529-b09b-791867e94c45",
+      "revision": 3,
+      "renderer": "webgl",
+      "dimensions": {
+        "width": 512,
+        "height": 360
+      },
+      "byteLength": 32822,
+      "readiness": {
+        "renderedRevision": 3,
+        "transitionSettled": true,
+        "readyAssetIds": [
+          "lantern"
+        ],
+        "pendingAssetIds": [],
+        "failedAssetIds": []
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    },
+    "software": {
+      "projectId": "2a7426e4-a3fc-4ee6-938d-047bc82ccdad",
+      "revision": 3,
+      "renderer": "software",
+      "dimensions": {
+        "width": 512,
+        "height": 360
+      },
+      "byteLength": 129846,
+      "readiness": {
+        "renderedRevision": 3,
+        "transitionSettled": true,
+        "readyAssetIds": [
+          "lantern"
+        ],
+        "pendingAssetIds": [],
+        "failedAssetIds": []
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    }
+  },
+  "pageErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "consoleErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "requestFailures": {
+    "webgl": [
+      {
+        "url": "http://127.0.0.1:35327/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ],
+    "software": [
+      {
+        "url": "http://127.0.0.1:35327/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ]
+  }
+}

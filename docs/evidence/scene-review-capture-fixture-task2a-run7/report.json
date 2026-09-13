@@ -1,0 +1,142 @@
+{
+  "passed": true,
+  "scope": "local revision-bound game-canvas capture in WebGL and software renderers",
+  "liveModelCalls": 0,
+  "externalRequests": [],
+  "rendererResults": {
+    "webgl": {
+      "projectId": "22501dfd-2f5a-4d65-9988-0f7ab11e24cc",
+      "initialRevision": 5,
+      "replacementRevision": 7,
+      "renderer": "webgl",
+      "initial": {
+        "dimensions": {
+          "width": 512,
+          "height": 360
+        },
+        "byteLength": 33698,
+        "readiness": {
+          "renderedRevision": 5,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        }
+      },
+      "duringReplacement": {
+        "revision": 7,
+        "readyAssetIds": [
+          "pebble"
+        ],
+        "pendingAssetIds": [
+          "lantern"
+        ],
+        "failedAssetIds": []
+      },
+      "replacement": {
+        "dimensions": {
+          "width": 512,
+          "height": 360
+        },
+        "byteLength": 33698,
+        "readiness": {
+          "renderedRevision": 7,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        }
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    },
+    "software": {
+      "projectId": "122067f7-f8fb-450f-8d50-0fe6ea79e917",
+      "initialRevision": 5,
+      "replacementRevision": 7,
+      "renderer": "software",
+      "initial": {
+        "dimensions": {
+          "width": 512,
+          "height": 360
+        },
+        "byteLength": 130826,
+        "readiness": {
+          "renderedRevision": 5,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        }
+      },
+      "duringReplacement": {
+        "revision": 7,
+        "readyAssetIds": [
+          "pebble"
+        ],
+        "pendingAssetIds": [
+          "lantern"
+        ],
+        "failedAssetIds": []
+      },
+      "replacement": {
+        "dimensions": {
+          "width": 512,
+          "height": 360
+        },
+        "byteLength": 130378,
+        "readiness": {
+          "renderedRevision": 7,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        }
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    }
+  },
+  "pageErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "consoleErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "requestFailures": {
+    "webgl": [
+      {
+        "url": "http://127.0.0.1:38779/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ],
+    "software": [
+      {
+        "url": "http://127.0.0.1:38779/api/generate",
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:38779/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ]
+  }
+}

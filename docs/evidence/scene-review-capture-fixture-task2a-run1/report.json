@@ -1,0 +1,47 @@
+{
+  "passed": false,
+  "scope": "local revision-bound game-canvas capture in WebGL and software renderers",
+  "liveModelCalls": 0,
+  "externalRequests": [],
+  "rendererResults": {
+    "webgl": {
+      "projectId": "ba5af846-cb61-4475-a58f-e9129b8d07bb",
+      "revision": 3,
+      "renderer": "webgl",
+      "dimensions": {
+        "width": 512,
+        "height": 360
+      },
+      "byteLength": 32598,
+      "readiness": {
+        "renderedRevision": 3,
+        "transitionSettled": true,
+        "readyAssetIds": [
+          "lantern"
+        ],
+        "pendingAssetIds": [],
+        "failedAssetIds": []
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    }
+  },
+  "pageErrors": {
+    "webgl": [],
+    "software": []
+  },
+  "consoleErrors": {
+    "webgl": [],
+    "software": []
+  },
+  "requestFailures": {
+    "webgl": [],
+    "software": [
+      {
+        "url": "http://127.0.0.1:42253/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ]
+  },
+  "error": "page.evaluate: Error: Missing software capture source.\n    at eval (eval at evaluate (:311:30), <anonymous>:3:27)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+}

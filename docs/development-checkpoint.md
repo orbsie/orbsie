@@ -209,3 +209,19 @@ five downsize attempts (mock encoder, not actual image quality): evidence
 scene-review-root-encoder-20260913/report.json. Luna's current encoder uses bounded
 512/384/256/192/128 edges. Await final adapter edge-case tests/fixture and diff review
 before accepting or deploying Task2a. No live model calls in these checks.
+
+## Capture implementation accepted for integration
+
+Luna Task2a handoff reviewed: revision/project-bound process-local bridge, WebGL
+resource/formation and frame readiness, software geometry generation plus painted
+frame binding, committed React metadata, failures/cancel/unmount/timeouts, canvas-
+only bounded PNG with aspect-preserving five-step resize. Root independently ran
+10focused tests and typecheck, inspected changed renderer code and run7 replacement
+image; initial/replacement PNG hashes differ and the tree replaces the platform.
+Run7 actual desktop WebGL+software fixture passes delayed replacement with pebble
+remaining ready; earlier failures retained. Encoder mock verifies portrait ratio
+and bounded attempts; actual portrait browser capture/full mobile acceptance is
+still a milestone gap, not proven by the desktop fixture. No inference occurred.
+Rebuilt player artifacts after detecting stale software-world source in manifest.
+No deployment yet. Next single Luna task: docs/creative-prompt-task.md, then queued
+capability/transport/loop/evaluation sequence. Full review loop remains incomplete.

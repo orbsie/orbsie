@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import { entityGeometry } from "@/lib/geometry";
@@ -34,6 +41,13 @@ import {
 } from "@/lib/formation-particles";
 import type { Entity, Project } from "@/lib/protocol";
 import { parcelTransitionController } from "@/lib/parcel-transition";
+import {
+  notifySceneReviewCaptureChanged,
+  captureSceneReview,
+  captureSceneCanvas,
+  registerSceneReviewCaptureSource,
+  type SceneReviewSourceState,
+} from "@/lib/scene-review-capture";
 
 export type SoftwareGeometryEntry = {
   geometry: THREE.BufferGeometry;
@@ -170,6 +184,7 @@ function makeEntityGeometry(entity: Entity): SoftwareGeometryEntry {
 function SoftwareEntity({
   entity,
   onChange,
+  onAssetError,
 }: {
   entity: Entity;
   onChange: (
@@ -177,6 +192,7 @@ function SoftwareEntity({
     entry: SoftwareGeometryEntry | undefined,
     disposed?: THREE.BufferGeometry,
   ) => boolean;
+  onAssetError: (id: string, error: string | undefined) => void;
 }) {
   const recipe =
     entity.geometry?.kind === "asset" || entity.geometry?.kind === "generated"
@@ -193,9 +209,11 @@ function SoftwareEntity({
   const loaded = recipe?.kind === "generated" ? generated : catalog;
   const loadedTexture = recipe?.kind === "asset" ? catalog?.texture : undefined;
   useEffect(() => {
+    onAssetError(entity.id, loaded?.error);
     if (loaded?.error)
       useOrb.getState().set({ error: `${entity.label}: ${loaded.error}` });
-  }, [entity.label, loaded?.error]);
+    return () => onAssetError(entity.id, undefined);
+  }, [entity.id, entity.label, loaded?.error, onAssetError]);
   useEffect(() => {
     // Clone/build only after React commits this entity. That keeps discarded
     // concurrent renders from allocating geometries that have no owner.
@@ -547,7 +565,9 @@ export default function SoftwareWorld({
 }: SoftwareWorldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const geometriesRef = useRef(new Map<string, SoftwareGeometryEntry>());
+  const geometryGenerationRef = useRef(0);
   const disposedGeometriesRef = useRef(new WeakSet<THREE.BufferGeometry>());
+  const assetErrorsRef = useRef(new Map<string, string>());
   const [, setGeometryVersion] = useState(0);
   const geometryChange = useMemo(
     () =>
@@ -566,10 +586,12 @@ export default function SoftwareWorld({
           // Keep the committed last-good shape during an asynchronous asset
           // replacement. The pending clone has no owner once it is rejected.
           disposeOnce(entry.geometry);
+          notifySceneReviewCaptureChanged();
           return false;
         }
         if (disposed && current?.geometry === disposed) {
           geometriesRef.current.delete(id);
+          geometryGenerationRef.current += 1;
           disposeOnce(disposed);
         } else if (disposed && current?.geometry !== disposed) {
           // A stale cleanup may arrive after a replacement has committed.
@@ -579,13 +601,17 @@ export default function SoftwareWorld({
           if (current && current.geometry !== entry.geometry)
             disposeOnce(current.geometry);
           geometriesRef.current.set(id, entry);
+          geometryGenerationRef.current += 1;
           setGeometryVersion((version) => version + 1);
+          notifySceneReviewCaptureChanged();
           return true;
         }
         if (!entry && !disposed && current) {
           geometriesRef.current.delete(id);
+          geometryGenerationRef.current += 1;
           disposeOnce(current.geometry);
           setGeometryVersion((version) => version + 1);
+          notifySceneReviewCaptureChanged();
           return true;
         }
         setGeometryVersion((version) => version + 1);
@@ -618,9 +644,113 @@ export default function SoftwareWorld({
   const onReadyRef = useRef(onReady);
   const onRendererReadyRef = useRef(onRendererReady);
   const onErrorRef = useRef(onError);
+  const reviewProjectRef = useRef(project);
+  const reviewPhaseRef = useRef(phase);
+  const drawnRevisionRef = useRef<
+    { projectId: string; revision: number } | undefined
+  >(undefined);
+  const drawnGeometryGenerationRef = useRef(-1);
+  useLayoutEffect(() => {
+    reviewProjectRef.current = project;
+    reviewPhaseRef.current = phase;
+    notifySceneReviewCaptureChanged();
+  }, [phase, project]);
+  const reviewMounted = useRef(false);
+  const onAssetError = useCallback((id: string, error: string | undefined) => {
+    if (error) assetErrorsRef.current.set(id, error);
+    else assetErrorsRef.current.delete(id);
+    notifySceneReviewCaptureChanged();
+  }, []);
   onReadyRef.current = onReady;
   onRendererReadyRef.current = onRendererReady;
   onErrorRef.current = onError;
+
+  useEffect(() => {
+    reviewMounted.current = true;
+    const source = {
+      renderer: "software",
+      getState: (): SceneReviewSourceState => {
+        const currentProject = reviewProjectRef.current;
+        const currentRevision = currentProject.revision;
+        const expected = currentProject.entities;
+        const pendingAssetIds = expected
+          .filter((entity) => {
+            const entry = geometriesRef.current.get(entity.id);
+            return (
+              !entry ||
+              !entry.ready ||
+              entry.sourceRecipe !== entity.geometry ||
+              entry.sourceStage !== entity.stage
+            );
+          })
+          .map((entity) => entity.id);
+        const failedAssetIds = expected
+          .filter((entity) => assetErrorsRef.current.has(entity.id))
+          .map((entity) => entity.id);
+        const readyAssetIds = expected
+          .filter((entity) => {
+            const entry = geometriesRef.current.get(entity.id);
+            return (
+              !!entry &&
+              entry.ready &&
+              entry.sourceRecipe === entity.geometry &&
+              entry.sourceStage === entity.stage &&
+              !assetErrorsRef.current.has(entity.id)
+            );
+          })
+          .map((entity) => entity.id);
+        const framePainted =
+          drawnRevisionRef.current?.projectId === currentProject.id &&
+          drawnRevisionRef.current.revision === currentRevision &&
+          drawnGeometryGenerationRef.current === geometryGenerationRef.current;
+        return {
+          renderer: "software",
+          projectId: currentProject.id,
+          revision: currentRevision,
+          renderedRevision:
+            framePainted && pendingAssetIds.length === 0 ? currentRevision : -1,
+          transitionSettled:
+            reviewPhaseRef.current === "editing" &&
+            parcelTransitionController.snapshot.settled,
+          mounted: reviewMounted.current && rendererReady.current,
+          readyAssetIds,
+          pendingAssetIds,
+          failedAssetIds,
+          errors: expected
+            .map((entity) => assetErrorsRef.current.get(entity.id))
+            .filter((error): error is string => !!error),
+        };
+      },
+      capture: () => {
+        const canvas = canvasRef.current;
+        if (!canvas) throw new Error("Software canvas is not ready.");
+        return captureSceneCanvas(canvas);
+      },
+    } as const;
+    const unregister = registerSceneReviewCaptureSource(source);
+    const fixtureProbe = (
+      globalThis as typeof globalThis & {
+        __orbsieSceneReviewFixture?: {
+          software?: {
+            capture: typeof captureSceneReview;
+            read: () => SceneReviewSourceState;
+          };
+        };
+      }
+    ).__orbsieSceneReviewFixture;
+    const fixtureEntry = {
+      capture: captureSceneReview,
+      read: source.getState,
+    };
+    if (fixtureProbe) fixtureProbe.software = fixtureEntry;
+    notifySceneReviewCaptureChanged();
+    return () => {
+      reviewMounted.current = false;
+      if (fixtureProbe?.software === fixtureEntry) delete fixtureProbe.software;
+      unregister();
+      notifySceneReviewCaptureChanged();
+    };
+  }, []);
 
   useEffect(
     () => () => {
@@ -630,6 +760,8 @@ export default function SoftwareWorld({
         entry.geometry.dispose();
       }
       geometriesRef.current.clear();
+      assetErrorsRef.current.clear();
+      notifySceneReviewCaptureChanged();
     },
     [],
   );
@@ -680,6 +812,7 @@ export default function SoftwareWorld({
     if (!rendererReady.current) {
       rendererReady.current = true;
       onRendererReadyRef.current?.("software");
+      notifySceneReviewCaptureChanged();
     }
     const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
     camera.position.set(0, 1.8, 10.2);
@@ -895,6 +1028,23 @@ export default function SoftwareWorld({
           camera,
           picksRef.current,
         );
+        const drawnProject = drawnRevisionRef.current;
+        if (
+          drawnProject?.projectId !== projectNow.id ||
+          drawnProject.revision !== projectNow.revision
+        ) {
+          drawnRevisionRef.current = {
+            projectId: projectNow.id,
+            revision: projectNow.revision,
+          };
+          notifySceneReviewCaptureChanged();
+        }
+        if (
+          drawnGeometryGenerationRef.current !== geometryGenerationRef.current
+        ) {
+          drawnGeometryGenerationRef.current = geometryGenerationRef.current;
+          notifySceneReviewCaptureChanged();
+        }
         if (
           current.playing &&
           !announcedReady.current &&
@@ -917,6 +1067,10 @@ export default function SoftwareWorld({
       stopped = true;
       cancelAnimationFrame(frame);
       inputRef.current.clear();
+      rendererReady.current = false;
+      drawnRevisionRef.current = undefined;
+      drawnGeometryGenerationRef.current = -1;
+      notifySceneReviewCaptureChanged();
     };
   }, []);
 
@@ -1033,6 +1187,7 @@ export default function SoftwareWorld({
           key={entity.id}
           entity={entity}
           onChange={geometryChange}
+          onAssetError={onAssetError}
         />
       ))}
       <p className="software-world-status" aria-live="polite">
