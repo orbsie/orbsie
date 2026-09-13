@@ -18,6 +18,26 @@ const DIAGNOSTIC_CODES = new Set([
   "INVALID_SCENE_PROTOCOL",
   "TRUNCATED_SCENE_STREAM",
   "PROVIDER_STREAM_ERROR",
+  "CHATGPT_GENERATION_ERROR",
+]);
+const CHATGPT_GENERATION_STAGES = new Set([
+  "catalog",
+  "thread-start",
+  "turn-start",
+  "stream",
+]);
+const CHATGPT_GENERATION_REASONS = new Set([
+  "rpc-rejection",
+  "terminal-failure",
+  "callback-validation",
+  "tool-rejection",
+  "timeout",
+  "cancelled",
+  "output-bound",
+  "runtime-closed",
+  "model-unavailable",
+  "invalid-input",
+  "unknown",
 ]);
 
 function normalizeFinishReason(value) {
@@ -267,6 +287,23 @@ function safeDiagnostic(value) {
       FINISH_REASONS.has(diagnostic.finishReason)
         ? diagnostic.finishReason
         : "other";
+  if (
+    typeof diagnostic.stage === "string" &&
+    CHATGPT_GENERATION_STAGES.has(diagnostic.stage)
+  )
+    output.diagnostic.stage = diagnostic.stage;
+  if (
+    typeof diagnostic.reason === "string" &&
+    CHATGPT_GENERATION_REASONS.has(diagnostic.reason)
+  )
+    output.diagnostic.reason = diagnostic.reason;
+  if (
+    typeof diagnostic.rpcCode === "number" &&
+    Number.isSafeInteger(diagnostic.rpcCode) &&
+    diagnostic.rpcCode >= -32768 &&
+    diagnostic.rpcCode <= 32767
+  )
+    output.diagnostic.rpcCode = diagnostic.rpcCode;
   return output;
 }
 

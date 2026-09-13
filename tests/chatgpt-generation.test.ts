@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import type { ChatGPTDeviceRpc } from "../src/lib/server/chatgpt-device-session";
 import type { ChatGPTModel } from "../src/lib/server/chatgpt-models";
 import {
@@ -6,6 +7,10 @@ import {
   CHATGPT_READ_POLICY,
 } from "../src/lib/server/chatgpt-generation-policy";
 import { createChatGPTGeneration } from "../src/lib/server/chatgpt-generation";
+import {
+  ChatGPTRpcError,
+  generationDiagnostic,
+} from "../src/lib/generation-diagnostics";
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -100,10 +105,18 @@ function completed(
     method: "turn/completed",
     params: {
       threadId,
-      turnId,
       turn: { id: turnId, status },
     },
   };
+}
+
+async function failureOf(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error) {
+    return error;
+  }
+  throw Error("Expected generation to fail.");
 }
 
 describe("ChatGPT generation lifecycle", () => {
@@ -421,5 +434,230 @@ describe("ChatGPT generation lifecycle", () => {
     malformed.turn.resolve({ turn: { id: "turn-1" } });
     await expect(run).rejects.toThrow("generation could not be completed");
     expect(malformedDeps.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("reports a safe catalog-stage rejection without preserving raw causes", async () => {
+    const f = fixture();
+    const deps = options(f);
+    deps.models.mockRejectedValue(
+      Error("access_token=private-secret prompt=private-prompt"),
+    );
+    const error = await failureOf(
+      createChatGPTGeneration(deps).generate(input()),
+    );
+    expect(generationDiagnostic(error)).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        operation: 0,
+        issues: [],
+        stage: "catalog",
+        reason: "unknown",
+      },
+    });
+    expect(JSON.stringify(error)).not.toContain("private-secret");
+    expect(JSON.stringify(error)).not.toContain("private-prompt");
+  });
+
+  it("reports bounded RPC codes at thread and turn start", async () => {
+    const threadFailure = fixture();
+    threadFailure.request.mockImplementationOnce(async () => {
+      throw new ChatGPTRpcError(401);
+    });
+    const threadError = await failureOf(
+      createChatGPTGeneration(options(threadFailure)).generate(input()),
+    );
+    expect(generationDiagnostic(threadError)).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        operation: 0,
+        issues: [],
+        stage: "thread-start",
+        reason: "rpc-rejection",
+        rpcCode: 401,
+      },
+    });
+
+    const turnFailure = fixture();
+    turnFailure.turn.reject(new ChatGPTRpcError(999_999));
+    const turnError = await failureOf(
+      createChatGPTGeneration(options(turnFailure)).generate(input()),
+    );
+    expect(generationDiagnostic(turnError)).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        operation: 0,
+        issues: [],
+        stage: "turn-start",
+        reason: "rpc-rejection",
+      },
+    });
+  });
+
+  it("uses the official nested turn identity for pre-ack terminal events", async () => {
+    const f = fixture();
+    const generation = createChatGPTGeneration(options(f));
+    const run = generation.generate(input());
+    await flush();
+    f.notify(completed("failed"));
+    f.turn.resolve({ turn: { id: "turn-1" } });
+    const error = await failureOf(run);
+    expect(generationDiagnostic(error)).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        operation: 0,
+        issues: [],
+        stage: "stream",
+        reason: "terminal-failure",
+      },
+    });
+  });
+
+  it("does not attribute an unrelated pre-ack terminal to a turn RPC failure", async () => {
+    const f = fixture();
+    const generation = createChatGPTGeneration(options(f));
+    const run = generation.generate(input());
+    await flush();
+    f.notify(completed("failed", "other-turn"));
+    f.turn.reject(new ChatGPTRpcError(409));
+    const error = await failureOf(run);
+    expect(generationDiagnostic(error)).toMatchObject({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        stage: "stream",
+        reason: "rpc-rejection",
+        rpcCode: 409,
+      },
+    });
+  });
+
+  it("rejects conflicting top-level and nested terminal identities", async () => {
+    const f = fixture();
+    const generation = createChatGPTGeneration(options(f));
+    const run = generation.generate(input());
+    await flush();
+    f.notify({
+      method: "turn/completed",
+      params: {
+        threadId: "thread-1",
+        turnId: "turn-1",
+        turn: { id: "other-turn", status: "completed" },
+      },
+    });
+    const error = await failureOf(run);
+    expect(generationDiagnostic(error)).toMatchObject({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: { stage: "stream", reason: "unknown" },
+    });
+  });
+
+  it("reports callback scene validation with only bounded cause fields", async () => {
+    const f = fixture();
+    const validation = new z.ZodError([
+      {
+        code: "custom",
+        path: ["geometry", "privateNode"],
+        message: "access_token=private-secret",
+      },
+    ]);
+    const generation = createChatGPTGeneration(options(f));
+    const run = generation.generate(
+      input(() => {
+        throw validation;
+      }),
+    );
+    await flush();
+    f.turn.resolve({ turn: { id: "turn-1" } });
+    await flush();
+    f.notify(delta("private scene text"));
+    const error = await failureOf(run);
+    const diagnostic = generationDiagnostic(error, 7, null);
+    expect(diagnostic).toEqual({
+      code: "INVALID_SCENE_UPDATE",
+      diagnostic: {
+        operation: 7,
+        issues: [{ code: "custom", path: ["geometry", "?"] }],
+        stage: "stream",
+        reason: "callback-validation",
+      },
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain("private");
+  });
+
+  it("classifies tool, output, cancellation, timeout, and runtime closure safely", async () => {
+    const tool = fixture();
+    const toolRun = createChatGPTGeneration(options(tool)).generate(input());
+    await flush();
+    tool.notify({
+      method: "item/commandExecution/request",
+      params: { item: { type: "commandExecution", command: "cat secret" } },
+    });
+    expect(generationDiagnostic(await failureOf(toolRun))).toMatchObject({
+      diagnostic: {
+        stage: "stream",
+        reason: "tool-rejection",
+      },
+    });
+
+    const output = fixture();
+    const outputRun = createChatGPTGeneration(options(output)).generate(
+      input(),
+    );
+    await flush();
+    output.notify(delta("x".repeat(64 * 1024)));
+    output.notify(delta("y".repeat(64 * 1024)));
+    output.notify(delta("z".repeat(64 * 1024)));
+    output.notify(delta("a".repeat(64 * 1024)));
+    output.notify(delta("b".repeat(64 * 1024)));
+    output.notify(delta("c".repeat(64 * 1024)));
+    output.notify(delta("d".repeat(64 * 1024)));
+    output.notify(delta("e".repeat(64 * 1024)));
+    output.notify(delta("f"));
+    expect(generationDiagnostic(await failureOf(outputRun))).toMatchObject({
+      diagnostic: {
+        stage: "stream",
+        reason: "output-bound",
+      },
+    });
+
+    const closed = fixture();
+    const closedRun = createChatGPTGeneration(options(closed)).generate(
+      input(),
+    );
+    await flush();
+    closed.notify({ method: "orbsie/runtime/closed", params: {} });
+    expect(generationDiagnostic(await failureOf(closedRun))).toMatchObject({
+      diagnostic: {
+        stage: "stream",
+        reason: "runtime-closed",
+      },
+    });
+
+    const cancelled = fixture();
+    const cancelController = new AbortController();
+    const cancelRun = createChatGPTGeneration(options(cancelled)).generate({
+      ...input(),
+      signal: cancelController.signal,
+    });
+    await flush();
+    cancelController.abort();
+    expect(generationDiagnostic(await failureOf(cancelRun))).toMatchObject({
+      diagnostic: { reason: "cancelled" },
+    });
+
+    vi.useFakeTimers();
+    try {
+      const timed = fixture();
+      const timedRun = createChatGPTGeneration({
+        ...options(timed),
+        timeoutMs: 20,
+      }).generate(input());
+      const timedFailure = failureOf(timedRun);
+      await vi.advanceTimersByTimeAsync(20);
+      expect(generationDiagnostic(await timedFailure)).toMatchObject({
+        diagnostic: { reason: "timeout" },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

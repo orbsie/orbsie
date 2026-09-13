@@ -142,6 +142,47 @@ describe("scene JSON diagnostic helpers", () => {
     });
   });
 
+  it("retains only allowlisted ChatGPT failure metadata", () => {
+    const diagnostic = diagnosticFromGenerationOutput(
+      JSON.stringify({
+        code: "CHATGPT_GENERATION_ERROR",
+        diagnostic: {
+          operation: 3,
+          stage: "turn-start",
+          reason: "rpc-rejection",
+          rpcCode: -32603,
+          raw: "access_token=private-secret",
+        },
+      }),
+    );
+    expect(diagnostic).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: {
+        operation: 3,
+        stage: "turn-start",
+        reason: "rpc-rejection",
+        rpcCode: -32603,
+      },
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain("private-secret");
+
+    const untrusted = diagnosticFromGenerationOutput(
+      JSON.stringify({
+        code: "CHATGPT_GENERATION_ERROR",
+        diagnostic: {
+          operation: 3,
+          stage: "private-stage",
+          reason: "private-reason",
+          rpcCode: 999999,
+        },
+      }),
+    );
+    expect(untrusted).toEqual({
+      code: "CHATGPT_GENERATION_ERROR",
+      diagnostic: { operation: 3 },
+    });
+  });
+
   it("writes a private raw line artifact only at an explicit outside path", async () => {
     const directory = await mkdtemp(join(tmpdir(), "orbsie-scene-diag-test-"));
     temporaryDirectories.push(directory);

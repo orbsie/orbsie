@@ -4,6 +4,14 @@ import {
   CHATGPT_GENERATION_CONFIG,
   CHATGPT_READ_POLICY,
 } from "./chatgpt-generation-policy";
+import {
+  ChatGPTGenerationError,
+  ChatGPTGenerationReason,
+  ChatGPTGenerationStage,
+  ChatGPTRpcError,
+  generationDiagnostic,
+  type GenerationDiagnostic,
+} from "../generation-diagnostics";
 
 const MAX_INSTRUCTIONS = 64 * 1024;
 const MAX_INPUT = 256 * 1024;
@@ -95,11 +103,11 @@ function awaitAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
         signal.removeEventListener("abort", abort);
         resolve(value);
       },
-      () => {
+      (error) => {
         if (settled) return;
         settled = true;
         signal.removeEventListener("abort", abort);
-        reject(GENERIC);
+        reject(error instanceof ChatGPTRpcError ? error : GENERIC);
       },
     );
   });
@@ -155,12 +163,20 @@ function toolRequest(method: string, rawParams: unknown): boolean {
   );
 }
 
-function eventTurnId(params: RecordValue): string | undefined {
-  return id(params.turnId) ? params.turnId : undefined;
+function eventTurnId(params: RecordValue, method: string): string | undefined {
+  const direct = params.turnId;
+  if (direct !== undefined && !id(direct)) return undefined;
+  if (method !== "turn/completed") return id(direct) ? direct : undefined;
+  const turn = record(params.turn);
+  const nested = turn?.id;
+  if (!id(nested)) return undefined;
+  if (direct !== undefined && direct !== nested) return undefined;
+  return nested;
 }
 
 function terminalStatus(params: RecordValue): boolean | undefined {
-  const turn = record(params.turn) ?? params;
+  const turn = record(params.turn);
+  if (!turn) return undefined;
   if (turn.status === "completed") return true;
   if (
     turn.status === "failed" ||
@@ -175,12 +191,36 @@ function publicError(
   error: unknown,
   timedOut: boolean,
   cancelled: boolean,
+  stage: ChatGPTGenerationStage,
+  reason: ChatGPTGenerationReason | undefined,
+  sceneDiagnostic: GenerationDiagnostic | undefined,
 ): Error {
-  if (timedOut) return Error(TIMED_OUT);
-  if (cancelled) return Error(CANCELLED);
-  if (error === MODEL_UNAVAILABLE) return Error(MODEL_UNAVAILABLE);
-  if (error === INVALID_INPUT) return Error(INVALID_INPUT);
-  return Error(GENERIC);
+  const finalReason = timedOut
+    ? "timeout"
+    : cancelled
+      ? "cancelled"
+      : (reason ??
+        (error === MODEL_UNAVAILABLE
+          ? "model-unavailable"
+          : error === INVALID_INPUT
+            ? "invalid-input"
+            : error instanceof ChatGPTRpcError
+              ? "rpc-rejection"
+              : "unknown"));
+  const message = timedOut
+    ? TIMED_OUT
+    : cancelled
+      ? CANCELLED
+      : error === MODEL_UNAVAILABLE
+        ? MODEL_UNAVAILABLE
+        : error === INVALID_INPUT
+          ? INVALID_INPUT
+          : GENERIC;
+  return new ChatGPTGenerationError(stage, finalReason, {
+    rpcCode: error instanceof ChatGPTRpcError ? error.rpcCode : undefined,
+    sceneDiagnostic,
+    message,
+  });
 }
 
 export function createChatGPTGeneration(options: GenerationOptions) {
@@ -218,6 +258,9 @@ export function createChatGPTGeneration(options: GenerationOptions) {
     let callbackFailed = false;
     let internalFailure = false;
     let turnEnded = false;
+    let stage: ChatGPTGenerationStage = "catalog";
+    let failureReason: ChatGPTGenerationReason | undefined;
+    let failureDiagnostic: GenerationDiagnostic | undefined;
     let fatalError: unknown;
     let forwardAbort: (() => void) | undefined;
 
@@ -291,6 +334,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         operation!.abort();
       }, timeoutMs);
 
+      stage = "catalog";
       const catalog = await awaitAbort(
         Promise.resolve().then(() => options.models()),
         operation.signal,
@@ -299,6 +343,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
       if (!modelAvailable(catalog, input.model, input.effort))
         throw MODEL_UNAVAILABLE;
 
+      stage = "thread-start";
       const threadResponse = await rpcRequest(
         options.rpc,
         THREAD_START,
@@ -332,10 +377,16 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         rejectTerminal = reject;
       });
       void terminalPromise.catch(() => undefined);
-      const fail = (error: unknown) => {
+      const fail = (
+        error: unknown,
+        reason: ChatGPTGenerationReason = "unknown",
+        diagnostic?: GenerationDiagnostic,
+      ) => {
         if (fatalError || (terminal && turnEnded)) return;
         fatalError = error;
         internalFailure = true;
+        failureReason = reason;
+        failureDiagnostic = diagnostic;
         if (error === GENERIC) forceDispose = true;
         rejectTerminal(error);
         operation!.abort();
@@ -347,7 +398,10 @@ export function createChatGPTGeneration(options: GenerationOptions) {
           terminal = { ok, turnId: eventId, sequence };
           turnEnded = true;
           if (ok) resolveTerminal();
-          else rejectTerminal(GENERIC);
+          else {
+            failureReason = "terminal-failure";
+            rejectTerminal(GENERIC);
+          }
           return;
         }
         if (terminals.length >= 8) {
@@ -362,13 +416,17 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         outputBytes += byteLength(delta.text);
         if (outputBytes > MAX_OUTPUT) {
           forceDispose = true;
+          failureReason = "output-bound";
           throw GENERIC;
         }
         try {
           input.onText(delta.text);
-        } catch {
+        } catch (error) {
           callbackFailed = true;
           forceDispose = true;
+          const diagnostic = generationDiagnostic(error);
+          failureReason = "callback-validation";
+          failureDiagnostic = diagnostic;
           throw GENERIC;
         }
       };
@@ -376,19 +434,26 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         const envelope = record(notification);
         if (!envelope || typeof envelope.method !== "string") return;
         if (envelope.method === "orbsie/runtime/closed") {
+          stage = "stream";
           forceDispose = true;
-          fail(GENERIC);
+          fail(GENERIC, "runtime-closed");
           return;
         }
         if (toolRequest(envelope.method, envelope.params)) {
+          stage = "stream";
           forceDispose = true;
-          fail(GENERIC);
+          fail(GENERIC, "tool-rejection");
           return;
         }
         if (fatalError || terminal) return;
         const params = record(envelope.params);
         if (!params || params.threadId !== threadId) return;
-        const currentTurnId = eventTurnId(params);
+        if (
+          envelope.method === "item/agentMessage/delta" ||
+          envelope.method === "turn/completed"
+        )
+          stage = "stream";
+        const currentTurnId = eventTurnId(params, envelope.method);
         if (turnId && currentTurnId && currentTurnId !== turnId) return;
         if (
           (envelope.method === "item/agentMessage/delta" ||
@@ -403,12 +468,12 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         if (envelope.method === "item/agentMessage/delta") {
           if (!text(params.delta, MAX_DELTA)) {
             forceDispose = true;
-            fail(GENERIC);
+            fail(GENERIC, "output-bound");
             return;
           }
           if (++deltaCount > MAX_DELTAS) {
             forceDispose = true;
-            fail(GENERIC);
+            fail(GENERIC, "output-bound");
             return;
           }
           const delta = {
@@ -420,7 +485,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
             bufferedBytes += byteLength(delta.text);
             if (bufferedBytes > MAX_OUTPUT || buffered.length >= MAX_DELTAS) {
               forceDispose = true;
-              fail(GENERIC);
+              fail(GENERIC, "output-bound");
               return;
             }
             buffered.push(delta);
@@ -429,7 +494,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
           try {
             deliver(delta);
           } catch {
-            fail(GENERIC);
+            fail(GENERIC, failureReason ?? "unknown", failureDiagnostic);
           }
           return;
         }
@@ -446,6 +511,7 @@ export function createChatGPTGeneration(options: GenerationOptions) {
       unsubscribe = subscribe(listener) ?? undefined;
       if (typeof unsubscribe !== "function") throw GENERIC;
 
+      stage = "turn-start";
       turnRequested = true;
       const turnResponsePromise = rpcRequest(
         options.rpc,
@@ -465,8 +531,12 @@ export function createChatGPTGeneration(options: GenerationOptions) {
       const turn = record(turnResponse)?.turn;
       if (!id(record(turn)?.id)) throw GENERIC;
       turnId = record(turn)!.id as string;
+      stage = "stream";
       terminal = terminals.find((candidate) => candidate.turnId === turnId);
-      if (terminal) turnEnded = true;
+      if (terminal) {
+        turnEnded = true;
+        if (!terminal.ok) failureReason = "terminal-failure";
+      }
       for (const delta of buffered) {
         if (!terminal || delta.sequence < terminal.sequence) deliver(delta);
       }
@@ -489,7 +559,14 @@ export function createChatGPTGeneration(options: GenerationOptions) {
         else cancelled = true;
       }
       await safetyCleanup();
-      throw publicError(error, timedOut, cancelled);
+      throw publicError(
+        error,
+        timedOut,
+        cancelled,
+        stage,
+        failureReason,
+        failureDiagnostic,
+      );
     } finally {
       if (timer !== undefined) clearTimeout(timer);
       if (unsubscribe) {

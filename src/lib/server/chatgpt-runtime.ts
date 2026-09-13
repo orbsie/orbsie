@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type ChatGPTDeviceRpc } from "./chatgpt-device-session";
+import { ChatGPTRpcError } from "../generation-diagnostics";
 
 const RPC_TIMEOUT_MS = 30_000;
 const MAX_PENDING = 16;
@@ -337,7 +338,11 @@ export async function createIsolatedChatGPTRpc(
             if (item) {
               pending.delete(message.id);
               clearTimeout(item.timer);
-              item.reject(failure("ChatGPT App Server request failed."));
+              const error =
+                message.error && typeof message.error === "object"
+                  ? (message.error as Record<string, unknown>)
+                  : undefined;
+              item.reject(new ChatGPTRpcError(error?.code));
             }
           } else {
             const item = pending.get(message.id);

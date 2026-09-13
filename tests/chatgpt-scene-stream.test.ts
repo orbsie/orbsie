@@ -197,6 +197,8 @@ describe("hosted ChatGPT scene stream", () => {
     );
     expect(failed.code).toBe("INVALID_SCENE_UPDATE");
     expect(failed.diagnostic).toBeDefined();
+    expect(failed.diagnostic.stage).toBe("stream");
+    expect(failed.diagnostic.reason).toBe("callback-validation");
     expect(JSON.stringify(failed)).not.toContain("private-secret");
 
     const feedback = generationFeedbackForFailure(project.id, failed);
@@ -231,6 +233,25 @@ describe("hosted ChatGPT scene stream", () => {
       );
       expect(result).toContain('"error":');
     }
+  });
+
+  it("marks missing commit as safe stream validation without leaking command text", async () => {
+    const result = await output(
+      createChatGPTSceneStream(request(), {
+        generate: async (i) => {
+          i.onText(JSON.stringify(reserve));
+        },
+      }),
+    );
+    const failed = JSON.parse(result.split("\n").at(-2)!);
+    expect(failed).toMatchObject({
+      code: "INVALID_SCENE_PROTOCOL",
+      diagnostic: {
+        stage: "stream",
+        reason: "callback-validation",
+      },
+    });
+    expect(result).not.toContain("access_token");
   });
   it("rejects native modeling and nonexistent selection before invoking generation", () => {
     const generator = { generate: vi.fn() };

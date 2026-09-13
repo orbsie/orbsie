@@ -9,6 +9,7 @@ import {
   CHATGPT_GENERATION_CONFIG,
   CHATGPT_READ_POLICY,
 } from "../src/lib/server/chatgpt-generation-policy";
+import { ChatGPTRpcError } from "../src/lib/generation-diagnostics";
 import { createIsolatedChatGPTRpc } from "../src/lib/server/chatgpt-runtime";
 
 class FakeChild extends EventEmitter {
@@ -249,6 +250,44 @@ describe("isolated ChatGPT App Server runtime", () => {
       id: 99,
       error: { code: -32601, message: "Server requests are not supported." },
     });
+  });
+
+  it("retains only a bounded numeric RPC code on a rejected response", async () => {
+    const { runtime, child } = await start();
+    const pending = runtime.request("account/read");
+    const id = JSON.parse(child.stdin.writes.at(-1)!).id;
+    child.stdout.emit(
+      "data",
+      child.line({
+        id,
+        error: {
+          code: -32603,
+          message: "access_token=secret",
+          metadata: { prompt: "private prompt" },
+        },
+      }),
+    );
+    const error = await pending.catch((value) => value);
+    expect(error).toBeInstanceOf(ChatGPTRpcError);
+    expect((error as ChatGPTRpcError).rpcCode).toBe(-32603);
+    expect((error as ChatGPTRpcError).message).toBe(
+      "ChatGPT App Server request failed.",
+    );
+    expect(JSON.stringify(error)).not.toContain("secret");
+    expect(JSON.stringify(error)).not.toContain("private prompt");
+
+    const second = runtime.request("account/read");
+    const secondId = JSON.parse(child.stdin.writes.at(-1)!).id;
+    child.stdout.emit(
+      "data",
+      child.line({
+        id: secondId,
+        error: { code: 999_999, message: "private" },
+      }),
+    );
+    const unbounded = await second.catch((value) => value);
+    expect(unbounded).toBeInstanceOf(ChatGPTRpcError);
+    expect((unbounded as ChatGPTRpcError).rpcCode).toBeUndefined();
   });
 
   it("bounds pending requests at sixteen and rejects malformed UTF-8", async () => {

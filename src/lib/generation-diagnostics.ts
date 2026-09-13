@@ -14,6 +14,8 @@ export const generationDiagnosticCodes = [
   "TRUNCATED_SCENE_STREAM",
   "PROVIDER_STREAM_ERROR",
 ] as const;
+export const chatGPTGenerationDiagnosticCode =
+  "CHATGPT_GENERATION_ERROR" as const;
 export const generationDiagnosticReasons = [
   "duplicate_recipe_node_id",
   "unreachable_recipe_node",
@@ -118,11 +120,68 @@ export const generationDiagnosticIssueCodes = [
   "invalid_value",
   "custom",
 ] as const;
+
+export const chatGPTGenerationStages = [
+  "catalog",
+  "thread-start",
+  "turn-start",
+  "stream",
+] as const;
+
+export const chatGPTGenerationReasons = [
+  "rpc-rejection",
+  "terminal-failure",
+  "callback-validation",
+  "tool-rejection",
+  "timeout",
+  "cancelled",
+  "output-bound",
+  "runtime-closed",
+  "model-unavailable",
+  "invalid-input",
+  "unknown",
+] as const;
+
+export type ChatGPTGenerationStage = (typeof chatGPTGenerationStages)[number];
+export type ChatGPTGenerationReason = (typeof chatGPTGenerationReasons)[number];
+
+const MIN_RPC_CODE = -32_768;
+const MAX_RPC_CODE = 32_767;
+
+/** Keep JSON-RPC codes numeric and bounded; discard all other error data. */
+export function boundedRpcCode(value: unknown): number | undefined {
+  return typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= MIN_RPC_CODE &&
+    value <= MAX_RPC_CODE
+    ? value
+    : undefined;
+}
+
+/** A provider-safe rejection created by the isolated App Server transport. */
+export class ChatGPTRpcError extends Error {
+  readonly rpcCode?: number;
+
+  constructor(code?: unknown) {
+    super("ChatGPT App Server request failed.");
+    this.name = "ChatGPTRpcError";
+    const bounded = boundedRpcCode(code);
+    if (bounded !== undefined) this.rpcCode = bounded;
+  }
+}
+
+export type ChatGPTGenerationErrorOptions = {
+  rpcCode?: unknown;
+  sceneDiagnostic?: GenerationDiagnostic;
+  message?: string;
+};
 const knownDiagnosticReasons = new Set<string>(generationDiagnosticReasons);
 const knownPathKeys = new Set<string>(generationDiagnosticPathKeys);
 const knownIssueCodes = new Set<string>(generationDiagnosticIssueCodes);
 
-type DiagnosticCode = (typeof generationDiagnosticCodes)[number];
+type DiagnosticCode =
+  | (typeof generationDiagnosticCodes)[number]
+  | typeof chatGPTGenerationDiagnosticCode;
 
 export type GenerationFinishReason =
   | "stop"
@@ -214,7 +273,47 @@ export interface GenerationDiagnostic {
     readonly issues: readonly GenerationDiagnosticIssue[];
     readonly providerStatus?: number | null;
     readonly finishReason?: GenerationFinishReason;
+    readonly stage?: ChatGPTGenerationStage;
+    readonly reason?: ChatGPTGenerationReason;
+    readonly rpcCode?: number;
   };
+}
+
+/** Safe metadata for one hosted ChatGPT generation failure. */
+export class ChatGPTGenerationError extends Error {
+  readonly stage: ChatGPTGenerationStage;
+  readonly reason: ChatGPTGenerationReason;
+  readonly rpcCode?: number;
+  readonly sceneDiagnostic?: GenerationDiagnostic;
+
+  constructor(
+    stage: ChatGPTGenerationStage,
+    reason: ChatGPTGenerationReason,
+    options: ChatGPTGenerationErrorOptions = {},
+  ) {
+    super(options.message ?? "ChatGPT generation could not be completed.");
+    this.name = "ChatGPTGenerationError";
+    this.stage = (chatGPTGenerationStages as readonly unknown[]).includes(stage)
+      ? stage
+      : "stream";
+    this.reason = (chatGPTGenerationReasons as readonly unknown[]).includes(
+      reason,
+    )
+      ? reason
+      : "unknown";
+    const bounded = boundedRpcCode(options.rpcCode);
+    if (bounded !== undefined) this.rpcCode = bounded;
+    const sceneCode = options.sceneDiagnostic?.code;
+    if (
+      options.sceneDiagnostic &&
+      sceneCode &&
+      (generationDiagnosticCodes as readonly string[]).includes(sceneCode)
+    )
+      this.sceneDiagnostic = {
+        code: sceneCode,
+        diagnostic: safeSceneDiagnostic(options.sceneDiagnostic, 0),
+      };
+  }
 }
 
 type Candidate = {
@@ -315,6 +414,51 @@ function zodIssues(error: z.ZodError): GenerationDiagnosticIssue[] {
   return issues;
 }
 
+function safeSceneIssues(value: unknown): GenerationDiagnosticIssue[] {
+  if (!Array.isArray(value)) return [];
+  const issues: GenerationDiagnosticIssue[] = [];
+  for (const entry of value.slice(0, MAX_ISSUES)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const issue = entry as Record<string, unknown>;
+    const path = Array.isArray(issue.path) ? sanitizePath(issue.path) : [];
+    const reason =
+      typeof issue.reason === "string" &&
+      knownDiagnosticReasons.has(issue.reason)
+        ? issue.reason
+        : undefined;
+    issues.push({
+      code: issueCode(issue.code),
+      path,
+      ...(reason ? { reason } : {}),
+    });
+  }
+  return issues;
+}
+
+function safeSceneDiagnostic(
+  value: GenerationDiagnostic | undefined,
+  operation: number,
+): GenerationDiagnostic["diagnostic"] {
+  const source = value?.diagnostic;
+  if (!source) return { operation, issues: [] };
+  const providerStatus =
+    source.providerStatus === null ||
+    (typeof source.providerStatus === "number" &&
+      Number.isInteger(source.providerStatus) &&
+      source.providerStatus >= 400 &&
+      source.providerStatus <= 599)
+      ? source.providerStatus
+      : undefined;
+  return {
+    operation,
+    issues: safeSceneIssues(source.issues),
+    ...(providerStatus !== undefined ? { providerStatus } : {}),
+    ...(source.finishReason !== undefined
+      ? { finishReason: normalizeFinishReason(source.finishReason) }
+      : {}),
+  };
+}
+
 /** Return a bounded, schema-only diagnostic suitable for an error NDJSON line. */
 export function generationDiagnostic(
   error: unknown,
@@ -324,6 +468,34 @@ export function generationDiagnostic(
   const operation = Number.isFinite(operationCount)
     ? Math.min(MAX_OPERATION_COUNT, Math.max(0, Math.trunc(operationCount)))
     : 0;
+  if (error instanceof ChatGPTGenerationError) {
+    const scene = error.sceneDiagnostic;
+    const sceneCode = scene?.code;
+    const rpcCode = boundedRpcCode(error.rpcCode);
+    const stage = (chatGPTGenerationStages as readonly unknown[]).includes(
+      error.stage,
+    )
+      ? error.stage
+      : "stream";
+    const reason = (chatGPTGenerationReasons as readonly unknown[]).includes(
+      error.reason,
+    )
+      ? error.reason
+      : "unknown";
+    return {
+      code:
+        sceneCode &&
+        (generationDiagnosticCodes as readonly string[]).includes(sceneCode)
+          ? sceneCode
+          : chatGPTGenerationDiagnosticCode,
+      diagnostic: {
+        ...safeSceneDiagnostic(scene, operation),
+        stage,
+        reason,
+        ...(rpcCode !== undefined ? { rpcCode } : {}),
+      },
+    };
+  }
   if (error instanceof ProviderStreamError)
     return {
       code: "PROVIDER_STREAM_ERROR",

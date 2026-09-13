@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  chatGPTGenerationDiagnosticCode,
+  chatGPTGenerationReasons,
+  chatGPTGenerationStages,
   generationDiagnosticCodes,
   generationDiagnosticIssueCodes,
   generationDiagnosticPathKeys,
@@ -13,6 +16,10 @@ const finishReasons = [
   "content_filter",
   "error",
   "other",
+] as const;
+const generationFeedbackCodes = [
+  ...generationDiagnosticCodes,
+  chatGPTGenerationDiagnosticCode,
 ] as const;
 
 const pathSegmentSchema = z.union([
@@ -32,9 +39,12 @@ export const generationFeedbackSchema = z
   .object({
     version: z.literal(1),
     projectId: z.string().regex(/^[\w-]{1,80}$/),
-    code: z.enum(generationDiagnosticCodes),
+    code: z.enum(generationFeedbackCodes),
     finishReason: z.enum(finishReasons).nullable(),
     issues: z.array(generationFeedbackIssueSchema).max(8),
+    stage: z.enum(chatGPTGenerationStages).optional(),
+    reason: z.enum(chatGPTGenerationReasons).optional(),
+    rpcCode: z.number().int().min(-32768).max(32767).optional(),
   })
   .strict();
 
@@ -60,6 +70,15 @@ export function generationFeedbackForFailure(
     code: source?.code,
     finishReason: diagnostic?.finishReason ?? null,
     issues: diagnostic?.issues,
+    ...(typeof diagnostic?.stage === "string"
+      ? { stage: diagnostic.stage }
+      : {}),
+    ...(typeof diagnostic?.reason === "string"
+      ? { reason: diagnostic.reason }
+      : {}),
+    ...(typeof diagnostic?.rpcCode === "number"
+      ? { rpcCode: diagnostic.rpcCode }
+      : {}),
   };
   const parsed = generationFeedbackSchema.safeParse(candidate);
   return parsed.success ? parsed.data : undefined;
@@ -72,6 +91,7 @@ export function generationFeedbackInstruction(
   if (!value) return "";
   const parsed = generationFeedbackSchema.safeParse(value);
   if (!parsed.success) return "";
+  if (parsed.data.code === chatGPTGenerationDiagnosticCode) return "";
   const { code, finishReason, issues } = parsed.data;
   const issueText = issues.length
     ? issues

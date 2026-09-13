@@ -12,6 +12,7 @@ import { promptCatalogForPolicy } from "../asset-catalog";
 import { authoringHistory } from "../authoring-history";
 import { assertModelingCommand } from "../modeling-policy";
 import {
+  ChatGPTGenerationError,
   generationDiagnostic,
   SceneProtocolError,
 } from "../generation-diagnostics";
@@ -158,7 +159,11 @@ export function createChatGPTSceneStream(
           });
           emit(buffer);
           combined.throwIfAborted();
-          if (!pendingCommit) throw Error("Missing final commit.");
+          if (!pendingCommit)
+            throw new SceneProtocolError(
+              null,
+              "The model did not finish with a commit_revision.",
+            );
           const commit = pendingCommit;
           pendingCommit = undefined;
           const applied = applyModelOperation(
@@ -178,7 +183,17 @@ export function createChatGPTSceneStream(
           cursor = applied.cursor;
           enqueue(commit);
         } catch (error) {
-          const diagnostic = generationDiagnostic(error, count, null);
+          let safeError = error;
+          if (!(error instanceof ChatGPTGenerationError)) {
+            const scene = generationDiagnostic(error, count, null);
+            if (scene?.code && scene.code !== "PROVIDER_STREAM_ERROR")
+              safeError = new ChatGPTGenerationError(
+                "stream",
+                "callback-validation",
+                { sceneDiagnostic: scene },
+              );
+          }
+          const diagnostic = generationDiagnostic(safeError, count, null);
           if (!cancelled && !combined.aborted)
             controller.enqueue(
               encoder.encode(

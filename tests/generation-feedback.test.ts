@@ -4,6 +4,10 @@ import {
   generationFeedbackInstruction,
   generationFeedbackSchema,
 } from "../src/lib/generation-feedback";
+import {
+  ChatGPTGenerationError,
+  generationDiagnostic,
+} from "../src/lib/generation-diagnostics";
 
 const diagnosticRecord = {
   error: "provider secret and raw node id must never be forwarded",
@@ -77,5 +81,53 @@ describe("generation retry feedback", () => {
     );
     expect(feedback?.projectId).toBe("project-b");
     expect(generationFeedbackInstruction(undefined)).toBe("");
+  });
+
+  it("retains safe callback and transport metadata without scene correction", () => {
+    const callbackFailure = generationDiagnostic(
+      new ChatGPTGenerationError("stream", "callback-validation", {
+        rpcCode: 400,
+        sceneDiagnostic: {
+          code: "INVALID_SCENE_UPDATE",
+          diagnostic: { operation: 3, issues: [] },
+        },
+      }),
+      3,
+    );
+    const feedback = generationFeedbackForFailure("project-a", {
+      error: "safe public error",
+      ...callbackFailure!,
+    });
+    expect(feedback).toEqual({
+      version: 1,
+      projectId: "project-a",
+      code: "INVALID_SCENE_UPDATE",
+      finishReason: null,
+      issues: [],
+      stage: "stream",
+      reason: "callback-validation",
+      rpcCode: 400,
+    });
+    const providerFailure = generationDiagnostic(
+      new ChatGPTGenerationError("turn-start", "rpc-rejection", {
+        rpcCode: 401,
+      }),
+    );
+    const providerFeedback = generationFeedbackForFailure("project-a", {
+      error: "access_token=provider-secret",
+      ...providerFailure!,
+    });
+    expect(providerFeedback).toEqual({
+      version: 1,
+      projectId: "project-a",
+      code: "CHATGPT_GENERATION_ERROR",
+      finishReason: null,
+      issues: [],
+      stage: "turn-start",
+      reason: "rpc-rejection",
+      rpcCode: 401,
+    });
+    expect(generationFeedbackInstruction(providerFeedback)).toBe("");
+    expect(JSON.stringify(providerFeedback)).not.toContain("provider-secret");
   });
 });

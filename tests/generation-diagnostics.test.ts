@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { blankProject, commandSchema } from "../src/lib/protocol";
 import {
+  ChatGPTGenerationError,
   generationDiagnostic,
   ProviderStreamError,
 } from "../src/lib/generation-diagnostics";
@@ -33,6 +34,41 @@ describe("generation diagnostics", () => {
       expect(generationDiagnostic(error)?.diagnostic.providerStatus).toBeNull();
       expect(JSON.stringify(error)).not.toContain("private-secret");
     }
+  });
+
+  it("normalizes malformed typed ChatGPT metadata before serialization", () => {
+    const error = new ChatGPTGenerationError(
+      "private-stage" as never,
+      "private-reason" as never,
+      {
+        sceneDiagnostic: {
+          code: "INVALID_SCENE_UPDATE",
+          diagnostic: {
+            operation: 1,
+            issues: [
+              {
+                code: "private-code",
+                path: ["private-id"],
+                reason: "private-reason",
+              },
+            ],
+          },
+        },
+      },
+    );
+    Object.assign(error, { rpcCode: "private-rpc-code" });
+    expect(generationDiagnostic(error)).toEqual({
+      code: "INVALID_SCENE_UPDATE",
+      diagnostic: {
+        operation: 0,
+        issues: [{ code: "custom", path: ["?"] }],
+        stage: "stream",
+        reason: "unknown",
+      },
+    });
+    expect(JSON.stringify(generationDiagnostic(error))).not.toContain(
+      "private",
+    );
   });
 
   it("records a provider stream status without exposing upstream payloads", async () => {
@@ -241,6 +277,41 @@ describe("generation diagnostics", () => {
       diagnostic: { operation: 0, issues: [] },
     });
     expect(generationDiagnostic(new Error("private"))).toBeUndefined();
+  });
+
+  it("sanitizes a typed ChatGPT cause before serializing its safe metadata", () => {
+    const diagnostic = generationDiagnostic(
+      new ChatGPTGenerationError("stream", "callback-validation", {
+        rpcCode: 401,
+        sceneDiagnostic: {
+          code: "INVALID_SCENE_UPDATE",
+          diagnostic: {
+            operation: 99,
+            issues: [
+              {
+                code: "private-code",
+                path: ["privateField"],
+                reason: "private-reason",
+              },
+            ],
+            raw: "provider-secret",
+          },
+          raw: "access_token=private-secret",
+        } as never,
+      }),
+      3,
+    );
+    expect(diagnostic).toEqual({
+      code: "INVALID_SCENE_UPDATE",
+      diagnostic: {
+        operation: 3,
+        issues: [{ code: "custom", path: ["?"] }],
+        stage: "stream",
+        reason: "callback-validation",
+        rpcCode: 401,
+      },
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain("private");
   });
 
   it("records the attempted malformed command before a later terminal frame", async () => {

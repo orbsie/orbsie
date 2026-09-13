@@ -38,6 +38,7 @@ export async function installGenerationDiagnosticObserver(page) {
                     "INVALID_SCENE_PROTOCOL",
                     "TRUNCATED_SCENE_STREAM",
                     "PROVIDER_STREAM_ERROR",
+                    "CHATGPT_GENERATION_ERROR",
                   ].includes(record.code)
                 )
                   continue;

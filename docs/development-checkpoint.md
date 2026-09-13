@@ -20,7 +20,7 @@ cookies, local Codex credentials, or user Blender installation. Preserve license
 
 ## Current task: diagnose first real hosted ChatGPT generation failure
 
-Active worker `/root/chatgpt_failure_diagnostics` owns bounded safe diagnostics in
+Worker `/root/chatgpt_failure_diagnostics` implements bounded safe diagnostics in
 chatgpt-runtime/generation/scene-stream plus narrowly required schema/tests.
 Also fixes exact protocol mismatch root proved against hosted Codex0.153.4:
 `turn/completed` has `{threadId, turn:{id,...}}`, not top-level `turnId`.
@@ -28,7 +28,12 @@ Current generator incorrectly rejects official completion events. Preserve
 cross-thread/turn validation. Diagnostics must only expose closed stage/reason
 codes, bounded numeric RPC code and already-sanitized validation metadata, never
 raw provider text, credentials, IDs, paths or generated content. No live calls,
-deploy or nested agents by worker. Root reviews every finished diff.
+deploy or nested agents by worker. Root reviewed the server/protocol diff and
+requested fixes for client acceptance of CHATGPT_GENERATION_ERROR, serialization
+of mutated RPC metadata, and unmatched pre-ack terminal classification. Final
+review accepted those fixes. Six focused suites (78 tests), typecheck, Prettier
+and diff checks passed. No additional live calls. Next: isolated release build
+and deployment, then fresh owner Chrome ChatGPT create/edit acceptance.
 
 Real owner Chrome authorization/catalog succeeded again, Luna low applied.
 One live create requested mushroom platforms, moving middle platform, crystals,
