@@ -23,6 +23,21 @@ import {
   collectProviderBrowserE2EProvenance,
   parseApplicationSourceCommit,
 } from "./lib/provider-browser-e2e-provenance.mjs";
+import {
+  FRESH_GAMEPLAY_LIMITS,
+  buildFreshGameplayTargets,
+  chooseGameplayKeys,
+  chooseGameplayJumpKeys,
+  generationStreamIsOpen,
+  gameplaySurfaceCandidatePoints,
+  observePlatformContact,
+  portalCompletionIsAuthoritative,
+  summarizeFreshGameplayRun,
+  validateGenerationMovementObservation,
+  validateFreshGameplayObservation,
+  waitForFreshGameplayObservation,
+} from "./lib/fresh-flagship-gameplay.mjs";
+import { createTraversalTouchInput } from "./lib/traversal-touch-input.mjs";
 
 /**
  * Opt-in, provider-backed browser acceptance harness.
@@ -2363,6 +2378,12 @@ function attachRequestEvidence(page, config, info) {
       info.loopbackGenerationRequests += 1;
     if (!isApiGeneration && !isHostedGeneration && !isCompanionGeneration)
       return;
+    info.generationRequestTimes ||= [];
+    info.generationRequestTimes.push({
+      request: info.generationRequests + 1,
+      atMs: Date.now(),
+      path: requestURL.pathname,
+    });
     info.generationRequests += 1;
     if (isApiGeneration) info.apiGenerationRequests += 1;
     if (isHostedGeneration) info.hostedGenerationRequests += 1;
@@ -3726,6 +3747,32 @@ export function assertFlagshipStoryCreation(project) {
     collectibles,
     trees,
     platforms,
+    portal: portals[0],
+  };
+}
+
+function storyObjectiveEvidence(project, label) {
+  const collectibles = storyCollectibles(project);
+  const portals = project.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  assert.equal(portals.length, 1, `${label} must have one portal.`);
+  const winningRules = (project.game?.rules ?? []).filter((rule) =>
+    storyPortalWinRule(rule, portals[0].id),
+  );
+  assert.equal(
+    winningRules.length,
+    1,
+    `${label} must have one portal win rule.`,
+  );
+  const condition = storyCrystalGoalCondition(winningRules[0]);
+  assert(condition, `${label} portal win rule has no crystals objective.`);
+  return {
+    collectibleIds: collectibles.map((entity) => entity.id),
+    collectibleCount: collectibles.length,
+    portalId: portals[0].id,
+    portalComparison: condition.condition.comparison,
+    portalThreshold: condition.condition.value,
   };
 }
 
@@ -4510,6 +4557,711 @@ export async function persistFlagshipStoryPhase(
   return phaseManifest;
 }
 
+async function readGameplayObservation(page) {
+  return page.evaluate(() => {
+    const read = window.__ORBSIE_GAMEPLAY_READ__;
+    return typeof read === "function" ? read() : null;
+  });
+}
+
+/** Give keyboard gameplay events a real rendered surface target. */
+async function focusGameplaySurface(page) {
+  const surface = page.locator("canvas").first();
+  await expect(surface).toBeVisible({ timeout: 30000 });
+  const box = await surface.boundingBox();
+  assert(box, "Flagship gameplay surface has no rendered bounds.");
+  const candidates = gameplaySurfaceCandidatePoints(box);
+  const point = await page.evaluate(({ candidatePoints, bounds }) => {
+    const canvas = [...document.querySelectorAll("canvas")].find((node) => {
+      const rect = node.getBoundingClientRect();
+      return (
+        Math.abs(rect.x - bounds.x) < 1 &&
+        Math.abs(rect.y - bounds.y) < 1 &&
+        Math.abs(rect.width - bounds.width) < 1 &&
+        Math.abs(rect.height - bounds.height) < 1
+      );
+    });
+    if (!canvas) return null;
+    return (
+      candidatePoints.find(({ x, y }) => {
+        const hit = document.elementFromPoint(x, y);
+        return hit === canvas || (hit !== null && canvas.contains(hit));
+      }) ?? null
+    );
+  }, { candidatePoints: candidates, bounds: box });
+  assert(
+    point,
+    "No unobscured point was available on the rendered gameplay surface.",
+  );
+  await surface.click({
+    position: { x: point.x - box.x, y: point.y - box.y },
+  });
+}
+
+async function createFlagshipGameplayInput(page, requestedMode = "auto") {
+  const touch =
+    requestedMode === "touch" ||
+    (requestedMode === "auto" &&
+      (await page.evaluate(
+        () => window.matchMedia("(pointer: coarse)").matches,
+      )));
+  const held = new Set();
+  let touchInput;
+  let cdp;
+  if (touch) {
+    cdp = await page.context().newCDPSession(page);
+    await cdp.send("Emulation.setTouchEmulationEnabled", {
+      enabled: true,
+      maxTouchPoints: 5,
+    });
+    touchInput = createTraversalTouchInput({
+      cdp,
+      touchPoint: async (key, id) => {
+        const label = key === " " ? "Jump" : `Move ${key}`;
+        const box = await page
+          .getByRole("button", { name: label, exact: true })
+          .boundingBox();
+        if (!box) throw new Error(`Missing flagship touch control ${key}.`);
+        return {
+          x: box.x + box.width / 2,
+          y: box.y + box.height / 2,
+          id,
+        };
+      },
+    });
+  }
+  return {
+    mode: touch ? "touch" : "keyboard",
+    setKeys: async (keys) => {
+      if (touch) {
+        await touchInput.setKeys(keys);
+        return;
+      }
+      const next = new Set(keys);
+      for (const key of held) {
+        if (!next.has(key)) {
+          await page.keyboard.up(key);
+          held.delete(key);
+        }
+      }
+      for (const key of next) {
+        if (!held.has(key)) {
+          await page.keyboard.down(key);
+          held.add(key);
+        }
+      }
+    },
+    releaseAll: async () => {
+      if (touch) {
+        await touchInput.releaseAll();
+        return;
+      }
+      for (const key of held) await page.keyboard.up(key);
+      held.clear();
+    },
+    close: async () => {
+      await touchInput?.releaseAll().catch(() => {});
+      if (!touch) {
+        for (const key of held) await page.keyboard.up(key).catch(() => {});
+        held.clear();
+      }
+      await cdp?.detach().catch(() => {});
+    },
+  };
+}
+
+export async function runFreshFlagshipGameplay(
+  page,
+  project,
+  story,
+  options = {},
+) {
+  const targets = buildFreshGameplayTargets(project, story);
+  const input = await createFlagshipGameplayInput(
+    page,
+    options.inputMode ?? "auto",
+  );
+  const observations = [];
+  const inputTrace = [];
+  const platformEvidence = new Map(
+    targets.platforms.map((target) => [
+      target.id,
+      {
+        id: target.id,
+        behavior: target.behavior,
+        groundedFrames: 0,
+        bounceFrames: 0,
+        startPosition: null,
+        maximumDisplacement: 0,
+        jumpEvidence: [],
+      },
+    ]),
+  );
+  const startedAt = Date.now();
+  let expectedRenderer;
+  let expectedReset;
+  let expectedSessionGeneration;
+  let lastObservationAt = -Infinity;
+  let previous;
+  const staleObservationWaits = [];
+  const read = async ({ allowLifecycleChange = false } = {}) => {
+    let observation = await readGameplayObservation(page);
+    if (!observation) return null;
+    if (observation.atMs <= lastObservationAt) {
+      const waitStartedAt = Date.now();
+      const waitDeadline =
+        waitStartedAt + FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs;
+      observation = await readGameplayObservation(page);
+      while (
+        observation &&
+        observation.atMs <= lastObservationAt &&
+        Date.now() < waitDeadline
+      ) {
+        await page.waitForTimeout(50);
+        observation = await readGameplayObservation(page);
+      }
+      staleObservationWaits.push({
+        waitedMs: Date.now() - waitStartedAt,
+        previousAtMs: lastObservationAt,
+        observedAtMs: observation?.atMs ?? null,
+      });
+      if (!observation || observation.atMs <= lastObservationAt) return null;
+    }
+    validateFreshGameplayObservation(observation, {
+      projectId: project.id,
+      revision: project.revision,
+      renderer: expectedRenderer,
+      lastAtMs: lastObservationAt,
+      reset: expectedReset,
+      sessionGeneration: expectedSessionGeneration,
+      allowLifecycleChange,
+    });
+    if (observations.length >= 6000)
+      throw new Error("Fresh gameplay observation trace exceeded its bound.");
+    expectedRenderer ??= observation.renderer;
+    if (!allowLifecycleChange) {
+      expectedReset ??= observation.reset;
+      expectedSessionGeneration ??= observation.sessionGeneration;
+    }
+    observations.push(observation);
+    for (const target of targets.platforms) {
+      const live = observation.entities.find(
+        (entity) => entity.id === target.id,
+      );
+      const evidence = platformEvidence.get(target.id);
+      const contact = observePlatformContact(
+        previous,
+        observation,
+        live ?? target,
+      );
+      if (contact.grounded) evidence.groundedFrames += 1;
+      if (contact.bounced) evidence.bounceFrames += 1;
+      if (live) {
+        evidence.startPosition ??= [...live.position];
+        evidence.maximumDisplacement = Math.max(
+          evidence.maximumDisplacement,
+          Math.hypot(
+            live.position[0] - evidence.startPosition[0],
+            live.position[1] - evidence.startPosition[1],
+            live.position[2] - evidence.startPosition[2],
+          ),
+        );
+      }
+    }
+    lastObservationAt = observation.atMs;
+    previous = observation;
+    return observation;
+  };
+  const setKeys = async (keys, reason) => {
+    await input.setKeys(keys);
+    inputTrace.push({
+      atMs: Date.now() - startedAt,
+      keys: [...keys],
+      reason,
+    });
+    if (inputTrace.length > 2000)
+      throw new Error("Fresh gameplay input trace exceeded its bound.");
+  };
+  const compactPlatformObservation = (observation, targetId) => {
+    const platform = observation?.entities?.find(
+      (entity) => entity.id === targetId,
+    );
+    return observation
+      ? {
+          atMs: observation.atMs,
+          player: {
+            position: [...observation.player.position],
+            velocityY: observation.player.velocityY,
+            groundedOn: observation.player.groundedOn ?? null,
+          },
+          platform: platform
+            ? { position: [...platform.position], scale: [...platform.scale] }
+            : null,
+          platformContactId: observation.platformContacts?.includes(targetId)
+            ? targetId
+            : null,
+          bounceContactId: observation.bounceContacts?.includes(targetId)
+            ? targetId
+            : null,
+          platformContactCount:
+            observation.platformContactCounts?.[targetId] ?? 0,
+          bounceContactCount:
+            observation.bounceContactCounts?.[targetId] ?? 0,
+        }
+      : null;
+  };
+  const recordJumpSample = (phase, observation) => {
+    const sample = compactPlatformObservation(observation, phase.id);
+    if (!sample) return;
+    if (phase.samples.length < 8) phase.samples.push(sample);
+    if (sample.player.velocityY <= 0 && !phase.apex)
+      phase.apex = sample;
+  };
+  const finish = async () => {
+    await input.releaseAll().catch(() => {});
+    await input.close();
+  };
+  try {
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    if (await play.isVisible()) await play.click();
+    await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
+    if (input.mode === "keyboard") await focusGameplaySurface(page);
+    const observationEpoch = await page.evaluate(() => performance.now());
+    await expect
+      .poll(
+        async () => {
+          const observation = await readGameplayObservation(page);
+          return Boolean(observation && observation.atMs > observationEpoch);
+        },
+        {
+          timeout: 30000,
+        },
+      )
+      .toBe(true);
+    const start = await read();
+    if (!start)
+      throw new Error("Fresh gameplay renderer exposed no player observation.");
+    if (start.projectId !== project.id || start.revision !== project.revision)
+      throw new Error(
+        "Fresh gameplay started with a different project snapshot.",
+      );
+
+    const movementBefore = start;
+    await setKeys(["d"], "movement-check");
+    await page.waitForTimeout(280);
+    const movementAfter = await read();
+    await setKeys([], "movement-release");
+    if (!movementAfter)
+      throw new Error("Fresh gameplay movement produced no observation.");
+    const movementDistance = Math.hypot(
+      movementAfter.player.position[0] - movementBefore.player.position[0],
+      movementAfter.player.position[2] - movementBefore.player.position[2],
+    );
+    if (movementDistance < FRESH_GAMEPLAY_LIMITS.movementMinDistance)
+      throw new Error(
+        `Fresh gameplay movement was not observed (${movementDistance.toFixed(3)} units).`,
+      );
+
+    const approach = async (target, kind) => {
+      let last;
+      for (
+        let step = 0;
+        step < FRESH_GAMEPLAY_LIMITS.maxSteeringStepsPerTarget;
+        step++
+      ) {
+        last = await read();
+        if (!last)
+          throw new Error(`No observation while approaching ${target.id}.`);
+        const live = last.entities.find((entity) => entity.id === target.id);
+        if (!live)
+          throw new Error(
+            `Fresh gameplay could not observe target ${target.id}.`,
+          );
+        if (kind === "collect" && last.scoreIds.includes(target.id))
+          return last;
+        if (
+          kind === "portal" &&
+          portalCompletionIsAuthoritative(last, {
+            portalId: targets.portal.id,
+            expectedCollectibleIds: targets.collectibles.map(
+              (collectible) => collectible.id,
+            ),
+          })
+        )
+          return last;
+        const distance = Math.hypot(
+          last.player.position[0] - live.position[0],
+          last.player.position[2] - live.position[2],
+        );
+        if (distance <= FRESH_GAMEPLAY_LIMITS.targetDistance) {
+          await setKeys([], `${kind}-settle`);
+          await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
+          last = await read();
+          if (kind !== "collect" || last?.scoreIds.includes(target.id))
+            return last;
+        }
+        const jump =
+          live.position[1] > last.player.position[1] + 0.3 || step % 18 === 0;
+        await setKeys(
+          jump
+            ? [...chooseGameplayKeys(last.player.position, live.position), " "]
+            : chooseGameplayKeys(last.player.position, live.position),
+          `${kind}-steer`,
+        );
+        await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.steeringStepMs);
+      }
+      await setKeys([], `${kind}-unreachable`);
+      throw new Error(
+        `Fresh gameplay could not reach ${target.id}: ${JSON.stringify(last)}`,
+      );
+    };
+
+    for (const target of targets.platforms) {
+      await approach(target, "platform");
+      const evidence = platformEvidence.get(target.id);
+      if (evidence.groundedFrames > 0 || evidence.bounceFrames > 0) continue;
+      for (
+        let attempt = 0;
+        attempt < FRESH_GAMEPLAY_LIMITS.maxJumpAttempts;
+        attempt++
+      ) {
+        const live =
+          previous.entities.find((entity) => entity.id === target.id) ?? target;
+        const phase = {
+          id: target.id,
+          attempt,
+          before: compactPlatformObservation(previous, target.id),
+          inputKeys: [],
+          samples: [],
+          apex: null,
+          landing: null,
+        };
+        evidence.jumpEvidence.push(phase);
+        const jumpKeys = chooseGameplayJumpKeys(
+          previous.player.position,
+          live.position,
+        );
+        phase.inputKeys.push(jumpKeys);
+        await setKeys(jumpKeys, "platform-jump");
+        for (
+          let step = 0;
+          step < FRESH_GAMEPLAY_LIMITS.jumpFeedbackSteps;
+          step++
+        ) {
+          await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.jumpFeedbackStepMs);
+          const sample = await read();
+          recordJumpSample(phase, sample);
+          const samplePlatform = sample?.entities?.find(
+            (entity) => entity.id === target.id,
+          );
+          if (!sample || !samplePlatform) continue;
+          const nextKeys = chooseGameplayJumpKeys(
+            sample.player.position,
+            samplePlatform.position,
+          );
+          phase.inputKeys.push(nextKeys);
+          await setKeys(nextKeys, "platform-jump-feedback");
+        }
+        await setKeys([], "platform-jump-release");
+        await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
+        const landing = await read();
+        phase.landing = compactPlatformObservation(landing, target.id);
+        if (evidence.groundedFrames > 0 || evidence.bounceFrames > 0) break;
+      }
+    }
+
+    for (const target of targets.collectibles) {
+      const before = previous;
+      await approach(target, "collect");
+      let after = previous;
+      for (
+        let attempt = 0;
+        attempt < FRESH_GAMEPLAY_LIMITS.maxJumpAttempts;
+        attempt++
+      ) {
+        if (after?.scoreIds.includes(target.id)) break;
+        await setKeys(
+          [" ", ...chooseGameplayKeys(after.player.position, target.position)],
+          "collect-jump",
+        );
+        await page.waitForTimeout(240);
+        await setKeys([], "collect-jump-release");
+        await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
+        after = await read();
+      }
+      if (!after?.scoreIds.includes(target.id))
+        throw new Error(
+          `Fresh gameplay reached ${target.id} without observing its collection from ${JSON.stringify(before)}.`,
+        );
+    }
+
+    await approach(targets.portal, "portal");
+    await setKeys([], "portal-settle");
+    await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
+    const won = await read();
+    await expect(
+      page.getByText("Adventure complete", { exact: true }),
+    ).toBeVisible({
+      timeout: 5000,
+    });
+    if (
+      !won?.won ||
+      won.status !== "won" ||
+      !won.contacts.includes(targets.portal.id)
+    )
+      throw new Error("Fresh gameplay did not observe a portal collision win.");
+    const completionObservations = [...observations];
+    const completion = summarizeFreshGameplayRun({
+      project,
+      observations: completionObservations,
+      targets,
+    });
+    if (
+      completion.collectedIds.length !== targets.collectibles.length ||
+      !targets.collectibles.every((target) =>
+        completion.collectedIds.includes(target.id),
+      )
+    )
+      throw new Error(
+        "Fresh gameplay did not collect the complete crystal set.",
+      );
+
+    const platformResults = [...platformEvidence.values()];
+    const missingPlatforms = platformResults.filter(
+      (entry) => entry.groundedFrames === 0 && entry.bounceFrames === 0,
+    );
+    if (missingPlatforms.length > 0)
+      throw new Error(
+        `Fresh gameplay did not contact every platform: ${missingPlatforms
+          .map((entry) => entry.id)
+          .join(", ")}`,
+      );
+    const missingBounces = platformResults.filter(
+      (entry) => entry.behavior === "bounce" && entry.bounceFrames === 0,
+    );
+    if (missingBounces.length > 0)
+      throw new Error(
+        `Fresh gameplay did not observe every bouncy platform: ${missingBounces
+          .map((entry) => entry.id)
+          .join(", ")}`,
+      );
+    const stationaryPlatforms = platformResults.filter(
+      (entry) => entry.maximumDisplacement < 0.05,
+    );
+    if (stationaryPlatforms.length > 0)
+      throw new Error(
+        `Fresh gameplay did not observe movement for every platform: ${stationaryPlatforms
+          .map((entry) => entry.id)
+          .join(", ")}`,
+      );
+    const resetBefore = won.reset;
+    await page
+      .getByRole("button", { name: "Restart game", exact: true })
+      .click();
+    await expect
+      .poll(
+        async () => {
+          const observation = await readGameplayObservation(page);
+          return observation &&
+            observation.atMs > lastObservationAt &&
+            observation.reset > resetBefore
+            ? true
+            : false;
+        },
+        {
+          timeout: 5000,
+        },
+      )
+      .toBe(true);
+    await page.waitForTimeout(30);
+    const reset = await read({ allowLifecycleChange: true });
+    if (
+      !reset ||
+      reset.projectId !== project.id ||
+      reset.revision !== project.revision ||
+      (reset.reset <= resetBefore &&
+        reset.sessionGeneration <= won.sessionGeneration) ||
+      reset.scoreIds.length !== 0 ||
+      reset.gameScore !== 0 ||
+      reset.status !== "playing" ||
+      reset.won ||
+      reset.lost ||
+      Math.hypot(reset.player.position[0], reset.player.position[2] - 5) > 0.2
+    )
+      throw new Error(
+        "Fresh gameplay reset did not restore the same world and avatar state.",
+      );
+    return {
+      ...completion,
+      inputMode: input.mode,
+      startedAt: new Date(startedAt).toISOString(),
+      finishedAt: new Date().toISOString(),
+      inputTrace,
+      movement: {
+        distance: movementDistance,
+        before: movementBefore,
+        after: movementAfter,
+      },
+      timing: {
+        observationSamples: completionObservations.length,
+        observedSpanMs: completion.elapsedMs,
+        staleObservationWaits,
+        source: "renderer performance.now timestamps",
+      },
+      contacts: [
+        ...new Set(observations.flatMap((observation) => observation.contacts)),
+      ],
+      collections: [
+        ...new Set(
+          observations.flatMap((observation) => observation.collected),
+        ),
+      ],
+      platformEvidence: platformResults,
+      win: {
+        projectId: won.projectId,
+        revision: won.revision,
+        score: won.gameScore,
+        status: won.status,
+        portalId: targets.portal.id,
+      },
+      reset: {
+        projectId: reset.projectId,
+        revision: reset.revision,
+        scoreIds: reset.scoreIds,
+        reset: reset.reset,
+        player: reset.player,
+      },
+    };
+  } catch (error) {
+    const evidence = {
+      observationCount: observations.length,
+      lastObservation: previous,
+      inputTrace: inputTrace.slice(-20),
+      platformEvidence: [...platformEvidence.values()],
+    };
+    if (error && typeof error === "object") {
+      error.freshGameplayEvidence = evidence;
+    }
+    throw error;
+  } finally {
+    await finish();
+  }
+}
+
+export async function observeFlagshipMovementDuringGeneration(
+  page,
+  info,
+  options = {},
+) {
+  const startedAt = Date.now();
+  const expectedProjectId =
+    options.projectId ?? info.generationBodies.at(-1)?.projectId;
+  const play = page.getByRole("button", { name: "Play", exact: true });
+  await expect(play).toBeVisible({ timeout: 30000 });
+  await play.click();
+  await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
+  const observationEpoch = await page.evaluate(() => performance.now());
+  await expect
+    .poll(
+      async () => {
+        const observation = await readGameplayObservation(page);
+        return Boolean(
+          observation &&
+          observation.atMs > observationEpoch &&
+          (!expectedProjectId || observation.projectId === expectedProjectId),
+        );
+      },
+      {
+        timeout: 30000,
+      },
+    )
+    .toBe(true);
+  const input = await createFlagshipGameplayInput(
+    page,
+    options.inputMode ?? "auto",
+  );
+  let before = null;
+  let after = null;
+  let beforeSample = null;
+  let afterSample = null;
+  let validation = null;
+  try {
+    if (input.mode === "keyboard") await focusGameplaySurface(page);
+    beforeSample = await waitForFreshGameplayObservation(
+      () => readGameplayObservation(page),
+      (delayMs) => page.waitForTimeout(delayMs),
+      { lastAtMs: observationEpoch },
+    );
+    before = beforeSample.observation;
+    const stopControlVisible = await page
+      .getByRole("button", { name: "Stop", exact: true })
+      .isVisible()
+      .catch(() => false);
+    const inProgressBeforeInput = generationStreamIsOpen({
+      stopControlVisible,
+    });
+    await input.setKeys(["d"]);
+    await page.waitForTimeout(260);
+    afterSample = await waitForFreshGameplayObservation(
+      () => readGameplayObservation(page),
+      (delayMs) => page.waitForTimeout(delayMs),
+      { lastAtMs: before?.atMs ?? observationEpoch },
+    );
+    after = afterSample.observation;
+    await input.releaseAll();
+    const stopControlVisibleAfter = await page
+      .getByRole("button", { name: "Stop", exact: true })
+      .isVisible()
+      .catch(() => false);
+    validation = validateGenerationMovementObservation(before, after, {
+      projectId: expectedProjectId,
+      streamOpenBefore: inProgressBeforeInput,
+      streamOpenAfter: stopControlVisibleAfter,
+    });
+    if (!validation.valid)
+      throw new Error(
+        `Flagship generation movement evidence failed: ${JSON.stringify(validation)}`,
+      );
+    return {
+      status: "passed",
+      inputMode: input.mode,
+      startedAt: new Date(startedAt).toISOString(),
+      movementAtMs: Date.now() - startedAt,
+      movementAt: new Date().toISOString(),
+      generationRequestsAtMovement: info.generationRequests,
+      generationResponsesAtMovement: info.generationStatuses.length,
+      generationStreamOpenAtMovement: stopControlVisible,
+      generationStreamOpenAfterMovement: stopControlVisibleAfter,
+      generationRequestAtMs: info.generationRequestTimes?.at(-1)?.atMs ?? null,
+      generationRequestAt: info.generationRequestTimes?.at(-1)?.atMs
+        ? new Date(info.generationRequestTimes.at(-1).atMs).toISOString()
+        : null,
+      projectId: before?.projectId ?? null,
+      revisionBefore: before?.revision ?? null,
+      revisionAfter: after?.revision ?? null,
+      movementDistance: validation.movementDistance,
+      before,
+      after,
+      beforeSample,
+      afterSample,
+    };
+  } catch (error) {
+    if (error && typeof error === "object") {
+      error.generationMovementEvidence = {
+        before,
+        after,
+        beforeSample,
+        afterSample,
+        validation,
+      };
+    }
+    throw error;
+  } finally {
+    await input.releaseAll().catch(() => {});
+    await input.close();
+  }
+}
+
 async function runFlagshipStory(
   page,
   config,
@@ -4566,6 +5318,26 @@ async function runFlagshipStory(
     status: "running",
     visualReview: "pending",
   };
+  if (options.seeded) {
+    report.flagshipStory.phases.creation.gameplay = {
+      status: "not-run",
+      reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
+    };
+  } else {
+    const creationGameplay = await runFreshFlagshipGameplay(
+      page,
+      created,
+      initialStory,
+      { inputMode: config.flagshipInputMode },
+    );
+    report.flagshipStory.phases.creation.gameplay = creationGameplay;
+    await page.screenshot({
+      path: join(evidenceDir, "story-creation-gameplay-reset.png"),
+      fullPage: true,
+    });
+    report.evidence.push("story-creation-gameplay-reset.png");
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+  }
   if (!(await page.locator(".object-list").isVisible()))
     await page.getByRole("button", { name: "Show objects", exact: true }).click();
   const treeRow = page
@@ -4652,11 +5424,23 @@ async function runFlagshipStory(
     goal7,
     initialStory.middlePlatform.id,
   );
+  const goal7Objective = storyObjectiveEvidence(goal7, "Story goal-7 edit");
+  assert.equal(
+    goal7Objective.collectibleCount,
+    7,
+    "Story goal-7 edit must expose seven collectible objectives.",
+  );
+  assert.equal(
+    goal7Objective.portalThreshold,
+    7,
+    "Story goal-7 edit portal must require seven crystals.",
+  );
   onGoodProject(goal7);
   report.flagshipStory.phases.goal7 = {
     status: "passed",
     revision: goal7.revision,
     ...platformCheck,
+    objective: goal7Objective,
   };
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.locator(".game-hud")).toBeVisible();
@@ -4685,11 +5469,24 @@ async function runFlagshipStory(
     storyComparable(mushroom),
     "Story undo did not restore the mushroom revision apart from revision/messages.",
   );
+  const undoneObjective = storyObjectiveEvidence(undone, "Story undo");
+  assert.equal(
+    undoneObjective.collectibleCount,
+    5,
+    "Story undo must restore five collectible objectives.",
+  );
+  assert.equal(
+    undoneObjective.portalThreshold,
+    5,
+    "Story undo portal must restore the five-crystal objective.",
+  );
   onGoodProject(undone);
   report.flagshipStory = {
     ...report.flagshipStory,
     status: "structural-passed",
-    scope: "structural-and-persistence",
+    scope: options.seeded
+      ? "structural-and-persistence"
+      : "fresh-gameplay-and-structural-persistence",
     visualReview: "pending",
     initial: {
       trees: initialStory.trees.length,
@@ -4699,14 +5496,21 @@ async function runFlagshipStory(
       middlePlatformId: initialStory.middlePlatform.id,
     },
     mushroom: { ...mushroomCheck, revision: mushroom.revision },
-    goal7: { ...platformCheck, revision: goal7.revision },
+    goal7: {
+      ...platformCheck,
+      revision: goal7.revision,
+      objective: goal7Objective,
+    },
     undo: {
       restoredRevision: undone.revision,
       restoredMushroomState: true,
       exportedGoal: 5,
+      objective: undoneObjective,
     },
     limitations: [
-      "Interactive traversal to collect crystals, reach the portal, and win remains unverified.",
+      options.seeded
+        ? "Fresh-world gameplay was not claimed for the saved checkpoint continuation; the seven-crystal edit and undo only repeat objective-state checks."
+        : "Creation-phase gameplay was traversed in the fresh world; the seven-crystal edit and undo only repeat objective-state checks.",
     ],
   };
   report.edit = {
@@ -7099,6 +7903,10 @@ async function run(config, report = emptyReport(config)) {
     viewport: { width: 1440, height: 1000 },
     ...(storageState ? { storageState } : {}),
   });
+  await context.addInitScript(() => {
+    // The gameplay bridge is opt-in and returns copied primitive observations.
+    window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+  });
   await installTrafficGuard(context, config, approvedOrigins, info);
   const page = await context.newPage();
   attachRequestEvidence(page, config, info);
@@ -7247,8 +8055,14 @@ async function run(config, report = emptyReport(config)) {
       lastGoodProject = projectBefore.project;
       assert.equal(projectBefore.sensitive, false);
       const prompt = page.getByPlaceholder("What experience to build?");
+      await expect(page.locator("main")).toHaveAttribute(
+        "data-renderer-availability",
+        "ready",
+        { timeout: 30000 },
+      );
       await expect(prompt).toBeVisible({ timeout: 30000 });
       await prompt.fill(config.prompt);
+      await expect(prompt).toHaveValue(config.prompt);
       await page.getByRole("button", { name: "Create", exact: true }).click();
       await expect
         .poll(() => info.generationRequests, { timeout: 30000 })
@@ -7319,11 +8133,27 @@ async function run(config, report = emptyReport(config)) {
           fullPage: true,
         });
       }
+      const gameplayDuringGeneration = config.flagshipStory
+        ? observeFlagshipMovementDuringGeneration(page, info, {
+            inputMode: config.flagshipInputMode,
+          })
+        : undefined;
+      gameplayDuringGeneration?.catch(() => {});
+      try {
       projectAfterCreation = await waitForSavedProject(
         page,
         interrupted ? interrupted.checkpoint.revision + 1 : 1,
         1,
       );
+        if (gameplayDuringGeneration) {
+          report.creation.gameplayDuringGeneration =
+            await gameplayDuringGeneration;
+          await page.getByRole("button", { name: "Edit", exact: true }).click();
+        }
+      } catch (error) {
+        await gameplayDuringGeneration?.catch(() => {});
+        throw error;
+      }
       lastGoodProject = projectAfterCreation;
       if (config.requireBrowserModel) {
         const bakedEntity = projectAfterCreation.entities.find(
@@ -8043,6 +8873,7 @@ async function run(config, report = emptyReport(config)) {
           }
         : {}),
       generationStatuses: info.generationStatuses,
+      generationRequestTimes: info.generationRequestTimes ?? [],
       generationDiagnostics: info.generationDiagnostics,
       generationBudgetViolations: info.generationBudgetViolations ?? [],
       blockedExternalRequests: info.blockedExternalRequests,
@@ -8105,6 +8936,7 @@ async function run(config, report = emptyReport(config)) {
           }
         : {}),
       generationStatuses: info.generationStatuses,
+      generationRequestTimes: info.generationRequestTimes ?? [],
       generationDiagnostics: info.generationDiagnostics,
       generationBudgetViolations: info.generationBudgetViolations ?? [],
       blockedExternalRequests: info.blockedExternalRequests,
@@ -8129,6 +8961,7 @@ async function run(config, report = emptyReport(config)) {
           }
         : {}),
       generationStatuses: info.generationStatuses,
+      generationRequestTimes: info.generationRequestTimes ?? [],
       generationDiagnostics: info.generationDiagnostics,
       blockedExternalRequests: info.blockedExternalRequests,
       blockedExternalOrigins: [...info.blockedExternalOrigins].slice(0, 8),

@@ -25,6 +25,9 @@ export type PlayerInput = {
 export type GameplayStep = PlayerState & {
   collected: string[];
   contacts: string[];
+  /** Events from the selected descending top-surface platform contact. */
+  platformContactId?: string;
+  bounceContactId?: string;
   won: boolean;
 };
 
@@ -432,6 +435,8 @@ export function stepGameplay(
           touchesEntity(entity, position, time, worldMatrices?.get(entity.id)),
       )
       .map((entity) => entity.id),
+    ...(floorId ? { platformContactId: floorId } : {}),
+    ...(floorId && bounce ? { bounceContactId: floorId } : {}),
     won,
   };
 }

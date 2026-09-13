@@ -63,6 +63,10 @@ import {
   type PlayerState,
 } from "@/lib/gameplay";
 import {
+  gameplayObservationRequested,
+  publishGameplayObservation,
+} from "@/lib/gameplay-observation";
+import {
   globeOffsetY,
   globeScale,
   parcelFrame,
@@ -987,6 +991,50 @@ function Player({
       if (session.error && current.error !== session.error.message)
         s.set({ error: session.error.message });
     } else if (result.won && !s.won) s.set({ won: true });
+    if (gameplayObservationRequested()) {
+      const observedEntities = s.project.entities.flatMap((entity) => {
+        const effective = session.effectiveEntity(entity);
+        if (!effective) return [];
+        const matrix = worldMatrices?.get(entity.id);
+        const position = matrix
+          ? ([matrix.elements[12], matrix.elements[13], matrix.elements[14]] as [
+              number,
+              number,
+              number,
+            ])
+          : movingEntityPosition(effective, clock.elapsedTime);
+        return [
+          {
+            id: entity.id,
+            behavior: entity.behavior?.type ?? null,
+            stage: effective.stage,
+            position,
+            scale: [...effective.scale] as [number, number, number],
+          },
+        ];
+      });
+      const latest = useOrb.getState();
+      publishGameplayObservation({
+        renderer: "webgl",
+        projectId: latest.project.id,
+        revision: latest.project.revision,
+        simulationDeltaMs: dt * 1000,
+        playing: latest.playing,
+        player: state.current,
+        entities: observedEntities,
+        contacts: result.contacts,
+        platformContactId: result.platformContactId,
+        bounceContactId: result.bounceContactId,
+        collected: result.collected,
+        scoreIds: latest.score,
+        gameScore: latest.gameScore,
+        status: session.state?.status ?? null,
+        won: latest.won,
+        lost: latest.lost,
+        reset: latest.reset,
+        sessionGeneration: session.resetGeneration,
+      });
+    }
     if (inputsReady.current) {
       markExperience(s.project.id, "controls");
       if (

@@ -1,0 +1,27 @@
+{
+  "scope": "Local deterministic desktop creation gameplay; no provider, physical-mobile, full edited-story, publication, or software visual acceptance",
+  "webgl": {
+    "status": "passed",
+    "source": "docs/evidence/fresh-flagship-gameplay-fixture-run9/report.json",
+    "sha256": "73b128f03d2432f9295cf2bf440463e8e0df8e836c90a59f3d810c01c3f7b18c",
+    "visualReview": "Reset screenshot reviewed; scene, avatar, sidebar and score0 visible"
+  },
+  "software": {
+    "status": "gameplay-accepted-with-expected-injected-initialization-error",
+    "source": "docs/evidence/fresh-flagship-gameplay-fixture-run10/report.json",
+    "sha256": "1de5a64fd33f4341c92ec7eddaec936381652f1703272fb1bd5f0b569fb1a198",
+    "originalReportPassed": false,
+    "adjudication": "Original report unchanged. Full gameplay completed; sole page error is exactly the WebGL context error deliberately injected by forced fallback. Software renderer reports ready. Current fixture classifies this exact error only in forced software mode. No browser rerun claimed.",
+    "visualReview": "Open defect: centered composer obscures scene; fixed camera/transition integration requires correction"
+  },
+  "validation": {
+    "source": "Luna completion report; root reviewed code and evidence",
+    "typecheck": "passed",
+    "focusedSixSuites": {
+      "files": 6,
+      "testsPassed": 95
+    },
+    "latestFocusedGameplayTestsPassed": 15
+  },
+  "modelCalls": 0
+}

@@ -1,0 +1,1922 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "webgl": {
+      "status": "passed",
+      "renderer": "webgl",
+      "generationRequests": 1,
+      "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+      "revision": 20,
+      "generationMovement": {
+        "status": "passed",
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T19:57:02.958Z",
+        "movementAtMs": 877,
+        "movementAt": "2026-09-13T19:57:03.835Z",
+        "generationRequestsAtMovement": 1,
+        "generationResponsesAtMovement": 0,
+        "generationStreamOpenAtMovement": true,
+        "generationStreamOpenAfterMovement": true,
+        "generationRequestAtMs": 1789329422958,
+        "generationRequestAt": "2026-09-13T19:57:02.958Z",
+        "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "movementDistance": 0.48000000000000065,
+        "before": {
+          "renderer": "webgl",
+          "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+          "revision": 2,
+          "simulationDeltaMs": 27.59999999962747,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.3809258920801772,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 1797.800000000745,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "after": {
+          "renderer": "webgl",
+          "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+          "revision": 2,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0.42123962970737894,
+              0.42,
+              4.769875741469981
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.4006062606278028,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 2025.800000000745,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "beforeSample": {
+          "observation": {
+            "renderer": "webgl",
+            "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+            "revision": 2,
+            "simulationDeltaMs": 27.59999999962747,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3809258920801772,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 1797.800000000745,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        },
+        "afterSample": {
+          "observation": {
+            "renderer": "webgl",
+            "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+            "revision": 2,
+            "simulationDeltaMs": 40,
+            "playing": true,
+            "player": {
+              "position": [
+                0.42123962970737894,
+                0.42,
+                4.769875741469981
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.4006062606278028,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 2025.800000000745,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        }
+      },
+      "gameplay": {
+        "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+        "revision": 20,
+        "renderer": "webgl",
+        "collectedIds": [
+          "fixture-crystal-3",
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "expectedCollectibleIds": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "score": 5,
+        "won": true,
+        "reset": {
+          "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+          "revision": 20,
+          "scoreIds": [],
+          "reset": 1,
+          "player": {
+            "position": [
+              0,
+              0.428,
+              5
+            ],
+            "velocityY": -1.2
+          }
+        },
+        "elapsedMs": 10615.699999999255,
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T19:57:04.438Z",
+        "finishedAt": "2026-09-13T19:57:16.509Z",
+        "inputTrace": [
+          {
+            "atMs": 1280,
+            "keys": [
+              "d"
+            ],
+            "reason": "movement-check"
+          },
+          {
+            "atMs": 1567,
+            "keys": [],
+            "reason": "movement-release"
+          },
+          {
+            "atMs": 1628,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1709,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1785,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2023,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2151,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2287,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2365,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2439,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2513,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2589,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 2776,
+            "keys": [
+              " ",
+              "d",
+              "w"
+            ],
+            "reason": "platform-jump"
+          },
+          {
+            "atMs": 2832,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 2888,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 2999,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 3053,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 3107,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 3164,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 3165,
+            "keys": [],
+            "reason": "platform-jump-release"
+          },
+          {
+            "atMs": 3413,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3497,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3571,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3649,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3726,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3801,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3881,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3959,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4033,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4167,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4242,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4317,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4526,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4602,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 4845,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4919,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 4996,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5069,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5149,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5223,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5298,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5373,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5513,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5587,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5663,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5736,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5815,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 5890,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 6086,
+            "keys": [
+              "a",
+              "s",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6165,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6239,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6318,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6391,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6465,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6539,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6615,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6689,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6764,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6838,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6914,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6989,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7065,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7139,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7215,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7298,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7375,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7452,
+            "keys": [
+              "a",
+              "s",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7530,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7604,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7682,
+            "keys": [
+              "a",
+              "s",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7756,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7833,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7969,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8130,
+            "keys": [
+              "d",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8205,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8280,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8410,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8484,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8559,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8634,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8711,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8786,
+            "keys": [
+              "d",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8866,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8942,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9148,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9222,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9299,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9382,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9458,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9536,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9613,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9690,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9764,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9838,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9914,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10002,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10077,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10153,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10230,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10304,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10387,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10462,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10537,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10614,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10689,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10765,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10842,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11017,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11099,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11173,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11247,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11321,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11397,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11471,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11547,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11619,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 11699,
+            "keys": [],
+            "reason": "portal-settle"
+          }
+        ],
+        "movement": {
+          "distance": 0.800000000000001,
+          "before": {
+            "renderer": "webgl",
+            "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+            "revision": 20,
+            "simulationDeltaMs": 40,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3009181049579745,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.2534239148174613,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.14428000000044702,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 3922.300000000745,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "after": {
+            "renderer": "webgl",
+            "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+            "revision": 20,
+            "simulationDeltaMs": 40,
+            "playing": true,
+            "player": {
+              "position": [
+                0.7020660495122982,
+                0.42,
+                4.6164595691166355
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.25405205737142444,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.20047568365770993,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.224280000000447,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 4207.5999999996275,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          }
+        },
+        "timing": {
+          "observationSamples": 125,
+          "observedSpanMs": 10615.699999999255,
+          "staleObservationWaits": [
+            {
+              "waitedMs": 56,
+              "previousAtMs": 4207.5999999996275,
+              "observedAtMs": 4266.9000000003725
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 4392.4000000003725,
+              "observedAtMs": 4661.199999999255
+            },
+            {
+              "waitedMs": 54,
+              "previousAtMs": 4661.199999999255,
+              "observedAtMs": 4822
+            },
+            {
+              "waitedMs": 59,
+              "previousAtMs": 4822,
+              "observedAtMs": 4951.5999999996275
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 5559,
+              "observedAtMs": 5667.800000000745
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 5962.699999999255,
+              "observedAtMs": 6067.9000000003725
+            },
+            {
+              "waitedMs": 58,
+              "previousAtMs": 6714.9000000003725,
+              "observedAtMs": 6808.300000000745
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 7420.4000000003725,
+              "observedAtMs": 7477.9000000003725
+            },
+            {
+              "waitedMs": 64,
+              "previousAtMs": 8048.5999999996275,
+              "observedAtMs": 8185.199999999255
+            },
+            {
+              "waitedMs": 58,
+              "previousAtMs": 10484.099999999627,
+              "observedAtMs": 10633.800000000745
+            },
+            {
+              "waitedMs": 60,
+              "previousAtMs": 10706.400000000373,
+              "observedAtMs": 10786
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 10960.199999999255,
+              "observedAtMs": 11067.300000000745
+            },
+            {
+              "waitedMs": 61,
+              "previousAtMs": 11690.5,
+              "observedAtMs": 11735.800000000745
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 11735.800000000745,
+              "observedAtMs": 11783.5
+            },
+            {
+              "waitedMs": 62,
+              "previousAtMs": 13594.699999999255,
+              "observedAtMs": 13668.300000000745
+            }
+          ],
+          "source": "renderer performance.now timestamps"
+        },
+        "contacts": [
+          "fixture-portal"
+        ],
+        "collections": [
+          "fixture-crystal-3",
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 8,
+            "bounceFrames": 0,
+            "startPosition": [
+              0,
+              0.3009181049579745,
+              3
+            ],
+            "maximumDisplacement": 0.3208915218840743,
+            "jumpEvidence": [
+              {
+                "id": "fixture-platform-a",
+                "attempt": 0,
+                "before": {
+                  "atMs": 5428.4000000003725,
+                  "player": {
+                    "position": [
+                      0.011693273922246034,
+                      1.4280000000000004,
+                      3.3527406799944997
+                    ],
+                    "velocityY": -1.1999999999999993,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.05354996328985365,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "inputKeys": [
+                  [
+                    " ",
+                    "d",
+                    "w"
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ]
+                ],
+                "samples": [
+                  {
+                    "atMs": 5494.300000000745,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        1.3560000000000003,
+                        3.199212739196933
+                      ],
+                      "velocityY": -1.7999999999999994,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.045114806662175655,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5559,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        1.2600000000000002,
+                        3.199212739196933
+                      ],
+                      "velocityY": -2.3999999999999995,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.037238924429386366,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5667.800000000745,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        1.1400000000000003,
+                        3.199212739196933
+                      ],
+                      "velocityY": -2.9999999999999996,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.024987991368010526,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5710.300000000745,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        0.9960000000000003,
+                        3.199212739196933
+                      ],
+                      "velocityY": -3.5999999999999996,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.020567751631016096,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5772.4000000003725,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        0.8280000000000003,
+                        3.199212739196933
+                      ],
+                      "velocityY": -4.199999999999999,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.014458252532716431,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5834.300000000745,
+                    "player": {
+                      "position": [
+                        0.056739598905078154,
+                        0.7408603348239209,
+                        3.199212739196933
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": "fixture-platform-a"
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.008860334823920929,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": "fixture-platform-a",
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  }
+                ],
+                "apex": {
+                  "atMs": 5494.300000000745,
+                  "player": {
+                    "position": [
+                      0.056739598905078154,
+                      1.3560000000000003,
+                      3.199212739196933
+                    ],
+                    "velocityY": -1.7999999999999994,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.045114806662175655,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "landing": {
+                  "atMs": 5962.699999999255,
+                  "player": {
+                    "position": [
+                      0.056739598905078154,
+                      0.7306840774412179,
+                      3.199212739196933
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-a"
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      -0.001315922558782101,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-a",
+                  "bounceContactId": null,
+                  "platformContactCount": 3,
+                  "bounceContactCount": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 8,
+            "bounceFrames": 0,
+            "startPosition": [
+              0.2534239148174613,
+              0.8,
+              0.3
+            ],
+            "maximumDisplacement": 0.6030380852043794,
+            "jumpEvidence": []
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 1,
+            "bounceFrames": 1,
+            "startPosition": [
+              0.14428000000044702,
+              1.4,
+              -2.5
+            ],
+            "maximumDisplacement": 0.653200000000001,
+            "jumpEvidence": []
+          }
+        ],
+        "win": {
+          "projectId": "3a9ac18f-1525-4ebd-b6a6-454dd74bef15",
+          "revision": 20,
+          "score": 5,
+          "status": "won",
+          "portalId": "fixture-portal"
+        }
+      },
+      "pageErrors": [],
+      "blockedExternalRequests": []
+    },
+    "software": {
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "3613f3cc-39d3-4f7a-ac8a-bc50b9946798",
+      "generationMovement": {
+        "before": null,
+        "after": null,
+        "beforeSample": null,
+        "afterSample": null,
+        "validation": null
+      },
+      "traversal": null
+    }
+  },
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('canvas').first()\u001b[22m\n\u001b[2m    - locator resolved to <canvas width=\"1280\" height=\"900\"></canvas>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"chat-header\">…</div> from <section aria-label=\"World conversation\" class=\"composer-shell chat-panel\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <div class=\"chat-header\">…</div> from <section aria-label=\"World conversation\" class=\"composer-shell chat-panel\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    49 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"chat-header\">…</div> from <section aria-label=\"World conversation\" class=\"composer-shell chat-panel\">…</section> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n Fixture diagnostics: {\"renderer\":\"software\",\"readyState\":\"complete\",\"mainRendererAvailability\":\"ready\",\"composerValue\":\"\",\"composerExists\":true,\"createExists\":false,\"createDisabled\":null,\"bodyText\":\"WebGL2 could not initialize, so Orbsie is using its software canvas renderer.\\n\\nUsing compatibility graphics · Options\\n×\\nSaved on this device\\nShare Orb\\nCreate a world\\nBack to planet\\nCreate the local fresh gameplay fixture.\\nEdit\\nPlay\\nYour world\\n\\nCreate the local fresh gameplay fixture.\\n\\nCreating…\\n1 objects\\nWhat experience to build?\\n3 free prompts\\nStop\\n3 free prompts left\\n◆\\n0 / 0\\nExplore your garden\\nW\\nA\\nS\\nD\\nMove\\n·\\nspace\\nJump\",\"pageErrors\":[\"THREE.WebGLRenderer: Error creating WebGL context.\"],\"consoleErrors\":[\"warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\",\"error: THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.\"],\"requestFailures\":[],\"requestsSeen\":[\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"POST http://127.0.0.1:33683/api/generate-stream\"],\"partialEvidence\":{\"renderer\":\"software\",\"generationRequests\":1,\"projectId\":\"3613f3cc-39d3-4f7a-ac8a-bc50b9946798\",\"generationMovement\":{\"before\":null,\"after\":null,\"beforeSample\":null,\"afterSample\":null,\"validation\":null},\"traversal\":null}}"
+}

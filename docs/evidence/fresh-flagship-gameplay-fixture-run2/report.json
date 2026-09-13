@@ -1,0 +1,7 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no provider/model/auth/network calls.",
+  "appUrl": "http://localhost:3091",
+  "renderers": {},
+  "error": "Fresh gameplay returned a stale renderer observation."
+}

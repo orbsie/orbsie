@@ -1,0 +1,7 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no provider/model/auth/network calls.",
+  "appUrl": "http://localhost:3091",
+  "renderers": {},
+  "error": "expect(locator).toBeEnabled() failed\n\nLocator:  getByRole('button', { name: 'Create', exact: true })\nExpected: enabled\nReceived: disabled\nTimeout:  30000ms\n\nCall log:\n  - Expect \"toBeEnabled\" getByRole('button', { name: 'Create', exact: true }) with timeout 30000ms\n  - waiting for getByRole('button', { name: 'Create', exact: true })\n    63 × locator resolved to <button disabled type=\"submit\" class=\"create-button\">…</button>\n       - unexpected value \"disabled\"\n"
+}

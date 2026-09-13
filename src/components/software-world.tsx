@@ -14,6 +14,10 @@ import {
   type PlayerState,
 } from "@/lib/gameplay";
 import {
+  gameplayObservationRequested,
+  publishGameplayObservation,
+} from "@/lib/gameplay-observation";
+import {
   PlayerInputTracker,
   actionForPlayerKey,
   type PlayerInputDetail,
@@ -759,6 +763,46 @@ export default function SoftwareWorld({
             )
               next.set({ gameScore: session.state.score, won, lost });
           } else if (result.won && !next.won) next.set({ won: true });
+          if (gameplayObservationRequested()) {
+            const observedEntities = playable.map((entity) => {
+              const matrix = matrices?.get(entity.id);
+              const position = matrix
+                ? ([
+                    matrix.elements[12],
+                    matrix.elements[13],
+                    matrix.elements[14],
+                  ] as [number, number, number])
+                : movingEntityPosition(entity, now / 1000);
+              return {
+                id: entity.id,
+                behavior: entity.behavior?.type ?? null,
+                stage: entity.stage,
+                position,
+                scale: [...entity.scale] as [number, number, number],
+              };
+            });
+            const latest = useOrb.getState();
+            publishGameplayObservation({
+              renderer: "software",
+              projectId: latest.project.id,
+              revision: latest.project.revision,
+              simulationDeltaMs: delta * 1000,
+              playing: latest.playing,
+              player: playerRef.current,
+              entities: observedEntities,
+              contacts: result.contacts,
+              platformContactId: result.platformContactId,
+              bounceContactId: result.bounceContactId,
+              collected: result.collected,
+              scoreIds: latest.score,
+              gameScore: latest.gameScore,
+              status: session.state?.status ?? null,
+              won: latest.won,
+              lost: latest.lost,
+              reset: latest.reset,
+              sessionGeneration: session.resetGeneration,
+            });
+          }
         } else inputRef.current.clear();
         drawScene(
           context,

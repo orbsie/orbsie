@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "webgl": {
+      "renderer": "webgl",
+      "generationRequests": 1,
+      "projectId": "c7c33011-5682-4f9d-98cc-0095bf552522",
+      "generationMovement": null,
+      "traversal": null
+    }
+  },
+  "error": "Flagship generation movement returned a stale observation. Fixture diagnostics: {\"renderer\":\"webgl\",\"readyState\":\"complete\",\"mainRendererAvailability\":\"ready\",\"composerValue\":\"\",\"composerExists\":true,\"createExists\":false,\"createDisabled\":null,\"bodyText\":\"Saved on this device\\nShare Orb\\nCreate a world\\nBack to planet\\nCreate the local fresh gameplay fixture.\\nEdit\\nPlay\\nYour world\\n\\nCreate the local fresh gameplay fixture.\\n\\nCreating…\\n1 objects\\nWhat experience to build?\\n3 free prompts\\nStop\\n3 free prompts left\\n◆\\n0 / 0\\nExplore your garden\\nW\\nA\\nS\\nD\\nMove\\n·\\nspace\\nJump\",\"pageErrors\":[],\"consoleErrors\":[\"warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\"],\"requestFailures\":[],\"requestsSeen\":[\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"POST http://127.0.0.1:34231/api/generate-stream\"],\"partialEvidence\":{\"renderer\":\"webgl\",\"generationRequests\":1,\"projectId\":\"c7c33011-5682-4f9d-98cc-0095bf552522\",\"generationMovement\":null,\"traversal\":null}}"
+}
