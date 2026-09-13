@@ -180,3 +180,11 @@ or self-review completion claimed. Paused Luna host_session_renewal resumed Task
 through followup_task; capture helper remains unfinished WIP. Root verified rebuilt
 player runtime exactly matches deployed c84ecbd build; source manifest has identical
 key/value contents with ordering differences only. Quota55%used/45%remaining.
+
+## Next capability contract ready
+
+Root verified image metadata also disappears in browser parseChatGPTModels, beyond
+host/server validation. Queued docs/visual-review-capability-task.md with explicit
+tri-state normalization, bounded metadata, full catalog propagation and unchanged
+ordinary model availability. This is architecture only; no capability implementation
+or image inference claimed. Existing Luna capture task confirmed running.
