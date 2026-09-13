@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {},
+  "standalone": {
+    "restartStage": "focused",
+    "restartFocus": true,
+    "restartGroundedSamples": [
+      {
+        "atMs": 487.6000000014901,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 737.5,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 8370.5,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      }
+    ],
+    "restartLastObservation": {
+      "atMs": 8370.5,
+      "reset": 1,
+      "projectId": "40f30f2d-7b8c-4263-82cb-18589f35085f",
+      "position": [
+        0,
+        0.42,
+        5
+      ],
+      "velocityY": 0
+    }
+  },
+  "pageErrors": [],
+  "expectedFailureErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate"
+}

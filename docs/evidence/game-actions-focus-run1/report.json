@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {
+    "variableConditions": true,
+    "clickAndColor": true,
+    "hiddenNotClickable": true
+  },
+  "standalone": {},
+  "pageErrors": [],
+  "expectedFailureErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toBeGreaterThan(expected)\n\nExpected: > 50\nReceived:   24.047149145076332"
+}

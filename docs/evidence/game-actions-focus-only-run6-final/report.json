@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "realProviderCalls": 0,
+  "editor": {},
+  "standalone": {
+    "foregroundBefore": {
+      "visibilityState": "visible",
+      "hasFocus": true,
+      "readyState": "complete",
+      "performanceNow": 321.0999999977648,
+      "activeElement": ""
+    },
+    "renderer": "software-forced",
+    "restartStage": "jumped",
+    "restartFocus": true,
+    "restartGroundedSamples": [
+      {
+        "atMs": 466.19999999925494,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 716.3000000007451,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 1849.199999999255,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      }
+    ],
+    "restartLastObservation": {
+      "atMs": 1949.5,
+      "reset": 1,
+      "projectId": "a01e478f-5379-4d57-bb43-ba309489a847",
+      "playing": true,
+      "position": [
+        0,
+        0.9324999,
+        5
+      ],
+      "velocityY": 4.5
+    },
+    "restartJump": {
+      "before": {
+        "atMs": 1849.199999999255,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      "after": {
+        "atMs": 1949.5,
+        "position": [
+          0,
+          0.9324999,
+          5
+        ],
+        "velocityY": 4.5
+      }
+    },
+    "replayWin": {
+      "before": {
+        "atMs": 3816.199999999255,
+        "position": [
+          0,
+          0.42,
+          5
+        ]
+      },
+      "after": {
+        "atMs": 4182.800000000745,
+        "position": [
+          -0.41575782707756526,
+          0.42,
+          4.238960402328666
+        ],
+        "won": true
+      }
+    },
+    "replayFocus": true,
+    "replayReset": {
+      "atMs": 4250.099999997765,
+      "reset": 2,
+      "position": [
+        0,
+        0.49581664999999964,
+        5
+      ]
+    }
+  },
+  "pageErrors": [],
+  "expectedFailureErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": []
+}

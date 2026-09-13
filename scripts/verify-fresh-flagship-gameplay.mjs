@@ -758,13 +758,52 @@ async function verifyGameplayKeyboardFocus(page, project) {
     );
     evidence.renderer = initial.observation.renderer;
     await restart.click();
-    const firstReset = await waitForFreshMatchingObservation(
+    await expect(region).toBeFocused();
+    evidence.restartFocus = true;
+    const restartReset = await waitForFreshMatchingObservation(
       page,
       (observation) =>
         observation.projectId === project.id &&
         observation.reset > initial.observation.reset,
-      "restart before click-Play focus",
+      "restart before restart-Space focus",
       initial.observation.atMs,
+    );
+    const restartBaseline = (
+      await waitForGroundedBaseline(
+        page,
+        project.id,
+        restartReset.observation.reset,
+        restartReset.observation.atMs,
+        "restart-Space baseline",
+      )
+    ).observation;
+    await page.keyboard.down(" ");
+    spaceHeld = true;
+    const restartAfter = (
+      await waitForJumpRise(
+        page,
+        restartBaseline,
+        project.id,
+        restartReset.observation.reset,
+        "restart-Space",
+      )
+    ).observation;
+    await page.keyboard.up(" ");
+    spaceHeld = false;
+    evidence.jumps.push({
+      activation: "restart",
+      before: restartBaseline,
+      after: restartAfter,
+    });
+
+    await restart.click();
+    const firstReset = await waitForFreshMatchingObservation(
+      page,
+      (observation) =>
+        observation.projectId === project.id &&
+        observation.reset > restartReset.observation.reset,
+      "restart before click-Play focus",
+      restartAfter.atMs,
     );
     await edit.click();
     await expect(edit).toBeFocused();

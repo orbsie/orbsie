@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import World from "../components/world";
 import { useOrb } from "../lib/store";
@@ -60,6 +60,19 @@ function PlayerApp() {
   const [sceneReady, setSceneReady] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [touchDevice, setTouchDevice] = useState(false);
+  const gameplayRegion = useRef<HTMLDivElement>(null);
+  const focusGameplayRegion = () =>
+    gameplayRegion.current?.focus({ preventScroll: true });
+  const resetGame = () => {
+    s.set({
+      score: [],
+      gameScore: 0,
+      won: false,
+      lost: false,
+      reset: s.reset + 1,
+    });
+    focusGameplayRegion();
+  };
   const ready = rendererReady && sceneReady;
   const retryRenderer = () => {
     if (!graphicsError) return;
@@ -99,7 +112,13 @@ function PlayerApp() {
       className={touchDevice ? "touch-layout" : undefined}
       data-ready={ready && !error}
     >
-      <div className="canvas">
+      <div
+        ref={gameplayRegion}
+        className="canvas gameplay-region"
+        role="region"
+        aria-label="Gameplay area"
+        tabIndex={-1}
+      >
         {loaded && (
           <World
             key={rendererRetryToken}
@@ -131,19 +150,7 @@ function PlayerApp() {
       <header>
         <a href="https://orbsie.com">◉ orbsie</a>
         <span>{s.project.title}</span>
-        <button
-          onClick={() =>
-            s.set({
-              score: [],
-              gameScore: 0,
-              won: false,
-              lost: false,
-              reset: s.reset + 1,
-            })
-          }
-        >
-          ↻ Restart
-        </button>
+        <button onClick={resetGame}>↻ Restart</button>
       </header>
       {graphicsError && graphicsHelpVisible ? (
         <div className="message graphics-player-error" role="status">
@@ -202,19 +209,7 @@ function PlayerApp() {
               ? `Final score: ${s.gameScore}`
               : "You found every crystal and made it home."}
           </p>
-          <button
-            onClick={() =>
-              s.set({
-                score: [],
-                gameScore: 0,
-                won: false,
-                lost: false,
-                reset: s.reset + 1,
-              })
-            }
-          >
-            Play again
-          </button>
+          <button onClick={resetGame}>Play again</button>
         </div>
       )}
     </main>

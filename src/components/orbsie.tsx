@@ -1084,7 +1084,7 @@ export default function Orbsie() {
     setPrompt(recovery.prompt);
     void submit(undefined, recovery.prompt, selectedId ?? null, true);
   };
-  const reset = () =>
+  const reset = () => {
     s.set({
       score: [],
       gameScore: 0,
@@ -1092,6 +1092,8 @@ export default function Orbsie() {
       lost: false,
       reset: s.reset + 1,
     });
+    focusGameplayRegion();
+  };
   const download = async () => {
     setBusy(true);
     try {

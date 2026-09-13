@@ -1,0 +1,1583 @@
+{
+  "passed": true,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "webgl": {
+      "status": "passed",
+      "renderer": "webgl",
+      "focusOnly": true,
+      "generationRequests": 1,
+      "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+      "revision": 20,
+      "generationMovement": {
+        "status": "passed",
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T21:11:16.958Z",
+        "movementAtMs": 1686,
+        "movementAt": "2026-09-13T21:11:18.644Z",
+        "generationRequestsAtMovement": 1,
+        "generationResponsesAtMovement": 0,
+        "generationStreamOpenAtMovement": true,
+        "generationStreamOpenAfterMovement": true,
+        "generationRequestAtMs": 1789333876957,
+        "generationRequestAt": "2026-09-13T21:11:16.957Z",
+        "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "movementDistance": 0.16000000000000023,
+        "before": {
+          "renderer": "webgl",
+          "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+          "revision": 2,
+          "simulationDeltaMs": 17.100000001490116,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.41116780259990016,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 2193.300000000745,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "after": {
+          "renderer": "webgl",
+          "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+          "revision": 2,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0.14041320990245965,
+              0.42,
+              4.923291913823327
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.4180019531452258,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 2379.89999999851,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "beforeSample": {
+          "observation": {
+            "renderer": "webgl",
+            "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+            "revision": 2,
+            "simulationDeltaMs": 17.100000001490116,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.41116780259990016,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 2193.300000000745,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        },
+        "afterSample": {
+          "observation": {
+            "renderer": "webgl",
+            "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+            "revision": 2,
+            "simulationDeltaMs": 40,
+            "playing": true,
+            "player": {
+              "position": [
+                0.14041320990245965,
+                0.42,
+                4.923291913823327
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.4180019531452258,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 2379.89999999851,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        }
+      },
+      "focus": {
+        "renderer": "webgl",
+        "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+        "jumps": [
+          {
+            "activation": "restart",
+            "before": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.42,
+                  5
+                ],
+                "velocityY": 0
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.19619697322000948,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0.12903281584306686,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.06867999999970198,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 1,
+              "sessionGeneration": 3,
+              "atMs": 4533.5,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            },
+            "after": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 19.800000000745058,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.7370394000035808,
+                  5
+                ],
+                "velocityY": 5.102999999988825
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.1654002291457018,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0.08812082701209348,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.09260000000000002,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 1,
+              "sessionGeneration": 3,
+              "atMs": 4709.39999999851,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            }
+          },
+          {
+            "activation": "click",
+            "before": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.42,
+                  5
+                ],
+                "velocityY": 0
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.034508334727253204,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    -0.12077580787832168,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.09600000000000002,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 2,
+              "sessionGeneration": 4,
+              "atMs": 5576.199999999255,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            },
+            "after": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.636,
+                  5
+                ],
+                "velocityY": 5.4
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.025855490068042886,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    -0.13838808649028492,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.11200000000000002,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 2,
+              "sessionGeneration": 4,
+              "atMs": 5653.599999997765,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            }
+          },
+          {
+            "activation": "keyboard-enter",
+            "before": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.42,
+                  5
+                ],
+                "velocityY": 0
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    -0.015034341076316599,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    -0.2499716804955461,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.09600000000000002,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 3,
+              "sessionGeneration": 5,
+              "atMs": 6209.199999999255,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            },
+            "after": {
+              "renderer": "webgl",
+              "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+              "revision": 20,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.636,
+                  5
+                ],
+                "velocityY": 5.4
+              },
+              "entities": [
+                {
+                  "id": "fixture-platform-a",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    -0.01669367027820115,
+                    3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.6,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-b",
+                  "behavior": "move",
+                  "stage": "ready",
+                  "position": [
+                    -0.2582422815531938,
+                    0.8,
+                    0.3
+                  ],
+                  "scale": [
+                    1.6,
+                    0.7,
+                    1.6
+                  ]
+                },
+                {
+                  "id": "fixture-platform-c",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.11200000000000002,
+                    1.4,
+                    -2.5
+                  ],
+                  "scale": [
+                    1.7,
+                    0.7,
+                    1.7
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.5,
+                    0.8,
+                    4
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    2.6
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    1.2
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    1.4,
+                    0.8,
+                    -0.5
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1.2,
+                    0.8,
+                    -2.8
+                  ],
+                  "scale": [
+                    0.6,
+                    0.6,
+                    0.6
+                  ]
+                },
+                {
+                  "id": "fixture-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0,
+                    -5.2
+                  ],
+                  "scale": [
+                    1.4,
+                    1.4,
+                    1.1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 3,
+              "sessionGeneration": 5,
+              "atMs": 6258.300000000745,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            }
+          }
+        ],
+        "initialFocus": true,
+        "restartFocus": true,
+        "keyboardActivationFocus": true,
+        "focusVisible": true,
+        "composerTyping": {
+          "focused": true,
+          "value": "wasd ",
+          "before": {
+            "renderer": "webgl",
+            "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+            "revision": 20,
+            "simulationDeltaMs": 17.800000000745058,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  -0.010518780243275544,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  -0.33097518532940357,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.07112000000029803,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 4,
+            "sessionGeneration": 6,
+            "atMs": 6843.599999997765,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "after": {
+            "renderer": "webgl",
+            "projectId": "e6a43b06-c566-4873-9911-3c9b6b9f697f",
+            "revision": 20,
+            "simulationDeltaMs": 40,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.0011660737836115265,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  -0.3428780006735549,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.10312000000029803,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 4,
+            "sessionGeneration": 6,
+            "atMs": 7028.099999997765,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          }
+        },
+        "tabReachedEditor": true,
+        "finalFocus": {
+          "tag": "button",
+          "text": "Edit"
+        }
+      },
+      "pageErrors": [],
+      "expectedPageErrors": [],
+      "blockedExternalRequests": []
+    }
+  }
+}

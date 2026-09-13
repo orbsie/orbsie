@@ -20,6 +20,10 @@ main {
   position: absolute;
   inset: 0;
 }
+.gameplay-region:focus-visible {
+  outline: 3px solid #a184cc;
+  outline-offset: -3px;
+}
 header {
   position: absolute;
   left: calc(25px + var(--player-safe-left));

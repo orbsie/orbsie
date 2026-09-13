@@ -6,6 +6,7 @@ import sharp from "sharp";
 const dir =
   process.env.ORBSIE_GAME_ACTIONS_EVIDENCE_DIRECTORY ??
   "docs/evidence/game-actions";
+const focusOnly = process.env.ORBSIE_GAME_ACTIONS_FOCUS_ONLY === "1";
 await mkdir(dir, { recursive: true });
 const variable = (name, value) => ({
   operand: { type: "variable", name },
@@ -60,6 +61,15 @@ const game = {
     ]),
   ],
 };
+const focusFixtureGame = {
+  variables: [],
+  rules: [
+    rule("reach-target-to-win", { type: "collision", entityId: "target" }, [
+      { type: "win" },
+    ]),
+  ],
+};
+const fixtureGame = focusOnly ? focusFixtureGame : game;
 const commands = [
   {
     type: "reserve_entity",
@@ -68,7 +78,7 @@ const commands = [
       label: "Clickable cube",
       // Keep the object clear of the editor conversation card so the same
       // pixel evidence works for both the editor and standalone player.
-      position: [3.5, 0, 0],
+      position: focusOnly ? [0, 0, 3.4] : [3.5, 0, 0],
       color: "#ff00ff",
       stage: "seed",
     },
@@ -89,7 +99,7 @@ const commands = [
       ],
     },
   },
-  { type: "set_game", game },
+  { type: "set_game", game: fixtureGame },
   { type: "commit_revision", message: "Action game ready." },
 ];
 const report = {
@@ -115,13 +125,12 @@ const browserContext = await browser.newContext({
   reducedMotion: "reduce",
 });
 await browserContext.addInitScript(() => {
+  window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+});
+await browserContext.addInitScript(() => {
   const getContext = HTMLCanvasElement.prototype.getContext;
   HTMLCanvasElement.prototype.getContext = function (kind, attributes) {
-    if (
-      kind === "webgl2" ||
-      kind === "webgl" ||
-      kind === "experimental-webgl"
-    )
+    if (kind === "webgl2" || kind === "webgl" || kind === "experimental-webgl")
       return null;
     return getContext.call(this, kind, attributes);
   };
@@ -186,6 +195,240 @@ async function center(page, color) {
     .toBe(true);
   return found;
 }
+
+async function verifyStandaloneRestartFocus(page, result) {
+  result.renderer = "software-forced";
+  result.restartStage = "before-click";
+  const region = page.getByRole("region", {
+    name: "Gameplay area",
+    exact: true,
+  });
+  const restart = page.getByRole("button", { name: /Restart/ });
+  const readObservation = () =>
+    page.evaluate(() => window.__ORBSIE_GAMEPLAY_READ__?.() ?? null);
+  await restart.click();
+  result.restartStage = "clicked";
+  await expect(region).toBeFocused();
+  result.restartFocus = true;
+  result.restartStage = "focused";
+  let baseline;
+  let stableFrames = 0;
+  let lastAtMs = -Infinity;
+  result.restartGroundedSamples = [];
+  await expect
+    .poll(
+      async () => {
+        const observation = await readObservation();
+        result.restartLastObservation = observation
+          ? {
+              atMs: observation.atMs,
+              reset: observation.reset,
+              projectId: observation.projectId,
+              position: [...observation.player.position],
+              velocityY: observation.player.velocityY,
+            }
+          : null;
+        if (!observation || observation.atMs <= lastAtMs) return false;
+        lastAtMs = observation.atMs;
+        if (
+          Math.abs(observation.player.position[1] - 0.42) < 0.08 &&
+          Math.abs(observation.player.velocityY) < 0.02
+        ) {
+          stableFrames += 1;
+          baseline = observation;
+          result.restartGroundedSamples.push({
+            atMs: observation.atMs,
+            position: [...observation.player.position],
+            velocityY: observation.player.velocityY,
+          });
+          return stableFrames >= 3;
+        }
+        stableFrames = 0;
+        return false;
+      },
+      { timeout: 5000 },
+    )
+    .toBe(true);
+  result.restartStage = "grounded";
+  let jumped;
+  let spaceHeld = false;
+  await page.evaluate(() => {
+    const events = [];
+    window.__ORBSIE_GAMEPLAY_FOCUS_EVENTS__ = events;
+    window.addEventListener(
+      "keydown",
+      (event) => {
+        events.push({
+          key: event.key,
+          target: event.target instanceof Element ? event.target.tagName : null,
+          active: document.activeElement?.className ?? null,
+        });
+      },
+      { capture: true },
+    );
+  });
+  try {
+    await page.keyboard.down(" ");
+    spaceHeld = true;
+    try {
+      await expect
+        .poll(
+          async () => {
+            const observation = await readObservation();
+            result.restartLastObservation = observation
+              ? {
+                  atMs: observation.atMs,
+                  reset: observation.reset,
+                  projectId: observation.projectId,
+                  playing: observation.playing,
+                  position: [...observation.player.position],
+                  velocityY: observation.player.velocityY,
+                }
+              : null;
+            if (!observation || observation.atMs <= lastAtMs) return false;
+            lastAtMs = observation.atMs;
+            if (
+              observation.player.velocityY > 0 &&
+              observation.player.position[1] >
+                baseline.player.position[1] + 0.02
+            ) {
+              jumped = observation;
+              return true;
+            }
+            return false;
+          },
+          { timeout: 5000 },
+        )
+        .toBe(true);
+    } catch (error) {
+      result.restartJumpDebug = await page.evaluate(() => ({
+        events: window.__ORBSIE_GAMEPLAY_FOCUS_EVENTS__ ?? [],
+        activeElement: document.activeElement
+          ? {
+              tag: document.activeElement.tagName,
+              className: document.activeElement.className,
+            }
+          : null,
+        observation: window.__ORBSIE_GAMEPLAY_READ__?.() ?? null,
+      }));
+      throw error;
+    }
+  } finally {
+    if (spaceHeld) await page.keyboard.up(" ").catch(() => undefined);
+  }
+  result.restartFocus = true;
+  result.restartStage = "jumped";
+  result.restartJump = {
+    before: {
+      atMs: baseline.atMs,
+      position: [...baseline.player.position],
+      velocityY: baseline.player.velocityY,
+    },
+    after: {
+      atMs: jumped.atMs,
+      position: [...jumped.player.position],
+      velocityY: jumped.player.velocityY,
+    },
+  };
+}
+
+async function verifyStandaloneReplayFocus(page, result) {
+  const region = page.getByRole("region", {
+    name: "Gameplay area",
+    exact: true,
+  });
+  const readObservation = () =>
+    page.evaluate(() => window.__ORBSIE_GAMEPLAY_READ__?.() ?? null);
+  let lastAtMs = -Infinity;
+  let grounded;
+  let stableFrames = 0;
+  await expect
+    .poll(
+      async () => {
+        const observation = await readObservation();
+        if (!observation || observation.atMs <= lastAtMs) return false;
+        lastAtMs = observation.atMs;
+        if (
+          !observation.won &&
+          Math.abs(observation.player.position[1] - 0.42) < 0.08 &&
+          Math.abs(observation.player.velocityY) < 0.02
+        ) {
+          stableFrames += 1;
+          grounded = observation;
+          return stableFrames >= 2;
+        }
+        stableFrames = 0;
+        return false;
+      },
+      { timeout: 5000 },
+    )
+    .toBe(true);
+  let won;
+  let forwardHeld = false;
+  try {
+    await page.keyboard.down("w");
+    forwardHeld = true;
+    await expect
+      .poll(
+        async () => {
+          const observation = await readObservation();
+          if (!observation || observation.atMs <= lastAtMs) return false;
+          lastAtMs = observation.atMs;
+          if (observation.won) {
+            won = observation;
+            return true;
+          }
+          return false;
+        },
+        { timeout: 5000 },
+      )
+      .toBe(true);
+  } finally {
+    if (forwardHeld) await page.keyboard.up("w").catch(() => undefined);
+  }
+  result.replayWin = {
+    before: {
+      atMs: grounded.atMs,
+      position: [...grounded.player.position],
+    },
+    after: {
+      atMs: won.atMs,
+      position: [...won.player.position],
+      won: won.won,
+    },
+  };
+  const replay = page.getByRole("button", { name: "Play again", exact: true });
+  await expect(replay).toBeVisible();
+  await replay.click();
+  await expect(region).toBeFocused();
+  result.replayFocus = true;
+  let replayReset;
+  await expect
+    .poll(
+      async () => {
+        const observation = await readObservation();
+        if (!observation || observation.atMs <= lastAtMs) return false;
+        lastAtMs = observation.atMs;
+        if (
+          observation.reset > won.reset &&
+          observation.won === false &&
+          observation.playing === true
+        ) {
+          replayReset = observation;
+          return true;
+        }
+        return false;
+      },
+      { timeout: 5000 },
+    )
+    .toBe(true);
+  result.replayReset = {
+    atMs: replayReset.atMs,
+    reset: replayReset.reset,
+    position: [...replayReset.player.position],
+  };
+}
+
 async function nearbyPixels(page, color, point) {
   const pixels = await canvasPixels(page);
   if (!pixels) return 0;
@@ -326,13 +569,16 @@ try {
     page.getByText("Action game ready.", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Play", exact: true }).click();
-  await exercise(page, true, report.editor);
+  if (!focusOnly) await exercise(page, true, report.editor);
   await page.getByRole("button", { name: "Share Orb", exact: true }).click();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: /^Download your world/ }).click();
   await (await download).saveAs(dir + "/world.zip");
   const files = unzipSync(await readFile(dir + "/world.zip"));
-  expect(JSON.parse(strFromU8(files["project.json"])).game).toEqual(game);
+  expect(JSON.parse(strFromU8(files["project.json"])).game).toEqual(
+    fixtureGame,
+  );
+  if (focusOnly) await page.close();
   server = createServer((req, res) => {
     const path =
       new URL(req.url, "http://localhost").pathname.slice(1) || "index.html";
@@ -373,7 +619,18 @@ try {
     "Graphics are unavailable",
   );
   await expect(player.locator(".message")).not.toContainText("Opening");
-  await exercise(player, false, report.standalone);
+  if (focusOnly) {
+    await player.bringToFront();
+    report.standalone.foregroundBefore = await player.evaluate(() => ({
+      visibilityState: document.visibilityState,
+      hasFocus: document.hasFocus(),
+      readyState: document.readyState,
+      performanceNow: performance.now(),
+      activeElement: document.activeElement?.className ?? null,
+    }));
+    await verifyStandaloneRestartFocus(player, report.standalone);
+    await verifyStandaloneReplayFocus(player, report.standalone);
+  } else await exercise(player, false, report.standalone);
   expect(report.pageErrors).toEqual([]);
   expect(report.expectedFailureErrors).toHaveLength(2);
   expect(report.externalStandaloneRequests).toEqual([]);

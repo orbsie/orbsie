@@ -1,0 +1,64 @@
+{
+  "passed": false,
+  "realProviderCalls": 0,
+  "editor": {},
+  "standalone": {
+    "foregroundBefore": {
+      "visibilityState": "visible",
+      "hasFocus": true,
+      "readyState": "complete",
+      "performanceNow": 344.5,
+      "activeElement": ""
+    },
+    "renderer": "software-forced",
+    "restartStage": "focused",
+    "restartFocus": true,
+    "restartGroundedSamples": [
+      {
+        "atMs": 490.9000000022352,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 740.8000000007451,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      },
+      {
+        "atMs": 6567.20000000298,
+        "position": [
+          0,
+          0.42,
+          5
+        ],
+        "velocityY": 0
+      }
+    ],
+    "restartLastObservation": {
+      "atMs": 6567.20000000298,
+      "reset": 1,
+      "projectId": "f6d10eb0-c355-4f4f-b7bb-1af3841b81f9",
+      "position": [
+        0,
+        0.42,
+        5
+      ],
+      "velocityY": 0
+    }
+  },
+  "pageErrors": [],
+  "expectedFailureErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context.",
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "externalStandaloneRequests": [],
+  "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate"
+}
