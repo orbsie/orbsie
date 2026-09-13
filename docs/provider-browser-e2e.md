@@ -224,18 +224,19 @@ failed or was explicitly blocked; it never means that a fixture passed.
 
 Initial development used syntax checks only. Root integration then ran real managed ChatGPT browser calls with Astra low/default. The current evidence report records the actual completed phases and any remaining failure; a partial report is not a full E2E pass. OpenRouter, Gateway and real publication require their own independent successful reports.
 
-The local OpenRouter Luna exception also passed creation, exact scoped edit, reload, ZIP export and standalone load with the server configured to 512 output tokens. Its first visible reservation was 3.891 seconds. This verifies the authorized Luna path, not the separate Astra requirement. Local test servers must set `BETTER_AUTH_URL` to the exact test origin; production configuration intentionally rejects a mismatched browser origin.
+The local OpenRouter Luna exception also passed creation, exact scoped edit, reload, ZIP export and standalone load with the server configured to 512 output tokens. Its first visible reservation was 3.891 seconds. This is historical bounded Luna evidence, not completion of the current three-provider flagship acceptance. Current live tests are Luna-only; end-user model choices remain unrestricted. Local test servers must set `BETTER_AUTH_URL` to the exact test origin; production configuration intentionally rejects a mismatched browser origin.
 
-Local Blender runs additionally accept `ORBSIE_BUILDER_URL` and
+Historical developer-only local Blender experiments additionally accept `ORBSIE_BUILDER_URL` and
 `ORBSIE_BUILDER_TOKEN` for the foreground modeling companion. The harness
 connects through the real Connections UI, requires at least one generated
 model, preserves it during the scoped recolor, and scans storage/ZIP text for
 the builder capability. `ORBSIE_EVIDENCE_DIR` keeps these reports separate from
-other live runs. These options do not change provider/model authorization or
-output limits. Never place the private capability in evidence or source.
+other live runs. These historical options are not the browser-only product architecture or a
+required user connection. Current acceptance must use browser-local modeling
+without a Blender service. Never place the private capability in evidence or source.
 
 ## ChatGPT-authored input game
 
-`ORBSIE_LIVE_E2E=1 node scripts/verify-chatgpt-authored-game.mjs` starts a temporary authenticated ChatGPT companion and runs the real browser pairing flow against `http://127.0.0.1:3024`. It requires the managed account to expose `gpt-6-astra`; generation uses low reasoning and default processing. The wrapper passes its temporary capability only through the child environment, revokes it on exit, and records the actual generation count in a sanitized `wrapper.json`.
+`ORBSIE_LIVE_E2E=1 node scripts/verify-chatgpt-authored-game.mjs` starts a temporary authenticated ChatGPT companion and runs the real browser pairing flow against `http://127.0.0.1:3024`. The current wrapper explicitly requires `gpt-5.6-luna`; generation uses low reasoning and default processing. This developer companion experiment does not prove the browser-only hosted ChatGPT subscription workflow. The wrapper passes its temporary capability only through the child environment, revokes it on exit, and records the actual generation count in a sanitized `wrapper.json`.
 
 This scenario creates two original procedural/custom objects and three input rules (right adds 7, up wins, left loses), then performs a selected material edit. It checks the unchanged game program through edit, local reload and ZIP export, and plays the downloaded world through score, held-input deduplication, win, restart and loss. It uses no fixture generation transport. `ORBSIE_REQUIRE_INPUT_GAME=1` enables the same scenario in the general harness; default scenarios remain unchanged. This verifies a bounded input game, not Blender construction, cloud recovery or publication.
