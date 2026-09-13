@@ -4,6 +4,7 @@ import {
   pricePerMillion,
   qualityRank,
 } from "../src/lib/model-catalog";
+import { modelCapabilities } from "../src/lib/model-capabilities";
 import {
   modelModes,
   modelModesForProvider,
@@ -257,4 +258,64 @@ it("does not infer Gateway structured-output rejection from other listed paramet
     "gateway",
   );
   expect(model.capabilities?.structuredOutput.supported).toBe("unknown");
+});
+
+it("derives image input only from bounded provider input modalities", () => {
+  const cases = [
+    [
+      "openrouter",
+      { architecture: { input_modalities: ["text", "image", "image"] } },
+      true,
+    ],
+    ["openrouter", { architecture: { input_modalities: ["text"] } }, false],
+    ["gateway", { modalities: { input: ["text", "image"] } }, true],
+    ["gateway", { modalities: { input: ["text", "audio"] } }, false],
+    ["openrouter", { architecture: { input_modalities: [] } }, "unknown"],
+    ["openrouter", { architecture: { input_modalities: "image" } }, "unknown"],
+    [
+      "openrouter",
+      { architecture: { input_modalities: ["text", 7] } },
+      "unknown",
+    ],
+    [
+      "openrouter",
+      { architecture: { input_modalities: Array(17).fill("text") } },
+      "unknown",
+    ],
+    ["openrouter", { modalities: { input: ["image"] } }, "unknown"],
+    ["gateway", { architecture: { input_modalities: ["image"] } }, "unknown"],
+    [
+      "gateway",
+      {
+        id: "vision-model",
+        tags: ["vision"],
+        architecture: { output_modalities: ["text"] },
+        metadata: { input_modalities: ["image"] },
+      },
+      "unknown",
+    ],
+  ] as const;
+  for (const [provider, model, supported] of cases) {
+    const result = modelCapabilities(
+      model as Record<string, unknown>,
+      provider,
+    );
+    expect(result.imageInput).toEqual({
+      supported,
+      source: supported === "unknown" ? "unspecified" : "catalog",
+    });
+  }
+
+  const [usable] = catalogModels(
+    [
+      {
+        id: "text-with-unknown-image-support",
+        type: "language",
+        tags: ["vision"],
+      },
+    ],
+    "gateway",
+  );
+  expect(usable.capabilities?.text.supported).toBe(true);
+  expect(usable.capabilities?.imageInput?.supported).toBe("unknown");
 });

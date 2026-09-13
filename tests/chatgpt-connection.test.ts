@@ -123,6 +123,55 @@ describe("ChatGPT connection response guards", () => {
     ]);
   });
 
+  it("retains safe image modalities through the browser parser", () => {
+    expect(
+      parseChatGPTModels({
+        models: [
+          {
+            id: "catalog-1",
+            model: "gpt-5.1",
+            displayName: "GPT 5.1",
+            supportedReasoningEfforts: ["medium", "low"],
+            defaultReasoningEffort: "medium",
+            inputModalities: ["text", "image", "image"],
+            providerSecret: "must-not-leak",
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        id: "catalog-1",
+        model: "gpt-5.1",
+        displayName: "GPT 5.1",
+        supportedReasoningEfforts: ["medium", "low"],
+        defaultReasoningEffort: "medium",
+        inputModalities: ["text", "image"],
+      },
+    ]);
+
+    for (const inputModalities of [
+      undefined,
+      [],
+      "image",
+      ["text", 7],
+      Array(17).fill("text"),
+    ]) {
+      const [parsed] = parseChatGPTModels({
+        models: [
+          {
+            id: "catalog-1",
+            model: "gpt-5.1",
+            displayName: "GPT 5.1",
+            supportedReasoningEfforts: ["medium", "low"],
+            defaultReasoningEffort: "medium",
+            inputModalities,
+          },
+        ],
+      })!;
+      expect(parsed).not.toHaveProperty("inputModalities");
+    }
+  });
+
   it("accepts an empty hosted catalog without creating a selection", () => {
     expect(parseChatGPTModels({ models: [] })).toEqual([]);
   });

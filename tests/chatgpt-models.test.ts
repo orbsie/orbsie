@@ -55,6 +55,45 @@ describe("ChatGPT model discovery", () => {
       cursor: "page2",
     });
   });
+  it("retains only bounded optional input modalities from the runtime catalog", async () => {
+    const result = await listChatGPTModels(
+      {
+        request: vi.fn().mockResolvedValue({
+          data: [
+            {
+              ...model,
+              inputModalities: ["text", "image", "image"],
+              providerSecret: "must-not-leak",
+            },
+          ],
+          nextCursor: null,
+        }),
+      },
+      session() as never,
+    );
+    expect(result[0]).toMatchObject({
+      id: model.id,
+      inputModalities: ["text", "image"],
+    });
+    expect(result[0]).not.toHaveProperty("providerSecret");
+
+    const publicModel = {
+      ...model,
+      supportedReasoningEfforts: ["low", "xhigh"],
+    };
+    for (const inputModalities of [
+      undefined,
+      [],
+      "image",
+      ["text", 7],
+      Array(17).fill("text"),
+    ]) {
+      const [parsed] = validateChatGPTModels([
+        { ...publicModel, inputModalities },
+      ]);
+      expect(parsed).not.toHaveProperty("inputModalities");
+    }
+  });
   it("rejects stale authenticated state after logout during discovery", async () => {
     const state = session();
     state.getSnapshot.mockReturnValue({ authStatus: "unknown" });
@@ -82,12 +121,10 @@ describe("ChatGPT model discovery", () => {
   });
   it("bounds pagination without silently returning a partial catalog", async () => {
     let cursor = 0;
-    const request = vi
-      .fn()
-      .mockImplementation(async () => ({
-        data: [],
-        nextCursor: String(++cursor),
-      }));
+    const request = vi.fn().mockImplementation(async () => ({
+      data: [],
+      nextCursor: String(++cursor),
+    }));
     await expect(
       listChatGPTModels({ request }, session() as never),
     ).rejects.toThrow();

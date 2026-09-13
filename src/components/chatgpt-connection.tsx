@@ -17,6 +17,7 @@ import {
   defaultChatGPTPresetSelection,
   resolveChatGPTPresetOptions,
 } from "../lib/chatgpt-model-presets";
+import { normalizeInputModalities } from "../lib/input-modalities";
 import type { ChatGPTPresetLabel } from "../lib/chatgpt-model-presets";
 
 export {
@@ -45,6 +46,7 @@ export type ChatGPTModelOption = {
   displayName: string;
   supportedReasoningEfforts: string[];
   defaultReasoningEffort: string;
+  inputModalities?: string[];
 };
 
 export type ProviderSessionUser = {
@@ -137,6 +139,7 @@ export function parseChatGPTModels(
     if (!value || typeof value !== "object") return null;
     const source = value as Record<string, unknown>;
     const efforts = source.supportedReasoningEfforts;
+    const inputModalities = normalizeInputModalities(source.inputModalities);
     if (
       !boundedIdentifier(source.id, 256) ||
       !boundedIdentifier(source.model, 256) ||
@@ -157,6 +160,7 @@ export function parseChatGPTModels(
       displayName: source.displayName,
       supportedReasoningEfforts: [...new Set(efforts as string[])],
       defaultReasoningEffort: source.defaultReasoningEffort,
+      ...(inputModalities ? { inputModalities } : {}),
     });
   }
   return parsed;

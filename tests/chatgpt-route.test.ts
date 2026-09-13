@@ -161,6 +161,39 @@ describe("authenticated ChatGPT routes", () => {
     expect(mocks.request).not.toHaveBeenCalled();
   });
 
+  it("retains safe input modalities through route validation", async () => {
+    mocks.readHost.mockResolvedValue(host);
+    mocks.request.mockResolvedValueOnce(
+      Response.json({
+        models: [
+          {
+            id: "gpt-5.6-luna",
+            model: "gpt-5.6-luna",
+            displayName: "Luna",
+            supportedReasoningEfforts: ["low", "medium"],
+            defaultReasoningEffort: "low",
+            inputModalities: ["text", "image", "image"],
+            providerSecret: "must-not-leak",
+          },
+        ],
+      }),
+    );
+    const response = await GET(request("models"), context("models"));
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({
+      models: [
+        {
+          id: "gpt-5.6-luna",
+          model: "gpt-5.6-luna",
+          displayName: "Luna",
+          supportedReasoningEfforts: ["low", "medium"],
+          defaultReasoningEffort: "low",
+          inputModalities: ["text", "image"],
+        },
+      ],
+    });
+  });
+
   it("starts through one private host and returns only a validated challenge", async () => {
     mocks.request.mockResolvedValueOnce(
       Response.json({

@@ -8,7 +8,7 @@ history: checkpoint-history/2026-09-13-before-creative-prompt.md (and its archiv
 
 Astra low/default architecture/review/integration; one Luna xhigh/default worker,
 no nested agents, concise context, Fast off. Reuse /root/host_session_renewal.
-Creative prompt implementation accepted; next worker task is visual-review-capability-task.md. Root owns
+Creative prompt implementation accepted; capability propagation also accepted; next worker task is visual-review-transport-task.md. Root owns
 review, not duplicate investigation. Owner explicitly requested implementing ALL
 Astra recommendations. Sequence: shared creative/game prompt -> image capability
 propagation -> bounded image transport/process policy -> render/inspect/correct/
@@ -120,3 +120,13 @@ in git stash before integration; cherry-pick conflicts limited to checkpoint and
 regenerable player artifacts, resolved with accepted source then rebuilt. Main
 player artifacts synced to released build. No live model calls. Luna continues
 image capability task, excluded from this isolated release.
+
+## Image capabilities accepted
+
+Shared bounded modality normalizer and API imageInput true/false/unknown implemented;
+ChatGPT host validation, route revalidation and browser parser preserve optional
+metadata. Missing/empty/malformed staysunknown without affecting text availability.
+Root reviewed all code/tests;58focused tests across6suites and root typecheck pass.
+No live calls or review UI changes. Next internal transport contract:
+docs/visual-review-transport-task.md; public image requests remain unavailable until
+run authorization/loop integration. Capability detection alone is not ingestion proof.

@@ -1,3 +1,5 @@
+import { imageInputSupport } from "./input-modalities";
+
 export type Capability = {
   supported: boolean | "unknown";
   source: "catalog" | "provider-contract" | "unspecified";
@@ -11,6 +13,8 @@ export type ModelCapabilities = {
   jsonObject?: Capability;
   /** OpenRouter's structured_outputs response_format=json_schema request shape. */
   jsonSchema?: Capability;
+  /** Catalog-advertised image input support; unknown is not authorization. */
+  imageInput?: Capability;
 };
 const unknown = (): Capability => ({
   supported: "unknown",
@@ -29,6 +33,10 @@ export function modelCapabilities(
       ? (model.modalities as Record<string, unknown>)
       : {};
   const output = architecture.output_modalities ?? modalities.output;
+  const input =
+    provider === "openrouter"
+      ? architecture.input_modalities
+      : modalities.input;
   const text: Capability = Array.isArray(output)
     ? { supported: output.includes("text"), source: "catalog" }
     : provider === "gateway" && typeof model.type === "string"
@@ -65,6 +73,11 @@ export function modelCapabilities(
           source: "catalog",
         }
       : unknown();
+  const imageSupported = imageInputSupport(input);
+  const imageInput: Capability = {
+    supported: imageSupported,
+    source: imageSupported === "unknown" ? "unspecified" : "catalog",
+  };
   const streamingText: Capability =
     text.supported === false
       ? { supported: false, source: "catalog" }
@@ -78,6 +91,7 @@ export function modelCapabilities(
     structuredOutput,
     jsonObject,
     jsonSchema,
+    imageInput,
   };
 }
 /** The relay validates complete NDJSON records; native tools/schema are optional. */

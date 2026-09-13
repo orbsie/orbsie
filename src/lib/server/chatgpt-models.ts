@@ -2,6 +2,7 @@ import type {
   ChatGPTDeviceRpc,
   ChatGPTDeviceSession,
 } from "./chatgpt-device-session";
+import { normalizeInputModalities } from "../input-modalities";
 
 export type ChatGPTModel = {
   id: string;
@@ -9,6 +10,7 @@ export type ChatGPTModel = {
   displayName: string;
   supportedReasoningEfforts: string[];
   defaultReasoningEffort: string;
+  inputModalities?: string[];
 };
 const record = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
@@ -42,6 +44,7 @@ export function validateChatGPTModels(value: unknown): ChatGPTModel[] {
     )
       throw invalid();
     seen.add(item.id);
+    const inputModalities = normalizeInputModalities(item.inputModalities);
     return {
       id: item.id,
       model: item.model,
@@ -50,6 +53,7 @@ export function validateChatGPTModels(value: unknown): ChatGPTModel[] {
         ...new Set(item.supportedReasoningEfforts as string[]),
       ],
       defaultReasoningEffort: item.defaultReasoningEffort,
+      ...(inputModalities ? { inputModalities } : {}),
     };
   });
 }
