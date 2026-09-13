@@ -94,6 +94,7 @@ Use a persistent renderer and scene lifecycle. Keep the canvas mounted through t
 - The chat panel should settle around 320–380 px wide on desktop; the scene occupies the rest. Maintain comfortable framing as the viewport changes.
 - Provide a small “Back to planet” control. Existing Orbs should reopen directly in their workspace, with a short optional arrival transition rather than repeating the full introduction.
 - On small screens, use a collapsible bottom chat sheet so play remains practical. Respect reduced-motion preferences and provide a clear unsupported-WebGL fallback.
+- When browser graphics initialization fails, show actionable graphics-acceleration guidance in both the editor and published game. Give desktop Chrome steps to enable graphics acceleration and relaunch, with appropriate mobile guidance. Report unavailable WebGL without claiming the browser setting is definitely disabled. Keep generation blocked until a real renderer initializes; allow an explicit recheck and preserve drafts, connections, and committed worlds through recovery.
 
 Implement explicit UI states such as landing, descending, building, editing, playing, and publishing. Build progress and camera progress are independent; a network delay must not freeze the interface.
 
