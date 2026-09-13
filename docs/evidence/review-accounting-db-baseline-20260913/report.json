@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "database": "isolated disposable postgres:15-alpine container; tmpfs data; loopback port",
+  "limits": {
+    "cpus": 1,
+    "memoryMiB": 256,
+    "tmpfsMiB": 128
+  },
+  "command": "RUN_TRIAL_DATABASE_TEST=1 npx vitest run tests/trial-database.test.ts",
+  "tests": 2,
+  "concurrentClaims": 12,
+  "admitted": 3,
+  "exhausted": 9,
+  "cookieResetBypassRejected": true,
+  "cleanup": "container stopped and automatically removed; no production database used",
+  "scope": "Existing claimTrial accounting baseline only, not future review allowances",
+  "liveModelCalls": 0
+}

@@ -138,3 +138,12 @@ preflight. OpenRouter Luna input[file,image,text] and Gateway[text,image,pdf] bo
 normalize to imageInput true/catalog. Evidence image-capability-catalog-20260913.
 No credentials/inference used; this proves current metadata mapping, not successful
 image ingestion. Quota now57%used/43%remaining. Transport worker confirmed running.
+
+## Real database test baseline
+
+Root used cached postgres:15-alpine in a disposable loopback-only tmpfs container
+(1CPU/256MiB). RUN_TRIAL_DATABASE_TEST=1 tests/trial-database.test.ts passed2tests:
+3of12 concurrent claims admitted,9exhausted, cookie-reset network bypass rejected.
+Container stopped/removed; no production DB or modelcalls. Evidence
+review-accounting-db-baseline-20260913. Reuse this isolated setup for forthcoming
+review-allowance contention tests; current pass does not prove new allowances.
