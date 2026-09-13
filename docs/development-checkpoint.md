@@ -109,3 +109,9 @@ the fresh-world gameplay driver; publication verification is committedac7268f.
 Gameplay WIP review criteria and outstanding corrections are recorded under
 In-progress review in provider-live-gameplay-task.md. Await worker completion and
 actual browser fixture evidence before accepting/deploying observation changes.
+
+Provider prerequisites rechecked: .env.openrouter.local contains the OpenRouter
+test key (value not printed). Vercel lists AI_GATEWAY_TEST_KEY in production, but
+env run and a private temporary env pull did not expose a usable local value;
+no Gateway model request made. Temporary production env file was deleted. Do not
+claim local Gateway readiness yet or ask owner to paste credentials in chat.
