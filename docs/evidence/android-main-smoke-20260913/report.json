@@ -1,0 +1,35 @@
+{
+  "scope": "Android emulator main-page visual smoke; not physical-device or complete gameplay acceptance",
+  "url": "https://orbsie.com/",
+  "productionSource": "ddafb15",
+  "device": {
+    "avd": "orbsie_api35_phone",
+    "api": 35,
+    "port": 5580,
+    "hostCpuAffinity": [
+      30,
+      31
+    ],
+    "virtualCores": 2,
+    "memoryMiB": 3072,
+    "gpu": "swiftshader_indirect"
+  },
+  "setup": {
+    "ownerApprovedTerms": true,
+    "accountAdded": false,
+    "usageReportingChecked": false,
+    "notifications": "declined"
+  },
+  "observations": {
+    "rootViewedScreenshot": true,
+    "planetVisible": true,
+    "composerVisible": true,
+    "fatalGraphicsDialogVisible": false
+  },
+  "limitations": [
+    "No generated-game traversal",
+    "No physical-device performance claim",
+    "No forced Canvas2D claim; rendered planet seen visually"
+  ],
+  "modelCalls": 0
+}
