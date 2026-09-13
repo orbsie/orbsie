@@ -99,3 +99,9 @@ artifact signed-out publication; midrange physical Android and iOS Safari touch,
 orientation/background/long-run performance; licensed catalog admission/mix/new-only
 matrix and measurements; full prompt audit/free exhaustion/provider recovery and
 GitHub push. Scope remains prompt.md, not merely these implementation milestones.
+
+Procedural isolation audit:29 targeted evaluator/integrity/queue tests passed on
+current source; exact hashes in procedural-isolation-audit-20260913/report.json.
+Real QuickJS tests plus mocked queues; prior actual-browser worker evidence linked.
+No blanket security/mobile claim and no model calls. Current single Luna task is
+the fresh-world gameplay driver; publication verification is committedac7268f.

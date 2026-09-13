@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-09-13T18:53:48.325576+00:00",
+  "command": "npx vitest run tests/browser-procedural.test.ts tests/browser-procedural-integrity.test.ts tests/browser-modeling-queue.test.ts",
+  "testFiles": 3,
+  "testsPassed": 29,
+  "durationSeconds": 1.34,
+  "mode": "local real QuickJS WASM evaluator plus mocked queue tests",
+  "sha256": {
+    "src/lib/browser-procedural-evaluator.ts": "e79005924579873b483c1f4b7b9750ef13c7caf6b4ced0db752255e6cae01ea4",
+    "src/lib/browser-procedural.ts": "42083bd3c330492af63b55bff801a9b6653d84e7dbe78610efcf1c5fcdb81e5f",
+    "tests/browser-procedural.test.ts": "3988985de4509c6fa32382a8ddb3d2d62884b2c04d250ead6c402504e2adc47d",
+    "tests/browser-procedural-integrity.test.ts": "f9e173df22bd9063b19aaa86b073f3bc1da3100e137902293b286553f5c1a613",
+    "tests/browser-modeling-queue.test.ts": "84eae74c2767034b84c18a49d891ba26a795dfe97b1c4a884dba923347bb80f0"
+  },
+  "reviewedControls": [
+    "No module loader or host APIs passed to guest",
+    "8 MiB guest memory / 512 KiB stack",
+    "32 KiB UTF-8 source / 256 KiB output",
+    "2-second evaluator deadline; 10-second queue envelope",
+    "Captured serializer intrinsics resist guest prototype mutation",
+    "Abort/timeout worker termination and stale result rejection"
+  ],
+  "existingBrowserEvidence": "docs/evidence/browser-procedural-foundation-worker/report.json",
+  "browserEvidenceScope": "Prior actual worker execution, absent host APIs, bounded output, loop timeout, cancellation and recovery; not rerun this audit",
+  "modelCalls": 0,
+  "limitations": [
+    "Not a full security certification of all geometry backends",
+    "No new physical browser/device performance evidence"
+  ]
+}
