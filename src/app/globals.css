@@ -1328,10 +1328,15 @@ kbd {
   .workspace-heading {
     left: 20px;
     top: 80px;
+    right: 160px;
+    min-width: 0;
   }
   .workspace-heading h2 {
     font-size: 14px;
     margin-top: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .play-toolbar {
     top: 81px;
@@ -1531,10 +1536,15 @@ kbd {
   .workspace-heading {
     left: 16px;
     top: 52px;
+    right: 250px;
+    min-width: 0;
   }
   .workspace-heading h2 {
     font-size: 13px;
     margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .play-toolbar {
     top: 52px;
@@ -2124,3 +2134,15 @@ kbd {
 .graphics-guidance.is-advisory > button { padding: 0 4px; font-size: 18px; line-height: 1; }
 .graphics-error.is-advisory { width: min(360px, calc(100% - 32px)); padding: 10px 14px; }
 .graphics-player-error:has(.is-advisory) { top: 64px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); min-width: 0; padding: 10px 14px; }
+@media (max-width: 650px) {
+  .is-workspace .graphics-error.is-advisory {
+    /* Leave the mobile workspace heading, toolbar, and HUD unobscured. */
+    top: 220px;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .is-workspace .graphics-error.is-advisory {
+    /* The compact toolbar/HUD occupy the first 150px in landscape. */
+    top: 160px;
+  }
+}

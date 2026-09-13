@@ -1,0 +1,2048 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "software": {
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+      "generationMovement": {
+        "status": "passed",
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T20:15:07.343Z",
+        "movementAtMs": 543,
+        "movementAt": "2026-09-13T20:15:07.886Z",
+        "generationRequestsAtMovement": 1,
+        "generationResponsesAtMovement": 0,
+        "generationStreamOpenAtMovement": true,
+        "generationStreamOpenAfterMovement": true,
+        "generationRequestAtMs": 1789330507342,
+        "generationRequestAt": "2026-09-13T20:15:07.342Z",
+        "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "movementDistance": 1.0664000000000018,
+        "before": {
+          "renderer": "software",
+          "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+          "revision": 2,
+          "simulationDeltaMs": 16.699999999999818,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.3704116674285415,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 1108.2000000011176,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "after": {
+          "renderer": "software",
+          "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+          "revision": 2,
+          "simulationDeltaMs": 16.600000000000136,
+          "playing": true,
+          "player": {
+            "position": [
+              0.9358540439998942,
+              0.42,
+              4.488740605632476
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.3960017127297416,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 1375.2000000011176,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "beforeSample": {
+          "observation": {
+            "renderer": "software",
+            "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+            "revision": 2,
+            "simulationDeltaMs": 16.699999999999818,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3704116674285415,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 1108.2000000011176,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        },
+        "afterSample": {
+          "observation": {
+            "renderer": "software",
+            "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+            "revision": 2,
+            "simulationDeltaMs": 16.600000000000136,
+            "playing": true,
+            "player": {
+              "position": [
+                0.9358540439998942,
+                0.42,
+                4.488740605632476
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3960017127297416,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 1375.2000000011176,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        }
+      },
+      "traversal": {
+        "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+        "revision": 20,
+        "renderer": "software",
+        "collectedIds": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "expectedCollectibleIds": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "score": 5,
+        "won": true,
+        "reset": {
+          "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+          "revision": 20,
+          "scoreIds": [],
+          "reset": 1,
+          "player": {
+            "position": [
+              0,
+              0.47094154999999877,
+              5
+            ],
+            "velocityY": -0.7485000000000219
+          }
+        },
+        "elapsedMs": 15167,
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T20:15:08.775Z",
+        "finishedAt": "2026-09-13T20:15:24.487Z",
+        "inputTrace": [
+          {
+            "atMs": 209,
+            "keys": [
+              "d"
+            ],
+            "reason": "movement-check"
+          },
+          {
+            "atMs": 495,
+            "keys": [],
+            "reason": "movement-release"
+          },
+          {
+            "atMs": 504,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 579,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 653,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 727,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 803,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 886,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 1073,
+            "keys": [
+              " ",
+              "a",
+              "w"
+            ],
+            "reason": "platform-jump"
+          },
+          {
+            "atMs": 1128,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1184,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1237,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1291,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1346,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1404,
+            "keys": [
+              " "
+            ],
+            "reason": "platform-jump-feedback"
+          },
+          {
+            "atMs": 1407,
+            "keys": [],
+            "reason": "platform-jump-release"
+          },
+          {
+            "atMs": 1657,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1736,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1815,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1891,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 1970,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2048,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2123,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2203,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2278,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2356,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 2605,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2682,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2755,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2829,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2904,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 2977,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3053,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3126,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3202,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3275,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-steer"
+          },
+          {
+            "atMs": 3356,
+            "keys": [],
+            "reason": "platform-settle"
+          },
+          {
+            "atMs": 3607,
+            "keys": [
+              "a",
+              "s",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 3686,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 3760,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 3837,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 3911,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 3988,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4063,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4138,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4214,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4289,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4364,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4439,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4512,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4590,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4667,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4740,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4818,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5112,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5186,
+            "keys": [
+              "a",
+              "s",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5378,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5453,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5691,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5770,
+            "keys": [
+              "a"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5846,
+            "keys": [
+              "a"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6054,
+            "keys": [
+              "d",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6131,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6316,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6388,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6688,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6765,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6949,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7024,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7267,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7340,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7580,
+            "keys": [
+              "d",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7654,
+            "keys": [
+              "d",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7921,
+            "keys": [
+              "a",
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8001,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8240,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8317,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8505,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8580,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8874,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8950,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9138,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9218,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9455,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9758,
+            "keys": [
+              "d",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9836,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10075,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10154,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10396,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10470,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10714,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10788,
+            "keys": [
+              "d",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11036,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11107,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11353,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11427,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11671,
+            "keys": [
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11745,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11929,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12002,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12293,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12371,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12610,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12685,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12927,
+            "keys": [
+              "a",
+              "w",
+              " "
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13001,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13190,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13269,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13507,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13587,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13845,
+            "keys": [
+              "d",
+              "w",
+              " "
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14088,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14162,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14398,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14472,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14655,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 14729,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 15022,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 15097,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 15355,
+            "keys": [],
+            "reason": "portal-settle"
+          }
+        ],
+        "movement": {
+          "distance": 1.1335999999999997,
+          "before": {
+            "renderer": "software",
+            "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+            "revision": 20,
+            "simulationDeltaMs": 16.59999999999991,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.40189233016752035,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.3454655504336789,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.27331999999999995,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 2475.0999999996275,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "after": {
+            "renderer": "software",
+            "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+            "revision": 20,
+            "simulationDeltaMs": 16.799999999999727,
+            "playing": true,
+            "player": {
+              "position": [
+                0.9948275921589271,
+                0.42,
+                4.456523209438277
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3770787470136897,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.327622580304789,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.3866800000000001,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 2758,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          }
+        },
+        "timing": {
+          "observationSamples": 128,
+          "observedSpanMs": 15167,
+          "staleObservationWaits": [
+            {
+              "waitedMs": 4,
+              "previousAtMs": 2758,
+              "observedAtMs": 2774.7000000011176
+            },
+            {
+              "waitedMs": 59,
+              "previousAtMs": 3858,
+              "observedAtMs": 3925
+            },
+            {
+              "waitedMs": 61,
+              "previousAtMs": 4808,
+              "observedAtMs": 4858.700000001118
+            },
+            {
+              "waitedMs": 61,
+              "previousAtMs": 5809.0999999996275,
+              "observedAtMs": 5874.800000000745
+            },
+            {
+              "waitedMs": 219,
+              "previousAtMs": 7058.5999999996275,
+              "observedAtMs": 7377.700000001118
+            },
+            {
+              "waitedMs": 113,
+              "previousAtMs": 7410.4000000003725,
+              "observedAtMs": 7641.700000001118
+            },
+            {
+              "waitedMs": 164,
+              "previousAtMs": 7691.700000001118,
+              "observedAtMs": 7961.700000001118
+            },
+            {
+              "waitedMs": 124,
+              "previousAtMs": 8041.5999999996275,
+              "observedAtMs": 8294.300000000745
+            },
+            {
+              "waitedMs": 113,
+              "previousAtMs": 8357.599999999627,
+              "observedAtMs": 8576.200000001118
+            },
+            {
+              "waitedMs": 226,
+              "previousAtMs": 8625.599999999627,
+              "observedAtMs": 8958.200000001118
+            },
+            {
+              "waitedMs": 111,
+              "previousAtMs": 8991.5,
+              "observedAtMs": 9208
+            },
+            {
+              "waitedMs": 168,
+              "previousAtMs": 9258.099999999627,
+              "observedAtMs": 9536.300000000745
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 9608.200000001118,
+              "observedAtMs": 9844.400000000373
+            },
+            {
+              "waitedMs": 179,
+              "previousAtMs": 9876.200000001118,
+              "observedAtMs": 10158.599999999627
+            },
+            {
+              "waitedMs": 166,
+              "previousAtMs": 10226.300000000745,
+              "observedAtMs": 10507.800000000745
+            },
+            {
+              "waitedMs": 113,
+              "previousAtMs": 10525.200000001118,
+              "observedAtMs": 10758.900000000373
+            },
+            {
+              "waitedMs": 218,
+              "previousAtMs": 10841.300000000745,
+              "observedAtMs": 11141.900000000373
+            },
+            {
+              "waitedMs": 113,
+              "previousAtMs": 11174.700000001118,
+              "observedAtMs": 11409.800000000745
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 11441.700000001118,
+              "observedAtMs": 11724.900000000373
+            },
+            {
+              "waitedMs": 218,
+              "previousAtMs": 11774.599999999627,
+              "observedAtMs": 12025
+            },
+            {
+              "waitedMs": 167,
+              "previousAtMs": 12041.200000001118,
+              "observedAtMs": 12341.599999999627
+            },
+            {
+              "waitedMs": 166,
+              "previousAtMs": 12392.200000001118,
+              "observedAtMs": 12658.5
+            },
+            {
+              "waitedMs": 169,
+              "previousAtMs": 12709.200000001118,
+              "observedAtMs": 12975.800000000745
+            },
+            {
+              "waitedMs": 169,
+              "previousAtMs": 13024.400000000373,
+              "observedAtMs": 13291.099999999627
+            },
+            {
+              "waitedMs": 167,
+              "previousAtMs": 13341.5,
+              "observedAtMs": 13608.900000000373
+            },
+            {
+              "waitedMs": 164,
+              "previousAtMs": 13641.599999999627,
+              "observedAtMs": 13926.400000000373
+            },
+            {
+              "waitedMs": 111,
+              "previousAtMs": 13974.400000000373,
+              "observedAtMs": 14199
+            },
+            {
+              "waitedMs": 217,
+              "previousAtMs": 14259.700000001118,
+              "observedAtMs": 14558.5
+            },
+            {
+              "waitedMs": 164,
+              "previousAtMs": 14625.700000001118,
+              "observedAtMs": 14875.599999999627
+            },
+            {
+              "waitedMs": 167,
+              "previousAtMs": 14925.200000001118,
+              "observedAtMs": 15192.5
+            },
+            {
+              "waitedMs": 115,
+              "previousAtMs": 15224.599999999627,
+              "observedAtMs": 15460.800000000745
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 15527,
+              "observedAtMs": 15775.200000001118
+            },
+            {
+              "waitedMs": 164,
+              "previousAtMs": 15808.099999999627,
+              "observedAtMs": 16092.300000000745
+            },
+            {
+              "waitedMs": 12,
+              "previousAtMs": 16092.300000000745,
+              "observedAtMs": 16109.900000000373
+            },
+            {
+              "waitedMs": 168,
+              "previousAtMs": 16109.900000000373,
+              "observedAtMs": 16359.300000000745
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 16391.700000001118,
+              "observedAtMs": 16659.599999999627
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 16724.200000001118,
+              "observedAtMs": 16924.900000000373
+            },
+            {
+              "waitedMs": 219,
+              "previousAtMs": 16990.900000000373,
+              "observedAtMs": 17292.200000001118
+            },
+            {
+              "waitedMs": 178,
+              "previousAtMs": 17324.900000000373,
+              "observedAtMs": 17591.300000000745
+            }
+          ],
+          "source": "renderer performance.now timestamps"
+        },
+        "contacts": [
+          "fixture-portal"
+        ],
+        "collections": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 7,
+            "bounceFrames": 0,
+            "startPosition": [
+              0,
+              0.40189233016752035,
+              3
+            ],
+            "maximumDisplacement": 0.42187319603249207,
+            "jumpEvidence": [
+              {
+                "id": "fixture-platform-a",
+                "attempt": 0,
+                "before": {
+                  "atMs": 3341.800000000745,
+                  "player": {
+                    "position": [
+                      0.2916062121342817,
+                      1.341015749999999,
+                      3.169285107657476
+                    ],
+                    "velocityY": -2.4990000000000054,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.2994294963882913,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "inputKeys": [
+                  [
+                    " ",
+                    "a",
+                    "w"
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ],
+                  [
+                    " "
+                  ]
+                ],
+                "samples": [
+                  {
+                    "atMs": 3391.300000000745,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.191065549999999,
+                        3.1129772014289356
+                      ],
+                      "velocityY": -3.2490000000000054,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.29150208582864195,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3442.5,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.0154282914510706,
+                        3.1129772014289356
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": "fixture-platform-a"
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.2834282914510707,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": "fixture-platform-a",
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3508.0999999996275,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.3711928653505856,
+                        3.1129772014289356
+                      ],
+                      "velocityY": 4.999500000000003,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.272452340457909,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3558,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.5961678153505858,
+                        3.1129772014289356
+                      ],
+                      "velocityY": 4.249500000000003,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.2640875072761738,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3610.2000000011176,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.783642615350586,
+                        3.1129772014289356
+                      ],
+                      "velocityY": 3.4995000000000025,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.25562014775406916,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3659.4000000003725,
+                    "player": {
+                      "position": [
+                        0.09969628613732356,
+                        1.933617565350586,
+                        3.1129772014289356
+                      ],
+                      "velocityY": 2.749500000000002,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.24706380786055665,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 1,
+                    "bounceContactCount": 0
+                  }
+                ],
+                "apex": {
+                  "atMs": 3391.300000000745,
+                  "player": {
+                    "position": [
+                      0.09969628613732356,
+                      1.191065549999999,
+                      3.1129772014289356
+                    ],
+                    "velocityY": -3.2490000000000054,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.29150208582864195,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "landing": {
+                  "atMs": 3858,
+                  "player": {
+                    "position": [
+                      0.09969628613732356,
+                      2.158517215350586,
+                      3.1129772014289356
+                    ],
+                    "velocityY": -0.25049999999999817,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.21222408500839315,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 1,
+                  "bounceContactCount": 0
+                }
+              }
+            ]
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 8,
+            "bounceFrames": 0,
+            "startPosition": [
+              0.3454655504336789,
+              0.8,
+              0.3
+            ],
+            "maximumDisplacement": 0.6954133031800751,
+            "jumpEvidence": []
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 1,
+            "bounceFrames": 1,
+            "startPosition": [
+              0.27331999999999995,
+              1.4,
+              -2.5
+            ],
+            "maximumDisplacement": 0.5118800000000001,
+            "jumpEvidence": []
+          }
+        ],
+        "win": {
+          "projectId": "bd5a0059-43d1-4abf-902b-02b2818b603b",
+          "revision": 20,
+          "score": 5,
+          "status": "won",
+          "portalId": "fixture-portal"
+        }
+      }
+    }
+  },
+  "error": "phone-sheet-closed composer overflows the viewport: {\"box\":{\"left\":10,\"top\":792,\"right\":380,\"bottom\":1154.90625,\"width\":370,\"height\":362.90625},\"viewport\":{\"width\":390,\"height\":844}}. Fixture diagnostics: {\"renderer\":\"software\",\"readyState\":\"complete\",\"mainRendererAvailability\":\"ready\",\"composerValue\":\"Software transition layout check\",\"composerExists\":true,\"createExists\":false,\"createDisabled\":null,\"bodyText\":\"WebGL2 could not initialize, so Orbsie is using its software canvas renderer.\\n\\nUsing compatibility graphics · Options\\n×\\nShare Orb\\nCreate a world\\nBack to planet\\nCreate the local fresh gameplay fixture.\\nEdit\\nPlay\\nYour world\\n\\nCreate the local fresh gameplay fixture.\\n\\n✧\\n\\nLocal fresh gameplay fixture ready: collect five crystals, use three moving platforms, reach the portal, then restart.\\n\\nWhat experience to build?\\n3 free prompts\\nChange this\\n3 free prompts left\\n◆\\n0\\nScore\\nRules changed. Play restarted from the beginning.\",\"pageErrors\":[\"THREE.WebGLRenderer: Error creating WebGL context.\"],\"consoleErrors\":[\"warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\",\"error: THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.\"],\"requestFailures\":[\"POST http://127.0.0.1:36789/api/generate-stream: net::ERR_ABORTED\"],\"requestsSeen\":[\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"POST http://127.0.0.1:36789/api/generate-stream\",\"GET http://localhost:3091/api/trial\"],\"partialEvidence\":{\"renderer\":\"software\",\"generationRequests\":1,\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"generationMovement\":{\"status\":\"passed\",\"inputMode\":\"keyboard\",\"startedAt\":\"2026-09-13T20:15:07.343Z\",\"movementAtMs\":543,\"movementAt\":\"2026-09-13T20:15:07.886Z\",\"generationRequestsAtMovement\":1,\"generationResponsesAtMovement\":0,\"generationStreamOpenAtMovement\":true,\"generationStreamOpenAfterMovement\":true,\"generationRequestAtMs\":1789330507342,\"generationRequestAt\":\"2026-09-13T20:15:07.342Z\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revisionBefore\":2,\"revisionAfter\":2,\"movementDistance\":1.0664000000000018,\"before\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":2,\"simulationDeltaMs\":16.699999999999818,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3704116674285415,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1108.2000000011176,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"after\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":2,\"simulationDeltaMs\":16.600000000000136,\"playing\":true,\"player\":{\"position\":[0.9358540439998942,0.42,4.488740605632476],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3960017127297416,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1375.2000000011176,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"beforeSample\":{\"observation\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":2,\"simulationDeltaMs\":16.699999999999818,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3704116674285415,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1108.2000000011176,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"waitedMs\":0,\"polls\":0},\"afterSample\":{\"observation\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":2,\"simulationDeltaMs\":16.600000000000136,\"playing\":true,\"player\":{\"position\":[0.9358540439998942,0.42,4.488740605632476],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3960017127297416,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1375.2000000011176,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"waitedMs\":0,\"polls\":0}},\"traversal\":{\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":20,\"renderer\":\"software\",\"collectedIds\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"expectedCollectibleIds\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"score\":5,\"won\":true,\"reset\":{\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":20,\"scoreIds\":[],\"reset\":1,\"player\":{\"position\":[0,0.47094154999999877,5],\"velocityY\":-0.7485000000000219}},\"elapsedMs\":15167,\"inputMode\":\"keyboard\",\"startedAt\":\"2026-09-13T20:15:08.775Z\",\"finishedAt\":\"2026-09-13T20:15:24.487Z\",\"inputTrace\":[{\"atMs\":209,\"keys\":[\"d\"],\"reason\":\"movement-check\"},{\"atMs\":495,\"keys\":[],\"reason\":\"movement-release\"},{\"atMs\":504,\"keys\":[\"w\",\" \"],\"reason\":\"platform-steer\"},{\"atMs\":579,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":653,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":727,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":803,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":886,\"keys\":[],\"reason\":\"platform-settle\"},{\"atMs\":1073,\"keys\":[\" \",\"a\",\"w\"],\"reason\":\"platform-jump\"},{\"atMs\":1128,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1184,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1237,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1291,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1346,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1404,\"keys\":[\" \"],\"reason\":\"platform-jump-feedback\"},{\"atMs\":1407,\"keys\":[],\"reason\":\"platform-jump-release\"},{\"atMs\":1657,\"keys\":[\"d\",\"w\",\" \"],\"reason\":\"platform-steer\"},{\"atMs\":1736,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":1815,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":1891,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":1970,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2048,\"keys\":[\"w\",\" \"],\"reason\":\"platform-steer\"},{\"atMs\":2123,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2203,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2278,\"keys\":[\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2356,\"keys\":[],\"reason\":\"platform-settle\"},{\"atMs\":2605,\"keys\":[\"d\",\"w\",\" \"],\"reason\":\"platform-steer\"},{\"atMs\":2682,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2755,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2829,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2904,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":2977,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":3053,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":3126,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":3202,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":3275,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-steer\"},{\"atMs\":3356,\"keys\":[],\"reason\":\"platform-settle\"},{\"atMs\":3607,\"keys\":[\"a\",\"s\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":3686,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":3760,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":3837,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":3911,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":3988,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4063,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4138,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4214,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4289,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4364,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4439,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4512,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4590,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4667,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4740,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4818,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5112,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5186,\"keys\":[\"a\",\"s\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":5378,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5453,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5691,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5770,\"keys\":[\"a\"],\"reason\":\"collect-steer\"},{\"atMs\":5846,\"keys\":[\"a\"],\"reason\":\"collect-steer\"},{\"atMs\":6054,\"keys\":[\"d\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":6131,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":6316,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":6388,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":6688,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":6765,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":6949,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":7024,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":7267,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":7340,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":7580,\"keys\":[\"d\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7654,\"keys\":[\"d\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7921,\"keys\":[\"a\",\"w\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":8001,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":8240,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":8317,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":8505,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":8580,\"keys\":[\"w\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":8874,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":8950,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":9138,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":9218,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":9455,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":9758,\"keys\":[\"d\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":9836,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10075,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10154,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10396,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10470,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10714,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10788,\"keys\":[\"d\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":11036,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":11107,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":11353,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":11427,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":11671,\"keys\":[\"w\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":11745,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":11929,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12002,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12293,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12371,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12610,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12685,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12927,\"keys\":[\"a\",\"w\",\" \"],\"reason\":\"collect-steer\"},{\"atMs\":13001,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13190,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13269,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13507,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13587,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13845,\"keys\":[\"d\",\"w\",\" \"],\"reason\":\"portal-steer\"},{\"atMs\":14088,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":14162,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":14398,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":14472,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":14655,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":14729,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":15022,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":15097,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":15355,\"keys\":[],\"reason\":\"portal-settle\"}],\"movement\":{\"distance\":1.1335999999999997,\"before\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":20,\"simulationDeltaMs\":16.59999999999991,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.40189233016752035,3],\"scale\":[1.6,0.6,1.6]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0.3454655504336789,0.8,0.3],\"scale\":[1.6,0.7,1.6]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"stage\":\"ready\",\"position\":[0.27331999999999995,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},{\"id\":\"fixture-crystal-1\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.5,0.8,4],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-2\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,2.6],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-3\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,1.2],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-4\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,-0.5],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-5\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,-2.8],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-portal\",\"behavior\":\"portal\",\"stage\":\"ready\",\"position\":[0,0,-5.2],\"scale\":[1.4,1.4,1.1]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":\"playing\",\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":2,\"atMs\":2475.0999999996275,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"after\":{\"renderer\":\"software\",\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":20,\"simulationDeltaMs\":16.799999999999727,\"playing\":true,\"player\":{\"position\":[0.9948275921589271,0.42,4.456523209438277],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3770787470136897,3],\"scale\":[1.6,0.6,1.6]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0.327622580304789,0.8,0.3],\"scale\":[1.6,0.7,1.6]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"stage\":\"ready\",\"position\":[0.3866800000000001,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},{\"id\":\"fixture-crystal-1\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.5,0.8,4],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-2\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,2.6],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-3\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,1.2],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-4\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,-0.5],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-5\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,-2.8],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-portal\",\"behavior\":\"portal\",\"stage\":\"ready\",\"position\":[0,0,-5.2],\"scale\":[1.4,1.4,1.1]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":\"playing\",\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":2,\"atMs\":2758,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}}},\"timing\":{\"observationSamples\":128,\"observedSpanMs\":15167,\"staleObservationWaits\":[{\"waitedMs\":4,\"previousAtMs\":2758,\"observedAtMs\":2774.7000000011176},{\"waitedMs\":59,\"previousAtMs\":3858,\"observedAtMs\":3925},{\"waitedMs\":61,\"previousAtMs\":4808,\"observedAtMs\":4858.700000001118},{\"waitedMs\":61,\"previousAtMs\":5809.0999999996275,\"observedAtMs\":5874.800000000745},{\"waitedMs\":219,\"previousAtMs\":7058.5999999996275,\"observedAtMs\":7377.700000001118},{\"waitedMs\":113,\"previousAtMs\":7410.4000000003725,\"observedAtMs\":7641.700000001118},{\"waitedMs\":164,\"previousAtMs\":7691.700000001118,\"observedAtMs\":7961.700000001118},{\"waitedMs\":124,\"previousAtMs\":8041.5999999996275,\"observedAtMs\":8294.300000000745},{\"waitedMs\":113,\"previousAtMs\":8357.599999999627,\"observedAtMs\":8576.200000001118},{\"waitedMs\":226,\"previousAtMs\":8625.599999999627,\"observedAtMs\":8958.200000001118},{\"waitedMs\":111,\"previousAtMs\":8991.5,\"observedAtMs\":9208},{\"waitedMs\":168,\"previousAtMs\":9258.099999999627,\"observedAtMs\":9536.300000000745},{\"waitedMs\":163,\"previousAtMs\":9608.200000001118,\"observedAtMs\":9844.400000000373},{\"waitedMs\":179,\"previousAtMs\":9876.200000001118,\"observedAtMs\":10158.599999999627},{\"waitedMs\":166,\"previousAtMs\":10226.300000000745,\"observedAtMs\":10507.800000000745},{\"waitedMs\":113,\"previousAtMs\":10525.200000001118,\"observedAtMs\":10758.900000000373},{\"waitedMs\":218,\"previousAtMs\":10841.300000000745,\"observedAtMs\":11141.900000000373},{\"waitedMs\":113,\"previousAtMs\":11174.700000001118,\"observedAtMs\":11409.800000000745},{\"waitedMs\":163,\"previousAtMs\":11441.700000001118,\"observedAtMs\":11724.900000000373},{\"waitedMs\":218,\"previousAtMs\":11774.599999999627,\"observedAtMs\":12025},{\"waitedMs\":167,\"previousAtMs\":12041.200000001118,\"observedAtMs\":12341.599999999627},{\"waitedMs\":166,\"previousAtMs\":12392.200000001118,\"observedAtMs\":12658.5},{\"waitedMs\":169,\"previousAtMs\":12709.200000001118,\"observedAtMs\":12975.800000000745},{\"waitedMs\":169,\"previousAtMs\":13024.400000000373,\"observedAtMs\":13291.099999999627},{\"waitedMs\":167,\"previousAtMs\":13341.5,\"observedAtMs\":13608.900000000373},{\"waitedMs\":164,\"previousAtMs\":13641.599999999627,\"observedAtMs\":13926.400000000373},{\"waitedMs\":111,\"previousAtMs\":13974.400000000373,\"observedAtMs\":14199},{\"waitedMs\":217,\"previousAtMs\":14259.700000001118,\"observedAtMs\":14558.5},{\"waitedMs\":164,\"previousAtMs\":14625.700000001118,\"observedAtMs\":14875.599999999627},{\"waitedMs\":167,\"previousAtMs\":14925.200000001118,\"observedAtMs\":15192.5},{\"waitedMs\":115,\"previousAtMs\":15224.599999999627,\"observedAtMs\":15460.800000000745},{\"waitedMs\":163,\"previousAtMs\":15527,\"observedAtMs\":15775.200000001118},{\"waitedMs\":164,\"previousAtMs\":15808.099999999627,\"observedAtMs\":16092.300000000745},{\"waitedMs\":12,\"previousAtMs\":16092.300000000745,\"observedAtMs\":16109.900000000373},{\"waitedMs\":168,\"previousAtMs\":16109.900000000373,\"observedAtMs\":16359.300000000745},{\"waitedMs\":162,\"previousAtMs\":16391.700000001118,\"observedAtMs\":16659.599999999627},{\"waitedMs\":108,\"previousAtMs\":16724.200000001118,\"observedAtMs\":16924.900000000373},{\"waitedMs\":219,\"previousAtMs\":16990.900000000373,\"observedAtMs\":17292.200000001118},{\"waitedMs\":178,\"previousAtMs\":17324.900000000373,\"observedAtMs\":17591.300000000745}],\"source\":\"renderer performance.now timestamps\"},\"contacts\":[\"fixture-portal\"],\"collections\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"platformEvidence\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"groundedFrames\":7,\"bounceFrames\":0,\"startPosition\":[0,0.40189233016752035,3],\"maximumDisplacement\":0.42187319603249207,\"jumpEvidence\":[{\"id\":\"fixture-platform-a\",\"attempt\":0,\"before\":{\"atMs\":3341.800000000745,\"player\":{\"position\":[0.2916062121342817,1.341015749999999,3.169285107657476],\"velocityY\":-2.4990000000000054,\"groundedOn\":null},\"platform\":{\"position\":[0,0.2994294963882913,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"inputKeys\":[[\" \",\"a\",\"w\"],[\" \"],[\" \"],[\" \"],[\" \"],[\" \"],[\" \"]],\"samples\":[{\"atMs\":3391.300000000745,\"player\":{\"position\":[0.09969628613732356,1.191065549999999,3.1129772014289356],\"velocityY\":-3.2490000000000054,\"groundedOn\":null},\"platform\":{\"position\":[0,0.29150208582864195,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3442.5,\"player\":{\"position\":[0.09969628613732356,1.0154282914510706,3.1129772014289356],\"velocityY\":0,\"groundedOn\":\"fixture-platform-a\"},\"platform\":{\"position\":[0,0.2834282914510707,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":\"fixture-platform-a\",\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},{\"atMs\":3508.0999999996275,\"player\":{\"position\":[0.09969628613732356,1.3711928653505856,3.1129772014289356],\"velocityY\":4.999500000000003,\"groundedOn\":null},\"platform\":{\"position\":[0,0.272452340457909,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},{\"atMs\":3558,\"player\":{\"position\":[0.09969628613732356,1.5961678153505858,3.1129772014289356],\"velocityY\":4.249500000000003,\"groundedOn\":null},\"platform\":{\"position\":[0,0.2640875072761738,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},{\"atMs\":3610.2000000011176,\"player\":{\"position\":[0.09969628613732356,1.783642615350586,3.1129772014289356],\"velocityY\":3.4995000000000025,\"groundedOn\":null},\"platform\":{\"position\":[0,0.25562014775406916,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},{\"atMs\":3659.4000000003725,\"player\":{\"position\":[0.09969628613732356,1.933617565350586,3.1129772014289356],\"velocityY\":2.749500000000002,\"groundedOn\":null},\"platform\":{\"position\":[0,0.24706380786055665,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0}],\"apex\":{\"atMs\":3391.300000000745,\"player\":{\"position\":[0.09969628613732356,1.191065549999999,3.1129772014289356],\"velocityY\":-3.2490000000000054,\"groundedOn\":null},\"platform\":{\"position\":[0,0.29150208582864195,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"landing\":{\"atMs\":3858,\"player\":{\"position\":[0.09969628613732356,2.158517215350586,3.1129772014289356],\"velocityY\":-0.25049999999999817,\"groundedOn\":null},\"platform\":{\"position\":[0,0.21222408500839315,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0}}]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"groundedFrames\":8,\"bounceFrames\":0,\"startPosition\":[0.3454655504336789,0.8,0.3],\"maximumDisplacement\":0.6954133031800751,\"jumpEvidence\":[]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"groundedFrames\":1,\"bounceFrames\":1,\"startPosition\":[0.27331999999999995,1.4,-2.5],\"maximumDisplacement\":0.5118800000000001,\"jumpEvidence\":[]}],\"win\":{\"projectId\":\"bd5a0059-43d1-4abf-902b-02b2818b603b\",\"revision\":20,\"score\":5,\"status\":\"won\",\"portalId\":\"fixture-portal\"}}}}"
+}

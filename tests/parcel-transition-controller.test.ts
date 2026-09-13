@@ -180,4 +180,14 @@ describe("parcel transition controller", () => {
     expect(frame.width).toBeLessThan(500);
     expect(composer.style.getPropertyValue("translate")).not.toBe("");
   });
+
+  it("detaches a software fallback renderer without leaving a stale attachment", () => {
+    const controller = new ParcelTransitionController();
+    const detach = controller.attachRenderer();
+    expect(controller.hasRenderer).toBe(true);
+    detach();
+    expect(controller.hasRenderer).toBe(false);
+    detach();
+    expect(controller.hasRenderer).toBe(false);
+  });
 });

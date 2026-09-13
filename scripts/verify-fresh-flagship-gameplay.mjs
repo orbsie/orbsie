@@ -25,12 +25,21 @@ const evidenceDir = resolve(
     "docs/evidence/fresh-flagship-gameplay-fixture",
 );
 const requestedRenderer = process.env.ORBSIE_FRESH_GAMEPLAY_RENDERER ?? "all";
+const layoutOnly = process.env.ORBSIE_FRESH_GAMEPLAY_LAYOUT_ONLY === "1";
+const coarsePointerFixture =
+  process.env.ORBSIE_FRESH_GAMEPLAY_COARSE_POINTER === "1";
 assert(
   requestedRenderer === "all" ||
     requestedRenderer === "webgl" ||
     requestedRenderer === "software",
   "ORBSIE_FRESH_GAMEPLAY_RENDERER must be all, webgl, or software.",
 );
+if (layoutOnly)
+  assert.equal(
+    requestedRenderer,
+    "software",
+    "Layout-only fixture validation requires the forced software renderer.",
+  );
 
 const entities = [
   {
@@ -174,6 +183,427 @@ function installSoftwareFallback(context) {
   });
 }
 
+function assertViewportBox(
+  box,
+  viewport,
+  label,
+  { allowPartial = false } = {},
+) {
+  assert(box, `${label} did not produce a layout box.`);
+  assert(box.width > 0 && box.height > 0, `${label} is empty.`);
+  if (allowPartial) {
+    assert(
+      box.right > -1 &&
+        box.bottom > -1 &&
+        box.left < viewport.width + 1 &&
+        box.top < viewport.height + 1,
+      `${label} is not visible in the viewport: ${JSON.stringify({ box, viewport })}.`,
+    );
+    return;
+  }
+  assert(
+    box.left >= -1 && box.top >= -1,
+    `${label} starts outside the viewport.`,
+  );
+  assert(
+    box.right <= viewport.width + 1 && box.bottom <= viewport.height + 1,
+    `${label} overflows the viewport: ${JSON.stringify({ box, viewport })}.`,
+  );
+}
+
+async function activateFixtureControl(locator) {
+  if (coarsePointerFixture) {
+    await locator.tap();
+    return;
+  }
+  await locator.click();
+}
+
+async function waitForStableBoundingBox(
+  page,
+  selector,
+  { maxWaitMs = 1200, stableFrames = 2, requireInViewport = false } = {},
+) {
+  const startedAt = Date.now();
+  const viewport = page.viewportSize();
+  let previous;
+  let stable = 0;
+  while (Date.now() - startedAt <= maxWaitMs) {
+    const box = await page.locator(selector).boundingBox();
+    const inViewport =
+      box &&
+      viewport &&
+      box.y >= -1 &&
+      box.y + box.height <= viewport.height + 1;
+    const isStable =
+      box &&
+      previous &&
+      ["x", "y", "width", "height"].every(
+        (key) => Math.abs(box[key] - previous[key]) < 0.5,
+      );
+    stable = isStable ? stable + 1 : 0;
+    if (stable >= stableFrames && (!requireInViewport || inViewport))
+      return { box, waitedMs: Date.now() - startedAt };
+    previous = box;
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(resolve)),
+    );
+  }
+  throw new Error(
+    `${selector} did not settle within ${maxWaitMs}ms while measuring the fixture layout.`,
+  );
+}
+
+async function measureSoftwareViewport(
+  page,
+  label,
+  { allowClosedComposer = false } = {},
+) {
+  const viewport = page.viewportSize();
+  assert(viewport, "Fixture page did not expose a viewport.");
+  const metrics = await page.evaluate(() => {
+    const box = (selector) => {
+      const element = document.querySelector(selector);
+      const rect = element?.getBoundingClientRect();
+      return rect
+        ? {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+          }
+        : null;
+    };
+    return {
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      scene: box(".scene"),
+      canvas: box(".software-world canvas"),
+      composer: box(".chat-panel, .landing-composer"),
+      sheetHandle: box(".sheet-handle"),
+      hud: box(".game-hud"),
+      advisory: box(".graphics-error.is-advisory"),
+      toolbar: box(".play-toolbar"),
+      heading: box(".workspace-heading h2"),
+      interaction: {
+        pointerCoarse: matchMedia("(pointer: coarse)").matches,
+        anyPointerCoarse: matchMedia("(any-pointer: coarse)").matches,
+        maxTouchPoints: navigator.maxTouchPoints,
+      },
+      horizontalOverflow:
+        document.documentElement.scrollWidth > window.innerWidth + 1 ||
+        document.body.scrollWidth > window.innerWidth + 1,
+      verticalOverflow:
+        document.documentElement.scrollHeight > window.innerHeight + 1 ||
+        document.body.scrollHeight > window.innerHeight + 1,
+    };
+  });
+  assert.equal(
+    metrics.viewport.width,
+    viewport.width,
+    `${label} viewport width changed unexpectedly.`,
+  );
+  assert.equal(
+    metrics.viewport.height,
+    viewport.height,
+    `${label} viewport height changed unexpectedly.`,
+  );
+  // The scene is a full-bleed visual layer. During the mobile sheet transition
+  // its camera framing can intentionally leave part of that layer outside the
+  // viewport; the canvas itself and the interactive overlays remain bounded.
+  assertViewportBox(metrics.scene, viewport, `${label} scene`, {
+    allowPartial: true,
+  });
+  // The software canvas follows the full-bleed scene framing and can be
+  // intentionally clipped by the mobile sheet. Require a visible intersection
+  // here; the sheet, HUD, and controls below remain fully bounded.
+  assertViewportBox(metrics.canvas, viewport, `${label} canvas`, {
+    allowPartial: true,
+  });
+  assertViewportBox(
+    metrics.advisory,
+    viewport,
+    `${label} compatibility advice`,
+  );
+  if (coarsePointerFixture) {
+    assert.equal(
+      metrics.interaction.pointerCoarse,
+      true,
+      `${label} did not expose a coarse pointer in the touch fixture.`,
+    );
+    assert(
+      metrics.interaction.maxTouchPoints > 0,
+      `${label} did not expose touch points in the touch fixture.`,
+    );
+  }
+  if (metrics.advisory && metrics.toolbar) {
+    const overlaps =
+      metrics.advisory.left < metrics.toolbar.right &&
+      metrics.advisory.right > metrics.toolbar.left &&
+      metrics.advisory.top < metrics.toolbar.bottom &&
+      metrics.advisory.bottom > metrics.toolbar.top;
+    assert.equal(
+      overlaps,
+      false,
+      `${label} compatibility advice overlaps the play toolbar: ${JSON.stringify({ advisory: metrics.advisory, toolbar: metrics.toolbar })}.`,
+    );
+  }
+  if (metrics.heading && metrics.toolbar) {
+    const overlaps =
+      metrics.heading.left < metrics.toolbar.right &&
+      metrics.heading.right > metrics.toolbar.left &&
+      metrics.heading.top < metrics.toolbar.bottom &&
+      metrics.heading.bottom > metrics.toolbar.top;
+    assert.equal(
+      overlaps,
+      false,
+      `${label} project title overlaps the play toolbar: ${JSON.stringify({ heading: metrics.heading, toolbar: metrics.toolbar })}.`,
+    );
+  }
+  if (metrics.composer && !allowClosedComposer)
+    assertViewportBox(metrics.composer, viewport, `${label} composer`);
+  if (allowClosedComposer)
+    assertViewportBox(metrics.sheetHandle, viewport, `${label} sheet handle`);
+  assert.equal(
+    metrics.horizontalOverflow,
+    false,
+    `${label} has horizontal overflow.`,
+  );
+  assert.equal(
+    metrics.verticalOverflow,
+    false,
+    `${label} has vertical overflow.`,
+  );
+  return metrics;
+}
+
+async function captureSoftwareLayoutState(page, label) {
+  return page.evaluate((stateLabel) => {
+    const describe = (element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        tag: element.tagName.toLowerCase(),
+        id: element.id || null,
+        className:
+          typeof element.className === "string" ? element.className : null,
+        rect: {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+        },
+        position: style.position,
+        transform: style.transform,
+        overflow: style.overflow,
+      };
+    };
+    const describeChain = (selector) => {
+      const chain = [];
+      let element = document.querySelector(selector);
+      for (let depth = 0; element && depth < 6; depth += 1) {
+        chain.push(describe(element));
+        element = element.parentElement;
+      }
+      return chain;
+    };
+    const active = document.activeElement;
+    return {
+      label: stateLabel,
+      window: {
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+      },
+      visualViewport: window.visualViewport
+        ? {
+            offsetLeft: window.visualViewport.offsetLeft,
+            offsetTop: window.visualViewport.offsetTop,
+            pageLeft: window.visualViewport.pageLeft,
+            pageTop: window.visualViewport.pageTop,
+            width: window.visualViewport.width,
+            height: window.visualViewport.height,
+          }
+        : null,
+      document: {
+        documentElementScrollTop: document.documentElement.scrollTop,
+        bodyScrollTop: document.body.scrollTop,
+        scrollHeight: document.documentElement.scrollHeight,
+        bodyScrollHeight: document.body.scrollHeight,
+      },
+      activeElement: active
+        ? {
+            tag: active.tagName.toLowerCase(),
+            id: active.id || null,
+            className:
+              typeof active.className === "string" ? active.className : null,
+          }
+        : null,
+      targets: {
+        advisory: describeChain(".graphics-error.is-advisory"),
+        composer: describeChain(".chat-panel"),
+        scene: describeChain(".scene"),
+      },
+    };
+  }, label);
+}
+
+async function waitForTwoAnimationFrames(page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+}
+
+async function verifySoftwareWorkspaceLayout(page, evidenceDir) {
+  const layout = {};
+  try {
+    return await verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout);
+  } catch (error) {
+    if (error && typeof error === "object")
+      error.softwareLayoutEvidence = layout;
+    throw error;
+  }
+}
+
+async function verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout) {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForTimeout(150);
+  await expect(page.locator("main")).toHaveClass(/is-workspace/);
+  await expect(page.locator(".software-world canvas")).toBeVisible();
+  await expect(page.locator(".graphics-error.is-advisory")).toBeVisible();
+  await expect(page.locator(".game-hud")).toBeVisible();
+  await expect(page.locator(".chat-panel textarea")).toBeVisible();
+  layout.desktopPlaying = await measureSoftwareViewport(
+    page,
+    "desktop-playing",
+  );
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-desktop-playing.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(150);
+  await expect(page.locator(".software-world canvas")).toBeVisible();
+  const handle = page.locator(".sheet-handle");
+  await expect(handle).toHaveAttribute("aria-expanded", "false");
+  await activateFixtureControl(handle);
+  await expect(handle).toHaveAttribute("aria-expanded", "true");
+  const composer = page.locator(".chat-panel textarea");
+  await expect(composer).toBeVisible();
+  layout.phoneSheetOpenSettle = await waitForStableBoundingBox(
+    page,
+    ".chat-panel",
+    { requireInViewport: true },
+  );
+  layout.phoneSheetOpenDiagnostics = [
+    await captureSoftwareLayoutState(page, "before-textarea-fill"),
+  ];
+  await composer.fill("Software transition layout check");
+  await expect(composer).toHaveValue("Software transition layout check");
+  layout.phoneSheetOpenDiagnostics.push(
+    await captureSoftwareLayoutState(page, "immediately-after-textarea-fill"),
+  );
+  await waitForTwoAnimationFrames(page);
+  layout.phoneSheetOpenDiagnostics.push(
+    await captureSoftwareLayoutState(page, "after-two-animation-frames"),
+  );
+  await page.waitForTimeout(300);
+  layout.phoneSheetOpenDiagnostics.push(
+    await captureSoftwareLayoutState(page, "after-300ms"),
+  );
+  layout.phoneSheetOpen = await measureSoftwareViewport(
+    page,
+    "phone-sheet-open",
+  );
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-sheet-open.png"),
+    fullPage: true,
+  });
+  await activateFixtureControl(handle);
+  await expect(handle).toHaveAttribute("aria-expanded", "false");
+  layout.phoneSheetClosedSettle = await waitForStableBoundingBox(
+    page,
+    ".chat-panel",
+  );
+  layout.phoneSheetClosed = await measureSoftwareViewport(
+    page,
+    "phone-sheet-closed",
+    { allowClosedComposer: true },
+  );
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-sheet-closed.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(150);
+  layout.phoneLandscape = await measureSoftwareViewport(
+    page,
+    "phone-landscape",
+    { allowClosedComposer: true },
+  );
+  await expect(
+    page.getByRole("button", { name: "Edit", exact: true }),
+  ).toBeVisible();
+  await activateFixtureControl(
+    page.getByRole("button", { name: "Edit", exact: true }),
+  );
+  layout.phoneLandscape.editHitTest = true;
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-landscape.png"),
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(150);
+
+  await activateFixtureControl(
+    page.getByRole("button", { name: "Back to planet", exact: true }),
+  );
+  await expect(page.locator("main")).toHaveClass(/is-landing/);
+  await expect(page.locator(".landing-composer")).toBeVisible();
+  await page.waitForTimeout(1100);
+  layout.landing = await measureSoftwareViewport(page, "phone-landing");
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-landing.png"),
+    fullPage: true,
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("main")).toHaveAttribute(
+    "data-renderer-availability",
+    "ready",
+    { timeout: 30000 },
+  );
+  await expect(
+    page.getByRole("button", {
+      name: "Continue your saved world",
+      exact: true,
+    }),
+  ).toBeVisible({ timeout: 10000 });
+  await page
+    .getByRole("button", { name: "Continue your saved world", exact: true })
+    .click();
+  await expect(page.locator("main")).toHaveClass(/is-workspace/);
+  await expect(page.locator(".software-world canvas")).toBeVisible();
+  await expect(page.locator(".chat-panel")).toBeVisible();
+  await page.waitForTimeout(1100);
+  layout.reopened = await measureSoftwareViewport(page, "phone-reopened");
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-reopened.png"),
+    fullPage: true,
+  });
+  return layout;
+}
+
 function deferred() {
   let resolvePromise;
   const promise = new Promise((resolveValue) => {
@@ -272,7 +702,8 @@ async function runRenderer(browser, renderer) {
   const stream = await startGenerationStream();
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
-    reducedMotion: "reduce",
+    reducedMotion: "no-preference",
+    ...(coarsePointerFixture ? { hasTouch: true, isMobile: true } : {}),
   });
   await context.addInitScript(() => {
     window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
@@ -343,10 +774,11 @@ async function runRenderer(browser, renderer) {
   page.on("requestfailed", (request) =>
     requestFailures.push(
       `${request.method()} ${request.url()}: ${request.failure()?.errorText ?? "unknown"}`,
-      ),
+    ),
   );
   let generationMovement;
   let result;
+  let layout;
   try {
     await page.goto(appUrl, { waitUntil: "domcontentloaded" });
     await expect(page.locator("main")).toHaveAttribute(
@@ -356,7 +788,9 @@ async function runRenderer(browser, renderer) {
     );
     const prompt = page.locator("#prompt");
     await prompt.fill("Create the local fresh gameplay fixture.");
-    await expect(prompt).toHaveValue("Create the local fresh gameplay fixture.");
+    await expect(prompt).toHaveValue(
+      "Create the local fresh gameplay fixture.",
+    );
     const create = page.getByRole("button", { name: "Create", exact: true });
     await expect(create).toBeEnabled({ timeout: 30000 });
     await create.click();
@@ -412,6 +846,36 @@ async function runRenderer(browser, renderer) {
         { role: "assistant", text: fixtureCommands.at(-1).message },
       ],
     };
+    if (layoutOnly) {
+      await expect(page.locator("main")).toHaveClass(/is-workspace/);
+      await activateFixtureControl(
+        page.getByRole("button", { name: "Play", exact: true }),
+      );
+      await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
+      layout = await verifySoftwareWorkspaceLayout(page, evidenceDir);
+      assert.equal(stream.requests, 1);
+      assert.deepEqual(blockedExternalRequests, []);
+      const expectedPageErrors = pageErrors.filter(
+        (message) =>
+          message === "THREE.WebGLRenderer: Error creating WebGL context.",
+      );
+      const unexpectedPageErrors = pageErrors.filter(
+        (message) => !expectedPageErrors.includes(message),
+      );
+      assert.deepEqual(unexpectedPageErrors, []);
+      return {
+        status: "passed",
+        renderer,
+        layoutOnly: true,
+        generationRequests: stream.requests,
+        projectId: project.id,
+        revision: project.revision,
+        layout,
+        pageErrors,
+        expectedPageErrors,
+        blockedExternalRequests,
+      };
+    }
     result = await runFreshFlagshipGameplay(page, project, story, {
       inputMode: "keyboard",
     });
@@ -434,6 +898,8 @@ async function runRenderer(browser, renderer) {
     assert.equal(result.reset.projectId, project.id);
     assert.equal(stream.requests, 1);
     assert.deepEqual(blockedExternalRequests, []);
+    if (renderer === "software")
+      layout = await verifySoftwareWorkspaceLayout(page, evidenceDir);
     // The software fixture deliberately blocks WebGL so the app exercises its
     // Canvas2D fallback. Three.js reports that expected initialization failure
     // as a page error; retain it in the report while failing on every other
@@ -441,7 +907,8 @@ async function runRenderer(browser, renderer) {
     const expectedPageErrors =
       renderer === "software"
         ? pageErrors.filter(
-            (message) => message === "THREE.WebGLRenderer: Error creating WebGL context.",
+            (message) =>
+              message === "THREE.WebGLRenderer: Error creating WebGL context.",
           )
         : [];
     const unexpectedPageErrors = pageErrors.filter(
@@ -460,6 +927,7 @@ async function runRenderer(browser, renderer) {
       revision: project.revision,
       generationMovement,
       gameplay: result,
+      layout,
       pageErrors,
       expectedPageErrors,
       blockedExternalRequests,
@@ -472,12 +940,17 @@ async function runRenderer(browser, renderer) {
       generationMovement:
         generationMovement ??
         (error && typeof error === "object"
-          ? error.generationMovementEvidence ?? null
+          ? (error.generationMovementEvidence ?? null)
           : null),
       traversal:
         result ??
         (error && typeof error === "object"
-          ? error.freshGameplayEvidence ?? null
+          ? (error.freshGameplayEvidence ?? null)
+          : null),
+      layout:
+        layout ??
+        (error && typeof error === "object"
+          ? (error.softwareLayoutEvidence ?? null)
           : null),
     };
     const fixtureDiagnostics = await page

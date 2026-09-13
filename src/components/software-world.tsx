@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
 import { entityGeometry } from "@/lib/geometry";
@@ -33,6 +33,7 @@ import {
   type FormationTextureSample,
 } from "@/lib/formation-particles";
 import type { Entity, Project } from "@/lib/protocol";
+import { parcelTransitionController } from "@/lib/parcel-transition";
 
 export type SoftwareGeometryEntry = {
   geometry: THREE.BufferGeometry;
@@ -55,6 +56,12 @@ const softwareRendererError =
 const softwareFallbackWarning =
   "WebGL2 could not initialize, so Orbsie is using its software canvas renderer.";
 const playerStart: PlayerState = { position: [0, 0.5, 5], velocityY: 0 };
+let motionPreference: MediaQueryList | undefined;
+const reduced = () => {
+  if (typeof window === "undefined") return false;
+  motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
+  return motionPreference.matches;
+};
 
 function copyPlayerState(value: PlayerState): PlayerState {
   return {
@@ -587,6 +594,7 @@ export default function SoftwareWorld({
     [],
   );
   const project = useOrb((state) => state.project);
+  const phase = useOrb((state) => state.phase);
   const selected = useOrb((state) => state.selected);
   const score = useOrb((state) => state.score);
   const reset = useOrb((state) => state.reset);
@@ -599,6 +607,14 @@ export default function SoftwareWorld({
   const generationRef = useRef(-1);
   const previousReset = useRef(reset);
   const previousProjectId = useRef(project.id);
+  const transitionInitialized = useRef(false);
+  const initializedScene = useRef(false);
+  const previousTransitionProjectId = useRef(project.id);
+  const previousPhase = useRef(phase);
+  const previousViewportMobile = useRef<boolean | undefined>(undefined);
+  const cameraStart = useMemo(() => new THREE.Vector3(), []);
+  const cameraEnd = useMemo(() => new THREE.Vector3(), []);
+  const cameraLook = useMemo(() => new THREE.Vector3(), []);
   const onReadyRef = useRef(onReady);
   const onRendererReadyRef = useRef(onRendererReady);
   const onErrorRef = useRef(onError);
@@ -620,6 +636,33 @@ export default function SoftwareWorld({
 
   /* __ORBSIE_SOFTWARE_WORLD_FIXTURE_PROBE__ */
 
+  useLayoutEffect(() => {
+    const firstMount = !transitionInitialized.current;
+    const projectChanged =
+      previousTransitionProjectId.current !== project.id;
+    const directWorkspace =
+      phase === "editing" &&
+      previousPhase.current === "landing" &&
+      !projectChanged;
+    if (firstMount)
+      parcelTransitionController.reset(
+        phase === "landing" || phase === "descending" ? 0 : 1,
+      );
+    else if (phase === "landing")
+      projectChanged
+        ? parcelTransitionController.reset(0)
+        : parcelTransitionController.setTarget(0);
+    else if (projectChanged || directWorkspace)
+      parcelTransitionController.reset(phase === "descending" ? 0 : 1);
+    else parcelTransitionController.setTarget(1);
+    transitionInitialized.current = true;
+    initializedScene.current = false;
+    previousTransitionProjectId.current = project.id;
+    previousPhase.current = phase;
+  }, [phase, project.id]);
+
+  useEffect(() => parcelTransitionController.attachRenderer(), []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -639,8 +682,8 @@ export default function SoftwareWorld({
       onRendererReadyRef.current?.("software");
     }
     const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
-    camera.position.set(0, 1.8, 10.4);
-    camera.lookAt(0, 1, 0);
+    camera.position.set(0, 1.8, 10.2);
+    camera.lookAt(0, 0.35, 0);
     camera.updateMatrixWorld();
     let frame = 0;
     let last = performance.now();
@@ -658,6 +701,12 @@ export default function SoftwareWorld({
         last = now;
         const current = useOrb.getState();
         const projectNow = current.project;
+        const currentPhase = current.phase;
+        const mobile = (canvas.clientWidth || 1) < 700;
+        if (previousViewportMobile.current !== mobile) {
+          previousViewportMobile.current = mobile;
+          initializedScene.current = false;
+        }
         if (
           previousReset.current !== current.reset ||
           previousProjectId.current !== projectNow.id
@@ -804,6 +853,35 @@ export default function SoftwareWorld({
             });
           }
         } else inputRef.current.clear();
+        const target = currentPhase === "landing" ? 0 : 1;
+        parcelTransitionController.setTarget(target);
+        const transition = parcelTransitionController.step(delta, reduced());
+        const progress = transition.progress;
+        if (
+          currentPhase === "landing" ||
+          progress < 0.995 ||
+          !initializedScene.current
+        ) {
+          cameraStart.set(0, 1.8, mobile ? 14.5 : 10.2);
+          cameraEnd.set(13, mobile ? 17 : 15, mobile ? 22 : 20);
+          camera.position.copy(cameraStart.lerp(cameraEnd, progress));
+          cameraLook.set(
+            mobile ? 0 : -2.7,
+            THREE.MathUtils.lerp(0.35, 0, progress),
+            0,
+          );
+          cameraLook.x *= progress;
+          camera.lookAt(cameraLook);
+          initializedScene.current = progress > 0.99;
+        }
+        if (target === 1 && transition.settled) {
+          const latest = useOrb.getState();
+          if (
+            latest.project.id === projectNow.id &&
+            latest.phase === "descending"
+          )
+            latest.set({ phase: "editing" });
+        }
         drawScene(
           context,
           canvas,

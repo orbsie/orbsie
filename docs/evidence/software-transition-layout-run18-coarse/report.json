@@ -1,0 +1,1386 @@
+{
+  "passed": true,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "software": {
+      "status": "passed",
+      "renderer": "software",
+      "layoutOnly": true,
+      "generationRequests": 1,
+      "projectId": "9b62fc8e-9924-4bed-bf0d-fdbb197e0663",
+      "revision": 20,
+      "layout": {
+        "desktopPlaying": {
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 1280,
+            "bottom": 900,
+            "width": 1280,
+            "height": 900
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 1280,
+            "bottom": 900,
+            "width": 1280,
+            "height": 900
+          },
+          "composer": {
+            "left": 20,
+            "top": 88,
+            "right": 362,
+            "bottom": 878,
+            "width": 342,
+            "height": 790
+          },
+          "sheetHandle": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "width": 0,
+            "height": 0
+          },
+          "hud": {
+            "left": 1109,
+            "top": 158,
+            "right": 1253,
+            "bottom": 218,
+            "width": 144,
+            "height": 60
+          },
+          "advisory": {
+            "left": 460,
+            "top": 76,
+            "right": 820,
+            "bottom": 118,
+            "width": 360,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 1016,
+            "top": 91,
+            "right": 1253,
+            "bottom": 137,
+            "width": 237,
+            "height": 46
+          },
+          "heading": {
+            "left": 390,
+            "top": 122,
+            "right": 687,
+            "bottom": 145,
+            "width": 297,
+            "height": 23
+          },
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "phoneSheetOpenSettle": {
+          "box": {
+            "x": 10,
+            "y": 471.09375,
+            "width": 370,
+            "height": 362.90625
+          },
+          "waitedMs": 693
+        },
+        "phoneSheetOpenDiagnostics": [
+          {
+            "label": "before-textarea-fill",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "button",
+              "id": null,
+              "className": "sheet-handle"
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "immediately-after-textarea-fill",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "after-two-animation-frames",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "after-300ms",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          }
+        ],
+        "phoneSheetOpen": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 10,
+            "top": 471.09375,
+            "right": 380,
+            "bottom": 834,
+            "width": 370,
+            "height": 362.90625
+          },
+          "sheetHandle": {
+            "left": 11,
+            "top": 472.09375,
+            "right": 379,
+            "bottom": 492.09375,
+            "width": 368,
+            "height": 20
+          },
+          "hud": {
+            "left": 250,
+            "top": 136,
+            "right": 373,
+            "bottom": 186,
+            "width": 123,
+            "height": 50
+          },
+          "advisory": {
+            "left": 16,
+            "top": 220,
+            "right": 374,
+            "bottom": 262,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 230,
+            "top": 81,
+            "right": 373,
+            "bottom": 123,
+            "width": 143,
+            "height": 42
+          },
+          "heading": {
+            "left": 20,
+            "top": 107,
+            "right": 230,
+            "bottom": 126,
+            "width": 210,
+            "height": 19
+          },
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "phoneSheetClosedSettle": {
+          "box": {
+            "x": 10,
+            "y": 792,
+            "width": 370,
+            "height": 362.90625
+          },
+          "waitedMs": 348
+        },
+        "phoneSheetClosed": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 10,
+            "top": 792,
+            "right": 380,
+            "bottom": 1154.90625,
+            "width": 370,
+            "height": 362.90625
+          },
+          "sheetHandle": {
+            "left": 11,
+            "top": 793,
+            "right": 379,
+            "bottom": 813,
+            "width": 368,
+            "height": 20
+          },
+          "hud": {
+            "left": 250,
+            "top": 136,
+            "right": 373,
+            "bottom": 186,
+            "width": 123,
+            "height": 50
+          },
+          "advisory": {
+            "left": 16,
+            "top": 220,
+            "right": 374,
+            "bottom": 262,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 230,
+            "top": 81,
+            "right": 373,
+            "bottom": 123,
+            "width": 143,
+            "height": 42
+          },
+          "heading": {
+            "left": 20,
+            "top": 107,
+            "right": 230,
+            "bottom": 126,
+            "width": 210,
+            "height": 19
+          },
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "phoneLandscape": {
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 844,
+            "bottom": 390,
+            "width": 844,
+            "height": 390
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 844,
+            "bottom": 390,
+            "width": 844,
+            "height": 390
+          },
+          "composer": {
+            "left": 220,
+            "top": 338,
+            "right": 744,
+            "bottom": 518,
+            "width": 524,
+            "height": 180
+          },
+          "sheetHandle": {
+            "left": 221,
+            "top": 339,
+            "right": 743,
+            "bottom": 359,
+            "width": 522,
+            "height": 20
+          },
+          "hud": {
+            "left": 703,
+            "top": 100,
+            "right": 828,
+            "bottom": 152,
+            "width": 125,
+            "height": 52
+          },
+          "advisory": {
+            "left": 242,
+            "top": 160,
+            "right": 602,
+            "bottom": 202,
+            "width": 360,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 638,
+            "top": 52,
+            "right": 828,
+            "bottom": 90,
+            "width": 190,
+            "height": 38
+          },
+          "heading": {
+            "left": 16,
+            "top": 78,
+            "right": 594,
+            "bottom": 96,
+            "width": 578,
+            "height": 18
+          },
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false,
+          "editHitTest": true
+        },
+        "landing": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 12.282821655273438,
+            "top": 627.0660400390625,
+            "right": 377.70469665527344,
+            "bottom": 754.0660400390625,
+            "width": 365.421875,
+            "height": 127
+          },
+          "sheetHandle": null,
+          "hud": null,
+          "advisory": {
+            "left": 16,
+            "top": 76,
+            "right": 374,
+            "bottom": 118,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": null,
+          "heading": null,
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "reopened": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 10,
+            "top": 471.09375,
+            "right": 380,
+            "bottom": 834,
+            "width": 370,
+            "height": 362.90625
+          },
+          "sheetHandle": {
+            "left": 11,
+            "top": 472.09375,
+            "right": 379,
+            "bottom": 492.09375,
+            "width": 368,
+            "height": 20
+          },
+          "hud": null,
+          "advisory": {
+            "left": 16,
+            "top": 220,
+            "right": 374,
+            "bottom": 262,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 230,
+            "top": 81,
+            "right": 373,
+            "bottom": 123,
+            "width": 143,
+            "height": 42
+          },
+          "heading": {
+            "left": 20,
+            "top": 107,
+            "right": 230,
+            "bottom": 126,
+            "width": 210,
+            "height": 19
+          },
+          "interaction": {
+            "pointerCoarse": true,
+            "anyPointerCoarse": true,
+            "maxTouchPoints": 1
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        }
+      },
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "expectedPageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "blockedExternalRequests": []
+    }
+  }
+}
