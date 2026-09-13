@@ -1,0 +1,19 @@
+{
+  "codexVersion": "0.153.4",
+  "command": "npm exec --yes --package @openai/codex@0.153.4 -- codex app-server generate-json-schema --out OUTPUT --experimental",
+  "schemaFile": "v2/TurnCompletedNotification.json",
+  "sha256": "78af2a37391e8e669a4020cb58593e4d3e378756ced79d5fec72374fa69fb94b",
+  "properties": {
+    "threadId": {
+      "type": "string"
+    },
+    "turn": {
+      "$ref": "#/definitions/Turn"
+    }
+  },
+  "required": [
+    "threadId",
+    "turn"
+  ],
+  "finding": "Completion turn ID is nested in turn.id, not a top-level turnId."
+}

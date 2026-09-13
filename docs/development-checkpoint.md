@@ -1,235 +1,91 @@
 # Development checkpoint
 
-Updated 2026-09-12 after reviewed work based on HEAD `98d1c60`. The full `prompt.md` goal is incomplete.
-Previous detailed handoff is preserved in
-[checkpoint archive](checkpoint-history/2026-09-12-before-asset-import.md).
-Use raw evidence and current source to verify claims; older exports remain immutable.
+Updated 2026-09-13. Full goal: implement all `prompt.md`, with real E2E workflows
+for OpenRouter, Vercel AI Gateway and ChatGPT. **Incomplete.** Requirements remain
+in `prompt.md`; do not substitute focused milestones for full acceptance.
+Previous detailed evidence/history: [archive](checkpoint-history/2026-09-13-after-software-fallback.md).
 
-## Execution constraints
+## Execution policy
 
-Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
-concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 34% weekly used, 66% remaining. Stop workers
-and tests below 20% remaining. Goal token totals are not subscription quota.
-Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
-retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
-required); Gateway up to5/test. OpenRouter3-call recovery approval remains pending.
-End users retain provider/model choice. GitHub actions use computer use. No secrets
-in reports. Browser-only product modeling; no user Blender install or connection.
+Astra reviews architecture/integration; one Luna xhigh/default worker at a time,
+no nested agents, concise context, Fast off. Targeted checks; full/live runs only
+at meaningful milestones. Latest actual quota read: 34% weekly used, 66% remaining;
+stop workers/tests below20% remaining. Goal token totals are not quota.
+Live tests use Luna only; users retain unrestricted supported model choice.
+Owner approved needed ChatGPT calls; existing harness two-call milestone has
+180s/512KiB per call, no enforceable token cap. OpenRouter4096 output tokens/call,
+2-call milestones; Gateway up to5/test. No automatic blind retries.
+Use owner Chrome via computer use; GitHub via computer use. No copied browser
+cookies, local Codex credentials, or user Blender installation. Preserve licenses.
 
-## Current task
+## Current task: diagnose first real hosted ChatGPT generation failure
 
-LATEST USER CORRECTION: WebGL failure must select playable Canvas2D fallback.
-Reviewed implementation committed `1b8698d`; compact guidance/styles `52ee047`;
-standalone artifacts built from isolated source and committed `0ff35ca`. Deployed and owner-browser verified (see production evidence below). Main retains paused, unreviewed texture WIP, especially World Formation.
-Do not deploy main worktree directly. Release candidate lives at
-`/tmp/orbsie-graphics-release-7006a72`, server3071, with isolated fallback sources,
-node_modules and rebuilt standalone bundle. Its .vercel/project.json is linked.
+Active worker `/root/chatgpt_failure_diagnostics` owns bounded safe diagnostics in
+chatgpt-runtime/generation/scene-stream plus narrowly required schema/tests.
+Also fixes exact protocol mismatch root proved against hosted Codex0.153.4:
+`turn/completed` has `{threadId, turn:{id,...}}`, not top-level `turnId`.
+Current generator incorrectly rejects official completion events. Preserve
+cross-thread/turn validation. Diagnostics must only expose closed stage/reason
+codes, bounded numeric RPC code and already-sanitized validation metadata, never
+raw provider text, credentials, IDs, paths or generated content. No live calls,
+deploy or nested agents by worker. Root reviews every finished diff.
 
-Both Luna workers are stopped. Final acceptance passed:
-`game-actions-software-acceptance-final/report.json` covers editor and exported
-player variable gates, click/color, hide/non-clickability, position/path movement,
-score and reset. Exactly two induced WebGL constructor errors; zero unexpected
-errors/external standalone requests. Dedicated verifier is
-`scripts/verify-software-game-actions.mjs`; original normal-renderer game-actions
-verifier is preserved. Fallback/gating/retry/race checks passed in
-`webgl-failure-software-acceptance-20260912-2/report.json`; standalone movement
-smoke check in `player-readiness-software-acceptance-20260912-1/unavailable.json`.
-Root shared gameplay/input/readiness unit milestone: 5 files, 43 tests passed.
-Typecheck passed on isolated release. No live inference used. Full physical-mobile,
-large-scene performance, and flagship physics acceptance remain broader-goal work;
-do not represent these focused checks as full prompt.md completion.
+Real owner Chrome authorization/catalog succeeded again, Luna low applied.
+One live create requested mushroom platforms, moving middle platform, crystals,
+portal win/reset and blue-strawberry tree. POST /api/chatgpt/generate returned200
+at2026-09-13T03:46:24Z, but UI generic generation failure; objects panel empty.
+No edit or retry. Actual failure cause remains unproven: current code erases
+RPC/callback/terminal causes. Evidence `chatgpt-owner-live-20260913/create-failure.json`
+and `completion-schema.json`. Do not attribute that run solely to the protocol
+bug until stronger evidence. Next: review/test fix, isolated deploy, fresh consent
+if required by host expiry/artifact change, then deliberate live create/edit.
 
-Production source `3b55d33` deployed successfully to
-`https://orbsie-bwx2kdmse-grappeggias-projects.vercel.app`, aliased orbsie.com.
-Vercel build/typecheck passed. Owner Chrome production refresh confirms Canvas2D,
-compact advisory, no fatal dialog and Create enabled with nonempty prompt (cleared
-without submitting). Evidence `software-owner-local/production.json`. Reload showed
-3 free prompts rather than the historical ChatGPT selection; no new inference or
-connection claim. Local test tabs closed; owner production tab left ready.
-Main texture WIP remains paused/unreviewed and was excluded from this deployment.
+## Production and workspace
 
-ChatGPT real owner browser connection succeeded2026-09-13 after fresh device authorization. Orbsie Signed in message, real catalog includes Luna, selected gpt-5.6-luna/low and applied connection. Evidence chatgpt-device-owner/connected.json. No inference yet: owner Chrome WebGL unavailable blocks Create. Do not bypass rendering gate or copy browser cookies. Prior rejection preserved, cause unproven; device-code security setting was already enabled.
+Production source3b55d33 deployed to
+https://orbsie-bwx2kdmse-grappeggias-projects.vercel.app, aliased https://orbsie.com.
+Build/typecheck passed. Graphics fallback source1b8698d, advice52ee047,
+standalone bundle0ff35ca. Owner Chrome now renders Canvas2D and enables Create
+with prompt; no fatal dialog. Evidence `software-owner-local/production.json`.
+43 shared gameplay/input/readiness unit tests passed. Editor+standalone variable,
+click/color, visibility, position/path, score/reset acceptance passed:
+`game-actions-software-acceptance-final/report.json`. Zero unexpected errors or
+external standalone requests. Fallback/retry/race suite also passed. These are
+focused checks, not full mobile/flagship/performance certification.
 
-WebGL correction committed0fe5d2e: separate Canvas readiness, submission state/ref gates, persistent accessible error and interrupted draft restoration. Typecheck and focused browser verifier passed; strengthened race evidence webgl-failure-1789265408500/report.json. Root saw actual owner Chrome local error feedback. Deployed source6300025 to orbsie-r0z3rja1o-grappeggias-projects.vercel.app, aliased orbsie.com. Build/typecheck passed. Actual owner Chrome production shows persistent graphics error and disabled Create; evidence webgl-owner-local/production.json. Gameplay remains blocked by that browser WebGL failure. Decoder3d6a839 and next texture integration contract70fa2de remain unchanged.
+Main retains paused unreviewed texture WIP: World Formation, asset hook/texture,
+formation particles/core and catalog comparison scripts/tests. Do not deploy main
+worktree directly. Clean release worktree `/tmp/orbsie-graphics-release-7006a72`
+is at3b55d33, with node_modules and linked .vercel/project.json. Servers3071/3072
+were stopped; local3070 historically exists, verify before use. Deploy reviewed
+commits through isolated worktree. Vercel CLI uses existing local auth; no keys in
+chat/evidence. Root commits frequently and preserves failed unique-run evidence.
 
-Decoder/transfer/cache stage reviewed and accepted: explicit material-index validation corrected; 17 focused tests and typecheck passed. Final actual-worker evidence: mushroom-basic-textured-worker-final/report.json (666 UV vertices, expected samplers, pixel-inclusive accounting). Renderer/export/catalog integration remains incomplete. No deployment or live calls.
+## Browser handoff
 
-### Immediate acceptance and follow-up
+CUA extension Chrome browser1, Person1, instance9a170aec-060d-42f6-9e37-e4a360ee76a6.
+Production tab1618752702; ChatGPT signed-in tab1618750689. Claim/mark handoff in
+current turn as needed. Device auth tabs auto-close on success; never reuse codes.
+chrome://gpu diagnostics and direct /api/chatgpt/status tab navigation were blocked;
+do not bypass via CDP/backend/cookie export. Normal Connections UI works.
+Host initial lifetime is10min, nonpersistent, no renewal implemented. Vercel SDK
+supports extendTimeout, verified locally and official docs; see
+`docs/chatgpt-session-lifetime-followup.md`. No claim current host remains alive.
 
-Current priority is the playable Canvas2D fallback in editor and standalone player.
-The reviewed implementation is committed but not deployed. Initial review issues
-(mesh face dropping, ordering, lifetime, input/reset/terminal semantics) were
-addressed; remaining behavioral acceptance is assigned to the current worker. Optional acceleration advice must not gate
-creation, score display, or readiness when software rendering succeeds.
+## Remaining major acceptance gaps
 
-Owner Chrome is extension browser 1, profile Person 1. Use computer use for owner
-acceptance. Its WebGL initialization fails; chrome://gpu diagnostics were blocked
-by browser policy, so do not bypass that restriction. ChatGPT device authorization
-succeeded (see evidence above); no live inference has run. The hosted runtime has
-a source-confirmed ten-minute lifetime without an inspected renewal path; refresh
-connection status through normal UI before testing. See
-`docs/chatgpt-session-lifetime-followup.md`. Never copy browser cookies/auth caches.
+- ChatGPT real creation/edit/recovery/export/publish; active-session continuity.
+- OpenRouter real OAuth consent; API-key evidence is not OAuth acceptance.
+- Same persistent flagship game per provider: incremental creation while playing,
+  three moving bouncy mushrooms, collection/portal win/reset, giant pink targeted
+  edit, slower middle+two crystals, original live undo, refresh and publish.
+- Physical midrange Android and iOS Safari, touch/orientation/background/long-run
+  performance. Prior emulator or narrow desktop tests do not certify mobile.
+- Finish texture/catalog/procedural mix integration, visual quality and offline
+  export/license acceptance. Decoder3d6a839 accepted; texture WIP not accepted.
+- Full prompt.md requirement audit, provider recovery/free exhaustion, GitHub push.
 
-Owner approved the calls needed for live acceptance. Hosted harness still requires
-`ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib`, with no output-token-cap claim.
-Its two-call milestones may run once session and playable-renderer prerequisites
-are met. End-user model choice remains unrestricted; development live calls use
-Luna. Texture integration is paused, not accepted; decoder stage remains accepted.
-
-PRIORITY owner correction: no separate Orbsie email/password gate for provider
-connection. Implemented BetterAuth anonymous-session bootstrap with existing
-session reuse, cookie forwarding, origin/rate-limit preservation, sanitized user
-response and no auto-deletion of guest owners. Additive user.isAnonymous boolean
-DEFAULT false applied to .env.local DB. Real bootstrap/reuse/isolation/HTTPOnly/
-403-origin checks passed; temporary test users removed. No provider calls.
-Frontend ChatGPT button now opens settings and starts device authorization without
-email/password. Bounded singleflight bootstrap, stale account guards and StrictMode
-unmount cleanup included. Root reviewed diff;38 focused tests+tsc passed. Browser
-check with real bootstrap/mocked ChatGPT passed start1/cancel1/email0/draft preserved.
-Signedout OpenRouter OAuth destination(mocked) and Gateway entry also passed with
-zero email requests. Evidence docs/evidence/provider-session-bootstrap. Existing
-OpenAI device-code/link step remains; automatic external redirect not implemented.
-Deployed28a1219 to orbsie.com via orbsie-onchbepae-grappeggias-projects.vercel.app.
-Production build/tsc passed. Initial live bootstrap503 exposed different production
-DB missing isAnonymous; additive migration then applied to production. OwnerChrome
-bootstrap200, real ChatGPT/start200 and status200; actual device code displayed
-without Orbsie password. Authorization link clicked. Owner authorization/inference
-still pending; don't claim Connected. Production evidence provider-session-bootstrap/production.json. Local
-Next dev3070 session75807. Do not tell owner fix is live before deploy verification.
-
-Conforming bake review completed 2026-09-13: root reviewed converter/topology diff
-and both front/rear comparisons. Pink speckles are absent in these views; measured
-25620 vertices/8540 triangles, zero T-junctions/exact-zero/small-area triangles,
-finite normals and no inverted winding. GLB923604 bytes; output SHA and exact
-CC0 license verified. Repair stays opt-in and historical evidence is unchanged.
-Default-color white spots retain visibly jagged fringes: NOT admitted to catalog.
-Next asset quality work must address color fidelity, not repeat topology repair.
-Worker /root/mushroom_color_fidelity completed. No source change retained.
-22000 refinement-budget experiment GLB hashb1e47e23 recovered and verified;
-root reviewed recovered front image: white spot outlines worse, rejected.
-Experimental topology counts lack a retained report and are explicitly
-worker-reported/unverified. Baseline fidelity-* artifacts duplicate conforming
-baseline; only experiment-22000 artifacts demonstrate the attempted variant.
-Do not rerun vertex-budget tuning. Next architecture decision: bounded embedded
-texture support across decoder/worker transfer/material/export, or a different
-permissive asset with acceptable vertex-color appearance. Textured prototype completed and root-reviewed: filter-corrected GLB271396bytes,
-666vertices/222triangles, embedded512PNG, exactCC0, base0/height1. Hash3bb6e9fc
-verified. Front/rear show softly filtered spots without old fringes; uniform
-pink visible. Initial nearest-filter export and blank-pink fixture preserved;
-corrected evidence mushroom-basic-textured-filter-corrected{,-preview}.
-Typecheck and20hosted/recovery tests passed after correcting texture image types
-and earlier helper optional-parameter typings. No catalog/runtime integration yet.
-Next implement decoder/transfer/cache contract from catalog-texture-integration-plan.md,
-then editor/export integration before asset admission.
-Active worker /root/mushroom_color_fidelity owns decoder/worker/queue/cache and
-asset tests for optional typed RGBA atlas descriptor. It may add runtime helper
-and corresponding build-player source allowlist entry. No World/hook/catalog
-changes or player bundle regeneration in this stage. Root must review real-worker
-PNG decode, resource rejection, transfer/cache budget accounting and typecheck.
-Renderer integration remains separate; do not enable textured asset IDs yet.
-
-## Asset handoff (paused)
-
-The bounded offline Three.js FBX/TGA import probe passed and root reviewed source
-and report. scripts/probe-mushroom-import.mjs imports one762-vertex/254-triangle
-mesh with762 UV vertices, finite bounds, and exact texture-map identity. TGA is
-4096-square, decoded to RGBA with flipY=true, repeat wrapping and sRGB. Input
-hashes match inspection. Evidence: mushroom-candidate-import/report.json. No
-model/network/browser calls or catalog changes. No worker currently active.
-Texture-baked prototype is now generated by scripts/convert-mushroom-candidate.mjs.
-Root reviewed and corrected texture texel-center/wrapping sampling and transformed
-normals. Synthetic texel-center/repeat-seam checks and corrected conversion passed.
-Output: docs/evidence/mushroom-candidate-conversion/prototype.glb,440200 bytes,
-12192 vertices/4064 triangles, one-meter height/base0, no texture/image/URI. Exact
-license copied and source/output hashes recorded in report.json. GLTFLoader and
-transformed bounds checks passed. Appearance remains unverified; no catalog change.
-Local original/baked/pink front/rear previews now rendered; root reviewed images
-and fixture. Evidence mushroom-candidate-preview. First incorrect multiplicative
-pink comparator preserved under first-run; corrected comparator replaces COLOR_0
-and clones geometry, with assertions. No page errors/external requests. Silhouette
-matches source; gills/spots softened. Flat mature cap is not approved as the default
-giant mushroom. No catalog admission. Basic variant has now been extracted, converted and rendered using those tools.
-Evidence mushroom-basic-{inspection,conversion,preview}; GLB384900 bytes,
-10656 vertices/3552 triangles, base0/height1m. Root sees rounded cap and distinct
-stem in pink, but jagged baked white spots are a visible quality defect. Not
-admitted. Opt-in adaptive bake now implemented and rendered in mushroom-basic-adaptive-
-{conversion,preview}:29997 vertices/9999 triangles,~1.08MB, sampled color error
-0.467→0.121; vertex budget saturated, threshold0.04 not achieved. Root reviewed
-images: spot outlines improved but dark cap speckles persist even under uniform
-pink. NOT approved. Next diagnose this concrete rendering defect; no blanket
-quality claim or repeated provider calls. Topology diagnosis (mushroom-topology-diagnosis) now compares source/uniform/
-adaptive geometry after unit-height normalization. Root corrected an initial
-mislabeling of small triangles as zero-area; first-run.json retained. Corrected
-adaptive has0 exact-zero triangles,32 positive areas<=1e-6m2,2689 T-junctions;
-uniform has0/0/0. Both finite normals/no inverted winding. This establishes a
-nonconforming topology difference, not rendered causality. Next bounded correction
-should ensure neighboring refined triangles share split edge vertices, then run
-numeric topology and the same pink visual comparison before any admission.
-Preview fixture TypeScript errors were corrected; repository tsc now passes.
-Converter/verifier accept environment-selected inputs/output dirs; historical
-Big evidence is unchanged. Prior full conversion attempt was stopped
-at its time bound without artifacts; do not repeat a broad investigation.
-
-Candidate source: Asset Quest Low Poly Mushroom Kit, bundled CC0 license verified.
-Inspection: docs/evidence/mushroom-candidate-inspection/{README.md,report.json,License.txt}.
-Archive and selected FBX/TGA: /tmp/orbsie-mushroom-candidate.nIL3N8/.
-Selected mesh has254 triangles, UVs and external4096-square diffuse TGA. Actual
-silhouette/texture fidelity remain unrendered. Current catalog loader drops UVs
-and preserves material/COLOR_0 only; world asset tint replaces all vertex colors.
-Before admission: self-contained bounded GLB derivative, exact provenance/license,
-base/scale/normal validation, source-versus-derivative visual review, new catalog
-ID, actual decoder/export checks. Existing Kenney mushroom bytes/ID stay intact.
-
-## Recent completed work
-
-- `8046783`: player build includes every manifest source license, rejecting unsafe
-  paths. Root reviewed diff. Syntax/build/exact license inclusion passed; generated
-  player artifacts unchanged for current single-source catalog.
-- `7f06602`: candidate inspection/license/hash evidence committed; no asset shipped.
-- `3658d7e`: OpenRouter support-contact run, two Luna4096 calls, create/selected
-  mushroom edit/reload/export/standalone passed. Evidence provider-e2e/openrouter-support-contact.
-  Source bounds plus scale12/Y.6 give base0 against support0. Root reviewed saved
-  snapshots and screenshot. Giant size/recognizable mushroom quality still open.
-- `216386c`: shared provider catalog guidance recomputes support contact after
-  geometry/scale changes; production deployed. Prior clipping evidence retained.
-- `2db0ada`: live canceled replacement publication preserves old revision/URL,
-  exact snapshot and fresh signed-out browser load. Evidence publication-terminal-corrected.
-  Two publish POSTs, one guarded cancel, no model calls. CANCELED verified; ERROR
-  only offline. This does not prove full gameplay/mobile acceptance.
-- `4a60a13` / `6639c7d`: bounded input latency telemetry integrated with World.
-  Two-sample synthetic browser check passes; not representative mobile performance.
-
-## Environment and owner gates
-
-Production: https://orbsie.com, app source216386c.
-Last local build2e04040 on127.0.0.1:3068, server handle1205; verify handle before use.
-Latest Chrome page1 snapshot still shows Orbsie sign-in dialog, ChatGPT queued
-for after sign-in. Owner must authenticate/consent; don't repeatedly ask unchanged
-question or disturb draft. Real ChatGPT consent/catalog/inference remains unverified.
-Vercel credential file: /home/marcos/.local/share/com.vercel.cli/auth.json (0600).
-Main project prj_oRks1By5wPlChGkGgHG0Kz4xYn17; team_AuL6qTSH2R8yEQT4Q12a0jXR.
-Never target main project in controlled deployment-failure tests.
-OpenRouter local key/config: ignored .env.openrouter.local. Never print values.
-No current local Gateway plaintext test key; don't infer from sensitive env pull.
-Physical Android/iOS devices unavailable; owner specified recent midrange Android.
-Emulator evidence is not physical-device acceptance.
-
-## Remaining full-scope acceptance
-
-1. Real browser ChatGPT subscription sign-in/consent/catalog/inference/create/edit,
-   recovery, export and publication. OpenRouter real OAuth consent also unverified.
-2. Complete flagship story per provider: play during creation, three moving bounce
-   platforms, collectibles/portal win/reset, giant pink target edit, slow middle
-   platform plus two crystals, original live undo, refresh and same-world publish.
-   Current Gateway saved revision37 route has partial platform evidence, not full
-   portal/reset/mobile proof. Older/different worlds cannot close that scope.
-3. Real midrange Android and iOS Safari editor/public workflows, keyboard/orientation,
-   background/recovery, long sessions; representative frame/input/memory timings.
-4. Remaining provider recovery/free-failure/exhaustion acceptance, catalog versus
-   procedural responsiveness benchmark, asset quality review and full scope audit.
-5. GitHub push through computer use remains unverified.
-
-Do not mark the goal complete from bounded fixture passes. See prompt.md,
-docs/scope-audit.md and archived checkpoint for detailed evidence locations and
-failed attempts. Preserve failures; do not weaken acceptance to fit them.
+Prior provider evidence remains in archive: OpenRouter3658d7e create/pink edit/
+reload/export/contact passed with visual-quality gap; Gateway input-game39b8c90
+and3-call cloud recovery passed; free blue-strawberry2→1→0 passed. Do not repeat
+those isolated checks as a substitute for missing full same-world milestones.

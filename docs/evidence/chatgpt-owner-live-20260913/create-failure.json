@@ -1,0 +1,19 @@
+{
+  "productionSource": "3b55d33",
+  "browser": "Owner Chrome Person 1 via computer use",
+  "freshAuthorizationSucceeded": true,
+  "realCatalogLoaded": true,
+  "model": "gpt-5.6-luna",
+  "effort": "low",
+  "liveCreateCalls": 1,
+  "liveEditCalls": 0,
+  "prompt": "Create a small playable mushroom garden with three bouncy platforms, moving middle mushroom, two crystals, a winning portal and a blue-strawberry tree.",
+  "httpRoute": "POST /api/chatgpt/generate",
+  "requestTime": "2026-09-13T03:46:24Z",
+  "httpStatus": 200,
+  "uiError": "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
+  "objectsPanelEmpty": true,
+  "passed": false,
+  "rootCauseOfThisRun": "Unproven; protocol mismatch independently confirmed and diagnostic loss prevents attribution.",
+  "automaticRetry": false
+}
