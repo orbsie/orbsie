@@ -9,7 +9,7 @@ Use raw evidence and current source to verify claims; older exports remain immut
 
 Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
 concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 29% weekly used, 71% remaining. Stop workers
+Latest actual Codex App Server read: 30% weekly used, 70% remaining. Stop workers
 and tests below 20% remaining. Goal token totals are not subscription quota.
 Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
 retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
@@ -19,7 +19,9 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
-NEXT PRIORITY after in-flight decoder: fix silent production WebGL failure.
+Decoder/transfer/cache stage reviewed and accepted: explicit material-index validation corrected; 17 focused tests and typecheck passed. Final actual-worker evidence: mushroom-basic-textured-worker-final/report.json (666 UV vertices, expected samplers, pixel-inclusive accounting). Renderer/export/catalog integration remains incomplete. No deployment or live calls.
+
+NEXT PRIORITY after decoder review: fix silent production WebGL failure.
 Owner Chrome on orbsie.com emits WebGL initialization errors, DOM has no message,
 Create becomes enabled with a nonempty prompt (cleared without submitting).
 World returns null when onError supplied; Orbsie callback1248 discards message.

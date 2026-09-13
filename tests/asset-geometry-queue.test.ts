@@ -108,10 +108,11 @@ describe("bounded catalog geometry worker queue", () => {
         },
       },
     } as MessageEvent);
-    const geometry = await job.promise;
-    expect(geometry.getAttribute("position").array).toBe(positions);
-    expect(geometry.boundingBox?.max.toArray()).toEqual([1, 1, 0]);
-    expect(geometry.userData.sourceTransformsPreserved).toBe(true);
-    geometry.dispose();
+    const prepared = await job.promise;
+    expect(prepared.baseColorTexture).toBeUndefined();
+    expect(prepared.geometry.getAttribute("position").array).toBe(positions);
+    expect(prepared.geometry.boundingBox?.max.toArray()).toEqual([1, 1, 0]);
+    expect(prepared.geometry.userData.sourceTransformsPreserved).toBe(true);
+    prepared.geometry.dispose();
   });
 });

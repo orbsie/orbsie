@@ -1,0 +1,76 @@
+{
+  "status": "decoded",
+  "scope": "isolated real browser worker PNG decode; test-only existing catalog ID with manifest verification disabled",
+  "input": {
+    "path": "docs/evidence/mushroom-basic-textured-filter-corrected/prototype.glb",
+    "sha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+    "bytes": 271396
+  },
+  "worker": {
+    "bytes": 898174,
+    "esbuildInputs": [],
+    "id": "kenney.nature.tree-default",
+    "verifyManifest": false
+  },
+  "result": {
+    "byteLength": 1127032,
+    "attributes": {
+      "position": {
+        "constructor": "Float32Array",
+        "bytes": 7992
+      },
+      "normal": {
+        "constructor": "Float32Array",
+        "bytes": 7992
+      },
+      "uv": {
+        "constructor": "Float32Array",
+        "bytes": 5328
+      },
+      "color": {
+        "constructor": "Float32Array",
+        "bytes": 7992
+      },
+      "formationPosition": {
+        "constructor": "Float32Array",
+        "bytes": 24576
+      },
+      "formationColor": {
+        "constructor": "Float32Array",
+        "bytes": 24576
+      }
+    },
+    "texture": {
+      "width": 512,
+      "height": 512,
+      "pixels": 1048576,
+      "constructor": "Uint8Array",
+      "firstPixel": [
+        112,
+        93,
+        87,
+        255
+      ],
+      "distinctSampleBytes": 242,
+      "colorSpace": "srgb",
+      "wrapS": 1000,
+      "wrapT": 1000,
+      "magFilter": 1006,
+      "minFilter": 1008,
+      "generateMipmaps": true
+    }
+  },
+  "checks": {
+    "actualWorker": true,
+    "pngDecodedToRgbaUint8Array": true,
+    "dimensions512": true,
+    "pixelBytesBounded": true,
+    "transferredGeometryAndPixels": true,
+    "uvTransferred": true,
+    "byteAccountingIncludesPixels": true,
+    "noPageErrors": true,
+    "noExternalRequests": true
+  },
+  "pageErrors": [],
+  "externalRequests": []
+}

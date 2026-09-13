@@ -11,6 +11,10 @@ import {
   prepareAssetGeometry,
   type AssetGeometryWorkerFactory,
 } from "./asset-geometry-queue";
+import type {
+  AssetBaseColorTextureTransfer,
+  PreparedAssetGeometry,
+} from "./asset-geometry-core";
 import { AssetGeometryError } from "./asset-geometry-error";
 
 export { AssetGeometryError } from "./asset-geometry-error";
@@ -53,6 +57,7 @@ export interface AssetGeometryLoadOptions {
 export interface LoadedAssetGeometry {
   readonly asset: CatalogAsset;
   readonly geometry: THREE.BufferGeometry;
+  readonly baseColorTexture?: AssetBaseColorTextureTransfer;
   readonly byteLength: number;
   readonly release: () => void;
   readonly dispose: () => void;
@@ -69,6 +74,7 @@ interface GeometryEntry {
   readonly id: AssetId;
   readonly asset: CatalogAsset;
   readonly geometry: THREE.BufferGeometry;
+  readonly baseColorTexture?: AssetBaseColorTextureTransfer;
   readonly byteLength: number;
   cached: boolean;
   refs: number;
@@ -105,6 +111,13 @@ function bytesOfGeometry(geometry: THREE.BufferGeometry): number {
     bytes += (attribute.array as ArrayBufferView).byteLength;
   if (geometry.index) bytes += geometry.index.array.byteLength;
   return bytes;
+}
+
+function bytesOfLoadedGeometry(
+  geometry: THREE.BufferGeometry,
+  baseColorTexture?: AssetBaseColorTextureTransfer,
+): number {
+  return bytesOfGeometry(geometry) + (baseColorTexture?.pixels.byteLength ?? 0);
 }
 
 async function defaultFetchBytes(
@@ -432,10 +445,10 @@ export class AssetGeometryLoader {
               `Asset ${asset.id} does not match its manifest SHA-256.`,
             );
         }
-        let geometry: THREE.BufferGeometry | undefined;
+        let prepared: PreparedAssetGeometry | undefined;
         let transferred = false;
         try {
-          geometry = await prepareAssetGeometry(
+          prepared = await prepareAssetGeometry(
             bytes,
             asset.id as AssetId,
             this.#maxVertices,
@@ -454,8 +467,12 @@ export class AssetGeometryLoader {
           const entry: GeometryEntry = {
             id: asset.id as AssetId,
             asset,
-            geometry,
-            byteLength: bytesOfGeometry(geometry),
+            geometry: prepared.geometry,
+            baseColorTexture: prepared.baseColorTexture,
+            byteLength: bytesOfLoadedGeometry(
+              prepared.geometry,
+              prepared.baseColorTexture,
+            ),
             cached: false,
             refs: 0,
             released: false,
@@ -469,7 +486,7 @@ export class AssetGeometryLoader {
           transferred = true;
           return entry;
         } finally {
-          if (!transferred) geometry?.dispose();
+          if (!transferred) prepared?.geometry.dispose();
         }
       } catch (error) {
         if (error instanceof AssetGeometryError) throw error;
@@ -509,6 +526,9 @@ export class AssetGeometryLoader {
     return {
       asset: entry.asset,
       geometry: entry.geometry,
+      ...(entry.baseColorTexture
+        ? { baseColorTexture: entry.baseColorTexture }
+        : {}),
       byteLength: entry.byteLength,
       release,
       dispose: release,

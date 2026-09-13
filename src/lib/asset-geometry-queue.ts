@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { AssetGeometryError } from "./asset-geometry-error";
 import type {
+  AssetBaseColorTextureTransfer,
   AssetGeometryArray,
+  PreparedAssetGeometry,
   AssetGeometryTransfer,
 } from "./asset-geometry-core";
 import type { AssetId } from "./asset-catalog";
@@ -42,7 +44,7 @@ type Job = {
   verifyManifest: boolean;
   signal: AbortSignal;
   options: PrepareAssetGeometryOptions;
-  resolve: (geometry: THREE.BufferGeometry) => void;
+  resolve: (prepared: PreparedAssetGeometry) => void;
   reject: (error: unknown) => void;
   cancel: () => void;
 };
@@ -94,10 +96,60 @@ function isTypedArray(value: unknown): value is AssetGeometryArray {
   );
 }
 
+function reconstructBaseColorTexture(
+  value: unknown,
+): AssetBaseColorTextureTransfer | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object")
+    throw new AssetGeometryError(
+      "parse-failed",
+      "Catalog geometry worker returned an invalid base-color texture descriptor.",
+    );
+  const texture = value as AssetBaseColorTextureTransfer;
+  if (
+    !(texture.pixels instanceof Uint8Array) ||
+    !Number.isSafeInteger(texture.width) ||
+    !Number.isSafeInteger(texture.height) ||
+    texture.width <= 0 ||
+    texture.height <= 0 ||
+    texture.width > 1024 ||
+    texture.height > 1024 ||
+    texture.width * texture.height > 1024 * 1024 ||
+    texture.pixels.byteLength !== texture.width * texture.height * 4 ||
+    !["", "srgb", "srgb-linear"].includes(texture.colorSpace) ||
+    ![
+      THREE.RepeatWrapping,
+      THREE.MirroredRepeatWrapping,
+      THREE.ClampToEdgeWrapping,
+    ].includes(texture.wrapS) ||
+    ![THREE.NearestFilter, THREE.LinearFilter].includes(texture.magFilter) ||
+    ![
+      THREE.NearestFilter,
+      THREE.LinearFilter,
+      THREE.NearestMipmapNearestFilter,
+      THREE.NearestMipmapLinearFilter,
+      THREE.LinearMipmapNearestFilter,
+      THREE.LinearMipmapLinearFilter,
+    ].includes(texture.minFilter) ||
+    ![
+      THREE.RepeatWrapping,
+      THREE.MirroredRepeatWrapping,
+      THREE.ClampToEdgeWrapping,
+    ].includes(texture.wrapT) ||
+    typeof texture.generateMipmaps !== "boolean" ||
+    texture.channel !== 0
+  )
+    throw new AssetGeometryError(
+      "parse-failed",
+      "Catalog geometry worker returned invalid base-color texture pixels.",
+    );
+  return texture;
+}
+
 /** Reconstruct the only Three.js object that crosses back onto the main thread. */
 export function reconstructAssetGeometry(
   decoded: AssetGeometryTransfer,
-): THREE.BufferGeometry {
+): PreparedAssetGeometry {
   if (!decoded || typeof decoded !== "object" || !decoded.attributes)
     throw new AssetGeometryError(
       "parse-failed",
@@ -142,7 +194,10 @@ export function reconstructAssetGeometry(
       decoded.sphere.radius,
     );
     geometry.userData = { ...(decoded.userData ?? {}) };
-    return geometry;
+    const baseColorTexture = reconstructBaseColorTexture(
+      decoded.baseColorTexture,
+    );
+    return { geometry, ...(baseColorTexture ? { baseColorTexture } : {}) };
   } catch (error) {
     geometry.dispose();
     throw error;
@@ -217,9 +272,9 @@ function pump(): void {
   active = job;
   let worker: AssetGeometryWorkerLike | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const finish = (error?: unknown, geometry?: THREE.BufferGeometry) => {
+  const finish = (error?: unknown, prepared?: PreparedAssetGeometry) => {
     if (active !== job) {
-      geometry?.dispose();
+      prepared?.geometry.dispose();
       return;
     }
     worker?.terminate();
@@ -228,7 +283,7 @@ function pump(): void {
     active = undefined;
     stopActive = undefined;
     if (error) job.reject(error);
-    else job.resolve(geometry!);
+    else job.resolve(prepared!);
     pump();
   };
   stopActive = () => finish(aborted());
@@ -255,12 +310,12 @@ function pump(): void {
         finish(failure);
         return;
       }
-      let geometry: THREE.BufferGeometry | undefined;
+      let prepared: PreparedAssetGeometry | undefined;
       try {
-        geometry = reconstructAssetGeometry(decodedFromWorker(data));
-        finish(undefined, geometry);
+        prepared = reconstructAssetGeometry(decodedFromWorker(data));
+        finish(undefined, prepared);
       } catch (error) {
-        geometry?.dispose();
+        prepared?.geometry.dispose();
         finish(error);
       }
     };
@@ -310,7 +365,7 @@ export async function prepareAssetGeometry(
   maxGeometryBytes: number,
   signal: AbortSignal,
   options: PrepareAssetGeometryOptions = {},
-): Promise<THREE.BufferGeometry> {
+): Promise<PreparedAssetGeometry> {
   if (signal.aborted) throw aborted();
   if (typeof window === "undefined") {
     const { decodeAssetGeometry } = await import("./asset-geometry-core");
