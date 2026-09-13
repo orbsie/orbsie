@@ -105,3 +105,19 @@ entity is displayed. Bind capture to the frame after relevant entity resources
 commit, with parcel transition complete; otherwise the model may inspect the
 planet or an old mesh. Keep readiness/capture in renderer refs, not per-frame
 store updates, and invalidate registrations on renderer/project unmount.
+
+### Vision capability plumbing for the transport step
+
+Root check 2026-09-13: public OpenRouter Luna metadata advertises
+architecture.input_modalities=[file,image,text]; Gateway advertises
+modalities.input=[text,image,pdf]. Current model-capabilities.ts parses output
+modalities only and has no image-input capability. Add an explicit catalog-backed
+image-input capability without changing ordinary text-generation availability.
+
+Pinned App Server0.153.4 generated ModelListResponse schema includes inputModalities
+(text/image); validateChatGPTModels currently strips it. Preserve bounded known
+modality metadata through server/client catalogs in the transport step. Missing
+metadata must remain unknown rather than silently claiming visual support. Keep
+end-user model choices unchanged. Tests need explicit image support, explicit
+text-only, absent/invalid metadata, and user-facing limited-review behavior.
+These catalog checks are not successful image-inference acceptance.
