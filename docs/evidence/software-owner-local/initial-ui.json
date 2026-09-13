@@ -1,0 +1,11 @@
+{
+  "scope": "Computer-use observation of isolated fallback candidate in owner Chrome; gameplay not yet accepted",
+  "url": "http://localhost:3071",
+  "browser": "Chrome Person 1 via extension",
+  "softwareRendererVisible": true,
+  "compatibilityAdviceCollapsed": true,
+  "createEnabledWithPrompt": true,
+  "testPromptCleared": true,
+  "generationCalls": 0,
+  "productionDeployed": false
+}
