@@ -11,11 +11,10 @@ export const CHATGPT_GENERATION_CONFIG = Object.freeze({
 });
 export const CHATGPT_READ_POLICY = Object.freeze({
   type: "readOnly",
-  access: {
-    type: "restricted",
-    readableRoots: [],
-    includePlatformDefaults: false,
-  },
+  // This is the stable App Server v2 ReadOnlySandboxPolicy shape. The pinned
+  // 0.153.4 decoder rejects the older access/readableRoots extension here.
+  // The isolated runtime supplies a private cwd/CODEX_HOME.
+  networkAccess: false,
 });
 const record = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);

@@ -1,0 +1,48 @@
+{
+  "scope": "Bounded App Server request decoding probe; no authentication or inference",
+  "checkedAt": "2026-09-13",
+  "codexVersion": "0.153.4",
+  "command": "npm exec --yes --package @openai/codex@0.153.4 -- codex app-server generate-json-schema --out /tmp/orbsie-chatgpt-schema-evidence --experimental",
+  "runtimeProbe": {
+    "command": "npm exec --yes --package @openai/codex@0.153.4 -- codex app-server --stdio",
+    "cwd": "isolated temporary directory",
+    "codexHome": "isolated empty CODEX_HOME",
+    "initialization": "accepted",
+    "inferenceRequests": 0,
+    "credentialsCopied": false
+  },
+  "request": {
+    "method": "turn/start",
+    "threadId": "orbsie-schema-probe-missing-thread",
+    "model": "gpt-5.6-luna",
+    "effort": "low",
+    "serviceTier": "default",
+    "approvalPolicy": "never",
+    "input": "bounded schema probe text; no model execution"
+  },
+  "results": {
+    "legacyPolicy": {
+      "sandboxPolicy": {
+        "type": "readOnly",
+        "access": {
+          "type": "restricted",
+          "readableRoots": [],
+          "includePlatformDefaults": false
+        }
+      },
+      "rpcCode": -32600,
+      "safeMessage": "invalid request: readonly.access is no longer supported; use permissionprofile for restricted reads",
+      "meaning": "decoder rejected legacy policy before thread validation"
+    },
+    "currentPolicy": {
+      "sandboxPolicy": {
+        "type": "readOnly",
+        "networkAccess": false
+      },
+      "rpcCode": -32600,
+      "safeMessage": "invalid thread id: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fa-f-], found `o` at 1",
+      "meaning": "decoder accepted policy and reached thread validation"
+    }
+  },
+  "finding": "The prior sandbox policy caused an immediate turn/start rejection before any scene delta. The current policy reaches normal request validation."
+}

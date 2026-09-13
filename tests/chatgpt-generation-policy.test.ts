@@ -25,6 +25,39 @@ const turn = {
   approvalPolicy: "never",
 };
 describe("hosted generation process policy", () => {
+  it("uses the installed App Server read-only sandbox schema", () => {
+    expect(CHATGPT_READ_POLICY).toEqual({
+      type: "readOnly",
+      networkAccess: false,
+    });
+    expect(
+      valid(
+        "turn/start",
+        { ...turn, sandboxPolicy: { type: "readOnly", networkAccess: true } },
+        threads,
+        turns,
+      ),
+    ).toBe(false);
+    expect(
+      valid(
+        "turn/start",
+        {
+          ...turn,
+          sandboxPolicy: {
+            type: "readOnly",
+            access: {
+              type: "restricted",
+              readableRoots: [],
+              includePlatformDefaults: false,
+            },
+          },
+        },
+        threads,
+        turns,
+      ),
+    ).toBe(false);
+  });
+
   it("accepts fixed regular-processing requests", () => {
     expect(valid("thread/start", start, threads, turns)).toBe(true);
     expect(valid("turn/start", turn, threads, turns)).toBe(true);

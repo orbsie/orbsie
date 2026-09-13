@@ -17,11 +17,16 @@
     "state": "ready",
     "expiresAt": "2026-09-13T21:33:43.516Z"
   },
-  "finding": "Immediate streamed-generation failure before scene commands; root cause unproven",
+  "finding": "Pinned App Server 0.153.4 rejects readonly.access before thread validation; no-inference RPC probe reproduces immediate failure. Corrected policy accepted by decoder.",
   "modelCalls": 0,
   "pending": [
-    "Specific streamed diagnostic",
-    "Selected model/reasoning",
-    "Focused reproduction and fix"
-  ]
+    "Deploy corrected host artifact",
+    "Real signed-in Luna create/edit acceptance"
+  ],
+  "hostDiagnosticAttempt": {
+    "modelCalls": 0,
+    "catalogResponseStatus": 502,
+    "laterProxyResponse": "non-JSON sandbox response",
+    "note": "No Luna inference was started; not evidence of account model availability"
+  }
 }
