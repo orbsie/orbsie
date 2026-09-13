@@ -19,6 +19,20 @@ in reports. Browser-only product modeling; no user Blender install or connection
 
 ## Current task
 
+Browser handoff 2026-09-13: use CUA extension Chrome profile Person 1 (browser1,
+extension instance9a170aec-060d-42f6-9e37-e4a360ee76a6) for owner testing;
+user explicitly chose this signed-in profile for future work. ChatGPT Pro session
+verified via profile UI; Orbsie tab1618752688 and OpenAI tab1618752689.
+Cloudflare loop did not recur: account selection and Continue reached device-code
+entry. Authorization still incomplete. Extension fill/keyboard attempts left all
+nine code fields empty; do not treat tool actions as successful submission.
+The Codex CLI label is consistent with the actual isolated codex app-server runtime
+(src/lib/server/chatgpt-runtime.ts) and documented account/login/start type
+chatgptDeviceCode (https://learn.chatgpt.com/docs/app-server#3b-log-in-with-chatgpt-device-code-flow).
+Earlier categorical mismatch warning was corrected; label alone does not prove an
+unsupported integration. No inference calls. Next: complete device entry through
+owner UI, verify Connected/catalog, then bounded Luna acceptance after quota check.
+
 PRIORITY owner correction: no separate Orbsie email/password gate for provider
 connection. Implemented BetterAuth anonymous-session bootstrap with existing
 session reuse, cookie forwarding, origin/rate-limit preservation, sanitized user
