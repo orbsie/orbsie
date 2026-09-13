@@ -98,6 +98,10 @@ p {
   inset: 0;
   z-index: 1;
 }
+.gameplay-region:focus-visible {
+  outline: 3px solid #a184cc;
+  outline-offset: -3px;
+}
 .is-landing .scene {
   top: 60px;
   bottom: 50px;

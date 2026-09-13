@@ -29,7 +29,6 @@ import {
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
   generationStreamIsOpen,
-  gameplaySurfaceCandidatePoints,
   observePlatformContact,
   portalCompletionIsAuthoritative,
   summarizeFreshGameplayRun,
@@ -4566,36 +4565,12 @@ async function readGameplayObservation(page) {
 
 /** Give keyboard gameplay events a real rendered surface target. */
 async function focusGameplaySurface(page) {
-  const surface = page.locator("canvas").first();
-  await expect(surface).toBeVisible({ timeout: 30000 });
-  const box = await surface.boundingBox();
-  assert(box, "Flagship gameplay surface has no rendered bounds.");
-  const candidates = gameplaySurfaceCandidatePoints(box);
-  const point = await page.evaluate(({ candidatePoints, bounds }) => {
-    const canvas = [...document.querySelectorAll("canvas")].find((node) => {
-      const rect = node.getBoundingClientRect();
-      return (
-        Math.abs(rect.x - bounds.x) < 1 &&
-        Math.abs(rect.y - bounds.y) < 1 &&
-        Math.abs(rect.width - bounds.width) < 1 &&
-        Math.abs(rect.height - bounds.height) < 1
-      );
-    });
-    if (!canvas) return null;
-    return (
-      candidatePoints.find(({ x, y }) => {
-        const hit = document.elementFromPoint(x, y);
-        return hit === canvas || (hit !== null && canvas.contains(hit));
-      }) ?? null
-    );
-  }, { candidatePoints: candidates, bounds: box });
-  assert(
-    point,
-    "No unobscured point was available on the rendered gameplay surface.",
-  );
-  await surface.click({
-    position: { x: point.x - box.x, y: point.y - box.y },
+  const surface = page.getByRole("region", {
+    name: "Gameplay area",
+    exact: true,
   });
+  await expect(surface).toBeVisible({ timeout: 30000 });
+  await expect(surface).toBeFocused();
 }
 
 async function createFlagshipGameplayInput(page, requestedMode = "auto") {

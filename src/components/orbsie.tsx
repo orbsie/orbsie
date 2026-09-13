@@ -617,7 +617,11 @@ export default function Orbsie() {
   const chat = useRef<HTMLDivElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const composer = useRef<HTMLElement>(null);
+  const gameplayRegion = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const focusGameplayRegion = useCallback(() => {
+    gameplayRegion.current?.focus({ preventScroll: true });
+  }, []);
   const landing = s.phase === "landing";
   const selected = s.project.entities.find((e) => e.id === s.selected);
   const total = s.project.entities.filter(
@@ -1313,7 +1317,13 @@ export default function Orbsie() {
     >
       <div className="sky-texture" aria-hidden="true" />
       <div className="cosmic-backdrop" aria-hidden="true" />
-      <div className="scene">
+      <div
+        ref={gameplayRegion}
+        className="scene gameplay-region"
+        role="region"
+        aria-label="Gameplay area"
+        tabIndex={-1}
+      >
         <World
           key={rendererRetryToken}
           rendererRetryToken={rendererRetryToken}
@@ -1443,6 +1453,7 @@ export default function Orbsie() {
               onClick={() => {
                 s.set({ playing: true, selected: undefined });
                 setSheet(false);
+                focusGameplayRegion();
               }}
             >
               <Play size={14} fill="currentColor" />

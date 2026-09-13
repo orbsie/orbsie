@@ -17,6 +17,7 @@ import {
   observeFlagshipMovementDuringGeneration,
   runFreshFlagshipGameplay,
 } from "./provider-browser-e2e.mjs";
+import { waitForFreshGameplayObservation } from "./lib/fresh-flagship-gameplay.mjs";
 
 const appUrl = process.env.TEST_URL ?? "http://localhost:3040";
 const appOrigin = new URL(appUrl).origin;
@@ -28,6 +29,7 @@ const requestedRenderer = process.env.ORBSIE_FRESH_GAMEPLAY_RENDERER ?? "all";
 const layoutOnly = process.env.ORBSIE_FRESH_GAMEPLAY_LAYOUT_ONLY === "1";
 const coarsePointerFixture =
   process.env.ORBSIE_FRESH_GAMEPLAY_COARSE_POINTER === "1";
+const focusOnly = process.env.ORBSIE_FRESH_GAMEPLAY_FOCUS_ONLY === "1";
 assert(
   requestedRenderer === "all" ||
     requestedRenderer === "webgl" ||
@@ -40,6 +42,15 @@ if (layoutOnly)
     "software",
     "Layout-only fixture validation requires the forced software renderer.",
   );
+if (focusOnly)
+  assert(
+    requestedRenderer === "webgl" || requestedRenderer === "software",
+    "Focus-only fixture validation requires webgl or software renderer.",
+  );
+assert(
+  !(layoutOnly && focusOnly),
+  "Layout-only and focus-only fixture modes cannot be combined.",
+);
 
 const entities = [
   {
@@ -604,6 +615,324 @@ async function verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout) {
   return layout;
 }
 
+async function readGameplayObservation(page) {
+  return page.evaluate(() => {
+    const read = window.__ORBSIE_GAMEPLAY_READ__;
+    return typeof read === "function" ? read() : null;
+  });
+}
+
+async function waitForFreshMatchingObservation(
+  page,
+  predicate,
+  label,
+  lastAtMs = -Infinity,
+  maxWaitMs = 30000,
+) {
+  const startedAt = Date.now();
+  let cursor = lastAtMs;
+  let latest = null;
+  while (Date.now() - startedAt < maxWaitMs) {
+    const sample = await waitForFreshGameplayObservation(
+      () => readGameplayObservation(page),
+      (delayMs) => page.waitForTimeout(delayMs),
+      {
+        lastAtMs: cursor,
+        maxWaitMs: Math.min(1000, maxWaitMs - (Date.now() - startedAt)),
+      },
+    );
+    if (!sample.observation) break;
+    latest = sample.observation;
+    cursor = latest.atMs;
+    if (predicate(latest))
+      return { observation: latest, waitedMs: Date.now() - startedAt };
+  }
+  throw new Error(
+    `${label} did not produce a matching fresh observation: ${JSON.stringify({ latest, waitedMs: Date.now() - startedAt })}`,
+  );
+}
+
+async function waitForGroundedBaseline(
+  page,
+  projectId,
+  reset,
+  lastAtMs,
+  label,
+) {
+  const samples = [];
+  let cursor = lastAtMs;
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < 30000) {
+    const sample = await waitForFreshGameplayObservation(
+      () => readGameplayObservation(page),
+      (delayMs) => page.waitForTimeout(delayMs),
+      {
+        lastAtMs: cursor,
+        maxWaitMs: Math.min(1000, 30000 - (Date.now() - startedAt)),
+      },
+    );
+    if (!sample.observation) break;
+    const observation = sample.observation;
+    cursor = observation.atMs;
+    if (
+      observation.projectId === projectId &&
+      observation.reset === reset &&
+      observation.playing === true &&
+      Number.isFinite(observation.player.position[1]) &&
+      Math.abs(observation.player.position[1] - 0.42) < 0.08 &&
+      Number.isFinite(observation.player.velocityY) &&
+      Math.abs(observation.player.velocityY) < 0.02
+    ) {
+      samples.push(observation);
+      if (samples.length >= 3)
+        return {
+          observation,
+          waitedMs: Date.now() - startedAt,
+          stableFrames: samples.length,
+        };
+    } else samples.length = 0;
+  }
+  throw new Error(
+    `${label} did not reach a stable grounded baseline: ${JSON.stringify({ latest: cursor, waitedMs: Date.now() - startedAt })}`,
+  );
+}
+
+async function waitForJumpRise(page, baseline, projectId, reset, label) {
+  const startedAt = Date.now();
+  let cursor = baseline.atMs;
+  let latest = null;
+  const maxWaitMs = 1200;
+  while (Date.now() - startedAt < maxWaitMs) {
+    const sample = await waitForFreshGameplayObservation(
+      () => readGameplayObservation(page),
+      (delayMs) => page.waitForTimeout(delayMs),
+      {
+        lastAtMs: cursor,
+        maxWaitMs: Math.min(250, maxWaitMs - (Date.now() - startedAt)),
+      },
+    );
+    if (!sample.observation) break;
+    latest = sample.observation;
+    cursor = latest.atMs;
+    const position = latest.player.position;
+    if (
+      latest.projectId === projectId &&
+      latest.reset === reset &&
+      latest.playing === true &&
+      Number.isFinite(latest.player.velocityY) &&
+      latest.player.velocityY > 0 &&
+      Number.isFinite(position[1]) &&
+      position[1] > baseline.player.position[1] + 0.02
+    )
+      return { observation: latest, waitedMs: Date.now() - startedAt };
+  }
+  throw new Error(
+    `${label} did not show a fresh upward jump above the grounded baseline: ${JSON.stringify({ baseline, latest, waitedMs: Date.now() - startedAt })}`,
+  );
+}
+
+async function verifyGameplayKeyboardFocus(page, project) {
+  const evidence = { renderer: null, projectId: project.id, jumps: [] };
+  let spaceHeld = false;
+  try {
+    const region = page.getByRole("region", {
+      name: "Gameplay area",
+      exact: true,
+    });
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    const edit = page.getByRole("button", { name: "Edit", exact: true });
+    const restart = page.getByRole("button", {
+      name: "Restart game",
+      exact: true,
+    });
+    const composer = page.locator("#prompt");
+    await expect(region).toBeVisible();
+    await expect(region).toBeFocused();
+    evidence.initialFocus = true;
+
+    const initial = await waitForFreshMatchingObservation(
+      page,
+      (observation) =>
+        observation.projectId === project.id && observation.playing === true,
+      "click-Play focus",
+    );
+    evidence.renderer = initial.observation.renderer;
+    await restart.click();
+    const firstReset = await waitForFreshMatchingObservation(
+      page,
+      (observation) =>
+        observation.projectId === project.id &&
+        observation.reset > initial.observation.reset,
+      "restart before click-Play focus",
+      initial.observation.atMs,
+    );
+    await edit.click();
+    await expect(edit).toBeFocused();
+    await play.click();
+    await expect(region).toBeFocused();
+    const firstBaseline = (
+      await waitForGroundedBaseline(
+        page,
+        project.id,
+        firstReset.observation.reset,
+        firstReset.observation.atMs,
+        "click-Play baseline",
+      )
+    ).observation;
+    await page.keyboard.down(" ");
+    spaceHeld = true;
+    const firstAfter = (
+      await waitForJumpRise(
+        page,
+        firstBaseline,
+        project.id,
+        firstReset.observation.reset,
+        "click-Play Space",
+      )
+    ).observation;
+    await page.keyboard.up(" ");
+    spaceHeld = false;
+    evidence.jumps.push({
+      activation: "click",
+      before: firstBaseline,
+      after: firstAfter,
+    });
+
+    await restart.click();
+    const secondReset = await waitForFreshMatchingObservation(
+      page,
+      (observation) =>
+        observation.projectId === project.id &&
+        observation.reset > firstReset.observation.reset,
+      "restart before keyboard Play",
+      firstAfter.atMs,
+    );
+    await edit.click();
+    await expect(edit).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(play).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(region).toBeFocused();
+    evidence.keyboardActivationFocus = true;
+    evidence.focusVisible = await region.evaluate((element) =>
+      element.matches(":focus-visible"),
+    );
+    assert.equal(
+      evidence.focusVisible,
+      true,
+      "Keyboard-activated Play did not leave a visible gameplay focus target.",
+    );
+    const secondBaseline = (
+      await waitForGroundedBaseline(
+        page,
+        project.id,
+        secondReset.observation.reset,
+        secondReset.observation.atMs,
+        "keyboard-activated Play baseline",
+      )
+    ).observation;
+    await page.keyboard.down(" ");
+    spaceHeld = true;
+    const secondAfter = (
+      await waitForJumpRise(
+        page,
+        secondBaseline,
+        project.id,
+        secondReset.observation.reset,
+        "keyboard-activated Play Space",
+      )
+    ).observation;
+    await page.keyboard.up(" ");
+    spaceHeld = false;
+    evidence.jumps.push({
+      activation: "keyboard-enter",
+      before: secondBaseline,
+      after: secondAfter,
+    });
+
+    await restart.click();
+    const typingReset = await waitForFreshMatchingObservation(
+      page,
+      (observation) =>
+        observation.projectId === project.id &&
+        observation.reset > secondReset.observation.reset,
+      "restart before composer isolation",
+      secondAfter.atMs,
+    );
+    const typingBaseline = (
+      await waitForGroundedBaseline(
+        page,
+        project.id,
+        typingReset.observation.reset,
+        typingReset.observation.atMs,
+        "composer isolation baseline",
+      )
+    ).observation;
+    await composer.focus();
+    await expect(composer).toBeFocused();
+    await page.keyboard.type("wasd ");
+    const typingAfter = (
+      await waitForFreshMatchingObservation(
+        page,
+        (observation) =>
+          observation.projectId === project.id &&
+          observation.reset === typingReset.observation.reset &&
+          observation.playing === true,
+        "composer isolation observation",
+        typingBaseline.atMs,
+        1000,
+      )
+    ).observation;
+    assert(
+      Math.hypot(
+        typingAfter.player.position[0] - typingBaseline.player.position[0],
+        typingAfter.player.position[1] - typingBaseline.player.position[1],
+        typingAfter.player.position[2] - typingBaseline.player.position[2],
+      ) < 0.02 &&
+        Math.abs(
+          typingAfter.player.position[1] - typingBaseline.player.position[1],
+        ) < 0.02 &&
+        Math.abs(typingAfter.player.velocityY) < 0.02,
+      `Composer typing moved gameplay: ${JSON.stringify({ typingBaseline, typingAfter })}`,
+    );
+    evidence.composerTyping = {
+      focused: true,
+      value: await composer.inputValue(),
+      before: typingBaseline,
+      after: typingAfter,
+    };
+
+    await region.focus({ preventScroll: true });
+    let tabReachedEditor = false;
+    for (let index = 0; index < 16; index += 1) {
+      await page.keyboard.press("Tab");
+      if (
+        await edit.evaluate((element) => document.activeElement === element)
+      ) {
+        tabReachedEditor = true;
+        break;
+      }
+    }
+    assert.equal(
+      tabReachedEditor,
+      true,
+      "Tab navigation did not return to Edit.",
+    );
+    evidence.tabReachedEditor = true;
+    evidence.finalFocus = await page.evaluate(() => ({
+      tag: document.activeElement?.tagName.toLowerCase() ?? null,
+      text: document.activeElement?.textContent?.trim() ?? null,
+    }));
+    return evidence;
+  } catch (error) {
+    if (error && typeof error === "object")
+      error.gameplayFocusEvidence = evidence;
+    throw error;
+  } finally {
+    if (spaceHeld) await page.keyboard.up(" ").catch(() => {});
+  }
+}
+
 function deferred() {
   let resolvePromise;
   const promise = new Promise((resolveValue) => {
@@ -779,6 +1108,7 @@ async function runRenderer(browser, renderer) {
   let generationMovement;
   let result;
   let layout;
+  let focusEvidence;
   try {
     await page.goto(appUrl, { waitUntil: "domcontentloaded" });
     await expect(page.locator("main")).toHaveAttribute(
@@ -846,6 +1176,36 @@ async function runRenderer(browser, renderer) {
         { role: "assistant", text: fixtureCommands.at(-1).message },
       ],
     };
+    if (focusOnly) {
+      focusEvidence = await verifyGameplayKeyboardFocus(page, project);
+      assert.equal(stream.requests, 1);
+      assert.deepEqual(blockedExternalRequests, []);
+      const expectedPageErrors =
+        renderer === "software"
+          ? pageErrors.filter(
+              (message) =>
+                message ===
+                "THREE.WebGLRenderer: Error creating WebGL context.",
+            )
+          : [];
+      const unexpectedPageErrors = pageErrors.filter(
+        (message) => !expectedPageErrors.includes(message),
+      );
+      assert.deepEqual(unexpectedPageErrors, []);
+      return {
+        status: "passed",
+        renderer,
+        focusOnly: true,
+        generationRequests: stream.requests,
+        projectId: project.id,
+        revision: project.revision,
+        generationMovement,
+        focus: focusEvidence,
+        pageErrors,
+        expectedPageErrors,
+        blockedExternalRequests,
+      };
+    }
     if (layoutOnly) {
       await expect(page.locator("main")).toHaveClass(/is-workspace/);
       await activateFixtureControl(
@@ -926,6 +1286,7 @@ async function runRenderer(browser, renderer) {
       projectId: project.id,
       revision: project.revision,
       generationMovement,
+      focus: focusEvidence,
       gameplay: result,
       layout,
       pageErrors,
@@ -946,6 +1307,11 @@ async function runRenderer(browser, renderer) {
         result ??
         (error && typeof error === "object"
           ? (error.freshGameplayEvidence ?? null)
+          : null),
+      focus:
+        focusEvidence ??
+        (error && typeof error === "object"
+          ? (error.gameplayFocusEvidence ?? null)
           : null),
       layout:
         layout ??

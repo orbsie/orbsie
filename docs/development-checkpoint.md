@@ -8,7 +8,7 @@ Gateway and ChatGPT. **Incomplete.** Prior detailed handoff/evidence is in
 
 Astra reviews architecture/diffs/integration; one Luna xhigh/default worker,
 no nested agents, concise contexts, Fast off. Reuse `/root/host_session_renewal`:
-fresh worker creation previously hit thread cap. Latest quota46% used/54% remaining;
+fresh worker creation previously hit thread cap. Latest quota48% used/52% remaining;
 stop workers/live tests below20% remaining. Read actual quota with
 `python3 /home/marcos/.cache/orbsie/read-codex-quota.py`; goal tokens are not quota.
 Targeted tests; no repeated green/live runs without new evidence need.
@@ -137,3 +137,5 @@ returns no value, so no further decryption attempts. Production variable unchang
 Local Gateway credential validity not yet tested; no model calls during setup.
 Next fresh API-provider test remains Luna only,3calls,4096 output tokens/call,
 no automatic retries. Owner's broader Gateway ceiling remains5calls/test.
+
+Play focus fix accepted: root reviewed finished diff and both gameplay-focus-*-run1 reports. Click Play and real Tab→Enter Play focus the named region; fresh positive vertical velocity plus raised Y proves Space jump. Composer isolation and Tab return pass. Worker reports typecheck,6focused suites60tests,syntax/format pass. Editor-only change; no player rebuild/live calls. Next bounded task is restart/replay focus in editor and standalone, then queued route timing recovery (contract23463f3), then actual seven-crystal/undo traversal. Production remains ddafb15 until next release.
