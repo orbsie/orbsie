@@ -16,12 +16,14 @@ const evidenceDirectory =
   "docs/evidence/mushroom-candidate-conversion";
 const selectedFbxArchivePath = process.env.MUSHROOM_FBX_ARCHIVE_PATH;
 const adaptiveBake = process.env.MUSHROOM_ADAPTIVE_BAKE === "1";
+const conformingBake = process.env.MUSHROOM_CONFORMING_BAKE === "1";
 const outputPath = join(evidenceDirectory, "prototype.glb");
 const outputReportPath = join(evidenceDirectory, "report.json");
 const outputLicensePath = join(evidenceDirectory, "License.txt");
 const SUBDIVISION_LEVEL = 4;
 const MAX_VERTICES = 30_000;
 const MAX_BYTES = 2 * 1024 * 1024;
+const CONFORMING_REFINEMENT_BUDGET = 18_000;
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -176,6 +178,24 @@ function midpoint(a, b) {
   return a.map((value, index) => (value + b[index]) / 2);
 }
 
+function pointSegmentDistanceSquared(point, start, end) {
+  const edge = end.clone().sub(start);
+  const lengthSquared = edge.lengthSq();
+  if (lengthSquared === 0)
+    return { distanceSquared: point.distanceToSquared(start), t: 0 };
+  const t = THREE.MathUtils.clamp(
+    point.clone().sub(start).dot(edge) / lengthSquared,
+    0,
+    1,
+  );
+  return {
+    distanceSquared: point.distanceToSquared(
+      start.clone().addScaledVector(edge, t),
+    ),
+    t,
+  };
+}
+
 function centroid(a, b, c) {
   return a.map((value, index) => (value + b[index] + c[index]) / 3);
 }
@@ -218,6 +238,136 @@ function childTriangles(candidate) {
     { source: candidate.source, corners: [ca, bc, c], depth },
     { source: candidate.source, corners: [ab, bc, ca], depth },
   ];
+}
+
+function barycentricPoint(source, barycentric, normalization) {
+  return interpolateVector(
+    source[0].point,
+    source[1].point,
+    source[2].point,
+    barycentric,
+  )
+    .sub(normalization.center)
+    .multiplyScalar(normalization.scale);
+}
+
+function conformTriangles(candidates, pointFor, tolerance = 1e-6) {
+  const pointKey = (point) =>
+    [point.x, point.y, point.z]
+      .map((value) => Math.round(value / tolerance))
+      .join(",");
+  const points = new Map();
+  for (const candidate of candidates) {
+    for (const barycentric of candidate.corners) {
+      const point = pointFor(candidate, barycentric);
+      const key = pointKey(point);
+      if (!points.has(key)) points.set(key, point);
+    }
+  }
+  const edges = [];
+  const spatialEdges = new Map();
+  const cell = (value) => Math.floor(value / 0.01);
+  const addSpatial = (x, y, z, edgeIndex) => {
+    const key = `${x},${y},${z}`;
+    const list = spatialEdges.get(key) ?? [];
+    list.push(edgeIndex);
+    spatialEdges.set(key, list);
+  };
+  const candidateEdges = candidates.map((candidate, candidateIndex) => {
+    const result = [];
+    for (let edgeIndex = 0; edgeIndex < 3; edgeIndex++) {
+      const startBarycentric = candidate.corners[edgeIndex];
+      const endBarycentric = candidate.corners[(edgeIndex + 1) % 3];
+      const start = pointFor(candidate, startBarycentric);
+      const end = pointFor(candidate, endBarycentric);
+      const edge = {
+        candidateIndex,
+        edgeIndex,
+        startBarycentric,
+        endBarycentric,
+        start,
+        end,
+        startKey: pointKey(start),
+        endKey: pointKey(end),
+        splits: [],
+      };
+      const edgeId = edges.length;
+      edges.push(edge);
+      result.push(edge);
+      const min = start.clone().min(end);
+      const max = start.clone().max(end);
+      for (let x = cell(min.x); x <= cell(max.x); x++)
+        for (let y = cell(min.y); y <= cell(max.y); y++)
+          for (let z = cell(min.z); z <= cell(max.z); z++) addSpatial(x, y, z, edgeId);
+    }
+    return result;
+  });
+  const pointRecords = [...points.entries()];
+  for (const [, point] of pointRecords) {
+    const currentPointKey = pointKey(point);
+    const x = cell(point.x);
+    const y = cell(point.y);
+    const z = cell(point.z);
+    const candidateEdgesForPoint = new Set();
+    for (let cellX = x - 1; cellX <= x + 1; cellX++)
+      for (let cellY = y - 1; cellY <= y + 1; cellY++)
+        for (let cellZ = z - 1; cellZ <= z + 1; cellZ++)
+          for (const edgeIndex of spatialEdges.get(`${cellX},${cellY},${cellZ}`) ?? [])
+            candidateEdgesForPoint.add(edgeIndex);
+    for (const edgeIndex of candidateEdgesForPoint) {
+      const edge = edges[edgeIndex];
+      if (currentPointKey === edge.startKey || currentPointKey === edge.endKey)
+        continue;
+      const result = pointSegmentDistanceSquared(point, edge.start, edge.end);
+      const length = edge.start.distanceTo(edge.end);
+      const margin = Math.min(0.5, tolerance / Math.max(length, tolerance));
+      if (result.t > margin && result.t < 1 - margin && result.distanceSquared <= tolerance ** 2)
+        edge.splits.push(result.t);
+    }
+  }
+  let splitTriangleCount = 0;
+  const conformed = [];
+  for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
+    const candidate = candidates[candidateIndex];
+    const edgesForCandidate = candidateEdges[candidateIndex];
+    const boundary = [];
+    let split = false;
+    for (const edge of edgesForCandidate) {
+      const uniqueT = [...new Set(edge.splits.map((value) => value.toPrecision(12)))]
+        .map(Number)
+        .sort((a, b) => a - b);
+      if (uniqueT.length) split = true;
+      boundary.push(edge.startBarycentric);
+      for (const t of uniqueT)
+        boundary.push(edge.startBarycentric.map((value, index) => value * (1 - t) + edge.endBarycentric[index] * t));
+    }
+    if (!split) {
+      conformed.push(candidate);
+      continue;
+    }
+    splitTriangleCount++;
+    const center = centroid(...candidate.corners);
+    for (let index = 0; index < boundary.length; index++)
+      conformed.push({
+        source: candidate.source,
+        corners: [boundary[index], boundary[(index + 1) % boundary.length], center],
+        depth: candidate.depth,
+      });
+  }
+  return { triangles: conformed, splitTriangleCount };
+}
+
+function canonicalizePositions(output) {
+  const representatives = new Map();
+  for (let offset = 0; offset < output.positions.length; offset += 3) {
+    const point = output.positions.slice(offset, offset + 3);
+    const key = point.map((value) => Math.round(value / 1e-6)).join(",");
+    const representative = representatives.get(key) ?? point;
+    representatives.set(key, representative);
+    output.positions[offset] = representative[0];
+    output.positions[offset + 1] = representative[1];
+    output.positions[offset + 2] = representative[2];
+  }
 }
 
 function refineTriangles(initialTriangles, sampleColorAt, maxVertices = MAX_VERTICES) {
@@ -319,7 +469,7 @@ function addBakedTriangle(
   output.colors.push(color[0], color[1], color[2]);
 }
 
-function bakeMesh(mesh, texture, material, adaptiveEnabled) {
+function bakeMesh(mesh, texture, material, adaptiveEnabled, conformingEnabled) {
   const position = mesh.geometry.getAttribute("position");
   const normal = mesh.geometry.getAttribute("normal");
   const uv = mesh.geometry.getAttribute("uv");
@@ -397,8 +547,10 @@ function bakeMesh(mesh, texture, material, adaptiveEnabled) {
     }
   });
   const adaptive = adaptiveEnabled
-    ? refineTriangles(initialTriangles, (triangle, barycentric) =>
-        sampleColorAt(triangle, barycentric),
+    ? refineTriangles(
+        initialTriangles,
+        (triangle, barycentric) => sampleColorAt(triangle, barycentric),
+        conformingEnabled ? CONFORMING_REFINEMENT_BUDGET : MAX_VERTICES,
       )
     : {
         triangles: initialTriangles,
@@ -410,8 +562,15 @@ function bakeMesh(mesh, texture, material, adaptiveEnabled) {
         budgetSaturation: false,
         depthSaturation: false,
       };
+  const conforming = conformingEnabled
+    ? conformTriangles(
+        adaptive.triangles,
+        (candidate, barycentric) =>
+          barycentricPoint(candidate.source, barycentric, normalization),
+      )
+    : { triangles: adaptive.triangles, splitTriangleCount: 0 };
   const output = { positions: [], normals: [], colors: [] };
-  for (const candidate of adaptive.triangles) {
+  for (const candidate of conforming.triangles) {
     for (const barycentric of candidate.corners)
       addBakedTriangle(
         output,
@@ -423,6 +582,7 @@ function bakeMesh(mesh, texture, material, adaptiveEnabled) {
         sampleColorAt,
       );
   }
+  if (conformingEnabled) canonicalizePositions(output);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
@@ -436,7 +596,24 @@ function bakeMesh(mesh, texture, material, adaptiveEnabled) {
     "color",
     new THREE.Float32BufferAttribute(output.colors, 3),
   );
-  return { geometry, sourceBounds, normalization, triangleCount, adaptive };
+  return {
+    geometry,
+    sourceBounds,
+    normalization,
+    triangleCount,
+    adaptive: {
+      ...adaptive,
+      finalTriangles: adaptive.triangles.length,
+    },
+    conforming: {
+      enabled: conformingEnabled,
+      finalTriangles: conforming.triangles.length,
+      splitTriangleCount: conforming.splitTriangleCount,
+      reservedRefinementVertices: conformingEnabled
+        ? CONFORMING_REFINEMENT_BUDGET
+        : null,
+    },
+  };
 }
 
 function runSamplerAssertions() {
@@ -499,6 +676,26 @@ function runAdaptiveAssertions() {
     throw new Error("Adaptive budget assertion failed.");
 }
 
+function runConformingAssertions() {
+  const source = { id: "synthetic" };
+  const midpointCorner = [0.5, 0.5, 0];
+  const candidates = [
+    { source, corners: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], depth: 0 },
+    { source, corners: [[1, 0, 0], midpointCorner, [0, 0, 1]], depth: 0 },
+    { source, corners: [midpointCorner, [0, 1, 0], [0, 0, 1]], depth: 0 },
+  ];
+  const pointFor = (_, barycentric) =>
+    new THREE.Vector3(barycentric[0], barycentric[1], barycentric[2]);
+  const result = conformTriangles(candidates, pointFor);
+  if (result.splitTriangleCount === 0 || result.triangles.length <= candidates.length)
+    throw new Error("Conforming neighbor split assertion failed.");
+  for (const candidate of result.triangles) {
+    const [a, b, c] = candidate.corners.map((corner) => pointFor(candidate, corner));
+    if (b.clone().sub(a).cross(c.clone().sub(a)).lengthSq() === 0)
+      throw new Error("Conforming neighbor split produced a zero-area triangle.");
+  }
+}
+
 class NodeFileReader {
   constructor() {
     this.result = null;
@@ -521,6 +718,7 @@ class NodeFileReader {
 async function main() {
   runSamplerAssertions();
   runAdaptiveAssertions();
+  if (conformingBake) runConformingAssertions();
   await mkdir(evidenceDirectory, { recursive: true });
   const inspection = JSON.parse(await readFile(inspectionPath, "utf8"));
   const fbxEntries = inspection.selectedFiles.filter((entry) =>
@@ -602,7 +800,13 @@ async function main() {
   if (!material?.map || material.map !== texture)
     throw new Error("Selected FBX material does not use the prepared TGA map.");
   texture.updateMatrix();
-  const baked = bakeMesh(sourceMesh, texture, material, adaptiveBake);
+  const baked = bakeMesh(
+    sourceMesh,
+    texture,
+    material,
+    adaptiveBake,
+    conformingBake,
+  );
   const bakedMesh = new THREE.Mesh(
     baked.geometry,
     new THREE.MeshStandardMaterial({
@@ -721,6 +925,7 @@ async function main() {
         maxSplits: ADAPTIVE_MAX_SPLITS,
         limitation: "Error is sampled only at edge midpoints and centroids; it is not a guarantee between samples.",
       },
+      conforming: baked.conforming,
       textureSampling: {
         transform: "THREE.Texture.transformUv (repeat/offset/wrap/flipY)",
         filter: "bilinear",

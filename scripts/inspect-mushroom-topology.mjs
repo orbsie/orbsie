@@ -5,11 +5,19 @@ import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { TGALoader } from "three/addons/loaders/TGALoader.js";
 
-const inspectionPath = "docs/evidence/mushroom-basic-inspection/report.json";
-const uniformReportPath = "docs/evidence/mushroom-basic-conversion/report.json";
+const inspectionPath =
+  process.env.MUSHROOM_TOPOLOGY_INSPECTION_PATH ??
+  "docs/evidence/mushroom-basic-inspection/report.json";
+const uniformReportPath =
+  process.env.MUSHROOM_TOPOLOGY_UNIFORM_REPORT_PATH ??
+  "docs/evidence/mushroom-basic-conversion/report.json";
 const adaptiveReportPath =
+  process.env.MUSHROOM_TOPOLOGY_ADAPTIVE_REPORT_PATH ??
   "docs/evidence/mushroom-basic-adaptive-conversion/report.json";
-const outputDirectory = "docs/evidence/mushroom-topology-diagnosis";
+const conformingReportPath = process.env.MUSHROOM_TOPOLOGY_CONFORMING_REPORT_PATH;
+const outputDirectory =
+  process.env.MUSHROOM_TOPOLOGY_OUTPUT_DIRECTORY ??
+  "docs/evidence/mushroom-topology-diagnosis";
 const outputReportPath = `${outputDirectory}/report.json`;
 const TOLERANCE = 1e-6;
 const GRID_SIZE = 0.01;
@@ -231,19 +239,26 @@ async function main() {
   const inspection = JSON.parse(await readFile(inspectionPath, "utf8"));
   const uniform = JSON.parse(await readFile(uniformReportPath, "utf8"));
   const adaptive = JSON.parse(await readFile(adaptiveReportPath, "utf8"));
+  const conforming = conformingReportPath
+    ? JSON.parse(await readFile(conformingReportPath, "utf8"))
+    : null;
   const fbxEntry = inspection.selectedFiles.find((entry) => entry.archivePath.endsWith("Basic.fbx"));
   if (!fbxEntry) throw new Error("Basic FBX inspection entry is missing.");
-  const [fbxBytes, uniformBytes, adaptiveBytes, tgaBytes] = await Promise.all([
+  const artifactReports = [uniform, adaptive, ...(conforming ? [conforming] : [])];
+  const artifactBytes = await Promise.all(
+    artifactReports.map((report) => readFile(report.output.path)),
+  );
+  const [fbxBytes, tgaBytes] = await Promise.all([
     readFile(fbxEntry.path),
-    readFile(uniform.output.path),
-    readFile(adaptive.output.path),
     readFile(inspection.selectedFiles.find((entry) => entry.archivePath.endsWith("Mushrooms_C.tga")).path),
   ]);
+  const [uniformBytes, adaptiveBytes, conformingBytes] = artifactBytes;
   const hashes = {
     fbx: sha256(fbxBytes),
     uniformGlb: sha256(uniformBytes),
     adaptiveGlb: sha256(adaptiveBytes),
     tga: sha256(tgaBytes),
+    ...(conforming ? { conformingGlb: sha256(conformingBytes) } : {}),
   };
   const textureData = new TGALoader().parse(asArrayBuffer(tgaBytes));
   const texture = new THREE.DataTexture(textureData.data, textureData.width, textureData.height, THREE.RGBAFormat, THREE.UnsignedByteType);
@@ -279,6 +294,13 @@ async function main() {
     analyzeGeometry("basic-uniform-glb", uniformLoaded.geometry),
     analyzeGeometry("basic-adaptive-glb", adaptiveLoaded.geometry),
   ];
+  let conformingLoaded;
+  if (conforming) {
+    conformingLoaded = await loadGlbGeometry(conformingBytes);
+    analyses.push(
+      analyzeGeometry("basic-conforming-glb", conformingLoaded.geometry),
+    );
+  }
   const report = {
     status: "diagnosed",
     scope: "offline topology measurements; does not establish rendered causality",
@@ -288,6 +310,9 @@ async function main() {
       tga: { bytes: tgaBytes.byteLength, sha256: hashes.tga },
       uniformGlb: { path: uniform.output.path, bytes: uniformBytes.byteLength, sha256: hashes.uniformGlb },
       adaptiveGlb: { path: adaptive.output.path, bytes: adaptiveBytes.byteLength, sha256: hashes.adaptiveGlb },
+      ...(conforming
+        ? { conformingGlb: { path: conforming.output.path, bytes: conformingBytes.byteLength, sha256: hashes.conformingGlb } }
+        : {}),
     },
     sampler: {
       tolerance: TOLERANCE,
@@ -304,11 +329,17 @@ async function main() {
       adaptiveExtraTriangles: analyses[2].triangles - analyses[1].triangles,
       adaptiveTjunctions: analyses[2].tJunctions.count,
       uniformTjunctions: analyses[1].tJunctions.count,
+      ...(conforming
+        ? {
+            conformingTriangles: analyses[3].triangles,
+            conformingTjunctions: analyses[3].tJunctions.count,
+          }
+        : {}),
       interpretation: "T-junction and edge-incidence measurements can indicate refinement topology discontinuities, but they do not by themselves prove the SwiftShader pink speckles are caused by raster cracks.",
     },
   };
   await writeFile(outputReportPath, `${JSON.stringify(report, null, 2)}\n`);
-  disposeScene(fbxScene); disposeScene(uniformLoaded.scene); disposeScene(adaptiveLoaded.scene); texture.dispose();
+  disposeScene(fbxScene); disposeScene(uniformLoaded.scene); disposeScene(adaptiveLoaded.scene); if (conformingLoaded) disposeScene(conformingLoaded.scene); texture.dispose();
   console.log(JSON.stringify(report, null, 2));
 }
 

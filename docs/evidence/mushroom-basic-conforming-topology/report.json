@@ -1,0 +1,264 @@
+{
+  "status": "diagnosed",
+  "scope": "offline topology measurements; does not establish rendered causality",
+  "inputs": {
+    "inspection": "docs/evidence/mushroom-basic-inspection/report.json",
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Meshes/Fly_Agaric_Basic.fbx",
+      "bytes": 33856,
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b"
+    },
+    "tga": {
+      "bytes": 50331692,
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680"
+    },
+    "uniformGlb": {
+      "path": "docs/evidence/mushroom-basic-conversion/prototype.glb",
+      "bytes": 384900,
+      "sha256": "ad281b53d7c8544b85dd2da63288e0e62e24a41d43e5b7f51911d577ba3d6c1b"
+    },
+    "adaptiveGlb": {
+      "path": "docs/evidence/mushroom-basic-adaptive-conversion/prototype.glb",
+      "bytes": 1081180,
+      "sha256": "75169240e0d472d096a0accc0251355bf6797b34997e0b6cc0c22075a0729cce"
+    },
+    "conformingGlb": {
+      "path": "docs/evidence/mushroom-basic-conforming-conversion/prototype.glb",
+      "bytes": 923604,
+      "sha256": "4e6830f81d24639546b37c94331e46118187d4787835dddad040ca6f2485b61f"
+    }
+  },
+  "sampler": {
+    "tolerance": 0.000001,
+    "gridCellSize": 0.01,
+    "textureWidth": 4096,
+    "textureHeight": 4096,
+    "geometryComparisonSpace": "each geometry normalized to unit height and centered X/Z before area/weld/spatial checks",
+    "areaUnits": "normalized square meters"
+  },
+  "analyses": [
+    {
+      "name": "basic-fbx",
+      "vertices": 666,
+      "weldedVertices": 121,
+      "triangles": 222,
+      "finite": true,
+      "minTriangleAreaM2": 0.0009473810348310718,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 0,
+      "smallAreaThresholdM2": 0.000001,
+      "winding": {
+        "minFaceNormalDotInterpolatedNormal": 0.9060409391310743,
+        "maxFaceNormalDotInterpolatedNormal": 1,
+        "invertedWindingCount": 0
+      },
+      "normals": {
+        "finite": true,
+        "minLength": 0.9999999606287112,
+        "maxLength": 1.0000000396242892
+      },
+      "weldedEdgeIncidence": {
+        "uniqueEdges": 341,
+        "histogram": {
+          "1": 16,
+          "2": 325
+        }
+      },
+      "tJunctions": {
+        "tolerance": 0.000001,
+        "gridCellSize": 0.01,
+        "count": 0,
+        "examples": [],
+        "completeSpatialCheck": true
+      }
+    },
+    {
+      "name": "basic-uniform-glb",
+      "vertices": 10656,
+      "weldedVertices": 1810,
+      "triangles": 3552,
+      "finite": true,
+      "minTriangleAreaM2": 0.00005921128559222,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 0,
+      "smallAreaThresholdM2": 0.000001,
+      "winding": {
+        "minFaceNormalDotInterpolatedNormal": 0.8672263836506391,
+        "maxFaceNormalDotInterpolatedNormal": 1,
+        "invertedWindingCount": 0
+      },
+      "normals": {
+        "finite": true,
+        "minLength": 0.9999999582319421,
+        "maxLength": 1.0000000396242892
+      },
+      "weldedEdgeIncidence": {
+        "uniqueEdges": 5360,
+        "histogram": {
+          "1": 64,
+          "2": 5296
+        }
+      },
+      "tJunctions": {
+        "tolerance": 0.000001,
+        "gridCellSize": 0.01,
+        "count": 0,
+        "examples": [],
+        "completeSpatialCheck": true
+      }
+    },
+    {
+      "name": "basic-adaptive-glb",
+      "vertices": 29997,
+      "weldedVertices": 6378,
+      "triangles": 9999,
+      "finite": true,
+      "minTriangleAreaM2": 7.999315500047816e-7,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 32,
+      "smallAreaThresholdM2": 0.000001,
+      "winding": {
+        "minFaceNormalDotInterpolatedNormal": 0.8611930950905701,
+        "maxFaceNormalDotInterpolatedNormal": 1,
+        "invertedWindingCount": 0
+      },
+      "normals": {
+        "finite": true,
+        "minLength": 0.9999999582319421,
+        "maxLength": 1.0000000407355008
+      },
+      "weldedEdgeIncidence": {
+        "uniqueEdges": 18369,
+        "histogram": {
+          "1": 6741,
+          "2": 11628
+        }
+      },
+      "tJunctions": {
+        "tolerance": 0.000001,
+        "gridCellSize": 0.01,
+        "count": 2689,
+        "examples": [
+          {
+            "vertexId": 15,
+            "edge": [
+              12,
+              13
+            ],
+            "distance": 1.0634506365001075e-8,
+            "t": 0.4999987391691966
+          },
+          {
+            "vertexId": 19,
+            "edge": [
+              18,
+              20
+            ],
+            "distance": 0,
+            "t": 0.5
+          },
+          {
+            "vertexId": 22,
+            "edge": [
+              12,
+              13
+            ],
+            "distance": 5.31725320230885e-9,
+            "t": 0.7500006304154017
+          },
+          {
+            "vertexId": 24,
+            "edge": [
+              14,
+              15
+            ],
+            "distance": 3.3031461192596655e-8,
+            "t": 0.4999997823843436
+          },
+          {
+            "vertexId": 25,
+            "edge": [
+              18,
+              27
+            ],
+            "distance": 1.4362950071686759e-8,
+            "t": 0.4999978009096498
+          },
+          {
+            "vertexId": 26,
+            "edge": [
+              14,
+              27
+            ],
+            "distance": 0,
+            "t": 0.5
+          },
+          {
+            "vertexId": 28,
+            "edge": [
+              12,
+              29
+            ],
+            "distance": 1.4947438036147087e-9,
+            "t": 0.5000001858492487
+          },
+          {
+            "vertexId": 41,
+            "edge": [
+              40,
+              43
+            ],
+            "distance": 1.4362950071686759e-8,
+            "t": 0.4999978009096498
+          }
+        ],
+        "completeSpatialCheck": true
+      }
+    },
+    {
+      "name": "basic-conforming-glb",
+      "vertices": 25620,
+      "weldedVertices": 4304,
+      "triangles": 8540,
+      "finite": true,
+      "minTriangleAreaM2": 0.0000011263195992064573,
+      "exactZeroAreaCount": 0,
+      "smallAreaCount": 0,
+      "smallAreaThresholdM2": 0.000001,
+      "winding": {
+        "minFaceNormalDotInterpolatedNormal": 0.8613929554749115,
+        "maxFaceNormalDotInterpolatedNormal": 1,
+        "invertedWindingCount": 0
+      },
+      "normals": {
+        "finite": true,
+        "minLength": 0.9999999582319421,
+        "maxLength": 1.0000000407355008
+      },
+      "weldedEdgeIncidence": {
+        "uniqueEdges": 12842,
+        "histogram": {
+          "1": 64,
+          "2": 12778
+        }
+      },
+      "tJunctions": {
+        "tolerance": 0.000001,
+        "gridCellSize": 0.01,
+        "count": 0,
+        "examples": [],
+        "completeSpatialCheck": true
+      }
+    }
+  ],
+  "comparison": {
+    "uniformTriangles": 3552,
+    "adaptiveTriangles": 9999,
+    "adaptiveExtraTriangles": 6447,
+    "adaptiveTjunctions": 2689,
+    "uniformTjunctions": 0,
+    "conformingTriangles": 8540,
+    "conformingTjunctions": 0,
+    "interpretation": "T-junction and edge-incidence measurements can indicate refinement topology discontinuities, but they do not by themselves prove the SwiftShader pink speckles are caused by raster cracks."
+  }
+}

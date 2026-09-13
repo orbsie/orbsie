@@ -54,10 +54,13 @@ without Orbsie password. Authorization link clicked. Owner authorization/inferen
 still pending; don't claim Connected. Production evidence provider-session-bootstrap/production.json. Local
 Next dev3070 session75807. Do not tell owner fix is live before deploy verification.
 
-Asset task is paused: conforming bake worker finished with reported0 Tjunctions
-and no visible speckles, but root has NOT reviewed its diff/images. Pending files
-are converter/topology script and mushroom-basic-conforming evidence. Do not
-stage or deploy them as reviewed work yet; preserve them while fixing connection.
+Conforming bake review completed 2026-09-13: root reviewed converter/topology diff
+and both front/rear comparisons. Pink speckles are absent in these views; measured
+25620 vertices/8540 triangles, zero T-junctions/exact-zero/small-area triangles,
+finite normals and no inverted winding. GLB923604 bytes; output SHA and exact
+CC0 license verified. Repair stays opt-in and historical evidence is unchanged.
+Default-color white spots retain visibly jagged fringes: NOT admitted to catalog.
+Next asset quality work must address color fidelity, not repeat topology repair.
 
 ## Asset handoff (paused)
 
