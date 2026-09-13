@@ -9,7 +9,7 @@ Use raw evidence and current source to verify claims; older exports remain immut
 
 Astra reviews/integrates; at most one Luna xhigh/default worker, no nested agents,
 concise task context, Fast off. Targeted checks; live/full E2E only at milestones.
-Latest actual Codex App Server read: 28% weekly used, 72% remaining. Stop workers
+Latest actual Codex App Server read: 29% weekly used, 71% remaining. Stop workers
 and tests below 20% remaining. Goal token totals are not subscription quota.
 Live model tests: Luna only, low/default, max4096 output tokens/call, no automatic
 retries. OpenRouter2 calls/run (local file default512; explicit raised-cap flag
@@ -81,9 +81,15 @@ worker-reported/unverified. Baseline fidelity-* artifacts duplicate conforming
 baseline; only experiment-22000 artifacts demonstrate the attempted variant.
 Do not rerun vertex-budget tuning. Next architecture decision: bounded embedded
 texture support across decoder/worker transfer/material/export, or a different
-permissive asset with acceptable vertex-color appearance. Active worker /root/mushroom_color_fidelity now owns a NEW offline512x512
-embedded-PNG GLB prototype and isolated comparison only. No production source
-or catalog edits. First artifact must be retained; root visual review pending.
+permissive asset with acceptable vertex-color appearance. Textured prototype completed and root-reviewed: filter-corrected GLB271396bytes,
+666vertices/222triangles, embedded512PNG, exactCC0, base0/height1. Hash3bb6e9fc
+verified. Front/rear show softly filtered spots without old fringes; uniform
+pink visible. Initial nearest-filter export and blank-pink fixture preserved;
+corrected evidence mushroom-basic-textured-filter-corrected{,-preview}.
+Typecheck and20hosted/recovery tests passed after correcting texture image types
+and earlier helper optional-parameter typings. No catalog/runtime integration yet.
+Next implement decoder/transfer/cache contract from catalog-texture-integration-plan.md,
+then editor/export integration before asset admission. No active worker.
 
 ## Asset handoff (paused)
 

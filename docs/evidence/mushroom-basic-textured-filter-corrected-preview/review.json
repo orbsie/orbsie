@@ -1,0 +1,24 @@
+{
+  "status": "accepted-prototype-appearance",
+  "rootReviewed": [
+    "front.png",
+    "rear.png"
+  ],
+  "glbSha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+  "observations": [
+    "Silhouette retained.",
+    "White-spot edges softly filtered without vertex-bake fringes.",
+    "Uniform pink is visible with texture removed."
+  ],
+  "licenseBytesVerified": true,
+  "limitations": [
+    "512px image loses some fine detail.",
+    "Isolated SwiftShader preview does not prove editor/worker/export integration or mobile performance."
+  ],
+  "catalogAdmission": false,
+  "checks": {
+    "typescript": "passed",
+    "hostedAndRecoveryTests": 20,
+    "syntaxAndBundle": "passed"
+  }
+}

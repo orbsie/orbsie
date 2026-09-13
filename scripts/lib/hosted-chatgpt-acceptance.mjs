@@ -128,6 +128,20 @@ function validModelingFeedback(value) {
   return true;
 }
 
+/**
+ * @param {{
+ *   liveE2E: string,
+ *   baseOrigin: string,
+ *   expectedModel: string,
+ *   serviceTier?: string,
+ *   accountStorageStatePath: string,
+ *   interruptedRecovery?: boolean,
+ *   interruptionMethod?: string,
+ *   companionConfigured?: boolean,
+ *   testLimits?: string,
+ *   outputTokenCap?: string | null,
+ * }} options
+ */
 export function assertHostedPreflight({
   liveE2E,
   baseOrigin,

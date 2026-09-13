@@ -1,0 +1,201 @@
+{
+  "status": "prototype-generated",
+  "scope": "offline embedded-texture derivative; no runtime integration or catalog admission",
+  "sourceInspection": "docs/evidence/mushroom-basic-inspection/report.json",
+  "license": {
+    "spdx": "CC0",
+    "creator": "Asset Quest",
+    "url": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceTextPath": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/License.txt",
+    "sourceTextSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+    "preservedTextPath": "docs/evidence/mushroom-basic-textured-filter-corrected/License.txt"
+  },
+  "inputs": {
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Meshes/Fly_Agaric_Basic.fbx",
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b",
+      "bytes": 33856
+    },
+    "tga": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Textures/Mushrooms_C.tga",
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "bytes": 50331692
+    }
+  },
+  "texture": {
+    "atlasPath": "docs/evidence/mushroom-basic-textured-filter-corrected/atlas.png",
+    "atlasSha256": "4c92d96ce501c7edd13d0153453cc1d3d9c2d1fe25db696b5cffe1ab3f2ac303",
+    "sourceWidth": 4096,
+    "sourceHeight": 4096,
+    "atlasWidth": 512,
+    "atlasHeight": 512,
+    "format": "PNG",
+    "embeddedMimeType": "image/png",
+    "embeddedBufferView": 3,
+    "embeddedBytes": 248508,
+    "colorSpace": "sRGB",
+    "sampling": "source UVs retained; atlas resized from original TGA with Lanczos3",
+    "sampler": {
+      "magFilter": 1006,
+      "minFilter": 1008,
+      "generateMipmaps": true,
+      "gltfMagFilter": 9729,
+      "gltfMinFilter": 9987
+    },
+    "encoder": {
+      "package": "sharp",
+      "version": "0.35.4",
+      "role": "transitive build-time PNG encoder; no new dependency added"
+    }
+  },
+  "material": {
+    "name": "Mushooms_MAT_embedded_512_png",
+    "baseColor": [
+      0.6038273590529664,
+      0.6038273590529664,
+      0.6038273590529664
+    ],
+    "baseColorTextureIndex": 0,
+    "mapPreserved": true
+  },
+  "normalization": {
+    "sourceBounds": {
+      "min": [
+        -7.282815933227539,
+        -0.1662549078464508,
+        -7.282815933227539
+      ],
+      "max": [
+        7.282815933227539,
+        18.43482780456543,
+        7.282815933227539
+      ],
+      "size": [
+        14.565631866455078,
+        18.60108271241188,
+        14.565631866455078
+      ]
+    },
+    "sourceMatrixWorld": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "applied": "source matrixWorld, then center X/Z, subtract source min Y, scale total height to 1 meter",
+    "sourceToOutputScale": 0.05376031145395281,
+    "outputUnits": "meters",
+    "outputBaseY": 0,
+    "outputHeight": 1
+  },
+  "output": {
+    "path": "docs/evidence/mushroom-basic-textured-filter-corrected/prototype.glb",
+    "bytes": 271396,
+    "sha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+    "selfContained": true,
+    "hasImages": true,
+    "hasExternalUris": false,
+    "images": [
+      {
+        "mimeType": "image/png",
+        "bufferView": 3
+      }
+    ],
+    "meshes": [
+      {
+        "name": "Fly_Agaric_Basic_textured_512",
+        "vertices": 666,
+        "triangles": 222,
+        "attributes": [
+          "POSITION",
+          "NORMAL",
+          "TEXCOORD_0"
+        ],
+        "hasMap": true
+      }
+    ],
+    "bounds": {
+      "min": [
+        -0.391526460647583,
+        0,
+        -0.391526460647583
+      ],
+      "max": [
+        0.391526460647583,
+        1,
+        0.391526460647583
+      ],
+      "size": [
+        0.783052921295166,
+        1,
+        0.783052921295166
+      ]
+    }
+  },
+  "structural": {
+    "vertices": 666,
+    "triangles": 222,
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0"
+    ],
+    "bounds": {
+      "min": [
+        -0.391526460647583,
+        0,
+        -0.391526460647583
+      ],
+      "max": [
+        0.391526460647583,
+        1,
+        0.391526460647583
+      ],
+      "size": [
+        0.783052921295166,
+        1,
+        0.783052921295166
+      ]
+    },
+    "normals": {
+      "minLength": 0.9999999606287112,
+      "maxLength": 1.0000000396242892
+    },
+    "winding": {
+      "minFaceNormalDotInterpolatedNormal": 0.8851673541739191,
+      "maxFaceNormalDotInterpolatedNormal": 1,
+      "invertedWindingCount": 0
+    }
+  },
+  "checks": {
+    "finiteGeometry": true,
+    "vertexLimit": "666 <= 30000",
+    "byteLimit": "271396 < 2097152",
+    "baseY": true,
+    "oneMeterHeight": true,
+    "normalsFinite": true,
+    "uvFinite": true,
+    "noExternalUris": true,
+    "oneEmbeddedPng": true,
+    "embeddedBufferViewInRange": true,
+    "embeddedAtlas512": true,
+    "linearAtlasSampling": true,
+    "windingNoInversions": true
+  },
+  "appearance": {
+    "status": "unverified",
+    "note": "Front/rear isolated comparison is recorded by the companion textured preview evidence."
+  }
+}

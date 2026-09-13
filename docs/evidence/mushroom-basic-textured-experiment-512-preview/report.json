@@ -1,0 +1,144 @@
+{
+  "status": "rendered",
+  "scope": "isolated local Three/Playwright visual comparison; no app or catalog integration",
+  "inputs": {
+    "inspection": "docs/evidence/mushroom-basic-inspection/report.json",
+    "conversion": "docs/evidence/mushroom-basic-textured-experiment-512/report.json",
+    "fbx": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Meshes/Fly_Agaric_Basic.fbx",
+      "sha256": "cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b",
+      "bytes": 33856
+    },
+    "tga": {
+      "path": "/tmp/orbsie-mushroom-basic.Pe17Iz/selected/Textures/Mushrooms_C.tga",
+      "sha256": "b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680",
+      "bytes": 50331692
+    },
+    "glb": {
+      "path": "docs/evidence/mushroom-basic-textured-experiment-512/prototype.glb",
+      "sha256": "89cdbf9338120899a07a15e7e73d2a850c17e259a82c8e16aa68197b1a90bd70",
+      "bytes": 271396
+    },
+    "license": {
+      "license": "CC0",
+      "creator": "Asset Quest",
+      "url": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "sha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6"
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "devicePixelRatio": 1
+  },
+  "camera": {
+    "front": {
+      "position": [
+        1.7,
+        1.2,
+        2
+      ],
+      "lookAt": [
+        0,
+        0.5,
+        0
+      ]
+    },
+    "rear": {
+      "position": [
+        -1.7,
+        1.2,
+        -2
+      ],
+      "lookAt": [
+        0,
+        0.5,
+        0
+      ]
+    }
+  },
+  "lightsAndBackground": "identical hemisphere + key/fill directional lights and #07110e background",
+  "textures": {
+    "original": {
+      "loaded": true,
+      "width": 4096,
+      "height": 4096,
+      "flipY": true,
+      "colorSpace": "srgb"
+    },
+    "embedded": {
+      "loaded": true,
+      "width": 512,
+      "height": 512,
+      "colorSpace": "srgb"
+    },
+    "pink": {
+      "mapRemoved": true,
+      "color": "#ff69b4"
+    }
+  },
+  "bounds": {
+    "original": {
+      "min": [
+        -0.3915264528321225,
+        0,
+        -0.3915264528321225
+      ],
+      "max": [
+        0.3915264528321225,
+        1,
+        0.3915264528321225
+      ],
+      "size": [
+        0.783052905664245,
+        1,
+        0.783052905664245
+      ]
+    },
+    "embedded": {
+      "min": [
+        -0.391526460647583,
+        0,
+        -0.391526460647583
+      ],
+      "max": [
+        0.391526460647583,
+        1,
+        0.391526460647583
+      ],
+      "size": [
+        0.783052921295166,
+        1,
+        0.783052921295166
+      ]
+    },
+    "pink": {
+      "min": [
+        -0.391526460647583,
+        0,
+        -0.391526460647583
+      ],
+      "max": [
+        0.391526460647583,
+        1,
+        0.391526460647583
+      ],
+      "size": [
+        0.783052921295166,
+        1,
+        0.783052921295166
+      ]
+    }
+  },
+  "ready": true,
+  "pageErrors": [],
+  "externalRequests": [],
+  "screenshots": {
+    "front": "docs/evidence/mushroom-basic-textured-experiment-512-preview/front.png",
+    "rear": "docs/evidence/mushroom-basic-textured-experiment-512-preview/rear.png"
+  },
+  "appearance": {
+    "status": "review-required",
+    "note": "Front/rear panels compare the original full texture, embedded 512px atlas, and map-free uniform pink. Screenshots require human fidelity review."
+  }
+}

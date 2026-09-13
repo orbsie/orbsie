@@ -1,0 +1,56 @@
+{
+  "status": "completed-with-corrected-preview",
+  "scope": "one offline 512x512 embedded-texture prototype; no runtime integration or catalog admission",
+  "implementation": {
+    "converter": "scripts/build-textured-mushroom-candidate.mjs",
+    "previewFixture": "scripts/mushroom-textured-preview-fixture.ts",
+    "previewVerifier": "scripts/verify-textured-mushroom-preview.mjs",
+    "atlas": "512x512 PNG made once from the inspected 4096x4096 TGA; source UVs, normals, winding, and silhouette retained",
+    "glb": {
+      "path": "docs/evidence/mushroom-basic-textured-experiment-512/prototype.glb",
+      "sha256": "89cdbf9338120899a07a15e7e73d2a850c17e259a82c8e16aa68197b1a90bd70",
+      "bytes": 271396,
+      "vertices": 666,
+      "triangles": 222,
+      "embeddedImage": "image/png bufferView 3; no URI",
+      "bounds": "Y 0..1 m; X/Z +/-0.39152646 m",
+      "license": "CC0 / Asset Quest; preserved License.txt SHA-256 ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6"
+    }
+  },
+  "previewEvidence": {
+    "firstAttempt": {
+      "directory": "docs/evidence/mushroom-basic-textured-experiment-512-preview",
+      "status": "preserved-failed-harness-render",
+      "frontSha256": "fadadbc79bbd8b80fb4a73bc3dba180ca5f2daaed790a0fec0c83278e2c708f3",
+      "rearSha256": "600d569c2c54adc9f154ca2da44ded074b4346448934b7bad937134ca851e3ec",
+      "finding": "The uniform pink panel was blank because the first fixture version assigned a single material as a one-element array on ungrouped geometry. The directory is immutable and is excluded from the visual verdict."
+    },
+    "corrected": {
+      "directory": "docs/evidence/mushroom-basic-textured-experiment-512-preview-corrected",
+      "status": "rendered",
+      "frontSha256": "2912a06e1588441754e456e9ed75f8852f611208254e1ba3fad5a02bfd596cb8",
+      "rearSha256": "391f91665412700b1161f348cd1948a4fec62bbf9d3427f6b2f18d138a6640f2",
+      "checks": [
+        "Original full 4096x4096 TGA and embedded 512x512 PNG both loaded.",
+        "Uniform pink material rendered with mapRemoved=true and color #ff69b4.",
+        "Front and rear renders had no page errors or external requests.",
+        "Original, embedded, and pink bounds match within renderer precision."
+      ]
+    }
+  },
+  "visualVerdict": {
+    "result": "color-fidelity-improved-but-aliased",
+    "evidence": "The embedded view restores the original cap red/white spot layout and stem coloration that the uniform vertex-color comparator cannot represent; the pink comparator confirms the map contribution is removed. The 512 atlas visibly introduces jagged high-frequency spot edges, especially around the large front spot and rear spots.",
+    "comparisonBaseline": {
+      "front": "docs/evidence/mushroom-basic-conforming-preview/front.png",
+      "frontSha256": "cd27242533bd5481fab06beedcc030de461366fcee1616c7cce5b391dcac9b43",
+      "rear": "docs/evidence/mushroom-basic-conforming-preview/rear.png",
+      "rearSha256": "5c3d0eb6710512c008ee9df21176466864026ee3ea1c494252504bbea587eb6a"
+    }
+  },
+  "limitations": [
+    "This is an isolated prototype; runtime loader/material/export integration was not changed.",
+    "The result is a visual comparison, not a pixel-difference or perceptual score.",
+    "One 512x512 atlas experiment was run; no tuning loop was performed. The visible aliasing remains a fidelity limitation for this bounded prototype."
+  ]
+}
