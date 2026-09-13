@@ -69,9 +69,7 @@ Source review at36b61a2 found that hosted mode sets `outputCap = null` in
 512 KiB, deltas at8192 and default duration at180 seconds; these are
 application transport and runtime limits, not a provider token or cost
 guarantee. The RPC policy currently sends no maximum-output-token parameter.
-Two-request enforcement does not imply a per-request token bound. The exact
-acknowledgement below is pending owner approval of these actual bounds; do not
-run live acceptance while that approval is pending. This does not restrict
+Two-request enforcement does not imply a per-request token bound. The owner subsequently approved the live calls needed for acceptance (2026-09-13), in response to the actual time/byte-bound question. Use the existing two-call harness per milestone; additional justified milestones are authorized. Per-call safeguards and the 20% remaining Codex quota stop remain. This does not restrict
 end-user model choice.
 
 ## Running the hosted milestone
@@ -83,8 +81,7 @@ is bundled from the application protocol after private account-state checks;
 the temporary bundle is removed after import. Syntax checks also pass. These
 checks do not prove real subscription consent or inference. The command below
 is the live invocation, not a record of successful subscription acceptance.
-Owner approval of the actual application bounds is still pending, so do not
-run it yet.
+Owner approval of the actual application bounds is recorded above. Real product consent and an authorized private Orbsie session remain prerequisites; neither is inferred from approval.
 
 After the owner expressly approves the actual bounds, supplies an authorized
 private cookies-only storage-state file, and completes ChatGPT consent in the
