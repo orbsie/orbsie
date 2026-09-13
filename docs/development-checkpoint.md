@@ -37,7 +37,8 @@ Next bounded implementation: hosted ChatGPT active-session renewal, using
 `chatgpt-session-lifetime-followup.md`. Root rechecked registry/backend/manager
 and generate route:10minute host, no renewal, separate30s acquisition+175s fetch
 budgets. Preserve owner/session/attempt revocation and a total request deadline.
-No worker assigned to this next task yet. Follow with full-provider harness work
+One Luna worker `/root/host_session_renewal` now owns this bounded backend/route
+and focused-test task, with no live calls, deployment or nested agents. Follow with full-provider harness work
 in `provider-flagship-harness-followup.md`; fresh story currently Gateway-only.
 Browser CUA remains unavailable; owner failure not reproduced, no bypass.
 
@@ -53,8 +54,11 @@ browser surface restoration. No new model calls during texture work.
 
 ## Production and workspace
 
-Production sourceb880edd (ChatGPT fix4eb9ce8) deployed to
-https://orbsie-5jeulbfbi-grappeggias-projects.vercel.app, aliased https://orbsie.com.
+Production source2a1a38f (WebGL and software atlas integration, retaining ChatGPT
+fix4eb9ce8) deployed to https://orbsie-812hk6i52-grappeggias-projects.vercel.app,
+aliased https://orbsie.com. Local/Vercel builds pass; HTTP200 and exact player
+runtime/source hashes verified in `software-texture-release-20260913/report.json`.
+No new owner-browser or live inference acceptance from this release.
 Build/typecheck passed. Read-only deployed HTTP200 and exact player runtime/source
 hashes passed: `chatgpt-completion-release-20260913/report.json`. No post-fix live
 inference yet. Graphics fallback source1b8698d, advice52ee047,
@@ -66,10 +70,10 @@ click/color, visibility, position/path, score/reset acceptance passed:
 external standalone requests. Fallback/retry/race suite also passed. These are
 focused checks, not full mobile/flagship/performance certification.
 
-Main ff61fbc contains reviewed WebGL texture work and fallback evidence;
-software atlas worker changes are not yet reviewed. Do not deploy main
+Main2a1a38f contains reviewed WebGL/software atlas work and fallback evidence;
+host-session-renewal worker changes are not yet reviewed. Do not deploy main
 worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
-`/tmp/orbsie-chatgpt-release-4eb9ce8` is atb880edd with dependencies and project
+`/tmp/orbsie-chatgpt-release-4eb9ce8` is at2a1a38f with dependencies and project
 link. Local production build and Vercel production build passed. Servers3071/3072
 were stopped; local3070 historically exists, verify before use. Deploy reviewed
 commits through isolated worktree. Vercel CLI uses existing local auth; no keys in

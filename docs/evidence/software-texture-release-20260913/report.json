@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-09-13T17:42:31.726965+00:00",
+  "sourceCommit": "2a1a38f",
+  "deployment": "https://orbsie-812hk6i52-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "localBuildPassed": true,
+  "vercelBuildPassed": true,
+  "modelCalls": 0,
+  "browserAcceptance": false,
+  "generatedBuildDifference": "Next-generated next-env.d.ts points to production .next/types rather than .next/dev/types; renderer artifacts unchanged by local build.",
+  "/": {
+    "status": 200,
+    "bytes": 10783,
+    "sha256": "cc6dfc941282a2208a602f7ccef29bf877a6246d3af806a29109c926c4c9bb36"
+  },
+  "/player/runtime.js": {
+    "status": 200,
+    "bytes": 1818294,
+    "sha256": "308aebbe85589b371af0a57c142a4bf1006327843e0459932f2fb82ce34a54d8",
+    "matchesReleaseArtifact": true
+  },
+  "/player/source.json": {
+    "status": 200,
+    "bytes": 640472,
+    "sha256": "aa5f0164595357d5bb76cfa45a45277470faec1402aa3f70137e6edc585e99c3",
+    "matchesReleaseArtifact": true
+  },
+  "passed": true
+}
