@@ -100,6 +100,7 @@ const World = dynamic(() => import("./world"), {
   ),
 });
 type Connection = GenerationConnection;
+type RendererAvailability = "initializing" | "ready" | "unavailable";
 type ProviderLogoKind = "chatgpt" | "openrouter" | "gateway";
 
 const providerLogoSources: Record<ProviderLogoKind, string> = {
@@ -174,6 +175,37 @@ type CloudProject = {
 export default function Orbsie() {
   const s = useOrb();
   const [prompt, setPrompt] = useState("");
+  const [rendererAvailability, setRendererAvailability] =
+    useState<RendererAvailability>("initializing");
+  const [graphicsError, setGraphicsError] = useState("");
+  const rendererAvailabilityRef = useRef<RendererAvailability>("initializing");
+  const submittedPrompt = useRef<string | null>(null);
+  const setRendererState = useCallback((next: RendererAvailability) => {
+    rendererAvailabilityRef.current = next;
+    setRendererAvailability(next);
+  }, []);
+  const handleRendererReady = useCallback(() => {
+    if (rendererAvailabilityRef.current === "unavailable") return;
+    setRendererState("ready");
+  }, [setRendererState]);
+  const handleRendererError = useCallback(
+    (message: string) => {
+      const current = useOrb.getState();
+      const wasBuilding = current.building;
+      const interruptedPrompt = wasBuilding ? submittedPrompt.current : null;
+      setRendererState("unavailable");
+      setGraphicsError(message);
+      parcelTransitionController.markRendererUnavailable();
+      if (wasBuilding) current.stop();
+      setPrompt((draft) =>
+        draft.trim() ? draft : wasBuilding ? (interruptedPrompt ?? "") : draft,
+      );
+      useOrb.getState().set({ notice: "" });
+      if (useOrb.getState().phase === "descending")
+        useOrb.getState().set({ phase: "editing" });
+    },
+    [setRendererState],
+  );
   const dictation = useDictation(prompt, setPrompt, (message) =>
     s.set({ error: message }),
   );
@@ -760,6 +792,7 @@ export default function Orbsie() {
     const originalWorld = captureCloudRequest();
     const selectedConnectionVersion = connectionVersion.current;
     try {
+      if (rendererAvailabilityRef.current !== "ready") return;
       let selectedConnection = connection;
       if (!isGenerationReady(connection)) {
         if (connection.provider === "chatgpt-hosted") {
@@ -768,6 +801,7 @@ export default function Orbsie() {
         }
         const allowance = await refreshTrial();
         if (
+          rendererAvailabilityRef.current !== "ready" ||
           !originalWorld() ||
           (!retrying && textarea.current?.value !== text) ||
           connectionVersion.current !== selectedConnectionVersion
@@ -792,6 +826,8 @@ export default function Orbsie() {
         }
         selectedConnection = { provider: "free", model: "", key: "" };
       }
+      if (rendererAvailabilityRef.current !== "ready") return;
+      submittedPrompt.current = instruction;
       setPrompt("");
       const accountVersion = accountGeneration.current;
       const originProjectId = current.project.id;
@@ -955,8 +991,10 @@ export default function Orbsie() {
         }
       }
     } finally {
-      if (submission.current.sequence === sequence)
+      if (submission.current.sequence === sequence) {
         submission.current.checking = false;
+        submittedPrompt.current = null;
+      }
     }
   };
   const generationRecovery =
@@ -1240,19 +1278,26 @@ export default function Orbsie() {
   return (
     <main
       className={`app ${landing ? "is-landing" : "is-workspace"} ${publicView ? "is-public" : ""} ${sheet ? "sheet-open" : "sheet-closed"}`}
+      data-renderer-availability={rendererAvailability}
     >
       <div className="sky-texture" aria-hidden="true" />
       <div className="cosmic-backdrop" aria-hidden="true" />
       <div className="scene">
         <World
-          onError={() => {
-            parcelTransitionController.markRendererUnavailable();
-            const current = useOrb.getState();
-            if (current.phase === "descending")
-              current.set({ phase: "editing" });
-          }}
+          onRendererReady={handleRendererReady}
+          onError={handleRendererError}
         />
       </div>
+      {rendererAvailability === "unavailable" && (
+        <div className="graphics-error" role="alert" aria-live="assertive">
+          <strong>Graphics are unavailable</strong>
+          <p>{graphicsError || "WebGL2 could not start in this browser."}</p>
+          <p>
+            Your draft is still here. Saved worlds have not been changed. Try a
+            recent browser with hardware acceleration enabled.
+          </p>
+        </div>
+      )}
       {landing && (
         <div className="orbital-lines" aria-hidden="true">
           <i />
@@ -1596,7 +1641,9 @@ export default function Orbsie() {
                   <button
                     className="create-button"
                     type="submit"
-                    disabled={!prompt.trim()}
+                    disabled={
+                      !prompt.trim() || rendererAvailability !== "ready"
+                    }
                   >
                     {landing ? "Create" : "Change this"}
                     <ArrowUp size={16} />

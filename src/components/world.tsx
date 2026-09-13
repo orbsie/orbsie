@@ -1167,10 +1167,12 @@ class Boundary extends Component<
 }
 export default function World({
   onReady,
+  onRendererReady,
   onError,
   onInputLatency,
 }: {
   onReady?: () => void;
+  onRendererReady?: () => void;
   onError?: (message: string) => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
 } = {}) {
@@ -1202,6 +1204,7 @@ export default function World({
           }
         }}
         fallback={<Unavailable />}
+        onCreated={() => onRendererReady?.()}
         onPointerMissed={() => {
           if (!useOrb.getState().playing)
             useOrb.getState().set({ selected: undefined });

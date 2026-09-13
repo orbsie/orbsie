@@ -1032,6 +1032,36 @@ kbd {
   color: #75917f;
   gap: 15px;
 }
+.graphics-error {
+  position: absolute;
+  z-index: 6;
+  top: 76px;
+  left: 50%;
+  width: min(470px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 13px 16px;
+  border: 1px solid #e7c7b6;
+  border-radius: 11px;
+  background: #fffaf3f2;
+  box-shadow: var(--shadow);
+  color: #7e5249;
+  text-align: center;
+  pointer-events: none;
+}
+.graphics-error strong {
+  display: block;
+  font-size: 12px;
+}
+.graphics-error p {
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.is-landing .graphics-error {
+  background: #162a2bef;
+  border-color: #e7c7b688;
+  color: #f2d8c9;
+}
 .loading-orb {
   height: 70px;
   width: 70px;
