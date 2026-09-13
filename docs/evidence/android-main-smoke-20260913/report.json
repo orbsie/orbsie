@@ -26,12 +26,19 @@
     "composerVisible": true,
     "fatalGraphicsDialogVisible": false,
     "keyboardVisibleComposerAndCreateReachable": true,
-    "draftTypedWithoutSubmission": "a tree"
+    "draftTypedWithoutSubmission": "a tree",
+    "landscapeDraftPreserved": true,
+    "landscapeConnectionsOpenedByTouch": true,
+    "chatgptConnectReachableAfterScroll": true,
+    "chatgptDeviceSignInRequestCreated": true,
+    "openSignInNavigatedTo": "https://auth.openai.com/codex/device",
+    "cancelSignInTappedAfterReturn": true
   },
   "limitations": [
     "No generated-game traversal",
     "No physical-device performance claim",
-    "No forced Canvas2D claim; rendered planet seen visually"
+    "No forced Canvas2D claim; rendered planet seen visually",
+    "ChatGPT login/consent/generation not completed; device code deliberately omitted"
   ],
   "modelCalls": 0,
   "findings": [
