@@ -1,0 +1,26 @@
+{
+  "codexVersion": "0.153.4",
+  "source": "v2/TurnStartParams.json",
+  "sha256": "b36fb37326b1cf69f75c8b306f1f886d53a57c4b1b985e08e298e2407ea2ad02",
+  "readOnlyPolicy": {
+    "properties": {
+      "networkAccess": {
+        "default": false,
+        "type": "boolean"
+      },
+      "type": {
+        "enum": [
+          "readOnly"
+        ],
+        "title": "ReadOnlySandboxPolicyType",
+        "type": "string"
+      }
+    },
+    "required": [
+      "type"
+    ],
+    "title": "ReadOnlySandboxPolicy",
+    "type": "object"
+  },
+  "finding": "Current access/readableRoots request fields are absent from the pinned schema. Do not assume they enforce a restricted-root boundary. This is not established as the live generation failure cause."
+}

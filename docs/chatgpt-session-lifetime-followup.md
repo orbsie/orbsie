@@ -18,3 +18,15 @@ avoid extending credentials or retaining them silently beyond product policy.
 Test active-session continuity, idle expiry, refresh and clean reconnect. Reuse
 existing consent only while the actual host reports connected. Do not copy
 browser cookies or local Codex credentials to bypass reconnect.
+
+2026-09-13 verification: installed @vercel/sandbox3.2.2 declares
+Sandbox.extendTimeout(duration,{signal}); the pinned application currently does
+not call it. Official current duration/persistence guidance also documents this
+capability: https://vercel.com/kb/guide/vercel-sandbox-duration-and-persistence .
+Runtime extension and credential persistence are separate decisions. Keep
+persistent:false and resume:false unless a separately reviewed policy changes
+that contract. Renewal must coordinate the registry expiry with the actual
+running sandbox, preserve owner/session/attempt checks and logout cleanup, and
+reserve enough time for an in-flight generation. Passive status polling must not
+silently keep metered runtimes alive indefinitely. No renewal was implemented by
+this investigation.
