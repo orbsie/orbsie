@@ -1,0 +1,28 @@
+{
+  "scope": "Android emulator readiness; no Orbsie page or gameplay acceptance",
+  "avd": "orbsie_api35_phone",
+  "serial": "emulator-5580",
+  "api": 35,
+  "emulatorVersion": "37.1.11.0",
+  "chromeVersion": "124.0.6367.219",
+  "memoryMiB": 3072,
+  "cores": 2,
+  "gpu": "swiftshader",
+  "readOnly": true,
+  "physicalDevices": 0,
+  "booted": true,
+  "chromeStarted": true,
+  "modelCalls": 0,
+  "browserTermsAccepted": false,
+  "termsShown": {
+    "url": "https://policies.google.com/terms",
+    "country": "United States",
+    "effective": "2026-07-30"
+  },
+  "blocker": "Chrome first-run terms require specific owner consent; async request pending. Do not bypass first-run or copy another profile.",
+  "limitations": [
+    "Emulator is not physical midrange device proof",
+    "Installed Chrome124 is old and does not prove current mobile browser coverage",
+    "No Orbsie rendering/input/performance assertion"
+  ]
+}

@@ -110,3 +110,13 @@ Prior provider evidence remains in archive: OpenRouter3658d7e create/pink edit/
 reload/export/contact passed with visual-quality gap; Gateway input-game39b8c90
 and3-call cloud recovery passed; free blue-strawberry2→1→0 passed. Do not repeat
 those isolated checks as a substitute for missing full same-world milestones.
+
+## Android preflight2026-09-13
+
+Existing orbsie_api35_phone AVD booted read-only on emulator-5580 using2cores,
+3072MiB and SwiftShader. Installed Chrome124 first-run requires Google US terms
+effective2026-07-30; async specific approval requested, no terms accepted or
+Orbsie page tested. Evidence `android-emulator-preflight-20260913/`. Native
+physical devices remain absent; this older Chrome does not certify current mobile.
+Emulator exec session16021 is running, pending consent; inspect authoritative
+ADB/process state before continuing, do not bypass first-run.
