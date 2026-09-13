@@ -28,9 +28,13 @@ Acceptance: source/pink/restored views, shared appearance isolation, stale/faile
 replacement preserving last-good geometry/texture, cleanup and offline export.
 Candidate: `mushroom-basic-textured-filter-corrected/prototype.glb`; fixture-only
 catalog substitution must preserve exact candidate CC0 text and be labeled as such.
-SoftwareWorld currently averages vertex colors and ignores atlas pixels. This is
-an explicit remaining appearance gap before textured catalog admission; geometry,
-tint and gameplay still work. Do not claim full texture compatibility there.
+Root expanded the same task to SoftwareWorld: precompute approximate vertex
+colors from atlas UV samples in the committed geometry effect, preserve uniform
+recipe/game tint overrides and last-good replacement, no per-frame texture work.
+Forced-WebGL-failure candidate source/pink/restored acceptance is required. This
+is reduced-detail software appearance, not full texture-map fidelity. Root restored
+the exact source archive to /home/marcos/.cache/orbsie/source-archives/; provenance
+report `mushroom-source-restored-20260913/report.json` matches all original hashes.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
 reviewed and deployed. Six focused suites78 tests, typecheck and local/Vercel
@@ -46,7 +50,9 @@ browser surface restoration. No new model calls during texture work.
 
 Production sourceb880edd (ChatGPT fix4eb9ce8) deployed to
 https://orbsie-5jeulbfbi-grappeggias-projects.vercel.app, aliased https://orbsie.com.
-Build/typecheck passed. Graphics fallback source1b8698d, advice52ee047,
+Build/typecheck passed. Read-only deployed HTTP200 and exact player runtime/source
+hashes passed: `chatgpt-completion-release-20260913/report.json`. No post-fix live
+inference yet. Graphics fallback source1b8698d, advice52ee047,
 standalone bundle0ff35ca. Owner Chrome now renders Canvas2D and enables Create
 with prompt; no fatal dialog. Evidence `software-owner-local/production.json`.
 43 shared gameplay/input/readiness unit tests passed. Editor+standalone variable,
