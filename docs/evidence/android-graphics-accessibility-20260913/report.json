@@ -1,0 +1,15 @@
+{
+  "scope": "Actual Android emulator Chrome accessibility tree and root-viewed local screenshot",
+  "url": "http://localhost:3091",
+  "baseCommit": "7066184",
+  "worldSourceSha256": "ffd5a0556dc1a1954364dc54fb65ddccaf219fc7b09cc3888da1ce1fa112e7b2",
+  "graphicsUnavailableTextAbsent": true,
+  "namedGameplayRegionPresent": true,
+  "planetVisiblyRendered": true,
+  "modelCalls": 0,
+  "limitations": [
+    "Not deployed yet",
+    "No TalkBack spoken-output or physical-device claim",
+    "Software and genuine-failure states checked separately by worker"
+  ]
+}
