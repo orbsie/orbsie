@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-13T18:11:07.792539+00:00",
+  "channel": "provided chrome_devtools connector; no raw CDP/cookie copying",
+  "publicUrl": "https://orbsie.com/o/pub-free-30102c5c-f34a-421e-ac0f-654246d79bc6",
+  "iframeUrl": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
+  "publishedRevision": 1,
+  "observedMessage": "Your world needs WebGL2. Try a browser with hardware acceleration enabled.",
+  "compatibilityPassed": false,
+  "interpretation": "Historical standalone publication retains pre-fallback runtime; current editor deploy does not update this immutable published copy. Fresh publication required for current acceptance.",
+  "screenshot": "Reviewed inline through tool; file save denied by connector workspace-root policy, no alternate file write attempted.",
+  "modelCalls": 0,
+  "nextAction": "Fresh original-project publication through authorized owner flow; validate current runtime/source hashes and gameplay. Do not count old publication as current fallback proof."
+}

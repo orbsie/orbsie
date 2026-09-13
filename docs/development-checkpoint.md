@@ -128,3 +128,20 @@ Orbsie page tested. Evidence `android-emulator-preflight-20260913/`. Native
 physical devices remain absent; this older Chrome does not certify current mobile.
 Emulator exec session16021 is running, pending consent; inspect authoritative
 ADB/process state before continuing, do not bypass first-run.
+
+## Alternate browser connector discovery2026-09-13
+
+Provided chrome_devtools tools work (discover via ALL_TOOLS); CUA still lacks
+CUA_REPL_ENABLED_SURFACES. This profile is signed out of ChatGPT. No raw CDP,
+cookie copying, new login or model call. Tabs:2orbsie.com (mobile390x844,
+Connections open, test draft cleared);3chatgpt.com signed out;4historical published
+world in isolated context orbsie-public-release. Full inventory via list_pages.
+Current editor software-ready/mobile layout/Create enablement passed, evidence
+`production-mobile-viewport-20260913/report.json`. Actual ChatGPT connect buttons
+lack the existing OpenAI logo; assigned tiny fix to current worker.
+Historical published revision1 still has pre-fallback independent runtime and
+shows WebGL2 unavailable, evidence `published-old-runtime-20260913/report.json`.
+Fresh current-runtime publication is required; current editor deployment does
+not hot-update immutable old published games. Connector screenshot file save to
+repo denied by its workspace-root policy; inline screenshot viewing worked.
+Do not route around that filesystem restriction.

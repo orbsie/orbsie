@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-09-13T18:11:07.792985+00:00",
+  "sourceRelease": "0a2fbf6",
+  "url": "https://orbsie.com",
+  "channel": "provided chrome_devtools connector",
+  "viewport": [
+    390,
+    844
+  ],
+  "touchEmulation": true,
+  "physicalDevice": false,
+  "rendererAvailability": "ready",
+  "softwareCanvas": true,
+  "fatalGraphicsDialog": false,
+  "horizontalOverflow": false,
+  "createEnabledWithPrompt": true,
+  "testDraftRestoredEmpty": true,
+  "generationSubmitted": false,
+  "modelCalls": 0,
+  "connectionsDialogBounds": {
+    "left": 16,
+    "right": 374,
+    "top": 42.203125,
+    "bottom": 801.796875
+  },
+  "ChatGPTAccount": "This browser profile shows Log in on chatgpt.com; not the previously authorized owner session.",
+  "remainingIssue": "Actual Connect ChatGPT control lacks OpenAI logo; tiny existing-asset fix assigned to current Luna worker.",
+  "scope": "Fresh production mobile-sized editor/connection layout smoke check only; no gameplay/physical-device/live-provider acceptance"
+}
