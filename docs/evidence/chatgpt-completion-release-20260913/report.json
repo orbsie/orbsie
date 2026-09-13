@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-09-13T16:31:25.838409+00:00",
+  "sourceCommit": "b880edd",
+  "scope": "read-only deployment response and independent-player artifact verification",
+  "modelCalls": 0,
+  "browserAcceptance": false,
+  "/": {
+    "status": 200,
+    "bytes": 10783,
+    "sha256": "5ebe4fbc9f053847bbfec3872f267f659677f0d77e573c8fbd409aaa81c7184e",
+    "orbsieTitlePresent": true
+  },
+  "/player/runtime.js": {
+    "status": 200,
+    "bytes": 1813280,
+    "sha256": "fd6747e86c3ed98d8e638bd3b98a1a87ee6d2898d422b696f2d6c9addbd23615",
+    "matchesReleaseArtifact": true
+  },
+  "/player/source.json": {
+    "status": 200,
+    "bytes": 623879,
+    "sha256": "75cf91387d025a31077bf38023dcd86358d34f1a2d8b355a10369e2283982b5d",
+    "matchesReleaseArtifact": true
+  },
+  "passed": true
+}
