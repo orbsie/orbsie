@@ -1,0 +1,11 @@
+{
+  "accepted": false,
+  "scope": "review of retained preliminary WebGL screenshots, not full task acceptance",
+  "images": {
+    "untinted-front.png": "Three particle seed forms remain; final source appearance is not established.",
+    "pink-front.png": "Selected left mushroom is mid-transition with pale patches; final uniform tint is not established.",
+    "untinted-rear.png": "Settled red mushroom caps with clean white spots and pale stems are recognizable in this view."
+  },
+  "next": "Capture settled source/pink/restored front and rear based on actual formation completion, keeping intermediate images separately.",
+  "runtimeBugClaim": false
+}
