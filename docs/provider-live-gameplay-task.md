@@ -1,12 +1,15 @@
 # Same-world live gameplay acceptance
 
-Pending bounded follow-up after publication identity checks. This document does
-not claim implementation or a live pass.
+Creation traversal and Play focus are implemented and locally validated (a553f02,
+bf654aa). Restart/replay focus is the current single-worker task. Route timing,
+seven/undo traversal and fresh publication gameplay remain pending. This document
+is an acceptance contract, not a claim of a complete live provider pass.
 
 ## Source findings
 
-`runFlagshipStory` in scripts/provider-browser-e2e.mjs verifies structure, UI
-selection, edits and undo, but explicitly reports traversal unverified.
+`runFlagshipStory` in scripts/provider-browser-e2e.mjs traverses creation and
+verifies UI selection, edits and undo structurally. It explicitly reports that
+seven-crystal and restored-five phases only check objective state.
 `scripts/verify-saved-bounce-route.mjs` uses fixed saved ZIP hashes/IDs and real
 keyboard steering with rendered Three.js telemetry. It is useful prior evidence,
 not proof for a new provider-created project. `verify-winning-traversal.mjs`
@@ -145,3 +148,25 @@ Validate the observed failure with targeted controller cases, then one meaningfu
 browser traversal under the affected timing conditions. Do not replace the hard
 three-contact/bounce gate or discard failed live attempts. The current creation
 fixture pass proves one successful route; it does not establish timing robustness.
+
+## Final report acceptance gate
+
+Root source audit after bf654aa: the CLI prints `Provider browser E2E passed`
+when `run()` returns even though the flagship report still lists seven/undo
+traversal limitations. Standalone playback can also report passed after canvas
+readiness without the flagship collection/portal journey. Those messages prove
+only the configured checks; they must not be used as full-goal evidence.
+
+As part of the seven/undo and publication integration, derive an explicit complete
+flagship acceptance result from required phase evidence. Require fresh creation
+with movement during generation, creation win/reset, seven-object win/reset,
+original undo followed by five-object win/reset, same-project refresh/export,
+and current-artifact signed-out publication win/restart. Bind every phase to its
+expected project/revision and keep authentication evidence separate.
+
+Missing, not-run, seeded-continuation, blocked or structural-only phases must
+produce incomplete acceptance, even if narrower configured checks succeeded.
+Keep partial reports useful and preserve their evidence; distinguish configured
+check success from complete journey acceptance in the CLI. Add targeted negative
+cases for omitted seven/undo/publication traversal and mismatched revisions,
+plus a positive complete evidence contract. Do not add model calls for this gate.
