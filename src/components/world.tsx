@@ -1370,9 +1370,17 @@ function Scene({
 }
 const webglUnavailableMessage =
   "Your world needs WebGL2, but WebGL2 could not initialize in this browser.";
+function CanvasFallback() {
+  // R3F mounts this fallback as a child of <canvas>, including during a
+  // healthy WebGL render. Keep its transient copy out of the accessibility
+  // tree; real renderer failures use Unavailable or GraphicsGuidance below.
+  return (
+    <div className="webgl-fallback" aria-hidden="true">
+      <span>Preparing graphics…</span>
+    </div>
+  );
+}
 function Unavailable() {
-  // R3F mounts fallback inside the canvas even when WebGL works. This markup
-  // must never report renderer availability as a side effect.
   return (
     <div className="webgl-fallback">
       <strong>Graphics are unavailable</strong>
@@ -1509,7 +1517,7 @@ export default function World({
             throw error;
           }
         }}
-        fallback={<Unavailable />}
+        fallback={<CanvasFallback />}
         onCreated={() => notifyRendererReady("webgl")}
         onPointerMissed={() => {
           if (!useOrb.getState().playing)

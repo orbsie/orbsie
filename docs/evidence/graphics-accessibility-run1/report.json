@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "scope": "Local standalone accessibility check; no provider or external requests.",
+  "healthy": {
+    "canvasCount": 1,
+    "fallback": [
+      {
+        "text": "Preparing graphics…",
+        "ariaHidden": "true",
+        "parent": "CANVAS"
+      }
+    ],
+    "graphicsAnnouncementPresent": false,
+    "ariaSnapshot": "- main:\n  - region \"Gameplay area\"\n  - link \"◉ orbsie\":\n    - /url: https://orbsie.com\n  - text: A pocketful of sunshine\n  - button \"↻ Restart\"\n  - text: \"Score: 0 W A S D / Arrow keys to move · Space to jump\"",
+    "externalRequests": []
+  },
+  "unavailable": {
+    "graphicsAnnouncementPresent": true,
+    "ariaSnapshot": "- main:\n  - region \"Gameplay area\"\n  - link \"◉ orbsie\":\n    - /url: https://orbsie.com\n  - text: A pocketful of sunshine\n  - button \"↻ Restart\"\n  - status:\n    - region \"Graphics are unavailable\":\n      - heading \"Graphics are unavailable\" [level=2]\n      - paragraph: Neither WebGL2 nor the software canvas renderer could initialize in this browser.\n      - paragraph: This browser could not start its 2D graphics fallback. Your world needs a browser with canvas support.\n      - list:\n        - listitem: In Chrome, open Settings → System.\n        - listitem: Find “Use graphics acceleration when available”, then choose Relaunch.\n      - paragraph: This exported world stays loaded while you use Check again.\n      - button \"Check again\"\n  - text: W A S D / Arrow keys to move · Space to jump",
+    "externalRequests": []
+  }
+}
