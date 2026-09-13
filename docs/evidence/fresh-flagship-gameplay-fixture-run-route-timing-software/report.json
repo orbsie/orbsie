@@ -1,0 +1,4391 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://localhost:3091",
+  "renderers": {
+    "software": {
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+      "generationMovement": {
+        "status": "passed",
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T22:04:00.234Z",
+        "movementAtMs": 489,
+        "movementAt": "2026-09-13T22:04:00.723Z",
+        "generationRequestsAtMovement": 1,
+        "generationResponsesAtMovement": 0,
+        "generationStreamOpenAtMovement": true,
+        "generationStreamOpenAfterMovement": true,
+        "generationRequestAtMs": 1789337040233,
+        "generationRequestAt": "2026-09-13T22:04:00.233Z",
+        "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "movementDistance": 1.0668000000000002,
+        "before": {
+          "renderer": "software",
+          "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+          "revision": 2,
+          "simulationDeltaMs": 16.600000000000136,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.3619761905641532,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 1035.3999999985099,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "after": {
+          "renderer": "software",
+          "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+          "revision": 2,
+          "simulationDeltaMs": 16.699999999999818,
+          "playing": true,
+          "player": {
+            "position": [
+              0.9362050770246491,
+              0.42,
+              4.488548835417035
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "stage": "ready",
+              "position": [
+                0,
+                0.3898268607596487,
+                3
+              ],
+              "scale": [
+                1.6,
+                0.6,
+                1.6
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 1301.6000000014901,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "beforeSample": {
+          "observation": {
+            "renderer": "software",
+            "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+            "revision": 2,
+            "simulationDeltaMs": 16.600000000000136,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3619761905641532,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 1035.3999999985099,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        },
+        "afterSample": {
+          "observation": {
+            "renderer": "software",
+            "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+            "revision": 2,
+            "simulationDeltaMs": 16.699999999999818,
+            "playing": true,
+            "player": {
+              "position": [
+                0.9362050770246491,
+                0.42,
+                4.488548835417035
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3898268607596487,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": null,
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 1,
+            "atMs": 1301.6000000014901,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "waitedMs": 0,
+          "polls": 0
+        }
+      },
+      "traversal": {
+        "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+        "revision": 20,
+        "renderer": "software",
+        "collectedIds": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "expectedCollectibleIds": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "score": 5,
+        "won": true,
+        "reset": {
+          "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+          "revision": 20,
+          "scoreIds": [],
+          "reset": 1,
+          "player": {
+            "position": [
+              0,
+              0.49581664999999964,
+              5
+            ],
+            "velocityY": -0.25050000000001094
+          }
+        },
+        "elapsedMs": 18149.10000000149,
+        "inputMode": "keyboard",
+        "startedAt": "2026-09-13T22:04:01.651Z",
+        "finishedAt": "2026-09-13T22:04:20.213Z",
+        "inputTrace": [
+          {
+            "atMs": 70,
+            "keys": [
+              "d"
+            ],
+            "reason": "movement-check"
+          },
+          {
+            "atMs": 357,
+            "keys": [],
+            "reason": "movement-release"
+          },
+          {
+            "atMs": 374,
+            "keys": [
+              " ",
+              "w"
+            ],
+            "reason": "platform-jump-start"
+          },
+          {
+            "atMs": 418,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jump-release"
+          },
+          {
+            "atMs": 493,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 570,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 645,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 722,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 803,
+            "keys": [],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 876,
+            "keys": [],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 953,
+            "keys": [],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1028,
+            "keys": [],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1105,
+            "keys": [],
+            "reason": "platform-contact-release"
+          },
+          {
+            "atMs": 1173,
+            "keys": [
+              " ",
+              "d",
+              "w"
+            ],
+            "reason": "platform-jump-start"
+          },
+          {
+            "atMs": 1211,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jump-release"
+          },
+          {
+            "atMs": 1286,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1361,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1436,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1511,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1586,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1661,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1845,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 1976,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2051,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2126,
+            "keys": [],
+            "reason": "platform-contact-release"
+          },
+          {
+            "atMs": 2139,
+            "keys": [
+              " ",
+              "d",
+              "w"
+            ],
+            "reason": "platform-jump-start"
+          },
+          {
+            "atMs": 2176,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jump-release"
+          },
+          {
+            "atMs": 2249,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2378,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2451,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2523,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2663,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2792,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 2977,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 3107,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 3235,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 3419,
+            "keys": [
+              "w"
+            ],
+            "reason": "platform-jumping"
+          },
+          {
+            "atMs": 3654,
+            "keys": [],
+            "reason": "platform-contact-release"
+          },
+          {
+            "atMs": 3820,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4001,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4237,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4417,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4601,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 4836,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5017,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5254,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5327,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5455,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5686,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5867,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 5941,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6069,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6304,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6490,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6725,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 6958,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7139,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7320,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7555,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 7735,
+            "keys": [
+              " ",
+              "a",
+              "s"
+            ],
+            "reason": "collect-jump"
+          },
+          {
+            "atMs": 7771,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-jump-release"
+          },
+          {
+            "atMs": 7952,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8134,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8316,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8554,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 8736,
+            "keys": [
+              "a",
+              "s"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9138,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9318,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9499,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9735,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 9916,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10152,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10331,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10513,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10694,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10766,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 10896,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11025,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11098,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11397,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11578,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 11763,
+            "keys": [
+              " ",
+              "a",
+              "w"
+            ],
+            "reason": "collect-jump"
+          },
+          {
+            "atMs": 11800,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-jump-release"
+          },
+          {
+            "atMs": 11930,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12112,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12295,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12476,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12605,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12786,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 12921,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13065,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13193,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13326,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13402,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13474,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13547,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13620,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13749,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 13933,
+            "keys": [
+              " ",
+              "d"
+            ],
+            "reason": "collect-jump"
+          },
+          {
+            "atMs": 13968,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-jump-release"
+          },
+          {
+            "atMs": 14042,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14173,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14302,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14431,
+            "keys": [
+              "d"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14559,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14852,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14925,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 14999,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15126,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15200,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15273,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15347,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15421,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15550,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15681,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 15811,
+            "keys": [
+              " ",
+              "a",
+              "w"
+            ],
+            "reason": "collect-jump"
+          },
+          {
+            "atMs": 15848,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-jump-release"
+          },
+          {
+            "atMs": 15984,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16059,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16132,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16259,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16388,
+            "keys": [
+              "a",
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16519,
+            "keys": [
+              "w"
+            ],
+            "reason": "collect-steer"
+          },
+          {
+            "atMs": 16774,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 16845,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 16918,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17104,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17232,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17413,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17541,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17673,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17801,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 17931,
+            "keys": [
+              "d",
+              "w"
+            ],
+            "reason": "portal-steer"
+          },
+          {
+            "atMs": 18113,
+            "keys": [],
+            "reason": "portal-settle"
+          }
+        ],
+        "movement": {
+          "distance": 1.1328000000000003,
+          "before": {
+            "renderer": "software",
+            "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+            "revision": 20,
+            "simulationDeltaMs": 16.699999999999818,
+            "playing": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.4120246864379442,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.3497204056869964,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.24667999999999993,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 2301.5,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          },
+          "after": {
+            "renderer": "software",
+            "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+            "revision": 20,
+            "simulationDeltaMs": 16.600000000000364,
+            "playing": true,
+            "player": {
+              "position": [
+                0.9941255261094155,
+                0.42,
+                4.456906749869161
+              ],
+              "velocityY": 0
+            },
+            "entities": [
+              {
+                "id": "fixture-platform-a",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0.3934210794345363,
+                  3
+                ],
+                "scale": [
+                  1.6,
+                  0.6,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-b",
+                "behavior": "move",
+                "stage": "ready",
+                "position": [
+                  0.3401163638059082,
+                  0.8,
+                  0.3
+                ],
+                "scale": [
+                  1.6,
+                  0.7,
+                  1.6
+                ]
+              },
+              {
+                "id": "fixture-platform-c",
+                "behavior": "bounce",
+                "stage": "ready",
+                "position": [
+                  0.35996000000000017,
+                  1.4,
+                  -2.5
+                ],
+                "scale": [
+                  1.7,
+                  0.7,
+                  1.7
+                ]
+              },
+              {
+                "id": "fixture-crystal-1",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.5,
+                  0.8,
+                  4
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-2",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  2.6
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-3",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  1.2
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-4",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  1.4,
+                  0.8,
+                  -0.5
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-crystal-5",
+                "behavior": "collect",
+                "stage": "ready",
+                "position": [
+                  -1.2,
+                  0.8,
+                  -2.8
+                ],
+                "scale": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "id": "fixture-portal",
+                "behavior": "portal",
+                "stage": "ready",
+                "position": [
+                  0,
+                  0,
+                  -5.2
+                ],
+                "scale": [
+                  1.4,
+                  1.4,
+                  1.1
+                ]
+              }
+            ],
+            "contacts": [],
+            "collected": [],
+            "scoreIds": [],
+            "gameScore": 0,
+            "status": "playing",
+            "won": false,
+            "lost": false,
+            "reset": 0,
+            "sessionGeneration": 2,
+            "atMs": 2585,
+            "platformContacts": [],
+            "bounceContacts": [],
+            "platformContactCounts": {},
+            "bounceContactCounts": {}
+          }
+        },
+        "timing": {
+          "observationSamples": 133,
+          "observedSpanMs": 18149.10000000149,
+          "staleObservationWaits": [
+            {
+              "waitedMs": 5,
+              "previousAtMs": 2585,
+              "observedAtMs": 2601.89999999851
+            },
+            {
+              "waitedMs": 61,
+              "previousAtMs": 3334.89999999851,
+              "observedAtMs": 3401.39999999851
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 3851.60000000149,
+              "observedAtMs": 4068.300000000745
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 4068.300000000745,
+              "observedAtMs": 4201.5
+            },
+            {
+              "waitedMs": 6,
+              "previousAtMs": 4351.5,
+              "observedAtMs": 4368.300000000745
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 4484.800000000745,
+              "observedAtMs": 4601.39999999851
+            },
+            {
+              "waitedMs": 66,
+              "previousAtMs": 4734.699999999255,
+              "observedAtMs": 4884.699999999255
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 4884.699999999255,
+              "observedAtMs": 5018
+            },
+            {
+              "waitedMs": 110,
+              "previousAtMs": 5018,
+              "observedAtMs": 5184.60000000149
+            },
+            {
+              "waitedMs": 54,
+              "previousAtMs": 5184.60000000149,
+              "observedAtMs": 5301.199999999255
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 5301.199999999255,
+              "observedAtMs": 5467.89999999851
+            },
+            {
+              "waitedMs": 110,
+              "previousAtMs": 5467.89999999851,
+              "observedAtMs": 5617.89999999851
+            },
+            {
+              "waitedMs": 161,
+              "previousAtMs": 5617.89999999851,
+              "observedAtMs": 5867.89999999851
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 5867.89999999851,
+              "observedAtMs": 6034.5
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 6034.5,
+              "observedAtMs": 6218.60000000149
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 6218.60000000149,
+              "observedAtMs": 6455.699999999255
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 6455.699999999255,
+              "observedAtMs": 6651.199999999255
+            },
+            {
+              "waitedMs": 110,
+              "previousAtMs": 6651.199999999255,
+              "observedAtMs": 6834.60000000149
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 6834.60000000149,
+              "observedAtMs": 7068.39999999851
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 7068.39999999851,
+              "observedAtMs": 7254
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 7254,
+              "observedAtMs": 7488.300000000745
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 7501.199999999255,
+              "observedAtMs": 7684.5
+            },
+            {
+              "waitedMs": 159,
+              "previousAtMs": 7684.5,
+              "observedAtMs": 7884.5
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 7884.5,
+              "observedAtMs": 8102.5
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 8117.89999999851,
+              "observedAtMs": 8301.10000000149
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 8301.10000000149,
+              "observedAtMs": 8534.800000000745
+            },
+            {
+              "waitedMs": 114,
+              "previousAtMs": 8534.800000000745,
+              "observedAtMs": 8719.300000000745
+            },
+            {
+              "waitedMs": 161,
+              "previousAtMs": 8719.300000000745,
+              "observedAtMs": 8919.300000000745
+            },
+            {
+              "waitedMs": 160,
+              "previousAtMs": 8919.300000000745,
+              "observedAtMs": 9154.10000000149
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 9154.10000000149,
+              "observedAtMs": 9334.60000000149
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 9334.60000000149,
+              "observedAtMs": 9517.699999999255
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 9517.699999999255,
+              "observedAtMs": 9767.60000000149
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 9767.60000000149,
+              "observedAtMs": 9951
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 9951,
+              "observedAtMs": 10167.699999999255
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 10167.699999999255,
+              "observedAtMs": 10351.800000000745
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 10351.800000000745,
+              "observedAtMs": 10538.39999999851
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 10538.39999999851,
+              "observedAtMs": 10767.89999999851
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 10767.89999999851,
+              "observedAtMs": 10951
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 10951,
+              "observedAtMs": 11143.89999999851
+            },
+            {
+              "waitedMs": 215,
+              "previousAtMs": 11143.89999999851,
+              "observedAtMs": 11367.60000000149
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 11367.60000000149,
+              "observedAtMs": 11551.10000000149
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 11551.10000000149,
+              "observedAtMs": 11734.199999999255
+            },
+            {
+              "waitedMs": 162,
+              "previousAtMs": 11734.199999999255,
+              "observedAtMs": 11967.60000000149
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 11967.60000000149,
+              "observedAtMs": 12151
+            },
+            {
+              "waitedMs": 163,
+              "previousAtMs": 12151,
+              "observedAtMs": 12367.60000000149
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 12367.60000000149,
+              "observedAtMs": 12551
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 12551,
+              "observedAtMs": 12734.39999999851
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 12734.39999999851,
+              "observedAtMs": 12922.89999999851
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 12934.300000000745,
+              "observedAtMs": 13100.89999999851
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 13100.89999999851,
+              "observedAtMs": 13251.699999999255
+            },
+            {
+              "waitedMs": 62,
+              "previousAtMs": 13267.800000000745,
+              "observedAtMs": 13451.10000000149
+            },
+            {
+              "waitedMs": 161,
+              "previousAtMs": 13451.10000000149,
+              "observedAtMs": 13617.60000000149
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 13617.60000000149,
+              "observedAtMs": 13784.39999999851
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 13784.39999999851,
+              "observedAtMs": 13984.300000000745
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 13984.300000000745,
+              "observedAtMs": 14150.800000000745
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 14150.800000000745,
+              "observedAtMs": 14334.39999999851
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 14334.39999999851,
+              "observedAtMs": 14501.39999999851
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 14501.39999999851,
+              "observedAtMs": 14688
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 14688,
+              "observedAtMs": 14817.5
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 14817.5,
+              "observedAtMs": 15004.10000000149
+            },
+            {
+              "waitedMs": 59,
+              "previousAtMs": 15004.10000000149,
+              "observedAtMs": 15151
+            },
+            {
+              "waitedMs": 64,
+              "previousAtMs": 15151,
+              "observedAtMs": 15274.39999999851
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 15297.10000000149,
+              "observedAtMs": 15417.699999999255
+            },
+            {
+              "waitedMs": 60,
+              "previousAtMs": 15417.699999999255,
+              "observedAtMs": 15557.5
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 15817.5,
+              "observedAtMs": 15950.699999999255
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 15950.699999999255,
+              "observedAtMs": 16134.199999999255
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 16267.39999999851,
+              "observedAtMs": 16401.699999999255
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 16401.699999999255,
+              "observedAtMs": 16517.5
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 16517.5,
+              "observedAtMs": 16651.39999999851
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 16651.39999999851,
+              "observedAtMs": 16784.300000000745
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 16784.300000000745,
+              "observedAtMs": 16952.300000000745
+            },
+            {
+              "waitedMs": 108,
+              "previousAtMs": 16952.300000000745,
+              "observedAtMs": 17085.10000000149
+            },
+            {
+              "waitedMs": 54,
+              "previousAtMs": 17234.10000000149,
+              "observedAtMs": 17360.60000000149
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 17617.39999999851,
+              "observedAtMs": 17756.39999999851
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 17756.39999999851,
+              "observedAtMs": 17901
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 17901,
+              "observedAtMs": 18034
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 18034,
+              "observedAtMs": 18205.300000000745
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 18350.699999999255,
+              "observedAtMs": 18485.89999999851
+            },
+            {
+              "waitedMs": 54,
+              "previousAtMs": 18485.89999999851,
+              "observedAtMs": 18600.800000000745
+            },
+            {
+              "waitedMs": 58,
+              "previousAtMs": 18600.800000000745,
+              "observedAtMs": 18734.5
+            },
+            {
+              "waitedMs": 123,
+              "previousAtMs": 18734.5,
+              "observedAtMs": 18917.800000000745
+            },
+            {
+              "waitedMs": 54,
+              "previousAtMs": 18917.800000000745,
+              "observedAtMs": 19003.699999999255
+            },
+            {
+              "waitedMs": 112,
+              "previousAtMs": 19150.699999999255,
+              "observedAtMs": 19334.10000000149
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 19334.10000000149,
+              "observedAtMs": 19467.199999999255
+            },
+            {
+              "waitedMs": 109,
+              "previousAtMs": 19467.199999999255,
+              "observedAtMs": 19617.39999999851
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 19617.39999999851,
+              "observedAtMs": 19750.89999999851
+            },
+            {
+              "waitedMs": 57,
+              "previousAtMs": 19750.89999999851,
+              "observedAtMs": 19884
+            },
+            {
+              "waitedMs": 55,
+              "previousAtMs": 19884,
+              "observedAtMs": 20034.199999999255
+            },
+            {
+              "waitedMs": 56,
+              "previousAtMs": 20034.199999999255,
+              "observedAtMs": 20167.300000000745
+            },
+            {
+              "waitedMs": 107,
+              "previousAtMs": 20167.300000000745,
+              "observedAtMs": 20317.800000000745
+            }
+          ],
+          "source": "renderer performance.now timestamps"
+        },
+        "contacts": [
+          "fixture-portal"
+        ],
+        "collections": [
+          "fixture-crystal-1",
+          "fixture-crystal-2",
+          "fixture-crystal-3",
+          "fixture-crystal-4",
+          "fixture-crystal-5"
+        ],
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 9,
+            "bounceFrames": 0,
+            "startPosition": [
+              0,
+              0.4120246864379442,
+              3
+            ],
+            "maximumDisplacement": 0.43198749048017254,
+            "jumpEvidence": [
+              {
+                "id": "fixture-platform-a",
+                "attempt": 0,
+                "before": {
+                  "atMs": 2585,
+                  "player": {
+                    "position": [
+                      0.9941255261094155,
+                      0.42,
+                      4.456906749869161
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.3934210794345363,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "inputKeys": [
+                  [
+                    " ",
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "a",
+                    "w"
+                  ],
+                  [],
+                  [],
+                  [],
+                  []
+                ],
+                "samples": [
+                  {
+                    "atMs": 2601.89999999851,
+                    "player": {
+                      "position": [
+                        0.9941255261094155,
+                        0.42,
+                        4.456906749869161
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.39199480459186764,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 2718.300000000745,
+                    "player": {
+                      "position": [
+                        0.7705214549044155,
+                        1.0030663499999994,
+                        4.047602243003491
+                      ],
+                      "velocityY": 4.251,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.38115496887202704,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 2801.60000000149,
+                    "player": {
+                      "position": [
+                        0.6107768654414948,
+                        1.29472455,
+                        3.7551917333816176
+                      ],
+                      "velocityY": 3.0014999999999974,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.37244026467066627,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 2868.300000000745,
+                    "player": {
+                      "position": [
+                        0.4828661317418938,
+                        1.4532160499999993,
+                        3.521052705869267
+                      ],
+                      "velocityY": 2.0009999999999994,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.364908375653462,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 2951.60000000149,
+                    "player": {
+                      "position": [
+                        0.32292977206353146,
+                        1.5574993499999994,
+                        3.228291163222638
+                      ],
+                      "velocityY": 0.749999999999998,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.35483289264374007,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3018.199999999255,
+                    "player": {
+                      "position": [
+                        0.06730575063558364,
+                        1.565865899999999,
+                        3.1532890321262226
+                      ],
+                      "velocityY": -0.2490000000000007,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.34628995007475394,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3101.39999999851,
+                    "player": {
+                      "position": [
+                        0.003591655204592148,
+                        1.4826740999999988,
+                        3.1345948072583467
+                      ],
+                      "velocityY": -1.4985000000000035,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.3350234268846111,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3185.199999999255,
+                    "player": {
+                      "position": [
+                        0.003591655204592148,
+                        1.2953989499999978,
+                        3.1345948072583467
+                      ],
+                      "velocityY": -2.7480000000000064,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0,
+                        0.32315750143479516,
+                        3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.6,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  }
+                ],
+                "apex": {
+                  "atMs": 3018.199999999255,
+                  "player": {
+                    "position": [
+                      0.06730575063558364,
+                      1.565865899999999,
+                      3.1532890321262226
+                    ],
+                    "velocityY": -0.2490000000000007,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.34628995007475394,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "landing": {
+                  "atMs": 3334.89999999851,
+                  "player": {
+                    "position": [
+                      0.003591655204592148,
+                      1.0324486436998601,
+                      3.1345948072583467
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-a"
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.3004486436998602,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-a",
+                  "bounceContactId": null,
+                  "platformContactCount": 5,
+                  "bounceContactCount": 0
+                },
+                "contact": {
+                  "atMs": 3334.89999999851,
+                  "player": {
+                    "position": [
+                      0.003591655204592148,
+                      1.0324486436998601,
+                      3.1345948072583467
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-a"
+                  },
+                  "platform": {
+                    "position": [
+                      0,
+                      0.3004486436998602,
+                      3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.6,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-a",
+                  "bounceContactId": null,
+                  "platformContactCount": 5,
+                  "bounceContactCount": 0
+                },
+                "recovery": null
+              }
+            ]
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 2,
+            "bounceFrames": 0,
+            "startPosition": [
+              0.3497204056869964,
+              0.8,
+              0.3
+            ],
+            "maximumDisplacement": 0.6997156293912628,
+            "jumpEvidence": [
+              {
+                "id": "fixture-platform-b",
+                "attempt": 0,
+                "before": {
+                  "atMs": 3334.89999999851,
+                  "player": {
+                    "position": [
+                      0.003591655204592148,
+                      1.0324486436998601,
+                      3.1345948072583467
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-a"
+                  },
+                  "platform": {
+                    "position": [
+                      0.25291640612826866,
+                      0.8,
+                      0.3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.7,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "inputKeys": [
+                  [
+                    " ",
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ]
+                ],
+                "samples": [
+                  {
+                    "atMs": 3401.39999999851,
+                    "player": {
+                      "position": [
+                        0.003591655204592148,
+                        1.0218664993846922,
+                        3.1345948072583467
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": "fixture-platform-a"
+                    },
+                    "platform": {
+                      "position": [
+                        0.24134886930519905,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3518.199999999255,
+                    "player": {
+                      "position": [
+                        0.13490169252954767,
+                        1.6022422590108198,
+                        2.68706085983344
+                      ],
+                      "velocityY": 4.251000000000001,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.21987955255581623,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3584.800000000745,
+                    "player": {
+                      "position": [
+                        0.21001643943842052,
+                        1.8440755590108207,
+                        2.431053018553496
+                      ],
+                      "velocityY": 3.2504999999999975,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.2069303760794682,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3668.300000000745,
+                    "player": {
+                      "position": [
+                        0.3039380270276251,
+                        2.0525671590108194,
+                        2.1109472619905705
+                      ],
+                      "velocityY": 1.9995000000000027,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.19010792181856598,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3735,
+                    "player": {
+                      "position": [
+                        0.3789401581240411,
+                        2.1441504090108197,
+                        1.8553232405626208
+                      ],
+                      "velocityY": 1.0004999999999973,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.1762061569114514,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3818.39999999851,
+                    "player": {
+                      "position": [
+                        0.2190037984456796,
+                        2.1649918590108195,
+                        1.5625616979159935
+                      ],
+                      "velocityY": -0.2504999999999974,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.1582613384507992,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 3851.60000000149,
+                    "player": {
+                      "position": [
+                        0.25650486399388756,
+                        2.14417515901082,
+                        1.4347496872020187
+                      ],
+                      "velocityY": -0.7500000000000001,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.15094219957025964,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4068.300000000745,
+                    "player": {
+                      "position": [
+                        0.33916487033738413,
+                        2.032535109010821,
+                        1.1530259158384857
+                      ],
+                      "velocityY": -1.8509999999999946,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.10149189926065942,
+                        0.8,
+                        0.3
+                      ],
+                      "scale": [
+                        1.6,
+                        0.7,
+                        1.6
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  }
+                ],
+                "apex": {
+                  "atMs": 3818.39999999851,
+                  "player": {
+                    "position": [
+                      0.2190037984456796,
+                      2.1649918590108195,
+                      1.5625616979159935
+                    ],
+                    "velocityY": -0.2504999999999974,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0.1582613384507992,
+                      0.8,
+                      0.3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.7,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "landing": {
+                  "atMs": 4351.5,
+                  "player": {
+                    "position": [
+                      0.057837964284438194,
+                      1.584,
+                      0.6380604685212153
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-b"
+                  },
+                  "platform": {
+                    "position": [
+                      0.03351101573506083,
+                      0.8,
+                      0.3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.7,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-b",
+                  "bounceContactId": null,
+                  "platformContactCount": 1,
+                  "bounceContactCount": 0
+                },
+                "contact": {
+                  "atMs": 4351.5,
+                  "player": {
+                    "position": [
+                      0.057837964284438194,
+                      1.584,
+                      0.6380604685212153
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-b"
+                  },
+                  "platform": {
+                    "position": [
+                      0.03351101573506083,
+                      0.8,
+                      0.3
+                    ],
+                    "scale": [
+                      1.6,
+                      0.7,
+                      1.6
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-b",
+                  "bounceContactId": null,
+                  "platformContactCount": 1,
+                  "bounceContactCount": 0
+                },
+                "recovery": null
+              }
+            ]
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 1,
+            "bounceFrames": 1,
+            "startPosition": [
+              0.24667999999999993,
+              1.4,
+              -2.5
+            ],
+            "maximumDisplacement": 0.547,
+            "jumpEvidence": [
+              {
+                "id": "fixture-platform-c",
+                "attempt": 0,
+                "before": {
+                  "atMs": 4351.5,
+                  "player": {
+                    "position": [
+                      0.057837964284438194,
+                      1.584,
+                      0.6380604685212153
+                    ],
+                    "velocityY": 0,
+                    "groundedOn": "fixture-platform-b"
+                  },
+                  "platform": {
+                    "position": [
+                      0.1546799999999996,
+                      1.4,
+                      -2.5
+                    ],
+                    "scale": [
+                      1.7,
+                      0.7,
+                      1.7
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "inputKeys": [
+                  [
+                    " ",
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "d",
+                    "w"
+                  ],
+                  [
+                    "w"
+                  ]
+                ],
+                "samples": [
+                  {
+                    "atMs": 4368.300000000745,
+                    "player": {
+                      "position": [
+                        0.05378747753417726,
+                        1.584,
+                        0.6380604685212153
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": "fixture-platform-b"
+                    },
+                    "platform": {
+                      "position": [
+                        0.16131999999999974,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4484.800000000745,
+                    "player": {
+                      "position": [
+                        0.1388320121785851,
+                        2.0449999500000002,
+                        0.29262260172669075
+                      ],
+                      "velocityY": 4.65,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.19731999999999972,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4601.39999999851,
+                    "player": {
+                      "position": [
+                        0.20257256202929194,
+                        2.270096549999998,
+                        0.07538056549813625
+                      ],
+                      "velocityY": 3.801000000000009,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.21995999999999954,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4618,
+                    "player": {
+                      "position": [
+                        0.22149201852208164,
+                        2.329719749999999,
+                        0.010898830363157627
+                      ],
+                      "velocityY": 3.549000000000006,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.2266799999999996,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4734.699999999255,
+                    "player": {
+                      "position": [
+                        0.30403940905312177,
+                        2.5334063999999996,
+                        -0.27044112114838365
+                      ],
+                      "velocityY": 2.449500000000003,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.25599999999999973,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 4884.699999999255,
+                    "player": {
+                      "position": [
+                        0.3865867995841618,
+                        2.6564997000000004,
+                        -0.5517810726599249
+                      ],
+                      "velocityY": 1.3500000000000003,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.2853199999999998,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5018,
+                    "player": {
+                      "position": [
+                        0.45043996524732716,
+                        2.6948413500000004,
+                        -0.7694069287404782
+                      ],
+                      "velocityY": 0.4994999999999894,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.3080000000000001,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  {
+                    "atMs": 5184.60000000149,
+                    "player": {
+                      "position": [
+                        0.5142931309104914,
+                        2.6849596499999997,
+                        -0.9870327848210281
+                      ],
+                      "velocityY": -0.35100000000000786,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.3306800000000001,
+                        1.4,
+                        -2.5
+                      ],
+                      "scale": [
+                        1.7,
+                        0.7,
+                        1.7
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  }
+                ],
+                "apex": {
+                  "atMs": 5184.60000000149,
+                  "player": {
+                    "position": [
+                      0.5142931309104914,
+                      2.6849596499999997,
+                      -0.9870327848210281
+                    ],
+                    "velocityY": -0.35100000000000786,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0.3306800000000001,
+                      1.4,
+                      -2.5
+                    ],
+                    "scale": [
+                      1.7,
+                      0.7,
+                      1.7
+                    ]
+                  },
+                  "platformContactId": null,
+                  "bounceContactId": null,
+                  "platformContactCount": 0,
+                  "bounceContactCount": 0
+                },
+                "landing": null,
+                "contact": {
+                  "atMs": 5867.89999999851,
+                  "player": {
+                    "position": [
+                      0.42491557835683946,
+                      2.1839999999999997,
+                      -1.819653881006095
+                    ],
+                    "velocityY": 7.08,
+                    "groundedOn": null
+                  },
+                  "platform": {
+                    "position": [
+                      0.4213200000000006,
+                      1.4,
+                      -2.5
+                    ],
+                    "scale": [
+                      1.7,
+                      0.7,
+                      1.7
+                    ]
+                  },
+                  "platformContactId": "fixture-platform-c",
+                  "bounceContactId": "fixture-platform-c",
+                  "platformContactCount": 1,
+                  "bounceContactCount": 1
+                },
+                "recovery": null
+              }
+            ]
+          }
+        ],
+        "win": {
+          "projectId": "8dd88291-62e3-43e5-b1ae-577a230077c6",
+          "revision": 20,
+          "score": 5,
+          "status": "won",
+          "portalId": "fixture-portal"
+        }
+      },
+      "focus": null,
+      "layout": {
+        "desktopPlaying": {
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 1280,
+            "bottom": 900,
+            "width": 1280,
+            "height": 900
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 1280,
+            "bottom": 900,
+            "width": 1280,
+            "height": 900
+          },
+          "composer": {
+            "left": 20,
+            "top": 88,
+            "right": 362,
+            "bottom": 878,
+            "width": 342,
+            "height": 790
+          },
+          "sheetHandle": {
+            "left": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "width": 0,
+            "height": 0
+          },
+          "hud": {
+            "left": 1109,
+            "top": 158,
+            "right": 1253,
+            "bottom": 218,
+            "width": 144,
+            "height": 60
+          },
+          "advisory": {
+            "left": 460,
+            "top": 76,
+            "right": 820,
+            "bottom": 118,
+            "width": 360,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 1016,
+            "top": 91,
+            "right": 1253,
+            "bottom": 137,
+            "width": 237,
+            "height": 46
+          },
+          "heading": {
+            "left": 390,
+            "top": 122,
+            "right": 687,
+            "bottom": 145,
+            "width": 297,
+            "height": 23
+          },
+          "interaction": {
+            "pointerCoarse": false,
+            "anyPointerCoarse": false,
+            "maxTouchPoints": 0
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "phoneSheetOpenSettle": {
+          "box": {
+            "x": 10,
+            "y": 471.09375,
+            "width": 370,
+            "height": 362.90625
+          },
+          "waitedMs": 527
+        },
+        "phoneSheetOpenDiagnostics": [
+          {
+            "label": "before-textarea-fill",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "button",
+              "id": null,
+              "className": "sheet-handle"
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene gameplay-region",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "immediately-after-textarea-fill",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene gameplay-region",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "after-two-animation-frames",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene gameplay-region",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          },
+          {
+            "label": "after-300ms",
+            "window": {
+              "scrollX": 0,
+              "scrollY": 0,
+              "innerWidth": 390,
+              "innerHeight": 844
+            },
+            "visualViewport": {
+              "offsetLeft": 0,
+              "offsetTop": 0,
+              "pageLeft": 0,
+              "pageTop": 0,
+              "width": 390,
+              "height": 844
+            },
+            "document": {
+              "documentElementScrollTop": 0,
+              "bodyScrollTop": 0,
+              "scrollHeight": 844,
+              "bodyScrollHeight": 844
+            },
+            "activeElement": {
+              "tag": "textarea",
+              "id": "prompt",
+              "className": ""
+            },
+            "targets": {
+              "advisory": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "graphics-error is-advisory",
+                  "rect": {
+                    "left": 16,
+                    "top": 220,
+                    "right": 374,
+                    "bottom": 262,
+                    "width": 358,
+                    "height": 42
+                  },
+                  "position": "absolute",
+                  "transform": "matrix(1, 0, 0, 1, -179, 0)",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "composer": [
+                {
+                  "tag": "section",
+                  "id": null,
+                  "className": "composer-shell chat-panel",
+                  "rect": {
+                    "left": 10,
+                    "top": 471.09375,
+                    "right": 380,
+                    "bottom": 834,
+                    "width": 370,
+                    "height": 362.90625
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ],
+              "scene": [
+                {
+                  "tag": "div",
+                  "id": null,
+                  "className": "scene gameplay-region",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "absolute",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "main",
+                  "id": null,
+                  "className": "app is-workspace  sheet-open",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "relative",
+                  "transform": "none",
+                  "overflow": "hidden"
+                },
+                {
+                  "tag": "body",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                },
+                {
+                  "tag": "html",
+                  "id": null,
+                  "className": "",
+                  "rect": {
+                    "left": 0,
+                    "top": 0,
+                    "right": 390,
+                    "bottom": 844,
+                    "width": 390,
+                    "height": 844
+                  },
+                  "position": "static",
+                  "transform": "none",
+                  "overflow": "visible"
+                }
+              ]
+            }
+          }
+        ],
+        "phoneSheetOpen": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 10,
+            "top": 471.09375,
+            "right": 380,
+            "bottom": 834,
+            "width": 370,
+            "height": 362.90625
+          },
+          "sheetHandle": {
+            "left": 11,
+            "top": 472.09375,
+            "right": 379,
+            "bottom": 492.09375,
+            "width": 368,
+            "height": 20
+          },
+          "hud": {
+            "left": 250,
+            "top": 136,
+            "right": 373,
+            "bottom": 186,
+            "width": 123,
+            "height": 50
+          },
+          "advisory": {
+            "left": 16,
+            "top": 220,
+            "right": 374,
+            "bottom": 262,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 230,
+            "top": 81,
+            "right": 373,
+            "bottom": 123,
+            "width": 143,
+            "height": 42
+          },
+          "heading": {
+            "left": 20,
+            "top": 107,
+            "right": 230,
+            "bottom": 126,
+            "width": 210,
+            "height": 19
+          },
+          "interaction": {
+            "pointerCoarse": false,
+            "anyPointerCoarse": false,
+            "maxTouchPoints": 0
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        },
+        "phoneSheetClosedSettle": {
+          "box": {
+            "x": 10,
+            "y": 792,
+            "width": 370,
+            "height": 362.90625
+          },
+          "waitedMs": 334
+        },
+        "phoneSheetClosed": {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "scene": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "canvas": {
+            "left": 0,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "width": 390,
+            "height": 844
+          },
+          "composer": {
+            "left": 10,
+            "top": 792,
+            "right": 380,
+            "bottom": 1154.90625,
+            "width": 370,
+            "height": 362.90625
+          },
+          "sheetHandle": {
+            "left": 11,
+            "top": 793,
+            "right": 379,
+            "bottom": 813,
+            "width": 368,
+            "height": 20
+          },
+          "hud": {
+            "left": 250,
+            "top": 136,
+            "right": 373,
+            "bottom": 186,
+            "width": 123,
+            "height": 50
+          },
+          "advisory": {
+            "left": 16,
+            "top": 220,
+            "right": 374,
+            "bottom": 262,
+            "width": 358,
+            "height": 42
+          },
+          "toolbar": {
+            "left": 230,
+            "top": 81,
+            "right": 373,
+            "bottom": 123,
+            "width": 143,
+            "height": 42
+          },
+          "heading": {
+            "left": 20,
+            "top": 107,
+            "right": 230,
+            "bottom": 126,
+            "width": 210,
+            "height": 19
+          },
+          "interaction": {
+            "pointerCoarse": false,
+            "anyPointerCoarse": false,
+            "maxTouchPoints": 0
+          },
+          "horizontalOverflow": false,
+          "verticalOverflow": false
+        }
+      }
+    }
+  },
+  "error": "phone-landscape sheet handle is empty. Fixture diagnostics: {\"renderer\":\"software\",\"readyState\":\"complete\",\"mainRendererAvailability\":\"ready\",\"composerValue\":\"Software transition layout check\",\"composerExists\":true,\"createExists\":false,\"createDisabled\":null,\"bodyText\":\"WebGL2 could not initialize, so Orbsie is using its software canvas renderer.\\n\\nUsing compatibility graphics · Options\\n×\\nSaved on this device\\nShare Orb\\nCreate a world\\nBack to planet\\nCreate the local fresh gameplay fixture.\\nEdit\\nPlay\\nYour world\\n\\nCreate the local fresh gameplay fixture.\\n\\n✧\\n\\nLocal fresh gameplay fixture ready: collect five crystals, use three moving platforms, reach the portal, then restart.\\n\\nWhat experience to build?\\n3 free prompts\\nChange this\\n3 free prompts left\\n◆\\n0\\nScore\\nW\\nA\\nS\\nD\\nMove\\n·\\nspace\\nJump\\nRules changed. Play restarted from the beginning.\",\"pageErrors\":[\"THREE.WebGLRenderer: Error creating WebGL context.\"],\"consoleErrors\":[\"warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\",\"error: THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.\"],\"requestFailures\":[\"POST http://127.0.0.1:37615/api/generate-stream: net::ERR_ABORTED\"],\"requestsSeen\":[\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"GET http://localhost:3091/api/config\",\"GET http://localhost:3091/api/trial\",\"POST http://127.0.0.1:37615/api/generate-stream\",\"GET http://localhost:3091/api/trial\"],\"partialEvidence\":{\"renderer\":\"software\",\"generationRequests\":1,\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"generationMovement\":{\"status\":\"passed\",\"inputMode\":\"keyboard\",\"startedAt\":\"2026-09-13T22:04:00.234Z\",\"movementAtMs\":489,\"movementAt\":\"2026-09-13T22:04:00.723Z\",\"generationRequestsAtMovement\":1,\"generationResponsesAtMovement\":0,\"generationStreamOpenAtMovement\":true,\"generationStreamOpenAfterMovement\":true,\"generationRequestAtMs\":1789337040233,\"generationRequestAt\":\"2026-09-13T22:04:00.233Z\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revisionBefore\":2,\"revisionAfter\":2,\"movementDistance\":1.0668000000000002,\"before\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":2,\"simulationDeltaMs\":16.600000000000136,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3619761905641532,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1035.3999999985099,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"after\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":2,\"simulationDeltaMs\":16.699999999999818,\"playing\":true,\"player\":{\"position\":[0.9362050770246491,0.42,4.488548835417035],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3898268607596487,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1301.6000000014901,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"beforeSample\":{\"observation\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":2,\"simulationDeltaMs\":16.600000000000136,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3619761905641532,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1035.3999999985099,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"waitedMs\":0,\"polls\":0},\"afterSample\":{\"observation\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":2,\"simulationDeltaMs\":16.699999999999818,\"playing\":true,\"player\":{\"position\":[0.9362050770246491,0.42,4.488548835417035],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3898268607596487,3],\"scale\":[1.6,0.6,1.6]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":null,\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":1,\"atMs\":1301.6000000014901,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"waitedMs\":0,\"polls\":0}},\"traversal\":{\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":20,\"renderer\":\"software\",\"collectedIds\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"expectedCollectibleIds\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"score\":5,\"won\":true,\"reset\":{\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":20,\"scoreIds\":[],\"reset\":1,\"player\":{\"position\":[0,0.49581664999999964,5],\"velocityY\":-0.25050000000001094}},\"elapsedMs\":18149.10000000149,\"inputMode\":\"keyboard\",\"startedAt\":\"2026-09-13T22:04:01.651Z\",\"finishedAt\":\"2026-09-13T22:04:20.213Z\",\"inputTrace\":[{\"atMs\":70,\"keys\":[\"d\"],\"reason\":\"movement-check\"},{\"atMs\":357,\"keys\":[],\"reason\":\"movement-release\"},{\"atMs\":374,\"keys\":[\" \",\"w\"],\"reason\":\"platform-jump-start\"},{\"atMs\":418,\"keys\":[\"w\"],\"reason\":\"platform-jump-release\"},{\"atMs\":493,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":570,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":645,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":722,\"keys\":[\"a\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":803,\"keys\":[],\"reason\":\"platform-jumping\"},{\"atMs\":876,\"keys\":[],\"reason\":\"platform-jumping\"},{\"atMs\":953,\"keys\":[],\"reason\":\"platform-jumping\"},{\"atMs\":1028,\"keys\":[],\"reason\":\"platform-jumping\"},{\"atMs\":1105,\"keys\":[],\"reason\":\"platform-contact-release\"},{\"atMs\":1173,\"keys\":[\" \",\"d\",\"w\"],\"reason\":\"platform-jump-start\"},{\"atMs\":1211,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jump-release\"},{\"atMs\":1286,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1361,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1436,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1511,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1586,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1661,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1845,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":1976,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2051,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2126,\"keys\":[],\"reason\":\"platform-contact-release\"},{\"atMs\":2139,\"keys\":[\" \",\"d\",\"w\"],\"reason\":\"platform-jump-start\"},{\"atMs\":2176,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jump-release\"},{\"atMs\":2249,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2378,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2451,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2523,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2663,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2792,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":2977,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":3107,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":3235,\"keys\":[\"d\",\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":3419,\"keys\":[\"w\"],\"reason\":\"platform-jumping\"},{\"atMs\":3654,\"keys\":[],\"reason\":\"platform-contact-release\"},{\"atMs\":3820,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4001,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4237,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4417,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4601,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":4836,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5017,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5254,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5327,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5455,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5686,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5867,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":5941,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":6069,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":6304,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":6490,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":6725,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":6958,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7139,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7320,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7555,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":7735,\"keys\":[\" \",\"a\",\"s\"],\"reason\":\"collect-jump\"},{\"atMs\":7771,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-jump-release\"},{\"atMs\":7952,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":8134,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":8316,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":8554,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":8736,\"keys\":[\"a\",\"s\"],\"reason\":\"collect-steer\"},{\"atMs\":9138,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":9318,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":9499,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":9735,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":9916,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10152,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10331,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10513,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10694,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10766,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":10896,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":11025,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":11098,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":11397,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":11578,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":11763,\"keys\":[\" \",\"a\",\"w\"],\"reason\":\"collect-jump\"},{\"atMs\":11800,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-jump-release\"},{\"atMs\":11930,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12112,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12295,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12476,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12605,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12786,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":12921,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13065,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13193,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13326,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13402,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13474,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13547,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13620,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":13749,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":13933,\"keys\":[\" \",\"d\"],\"reason\":\"collect-jump\"},{\"atMs\":13968,\"keys\":[\"d\"],\"reason\":\"collect-jump-release\"},{\"atMs\":14042,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":14173,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":14302,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":14431,\"keys\":[\"d\"],\"reason\":\"collect-steer\"},{\"atMs\":14559,\"keys\":[\"d\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":14852,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":14925,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":14999,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15126,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15200,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15273,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15347,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15421,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15550,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15681,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":15811,\"keys\":[\" \",\"a\",\"w\"],\"reason\":\"collect-jump\"},{\"atMs\":15848,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-jump-release\"},{\"atMs\":15984,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16059,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16132,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16259,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16388,\"keys\":[\"a\",\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16519,\"keys\":[\"w\"],\"reason\":\"collect-steer\"},{\"atMs\":16774,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":16845,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":16918,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17104,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17232,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17413,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17541,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17673,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17801,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":17931,\"keys\":[\"d\",\"w\"],\"reason\":\"portal-steer\"},{\"atMs\":18113,\"keys\":[],\"reason\":\"portal-settle\"}],\"movement\":{\"distance\":1.1328000000000003,\"before\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":20,\"simulationDeltaMs\":16.699999999999818,\"playing\":true,\"player\":{\"position\":[0,0.42,5],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.4120246864379442,3],\"scale\":[1.6,0.6,1.6]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0.3497204056869964,0.8,0.3],\"scale\":[1.6,0.7,1.6]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"stage\":\"ready\",\"position\":[0.24667999999999993,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},{\"id\":\"fixture-crystal-1\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.5,0.8,4],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-2\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,2.6],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-3\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,1.2],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-4\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,-0.5],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-5\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,-2.8],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-portal\",\"behavior\":\"portal\",\"stage\":\"ready\",\"position\":[0,0,-5.2],\"scale\":[1.4,1.4,1.1]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":\"playing\",\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":2,\"atMs\":2301.5,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}},\"after\":{\"renderer\":\"software\",\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":20,\"simulationDeltaMs\":16.600000000000364,\"playing\":true,\"player\":{\"position\":[0.9941255261094155,0.42,4.456906749869161],\"velocityY\":0},\"entities\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0,0.3934210794345363,3],\"scale\":[1.6,0.6,1.6]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"stage\":\"ready\",\"position\":[0.3401163638059082,0.8,0.3],\"scale\":[1.6,0.7,1.6]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"stage\":\"ready\",\"position\":[0.35996000000000017,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},{\"id\":\"fixture-crystal-1\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.5,0.8,4],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-2\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,2.6],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-3\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,1.2],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-4\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[1.4,0.8,-0.5],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-crystal-5\",\"behavior\":\"collect\",\"stage\":\"ready\",\"position\":[-1.2,0.8,-2.8],\"scale\":[0.6,0.6,0.6]},{\"id\":\"fixture-portal\",\"behavior\":\"portal\",\"stage\":\"ready\",\"position\":[0,0,-5.2],\"scale\":[1.4,1.4,1.1]}],\"contacts\":[],\"collected\":[],\"scoreIds\":[],\"gameScore\":0,\"status\":\"playing\",\"won\":false,\"lost\":false,\"reset\":0,\"sessionGeneration\":2,\"atMs\":2585,\"platformContacts\":[],\"bounceContacts\":[],\"platformContactCounts\":{},\"bounceContactCounts\":{}}},\"timing\":{\"observationSamples\":133,\"observedSpanMs\":18149.10000000149,\"staleObservationWaits\":[{\"waitedMs\":5,\"previousAtMs\":2585,\"observedAtMs\":2601.89999999851},{\"waitedMs\":61,\"previousAtMs\":3334.89999999851,\"observedAtMs\":3401.39999999851},{\"waitedMs\":109,\"previousAtMs\":3851.60000000149,\"observedAtMs\":4068.300000000745},{\"waitedMs\":56,\"previousAtMs\":4068.300000000745,\"observedAtMs\":4201.5},{\"waitedMs\":6,\"previousAtMs\":4351.5,\"observedAtMs\":4368.300000000745},{\"waitedMs\":55,\"previousAtMs\":4484.800000000745,\"observedAtMs\":4601.39999999851},{\"waitedMs\":66,\"previousAtMs\":4734.699999999255,\"observedAtMs\":4884.699999999255},{\"waitedMs\":55,\"previousAtMs\":4884.699999999255,\"observedAtMs\":5018},{\"waitedMs\":110,\"previousAtMs\":5018,\"observedAtMs\":5184.60000000149},{\"waitedMs\":54,\"previousAtMs\":5184.60000000149,\"observedAtMs\":5301.199999999255},{\"waitedMs\":56,\"previousAtMs\":5301.199999999255,\"observedAtMs\":5467.89999999851},{\"waitedMs\":110,\"previousAtMs\":5467.89999999851,\"observedAtMs\":5617.89999999851},{\"waitedMs\":161,\"previousAtMs\":5617.89999999851,\"observedAtMs\":5867.89999999851},{\"waitedMs\":162,\"previousAtMs\":5867.89999999851,\"observedAtMs\":6034.5},{\"waitedMs\":108,\"previousAtMs\":6034.5,\"observedAtMs\":6218.60000000149},{\"waitedMs\":162,\"previousAtMs\":6218.60000000149,\"observedAtMs\":6455.699999999255},{\"waitedMs\":108,\"previousAtMs\":6455.699999999255,\"observedAtMs\":6651.199999999255},{\"waitedMs\":110,\"previousAtMs\":6651.199999999255,\"observedAtMs\":6834.60000000149},{\"waitedMs\":163,\"previousAtMs\":6834.60000000149,\"observedAtMs\":7068.39999999851},{\"waitedMs\":107,\"previousAtMs\":7068.39999999851,\"observedAtMs\":7254},{\"waitedMs\":162,\"previousAtMs\":7254,\"observedAtMs\":7488.300000000745},{\"waitedMs\":55,\"previousAtMs\":7501.199999999255,\"observedAtMs\":7684.5},{\"waitedMs\":159,\"previousAtMs\":7684.5,\"observedAtMs\":7884.5},{\"waitedMs\":109,\"previousAtMs\":7884.5,\"observedAtMs\":8102.5},{\"waitedMs\":55,\"previousAtMs\":8117.89999999851,\"observedAtMs\":8301.10000000149},{\"waitedMs\":162,\"previousAtMs\":8301.10000000149,\"observedAtMs\":8534.800000000745},{\"waitedMs\":114,\"previousAtMs\":8534.800000000745,\"observedAtMs\":8719.300000000745},{\"waitedMs\":161,\"previousAtMs\":8719.300000000745,\"observedAtMs\":8919.300000000745},{\"waitedMs\":160,\"previousAtMs\":8919.300000000745,\"observedAtMs\":9154.10000000149},{\"waitedMs\":109,\"previousAtMs\":9154.10000000149,\"observedAtMs\":9334.60000000149},{\"waitedMs\":108,\"previousAtMs\":9334.60000000149,\"observedAtMs\":9517.699999999255},{\"waitedMs\":163,\"previousAtMs\":9517.699999999255,\"observedAtMs\":9767.60000000149},{\"waitedMs\":107,\"previousAtMs\":9767.60000000149,\"observedAtMs\":9951},{\"waitedMs\":108,\"previousAtMs\":9951,\"observedAtMs\":10167.699999999255},{\"waitedMs\":109,\"previousAtMs\":10167.699999999255,\"observedAtMs\":10351.800000000745},{\"waitedMs\":109,\"previousAtMs\":10351.800000000745,\"observedAtMs\":10538.39999999851},{\"waitedMs\":163,\"previousAtMs\":10538.39999999851,\"observedAtMs\":10767.89999999851},{\"waitedMs\":109,\"previousAtMs\":10767.89999999851,\"observedAtMs\":10951},{\"waitedMs\":109,\"previousAtMs\":10951,\"observedAtMs\":11143.89999999851},{\"waitedMs\":215,\"previousAtMs\":11143.89999999851,\"observedAtMs\":11367.60000000149},{\"waitedMs\":107,\"previousAtMs\":11367.60000000149,\"observedAtMs\":11551.10000000149},{\"waitedMs\":108,\"previousAtMs\":11551.10000000149,\"observedAtMs\":11734.199999999255},{\"waitedMs\":162,\"previousAtMs\":11734.199999999255,\"observedAtMs\":11967.60000000149},{\"waitedMs\":108,\"previousAtMs\":11967.60000000149,\"observedAtMs\":12151},{\"waitedMs\":163,\"previousAtMs\":12151,\"observedAtMs\":12367.60000000149},{\"waitedMs\":107,\"previousAtMs\":12367.60000000149,\"observedAtMs\":12551},{\"waitedMs\":109,\"previousAtMs\":12551,\"observedAtMs\":12734.39999999851},{\"waitedMs\":107,\"previousAtMs\":12734.39999999851,\"observedAtMs\":12922.89999999851},{\"waitedMs\":55,\"previousAtMs\":12934.300000000745,\"observedAtMs\":13100.89999999851},{\"waitedMs\":55,\"previousAtMs\":13100.89999999851,\"observedAtMs\":13251.699999999255},{\"waitedMs\":62,\"previousAtMs\":13267.800000000745,\"observedAtMs\":13451.10000000149},{\"waitedMs\":161,\"previousAtMs\":13451.10000000149,\"observedAtMs\":13617.60000000149},{\"waitedMs\":108,\"previousAtMs\":13617.60000000149,\"observedAtMs\":13784.39999999851},{\"waitedMs\":109,\"previousAtMs\":13784.39999999851,\"observedAtMs\":13984.300000000745},{\"waitedMs\":56,\"previousAtMs\":13984.300000000745,\"observedAtMs\":14150.800000000745},{\"waitedMs\":108,\"previousAtMs\":14150.800000000745,\"observedAtMs\":14334.39999999851},{\"waitedMs\":109,\"previousAtMs\":14334.39999999851,\"observedAtMs\":14501.39999999851},{\"waitedMs\":108,\"previousAtMs\":14501.39999999851,\"observedAtMs\":14688},{\"waitedMs\":55,\"previousAtMs\":14688,\"observedAtMs\":14817.5},{\"waitedMs\":108,\"previousAtMs\":14817.5,\"observedAtMs\":15004.10000000149},{\"waitedMs\":59,\"previousAtMs\":15004.10000000149,\"observedAtMs\":15151},{\"waitedMs\":64,\"previousAtMs\":15151,\"observedAtMs\":15274.39999999851},{\"waitedMs\":55,\"previousAtMs\":15297.10000000149,\"observedAtMs\":15417.699999999255},{\"waitedMs\":60,\"previousAtMs\":15417.699999999255,\"observedAtMs\":15557.5},{\"waitedMs\":55,\"previousAtMs\":15817.5,\"observedAtMs\":15950.699999999255},{\"waitedMs\":109,\"previousAtMs\":15950.699999999255,\"observedAtMs\":16134.199999999255},{\"waitedMs\":56,\"previousAtMs\":16267.39999999851,\"observedAtMs\":16401.699999999255},{\"waitedMs\":55,\"previousAtMs\":16401.699999999255,\"observedAtMs\":16517.5},{\"waitedMs\":55,\"previousAtMs\":16517.5,\"observedAtMs\":16651.39999999851},{\"waitedMs\":55,\"previousAtMs\":16651.39999999851,\"observedAtMs\":16784.300000000745},{\"waitedMs\":109,\"previousAtMs\":16784.300000000745,\"observedAtMs\":16952.300000000745},{\"waitedMs\":108,\"previousAtMs\":16952.300000000745,\"observedAtMs\":17085.10000000149},{\"waitedMs\":54,\"previousAtMs\":17234.10000000149,\"observedAtMs\":17360.60000000149},{\"waitedMs\":55,\"previousAtMs\":17617.39999999851,\"observedAtMs\":17756.39999999851},{\"waitedMs\":57,\"previousAtMs\":17756.39999999851,\"observedAtMs\":17901},{\"waitedMs\":55,\"previousAtMs\":17901,\"observedAtMs\":18034},{\"waitedMs\":55,\"previousAtMs\":18034,\"observedAtMs\":18205.300000000745},{\"waitedMs\":56,\"previousAtMs\":18350.699999999255,\"observedAtMs\":18485.89999999851},{\"waitedMs\":54,\"previousAtMs\":18485.89999999851,\"observedAtMs\":18600.800000000745},{\"waitedMs\":58,\"previousAtMs\":18600.800000000745,\"observedAtMs\":18734.5},{\"waitedMs\":123,\"previousAtMs\":18734.5,\"observedAtMs\":18917.800000000745},{\"waitedMs\":54,\"previousAtMs\":18917.800000000745,\"observedAtMs\":19003.699999999255},{\"waitedMs\":112,\"previousAtMs\":19150.699999999255,\"observedAtMs\":19334.10000000149},{\"waitedMs\":55,\"previousAtMs\":19334.10000000149,\"observedAtMs\":19467.199999999255},{\"waitedMs\":109,\"previousAtMs\":19467.199999999255,\"observedAtMs\":19617.39999999851},{\"waitedMs\":56,\"previousAtMs\":19617.39999999851,\"observedAtMs\":19750.89999999851},{\"waitedMs\":57,\"previousAtMs\":19750.89999999851,\"observedAtMs\":19884},{\"waitedMs\":55,\"previousAtMs\":19884,\"observedAtMs\":20034.199999999255},{\"waitedMs\":56,\"previousAtMs\":20034.199999999255,\"observedAtMs\":20167.300000000745},{\"waitedMs\":107,\"previousAtMs\":20167.300000000745,\"observedAtMs\":20317.800000000745}],\"source\":\"renderer performance.now timestamps\"},\"contacts\":[\"fixture-portal\"],\"collections\":[\"fixture-crystal-1\",\"fixture-crystal-2\",\"fixture-crystal-3\",\"fixture-crystal-4\",\"fixture-crystal-5\"],\"platformEvidence\":[{\"id\":\"fixture-platform-a\",\"behavior\":\"move\",\"groundedFrames\":9,\"bounceFrames\":0,\"startPosition\":[0,0.4120246864379442,3],\"maximumDisplacement\":0.43198749048017254,\"jumpEvidence\":[{\"id\":\"fixture-platform-a\",\"attempt\":0,\"before\":{\"atMs\":2585,\"player\":{\"position\":[0.9941255261094155,0.42,4.456906749869161],\"velocityY\":0,\"groundedOn\":null},\"platform\":{\"position\":[0,0.3934210794345363,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"inputKeys\":[[\" \",\"w\"],[\"w\"],[\"w\"],[\"w\"],[\"a\",\"w\"],[],[],[],[]],\"samples\":[{\"atMs\":2601.89999999851,\"player\":{\"position\":[0.9941255261094155,0.42,4.456906749869161],\"velocityY\":0,\"groundedOn\":null},\"platform\":{\"position\":[0,0.39199480459186764,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":2718.300000000745,\"player\":{\"position\":[0.7705214549044155,1.0030663499999994,4.047602243003491],\"velocityY\":4.251,\"groundedOn\":null},\"platform\":{\"position\":[0,0.38115496887202704,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":2801.60000000149,\"player\":{\"position\":[0.6107768654414948,1.29472455,3.7551917333816176],\"velocityY\":3.0014999999999974,\"groundedOn\":null},\"platform\":{\"position\":[0,0.37244026467066627,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":2868.300000000745,\"player\":{\"position\":[0.4828661317418938,1.4532160499999993,3.521052705869267],\"velocityY\":2.0009999999999994,\"groundedOn\":null},\"platform\":{\"position\":[0,0.364908375653462,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":2951.60000000149,\"player\":{\"position\":[0.32292977206353146,1.5574993499999994,3.228291163222638],\"velocityY\":0.749999999999998,\"groundedOn\":null},\"platform\":{\"position\":[0,0.35483289264374007,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3018.199999999255,\"player\":{\"position\":[0.06730575063558364,1.565865899999999,3.1532890321262226],\"velocityY\":-0.2490000000000007,\"groundedOn\":null},\"platform\":{\"position\":[0,0.34628995007475394,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3101.39999999851,\"player\":{\"position\":[0.003591655204592148,1.4826740999999988,3.1345948072583467],\"velocityY\":-1.4985000000000035,\"groundedOn\":null},\"platform\":{\"position\":[0,0.3350234268846111,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3185.199999999255,\"player\":{\"position\":[0.003591655204592148,1.2953989499999978,3.1345948072583467],\"velocityY\":-2.7480000000000064,\"groundedOn\":null},\"platform\":{\"position\":[0,0.32315750143479516,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0}],\"apex\":{\"atMs\":3018.199999999255,\"player\":{\"position\":[0.06730575063558364,1.565865899999999,3.1532890321262226],\"velocityY\":-0.2490000000000007,\"groundedOn\":null},\"platform\":{\"position\":[0,0.34628995007475394,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"landing\":{\"atMs\":3334.89999999851,\"player\":{\"position\":[0.003591655204592148,1.0324486436998601,3.1345948072583467],\"velocityY\":0,\"groundedOn\":\"fixture-platform-a\"},\"platform\":{\"position\":[0,0.3004486436998602,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":\"fixture-platform-a\",\"bounceContactId\":null,\"platformContactCount\":5,\"bounceContactCount\":0},\"contact\":{\"atMs\":3334.89999999851,\"player\":{\"position\":[0.003591655204592148,1.0324486436998601,3.1345948072583467],\"velocityY\":0,\"groundedOn\":\"fixture-platform-a\"},\"platform\":{\"position\":[0,0.3004486436998602,3],\"scale\":[1.6,0.6,1.6]},\"platformContactId\":\"fixture-platform-a\",\"bounceContactId\":null,\"platformContactCount\":5,\"bounceContactCount\":0},\"recovery\":null}]},{\"id\":\"fixture-platform-b\",\"behavior\":\"move\",\"groundedFrames\":2,\"bounceFrames\":0,\"startPosition\":[0.3497204056869964,0.8,0.3],\"maximumDisplacement\":0.6997156293912628,\"jumpEvidence\":[{\"id\":\"fixture-platform-b\",\"attempt\":0,\"before\":{\"atMs\":3334.89999999851,\"player\":{\"position\":[0.003591655204592148,1.0324486436998601,3.1345948072583467],\"velocityY\":0,\"groundedOn\":\"fixture-platform-a\"},\"platform\":{\"position\":[0.25291640612826866,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"inputKeys\":[[\" \",\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"w\"],[\"w\"],[\"w\"]],\"samples\":[{\"atMs\":3401.39999999851,\"player\":{\"position\":[0.003591655204592148,1.0218664993846922,3.1345948072583467],\"velocityY\":0,\"groundedOn\":\"fixture-platform-a\"},\"platform\":{\"position\":[0.24134886930519905,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3518.199999999255,\"player\":{\"position\":[0.13490169252954767,1.6022422590108198,2.68706085983344],\"velocityY\":4.251000000000001,\"groundedOn\":null},\"platform\":{\"position\":[0.21987955255581623,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3584.800000000745,\"player\":{\"position\":[0.21001643943842052,1.8440755590108207,2.431053018553496],\"velocityY\":3.2504999999999975,\"groundedOn\":null},\"platform\":{\"position\":[0.2069303760794682,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3668.300000000745,\"player\":{\"position\":[0.3039380270276251,2.0525671590108194,2.1109472619905705],\"velocityY\":1.9995000000000027,\"groundedOn\":null},\"platform\":{\"position\":[0.19010792181856598,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3735,\"player\":{\"position\":[0.3789401581240411,2.1441504090108197,1.8553232405626208],\"velocityY\":1.0004999999999973,\"groundedOn\":null},\"platform\":{\"position\":[0.1762061569114514,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3818.39999999851,\"player\":{\"position\":[0.2190037984456796,2.1649918590108195,1.5625616979159935],\"velocityY\":-0.2504999999999974,\"groundedOn\":null},\"platform\":{\"position\":[0.1582613384507992,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":3851.60000000149,\"player\":{\"position\":[0.25650486399388756,2.14417515901082,1.4347496872020187],\"velocityY\":-0.7500000000000001,\"groundedOn\":null},\"platform\":{\"position\":[0.15094219957025964,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4068.300000000745,\"player\":{\"position\":[0.33916487033738413,2.032535109010821,1.1530259158384857],\"velocityY\":-1.8509999999999946,\"groundedOn\":null},\"platform\":{\"position\":[0.10149189926065942,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0}],\"apex\":{\"atMs\":3818.39999999851,\"player\":{\"position\":[0.2190037984456796,2.1649918590108195,1.5625616979159935],\"velocityY\":-0.2504999999999974,\"groundedOn\":null},\"platform\":{\"position\":[0.1582613384507992,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"landing\":{\"atMs\":4351.5,\"player\":{\"position\":[0.057837964284438194,1.584,0.6380604685212153],\"velocityY\":0,\"groundedOn\":\"fixture-platform-b\"},\"platform\":{\"position\":[0.03351101573506083,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":\"fixture-platform-b\",\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},\"contact\":{\"atMs\":4351.5,\"player\":{\"position\":[0.057837964284438194,1.584,0.6380604685212153],\"velocityY\":0,\"groundedOn\":\"fixture-platform-b\"},\"platform\":{\"position\":[0.03351101573506083,0.8,0.3],\"scale\":[1.6,0.7,1.6]},\"platformContactId\":\"fixture-platform-b\",\"bounceContactId\":null,\"platformContactCount\":1,\"bounceContactCount\":0},\"recovery\":null}]},{\"id\":\"fixture-platform-c\",\"behavior\":\"bounce\",\"groundedFrames\":1,\"bounceFrames\":1,\"startPosition\":[0.24667999999999993,1.4,-2.5],\"maximumDisplacement\":0.547,\"jumpEvidence\":[{\"id\":\"fixture-platform-c\",\"attempt\":0,\"before\":{\"atMs\":4351.5,\"player\":{\"position\":[0.057837964284438194,1.584,0.6380604685212153],\"velocityY\":0,\"groundedOn\":\"fixture-platform-b\"},\"platform\":{\"position\":[0.1546799999999996,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"inputKeys\":[[\" \",\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"w\"],[\"d\",\"w\"],[\"d\",\"w\"],[\"w\"]],\"samples\":[{\"atMs\":4368.300000000745,\"player\":{\"position\":[0.05378747753417726,1.584,0.6380604685212153],\"velocityY\":0,\"groundedOn\":\"fixture-platform-b\"},\"platform\":{\"position\":[0.16131999999999974,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4484.800000000745,\"player\":{\"position\":[0.1388320121785851,2.0449999500000002,0.29262260172669075],\"velocityY\":4.65,\"groundedOn\":null},\"platform\":{\"position\":[0.19731999999999972,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4601.39999999851,\"player\":{\"position\":[0.20257256202929194,2.270096549999998,0.07538056549813625],\"velocityY\":3.801000000000009,\"groundedOn\":null},\"platform\":{\"position\":[0.21995999999999954,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4618,\"player\":{\"position\":[0.22149201852208164,2.329719749999999,0.010898830363157627],\"velocityY\":3.549000000000006,\"groundedOn\":null},\"platform\":{\"position\":[0.2266799999999996,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4734.699999999255,\"player\":{\"position\":[0.30403940905312177,2.5334063999999996,-0.27044112114838365],\"velocityY\":2.449500000000003,\"groundedOn\":null},\"platform\":{\"position\":[0.25599999999999973,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":4884.699999999255,\"player\":{\"position\":[0.3865867995841618,2.6564997000000004,-0.5517810726599249],\"velocityY\":1.3500000000000003,\"groundedOn\":null},\"platform\":{\"position\":[0.2853199999999998,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":5018,\"player\":{\"position\":[0.45043996524732716,2.6948413500000004,-0.7694069287404782],\"velocityY\":0.4994999999999894,\"groundedOn\":null},\"platform\":{\"position\":[0.3080000000000001,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},{\"atMs\":5184.60000000149,\"player\":{\"position\":[0.5142931309104914,2.6849596499999997,-0.9870327848210281],\"velocityY\":-0.35100000000000786,\"groundedOn\":null},\"platform\":{\"position\":[0.3306800000000001,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0}],\"apex\":{\"atMs\":5184.60000000149,\"player\":{\"position\":[0.5142931309104914,2.6849596499999997,-0.9870327848210281],\"velocityY\":-0.35100000000000786,\"groundedOn\":null},\"platform\":{\"position\":[0.3306800000000001,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":null,\"bounceContactId\":null,\"platformContactCount\":0,\"bounceContactCount\":0},\"landing\":null,\"contact\":{\"atMs\":5867.89999999851,\"player\":{\"position\":[0.42491557835683946,2.1839999999999997,-1.819653881006095],\"velocityY\":7.08,\"groundedOn\":null},\"platform\":{\"position\":[0.4213200000000006,1.4,-2.5],\"scale\":[1.7,0.7,1.7]},\"platformContactId\":\"fixture-platform-c\",\"bounceContactId\":\"fixture-platform-c\",\"platformContactCount\":1,\"bounceContactCount\":1},\"recovery\":null}]}],\"win\":{\"projectId\":\"8dd88291-62e3-43e5-b1ae-577a230077c6\",\"revision\":20,\"score\":5,\"status\":\"won\",\"portalId\":\"fixture-portal\"}},\"focus\":null,\"layout\":{\"desktopPlaying\":{\"viewport\":{\"width\":1280,\"height\":900},\"scene\":{\"left\":0,\"top\":0,\"right\":1280,\"bottom\":900,\"width\":1280,\"height\":900},\"canvas\":{\"left\":0,\"top\":0,\"right\":1280,\"bottom\":900,\"width\":1280,\"height\":900},\"composer\":{\"left\":20,\"top\":88,\"right\":362,\"bottom\":878,\"width\":342,\"height\":790},\"sheetHandle\":{\"left\":0,\"top\":0,\"right\":0,\"bottom\":0,\"width\":0,\"height\":0},\"hud\":{\"left\":1109,\"top\":158,\"right\":1253,\"bottom\":218,\"width\":144,\"height\":60},\"advisory\":{\"left\":460,\"top\":76,\"right\":820,\"bottom\":118,\"width\":360,\"height\":42},\"toolbar\":{\"left\":1016,\"top\":91,\"right\":1253,\"bottom\":137,\"width\":237,\"height\":46},\"heading\":{\"left\":390,\"top\":122,\"right\":687,\"bottom\":145,\"width\":297,\"height\":23},\"interaction\":{\"pointerCoarse\":false,\"anyPointerCoarse\":false,\"maxTouchPoints\":0},\"horizontalOverflow\":false,\"verticalOverflow\":false},\"phoneSheetOpenSettle\":{\"box\":{\"x\":10,\"y\":471.09375,\"width\":370,\"height\":362.90625},\"waitedMs\":527},\"phoneSheetOpenDiagnostics\":[{\"label\":\"before-textarea-fill\",\"window\":{\"scrollX\":0,\"scrollY\":0,\"innerWidth\":390,\"innerHeight\":844},\"visualViewport\":{\"offsetLeft\":0,\"offsetTop\":0,\"pageLeft\":0,\"pageTop\":0,\"width\":390,\"height\":844},\"document\":{\"documentElementScrollTop\":0,\"bodyScrollTop\":0,\"scrollHeight\":844,\"bodyScrollHeight\":844},\"activeElement\":{\"tag\":\"button\",\"id\":null,\"className\":\"sheet-handle\"},\"targets\":{\"advisory\":[{\"tag\":\"div\",\"id\":null,\"className\":\"graphics-error is-advisory\",\"rect\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"position\":\"absolute\",\"transform\":\"matrix(1, 0, 0, 1, -179, 0)\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"composer\":[{\"tag\":\"section\",\"id\":null,\"className\":\"composer-shell chat-panel\",\"rect\":{\"left\":10,\"top\":471.09375,\"right\":380,\"bottom\":834,\"width\":370,\"height\":362.90625},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"scene\":[{\"tag\":\"div\",\"id\":null,\"className\":\"scene gameplay-region\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}]}},{\"label\":\"immediately-after-textarea-fill\",\"window\":{\"scrollX\":0,\"scrollY\":0,\"innerWidth\":390,\"innerHeight\":844},\"visualViewport\":{\"offsetLeft\":0,\"offsetTop\":0,\"pageLeft\":0,\"pageTop\":0,\"width\":390,\"height\":844},\"document\":{\"documentElementScrollTop\":0,\"bodyScrollTop\":0,\"scrollHeight\":844,\"bodyScrollHeight\":844},\"activeElement\":{\"tag\":\"textarea\",\"id\":\"prompt\",\"className\":\"\"},\"targets\":{\"advisory\":[{\"tag\":\"div\",\"id\":null,\"className\":\"graphics-error is-advisory\",\"rect\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"position\":\"absolute\",\"transform\":\"matrix(1, 0, 0, 1, -179, 0)\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"composer\":[{\"tag\":\"section\",\"id\":null,\"className\":\"composer-shell chat-panel\",\"rect\":{\"left\":10,\"top\":471.09375,\"right\":380,\"bottom\":834,\"width\":370,\"height\":362.90625},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"scene\":[{\"tag\":\"div\",\"id\":null,\"className\":\"scene gameplay-region\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}]}},{\"label\":\"after-two-animation-frames\",\"window\":{\"scrollX\":0,\"scrollY\":0,\"innerWidth\":390,\"innerHeight\":844},\"visualViewport\":{\"offsetLeft\":0,\"offsetTop\":0,\"pageLeft\":0,\"pageTop\":0,\"width\":390,\"height\":844},\"document\":{\"documentElementScrollTop\":0,\"bodyScrollTop\":0,\"scrollHeight\":844,\"bodyScrollHeight\":844},\"activeElement\":{\"tag\":\"textarea\",\"id\":\"prompt\",\"className\":\"\"},\"targets\":{\"advisory\":[{\"tag\":\"div\",\"id\":null,\"className\":\"graphics-error is-advisory\",\"rect\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"position\":\"absolute\",\"transform\":\"matrix(1, 0, 0, 1, -179, 0)\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"composer\":[{\"tag\":\"section\",\"id\":null,\"className\":\"composer-shell chat-panel\",\"rect\":{\"left\":10,\"top\":471.09375,\"right\":380,\"bottom\":834,\"width\":370,\"height\":362.90625},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"scene\":[{\"tag\":\"div\",\"id\":null,\"className\":\"scene gameplay-region\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}]}},{\"label\":\"after-300ms\",\"window\":{\"scrollX\":0,\"scrollY\":0,\"innerWidth\":390,\"innerHeight\":844},\"visualViewport\":{\"offsetLeft\":0,\"offsetTop\":0,\"pageLeft\":0,\"pageTop\":0,\"width\":390,\"height\":844},\"document\":{\"documentElementScrollTop\":0,\"bodyScrollTop\":0,\"scrollHeight\":844,\"bodyScrollHeight\":844},\"activeElement\":{\"tag\":\"textarea\",\"id\":\"prompt\",\"className\":\"\"},\"targets\":{\"advisory\":[{\"tag\":\"div\",\"id\":null,\"className\":\"graphics-error is-advisory\",\"rect\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"position\":\"absolute\",\"transform\":\"matrix(1, 0, 0, 1, -179, 0)\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"composer\":[{\"tag\":\"section\",\"id\":null,\"className\":\"composer-shell chat-panel\",\"rect\":{\"left\":10,\"top\":471.09375,\"right\":380,\"bottom\":834,\"width\":370,\"height\":362.90625},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}],\"scene\":[{\"tag\":\"div\",\"id\":null,\"className\":\"scene gameplay-region\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"absolute\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"main\",\"id\":null,\"className\":\"app is-workspace  sheet-open\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"relative\",\"transform\":\"none\",\"overflow\":\"hidden\"},{\"tag\":\"body\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"},{\"tag\":\"html\",\"id\":null,\"className\":\"\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"position\":\"static\",\"transform\":\"none\",\"overflow\":\"visible\"}]}}],\"phoneSheetOpen\":{\"viewport\":{\"width\":390,\"height\":844},\"scene\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"canvas\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"composer\":{\"left\":10,\"top\":471.09375,\"right\":380,\"bottom\":834,\"width\":370,\"height\":362.90625},\"sheetHandle\":{\"left\":11,\"top\":472.09375,\"right\":379,\"bottom\":492.09375,\"width\":368,\"height\":20},\"hud\":{\"left\":250,\"top\":136,\"right\":373,\"bottom\":186,\"width\":123,\"height\":50},\"advisory\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"toolbar\":{\"left\":230,\"top\":81,\"right\":373,\"bottom\":123,\"width\":143,\"height\":42},\"heading\":{\"left\":20,\"top\":107,\"right\":230,\"bottom\":126,\"width\":210,\"height\":19},\"interaction\":{\"pointerCoarse\":false,\"anyPointerCoarse\":false,\"maxTouchPoints\":0},\"horizontalOverflow\":false,\"verticalOverflow\":false},\"phoneSheetClosedSettle\":{\"box\":{\"x\":10,\"y\":792,\"width\":370,\"height\":362.90625},\"waitedMs\":334},\"phoneSheetClosed\":{\"viewport\":{\"width\":390,\"height\":844},\"scene\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"canvas\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"composer\":{\"left\":10,\"top\":792,\"right\":380,\"bottom\":1154.90625,\"width\":370,\"height\":362.90625},\"sheetHandle\":{\"left\":11,\"top\":793,\"right\":379,\"bottom\":813,\"width\":368,\"height\":20},\"hud\":{\"left\":250,\"top\":136,\"right\":373,\"bottom\":186,\"width\":123,\"height\":50},\"advisory\":{\"left\":16,\"top\":220,\"right\":374,\"bottom\":262,\"width\":358,\"height\":42},\"toolbar\":{\"left\":230,\"top\":81,\"right\":373,\"bottom\":123,\"width\":143,\"height\":42},\"heading\":{\"left\":20,\"top\":107,\"right\":230,\"bottom\":126,\"width\":210,\"height\":19},\"interaction\":{\"pointerCoarse\":false,\"anyPointerCoarse\":false,\"maxTouchPoints\":0},\"horizontalOverflow\":false,\"verticalOverflow\":false}}}}"
+}

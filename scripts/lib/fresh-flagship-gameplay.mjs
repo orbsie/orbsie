@@ -8,6 +8,7 @@ export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   steeringStepMs: 70,
   jumpFeedbackStepMs: 50,
   jumpFeedbackSteps: 6,
+  jumpPressMs: 35,
   settleMs: 180,
   maxJumpAttempts: 3,
   maxObservationWaitMs: 1000,
@@ -58,8 +59,7 @@ export async function waitForFreshGameplayObservation(
   let observation = await read();
   const isFresh = (value) =>
     Boolean(value && Number.isFinite(value.atMs) && value.atMs > lastAtMs);
-  if (isFresh(observation))
-    return { observation, waitedMs: 0, polls: 0 };
+  if (isFresh(observation)) return { observation, waitedMs: 0, polls: 0 };
   const intervalMs = 50;
   const maxPolls = Math.max(1, Math.ceil(maxWaitMs / intervalMs));
   for (let poll = 1; poll <= maxPolls; poll++) {
@@ -117,10 +117,8 @@ export function validateGenerationMovementObservation(
   if (after && after.projectId !== projectId)
     failures.push("after-project-mismatch");
   if (before && after) {
-    if (after.revision < before.revision)
-      failures.push("revision-decreased");
-    if (after.renderer !== before.renderer)
-      failures.push("renderer-changed");
+    if (after.revision < before.revision) failures.push("revision-decreased");
+    if (after.renderer !== before.renderer) failures.push("renderer-changed");
     if (!(Number.isFinite(after.atMs) && after.atMs > before.atMs))
       failures.push("after-observation-not-newer");
   }
@@ -259,6 +257,7 @@ export function buildFreshGameplayTargets(project, story) {
       behavior: current.behavior?.type ?? null,
       position: finitePosition(current.position, `${label} ${current.id}`),
       scale: finitePosition(current.scale, `${label} ${current.id} scale`),
+      geometry: current.geometry,
     };
   };
   const platforms = (story.platforms ?? []).map((entity) =>
@@ -300,6 +299,20 @@ export function chooseGameplayKeys(playerPosition, targetPosition) {
   ).keys;
 }
 
+/** Avoid adding horizontal drift once the avatar is centered over a target. */
+export function chooseGameplaySteeringKeys(
+  playerPosition,
+  targetPosition,
+  centerDistance = FRESH_GAMEPLAY_LIMITS.centeringDistance,
+) {
+  const player = finitePosition(playerPosition, "player");
+  const target = finitePosition(targetPosition, "target");
+  return Math.hypot(player[0] - target[0], player[2] - target[2]) <=
+    centerDistance
+    ? []
+    : chooseGameplayKeys(player, target);
+}
+
 /** Keep the jump edge while releasing horizontal steering at platform center. */
 export function chooseGameplayJumpKeys(
   playerPosition,
@@ -313,6 +326,111 @@ export function chooseGameplayJumpKeys(
   )
     return [" "];
   return [" ", ...chooseGameplayKeys(player, target)];
+}
+
+/** Classify the vertical phase without treating a fixed-delay sample as a landing. */
+export function gameplayJumpPhase(observation, groundY = 0.42) {
+  const player = observation?.player;
+  if (!player || !Array.isArray(player.position)) return "unknown";
+  if (typeof player.groundedOn === "string" && player.groundedOn)
+    return "supported";
+  if (
+    Number.isFinite(player.velocityY) &&
+    Number.isFinite(player.position[1]) &&
+    Math.abs(player.velocityY) <= 0.1 &&
+    player.position[1] <= groundY + 0.08
+  )
+    return "grounded";
+  if (player.velocityY > 0.1) return "ascending";
+  if (player.velocityY < -0.1) return "descending";
+  return "apex";
+}
+
+/** Return the current stable support, if one is authoritative in the sample. */
+export function gameplaySupportId(observation, groundY = 0.42) {
+  const phase = gameplayJumpPhase(observation, groundY);
+  if (phase === "supported") return observation.player.groundedOn;
+  if (phase === "grounded") return "ground";
+  return null;
+}
+
+/** Estimate a target platform's top surface using its committed geometry bounds. */
+export function gameplayPlatformSurfaceHeight(
+  target,
+  position = target?.position,
+) {
+  const base = finitePosition(position, "platform");
+  const scaleY = Number(target?.scale?.[1]);
+  if (!Number.isFinite(scaleY))
+    throw new Error("platform scale must be finite.");
+  const bounds = target?.geometry?.model?.bounds;
+  const high = bounds
+    ? Math.max(bounds.min[1] * scaleY, bounds.max[1] * scaleY)
+    : Math.max(-0.025 * scaleY, 0.52 * scaleY);
+  return base[1] + high + 0.42;
+}
+
+/**
+ * Select one transition action from the current support and jump phase.
+ * `jumping` means a jump edge has already been sent for this target; a stable
+ * support then means the attempt recovered and may be retried, never that a
+ * second jump should be held continuously.
+ */
+export function chooseGameplayPlatformAction({
+  observation,
+  target,
+  jumping = false,
+  targetContacted = false,
+  groundY = 0.42,
+}) {
+  if (targetContacted) return { phase: "contacted", keys: [] };
+  const player = finitePosition(observation?.player?.position, "player");
+  const targetPosition = finitePosition(target?.position, "platform");
+  const verticalPhase = gameplayJumpPhase(observation, groundY);
+  const supportId = gameplaySupportId(observation, groundY);
+  const steering = chooseGameplaySteeringKeys(player, targetPosition);
+  if (jumping) {
+    if (supportId) return { phase: "recovered", keys: [] };
+    return { phase: "jumping", keys: steering };
+  }
+  if (
+    verticalPhase === "ascending" ||
+    verticalPhase === "descending" ||
+    verticalPhase === "apex"
+  )
+    return { phase: "airborne", keys: steering };
+  if (supportId && gameplayPlatformSurfaceHeight(target) > player[1] + 0.18)
+    return {
+      phase: "jumping",
+      keys: chooseGameplayJumpKeys(player, targetPosition),
+    };
+  return { phase: "steering", keys: steering };
+}
+
+/** Compare each authoritative contact counter against its own attempt baseline. */
+export function platformContactProgress(
+  observation,
+  targetId,
+  {
+    baselinePlatformContactCount = 0,
+    baselineBounceContactCount = 0,
+  } = {},
+) {
+  const platformContactCount =
+    observation?.platformContactCounts?.[targetId] ?? 0;
+  const bounceContactCount =
+    observation?.bounceContactCounts?.[targetId] ?? 0;
+  const grounded = observation?.player?.groundedOn === targetId;
+  const platformContact = platformContactCount > baselinePlatformContactCount;
+  const bounced = bounceContactCount > baselineBounceContactCount;
+  return {
+    grounded,
+    platformContact,
+    bounced,
+    contacted: grounded || platformContact || bounced,
+    platformContactCount,
+    bounceContactCount,
+  };
 }
 
 /**

@@ -145,3 +145,13 @@ traverses3platforms/bounce/5win/reset, but overall failed phone-landscape sheet
 assertion. Latest separate-counter/fresh-recovery/jump-response fixes unverified.
 No route processes remain per worker handoff and process inspection. Root review
 and targeted validation needed before accepting those WIP changes.
+
+## Route correction root verification
+
+Latest parked route fixes now reviewed:16focused tests,4 independent baseline
+assertions and harness syntax passed. Current software fixture confirms movement
+while streaming,3platform contacts/bounce,5collection/portalwin/reset on same
+project/revision. Evidence `fresh-flagship-route-reviewed-software-20260913/` with
+root-review and exact source hashes. Overall fixture remains false for phone-
+landscape empty sheet handle; mobile and full-provider gates remain open.
+Luna notified browser is free and continues visible activity task. No model calls.

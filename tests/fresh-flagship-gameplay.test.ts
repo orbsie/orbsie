@@ -3,7 +3,12 @@ import {
   buildFreshGameplayTargets,
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
+  chooseGameplayPlatformAction,
+  chooseGameplaySteeringKeys,
   generationStreamIsOpen,
+  gameplayJumpPhase,
+  gameplayPlatformSurfaceHeight,
+  gameplaySupportId,
   gameplaySurfaceCandidatePoints,
   observePlatformContact,
   portalCompletionIsAuthoritative,
@@ -95,6 +100,48 @@ describe("fresh flagship gameplay driver", () => {
     ]);
   });
 
+  it("routes elevated transitions from stable support and releases jump steering", () => {
+    const support = {
+      player: {
+        position: [0, 0.93, 3],
+        velocityY: 0,
+        groundedOn: "platform-a",
+      },
+    };
+    const elevated = {
+      id: "platform-b",
+      position: [0, 0.8, 0.3],
+      scale: [1.6, 0.7, 1.6],
+    };
+    expect(gameplayJumpPhase(support)).toBe("supported");
+    expect(gameplaySupportId(support)).toBe("platform-a");
+    expect(gameplayPlatformSurfaceHeight(elevated)).toBeCloseTo(1.584);
+    expect(
+      chooseGameplayPlatformAction({
+        observation: support,
+        target: elevated,
+      }),
+    ).toEqual({ phase: "jumping", keys: [" ", "d", "w"] });
+    const airborne = {
+      player: { position: [0, 1.3, 2], velocityY: 3 },
+    };
+    expect(gameplayJumpPhase(airborne)).toBe("ascending");
+    expect(
+      chooseGameplayPlatformAction({
+        observation: airborne,
+        target: elevated,
+      }).keys,
+    ).not.toContain(" ");
+    expect(
+      chooseGameplayPlatformAction({
+        observation: support,
+        target: elevated,
+        jumping: true,
+      }),
+    ).toEqual({ phase: "recovered", keys: [] });
+    expect(chooseGameplaySteeringKeys([0, 0, 0], [0.1, 0, 0.1])).toEqual([]);
+  });
+
   it("requires a real bounce event instead of nearby upward motion", () => {
     const target = { id: "platform", position: [0, 0, 0], scale: [1, 1, 1] };
     expect(
@@ -177,24 +224,32 @@ describe("fresh flagship gameplay driver", () => {
       player: { position: [0, 0, -1] },
     };
     expect(
-      validateGenerationMovementObservation(before, {
-        ...after,
-        playing: false,
-      }, {
-        projectId: "project",
-        streamOpenBefore: true,
-        streamOpenAfter: true,
-      }).failures,
+      validateGenerationMovementObservation(
+        before,
+        {
+          ...after,
+          playing: false,
+        },
+        {
+          projectId: "project",
+          streamOpenBefore: true,
+          streamOpenAfter: true,
+        },
+      ).failures,
     ).toContain("after-sample-not-playing");
     expect(
-      validateGenerationMovementObservation(before, {
-        ...after,
-        player: { position: [Number.NaN, 0, -1] },
-      }, {
-        projectId: "project",
-        streamOpenBefore: true,
-        streamOpenAfter: true,
-      }).failures,
+      validateGenerationMovementObservation(
+        before,
+        {
+          ...after,
+          player: { position: [Number.NaN, 0, -1] },
+        },
+        {
+          projectId: "project",
+          streamOpenBefore: true,
+          streamOpenAfter: true,
+        },
+      ).failures,
     ).toContain("movement-distance-nonfinite");
   });
 
@@ -218,8 +273,8 @@ describe("fresh flagship gameplay driver", () => {
     expect(
       portalCompletionIsAuthoritative(observation, {
         portalId: "portal",
-        expectedCollectibleIds: story.collectibles.map((target: any) =>
-          target.id,
+        expectedCollectibleIds: story.collectibles.map(
+          (target: any) => target.id,
         ),
       }),
     ).toBe(true);
@@ -228,8 +283,8 @@ describe("fresh flagship gameplay driver", () => {
         { ...observation, scoreIds: observation.scoreIds.slice(1) },
         {
           portalId: "portal",
-          expectedCollectibleIds: story.collectibles.map((target: any) =>
-            target.id,
+          expectedCollectibleIds: story.collectibles.map(
+            (target: any) => target.id,
           ),
         },
       ),

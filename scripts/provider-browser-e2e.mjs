@@ -28,8 +28,12 @@ import {
   buildFreshGameplayTargets,
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
+  chooseGameplayPlatformAction,
+  chooseGameplaySteeringKeys,
   generationStreamIsOpen,
+  gameplaySupportId,
   observePlatformContact,
+  platformContactProgress,
   portalCompletionIsAuthoritative,
   summarizeFreshGameplayRun,
   validateGenerationMovementObservation,
@@ -4785,11 +4789,35 @@ export async function runFreshFlagshipGameplay(
         }
       : null;
   };
+  const waitForJumpResponse = async (before) => {
+    const deadline =
+      Date.now() + FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs;
+    let latest = before;
+    while (Date.now() < deadline) {
+      const remaining = deadline - Date.now();
+      await page.waitForTimeout(
+        Math.min(FRESH_GAMEPLAY_LIMITS.jumpPressMs, remaining),
+      );
+      latest = await read();
+      if (
+        latest &&
+        latest.player.velocityY > 0.1 &&
+        latest.player.position[1] > before.player.position[1] + 0.005
+      )
+        return latest;
+    }
+    return null;
+  };
   const recordJumpSample = (phase, observation) => {
     const sample = compactPlatformObservation(observation, phase.id);
     if (!sample) return;
+    const previousSample = phase.samples.at(-1) ?? phase.before;
     if (phase.samples.length < 8) phase.samples.push(sample);
-    if (sample.player.velocityY <= 0 && !phase.apex)
+    if (
+      !phase.apex &&
+      previousSample?.player?.velocityY > 0 &&
+      sample.player.velocityY <= 0
+    )
       phase.apex = sample;
   };
   const finish = async () => {
@@ -4875,14 +4903,29 @@ export async function runFreshFlagshipGameplay(
           if (kind !== "collect" || last?.scoreIds.includes(target.id))
             return last;
         }
+        const supportId = gameplaySupportId(last);
         const jump =
-          live.position[1] > last.player.position[1] + 0.3 || step % 18 === 0;
-        await setKeys(
-          jump
-            ? [...chooseGameplayKeys(last.player.position, live.position), " "]
-            : chooseGameplayKeys(last.player.position, live.position),
-          `${kind}-steer`,
+          Boolean(supportId) &&
+          (live.position[1] > last.player.position[1] + 0.15 ||
+            (kind === "collect" && step % 18 === 0));
+        const steering = chooseGameplaySteeringKeys(
+          last.player.position,
+          live.position,
         );
+        await setKeys(
+          jump ? [" ", ...steering] : steering,
+          `${kind}-${jump ? "jump" : "steer"}`,
+        );
+        if (jump) {
+          const launch = await waitForJumpResponse(last);
+          await setKeys(
+            chooseGameplaySteeringKeys(
+              (launch ?? last).player.position,
+              live.position,
+            ),
+            `${kind}-jump-release`,
+          );
+        }
         await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.steeringStepMs);
       }
       await setKeys([], `${kind}-unreachable`);
@@ -4891,58 +4934,141 @@ export async function runFreshFlagshipGameplay(
       );
     };
 
-    for (const target of targets.platforms) {
-      await approach(target, "platform");
+    const platformApproach = async (
+      target,
+      attempt,
+      {
+        baselinePlatformContactCount = 0,
+        baselineBounceContactCount = 0,
+      } = {},
+    ) => {
       const evidence = platformEvidence.get(target.id);
-      if (evidence.groundedFrames > 0 || evidence.bounceFrames > 0) continue;
+      const phase = {
+        id: target.id,
+        attempt,
+        before: compactPlatformObservation(previous, target.id),
+        inputKeys: [],
+        samples: [],
+        apex: null,
+        landing: null,
+        contact: null,
+        recovery: null,
+      };
+      evidence.jumpEvidence.push(phase);
+      let jumping = false;
+      let last;
+      for (
+        let step = 0;
+        step < FRESH_GAMEPLAY_LIMITS.maxSteeringStepsPerTarget;
+        step++
+      ) {
+        last = await read();
+        if (!last)
+          throw new Error(`No observation while approaching ${target.id}.`);
+        recordJumpSample(phase, last);
+        const live = last.entities.find((entity) => entity.id === target.id);
+        if (!live)
+          throw new Error(
+            `Fresh gameplay could not observe target ${target.id}.`,
+          );
+        const contact = platformContactProgress(last, target.id, {
+          baselinePlatformContactCount,
+          baselineBounceContactCount,
+        });
+        if (contact.contacted) {
+          phase.contact = compactPlatformObservation(last, target.id);
+          if (contact.grounded)
+            phase.landing = phase.contact;
+          await setKeys([], "platform-contact-release");
+          return { observation: last, contacted: true };
+        }
+        const action = chooseGameplayPlatformAction({
+          observation: last,
+          target: { ...target, position: [...live.position] },
+          jumping,
+        });
+        if (action.phase === "recovered") {
+          phase.recovery = compactPlatformObservation(last, target.id);
+          await setKeys([], "platform-recovery-release");
+          return { observation: last, contacted: false, recovered: true };
+        }
+        phase.inputKeys.push(action.keys);
+        if (action.phase === "jumping" && !jumping) {
+          jumping = true;
+          await setKeys(action.keys, "platform-jump-start");
+          const launch = await waitForJumpResponse(last);
+          if (!launch) {
+            await setKeys([], "platform-jump-no-response-release");
+            phase.recovery = compactPlatformObservation(previous, target.id);
+            return { observation: previous ?? last, contacted: false };
+          }
+          recordJumpSample(phase, launch);
+          await setKeys(
+            chooseGameplaySteeringKeys(
+              launch.player.position,
+              live.position,
+            ),
+            "platform-jump-release",
+          );
+        } else {
+          await setKeys(action.keys, `platform-${action.phase}`);
+        }
+        await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.steeringStepMs);
+      }
+      await setKeys([], "platform-attempt-timeout");
+      return { observation: last, contacted: false };
+    };
+
+    for (const [platformIndex, target] of targets.platforms.entries()) {
+      const previousTarget = targets.platforms[platformIndex - 1];
+      let contacted = false;
       for (
         let attempt = 0;
         attempt < FRESH_GAMEPLAY_LIMITS.maxJumpAttempts;
         attempt++
       ) {
-        const live =
-          previous.entities.find((entity) => entity.id === target.id) ?? target;
-        const phase = {
-          id: target.id,
-          attempt,
-          before: compactPlatformObservation(previous, target.id),
-          inputKeys: [],
-          samples: [],
-          apex: null,
-          landing: null,
-        };
-        evidence.jumpEvidence.push(phase);
-        const jumpKeys = chooseGameplayJumpKeys(
-          previous.player.position,
-          live.position,
-        );
-        phase.inputKeys.push(jumpKeys);
-        await setKeys(jumpKeys, "platform-jump");
-        for (
-          let step = 0;
-          step < FRESH_GAMEPLAY_LIMITS.jumpFeedbackSteps;
-          step++
-        ) {
-          await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.jumpFeedbackStepMs);
-          const sample = await read();
-          recordJumpSample(phase, sample);
-          const samplePlatform = sample?.entities?.find(
-            (entity) => entity.id === target.id,
-          );
-          if (!sample || !samplePlatform) continue;
-          const nextKeys = chooseGameplayJumpKeys(
-            sample.player.position,
-            samplePlatform.position,
-          );
-          phase.inputKeys.push(nextKeys);
-          await setKeys(nextKeys, "platform-jump-feedback");
+        const baselinePlatformContactCount =
+          previous?.platformContactCounts?.[target.id] ?? 0;
+        const baselineBounceContactCount =
+          previous?.bounceContactCounts?.[target.id] ?? 0;
+        const outcome = await platformApproach(target, attempt, {
+          baselinePlatformContactCount,
+          baselineBounceContactCount,
+        });
+        if (outcome.contacted) {
+          contacted = true;
+          break;
         }
-        await setKeys([], "platform-jump-release");
-        await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
-        const landing = await read();
-        phase.landing = compactPlatformObservation(landing, target.id);
-        if (evidence.groundedFrames > 0 || evidence.bounceFrames > 0) break;
+        const supportId = gameplaySupportId(outcome.observation);
+        if (
+          previousTarget &&
+          supportId &&
+          supportId !== previousTarget.id &&
+          supportId !== target.id
+        ) {
+          const previousPlatformContactCount =
+            outcome.observation?.platformContactCounts?.[previousTarget.id] ??
+            0;
+          const previousBounceContactCount =
+            outcome.observation?.bounceContactCounts?.[previousTarget.id] ?? 0;
+          const recovery = await platformApproach(
+            previousTarget,
+            `recovery-${attempt}`,
+            {
+              baselinePlatformContactCount: previousPlatformContactCount,
+              baselineBounceContactCount: previousBounceContactCount,
+            },
+          );
+          if (!recovery.contacted)
+            throw new Error(
+              `Fresh gameplay could not recover reachable support ${previousTarget.id} before retrying ${target.id}.`,
+            );
+        }
       }
+      if (!contacted)
+        throw new Error(
+          `Fresh gameplay did not contact platform ${target.id} after bounded support-driven attempts.`,
+        );
     }
 
     for (const target of targets.collectibles) {
