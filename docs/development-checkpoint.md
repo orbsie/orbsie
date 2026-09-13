@@ -19,34 +19,27 @@ Owner approved needed ChatGPT calls; existing harness two-call milestone has
 Use owner Chrome via computer use; GitHub via computer use. No copied browser
 cookies, local Codex credentials, or user Blender installation. Preserve licenses.
 
-## Current task: investigate reported graphics fallback regression
+## Current task: software atlas appearance
 
-Owner reports “Graphics are unavailable” and requires playable fallback. Existing
-Canvas2D fallback is already deployed; do not assume the owner’s new failure is
-resolved by old evidence. Luna worker `/root/texture_renderer_completion` completed the focused investigation.
-Fresh editor forced-failure/retry checks and standalone WebGL-disabled input checks
-passed. Evidence: `webgl-failure-texture-stage-local-20260913/report.json` and
-`player-unavailable-texture-stage-20260913/unavailable.json`. No confirmed product
-regression or new fallback code change. Initial 127.0.0.1 test failed before hydration
-due to Next dev cross-origin policy; localhost passed. Owner error remains
-unreproduced; inspect the affected browser when computer-use access returns.
-No live calls, deployment or nested workers. Root CUA attempt still fails with
-`CUA_REPL_ENABLED_SURFACES is required` before browser access.
+Previous turn made progress: reviewed and committed WebGL texture integration
+and fresh fallback evidence inff61fbc. Owner graphics error remains unreproduced;
+forced-WebGL-off editor/retry and standalone input checks pass. CUA remains
+unavailable before browser access; no auth workaround is authorized.
 
-WebGL catalog texture stage reviewed: immutable atlas ownership, uniform tint and
-restore, last-good replacement, committed lifecycle cleanup and offline export.
-Final correction moves activeResource ref assignment into committed layout effect.
-Typecheck, player build, 22 focused tests and actual-worker development StrictMode
-candidate verifier pass: `catalog-texture-render-final-5/report.json`. Root
-reviewed settled editor source/pink/restore in final-2 and exported player in
-final-4. Candidate is fixture substitution only, not catalog admission. Changes
-are ready for coherent commit after the completed fallback regression checks.
+One Luna worker `/root/software_texture` implements precomputed approximate
+UV-sampled vertex colors in SoftwareEntity’s committed effect, shared sampler,
+uniform tint overrides and last-good appearance. Owns focused source/tests/browser
+fixture changes and player rebuild. No catalog admission, live calls or deployment.
+Root owns review and documentation. Contract: `catalog-texture-integration-plan.md`.
+Acceptance: actual worker with WebGL disabled, source/pink/restored editor views
+and offline exported playback, targeted sampler tests and typecheck.
 
-Software atlas appearance remains a separate unfinished task: precompute UV-sampled
-vertex colors in committed geometry effect, preserve recipe/game tint and last-good
-state, no per-frame texture work. Forced-WebGL-off acceptance required before
-catalog admission. Exact source archive is retained in
-`/home/marcos/.cache/orbsie/source-archives/`; provenance report
+WebGL texture stage ff61fbc includes immutable atlas ownership, uniform tint and
+restore, last-good replacement and committed lifecycle cleanup. Typecheck, player
+build,22 focused tests and actual-worker StrictMode verifier pass:
+`catalog-texture-render-final-5/report.json`. Root reviewed settled editor views
+in final-2 and exported player in final-4. Candidate remains fixture substitution.
+Source archive retained in `/home/marcos/.cache/orbsie/source-archives/`; provenance
 `mushroom-source-restored-20260913/report.json` matches original hashes.
 
 ChatGPT completion/protected diagnostics fix4eb9ce8 and player buildb880edd are
@@ -74,8 +67,8 @@ click/color, visibility, position/path, score/reset acceptance passed:
 external standalone requests. Fallback/retry/race suite also passed. These are
 focused checks, not full mobile/flagship/performance certification.
 
-Main retains reviewed, uncommitted texture changes and completed fallback evidence: World Formation, asset hook/texture,
-formation particles/core and catalog comparison scripts/tests. Do not deploy main
+Main ff61fbc contains reviewed WebGL texture work and fallback evidence;
+software atlas worker changes are not yet reviewed. Do not deploy main
 worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
 `/tmp/orbsie-chatgpt-release-4eb9ce8` is atb880edd with dependencies and project
 link. Local production build and Vercel production build passed. Servers3071/3072

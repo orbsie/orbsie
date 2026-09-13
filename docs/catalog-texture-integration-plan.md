@@ -1,7 +1,7 @@
 # Catalog texture integration task contract
 
-Status: decoder/transfer/cache accepted in3d6a839; renderer/export integration
-is active and unaccepted. No textured catalog admission yet. Provider connection
+Status: decoder/transfer/cache accepted in3d6a839; WebGL renderer/export
+integration accepted inff61fbc. Software atlas appearance is in progress. No textured catalog admission yet. Provider connection
 acceptance remains higher priority when browser access is available.
 
 The Asset Quest mushroom experiment retains its silhouette but loses texture
@@ -18,9 +18,9 @@ material support or add arbitrary remote textures. Start with a512-square atlas
 and measure visual fidelity before admission; this size is a candidate, not a
 quality guarantee. Keep the original CC0 text and source hashes with any derivative.
 
-The decoder currently drops UVs and flattens material colors in
-src/lib/asset-geometry-core.ts. Its URL guard rejects nested resources, including
-loader-created blob URLs. Do not loosen that guard globally. Validate embedded
+Original decoder limitation (resolved by3d6a839): UVs were dropped and material
+colors flattened in src/lib/asset-geometry-core.ts. Its URL guard rejected nested
+resources, including loader-created blob URLs. Do not loosen that guard globally. Validate embedded
 image buffer-view ranges and MIME types before decoding; enforce compressed-byte
 and decoded-pixel limits, and permit only URLs created by that validated decode.
 Reject external image URIs. Extend the worker result with bounded pixel data,
@@ -78,7 +78,8 @@ bundleCatalogAssets. Embedded PNG bytes therefore need no separate texture URL
 or export-side texture fetch. Rebuild the player and its worker only after the
 shared rendering change; verify exported playback, not just source inclusion.
 
-useAssetGeometry currently clones geometry and immediately releases its lease.
+Pre-integration useAssetGeometry cloned geometry and immediately released its lease.
+The following lifetime contract is implemented inff61fbc:
 Extend its result with a per-hook DataTexture while retaining the loader lease
 until hook cleanup. Share immutable RGBA storage; never mutate its pixels for
 entity tint. Dispose the hook's GPU texture, cloned geometry and lease exactly
@@ -106,3 +107,19 @@ Do not dispatch until the active WebGL correction is reviewed. Do not add a
 catalog ID yet. Acceptance must cover untinted/pink/restored source views,
 last-good appearance during stale/failed replacement, shared texture isolation,
 cleanup, and offline exported playback with zero provider calls.
+
+## Compatibility renderer handoff after ff61fbc
+
+WebGL development StrictMode and offline exported playback passed with the
+actual asset worker (`catalog-texture-render-final-5/report.json`). Root reviewed
+settled source/pink/restore and exported appearance. No catalog admission yet.
+
+SoftwareEntity still ignores the atlas when cloning geometry. Precompute
+approximate vertex colors by UV sampling in its committed geometry effect, using
+the existing bounded sampler and linear source-color multiplication. Do not
+sample per frame or mutate shared pixels. Explicit recipe tint and gameplay
+color overrides stay uniform; clearing tint restores source appearance. Keep
+last-good colors paired with geometry, recipe and collision stage on replacements.
+Validate source/pink/restored appearance through the actual worker with WebGL
+disabled and offline exported playback. This is reduced-detail software rendering;
+it does not claim full per-pixel texture mapping or mobile performance acceptance.
