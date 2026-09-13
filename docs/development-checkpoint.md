@@ -47,8 +47,8 @@ if required by host expiry/artifact change, then deliberate live create/edit.
 
 ## Production and workspace
 
-Production source3b55d33 deployed to
-https://orbsie-bwx2kdmse-grappeggias-projects.vercel.app, aliased https://orbsie.com.
+Production sourceb880edd (ChatGPT fix4eb9ce8) deployed to
+https://orbsie-5jeulbfbi-grappeggias-projects.vercel.app, aliased https://orbsie.com.
 Build/typecheck passed. Graphics fallback source1b8698d, advice52ee047,
 standalone bundle0ff35ca. Owner Chrome now renders Canvas2D and enables Create
 with prompt; no fatal dialog. Evidence `software-owner-local/production.json`.
@@ -60,8 +60,9 @@ focused checks, not full mobile/flagship/performance certification.
 
 Main retains paused unreviewed texture WIP: World Formation, asset hook/texture,
 formation particles/core and catalog comparison scripts/tests. Do not deploy main
-worktree directly. Clean release worktree `/tmp/orbsie-graphics-release-7006a72`
-is at3b55d33, with node_modules and linked .vercel/project.json. Servers3071/3072
+worktree directly. Prior /tmp release worktree disappeared. New clean release worktree
+`/tmp/orbsie-chatgpt-release-4eb9ce8` is atb880edd with dependencies and project
+link. Local production build and Vercel production build passed. Servers3071/3072
 were stopped; local3070 historically exists, verify before use. Deploy reviewed
 commits through isolated worktree. Vercel CLI uses existing local auth; no keys in
 chat/evidence. Root commits frequently and preserves failed unique-run evidence.
@@ -70,7 +71,10 @@ chat/evidence. Root commits frequently and preserves failed unique-run evidence.
 
 CUA extension Chrome browser1, Person1, instance9a170aec-060d-42f6-9e37-e4a360ee76a6.
 Production tab1618752702; ChatGPT signed-in tab1618750689. Claim/mark handoff in
-current turn as needed. Device auth tabs auto-close on success; never reuse codes.
+current turn as needed. Latest CUA call failed before browser access with
+`CUA_REPL_ENABLED_SURFACES is required`; owner asked to re-enable the surface.
+No post-deploy live calls or browser verification yet. Device auth tabs auto-close
+on success; never reuse codes.
 chrome://gpu diagnostics and direct /api/chatgpt/status tab navigation were blocked;
 do not bypass via CDP/backend/cookie export. Normal Connections UI works.
 Host initial lifetime is10min, nonpersistent, no renewal implemented. Vercel SDK
