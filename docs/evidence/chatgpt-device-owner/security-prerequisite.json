@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-13",
+  "officialSource": "https://learn.chatgpt.com/docs/auth",
+  "observedUI": "ChatGPT Settings > Security and login",
+  "deviceCodeAuthorizationEnabled": true,
+  "settingChanged": false,
+  "conclusion": "Disabled device-code authorization is ruled out; cause of rejected code remains unproven.",
+  "sourceReview": {
+    "orbsieAttemptTtlMinutes": 10,
+    "pendingPollIntervalSeconds": 3,
+    "completionRequiresMatchingLoginId": true
+  },
+  "next": "Inspect sanitized hosted attempt status and lifecycle before another code submission."
+}
