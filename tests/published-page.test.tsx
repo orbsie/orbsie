@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({
     throw Error("not found");
   },
 }));
-import PublishedOrb from "../src/app/o/[id]/page";
+import PublishedOrb, { generateMetadata } from "../src/app/o/[id]/page";
 beforeEach(() => {
   vi.stubEnv("DATABASE_URL", "test");
   query.mockReset();
@@ -56,4 +56,38 @@ it("does not expose draft or mismatched metadata on legacy releases", async () =
   expect(html).toContain("Published world");
   expect(html).not.toContain("Secret draft");
   expect(html).not.toContain("Pending title");
+  const metadata = await generateMetadata({
+    params: Promise.resolve({ id: "orb" }),
+  });
+  expect(JSON.stringify(metadata)).not.toContain("Secret draft");
+  expect(JSON.stringify(metadata)).not.toContain("Pending title");
+});
+
+it("uses immutable publication metadata for a noindex share page", async () => {
+  query.mockResolvedValue({
+    rows: [
+      {
+        published_revision: 7,
+        public_url: "https://example.com",
+        published_metadata: {
+          title: "Crystal meadow",
+          creator: "Artist",
+          revision: 7,
+        },
+      },
+    ],
+  });
+  const metadata = await generateMetadata({
+    params: Promise.resolve({ id: "orb" }),
+  });
+  expect(metadata.title).toBe("Crystal meadow — Revision 7 | Orbsie");
+  expect(metadata.description).toContain("Artist");
+  expect(metadata.description).toContain("revision 7");
+  expect(metadata.alternates?.canonical).toBe("https://orbsie.com/o/orb");
+  expect(metadata.robots).toMatchObject({ index: false, follow: true });
+  expect(metadata.openGraph).toMatchObject({
+    url: "https://orbsie.com/o/orb",
+    type: "website",
+  });
+  expect(JSON.stringify(metadata)).not.toContain("example.com");
 });

@@ -1,9 +1,61 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { database } from "../../../lib/server/auth";
-import { publicationMetadataSchema } from "../../../lib/publication-metadata";
+import type { Metadata } from "next";
+import {
+  ORBSIE_SITE_ORIGIN,
+  ORBSIE_SOCIAL_IMAGE,
+} from "../../../lib/site-metadata";
+import { readPublishedOrb } from "../../../lib/server/published-orb";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const orb = await readPublishedOrb(id);
+  if (!orb) notFound();
+  const metadata = orb.metadata;
+  const title = metadata?.title || "Published world";
+  const creator = metadata?.creator || "Orbsie creator";
+  const revision = orb.publishedRevision;
+  const canonical = `${ORBSIE_SITE_ORIGIN}/o/${encodeURIComponent(id)}`;
+  const description = metadata
+    ? `Play ${title}, an interactive world by ${creator}. Published revision ${revision}.`
+    : "Play a published interactive world on Orbsie.";
+  return {
+    title:
+      revision === null
+        ? `${title} | Orbsie`
+        : `${title} — Revision ${revision} | Orbsie`,
+    description,
+    alternates: { canonical },
+    robots: { index: false, follow: true },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "Orbsie",
+      type: "website",
+      images: [
+        {
+          url: ORBSIE_SOCIAL_IMAGE,
+          width: 1254,
+          height: 1254,
+          alt: "Orbsie little world mark",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ORBSIE_SOCIAL_IMAGE],
+    },
+  };
+}
 
 export default async function PublishedOrb({
   params,
@@ -11,24 +63,9 @@ export default async function PublishedOrb({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!process.env.DATABASE_URL) notFound();
-  const result = await database().query(
-    "SELECT published_metadata, public_url, published_revision FROM orbs WHERE id=$1 AND public_url IS NOT NULL",
-    [id],
-  );
-  const orb = result.rows[0] as
-    | {
-        published_metadata: unknown;
-        public_url: string;
-        published_revision: number | null;
-      }
-    | undefined;
+  const orb = await readPublishedOrb(id);
   if (!orb) notFound();
-  const parsed = publicationMetadataSchema.safeParse(orb.published_metadata);
-  const metadata =
-    parsed.success && parsed.data.revision === orb.published_revision
-      ? parsed.data
-      : undefined;
+  const metadata = orb.metadata;
   const title = metadata?.title ?? "Published world";
   const creator = metadata?.creator ?? "Orbsie creator";
 
@@ -54,9 +91,9 @@ export default async function PublishedOrb({
             <strong>{title}</strong>
             <span>By {creator}</span>
             <span>
-              {orb.published_revision == null
+              {orb.publishedRevision == null
                 ? "Published world"
-                : `Published revision ${orb.published_revision}`}
+                : `Published revision ${orb.publishedRevision}`}
             </span>
           </div>
         </div>
@@ -65,7 +102,7 @@ export default async function PublishedOrb({
         </Link>
       </header>
       <iframe
-        src={orb.public_url}
+        src={orb.publicUrl}
         title={`Play ${title}`}
         allow="fullscreen; gamepad"
         sandbox="allow-scripts allow-same-origin allow-pointer-lock"
