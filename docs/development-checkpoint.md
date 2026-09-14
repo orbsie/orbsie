@@ -166,3 +166,16 @@ verified in actual Vercel request-detail logs. CLI59.11.7 historical logs shows
 only first log per request; direct scoped request-logs rows reveal both events.
 Evidence generation-observability-deployment-20260913. Stage2 client diagnostics
 assigned to same sole Luna worker, no nested/live calls. Root deploy33697 done.
+
+Stage2 first handoff22tests/typecheck rejected on root review pending privacy and
+reliability corrections: arbitrary bounded model/timestamp/startupID strings,
+getItem denial can throw, start timestamp recorded at end, no build/type counts/
+initial revision, misleading parser/limit/429 classification, startup stage timing,
+and missing replay/negative store coverage. Same Luna correcting. Root owns
+scripts/verify-generation-diagnostics.mjs, preliminary desktop+phone download,
+reload/reset fixture under .vercel/diagnostics-preliminary. Local dev5285 on3013
+started for synthetic fixture50399; no model calls. A separate modal-anchor probe
+briefly loaded local home before setContent and issued read-only config/trial
+requests; no generation. Preliminary50399/47285 fail: settings download absent
+after reload without provider, placement gap sent to Luna. Root viewed screenshot;
+5285 stopped intentionally (130). Prototype tests are not acceptance evidence.
