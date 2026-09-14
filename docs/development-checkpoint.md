@@ -179,3 +179,15 @@ briefly loaded local home before setContent and issued read-only config/trial
 requests; no generation. Preliminary50399/47285 fail: settings download absent
 after reload without provider, placement gap sent to Luna. Root viewed screenshot;
 5285 stopped intentionally (130). Prototype tests are not acceptance evidence.
+
+Stage2 corrective handoff36tests/typecheck +9 parallel-classifier replay cases
+reviewed. Root actual dev browser download fixture87775 PASSED desktop1440 and
+phone390: cleanEOF/parser classifications, IDs, private sentinels absent, reload
+retention, disconnected settings access, reset clears, no overflow/pageerrors.
+Root viewed phone recovery/settings; requested readable 2-row phone toast.
+Further corrections pending: replay must execute real production store (current
+script duplicates classifier), storage-remove denial must not reload cleared
+history, bound crypto UUID receiver, wire actual public buildID, plain semantic
+applyOperation errors classification, prevent late snapshot/header writes after
+terminal/reset. Same Luna worker. Dev46589 stopped130; report/screenshots remain
+.vercel/diagnostics-corrected (not final production acceptance). Quota26%remaining.
