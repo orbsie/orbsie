@@ -18,6 +18,9 @@ const migration = await getMigrations({
 await migration.runMigrations();
 await database.query(await readFile("scripts/schema.sql", "utf8"));
 await database.query(await readFile("scripts/trial-schema.sql", "utf8"));
+await database.query(
+  await readFile("scripts/authoring-run-schema.sql", "utf8"),
+);
 await database.query(await readFile("scripts/waitlist-schema.sql", "utf8"));
 await database.query(await readFile("scripts/generation-schema.sql", "utf8"));
 await database.query(await readFile("scripts/chatgpt-host-schema.sql", "utf8"));

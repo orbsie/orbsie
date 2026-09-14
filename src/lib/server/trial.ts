@@ -1,5 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
+import type { PoolClient } from "pg";
 import { database, HttpError } from "./auth";
 
 export const FREE_MODEL = "openai/gpt-5.6-luna";
@@ -48,6 +49,7 @@ export function trialIdentity(request: Request) {
   const dailyLimit =
     Number.isSafeInteger(configured) && configured > 0 ? configured : 100;
   return {
+    identityHash: digest(id),
     cookie: `${COOKIE}=${id}.${digest(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`,
     buckets: [
       { key: `visitor:${digest(id)}`, limit: TRIAL_LIMIT },
@@ -56,7 +58,15 @@ export function trialIdentity(request: Request) {
     ],
   };
 }
-export type TrialIdentity = ReturnType<typeof trialIdentity>;
+// The legacy one-call API accepts the small test/adapter shape that predates
+// the ledger. New authoring-run issuance always receives identityHash from the
+// server-created value returned by trialIdentity.
+export type TrialIdentity = Omit<
+  ReturnType<typeof trialIdentity>,
+  "identityHash"
+> & {
+  identityHash?: string;
+};
 export class TrialExhausted extends HttpError {
   constructor() {
     super(
@@ -65,64 +75,109 @@ export class TrialExhausted extends HttpError {
     );
   }
 }
-export async function trialRemaining(identity: TrialIdentity) {
+function assertGlobalUnits(globalUnits: number) {
+  if (!Number.isSafeInteger(globalUnits) || globalUnits < 1 || globalUnits > 3)
+    throw new RangeError("Global trial units must be an integer from 1 to 3.");
+}
+function remaining(
+  identity: TrialIdentity,
+  counts: Map<string, number>,
+  globalUnits: number,
+) {
+  return Math.max(
+    0,
+    Math.min(
+      ...identity.buckets.map((bucket) => {
+        const available = bucket.limit - (counts.get(bucket.key) ?? 0);
+        return bucket.key.startsWith("global:")
+          ? Math.floor(available / globalUnits)
+          : available;
+      }),
+    ),
+  );
+}
+export async function trialRemaining(identity: TrialIdentity, globalUnits = 1) {
+  assertGlobalUnits(globalUnits);
   const result = await database().query<{ bucket: string; used: number }>(
     "SELECT bucket, used FROM orbsie_trial_usage WHERE bucket = ANY($1::text[])",
     [identity.buckets.map((b) => b.key)],
   );
   const counts = new Map(result.rows.map((row) => [row.bucket, row.used]));
-  return Math.max(
-    0,
-    Math.min(
-      ...identity.buckets.map((b) => b.limit - (counts.get(b.key) ?? 0)),
-    ),
-  );
+  return remaining(identity, counts, globalUnits);
 }
-export async function claimTrial(identity: TrialIdentity) {
+/**
+ * Claim the legacy visitor/network buckets using a caller-owned transaction.
+ * Global inference units are deliberately separate from prompt units: a free
+ * authoring run charges one visitor and network prompt while reserving up to
+ * three units from the shared daily ceiling.
+ */
+export async function claimTrialInTransaction(
+  client: PoolClient,
+  identity: TrialIdentity,
+  globalUnits = 1,
+) {
+  assertGlobalUnits(globalUnits);
+  // Every caller takes locks in the same order, including the daily shared-spend ceiling.
+  const buckets = [...identity.buckets].sort((a, b) =>
+    a.key.localeCompare(b.key),
+  );
+  for (const bucket of buckets) {
+    await client.query(
+      "INSERT INTO orbsie_trial_usage(bucket) VALUES ($1) ON CONFLICT DO NOTHING",
+      [bucket.key],
+    );
+    const result = await client.query<{ used: number }>(
+      "SELECT used FROM orbsie_trial_usage WHERE bucket=$1 FOR UPDATE",
+      [bucket.key],
+    );
+    const increment = bucket.key.startsWith("global:") ? globalUnits : 1;
+    if (!result.rows[0] || result.rows[0].used + increment > bucket.limit)
+      throw new TrialExhausted();
+  }
+  const updated = await client.query<{ bucket: string; used: number }>(
+    "UPDATE orbsie_trial_usage SET used=used+CASE WHEN bucket LIKE 'global:%' THEN $2 ELSE 1 END, updated_at=now() WHERE bucket = ANY($1::text[]) RETURNING bucket, used",
+    [buckets.map((b) => b.key), globalUnits],
+  );
+  const counts = new Map(updated.rows.map((row) => [row.bucket, row.used]));
+  return remaining(identity, counts, globalUnits);
+}
+export async function withDatabaseTransaction<T>(
+  work: (client: PoolClient) => Promise<T>,
+) {
   const client = await database().connect();
+  let releaseError: Error | undefined;
   try {
     await client.query("BEGIN");
-    // Every caller takes locks in the same order, including the daily shared-spend ceiling.
-    const buckets = [...identity.buckets].sort((a, b) =>
-      a.key.localeCompare(b.key),
-    );
-    for (const bucket of buckets) {
-      await client.query(
-        "INSERT INTO orbsie_trial_usage(bucket) VALUES ($1) ON CONFLICT DO NOTHING",
-        [bucket.key],
-      );
-      const result = await client.query<{ used: number }>(
-        "SELECT used FROM orbsie_trial_usage WHERE bucket=$1 FOR UPDATE",
-        [bucket.key],
-      );
-      if (result.rows[0].used >= bucket.limit) throw new TrialExhausted();
-    }
-    const updated = await client.query<{ bucket: string; used: number }>(
-      "UPDATE orbsie_trial_usage SET used=used+1, updated_at=now() WHERE bucket = ANY($1::text[]) RETURNING bucket, used",
-      [buckets.map((b) => b.key)],
-    );
+    const result = await work(client);
     await client.query("COMMIT");
-    const counts = new Map(updated.rows.map((row) => [row.bucket, row.used]));
-    return Math.max(
-      0,
-      Math.min(...buckets.map((b) => b.limit - counts.get(b.key)!)),
-    );
+    return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      releaseError =
+        rollbackError instanceof Error
+          ? rollbackError
+          : Error("Database transaction rollback failed.");
+    }
     throw error;
   } finally {
-    client.release();
+    // A client that could not roll back may still hold an open transaction;
+    // evict it instead of returning it to the pool for another request.
+    client.release(releaseError);
   }
+}
+export async function claimTrial(identity: TrialIdentity) {
+  return withDatabaseTransaction((client) =>
+    claimTrialInTransaction(client, identity, 1),
+  );
 }
 /** Clear visitor/network usage rows last claimed within the fixed 5-minute window. */
 export async function resetRecentTrialUsage() {
-  const client = await database().connect();
-  try {
-    await client.query("BEGIN");
+  return withDatabaseTransaction(async (client) => {
     const result = await client.query<{ bucket: string }>(
       "DELETE FROM orbsie_trial_usage WHERE (bucket LIKE 'visitor:%' OR bucket LIKE 'network:%') AND updated_at >= now() - interval '5 minutes' RETURNING bucket",
     );
-    await client.query("COMMIT");
     const cleared = result.rows.map((row) => row.bucket);
     return {
       cleared: cleared.length,
@@ -131,10 +186,5 @@ export async function resetRecentTrialUsage() {
       networks: cleared.filter((bucket) => bucket.startsWith("network:"))
         .length,
     };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  });
 }
