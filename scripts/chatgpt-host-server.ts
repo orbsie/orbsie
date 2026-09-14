@@ -8,12 +8,16 @@ import { createIsolatedChatGPTRpc } from "../src/lib/server/chatgpt-runtime";
 import { ChatGPTDeviceSession } from "../src/lib/server/chatgpt-device-session";
 import { createChatGPTHostHandler } from "../src/lib/server/chatgpt-host";
 
+/** The host process must never outlive the registry's absolute host cap. */
+export const CHATGPT_HOST_PROCESS_MAX_LIFETIME_MS = 40 * 60 * 1000;
+
 /** One private host process per owner session; never a shared account service. */
 export async function startChatGPTHostServer(options: {
   token: string;
   hostname?: string;
   port?: number;
   allowGeneration?: boolean;
+  setTimeoutFn?: typeof setTimeout;
 }) {
   if (
     typeof options.token !== "string" ||
@@ -149,8 +153,14 @@ export async function startChatGPTHostServer(options: {
         resolve();
       });
     });
-    // Bound even abandoned browser sessions; caller must provision a new host.
-    expiry = setTimeout(() => void close(), 10 * 60 * 1000);
+    // Keep this process aligned with the registry's absolute cap. The
+    // registry/backend still shorten the effective lifetime for idle and
+    // session expiry, while an explicit generation renewal can carry a
+    // running host beyond its initial ten-minute allowance.
+    expiry = (options.setTimeoutFn ?? setTimeout)(
+      () => void close(),
+      CHATGPT_HOST_PROCESS_MAX_LIFETIME_MS,
+    );
     maintenance = setInterval(() => session.getSnapshot(), 5_000);
     const address = server.address();
     if (!address || typeof address === "string") throw Error();

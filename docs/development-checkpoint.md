@@ -185,3 +185,12 @@ failure. Keep this distinction at handoff. Latest quota42% remaining.
 
 User also requests flat progress messages as siblings in parent chat thread, no
 nested activity panel. Included in inline-model-selector-task.md contract.
+
+Accepted timer fix: private host process ceiling now40min matching registry cap;
+sandbox/session still enforce shorter bounds. Two focused tests +typecheck pass.
+Root reviewed: fake-clock test crosses10min and reaches40min; separate real local
+HTTP stream fixture completes while injected expiry callback is pending, then
+closes on expiry. This is combined lifecycle fixture evidence, not40min live
+provider run or proof of owner's exact failure cause. Unsafe initial persistence
+draft removed by worker; durable implementation remains queued under
+docs/chatgpt-durable-connection-task.md. Luna now implements chat UX contract.
