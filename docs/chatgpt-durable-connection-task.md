@@ -198,3 +198,30 @@ Allocate a bounded portion of the existing route deadline to sealing/persistence
 and propagate the shorter generation deadline instead of extending billable calls.
 Test normal completion, cancellation and deadline exhaustion with rotated caches;
 prove no process continues after release and no secrets enter public responses.
+
+### Browser restoration source audit
+
+`orbsie.tsx` initializes connection to OpenRouter with an empty model/key on every
+mount. Its startup effect reads the app session and cloud projects only; ChatGPT
+status is checked by the connection modal, not by the main-page startup path.
+Therefore server vault restoration alone cannot satisfy restart-to-prompt. Add a
+small nonsecret saved preference (provider and Quality/Balanced/Budget selection),
+then asynchronously verify ChatGPT status/catalog after the existing app session
+has been read. Resolve the selected tier against the current catalog. Do not
+persist credentials or mark Ready from the preference. Existing connectionVersion,
+accountGeneration and activeProvider guards must prevent a delayed restore from
+overwriting a manual provider/model/account change or logout.
+
+`disconnectChatGPT` currently clears the selected model whenever modal status says
+Disconnected. Restore-in-progress or transport failure must not masquerade as that
+terminal state. A real missing/revoked/expired connection may offer Reconnect while
+retaining the user's tier preference; explicit Disconnect clears remembered state.
+The existing provider-session endpoint already refuses to create a replacement
+anonymous identity when getSession throws. Preserve that behavior: startup restore
+must not call anonymous bootstrap merely because status/catalog failed.
+
+Browser acceptance must start with a fresh page on `/` and a retained secure app
+cookie, without opening settings: restore selected tier and submit a prompt. Cover
+transient startup failure plus Retry, manual provider switch during restoration,
+explicit Disconnect plus reload, and cookie deletion (truthful sign-in required).
+No successful server fixture substitutes for these browser assertions.
