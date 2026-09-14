@@ -73,3 +73,27 @@ extend it to hosted generation or replace its use with the bounded export seam.
 - Targeted route/store/helper tests and typecheck; root reviews actual browser
   download. No live calls needed for this stage. Production log visibility after
   deployment is a separate acceptance check, not established by mocked console.
+
+## Subsequent client and connection handoff
+
+Stage 1 is server-only. Stage 2 adds a browser-owned bounded history and explicit
+download; never expose a process-global server ring to a requesting user. Share a
+pure schema/projector with the browser, not a module importing node:crypto, Buffer
+or server env. `store.ts` has the authoritative client cursor.runId and scene apply
+loop; `generation-connection.ts` constructs requests. Add correlation in a header,
+not into model context. Preserve response-body schemas and staged scene validation.
+
+The existing recovery controls are `.toast-actions` in `orbsie.tsx`; use a small
+Download diagnostics action there and in settings, without adding another dialog
+or debug content to the normal chat. `resetLocalData` in `store.ts` must clear this
+history alongside IndexedDB worlds. Keep original errors and cancellation behavior;
+only classify allowlisted diagnostics for the export. Reasoning effort, service
+tier and the user's Quality/Balanced/Budget selection are separate fields.
+
+Also cover startup connection recovery: configuration/session/status/catalog
+stage, timing and enumerated failure class, without user/session IDs or auth data.
+Control-route/private-host lifecycle correlation is a following bounded extension
+where not covered by generation observations. A user reporting lost login needs
+useful evidence even when no generation request began. Synthetic fixture outcomes
+must not be labeled live-provider success, and scene success must be measured
+after the client applies the validated commit.
