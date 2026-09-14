@@ -55,10 +55,10 @@ Shared typed scene-review result interface39a5bce: six targeted tests and typech
 pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
-Private completion-record shared interfaceaf2213e:13focused tests pass; worker
-whole-tree typecheck passes. Metadata validation only, not wired to transport.
-Initial/hosted contracts9d819f6. Latest initial API integration accepted locally;
-its production enablement waits for the complete bounded review loop.
+Private completion-record schemaaf2213e is now wired through the authenticated
+host transport in43113e8; schema13focused tests preceded the integration evidence
+above. Initial/hosted contracts9d819f6 are accepted locally. Production enablement
+waits for the complete bounded review loop.
 Binding accepted after root regressions: production server/browser procedural
 digests match, trailing NDJSON commit->command->commit fails without completion,
 and pending-hook cancellation fails once and consumes late results. Shared
