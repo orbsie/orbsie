@@ -26,7 +26,13 @@ output formats bypassed/invalid strict schema, missing API output-token cap,
 optional API effort restriction, missing finish-reason acceptance, and response
 reader cancellation/preflight validation gaps. Worker now fixes these with actual
 request-format, malformed/truncated/hosted failure, all-or-none/procedural and
-mid-read cancellation tests. New module/tests remain uncommitted WIP until review.
+mid-read cancellation tests. Second handoff20tests/typecheck passes, still not
+accepted: strict prompt advertised both wrapped and canonical schemas; procedural
+syntax guidance missing and its fixture was not valid browser code; browser/server
+binding comparison, all-or-none and env override evidence missing; late fetch body
+cleanup and silently ignored hosted maxTokens remain. Worker fixes this same batch,
+with optional narrow modeling-policy guidance refactor preserving existing defaults.
+New module/tests remain uncommitted WIP until final review.
 Next public admission/browser contract records review ledger cancellation gaps
 in docs/agentic-review-loop-task.md. Hosted acceptance commit43113e8.
 Initial API task finished. Root
