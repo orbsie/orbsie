@@ -57,7 +57,9 @@ import {
 import {
   appendAuthoringActivity,
   authoringEntityLabel,
+  createAuthoringActivityThrottle,
   type AuthoringActivity,
+  type AuthoringActivityDraft,
   type AuthoringActivityKind,
 } from "./authoring-activity";
 export type GenerationJournalConnection = {
@@ -273,8 +275,14 @@ let activeAuthoringRun:
         message: string,
         revision?: number,
       ) => void;
+      clear: () => void;
     }
   | undefined;
+function clearActiveAuthoringRun() {
+  const run = activeAuthoringRun;
+  activeAuthoringRun = undefined;
+  run?.clear();
+}
 function invalidatePendingLoad() {
   return ++loadEpoch;
 }
@@ -305,7 +313,10 @@ export const useOrb = create<State>((setState, getState) => ({
   readOnly: false,
   reset: 0,
   set(patch) {
-    if ("project" in patch || "reset" in patch) invalidatePendingLoad();
+    if ("project" in patch || "reset" in patch) {
+      invalidatePendingLoad();
+      clearActiveAuthoringRun();
+    }
     if ("project" in patch)
       patch = {
         ...patch,
@@ -528,7 +539,7 @@ export const useOrb = create<State>((setState, getState) => ({
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
-    activeAuthoringRun = undefined;
+    clearActiveAuthoringRun();
     await clear();
     setState({
       drafts: [],
@@ -546,7 +557,7 @@ export const useOrb = create<State>((setState, getState) => ({
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
-    activeAuthoringRun = undefined;
+    clearActiveAuthoringRun();
     let history: LocalHistory | undefined;
     if (!play) {
       history = readLocalHistory(getState().draftHistory[project.id], project);
@@ -609,7 +620,7 @@ export const useOrb = create<State>((setState, getState) => ({
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
-    activeAuthoringRun = undefined;
+    clearActiveAuthoringRun();
     const s = getState();
     const committedWorld = committed(s.project, baseline);
     setState({
@@ -666,6 +677,7 @@ export const useOrb = create<State>((setState, getState) => ({
     finishActiveExperience("cancelled");
     active?.abort();
     active = undefined;
+    clearActiveAuthoringRun();
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
@@ -726,11 +738,22 @@ export const useOrb = create<State>((setState, getState) => ({
       });
     };
     const runId = crypto.randomUUID();
+    let activityThrottle: ReturnType<typeof createAuthoringActivityThrottle>;
     const publishActivity = (
       kind: AuthoringActivityKind,
       message: string,
       revision = getState().project.revision,
     ) => {
+      const event: AuthoringActivityDraft = {
+        runId,
+        projectId: project.id,
+        revision,
+        kind,
+        message,
+      };
+      activityThrottle.publish(event);
+    };
+    activityThrottle = createAuthoringActivityThrottle((event) => {
       if (signal.aborted || active !== controller) return;
       setState((state) => {
         if (
@@ -741,31 +764,32 @@ export const useOrb = create<State>((setState, getState) => ({
           state.project.id !== project.id
         )
           return state;
-        const event: AuthoringActivity = {
+        const activity: AuthoringActivity = {
           id: crypto.randomUUID(),
-          runId,
-          projectId: project.id,
-          revision: Number.isInteger(revision)
-            ? revision
+          runId: event.runId,
+          projectId: event.projectId,
+          revision: Number.isInteger(event.revision)
+            ? event.revision
             : state.project.revision,
-          kind,
-          message,
+          kind: event.kind,
+          message: event.message,
           at: Date.now(),
         };
         return {
           ...state,
           authoringActivity: appendAuthoringActivity(
             state.authoringActivity,
-            event,
+            activity,
           ),
         };
       });
-    };
+    });
     activeAuthoringRun = {
       controller,
       runId,
       projectId: project.id,
       publish: publishActivity,
+      clear: activityThrottle.clear,
     };
     setState({
       project,
@@ -1164,7 +1188,7 @@ export const useOrb = create<State>((setState, getState) => ({
         finishRunExperience("cancelled");
         active = undefined;
         if (activeAuthoringRun?.controller === controller)
-          activeAuthoringRun = undefined;
+          clearActiveAuthoringRun();
         setState({ building: false });
       }
     }

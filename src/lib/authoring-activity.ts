@@ -1,4 +1,5 @@
 export const AUTHORING_ACTIVITY_LIMIT = 18;
+export const AUTHORING_ACTIVITY_INTERVAL_MS = 2_000;
 
 export type AuthoringActivityKind =
   | "waiting"
@@ -18,6 +19,103 @@ export type AuthoringActivity = {
   message: string;
   at: number;
 };
+
+export type AuthoringActivityDraft = Omit<AuthoringActivity, "id" | "at">;
+
+type ActivityTimer = ReturnType<typeof globalThis.setTimeout>;
+type ActivityScheduler = {
+  now?: () => number;
+  setTimeout?: (callback: () => void, delay: number) => ActivityTimer;
+  clearTimeout?: (timer: ActivityTimer) => void;
+};
+
+const terminalActivityKinds = new Set<AuthoringActivityKind>([
+  "completed",
+  "cancelled",
+  "failed",
+]);
+
+/** Publish the first update immediately and coalesce later updates by run. */
+export function createAuthoringActivityThrottle(
+  publish: (event: AuthoringActivityDraft) => void,
+  scheduler: ActivityScheduler = {},
+) {
+  const now = scheduler.now ?? Date.now;
+  const schedule =
+    scheduler.setTimeout ??
+    ((callback: () => void, delay: number) =>
+      globalThis.setTimeout(callback, delay));
+  const cancel =
+    scheduler.clearTimeout ??
+    ((timer: ActivityTimer) => globalThis.clearTimeout(timer));
+  let lastPublishedAt: number | undefined;
+  let pending: AuthoringActivityDraft | undefined;
+  let timer: ActivityTimer | undefined;
+  let generation = 0;
+
+  const emit = (event: AuthoringActivityDraft) => {
+    lastPublishedAt = now();
+    publish(event);
+  };
+  const flush = (expectedGeneration: number) => {
+    if (expectedGeneration !== generation) return;
+    timer = undefined;
+    if (!pending) return;
+    const remaining = Math.max(
+      0,
+      AUTHORING_ACTIVITY_INTERVAL_MS - (now() - (lastPublishedAt ?? 0)),
+    );
+    if (remaining > 0) {
+      timer = schedule(() => flush(expectedGeneration), remaining);
+      return;
+    }
+    const event = pending;
+    pending = undefined;
+    emit(event);
+  };
+  const schedulePending = () => {
+    if (timer !== undefined) return;
+    const expectedGeneration = generation;
+    const remaining = Math.max(
+      0,
+      AUTHORING_ACTIVITY_INTERVAL_MS -
+        (now() - (lastPublishedAt ?? Number.NEGATIVE_INFINITY)),
+    );
+    timer = schedule(() => flush(expectedGeneration), remaining);
+  };
+
+  return {
+    publish(event: AuthoringActivityDraft) {
+      if (terminalActivityKinds.has(event.kind)) {
+        pending = undefined;
+        if (timer !== undefined) {
+          cancel(timer);
+          timer = undefined;
+        }
+        emit(event);
+        return;
+      }
+      const current = now();
+      if (
+        lastPublishedAt === undefined ||
+        current - lastPublishedAt >= AUTHORING_ACTIVITY_INTERVAL_MS
+      ) {
+        pending = undefined;
+        emit(event);
+      } else {
+        pending = event;
+        schedulePending();
+      }
+    },
+    clear() {
+      generation += 1;
+      pending = undefined;
+      if (timer !== undefined) cancel(timer);
+      timer = undefined;
+      lastPublishedAt = undefined;
+    },
+  };
+}
 
 export function appendAuthoringActivity(
   current: readonly AuthoringActivity[],

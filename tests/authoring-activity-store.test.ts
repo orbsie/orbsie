@@ -98,6 +98,7 @@ function commandsForLantern() {
 }
 
 beforeEach(async () => {
+  vi.useFakeTimers();
   mocks.db.clear();
   mocks.browserBuild.mockReset();
   vi.stubGlobal("Worker", class {});
@@ -109,8 +110,18 @@ beforeEach(async () => {
 
 afterEach(() => {
   useOrb.getState().stop();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+
+async function waitForPreparation() {
+  for (let i = 0; i < 25; i++) {
+    if (useOrb.getState().authoringActivity.at(-1)?.kind === "preparing")
+      return;
+    await vi.advanceTimersByTimeAsync(100);
+  }
+  throw new Error("The throttled preparation activity was not published.");
+}
 
 describe("store authoring activity", () => {
   it("reports waiting, entity, geometry, applied, and completion at real milestones", async () => {
@@ -125,14 +136,10 @@ describe("store authoring activity", () => {
     expect(
       useOrb.getState().authoringActivity.map((event) => event.kind),
     ).toEqual(["waiting"]);
-    await vi.waitFor(() =>
-      expect(useOrb.getState().authoringActivity.at(-1)?.kind).toBe(
-        "preparing",
-      ),
-    );
+    await waitForPreparation();
     expect(
       useOrb.getState().authoringActivity.map((event) => event.kind),
-    ).toEqual(["waiting", "constructing", "applied", "preparing"]);
+    ).toEqual(["waiting", "preparing"]);
     expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
       "Lantern",
     );
@@ -142,11 +149,7 @@ describe("store authoring activity", () => {
     const activity = useOrb.getState().authoringActivity;
     expect(activity.map((event) => event.kind)).toEqual([
       "waiting",
-      "constructing",
-      "applied",
       "preparing",
-      "applied",
-      "applied",
       "completed",
     ]);
     expect(new Set(activity.map((event) => event.projectId))).toEqual(
@@ -155,9 +158,8 @@ describe("store authoring activity", () => {
     expect(activity.every((event) => event.runId === activity[0].runId)).toBe(
       true,
     );
-    expect(activity.map((event) => event.revision)).toEqual([
-      0, 0, 1, 1, 2, 3, 3,
-    ]);
+    expect(activity.map((event) => event.revision)).toEqual([0, 1, 3]);
+    expect(activity[1]!.at - activity[0]!.at).toBeGreaterThanOrEqual(2000);
     expect(
       activity.some((event) => /backend|json|inspect/i.test(event.message)),
     ).toBe(false);
@@ -172,11 +174,7 @@ describe("store authoring activity", () => {
     );
 
     const run = useOrb.getState().run("Build a lantern", connection);
-    await vi.waitFor(() =>
-      expect(useOrb.getState().authoringActivity.at(-1)?.kind).toBe(
-        "preparing",
-      ),
-    );
+    await waitForPreparation();
     useOrb.getState().stop();
     build.resolve(browserMetadata);
     await run;
@@ -196,11 +194,7 @@ describe("store authoring activity", () => {
     );
 
     const run = useOrb.getState().run("Build a lantern", connection);
-    await vi.waitFor(() =>
-      expect(useOrb.getState().authoringActivity.at(-1)?.kind).toBe(
-        "preparing",
-      ),
-    );
+    await waitForPreparation();
     await useOrb.getState().resetLocalData();
     build.resolve(browserMetadata);
     await run;
@@ -248,11 +242,7 @@ describe("store authoring activity", () => {
     );
 
     const firstRun = useOrb.getState().run("Build a lantern", connection);
-    await vi.waitFor(() =>
-      expect(useOrb.getState().authoringActivity.at(-1)?.kind).toBe(
-        "preparing",
-      ),
-    );
+    await waitForPreparation();
     const secondRun = useOrb.getState().run("Finish the world", connection);
     await secondRun;
     build.resolve(browserMetadata);
