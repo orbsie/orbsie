@@ -217,3 +217,20 @@ Legacy requests retain one-call accounting. Internal storage is accepted, not
 production-migrated or wired to public review admission. Next handoff is
 `docs/authoring-scene-binding-task.md`, followed by route/private lifecycle and
 browser reviewer integration. The complete agentic loop remains unfinished.
+
+### Private completion boundary source check
+
+Current managed host generation calls `createChatGPTSceneStream` inside the private
+executor (`chatgpt-managed-operation.ts`), while the public route receives a stream
+through `chatgpt-durable-service.ts`. In that service, upstream EOF is followed by
+credential sealing before the returned stream closes; sealing failure can therefore
+error the returned stream after a scene has committed. Keep those outcomes distinct.
+
+The next public/private wiring task must make completion authority cross this real
+boundary. Either use an explicitly versioned authenticated private completion record
+that the manager consumes, or validate/replay the authenticated host command stream
+with the shared authoring accumulator on the web server. Do not serialize callback
+functions, forward internal phase tokens to browser JSON, or rely on a callback that
+exists only inside an isolated executor with no ledger integration. Avoid breaking
+older private hosts by adding unsolicited strict-schema request-body fields. Exercise
+the actual HTTP handler/controller, durable wrapper, seal failure and Disconnect.

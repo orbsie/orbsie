@@ -24,7 +24,7 @@ pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
 
-Quota last75%used/25%remaining. Read
+Quota last76%used/24%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
@@ -119,7 +119,7 @@ remains separate. No full inspect/correct loop yet.
 
 ## Access and resources
 
-Owner requires existing signed-in Chrome. Last CUA: CUA_REPL_ENABLED_SURFACES
+Owner requires existing signed-in Chrome. CUA rechecked after ledger acceptance: CUA_REPL_ENABLED_SURFACES
 required. DevTools reachable profile signed out of ChatGPT/OpenRouter; not owner
 browser. No more login tabs, rawCDP or cookie copying. Do not repeat unchanged
 access checks. Browser access alone does not block available implementation.
