@@ -4,6 +4,10 @@ After initial API ledger integration is accepted, carry the same authority throu
 actual managed ChatGPT HTTP transport. Root selected a versioned private completion
 record rather than replaying a second full scene interpreter in the web process.
 This is private protocol metadata, not a model command or public request token.
+Root shared interface: src/lib/server/chatgpt-scene-completion.ts, with13 focused
+contract checks. It validates bounded version/binding metadata only; it does not
+authenticate, negotiate, parse the whole stream, strip records or grant authority.
+Use it in the transport integration rather than introducing a competing schema.
 
 Source path verified on1c740bd: api/chatgpt/generate -> durable.generate -> manager
 privateOperation -> sandbox-backend POST /private/operation/generate -> host.ts
