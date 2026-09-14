@@ -14,6 +14,13 @@ and shared trial transaction primitives. Public review routes/browser loop are n
 being enabled by this handoff. Contract: docs/agentic-review-loop-task.md.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Logging and SEO are deployed and verified; no live model calls for either release.
+Root reviewed ledger WIP and requested fixes for HMAC comparison, first-review
+acceptance terminalization, final verdict-only scene binding, pg bigint decoding,
+provider effort preservation and actual-PG rollback/finalization coverage. Worker
+has not handed off final evidence yet; do not accept or deploy ledger prematurely.
+Shared typed scene-review result interface committed39a5bce; six targeted tests
+and current typecheck pass. Not wired to models/browser. Root source review and
+next lifecycle/procedural-binding requirements committed9f8e7dd.
 Root owns release evidence, checkpoint, deployment and actual PostgreSQL acceptance.
 Synthetic PostgreSQL container orbsie-authoring-ledger-20260913 is ready on local
 port32771; root must stop it after ledger acceptance (no production data).
