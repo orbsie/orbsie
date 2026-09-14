@@ -75,6 +75,12 @@ end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
 flagship3calls, no blind retries. Hosted180s/512KiB are runtime/output bounds.
 Never echo credentials. Use completion notifications, avoid status-only turns.
 
+Browser availability rechecked Sep14: CUA getState still reports
+CUA_REPL_ENABLED_SURFACES required. Registered Chrome DevTools list_pages works,
+but existing ChatGPT page3 snapshot shows Log in/Sign up and OpenRouter page2 is
+on sign-in. No new login flow, cookie access or raw CDP; owner signed-in profile
+still unavailable. Do not treat the reachable signed-out profile as owner E2E.
+
 ## Production and accepted release
 
 Production https://orbsie.com ->
