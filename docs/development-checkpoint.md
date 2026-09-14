@@ -17,8 +17,11 @@ passed. Evidence authoring-hosted-authority-20260914. Private completion records
 are negotiated before inference, consumed only after clean private EOF and stripped
 from public output. Cancel fences completion; post-scene credential seal failure
 stays separate. No live calls/deployment or complete browser review-loop claim.
-Worker /root/host_session_renewal is idle after this handoff. Next: actual reviewer
-execution and browser integration under docs/agentic-review-loop-task.md.
+Worker /root/host_session_renewal now implements one bounded reviewer execution
+task in docs/scene-review-execution-task.md: real API/hosted one-call transports
+and semantically validated correction batches; no live calls or public endpoints.
+Next public admission/browser contract records review ledger cancellation gaps
+in docs/agentic-review-loop-task.md. Hosted acceptance commit43113e8.
 Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
 review fixes. Retained initial token fences abort during COMMIT acknowledgement;
@@ -75,7 +78,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last79%used/21%remaining. Read
+Quota last80%used/20%remaining; stop immediately if it drops below20%. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,

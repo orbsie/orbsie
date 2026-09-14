@@ -252,3 +252,43 @@ Current completeInitialAuthoringRun accepts no signal, and failAuthoringRun only
 admits active/reviewing/final-review with the private phase token. A completion
 that commits first clears that token. Resolve this ordering explicitly in the
 integration contract without reopening failed runs or weakening replay checks.
+
+### Next public review admission: source-specific integration decisions
+
+Initial API and hosted authority are accepted at43113e8. The current executor
+handoff is docs/scene-review-execution-task.md; its internal interface cannot by
+itself authorize a model call. The subsequent public route must reconstruct the
+same identity and request fingerprint as initial admission, compute createSceneBinding
+from the submitted snapshot and compare it in atomic admitAuthoringReview before
+inference. A client-provided digest or revision is never enough. Keep exact model,
+effort, original prompt, selected ID and capability flags bound through all phases.
+Do not permit new initial issuance as an automatic review retry.
+
+Source check: admitAuthoringReview and completeAuthoringReview currently lack the
+signal and bounded transaction options used by initial completion. Review completion
+also clears its token immediately, while failAuthoringRun only allows a completed
+initial phase with two slots. Resolve the equivalent late-COMMIT cancellation race
+before exposing the route: retain the finishing phase's private token until its
+success is accepted or the next phase atomically replaces it; permit failure only
+with that exact token and compatible phase/slot state. A delayed earlier failure
+must never cancel a newer phase. Finalized success must not be reopened to model
+calls. Test real durable state when cancellation occurs during review admission,
+row-lock wait and after actual completion COMMIT but before acknowledgement, for
+both first-review correction and terminal review. Bound admission/complete/failure
+DB waits and give failure cleanup independent headroom. Do not equate aborting a
+Promise with cancelling its database write.
+
+The browser's current store.run single fetch is around1169; it establishes one
+baseline, writer, abort controller and journal before this block. Put all phases
+under that ownership. Read the opaque initial run ID only after a successful
+initial response, await clean body EOF and current actual rendered revision,
+then captureSceneReview. The capture already checks geometry readiness, settled
+transitions and project/revision. Carry its exact revision and scope with bounded
+structural observations. Recheck controller/project/revision after every await,
+including capture, request, correction evaluation and save. Preserve the original
+undo baseline while saving each good internal revision. First-review correction
+must apply the server-validated canonical batch and its orchestration-owned commit,
+then match its scene binding before a final capture/request. Never apply a final
+review correction. All errors preserve saved good objects and offer explicit
+continuation; they cannot spend an unseen fourth call. Keep review summaries in
+the existing two-second activity cadence and flatten them into chat messages.
