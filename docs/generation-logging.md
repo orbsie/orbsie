@@ -35,6 +35,10 @@ reconstruct a private scene. Use synthetic fixtures for deterministic reproducti
 Any optional raw provider capture belongs outside the repository with explicit
 content boundaries and restricted permissions; it is not an ordinary log export.
 
-Client diagnostic download and production log-visibility acceptance are tracked
-separately in `generation-observability-task.md`. Server unit tests alone do not
-establish either of those outcomes.
+Production visibility was verified for both routes on deployment `dba95bc` using
+rejected requests without model calls. Vercel CLI 59.11.7 historical logs project
+only the first log message per request, even with `--expand --json`; use the
+request details to see all events. Returned event arrays may be unordered: use
+phase names and monotonic durations. Evidence: `evidence/generation-observability-
+deployment-20260913/acceptance.json`. Client diagnostic download remains a separate
+acceptance item in `generation-observability-task.md`.

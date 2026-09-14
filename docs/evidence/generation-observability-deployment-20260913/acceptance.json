@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "dba95bc",
+  "deployment": "https://orbsie-7y9kfo9yy-grappeggias-projects.vercel.app",
+  "buildPassed": true,
+  "targetedWorkerTests": 85,
+  "privateHttpIntegrationTests": 8,
+  "providerCalls": 0,
+  "productionLogVisibility": "passed",
+  "productionSmoke": [
+    {
+      "path": "/api/generate",
+      "status": 400,
+      "requestId": "3b916360-cb63-48dc-80c5-ee3fa93a7fc8",
+      "clientRunId": "c394a1fb-140a-4d10-b19f-e24095f21e29",
+      "events": [
+        {
+          "schemaVersion": 1,
+          "layer": "route",
+          "requestId": "3b916360-cb63-48dc-80c5-ee3fa93a7fc8",
+          "clientRunId": "c394a1fb-140a-4d10-b19f-e24095f21e29",
+          "buildId": "dba95bc",
+          "event": "phase",
+          "phase": "admission",
+          "durationMs": 0
+        },
+        {
+          "schemaVersion": 1,
+          "layer": "route",
+          "requestId": "3b916360-cb63-48dc-80c5-ee3fa93a7fc8",
+          "clientRunId": "c394a1fb-140a-4d10-b19f-e24095f21e29",
+          "buildId": "dba95bc",
+          "event": "terminal",
+          "terminalReason": "parser-failure",
+          "failureCode": "invalid-input",
+          "httpStatus": 400,
+          "durationMs": 14
+        }
+      ],
+      "exactlyOneTerminal": true,
+      "buildCorrelated": true
+    },
+    {
+      "path": "/api/chatgpt/generate",
+      "status": 401,
+      "requestId": "5c54e97a-5f4d-4b4b-bc43-d335a198ba49",
+      "clientRunId": "096d78d6-6f4b-49a8-96a8-c8e416706b64",
+      "events": [
+        {
+          "schemaVersion": 1,
+          "layer": "route",
+          "requestId": "5c54e97a-5f4d-4b4b-bc43-d335a198ba49",
+          "clientRunId": "096d78d6-6f4b-49a8-96a8-c8e416706b64",
+          "buildId": "dba95bc",
+          "event": "terminal",
+          "terminalReason": "transport-error",
+          "failureCode": "connection-required",
+          "httpStatus": 401,
+          "durationMs": 861
+        },
+        {
+          "schemaVersion": 1,
+          "layer": "route",
+          "requestId": "5c54e97a-5f4d-4b4b-bc43-d335a198ba49",
+          "clientRunId": "096d78d6-6f4b-49a8-96a8-c8e416706b64",
+          "buildId": "dba95bc",
+          "event": "phase",
+          "phase": "admission",
+          "durationMs": 0
+        }
+      ],
+      "exactlyOneTerminal": true,
+      "buildCorrelated": true
+    }
+  ]
+}

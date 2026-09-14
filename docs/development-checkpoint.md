@@ -155,3 +155,12 @@ JSON-line sink and rolling-compatible private headers accepted. Worker85tests in
 7suites+typecheck/format pass; root8 actual private-HTTP integration tests pass.
 No live model calls or deployment for this stage yet. Client export/history and
 startup diagnostics remain next bounded task. Runbook docs/generation-logging.md.
+
+Server logging dba95bc deployed to orbsie-7y9kfo9yy-grappeggias-projects.vercel.app,
+aliased orbsie.com; local+remote build pass. Explicit ORBSIE_BUILD_ID=dba95bc.
+Both public generate routes tested with rejected requests (400/401), zero model
+calls: UUID correlation, correct HTTP/failure code, build ID and exactly1terminal
+verified in actual Vercel request-detail logs. CLI59.11.7 historical logs shows
+only first log per request; direct scoped request-logs rows reveal both events.
+Evidence generation-observability-deployment-20260913. Stage2 client diagnostics
+assigned to same sole Luna worker, no nested/live calls. Root deploy33697 done.
