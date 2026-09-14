@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   remember: vi.fn(),
   withAdmission: vi.fn(),
   createRuntime: vi.fn(),
+  authoringAdmission: vi.fn(),
 }));
 
 vi.mock("@/lib/server/auth", () => ({
@@ -71,11 +72,18 @@ vi.mock("../src/lib/server/chatgpt-credential-vault", () => ({
 vi.mock("../src/lib/server/chatgpt-runtime", () => ({
   createIsolatedChatGPTRpc: state.createRuntime,
 }));
+vi.mock("../src/lib/server/authoring-run-admission", () => ({
+  admitInitialAuthoringRun: state.authoringAdmission,
+}));
 
 import { startChatGPTHostServer } from "../scripts/chatgpt-host-server";
 import { GET, POST } from "../src/app/api/chatgpt/[action]/route";
 import { POST as GENERATE } from "../src/app/api/chatgpt/generate/route";
 import { blankProject } from "../src/lib/protocol";
+import {
+  createChatGPTDurableService,
+  filterPrivateCompletion,
+} from "../src/lib/server/chatgpt-durable-service";
 
 const token = "h".repeat(64);
 const identity = { ownerId: "owner", sessionId: "session" };
@@ -103,6 +111,7 @@ class FixtureRuntime {
   closed = false;
   accountConnected = false;
   outcome?: "complete" | "error" | "cancel";
+  streamOutput?: string;
   turns = 0;
 
   constructor(initialCache?: Uint8Array) {
@@ -145,13 +154,15 @@ class FixtureRuntime {
             ? [{ type: "commit_revision", message: "Ready" }]
             : []),
         ];
+        const delta =
+          this.streamOutput ??
+          commands.map((value) => JSON.stringify(value)).join("\n");
         this.notify({
           method: "item/agentMessage/delta",
           params: {
             threadId: "thread-1",
             turnId: "turn-1",
-            delta:
-              commands.map((value) => JSON.stringify(value)).join("\n") + "\n",
+            delta: delta.endsWith("\n") ? delta : `${delta}\n`,
           },
         });
         if (this.outcome !== "cancel")
@@ -247,6 +258,177 @@ async function callHost(port: number, path: string, init: RequestInit = {}) {
     },
   });
 }
+
+function setupAuthoringManager(
+  server: Awaited<ReturnType<typeof startChatGPTHostServer>>,
+  streamOutput: string,
+  mutateGeneration?: (body: string) => string,
+  mutateOperation?: (
+    operation: string,
+    response: Response,
+  ) => Response | Promise<Response>,
+) {
+  const runtimes: FixtureRuntime[] = [];
+  state.createRuntime.mockImplementation(
+    async (options: { initialCredentialCache?: Uint8Array }) => {
+      const runtime = new FixtureRuntime(options.initialCredentialCache);
+      runtime.outcome = "complete";
+      runtime.streamOutput = streamOutput;
+      runtimes.push(runtime);
+      return runtime;
+    },
+  );
+  state.lease.mockResolvedValue({
+    kind: "leased",
+    lease: { ...lease, cache: Uint8Array.from(lease.cache) },
+  });
+  state.save.mockResolvedValue({ kind: "saved" });
+  state.release.mockResolvedValue({ kind: "released" });
+  state.withAdmission.mockImplementation(
+    async (_identity, _lease, operation: () => Promise<unknown>) => ({
+      kind: "admitted",
+      value: await operation(),
+    }),
+  );
+  const manager = {
+    ensure: vi.fn(async () => host),
+    acquireForOperation: vi.fn(async () => host),
+    privateOperation: vi.fn(
+      async (
+        _host,
+        operation: string,
+        input: unknown,
+        options?: {
+          signal?: AbortSignal;
+          sceneCompletionVersion?: number;
+        },
+      ) => {
+        const response = await callHost(
+          server.port,
+          `/private/operation/${operation}`,
+          {
+            method: "POST",
+            signal: options?.signal,
+            headers: {
+              "content-type": "application/json",
+              ...(options?.sceneCompletionVersion
+                ? { "x-orbsie-scene-completion": "1" }
+                : {}),
+            },
+            body: JSON.stringify(input),
+          },
+        );
+        let output = response;
+        if (operation === "generate" && mutateGeneration)
+          output = new Response(mutateGeneration(await response.text()), {
+            status: response.status,
+            headers: response.headers,
+          });
+        return mutateOperation ? mutateOperation(operation, output) : output;
+      },
+    ),
+    destroyHost: vi.fn(async () => undefined),
+    releaseHost: vi.fn(async () => true),
+    request: vi.fn(),
+    disconnect: vi.fn(async () => true),
+  };
+  return { manager, runtimes };
+}
+
+function completionLineIndex(lines: string[]) {
+  const index = lines.findIndex((line) =>
+    line.includes('"type":"orbsie.private.scene-completion"'),
+  );
+  if (index < 0) throw Error("Fixture did not produce a completion record.");
+  return index;
+}
+
+function mutateCompletionRecord(
+  body: string,
+  mutate: (record: Record<string, unknown>) => Record<string, unknown>,
+) {
+  const lines = body.trimEnd().split("\n");
+  const index = completionLineIndex(lines);
+  lines[index] = JSON.stringify(
+    mutate(JSON.parse(lines[index]) as Record<string, unknown>),
+  );
+  return `${lines.join("\n")}\n`;
+}
+
+function removeCompletionRecord(body: string) {
+  const lines = body.trimEnd().split("\n");
+  lines.splice(completionLineIndex(lines), 1);
+  return `${lines.join("\n")}\n`;
+}
+
+const authoringStreamMutations = [
+  ["missing completion", removeCompletionRecord],
+  [
+    "duplicate completion",
+    (body: string) => {
+      const lines = body.trimEnd().split("\n");
+      lines.push(lines[completionLineIndex(lines)]!);
+      return `${lines.join("\n")}\n`;
+    },
+  ],
+  [
+    "wrong operation",
+    (body: string) =>
+      mutateCompletionRecord(body, (record) => ({
+        ...record,
+        operationId: "other-operation",
+      })),
+  ],
+  [
+    "wrong epoch",
+    (body: string) =>
+      mutateCompletionRecord(body, (record) => ({ ...record, epoch: 999 })),
+  ],
+  [
+    "wrong project",
+    (body: string) =>
+      mutateCompletionRecord(body, (record) => ({
+        ...record,
+        projectId: "other-project",
+      })),
+  ],
+  [
+    "malformed completion",
+    (body: string) => {
+      const lines = body.trimEnd().split("\n");
+      lines[completionLineIndex(lines)] =
+        '{"type":"orbsie.private.scene-completion"';
+      return `${lines.join("\n")}\n`;
+    },
+  ],
+  [
+    "bad digest",
+    (body: string) =>
+      mutateCompletionRecord(body, (record) => ({ ...record, digest: "bad" })),
+  ],
+  [
+    "bad version",
+    (body: string) =>
+      mutateCompletionRecord(body, (record) => ({ ...record, version: 2 })),
+  ],
+  [
+    "command after completion",
+    (body: string) =>
+      `${body.trimEnd()}\n${JSON.stringify({ type: "reserve_entity" })}\n`,
+  ],
+  [
+    "error before completion",
+    (body: string) => {
+      const lines = body.trimEnd().split("\n");
+      lines.splice(
+        completionLineIndex(lines),
+        0,
+        JSON.stringify({ error: "provider failed" }),
+      );
+      return `${lines.join("\n")}\n`;
+    },
+  ],
+] as const;
 
 describe("durable route with the private host controller", () => {
   afterEach(() => {
@@ -527,3 +709,584 @@ it.each(["complete", "error", "cancel"] as const)(
   },
   15_000,
 );
+
+it("negotiates hosted scene authority over private HTTP and strips its record", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_HOSTED", "1");
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  state.auth.mockReturnValue({ api: { getSession: state.session } });
+  state.session.mockResolvedValue({
+    user: { id: identity.ownerId },
+    session: { id: identity.sessionId },
+  });
+  state.origin.mockImplementation(() => undefined);
+  state.createRuntime.mockReset();
+  const runtimes: FixtureRuntime[] = [];
+  state.createRuntime.mockImplementation(
+    async (options: { initialCredentialCache?: Uint8Array }) => {
+      const runtime = new FixtureRuntime(options.initialCredentialCache);
+      runtime.outcome = "complete";
+      runtimes.push(runtime);
+      return runtime;
+    },
+  );
+  let storedCache = Uint8Array.from(lease.cache);
+  state.lease.mockResolvedValue({
+    kind: "leased",
+    lease: { ...lease, cache: Uint8Array.from(storedCache) },
+  });
+  state.save.mockImplementation(
+    async (_identity, _lease, cache: Uint8Array) => {
+      storedCache = Uint8Array.from(cache);
+      return { kind: "saved" };
+    },
+  );
+  state.release.mockResolvedValue({ kind: "released" });
+  state.withAdmission.mockImplementation(
+    async (_identity, _lease, operation: () => Promise<unknown>) => ({
+      kind: "admitted",
+      value: await operation(),
+    }),
+  );
+  const complete = vi.fn(async () => undefined);
+  const fail = vi.fn(async () => undefined);
+  state.authoringAdmission.mockResolvedValue({
+    runId: "33333333-3333-4333-8333-333333333333",
+    trialRemaining: null,
+    complete,
+    fail,
+    lifecycle: {},
+  });
+  const server = await startChatGPTHostServer({
+    token,
+    hostname: "127.0.0.1",
+    allowGeneration: true,
+  });
+  const manager = {
+    ensure: vi.fn(async () => host),
+    acquireForOperation: vi.fn(async () => host),
+    privateOperation: vi.fn(
+      async (
+        _host,
+        operation: string,
+        input: unknown,
+        options?: {
+          signal?: AbortSignal;
+          sceneCompletionVersion?: number;
+        },
+      ) =>
+        callHost(server.port, `/private/operation/${operation}`, {
+          method: "POST",
+          signal: options?.signal,
+          headers: {
+            "content-type": "application/json",
+            ...(options?.sceneCompletionVersion
+              ? { "x-orbsie-scene-completion": "1" }
+              : {}),
+          },
+          body: JSON.stringify(input),
+        }),
+    ),
+    destroyHost: vi.fn(async () => undefined),
+    releaseHost: vi.fn(async () => true),
+    disconnect: vi.fn(async () => true),
+  };
+  state.createManager.mockReturnValue(manager);
+  try {
+    const response = await GENERATE(
+      request("generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-5.6-luna",
+          effort: "low",
+          prompt: "Create an orb",
+          project: blankProject(),
+          browserModeling: true,
+          authoringReview: true,
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('"type":"reserve_entity"');
+    expect(body).toContain('"type":"commit_revision"');
+    expect(body).not.toContain("orbsie.private.scene-completion");
+    expect(state.authoringAdmission).toHaveBeenCalledOnce();
+    expect(complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 1,
+        projectId: expect.any(String),
+        revision: expect.any(Number),
+        digest: expect.stringMatching(/^[a-f0-9]{64}$/),
+      }),
+      expect.any(AbortSignal),
+    );
+    expect(fail).not.toHaveBeenCalled();
+    expect(manager.privateOperation.mock.calls.map((call) => call[1])).toEqual([
+      "initialize",
+      "status",
+      "generate",
+      "seal",
+      "clear",
+    ]);
+    const generateCall = manager.privateOperation.mock.calls.find(
+      (call) => call[1] === "generate",
+    )!;
+    expect(generateCall[2]).not.toHaveProperty("authoringReview");
+    expect(generateCall[3]).toMatchObject({ sceneCompletionVersion: 1 });
+    expect(Buffer.from(storedCache).toString()).toBe("managed-rotated-cache");
+    expect(runtimes.at(-1)?.closed).toBe(true);
+  } finally {
+    await server.close();
+    vi.unstubAllEnvs();
+  }
+});
+
+it("stops before model generation when an old host omits negotiation", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  state.createRuntime.mockReset();
+  const runtimes: FixtureRuntime[] = [];
+  state.createRuntime.mockImplementation(
+    async (options: { initialCredentialCache?: Uint8Array }) => {
+      const runtime = new FixtureRuntime(options.initialCredentialCache);
+      runtime.outcome = "complete";
+      runtimes.push(runtime);
+      return runtime;
+    },
+  );
+  state.lease.mockResolvedValue({
+    kind: "leased",
+    lease: { ...lease, cache: Uint8Array.from(lease.cache) },
+  });
+  state.release.mockResolvedValue({ kind: "released" });
+  state.withAdmission.mockImplementation(
+    async (_identity, _lease, operation: () => Promise<unknown>) => ({
+      kind: "admitted",
+      value: await operation(),
+    }),
+  );
+  const server = await startChatGPTHostServer({
+    token,
+    hostname: "127.0.0.1",
+    allowGeneration: true,
+  });
+  const manager = {
+    privateOperation: vi.fn(
+      async (
+        _host,
+        operation: string,
+        input: unknown,
+        options?: {
+          signal?: AbortSignal;
+          sceneCompletionVersion?: number;
+        },
+      ) => {
+        const response = await callHost(
+          server.port,
+          `/private/operation/${operation}`,
+          {
+            method: "POST",
+            signal: options?.signal,
+            headers: {
+              "content-type": "application/json",
+              ...(options?.sceneCompletionVersion
+                ? { "x-orbsie-scene-completion": "1" }
+                : {}),
+            },
+            body: JSON.stringify(input),
+          },
+        );
+        if (operation === "status" && options?.sceneCompletionVersion) {
+          const body = await response.text();
+          const headers = new Headers(response.headers);
+          headers.delete("x-orbsie-scene-completion");
+          return new Response(body, {
+            status: response.status,
+            headers,
+          });
+        }
+        return response;
+      },
+    ),
+    ensure: vi.fn(async () => host),
+    acquireForOperation: vi.fn(async () => host),
+    destroyHost: vi.fn(async () => undefined),
+    releaseHost: vi.fn(async () => true),
+    request: vi.fn(),
+    disconnect: vi.fn(async () => true),
+  };
+  try {
+    const durable = createChatGPTDurableService({ manager });
+    await expect(
+      durable.generate(
+        identity,
+        {
+          model: "gpt-5.6-luna",
+          effort: "low",
+          prompt: "Create an orb",
+          project: blankProject(),
+          browserModeling: true,
+          localModeling: false,
+        },
+        undefined,
+        undefined,
+        { requestId: "request-old-host" },
+        {
+          complete: vi.fn(async () => undefined),
+          fail: vi.fn(async () => undefined),
+        },
+      ),
+    ).rejects.toMatchObject({ code: "unavailable" });
+    expect(
+      manager.privateOperation.mock.calls.map((call: unknown[]) => call[1]),
+    ).toEqual(["initialize", "status"]);
+    expect(runtimes.at(-1)?.turns).toBe(0);
+  } finally {
+    await server.close();
+    vi.unstubAllEnvs();
+  }
+});
+
+it.each(authoringStreamMutations)(
+  "rejects private HTTP completion mutation: %s",
+  async (_label, mutate) => {
+    vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+    const server = await startChatGPTHostServer({
+      token,
+      hostname: "127.0.0.1",
+      allowGeneration: true,
+    });
+    const { manager, runtimes } = setupAuthoringManager(
+      server,
+      [
+        JSON.stringify({
+          type: "reserve_entity",
+          entity: {
+            id: "orb-1",
+            label: "Orb",
+            position: [0, 0, 0],
+            scale: [1, 1, 1],
+            color: "#abcdef",
+            stage: "seed",
+          },
+        }),
+        JSON.stringify({ type: "commit_revision", message: "Ready" }),
+      ].join("\n"),
+      mutate,
+    );
+    const complete = vi.fn(async () => undefined);
+    const fail = vi.fn(async () => undefined);
+    try {
+      const durable = createChatGPTDurableService({ manager });
+      const stream = await durable.generate(
+        identity,
+        {
+          model: "gpt-5.6-luna",
+          effort: "low",
+          prompt: "Create an orb",
+          project: blankProject(),
+          browserModeling: true,
+          localModeling: false,
+        },
+        undefined,
+        undefined,
+        { requestId: `request-mutation-${_label}` },
+        { complete, fail },
+      );
+      const reader = stream!.getReader();
+      let publicBody = "";
+      let failure: unknown;
+      try {
+        for (;;) {
+          const next = await reader.read();
+          if (next.done) break;
+          publicBody += new TextDecoder().decode(next.value);
+        }
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toBeInstanceOf(Error);
+      expect(publicBody).not.toContain("orbsie.private.scene-completion");
+      expect(complete).not.toHaveBeenCalled();
+      expect(fail).toHaveBeenCalledOnce();
+      expect(runtimes[0]?.turns).toBe(1);
+    } finally {
+      await server.close();
+      vi.unstubAllEnvs();
+    }
+  },
+  15_000,
+);
+
+it("rejects an already-aborted negotiated response before reading it", async () => {
+  const source = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(
+        new TextEncoder().encode('{"type":"commit_revision"}\n'),
+      );
+      controller.close();
+    },
+  });
+  const signal = new AbortController();
+  signal.abort();
+  const complete = vi.fn(async () => undefined);
+  const fail = vi.fn(async () => undefined);
+  const filtered = filterPrivateCompletion(
+    source,
+    {
+      operationId: "operation-aborted",
+      epoch: 1,
+      projectId: "project-aborted",
+      minimumRevision: 0,
+    },
+    { complete, fail },
+    signal.signal,
+  );
+  const reader = filtered.getReader();
+  await expect(reader.read()).rejects.toMatchObject({
+    code: "invalid-response",
+  });
+  expect(complete).not.toHaveBeenCalled();
+  expect(fail).toHaveBeenCalledOnce();
+});
+
+it("reports completion-writer rejection without exposing its error", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  const server = await startChatGPTHostServer({
+    token,
+    hostname: "127.0.0.1",
+    allowGeneration: true,
+  });
+  const { manager } = setupAuthoringManager(
+    server,
+    [
+      JSON.stringify({
+        type: "reserve_entity",
+        entity: {
+          id: "orb-1",
+          label: "Orb",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#abcdef",
+          stage: "seed",
+        },
+      }),
+      JSON.stringify({ type: "commit_revision", message: "Ready" }),
+    ].join("\n"),
+  );
+  const complete = vi.fn(async () => {
+    throw Error("private writer secret");
+  });
+  const fail = vi.fn(async () => undefined);
+  try {
+    const durable = createChatGPTDurableService({ manager });
+    const stream = await durable.generate(
+      identity,
+      {
+        model: "gpt-5.6-luna",
+        effort: "low",
+        prompt: "Create an orb",
+        project: blankProject(),
+        browserModeling: true,
+        localModeling: false,
+      },
+      undefined,
+      undefined,
+      { requestId: "request-writer-rejection" },
+      { complete, fail },
+    );
+    let publicError: unknown;
+    try {
+      await new Response(stream!).text();
+    } catch (error) {
+      publicError = error;
+    }
+    expect(publicError).toBeInstanceOf(Error);
+    expect(publicError).toMatchObject({
+      code: "invalid-response",
+      message: "ChatGPT managed operation returned an invalid completion.",
+    });
+    expect((publicError as Error).message).not.toContain(
+      "private writer secret",
+    );
+    expect(complete).toHaveBeenCalledOnce();
+    expect(fail).toHaveBeenCalledOnce();
+  } finally {
+    await server.close();
+    vi.unstubAllEnvs();
+  }
+});
+
+it("keeps accepted authoring completion independent from seal failure", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  const server = await startChatGPTHostServer({
+    token,
+    hostname: "127.0.0.1",
+    allowGeneration: true,
+  });
+  const { manager } = setupAuthoringManager(
+    server,
+    [
+      JSON.stringify({
+        type: "reserve_entity",
+        entity: {
+          id: "orb-1",
+          label: "Orb",
+          position: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: "#abcdef",
+          stage: "seed",
+        },
+      }),
+      JSON.stringify({ type: "commit_revision", message: "Ready" }),
+    ].join("\n"),
+    undefined,
+    async (operation, response) => {
+      if (operation !== "seal") return response;
+      return new Response(JSON.stringify({ invalid: true }), {
+        status: 200,
+        headers: response.headers,
+      });
+    },
+  );
+  const complete = vi.fn(async () => undefined);
+  const fail = vi.fn(async () => undefined);
+  try {
+    const durable = createChatGPTDurableService({ manager });
+    const stream = await durable.generate(
+      identity,
+      {
+        model: "gpt-5.6-luna",
+        effort: "low",
+        prompt: "Create an orb",
+        project: blankProject(),
+        browserModeling: true,
+        localModeling: false,
+      },
+      undefined,
+      undefined,
+      { requestId: "request-seal-failure" },
+      { complete, fail },
+    );
+    await expect(new Response(stream!).text()).rejects.toThrow();
+    expect(complete).toHaveBeenCalledOnce();
+    expect(fail).not.toHaveBeenCalled();
+  } finally {
+    await server.close();
+    vi.unstubAllEnvs();
+  }
+});
+
+it.each([
+  ["malformed NDJSON", "not-json\n"],
+  ["provider error record", '{"error":"provider failed"}\n'],
+] as const)(
+  "fails an authoring stream on a private %s before completion",
+  async (_label, streamOutput) => {
+    vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+    const server = await startChatGPTHostServer({
+      token,
+      hostname: "127.0.0.1",
+      allowGeneration: true,
+    });
+    const { manager, runtimes } = setupAuthoringManager(server, streamOutput);
+    const complete = vi.fn(async () => undefined);
+    const fail = vi.fn(async () => undefined);
+    try {
+      const durable = createChatGPTDurableService({ manager });
+      const stream = await durable.generate(
+        identity,
+        {
+          model: "gpt-5.6-luna",
+          effort: "low",
+          prompt: "Create an orb",
+          project: blankProject(),
+          browserModeling: true,
+          localModeling: false,
+        },
+        undefined,
+        undefined,
+        { requestId: `request-${_label}` },
+        { complete, fail },
+      );
+      await expect(new Response(stream!).text()).rejects.toThrow();
+      expect(complete).not.toHaveBeenCalled();
+      expect(fail).toHaveBeenCalledOnce();
+      expect(runtimes[0]?.turns).toBe(1);
+    } finally {
+      await server.close();
+      vi.unstubAllEnvs();
+    }
+  },
+  15_000,
+);
+
+it("aborts a pending private completion and fences late success", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  const streamOutput = [
+    JSON.stringify({
+      type: "reserve_entity",
+      entity: {
+        id: "orb-1",
+        label: "Orb",
+        position: [0, 0, 0],
+        scale: [1, 1, 1],
+        color: "#abcdef",
+        stage: "seed",
+      },
+    }),
+    JSON.stringify({ type: "commit_revision", message: "Ready" }),
+  ].join("\n");
+  const server = await startChatGPTHostServer({
+    token,
+    hostname: "127.0.0.1",
+    allowGeneration: true,
+  });
+  const { manager } = setupAuthoringManager(server, streamOutput);
+  const completionStarted = vi.fn();
+  let releaseComplete!: () => void;
+  const complete = vi.fn(
+    async (_binding: unknown, _completionSignal: AbortSignal) => {
+      completionStarted();
+      await new Promise<void>((resolve) => {
+        releaseComplete = resolve;
+      });
+    },
+  );
+  const fail = vi.fn(async () => undefined);
+  const abort = new AbortController();
+  try {
+    const durable = createChatGPTDurableService({ manager });
+    const stream = await durable.generate(
+      identity,
+      {
+        model: "gpt-5.6-luna",
+        effort: "low",
+        prompt: "Create an orb",
+        project: blankProject(),
+        browserModeling: true,
+        localModeling: false,
+      },
+      abort.signal,
+      undefined,
+      { requestId: "request-pending-completion" },
+      { complete, fail },
+    );
+    const consumed = new Response(stream!).text();
+    await vi.waitFor(() => expect(completionStarted).toHaveBeenCalledOnce());
+    abort.abort();
+    // Consumer cancellation closes the public body after preserving the
+    // already-delivered commands; it must still fence the pending authority
+    // write and report failure rather than success.
+    await expect(consumed).resolves.toContain("commit_revision");
+    expect(complete).toHaveBeenCalledOnce();
+    expect(complete.mock.calls[0]?.[1]).toMatchObject({ aborted: true });
+    expect(fail).toHaveBeenCalledOnce();
+    releaseComplete();
+    await Promise.resolve();
+    expect(fail).toHaveBeenCalledOnce();
+  } finally {
+    await server.close();
+    vi.unstubAllEnvs();
+  }
+});

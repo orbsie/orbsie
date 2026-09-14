@@ -1,0 +1,35 @@
+{
+  "status": "accepted-gated-hosted-initial-authority",
+  "providerCalls": 0,
+  "rootReview": [
+    "Reviewed final source and private HTTP wire-mutation matrix",
+    "Verified pre-aborted filter creation and cancellation before metadata emission",
+    "Reviewed safe writer-error and non-cooperative late-completion assertions",
+    "Built private host with scripts/build-chatgpt-host.mjs and passed node --check"
+  ],
+  "workerVerification": {
+    "affectedFiveSuitesPassed": 61,
+    "privateHttpBackendPassed": 36,
+    "finalPrivateHttpPassed": 22,
+    "finalTypecheck": "passed",
+    "format": "passed",
+    "diffCheck": "passed"
+  },
+  "limitations": [
+    "Synthetic RPC and credential/ledger mocks in hosted HTTP suite; not live provider E2E",
+    "Durable coordinator PostgreSQL cancellation evidence remains separately recorded in authoring-initial-integration-20260914",
+    "No production deployment or public review loop enabled",
+    "Private-host bundle build is not a full latest-worktree Next production build"
+  ],
+  "sourceSha256": {
+    "src/app/api/chatgpt/generate/route.ts": "82836f9c883cd644def103abe284de5581c934b5427ed224ba7d167e79593d63",
+    "src/lib/server/authoring-run-admission.ts": "ff1f2d32d58893563a04e797ecef22be022f32d0f599be6e1d458f89a6064590",
+    "src/lib/server/chatgpt-durable-service.ts": "ce11a8be0edeba2f959a088edd1fbf1aa46606e341c2d087e2d6cfad71d02440",
+    "src/lib/server/chatgpt-host-manager.ts": "19cfe1b845369fcbaad35f49d966612d43e6657f544841b45f17873fe4dca867",
+    "src/lib/server/chatgpt-host.ts": "f3788013140f697a8ed1b615522058466035bdc0d77f76474cf096cffc9c5e1f",
+    "src/lib/server/chatgpt-managed-operation.ts": "69b2af5a64de55a2221eced5a46a39f3c6be68d38ff9eee4552319244c47a222",
+    "src/lib/server/chatgpt-sandbox-backend.ts": "42b0800912831205f73bc60a4666ab0a5f9b0bad9dcb9a9cc2705ae25d85233a",
+    "tests/chatgpt-durable-route-private-http.test.ts": "df04e023f07debe1e233ff7b0bb5675a51fef21e33bad88fb018de50fa4ac891",
+    "tests/chatgpt-sandbox-backend.test.ts": "b88522791dcc04d056658dcc45c0be02f5deb3e943c247e90a2f6dbce9c854f6"
+  }
+}

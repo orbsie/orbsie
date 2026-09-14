@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { z } from "zod";
 import {
   getAuth,
   checkOrigin,
@@ -21,9 +22,16 @@ import {
   observeGenerationStream,
   withGenerationRequestId,
 } from "@/lib/server/generation-observability";
+import {
+  admitInitialAuthoringRun,
+  type InitialAuthoringAdmission,
+} from "@/lib/server/authoring-run-admission";
 export const runtime = "nodejs";
 export const maxDuration = 180;
 const ROUTE_DEADLINE_MS = 180_000;
+const hostedAuthoringRequestSchema = chatGPTSceneRequestSchema
+  .extend({ authoringReview: z.boolean().default(false) })
+  .strict();
 const headers = { "Cache-Control": "private, no-store" };
 export async function POST(request: Request) {
   const requestId = generationRequestId();
@@ -53,6 +61,7 @@ export async function POST(request: Request) {
     request.signal,
     AbortSignal.timeout(ROUTE_DEADLINE_MS),
   ]);
+  let authoringAdmission: InitialAuthoringAdmission | undefined;
   try {
     checkOrigin(request);
     if (new URL(request.url).search)
@@ -62,19 +71,35 @@ export async function POST(request: Request) {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user?.id || !session.session?.id)
       throw new HttpError(401, "Sign in to Orbsie first.");
-    const input = chatGPTSceneRequestSchema.safeParse(
+    const input = hostedAuthoringRequestSchema.safeParse(
       await boundedJSON(request, 512 * 1024),
     );
     if (!input.success) throw new HttpError(400, "Invalid generation request.");
+    const { authoringReview, ...sceneInput } = input.data;
     if (
-      input.data.generationFeedback &&
-      input.data.generationFeedback.projectId !== input.data.project.id
+      sceneInput.generationFeedback &&
+      sceneInput.generationFeedback.projectId !== sceneInput.project.id
     )
       throw new HttpError(400, "Invalid generation request.");
     const identity = {
       ownerId: session.user.id,
       sessionId: session.session.id,
     };
+    if (authoringReview) {
+      authoringAdmission = await admitInitialAuthoringRun({
+        request,
+        project: sceneInput.project,
+        prompt: sceneInput.prompt,
+        provider: "chatgpt",
+        model: sceneInput.model,
+        effort: sceneInput.effort,
+        selected: sceneInput.selected,
+        localModeling: sceneInput.localModeling,
+        browserModeling: sceneInput.browserModeling,
+        signal: routeSignal,
+        ownerSession: identity,
+      });
+    }
     const manager = createChatGPTHostManager({
       artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
     });
@@ -82,13 +107,14 @@ export async function POST(request: Request) {
     const durable = createChatGPTDurableService({ manager });
     const body = await durable.generate(
       identity,
-      input.data,
+      sceneInput,
       routeSignal,
       routeDeadlineAt,
       {
         requestId,
         clientRunId: routeObservation.clientRunId,
       },
+      authoringAdmission,
     );
     if (!body) throw new HttpError(409, "Connect your ChatGPT account first.");
     return respond(
@@ -99,11 +125,15 @@ export async function POST(request: Request) {
             ...headers,
             "Content-Type": "application/x-ndjson",
             "X-Accel-Buffering": "no",
+            ...(authoringAdmission
+              ? { "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId }
+              : {}),
           },
         },
       ),
     );
   } catch (error) {
+    if (authoringAdmission) await authoringAdmission.fail(error);
     const timedOut =
       routeSignal.aborted && routeSignal.reason?.name === "TimeoutError";
     const clientAborted = routeSignal.aborted && !timedOut;

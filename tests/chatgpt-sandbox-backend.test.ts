@@ -91,6 +91,7 @@ test("carries observability correlation in headers while preserving the body sha
       requestId: "11111111-1111-4111-8111-111111111111",
       clientRunId: "22222222-2222-4222-8222-222222222222",
     },
+    1,
   );
   const [, init] = fetch.mock.calls[0] as [string, RequestInit];
   expect(JSON.parse(String(init.body))).toEqual({
@@ -103,6 +104,22 @@ test("carries observability correlation in headers while preserving the body sha
     "content-type": "application/json",
     "x-orbsie-request-id": "11111111-1111-4111-8111-111111111111",
     "x-orbsie-client-run-id": "22222222-2222-4222-8222-222222222222",
+    "x-orbsie-scene-completion": "1",
+  });
+});
+
+test("only negotiates scene completion on status and generation requests", async () => {
+  sdk.get.mockResolvedValue({
+    status: "running",
+    domain: () => "https://sb-example.vercel.run",
+  });
+  const fetch = vi.fn().mockResolvedValue(new Response("{}"));
+  vi.stubGlobal("fetch", fetch);
+  await backend.privateOperation(host, "seal", {}, undefined, undefined, 1);
+  const [, init] = fetch.mock.calls[0] as [string, RequestInit];
+  expect(init.headers).toEqual({
+    authorization: "Bearer private-token",
+    "content-type": "application/json",
   });
 });
 

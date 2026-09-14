@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { GenerationObservationCorrelation } from "./generation-observability";
+import {
+  PRIVATE_SCENE_COMPLETION_HEADER,
+  PRIVATE_SCENE_COMPLETION_VERSION,
+} from "./chatgpt-scene-completion";
 
 type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
@@ -112,6 +116,7 @@ export function createChatGPTSandboxBackend(options: {
     input: unknown,
     signal?: AbortSignal,
     correlation?: GenerationObservationCorrelation,
+    sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
   ) {
     if (host.expiresAt.getTime() <= Date.now())
       throw Error("ChatGPT host expired.");
@@ -138,6 +143,12 @@ export function createChatGPTSandboxBackend(options: {
               ...(correlation.clientRunId
                 ? { "x-orbsie-client-run-id": correlation.clientRunId }
                 : {}),
+            }
+          : {}),
+        ...(sceneCompletionVersion !== undefined &&
+        (operation === "status" || operation === "generate")
+          ? {
+              [PRIVATE_SCENE_COMPLETION_HEADER]: String(sceneCompletionVersion),
             }
           : {}),
       },

@@ -18,6 +18,16 @@ import { validateChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
 import { ChatGPTHostStaleError } from "./chatgpt-host-service";
 import { CHATGPT_MANAGED_OPERATION_MAX_MS } from "./chatgpt-managed-operation";
 import {
+  PRIVATE_SCENE_COMPLETION_HEADER,
+  PRIVATE_SCENE_COMPLETION_VERSION,
+  parsePrivateSceneCompletion,
+  type PrivateSceneCompletion,
+} from "./chatgpt-scene-completion";
+import type {
+  AuthoritativeSceneBinding,
+  InitialAuthoringAdmission,
+} from "./authoring-run-admission";
+import {
   createGenerationObservation,
   type GenerationObservationCorrelation,
 } from "./generation-observability";
@@ -25,6 +35,7 @@ import {
 const CLEANUP_HEADROOM_MS = 12_000;
 const PRIVATE_RESPONSE_MAX_BYTES = 256 * 1024;
 const CACHE_MAX_BYTES = 64 * 1024;
+const PRIVATE_GENERATION_RESPONSE_MAX_BYTES = 512 * 1024;
 
 export type DurableIdentity = { ownerId: string; sessionId: string };
 type Host = {
@@ -58,6 +69,7 @@ type DurableManager = {
     options?: {
       signal?: AbortSignal;
       correlation?: GenerationObservationCorrelation;
+      sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION;
     },
   ): Promise<Response>;
   request(
@@ -168,6 +180,194 @@ function operationIdentity(value: ReturnType<typeof binding>) {
   return { operationId: value.operationId, epoch: value.epoch };
 }
 
+type HostedAuthoringCompletion = Pick<
+  InitialAuthoringAdmission,
+  "complete" | "fail"
+>;
+
+function invalidPrivateCompletion() {
+  return new ChatGPTDurableServiceError(
+    "invalid-response",
+    "ChatGPT managed operation returned an invalid completion.",
+  );
+}
+
+/** Remove negotiated authority metadata before exposing the scene stream. */
+export function filterPrivateCompletion(
+  source: ReadableStream<Uint8Array>,
+  expected: {
+    operationId: string;
+    epoch: number;
+    projectId: string;
+    minimumRevision: number;
+  },
+  authoring: HostedAuthoringCompletion,
+  signal: AbortSignal | undefined,
+) {
+  const reader = source.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const encoder = new TextEncoder();
+  let buffer = "";
+  let bytes = 0;
+  let completion: PrivateSceneCompletion | undefined;
+  let state: "open" | "completing" | "completed" | "failed" = "open";
+  let released = false;
+  let failurePromise: Promise<void> | undefined;
+  const completionAbortController = new AbortController();
+  const completionSignal = completionAbortController.signal;
+  const release = () => {
+    if (!released) {
+      reader.releaseLock();
+      released = true;
+    }
+  };
+  const fail = (error: unknown) => {
+    if (state === "completed" || state === "failed")
+      return failurePromise ?? Promise.resolve();
+    state = "failed";
+    completionAbortController.abort();
+    failurePromise = Promise.resolve()
+      .then(() => authoring.fail(error))
+      .catch(() => undefined);
+    return failurePromise;
+  };
+  const onAbort = () => {
+    void fail(
+      signal?.reason instanceof Error
+        ? signal.reason
+        : Error("Generation cancelled."),
+    );
+    void reader.cancel(signal?.reason).catch(() => undefined);
+  };
+  const cleanup = () => signal?.removeEventListener("abort", onAbort);
+  signal?.addEventListener("abort", onAbort, { once: true });
+  if (signal?.aborted) {
+    onAbort();
+    cleanup();
+  }
+  const processLine = (value: string) => {
+    if (!value.trim()) return encoder.encode(`${value}\n`);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      throw invalidPrivateCompletion();
+    }
+    const record = responseRecord(parsed);
+    const type = record?.type;
+    if (type === "orbsie.private.scene-completion") {
+      if (completion) throw invalidPrivateCompletion();
+      completion = parsePrivateSceneCompletion(value, expected);
+      return undefined;
+    }
+    if (type === "error" || (record && "error" in record))
+      throw invalidPrivateCompletion();
+    if (typeof type === "string" && type.startsWith("orbsie.private."))
+      throw invalidPrivateCompletion();
+    if (completion) throw invalidPrivateCompletion();
+    return encoder.encode(`${value}\n`);
+  };
+  const completeAuthoring = async (record: PrivateSceneCompletion) => {
+    if (state !== "open" || completionSignal.aborted)
+      throw invalidPrivateCompletion();
+    state = "completing";
+    const completionPromise = Promise.resolve().then(() =>
+      authoring.complete(
+        {
+          version: record.bindingVersion,
+          projectId: record.projectId,
+          revision: record.revision,
+          digest: record.digest,
+        },
+        completionSignal,
+      ),
+    );
+    // A completion writer must not be allowed to become an unhandled rejection
+    // if cancellation wins while it is waiting on durable storage.
+    void completionPromise.catch(() => undefined);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const abort = () => {
+          completionSignal.removeEventListener("abort", abort);
+          reject(invalidPrivateCompletion());
+        };
+        if (completionSignal.aborted) {
+          abort();
+          return;
+        }
+        completionSignal.addEventListener("abort", abort, { once: true });
+        completionPromise.then(
+          () => {
+            completionSignal.removeEventListener("abort", abort);
+            resolve();
+          },
+          (error) => {
+            completionSignal.removeEventListener("abort", abort);
+            reject(error);
+          },
+        );
+      });
+      if (state !== "completing" || completionSignal.aborted)
+        throw invalidPrivateCompletion();
+      state = "completed";
+    } catch (error) {
+      const safeError = invalidPrivateCompletion();
+      await fail(safeError);
+      throw safeError;
+    }
+  };
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        for (;;) {
+          const next = await reader.read();
+          if (next.done) {
+            release();
+            buffer += decoder.decode();
+            if (buffer) {
+              const output = processLine(buffer);
+              if (output) controller.enqueue(output);
+            }
+            if (!completion) throw invalidPrivateCompletion();
+            completionSignal.throwIfAborted();
+            await completeAuthoring(completion);
+            cleanup();
+            controller.close();
+            return;
+          }
+          bytes += next.value.byteLength;
+          if (bytes > PRIVATE_GENERATION_RESPONSE_MAX_BYTES)
+            throw invalidPrivateCompletion();
+          buffer += decoder.decode(next.value, { stream: true });
+          let newline = buffer.indexOf("\n");
+          while (newline >= 0) {
+            const value = buffer.slice(0, newline).replace(/\r$/u, "");
+            buffer = buffer.slice(newline + 1);
+            const output = processLine(value);
+            if (output) controller.enqueue(output);
+            newline = buffer.indexOf("\n");
+          }
+        }
+      } catch (error) {
+        // Private stream failures must never expose provider or persistence
+        // messages through the public body or framework error logging.
+        const safeError = invalidPrivateCompletion();
+        await fail(safeError);
+        await reader.cancel().catch(() => undefined);
+        cleanup();
+        release();
+        controller.error(safeError);
+      }
+    },
+    async cancel(reason) {
+      await fail(invalidPrivateCompletion());
+      await reader.cancel(reason).catch(() => undefined);
+      cleanup();
+      release();
+    },
+  });
+}
+
 function cache(value: unknown): Uint8Array | null {
   if (value === null) return null;
   if (
@@ -243,6 +443,7 @@ export function createChatGPTDurableService(options: {
     identity: DurableIdentity,
     signal?: AbortSignal,
     routeDeadlineAt?: number,
+    sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
   ): Promise<{
     lease: ChatGPTCredentialLease;
     host: Host;
@@ -322,7 +523,35 @@ export function createChatGPTDurableService(options: {
             },
             { signal },
           );
-          return binding(await readJSON(initialized));
+          const initializedBinding = binding(await readJSON(initialized));
+          if (sceneCompletionVersion !== undefined) {
+            const preflight = await manager.privateOperation(
+              host!,
+              "status",
+              operationIdentity(initializedBinding),
+              { signal, sceneCompletionVersion },
+            );
+            if (
+              preflight.headers.get(PRIVATE_SCENE_COMPLETION_HEADER) !==
+              String(sceneCompletionVersion)
+            )
+              throw new ChatGPTDurableServiceError(
+                "unavailable",
+                "ChatGPT host does not support scene completion authority.",
+              );
+            const status = responseRecord(await readJSON(preflight));
+            if (
+              !status ||
+              !["connected", "disconnected", "unknown"].includes(
+                status.status as string,
+              )
+            )
+              throw new ChatGPTDurableServiceError(
+                "invalid-response",
+                "ChatGPT managed operation returned an invalid status.",
+              );
+          }
+          return initializedBinding;
         },
         { signal },
       );
@@ -592,6 +821,7 @@ export function createChatGPTDurableService(options: {
     signal?: AbortSignal,
     routeDeadlineAt?: number,
     correlation?: GenerationObservationCorrelation,
+    authoring?: HostedAuthoringCompletion,
   ): Promise<ReadableStream<Uint8Array> | null> {
     const hostedObservation = correlation
       ? createGenerationObservation({
@@ -604,7 +834,12 @@ export function createChatGPTDurableService(options: {
       : undefined;
     let active: Awaited<ReturnType<typeof acquire>>;
     try {
-      active = await acquire(identity, signal, routeDeadlineAt);
+      active = await acquire(
+        identity,
+        signal,
+        routeDeadlineAt,
+        authoring ? PRIVATE_SCENE_COMPLETION_VERSION : undefined,
+      );
     } catch (error) {
       hostedObservation?.terminal({
         reason: signal?.aborted
@@ -638,7 +873,13 @@ export function createChatGPTDurableService(options: {
           ...operationIdentity(active.binding),
           input,
         },
-        { signal, correlation },
+        {
+          signal,
+          correlation,
+          ...(authoring
+            ? { sceneCompletionVersion: PRIVATE_SCENE_COMPLETION_VERSION }
+            : {}),
+        },
       );
       if (
         !response.ok ||
@@ -650,7 +891,38 @@ export function createChatGPTDurableService(options: {
           "unavailable",
           "ChatGPT generation could not start.",
         );
+      if (
+        authoring &&
+        response.headers.get(PRIVATE_SCENE_COMPLETION_HEADER) !==
+          String(PRIVATE_SCENE_COMPLETION_VERSION)
+      )
+        throw new ChatGPTDurableServiceError(
+          "unavailable",
+          "ChatGPT host does not support scene completion authority.",
+        );
       source = response.body;
+      if (authoring) {
+        source = filterPrivateCompletion(
+          source,
+          {
+            operationId: active.binding.operationId,
+            epoch: active.binding.epoch,
+            projectId:
+              typeof input === "object" && input
+                ? String((input as { project?: { id?: unknown } }).project?.id)
+                : "",
+            minimumRevision:
+              typeof input === "object" && input
+                ? Number(
+                    (input as { project?: { revision?: unknown } }).project
+                      ?.revision,
+                  )
+                : -1,
+          },
+          authoring,
+          signal,
+        );
+      }
     } catch (error) {
       const timedOut =
         signal?.aborted && signal.reason?.name === "TimeoutError";

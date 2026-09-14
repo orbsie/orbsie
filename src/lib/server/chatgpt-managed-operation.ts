@@ -3,6 +3,10 @@ import { createChatGPTGeneration } from "./chatgpt-generation";
 import { listChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
 import { createChatGPTSceneStream } from "./chatgpt-scene-stream";
 import { CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES } from "./chatgpt-managed-credential-store";
+import {
+  PRIVATE_SCENE_COMPLETION_VERSION,
+  type PrivateSceneCompletion,
+} from "./chatgpt-scene-completion";
 import type { ChatGPTRuntime } from "./chatgpt-runtime";
 import {
   createGenerationObservation,
@@ -54,6 +58,7 @@ export type ChatGPTManagedOperationController = {
     input: unknown,
     signal?: AbortSignal,
     correlation?: GenerationObservationCorrelation,
+    sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
   ): Promise<ReadableStream<Uint8Array>>;
   seal(
     binding: ManagedOperationBinding,
@@ -553,6 +558,7 @@ export function createChatGPTManagedOperationController(options: {
     input: unknown,
     signal?: AbortSignal,
     correlation?: GenerationObservationCorrelation,
+    sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
   ): Promise<ReadableStream<Uint8Array>> => {
     const current = await readySlot(binding);
     const operationSignal = combinedSignal(current, signal, now);
@@ -570,14 +576,73 @@ export function createChatGPTManagedOperationController(options: {
         })
       : undefined;
     try {
-      return createChatGPTSceneStream(
+      let completion: PrivateSceneCompletion | undefined;
+      const source = createChatGPTSceneStream(
         input,
         current.generator!,
         operationSignal,
         {
           observability: observation,
+          ...(sceneCompletionVersion === PRIVATE_SCENE_COMPLETION_VERSION
+            ? {
+                lifecycle: {
+                  onComplete: async ({ binding, signal }) => {
+                    signal.throwIfAborted();
+                    completion = {
+                      type: "orbsie.private.scene-completion",
+                      version: PRIVATE_SCENE_COMPLETION_VERSION,
+                      operationId: current.operationId,
+                      epoch: current.epoch,
+                      projectId: binding.projectId,
+                      revision: binding.revision,
+                      bindingVersion: binding.version,
+                      digest: binding.digest,
+                    };
+                  },
+                },
+              }
+            : {}),
         },
       );
+      if (sceneCompletionVersion !== PRIVATE_SCENE_COMPLETION_VERSION)
+        return source;
+      const reader = source.getReader();
+      const encoder = new TextEncoder();
+      return new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          try {
+            const next = await reader.read();
+            if (!next.done) {
+              controller.enqueue(next.value);
+              return;
+            }
+            reader.releaseLock();
+            if (!completion)
+              throw new ChatGPTManagedOperationError(
+                "unavailable",
+                "The scene completion record was not produced.",
+              );
+            operationSignal.throwIfAborted();
+            if (current.invalidated || current.phase !== "ready")
+              throw new ChatGPTManagedOperationError(
+                "aborted",
+                "The managed ChatGPT operation was canceled.",
+              );
+            controller.enqueue(
+              encoder.encode(`${JSON.stringify(completion)}\n`),
+            );
+            controller.close();
+          } catch (error) {
+            reader.releaseLock();
+            controller.error(error);
+          }
+        },
+        async cancel(reason) {
+          current.abortController.abort(reason);
+          await reader.cancel(reason).catch(() => undefined);
+          reader.releaseLock();
+        },
+      });
     } catch (error) {
       signal?.removeEventListener("abort", onAbort);
       observation?.terminal({

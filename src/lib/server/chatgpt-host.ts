@@ -15,6 +15,10 @@ import {
   validatedGenerationRequestId,
   type GenerationObservationCorrelation,
 } from "./generation-observability";
+import {
+  PRIVATE_SCENE_COMPLETION_HEADER,
+  PRIVATE_SCENE_COMPLETION_VERSION,
+} from "./chatgpt-scene-completion";
 
 type HostSession = Pick<
   ChatGPTDeviceSession,
@@ -158,7 +162,11 @@ function privateLoginSealFailure(error: unknown): Response {
   );
 }
 
-function privateJSON(value: unknown, status = 200): Response {
+function privateJSON(
+  value: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>,
+): Response {
   let body: string;
   try {
     body = JSON.stringify(value);
@@ -170,7 +178,10 @@ function privateJSON(value: unknown, status = 200): Response {
       { error: "The private ChatGPT response is too large." },
       502,
     );
-  return new Response(body, { status, headers });
+  return new Response(body, {
+    status,
+    headers: { ...headers, ...(extraHeaders ?? {}) },
+  });
 }
 
 async function readJSON(
@@ -252,6 +263,17 @@ function operationCorrelation(
       "The private operation correlation is invalid.",
     );
   return { requestId, ...(clientRunId ? { clientRunId } : {}) };
+}
+
+function requestedSceneCompletionVersion(headers: Headers) {
+  const value = headers.get(PRIVATE_SCENE_COMPLETION_HEADER);
+  if (value === null) return undefined;
+  if (value !== String(PRIVATE_SCENE_COMPLETION_VERSION))
+    throw new ChatGPTManagedOperationError(
+      "invalid",
+      "The private scene completion version is invalid.",
+    );
+  return PRIVATE_SCENE_COMPLETION_VERSION;
 }
 
 function decodeCache(value: unknown): Uint8Array | undefined {
@@ -382,6 +404,8 @@ export function createChatGPTHostHandler({
   )
     throw Error("A server ChatGPT host token is required.");
 
+  let negotiatedSceneCompletionVersion:
+    typeof PRIVATE_SCENE_COMPLETION_VERSION | undefined;
   return async (request: Request) => {
     if (request.headers.has("origin"))
       return response(
@@ -471,6 +495,7 @@ export function createChatGPTHostHandler({
             },
             request.signal,
           );
+          negotiatedSceneCompletionVersion = undefined;
           return privateJSON(initialized);
         }
         const binding = operationBinding(value);
@@ -489,8 +514,20 @@ export function createChatGPTHostHandler({
               "invalid",
               "Invalid operation request.",
             );
+          const completionVersion = requestedSceneCompletionVersion(
+            request.headers,
+          );
+          const status = await managedOperation.status(binding, request.signal);
+          if (completionVersion !== undefined)
+            negotiatedSceneCompletionVersion = completionVersion;
           return privateJSON(
-            await managedOperation.status(binding, request.signal),
+            status,
+            200,
+            completionVersion === undefined
+              ? undefined
+              : {
+                  [PRIVATE_SCENE_COMPLETION_HEADER]: String(completionVersion),
+                },
           );
         }
         if (url.pathname === "/private/operation/models") {
@@ -518,17 +555,32 @@ export function createChatGPTHostHandler({
               "invalid",
               "Invalid operation request.",
             );
+          const completionVersion = requestedSceneCompletionVersion(
+            request.headers,
+          );
+          if (completionVersion !== negotiatedSceneCompletionVersion)
+            throw new ChatGPTManagedOperationError(
+              "invalid",
+              "The private scene completion version was not negotiated.",
+            );
           const stream = await managedOperation.generate(
             binding,
             value.input,
             request.signal,
             operationCorrelation(request.headers),
+            completionVersion,
           );
           return new Response(stream, {
             headers: {
               "Content-Type": "application/x-ndjson",
               "Cache-Control": "private, no-store",
               "X-Accel-Buffering": "no",
+              ...(completionVersion === undefined
+                ? {}
+                : {
+                    [PRIVATE_SCENE_COMPLETION_HEADER]:
+                      String(completionVersion),
+                  }),
             },
           });
         }
@@ -564,6 +616,7 @@ export function createChatGPTHostHandler({
               "Invalid operation request.",
             );
           await managedOperation.clear(binding);
+          negotiatedSceneCompletionVersion = undefined;
           return privateJSON({ cleared: true });
         }
         return response({ error: "Not found." }, 404);

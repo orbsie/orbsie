@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { createSceneBinding } from "../scene-binding";
 import type { Project } from "../protocol";
+import type { SceneBinding } from "../scene-binding";
 import {
   completeInitialAuthoringRun,
   failAuthoringRun,
@@ -26,13 +27,24 @@ export type InitialAuthoringAdmissionInput = {
   browserModeling: boolean;
   signal: AbortSignal;
   trialIdentity?: TrialIdentity;
+  /** Server-derived identity for linked providers; never read from JSON. */
+  ownerSession?: { ownerId: string; sessionId: string };
 };
+
+export type AuthoritativeSceneBinding = Pick<
+  SceneBinding,
+  "version" | "projectId" | "revision" | "digest"
+>;
 
 export type InitialAuthoringAdmission = {
   runId: string;
   trialRemaining: number | null;
   trialCookie?: string;
   lifecycle: AuthoringLifecycleHooks;
+  complete(
+    binding: AuthoritativeSceneBinding,
+    signal: AbortSignal,
+  ): Promise<void>;
   fail(error: unknown): Promise<void>;
 };
 
@@ -65,7 +77,26 @@ function validIdentityPart(value: unknown) {
   );
 }
 
-async function linkedIdentity(request: Request) {
+async function linkedIdentity(
+  request: Request,
+  ownerSession?: { ownerId: string; sessionId: string },
+) {
+  if (ownerSession) {
+    if (
+      !validIdentityPart(ownerSession.ownerId) ||
+      !validIdentityPart(ownerSession.sessionId)
+    )
+      throw new HttpError(
+        503,
+        "Your Orbsie session could not be checked. Retry shortly.",
+      );
+    return {
+      identityHash: digest(
+        "orbsie-authoring-owner-session-v1",
+        JSON.stringify([ownerSession.ownerId, ownerSession.sessionId]),
+      ),
+    };
+  }
   let auth: ReturnType<typeof getAuth>;
   try {
     auth = getAuth();
@@ -168,7 +199,7 @@ export async function admitInitialAuthoringRun(
           identityHash: input.trialIdentity?.identityHash,
           trialCookie: input.trialIdentity?.cookie,
         }
-      : await linkedIdentity(input.request);
+      : await linkedIdentity(input.request, input.ownerSession);
   const identityHash = linked.identityHash;
   if (!identityHash)
     throw new HttpError(
@@ -219,22 +250,35 @@ export async function admitInitialAuthoringRun(
     );
     return failurePromise;
   };
+  const complete = async (
+    completedBinding: AuthoritativeSceneBinding,
+    signal: AbortSignal,
+  ) => {
+    if (terminal !== "active" || signal.aborted)
+      throw cancellationError(signal);
+    if (
+      completedBinding.version !== initialBinding.version ||
+      completedBinding.projectId !== input.project.id ||
+      !Number.isSafeInteger(completedBinding.revision) ||
+      completedBinding.revision < input.project.revision ||
+      !/^[a-f0-9]{64}$/.test(completedBinding.digest)
+    )
+      throw Error("The completed scene binding is invalid.");
+    await completeInitialAuthoringRun({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: issued.phaseToken,
+      revision: completedBinding.revision,
+      sceneBindingDigest: completedBinding.digest,
+      signal,
+    });
+    if (signal.aborted || terminal !== "active")
+      throw cancellationError(signal);
+    terminal = "completed";
+  };
   const lifecycle: AuthoringLifecycleHooks = {
-    onComplete: async ({ binding: completedBinding, signal }) => {
-      if (terminal !== "active" || signal.aborted)
-        throw cancellationError(signal);
-      await completeInitialAuthoringRun({
-        ...binding,
-        runId: issued.runId,
-        phaseToken: issued.phaseToken,
-        revision: completedBinding.revision,
-        sceneBindingDigest: completedBinding.digest,
-        signal,
-      });
-      if (signal.aborted || terminal !== "active")
-        throw cancellationError(signal);
-      terminal = "completed";
-    },
+    onComplete: ({ binding: completedBinding, signal }) =>
+      complete(completedBinding, signal),
     onFailure: ({ error }) => initialFailure(error),
   };
   if (input.signal.aborted) {
@@ -246,6 +290,7 @@ export async function admitInitialAuthoringRun(
     trialRemaining: issued.trialRemaining,
     ...(linked.trialCookie ? { trialCookie: linked.trialCookie } : {}),
     lifecycle,
+    complete,
     fail: initialFailure,
   };
 }
