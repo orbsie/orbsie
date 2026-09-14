@@ -159,3 +159,42 @@ callback to an Orbsie persistence endpoint is not currently available. Do not re
 on such a callback without explicitly implementing and validating its authorization,
 network policy and bounded shutdown behavior. Prefer trusted server orchestration
 for the first complete lifecycle.
+
+### Chosen first orchestration: operation-scoped managed processes
+
+Reuse the private sandbox HTTP service, but instantiate a fresh isolated managed
+process for each authenticated status/models/generation operation. Acquire the
+owner's vault lease, initialize that process from its cache through the private
+host capability, perform the operation, then seal (terminate and snapshot), save
+under the exact lease/version/epoch and release. This avoids holding a refresh
+lease throughout idle browser sessions and preserves short-lived execution. It
+adds process startup overhead; measure it at the hosted acceptance milestone.
+Do not reprovision/install a new sandbox for every model call.
+
+A private controller serializes its process slot and binds it to an unpredictable
+operation ID plus lease epoch/deadline. Calls cannot address an earlier process
+by sending only the general sandbox capability. Initialization is single-use;
+concurrent initialization returns Busy. After sealing, repeated finalize for the
+same operation may retrieve its bounded snapshot for safe persistence retry, but
+must not restart the process or model call. Keep at most one retained snapshot,
+expire it and clear it on explicit Disconnect. No inference retry is introduced.
+
+Set a process deadline strictly before the lease deadline (include clock-skew and
+shutdown allowance). Expired operations reject new RPC admission and terminate.
+Server-side orchestration must not release early if termination is unconfirmed;
+in that case destroy the sandbox or retain the lease until its fenced expiry.
+A fresh owner session may later recover from the last successfully persisted cache;
+a provider rejection then requires truthful reconnection, not false Ready.
+
+New device login is a separate pending operation with no imported remembered cache.
+On verified login completion, seal its process and persist the newly produced cache
+before reporting the durable connection as saved. Existing active remembered
+connections require explicit account replacement semantics rather than overwriting
+vault rows during Start. Cancel only terminates this pending operation.
+
+Generation finalization must have reserved route headroom: the present public route
+and managed generation both allow 180 seconds, leaving no guaranteed cleanup time.
+Allocate a bounded portion of the existing route deadline to sealing/persistence,
+and propagate the shorter generation deadline instead of extending billable calls.
+Test normal completion, cancellation and deadline exhaustion with rotated caches;
+prove no process continues after release and no secrets enter public responses.
