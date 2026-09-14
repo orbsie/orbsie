@@ -177,3 +177,16 @@ No root test processes remain. Shared3040/3096 servers left untouched by worker.
 
 History for vault/runtime/private review: checkpoint-history/2026-09-13-before-
 private-host-acceptance.md. Do not repeat accepted investigations/tests absent gap.
+
+## Active server orchestration handoff
+
+Luna host_session_renewal is implementing durable service/public routes and initial
+login intent fencing; not accepted or deployed. Root isolated PostgreSQL container
+orbsie-durable-race-db-20260913 is running, loopback32770, DBorbsie_test/postgres,
+synthetic trust auth/tmpfs256MiB/1CPU. Worker has URL; remove after reviewed tests.
+Root early review found absent-intent SELECT FOR UPDATE does not serialize two
+owner sessions: stale begin upsert can overwrite concurrent Disconnect. Worker
+notified to serialize existing owner/intent admission, use fresh post-lock clocks,
+and prove first-intent races. Final diff and evidence review still required.
+Quota latest65%used/35%remaining; stop all workers/livecalls below20%remaining.
+Durable and self-review task docs now preserve intent and managed-review contracts.

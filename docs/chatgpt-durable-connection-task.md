@@ -225,3 +225,21 @@ cookie, without opening settings: restore selected tier and submit a prompt. Cov
 transient startup failure plus Retry, manual provider switch during restoration,
 explicit Disconnect plus reload, and cookie deletion (truthful sign-in required).
 No successful server fixture substitutes for these browser assertions.
+
+### Initial-login revocation fence
+
+Saving an existing leased connection is fenced already, but remembering a newly
+completed login creates a connection. That insertion also needs a persistent
+owner-level intent epoch: otherwise Disconnect can finish before a delayed login
+seal inserts a fresh active credential. Bind explicit Start to its admitted host
+attempt and intent epoch; remember must verify both atomically. Disconnect advances
+the intent and revokes existing credentials before remote cleanup. Status or restore
+must never manufacture a new intent after revocation. Migration of an already
+verified legacy login may initialize intent only when no prior owner intent exists.
+Use one consistent database lock order and demonstrate the remember/Disconnect
+race with independent PostgreSQL clients, including rollback on failed insertion.
+
+A completed HTTP stream alone is not evidence of a committed scene. Keep the
+existing completion-event requirement and last-good-scene behavior while adding
+credential finalization. The cleanup path must run after success, malformed or
+incomplete streams, errors, and cancellation; it must not retry model inference.

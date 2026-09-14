@@ -105,3 +105,17 @@ merely adding reviewImage to createChatGPTGeneration cannot reach the hosted use
 workflow. Preserve private host token validation, request ceilings, abort forwarding
 and renewal/session identity. Test this whole private hop with mocked RPC before
 live acceptance; do not call an internal function test hosted E2E.
+
+### Durable hosted-operation integration
+
+The accepted private host lifecycle now uses operation-scoped managed processes
+(`chatgpt-managed-operation.ts`), with an owner credential lease held through
+confirmed seal, rotated-cache save and clear. Add review to that same lifecycle;
+do not revive the legacy session generator or hold a refresh-capable process after
+releasing its lease. Each review phase is a distinct bounded model call under the
+same authoring-run identity and original provider/model selection. It may reuse
+the sandbox service, but must acquire current credential authority and verify its
+operation binding. Cancellation and failed review must finalize credentials with
+independent cleanup headroom exactly as initial generation does. Test the private
+HTTP hop through the real handler/controller and server orchestration, including
+Disconnect during review and stale replies after project or account changes.
