@@ -125,3 +125,13 @@ Root local servers10522 terminal0 and98456 terminal130 intentionally stopped.
 Production browser synthetic fixture47567 passed/terminal0: exactly1 synthetic
 Budget request+reply and all recovery cases. Evidence chatgpt-startup-live-fixture-
 20260913; root viewed phone screenshot. No provider calls. No root processes remain.
+
+Gateway diagnostic update: one instrumented request using isolated deployed480782d
+returned HTTP402 positive-credit-balance required (includingBYOK), no sceneoutput,
+no retry. Owner async question pending to replenish account. This blocks Gateway
+live acceptance only, not other implementation. Evidence gateway-framing-capture-
+20260913; original runner_failed report preserved with corrected provider_rejected
+classification in acceptance.json. Original malformed-output failure not reproduced.
+Private exact257byte response at /home/marcos/.cache/orbsie/provider-tests/
+framing-20260913/response.sse0600; parent0700. Tool9976cc9 adds bounded exactSSE
+capture and nonblocking limit cancellation;10focused tests pass. No root processes.

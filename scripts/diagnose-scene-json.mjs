@@ -233,7 +233,7 @@ async function run(options) {
   } catch (error) {
     if (capturePromise) await capturePromise.catch(() => {});
     generationOutput = "";
-    runStatus = "runner_failed";
+    runStatus = httpStatus >= 400 ? "provider_rejected" : "runner_failed";
     if (requestCount > 1) throw error;
   } finally {
     globalThis.fetch = originalFetch;
