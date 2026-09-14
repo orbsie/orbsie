@@ -1,0 +1,15 @@
+{
+  "scope": "Recent production ChatGPT generate requests, 2h window, limit100",
+  "records": [
+    {
+      "timestamp": 1789343061566,
+      "requestMethod": "POST",
+      "requestPath": "/api/chatgpt/generate",
+      "responseStatusCode": 200,
+      "level": "info",
+      "source": "serverless"
+    }
+  ],
+  "finding": "One HTTP200 request with no attached runtime message; this does not establish successful scene commit or distinguish timer expiry from provider/transport interruption.",
+  "liveModelCalls": 0
+}
