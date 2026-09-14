@@ -1,0 +1,42 @@
+{
+  "at": "2026-09-14T01:51:19.095715+00:00",
+  "scope": "saved-project replay using current standalone runtime, actual Android emulator Chrome and adb touch input",
+  "fixtureZip": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+  "fixtureSha256": "6bde327ef0c63ca558ed35d5a74e26e55098077006f3b065c5effa7261da084b",
+  "runtimeHashes": {
+    "runtime.js": "8baa30c211e5a2ffe3c1cdfb6a82da7d9b2a25e1396a86dc1c446fe965d7109e",
+    "runtime.css": "7d73ad410ad9ddc54f45d2b75a3a2331229231afc8e908b85795f5e91392c2f5",
+    "generated-geometry-worker.js": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a",
+    "asset-geometry-worker.js": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8"
+  },
+  "device": {
+    "avd": "orbsie_api35_phone",
+    "androidApi": 35,
+    "chrome": "124.0.6367.219",
+    "cores": 2,
+    "memoryMiB": 3072,
+    "display": [
+      1080,
+      2400
+    ]
+  },
+  "checks": {
+    "initialScore": 0,
+    "rightTouchScore": 7,
+    "upTouchWin": true,
+    "winFinalScore": 7,
+    "playAgainResetsScoreAndOverlay": true,
+    "leftTouchLoss": true,
+    "lossFinalScore": 0,
+    "lossRestartResetsOverlay": true,
+    "touchControlsVisible": true,
+    "rootReviewedAllScreenshots": true
+  },
+  "modelCalls": 0,
+  "passed": true,
+  "limitations": [
+    "Replay, not fresh provider create/edit or publication acceptance",
+    "Emulator and older Chrome, not current physical-device performance",
+    "Simple input-rule game, not flagship platform traversal or jump validation"
+  ]
+}

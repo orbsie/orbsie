@@ -186,3 +186,14 @@ Evidence android-current-preflight-20260913. No modelcalls/gameplay claim. Emula
 intentionally left running for next mobile checks; stop with adb emu kill when done.
 All UI dump sessions terminal (including59775). Temp screenshots /tmp/orbsie-android-current.
 Luna private lifecycle worker still active; quota latest37%remaining.
+
+Android saved-game replay passed actual touch Right->score7, Up->win/final7,
+PlayAgain->score0/overlaygone, Left->loss/final0, PlayAgain->overlaygone. Current
+standalone runtime plus unchanged saved Gateway project/models (hashes in evidence
+android-player-replay-20260913), not fresh provider/publication/flagship acceptance.
+Root viewed six screenshots. Zero modelcalls. Local server46673 and emulator76916
+both stopped with terminal exit0, adb reverse3187 removed. Supersedes running note.
+Luna private-controller/transport task FINISHED: reports43 focused tests,typecheck,
+format/diffcheck,build:chatgpt-host pass. Root final source/test review still pending;
+DO NOT accept/commit/deploy that uncommitted implementation before review. Reuse
+host_session_renewal for fixes/next orchestration. No worker task processes remain.
