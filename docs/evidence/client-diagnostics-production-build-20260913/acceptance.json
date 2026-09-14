@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "b518e68",
+  "buildPassed": true,
+  "browserFixturePassed": true,
+  "providerCalls": 0,
+  "expectedPublicBuildId": "b518e68",
+  "physicalDeviceAcceptance": false,
+  "rootReviewedPhoneLayout": true
+}

@@ -8,12 +8,13 @@ acceptance history: checkpoint-history/2026-09-13-before-durable-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing **client diagnostic history/export**.
+/root/host_session_renewal is implementing **SEO crawlability/metadata**.
 New clean-context spawn failed host thread limit; reuse existing worker.
-Contract docs/generation-observability-task.md. Server stage dba95bc accepted and
-deployed. Worker owns browser helper/store/export UI/startup diagnostics/replay
-fixtures and targeted checks. Root owns scripts/verify-generation-diagnostics.mjs,
-release checkout, evidence, checkpoint and deployment. No live logging-stage calls.
+Logging client stage b518e68 committed, root production build and desktop/phone
+download+startup fixtures pass (including public buildID). Deployment pending.
+Worker next contract docs/seo-crawlability-task.md, homepage-only sitemap/noindex
+shared worlds, targeted metadata checks. Root owns release checkout, logging
+evidence, checkpoint and deployment. No live model calls for logging or SEO.
 
 Quota last73%used/27%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
@@ -199,3 +200,11 @@ Next public build ID, phone toast rows. Worker final22tests/3files+typecheck pas
 real replay2suites pass; last build-ID helper8tests+typecheck pass. Root prior
 desktop/phone browser fixture passed; final built UI/build-ID verification next.
 No live calls. Logging handbook updated with export and replay workflow.
+
+Final b518e68 production build34026 pass. Built browser downloads43939 pass on
+desktop/phone with explicit public buildb518e68 assertions, root viewed phone
+two-row toast. Startup restoration1789 regression pass (synthetic Budget call
+and final assistant reply, config/session/status/malformed/reload/disconnect).
+Evidence client-diagnostics-production-build-20260913 and client-diagnostics-
+startup-regression-20260913. Root prodserver36459 still3013; deploy55666 running.
+Same Luna now owns bounded SEO task while root deploys pinned logging commit.
