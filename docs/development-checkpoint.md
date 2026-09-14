@@ -9,12 +9,14 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal finished the canonical scene binding/procedural
-provenance and internal adapter completion/failure hooks. Root accepted the final
-diff after the rejected first handoff and two smaller final fixes. Task contract:
-docs/authoring-scene-binding-task.md. No public review routes/browser loop enabled,
-no live calls or deployment in this handoff. Next: actual route/private hosted
-completion authority and review admission, then reviewer/browser integration.
+/root/host_session_renewal is implementing docs/authoring-initial-route-task.md:
+gated API initial issuance and validated completion/failure -> durable ledger,
+including cancellation/DB races. Previous binding1c740bd accepted. Root reviewed
+route/trial/ledger sources and owns acceptance, PG fixture and next hosted contract
+(docs/authoring-hosted-authority-task.md). No public review endpoint/browser loop,
+live calls, production migration or deployment in this handoff.
+Synthetic PG15 container orbsie-authoring-route-20260914 is live on127.0.0.1:32772;
+stop after DB acceptance (auto-removes). Only synthetic test data.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Ledger5cedb2e accepted after root fixes/review and actual PostgreSQL5/5 plus legacy
 trial2/2 tests (zero skips). Worker unit/reset/trial14passed/1DBskip and typecheck
