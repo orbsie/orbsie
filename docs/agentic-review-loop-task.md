@@ -60,6 +60,38 @@ order. Additive migration only; test rollback and real database contention befor
 production acceptance. Hosted subscription/API-linked calls also retain bounded
 request phases, while free requests require durable shared-key accounting.
 
+### Accounting source review and acceptance details
+
+Root verified current `trial.ts`: `claimTrial` locks visitor/network/global buckets
+in sorted order and increments each by one. The new transaction must charge one
+visitor/network prompt but reserve three global inference units, with a capacity
+check for the full reservation. Do not simply increment every bucket by three.
+Remaining-prompt presentation must account for the selected request mode's global
+unit cost. Keep the legacy one-call transaction behavior when reviews are disabled.
+`trialIdentity` uses the signed HttpOnly visitor cookie and trusted deployment IP;
+do not add a client-selected identity header or email-login prerequisite.
+
+The existing `generation_runs` table has an owned-orb foreign key. The new ledger
+must remain independent of that table for anonymous runs. Its opaque run ID is
+not sufficient authority: every phase checks the current secure identity, original
+provider/model/effort/prompt fingerprint, project and expected phase/revision.
+Do not store API keys, images or raw prompts in the allowance ledger.
+
+Initial completion must be recorded by the server's validated output lifecycle,
+not a client `completed: true` request. Reject review after incomplete/failed
+initial output. A revision number alone must not authorize an arbitrary substituted
+scene. Define and test the scene/operation binding before exposing review routes.
+Both adapters already advance a server shadow via `applyModelOperation`.
+Browser-procedural jobs are intentionally normalized differently in the browser;
+bind their canonical authoring source/provenance without assuming the server
+shadow is byte-identical to the renderer's cached mesh representation.
+
+Use additive schema and explicit initial/review/final-review transition methods.
+Test issuance rollback together with the trial charge, daily-unit exhaustion,
+parallel identical admissions (only one wins), expiry, stale revision, identity
+changes, and initial failure. Root will verify actual PostgreSQL contention before
+deploying/enabling the new accounting. No public multi-call behavior in handoff 1.
+
 ## Handoff 2: reviewer execution and browser integration
 
 Reuse internal validated text/image transport with a separate bounded review output
