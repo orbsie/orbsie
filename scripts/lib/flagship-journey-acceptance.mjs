@@ -1,3 +1,5 @@
+import { validateGenerationMovementObservation } from "./fresh-flagship-gameplay.mjs";
+
 /** Derive journey completeness from observed phases; never infer omitted checks. */
 export function flagshipJourneyAcceptance(report) {
   const missing = [];
@@ -40,8 +42,21 @@ export function flagshipJourneyAcceptance(report) {
     "fresh-visible-creation",
   );
   const during = report?.creation?.gameplayDuringGeneration;
+  const movement = validateGenerationMovementObservation(
+    during?.before,
+    during?.after,
+    {
+      projectId,
+      streamOpenBefore: during?.generationStreamOpenAtMovement === true,
+      streamOpenAfter: during?.generationStreamOpenAfterMovement === true,
+    },
+  );
   requireEvidence(
     during?.status === "passed" &&
+      movement.valid &&
+      ["webgl", "software"].includes(during?.before?.renderer) &&
+      during?.before?.revision === during?.revisionBefore &&
+      during?.after?.revision === during?.revisionAfter &&
       during?.projectId === projectId &&
       during?.generationStreamOpenAtMovement === true &&
       during?.generationStreamOpenAfterMovement === true &&

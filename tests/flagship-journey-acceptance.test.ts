@@ -52,6 +52,22 @@ function completeReport(): any {
         movementDistance: 0.3,
         revisionBefore: 1,
         revisionAfter: 2,
+        before: {
+          projectId: "world-1",
+          revision: 1,
+          playing: true,
+          renderer: "webgl",
+          atMs: 10,
+          player: { position: [0, 1, 5] },
+        },
+        after: {
+          projectId: "world-1",
+          revision: 2,
+          playing: true,
+          renderer: "webgl",
+          atMs: 30,
+          player: { position: [0.3, 1, 5] },
+        },
       },
     },
     edit: { selectedIdPreserved: true },
@@ -183,6 +199,13 @@ describe("complete flagship journey gate", () => {
     report.flagshipStory.phases.creation.gameplay.platformEvidence[0].maximumDisplacement = 0;
     expect(flagshipJourneyAcceptance(report).missing).toContain(
       "creation-win-reset",
+    );
+  });
+  it("does not accept a claimed movement distance without observed movement", () => {
+    const report = completeReport();
+    report.creation.gameplayDuringGeneration.after.player.position = [0, 1, 5];
+    expect(flagshipJourneyAcceptance(report).missing).toContain(
+      "movement-during-generation",
     );
   });
   it("handles absent and partial reports without granting completeness", () => {

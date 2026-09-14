@@ -175,7 +175,7 @@ plus a positive complete evidence contract. Do not add model calls for this gate
 
 `scripts/lib/flagship-journey-acceptance.mjs` derives a separate gameplay-journey
 result every time the provider harness writes a report. The CLI distinguishes
-configured-check success from complete/incomplete flagship acceptance. Eleven
+configured-check success from complete/incomplete flagship acceptance. Twelve
 focused contract cases pass, as do two existing follow-on tests; two preserved
 historical provider reports correctly classify incomplete. Evidence:
 `docs/evidence/flagship-journey-gate-20260913`. No browser/model calls were made.
@@ -194,3 +194,7 @@ those checks succeed. Each gameplay record follows the existing creation result
 shape, including reset status/score/lifecycle advance/player position. Root added
 those reset observation fields, signed-out publication context evidence, and the
 follow-on identity to future reports; no missing phase is fabricated or backfilled.
+
+The movement gate also revalidates the recorded before/after renderer observations
+using the existing production acceptance helper; a claimed distance with unchanged
+positions is rejected. No phase is accepted from a summary status alone.
