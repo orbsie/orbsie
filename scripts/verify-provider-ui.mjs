@@ -268,6 +268,35 @@ try {
   await expect(page.locator(".saved")).toHaveText("Saved on this device", {
     timeout: 15000,
   });
+  const activityRows = page.locator(
+    ".chat-messages > .authoring-activity-message",
+  );
+  await expect(activityRows.last()).toContainText("Generation complete");
+  expect(await page.locator(".chat-messages .authoring-activity").count()).toBe(
+    0,
+  );
+  expect(await page.locator('.chat-messages [role="status"]').count()).toBe(1);
+  checks.flatProductionActivity = await page
+    .locator(".chat-messages")
+    .evaluate((element) => {
+      const rows = Array.from(element.children);
+      const finalActivity = rows.findLastIndex((row) =>
+        row.classList.contains("authoring-activity-message"),
+      );
+      const finalReply = rows.findLastIndex(
+        (row) =>
+          row.classList.contains("assistant") &&
+          !row.classList.contains("authoring-activity-message"),
+      );
+      return {
+        activityCount: element.querySelectorAll(
+          ":scope > .authoring-activity-message",
+        ).length,
+        finalReplyAfterActivity: finalReply > finalActivity,
+      };
+    });
+  expect(checks.flatProductionActivity.finalReplyAfterActivity).toBe(true);
+  await page.screenshot({ path: `${output}/flat-chat-phone.png` });
   expect(generations).toBe(1);
   expect(requests.some((path) => path.startsWith("/api/auth"))).toBe(false);
   await page.getByRole("button", { name: "Share Orb", exact: true }).click();

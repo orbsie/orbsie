@@ -1,214 +1,122 @@
 # Development checkpoint
 
-Updated 2026-09-13. Full goal remains incomplete: all of prompt.md with real E2E
-OpenRouter, Vercel AI Gateway and hosted ChatGPT. Detailed retained evidence and
-history: checkpoint-history/2026-09-13-before-creative-prompt.md (and its archive).
+Updated2026-09-13. Full active goal remains incomplete: all prompt.md with real
+OpenRouter, Vercel AI Gateway and hosted ChatGPT E2E. Detailed history retained in
+checkpoint-history/2026-09-13-before-durable-login-vault.md and earlier archives.
 
-## Execution and current task
+## Execution / active work
 
-Astra low/default architecture/review/integration; one Luna xhigh/default worker,
-no nested agents, concise context, Fast off. Reuse /root/host_session_renewal.
-Creative prompt implementation accepted; capability propagation also accepted; image transport accepted; priority worker task is ChatGPT restart persistence. Root owns
-review, not duplicate investigation. Owner explicitly requested implementing ALL
-Astra recommendations. Sequence: shared creative/game prompt -> image capability
-propagation -> bounded image transport/process policy -> render/inspect/correct/
-verify loop and server-owned free allowances -> controlled Luna quality evaluation.
-Contracts: docs/creative-prompt-task.md, docs/visual-review-capability-task.md,
-docs/visible-authoring-task.md. Do not claim prompt-quality improvement before eval.
+Astra low/default architecture, contracts, every diff review and integration;
+one Luna xhigh/default worker, no nested agents, Fast off. Reuse
+/root/host_session_renewal. Worker currently implements durable credential-vault
+FOUNDATIONS only: new encrypted store/lease fencing, additive schema/migration,
+crypto/lifecycle tests and opt-in PostgreSQL contention test. No public persistence
+enablement yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
+app-owned managed auth cache/private host lifecycle and truthful browser restoration.
 
-Quota last55%used/45%remaining; check /home/marcos/.cache/orbsie/read-codex-quota.py.
-Stop worker/live tests below20%remaining. Goal token count is not quota. Live tests
-Luna only; end users unrestricted. Owner approved needed calls; API output4096/call,
-Gateway max5/test, flagship3calls. Hosted180s/512KiB bounds are not token/cost caps.
-No blind retries. GitHub via computer use; no copied cookies/Codex credentials.
-Browser-only product, no Blender installation/connection surfaced. Preserve licenses
-and safe unrelated edits. Frequent coherent commits; targeted checks, full/live
-E2E at meaningful milestones.
+Quota latest41%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
+stop workers/live calls below20%. Goal token count is not subscription quota.
+Live tests Luna only; end users unrestricted. Owner approved neededcalls; API4096
+output/call, Gatewaymax5/test, flagship3calls, no blind retries. Hosted180s/512KiB
+are runtime/response bounds, not token/cost caps. Never echo credentials.
 
-## Accepted implementation
+## Production / accepted changes
 
-Capture a9975fd: project/revision-bound game canvas, committed resource/frame
-readiness in both renderers, stale/cancel/failure/timeout rejection,128KiB encoded
-PNG cap with five aspect-preserving downsizes. Root reviewed diff,10focused tests,
-typecheck and actual replacement images. Desktop fixture run7 proves delayed asset
-replacement with unrelated pebble ready; prior failed runs retained. No modelcalls.
-Root portrait acceptance8906ad7: actual390x844 browser canvas ->237x512 capture in
-both renderers, correct identity/revision/aspect,27946/83022bytes. Evidence
-scene-review-portrait-root-20260913 includes executable fixture and images. This is
-viewport capture acceptance, not physical-phone/full-gameplay certification.
-Player artifacts rebuilt after capture; root devserver3091/session48628 stopped.
+Production https://orbsie.com -> https://orbsie-4pv1ft4yr-grappeggias-projects.vercel.app
+Release25aa1ae in /tmp/orbsie-chatgpt-release-4eb9ce8. CLI auth configured, scope
+grappeggias-projects. Release generated files may be dirty; preserve before edits.
+Prior generated changes stashed safely. No active deploy/build process.
 
-## Production
+Maina01ad40: direct anchored Quality/Balanced/Budget dropdown for API+ChatGPT,
+provider-specific IDs, inline retry/stale guards, flat chronological assistant
+activity, follow-latest scroll with resize/user opt-out. Root reviewed code/images.
+25focused tests+typecheck pass. Selectorfixture6 actual1440x1000/390x844 passes;
+activityfixture9 timing/order/phonevisibility/cancel passes. Earlier failed/mislabeled
+fixtures retained. Root actual catalog parser: OpenRouter368/Gateway299 accepted,
+all3tiers; ~alias regression fixed. Production UI fixture run2 passes dropdown,
+draft preservation, one live announcement and final reply after flat activity;
+root inspected phone image. Evidence inline-chat-production-fixture-20260913-run2.
+HTTPS-to-HTTP streaming fixture unsupported by Playwright redirect, retained as
+harness failure; local incremental stream evidence remains separate. No modelcalls.
 
-Current production release795c585 (main source a9975fd+bfb82d7+69a3237): https://orbsie.com
-alias for https://orbsie-e44b50ua0-grappeggias-projects.vercel.app. Includes ChatGPT presets,
-sandbox policy gingerbread fix, graphics/focus/replay/accessibility fixes and real
-activity UI. Capture and creative prompt now deployed; review loop not implemented. Activity is truthful
-waiting/building/preparing/applied/completed/cancelled/failed, bounded18events,
-accessible latest/history and stale-run guards;16tests+desktop/390px fixture pass.
-It is not model reasoning or visual inspection.
-Release checkout /tmp/orbsie-chatgpt-release-4eb9ce8 detached795c585; known generated
-next-env.d.ts dirty. Existing Vercel CLI auth/scope grappeggias-projects. Do not
-print credentials. Other old local process handles must be revalidated before use.
+Main69a3237: fixed private host ten-minute shutdown despite sandbox renewal; now
+bounded40min cap matching registry. Two focused tests+typecheck pass; fakeclock
+crosses10min/reaches40min, separate real local HTTP stream completes with pending
+expiry. Deployed. Not proof of owner's exact interruption cause: production logs
+showed one HTTP200 with no runtime completion diagnostic. Evidence
+chatgpt-interruption-log-check-20260913. No live renewed-provider proof yet.
 
-## Integration findings for upcoming loop
+Capturea9975fd and creativepromptbfb82d7 deployed. Actual WebGL/software desktop
+replacement capture +390x844 ->237x512 PNG pass; capture is project/revision/resource
+bound,128KiB encoded cap. Creative prompt intent/art/game/capability guidance;
+56tests+typecheck, root removal-semantics fix verified. Quality improvement unproven.
 
-Hosted turn currently text-only. image metadata stripped at host validator, API
-revalidation and browser parseChatGPTModels. API model-capabilities parses output
-but not image input. Preserve true/false/unknown; ordinary model choice unchanged.
-Pinned AppServer0.153.4 schema supports image/url but actual image ingestion is
-unverified. Offline policy evidence visual-review-policy-20260913 proves current
-process guard accepts exactly one text item and rejects images before RPC. Extend
-narrowly with bounded local PNG and aggregate bytes; no arbitrary URL/path access.
-Three-call proposal: initial -> review/correction -> final verification, same model,
-no automatic transport retries. Unsupported vision gets honest limited review.
-Current free route charges every request; extend trial transaction to issue atomic
-run-bound allowances and preserve shared daily spending ceiling. Never trust client
-review flags or silently consume three free prompts for one user request.
+NOT YET DEPLOYED: capability94e3932 and image transporta9afe4a. Preserve explicit
+vision true/false/unknown; API multipart/hosted image input, bounded PNG identity,
+exact process guards, unchanged text-only byte limits.77tests+typecheck pass; actual
+hosted PNG ingestion remains unproven. Build:chatgpt-host passed on main.
 
-## Browser / live provider state
+## Durable login requirements / rejected draft
 
-Owner says existing ChatGPT login/prompts work. Controlled hosted E2E still unproven.
-Reuse existing signed-in Chrome; do not create more login tabs. CUA unavailable
-(CUA_REPL_ENABLED_SURFACES required); official Chrome runtime browser list[] at last
-check. Recheck only on changed access. DevTools is a different signed-out profile.
-No raw CDP/cookie copying. Android API35 emulator approved/setup with optional
-reporting off; historical main/IME/connections checks pass, no physical-device proof.
+User reports token lost on restart and mid-session EOF. Model preference alone
+cannot restore authentication. Current isolated temporary auth directory and
+expired-host destruction lose managed auth. Initial global resume:true/persistent
+sandbox draft was rejected and removed: no complete restore/revocation lifecycle.
+Need owner-bound encrypted remembered cache, refreshed-token persistence, lease/
+epoch fencing, explicit Disconnect revocation and new-host verified restore.
+No client credentials/localStorage tokens, copied developer CODEX_HOME or cookies.
+No email gate or false-ready based solely on preference. Keep host execution bounded.
 
-Gateway latest ae3a478 input-game call: HTTP200 seed then INVALID_SCENE_JSON op2,
-issues[],finishReason:null; one Luna4096/default call, no edit/retry. Cause unproven.
-Evidence provider-e2e/gateway-input-local-origin-20260913. Next diagnostic contract
-docs/generation-framing-debug-task.md: bounded private capture/replay, minimal offline
-regression before further call. Keys remain local protected files; never echo.
-Public catalogs list Luna; readiness alone is not successful inference acceptance.
+## Queued agentic integration
 
-## Full-goal gates still open
+Owner requested ALL Astra recommendations, not only prompt changes. After latest
+connection/UI work: docs/agentic-review-loop-task.md Handoff1 atomic run allowances,
+then Handoff2 actual render/inspect/correct/finalverify with truthful activity.
+Separate allowance ledger: existing generation_runs requires owned saved orb and
+cannot authorize anonymous free prompts. One free prompt per bounded user request,
+reserve3globalcallunits, max2reviews, server-owned identity/revision/phase admission.
+Separate typed review schema/private hosted HTTP operation; preserve gameplay,
+last-good revisions, original undo baseline, cancellation and stale guards.
+Unsupported image => honest structural-only scope. Then controlled Luna quality
+evaluation, full provider/gameplay milestone. No actual self-review implemented yet.
 
-- Complete actual ChatGPT create/edit/recovery/>10min renewal/reload/export/publish;
-  OpenRouter OAuth consent/callback separate from API-key success.
-- Fresh three-call flagship per provider, playing during generation, platforms/bounce,
- 5win/reset, mushroom edit, slow platform+2,7win/reset, original Undo5win/reset,
- refresh/export and fresh current-artifact signed-out publication win/restart.
- Route fixes b9a36bd root16tests+4assertions/software traversal pass; landscape fixture
- expectation mismatch remains. Seven/original-undo/full gate contract in
- docs/provider-live-gameplay-task.md. Historical publication is immutable oldruntime.
-- Physical recent midrange Android and iOS Safari full flows/performance; browser
- viewport proof does not replace them. Device model/OS/attachment still unavailable.
-- Licensed asset admission, mixed/new-only live matrix/performance; prior10KenneyCC0
- and procedural fixture evidence retained, not complete hosted acceptance.
-- Full prompt budget/cancellation/recovery/isolation/UX audit, GitHub push, actual
- visible model inspection/correction and controlled quality evaluation. No completion
- claim until requirement-by-requirement evidence covers all of prompt.md.
+## Browser / mobile / credentials
 
-## Creative prompt accepted
+Owner insists reuse signed-in Chrome, no more login tabs. CUA last unavailable
+CUA_REPL_ENABLED_SURFACES; official Chrome runtime browserlist[]; no changedaccess
+observed. DevTools profile signedout, not owner's browser. No rawCDP/cookie copying.
+GitHub through computeruse; push still open. ADB devices empty on latest check;
+prior emulator/device/IME evidence retained, no physical Android/iOS proof.
+Worker instructed stop old devserver localhost3013 PID1669045/session13398;
+revalidate handle before relying on cleanup. Root fixture processes terminal.
+OpenRouter key .env.openrouter.local0600; Gateway private
+/home/marcos/.cache/orbsie/provider-tests/gateway.env0600; never echo.
 
-Shared five-section prompt + runtime-derived browser geometry limits reviewed.
-56tests across5suites/typecheck passed; root caught overbroad ban on removing
-existing IDs. Worker corrected it to permit requested deletion while forbidding
-remove/recreate editing shortcuts;19creative tests/format/diffcheck pass afterward.
-Final base5401bytes vs4100; all variants +1301UTF-8bytes (not measured tokens).
-Full NDJSON no-capability21447bytes; browser36670bytes. No schema/model/call-cap
-changes or live quality claims. Next: capability propagation, then image transport,
-server-bounded loop and controlled Luna eval. Prompt/capture deployed in a68cac4; see release evidence below.
+## Remaining full-goal acceptance gates
 
-## Capture/creative release verification
+- Durable ChatGPT restart/restore + actual create/edit/recovery/>10min renewal,
+  reload/export/publish in owner's signed-in browser; OpenRouter OAuth callback
+  distinct from API-key success.
+- Gateway latest ae3a478 one Luna4096/default call: HTTP200 seed then
+  INVALID_SCENE_JSON op2 issues[] finishReason:null. Cause unproven; noedit/retry.
+  docs/generation-framing-debug-task.md requires one bounded private response
+  capture/replay and sanitized regression before further acceptance calls.
+- Fresh3callflagship EACHprovider: playduringgeneration, platform/bounce5winreset,
+  mushroomedit, slowplatform+2,7winreset, originalUndo5winreset, reload/export,
+  fresh current-artifact signedoutpublication winrestart. Routefixb9a36bd partial
+  traversal accepted; fullgate docs/provider-live-gameplay-task.md remains.
+  Historical immutablepublication usesoldruntime; do not mutate to forcepass.
+- Actual recent midrange Android +iOSSafari fullflows/performance; viewportfixtures
+  are not physical device certification. Mobile acceleration/fallback/fullgameplay.
+- Licensed collection admission/mixed-new-only generation/performance; prior10Kenney
+  CC0/procedural evidence doesn't complete hosted/perf gates. Browser-only modeling,
+  no user Blender install/connection. Preserve licenses.
+- Fullprompt freebudget/exhaustion/cancel/recovery/isolation/UX, actual modelreview
+  loop +controlledqualityeval, providerE2E, publication and GitHubpush.
 
-Local production build57730 and Vercel83371 exited0; alias updated. Root verified
-config200 and published capture/modeling-policy source equality. Evidence
-capture-creative-release-20260913/report.json. Prior release generated dirt preserved
-in git stash before integration; cherry-pick conflicts limited to checkpoint and
-regenerable player artifacts, resolved with accepted source then rebuilt. Main
-player artifacts synced to released build. No live model calls. Luna continues
-image capability task, excluded from this isolated release.
+## Isolated DB test setup
 
-## Image capabilities accepted
-
-Shared bounded modality normalizer and API imageInput true/false/unknown implemented;
-ChatGPT host validation, route revalidation and browser parser preserve optional
-metadata. Missing/empty/malformed staysunknown without affecting text availability.
-Root reviewed all code/tests;58focused tests across6suites and root typecheck pass.
-No live calls or review UI changes. Next internal transport contract:
-docs/visual-review-transport-task.md; public image requests remain unavailable until
-run authorization/loop integration. Capability detection alone is not ingestion proof.
-
-## Capability live-catalog integration evidence
-
-Root exercised committed catalogModels against the exact public endpoints used by
-preflight. OpenRouter Luna input[file,image,text] and Gateway[text,image,pdf] both
-normalize to imageInput true/catalog. Evidence image-capability-catalog-20260913.
-No credentials/inference used; this proves current metadata mapping, not successful
-image ingestion. Quota now57%used/43%remaining. Transport worker confirmed running.
-
-## Real database test baseline
-
-Root used cached postgres:15-alpine in a disposable loopback-only tmpfs container
-(1CPU/256MiB). RUN_TRIAL_DATABASE_TEST=1 tests/trial-database.test.ts passed2tests:
-3of12 concurrent claims admitted,9exhausted, cookie-reset network bypass rejected.
-Container stopped/removed; no production DB or modelcalls. Evidence
-review-accounting-db-baseline-20260913. Reuse this isolated setup for forthcoming
-review-allowance contention tests; current pass does not prove new allowances.
-
-## Transport review in progress
-
-Root flagged incomplete PNG acceptance and new size limits accidentally applying
-to text-only inputs. Current worker draft addresses structural chunks/IHDR and
-gates new aggregate caps on image requests. Root actual saved-image corpus check
-passes4desktop/portrait PNGs across both renderers; evidence
-review-image-corpus-20260913 binds validator hash. Not provider decoding/inference
-or full transport acceptance. Worker still owns final tests and handoff.
-
-## Current handoff: ChatGPT restart persistence
-
-Owner reports lost ChatGPT connection after app restart. Luna host_session_renewal
-is tracing cookie identity, ephemeral host expiry, runtime credential lifecycle and
-restoration before fixing. Preserve provider-only login and owner isolation; explicit
-disconnect must clear connection. Agentic accounting/review loop remains queued.
-
-Visual transport accepted after root diff review: bounded identity-bound PNG, trusted
-image capability gates, API multipart and hosted image input, exact process policy.
-77 focused tests and typecheck passed; final diffcheck passed. Text-only byte limits
-remain unchanged. Real hosted PNG ingestion is still unproven; no live calls run.
-Quota checked: 43% remaining, above owner 20% stop threshold.
-
-Queued user UX requirement: direct composer model dropdown with Quality/Balanced/
-Budget only as default choices; keep connection settings separate. Contract:
-docs/inline-model-selector-task.md. Execute after session persistence, before
-resuming queued agentic-loop integration.
-
-Mid-session report: generic EOF before commit_revision; cause of owner's run not
-proven. Root found concrete timer mismatch: sandbox renewal extends sandbox only,
-private host-server still closes at original10min. Worker implementing bounded
-fix/regression. First persistence draft reviewed but NOT accepted: global resume
-would revive stopped hosts; ephemeral registry cleanup still loses auth; UI restore
-must confirm owner/auth and reject stale responses without clearing on transient
-failure. Keep this distinction at handoff. Latest quota42% remaining.
-
-User also requests flat progress messages as siblings in parent chat thread, no
-nested activity panel. Included in inline-model-selector-task.md contract.
-
-Accepted timer fix: private host process ceiling now40min matching registry cap;
-sandbox/session still enforce shorter bounds. Two focused tests +typecheck pass.
-Root reviewed: fake-clock test crosses10min and reaches40min; separate real local
-HTTP stream fixture completes while injected expiry callback is pending, then
-closes on expiry. This is combined lifecycle fixture evidence, not40min live
-provider run or proof of owner's exact failure cause. Unsafe initial persistence
-draft removed by worker; durable implementation remains queued under
-docs/chatgpt-durable-connection-task.md. Luna now implements chat UX contract.
-
-Timer fix deployed: release795c585, main69a3237. Local/Vercelbuilds passed; / and
-/api/config200. Evidence chatgpt-host-timer-release-20260913/report.json. Old private
-host artifacts still trigger existing stale-host connection policy; no durable
-auth migration yet. Release generated changes stashed safely before cherry-pick.
-
-Accepted chat UX: direct anchored three-tier dropdown, provider-specific IDs,
-validated catalog/inline retry/stale guards; progress as chronological sibling
-assistant messages and follow-latest scrolling with resize/user opt-out. Root
-reviewed diff and screenshots.25tests across model-quality-presets,
-chatgpt-model-presets,model-catalog,authoring-activity,authoring-activity-store;
-typecheck/format/diffcheck pass. Final selector fixture run6 proves actual1440x1000
-and390x844 menu bounds; prior run5 mislabeled phone as desktop, retained. Activity
-run9 proves flat order/latestphonevisibility/cancel; prior failures retained.
-Root actual catalog check afteraliasfix acceptsOpenRouter368/Gateway299, all3tiers
-available; initial failure and correctedhash saved. No live modelcalls.
-Workerdevserver localhost3013 PID1669045 launchsession13398, revalidatebeforeuse.
-Nextworker: durable credential vault primitives, no public persistence success yet.
+Docker cached postgres:15-alpine available. Prior real trial concurrency baseline
+cd0e42b passed12claims/3admitted9exhausted using independentpool; container removed.
+Use new loopback-only tmpfs container, synthetic users/sessions, apply additive
+schema; run opted-in vault contention test. No production migration untilreview.

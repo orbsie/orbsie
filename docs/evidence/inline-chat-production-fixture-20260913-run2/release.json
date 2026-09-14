@@ -1,0 +1,10 @@
+{
+  "deployment": "https://orbsie-4pv1ft4yr-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "releaseCommit": "25aa1ae",
+  "mainCommit": "a01ad40",
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "scope": "Deployed desktop/phone dropdown and flat chat DOM with synthetic generation; no provider auth/inference acceptance",
+  "liveModelCalls": 0
+}

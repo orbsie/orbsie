@@ -1,0 +1,8 @@
+{
+  "passed": false,
+  "scope": "Attempt to run local streaming fixture against HTTPS production page",
+  "failure": "Playwright route.continue cannot change HTTPS request to local HTTP fixture URL",
+  "classification": "test harness protocol limitation; no product failure established",
+  "liveModelCalls": 0,
+  "nextEvidence": "inline-chat-production-fixture-20260913-run2 tests flat deployed DOM with synthetic response; local activity run9 retains incremental stream evidence"
+}
