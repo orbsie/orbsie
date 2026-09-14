@@ -9,12 +9,11 @@ checkpoint-history/2026-09-13-before-durable-login-vault.md and earlier archives
 Astra low/default architecture, contracts, every diff review and integration;
 one Luna xhigh/default worker, no nested agents, Fast off. Reuse
 /root/host_session_renewal. Vault foundations accepted: encrypted store/lease fencing, additive schema, six
-unit tests and real PostgreSQL contention/rollback/expiry tests passed. Private runtime/controller stages are accepted; next worker stage is server vault
-orchestration and public route integration, followed by main-page restoration. No public persistence
-enablement yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
+unit tests and real PostgreSQL contention/rollback/expiry tests passed. Private runtime/controller and durable server orchestration are accepted; current
+worker stage is main-page restoration. No public persistence deployment yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
 app-owned managed auth cache/private host lifecycle and truthful browser restoration.
 
-Quota latest36%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
+Quota latest30%remaining (70%used). Check /home/marcos/.cache/orbsie/read-codex-quota.py;
 stop workers/live calls below20%. Goal token count is not subscription quota.
 Live tests Luna only; end users unrestricted. Owner approved neededcalls; API4096
 output/call, Gatewaymax5/test, flagship3calls, no blind retries. Hosted180s/512KiB
@@ -214,3 +213,22 @@ unbounded-world-task.md, ai-connection-priority.md (official OAuth registration
 feasibility unproven; device login does not satisfy new code-free requirement).
 Production2hour log check onlyHTTP200/no completion diagnostics, evidence
 stream-resilience-log-check-20260913. Preserve full agentic/provider/mobile scope.
+
+## Current handoff (2026-09-13)
+
+Worker /root/host_session_renewal is implementing startup restoration; root reviewed
+the initial diff and requested corrections for unknown auth status, missing app
+session vs transport failure, and accidental free submission while restoring.
+Wait for final evidence before committing/deploying. Current uncommitted helper,
+component and browser-fixture changes belong to that task.
+
+Quiet chat browser fixture accepted in be77315: built ecaacaf, desktop1440x1000 and
+phone390x844, two flat activity rows for immediate completion, no overflow/page
+errors, zero live calls. Root viewed phone screenshot. SEO baseline642a3cc confirms
+server-rendered home content but no canonical/social/crawler files; private/public
+world indexing policy must be respected.
+
+Next logging handoff: docs/generation-observability-task.md (2cafab4) specifies
+correlation, layer-specific terminal outcomes, bounded content-free exports, and
+synthetic replay. Implementation still pending. No model calls needed for that
+stage. Existing plan remains docs/resilience-activity-seo-task.md.
