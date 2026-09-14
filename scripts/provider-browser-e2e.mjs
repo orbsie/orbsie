@@ -9091,7 +9091,9 @@ async function main() {
     runStarted = true;
     const result = await run(config, report);
     const reportPath = await writeReport(result, config);
-    console.log(`Provider browser E2E passed; sanitized report: ${reportPath}`);
+    console.log(
+      `Configured provider checks passed; sanitized report: ${reportPath}`,
+    );
   } catch (error) {
     if (config) {
       report ||= emptyReport(config);
