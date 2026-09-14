@@ -12,7 +12,7 @@
 - Keep Apache 2.0.
 - Use GPT-6 Astra with low reasoning and regular/standard processing for the lead. Disable Fast mode. Explicitly delegated Luna workers use GPT-5.6 Luna with xhigh reasoning and regular/standard processing. Orbsie calls use standard processing; live model tests use Luna only. Speed tier is separate from reasoning effort.
 - Continue implementation with Astra owning planning, integration, and quality, strategically delegating bounded work to Luna xhigh under the execution plan below. Use at most one Luna worker at a time with concise task context, with frequent pushes to main. Use the owner's Google Cloud project `orbsie` for private object storage and Neon PostgreSQL for relational data.
-- Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. Put the full compatible model catalog under Advanced.
+- Present Quality, Balanced, and Budget creation modes with provider-verified model recommendations. The chat model trigger opens these three choices directly in an anchored dropdown, without a settings dialog or confirmation. Keep connection management separate and put the full compatible model catalog under Advanced. Preserve drafts and support keyboard and mobile touch selection.
 - Center the prompt over the globe, remove Island/Garden selectors, use the exact placeholder "What experience to build?", and support microphone dictation.
 - All live model-backed tests must use Luna only. This test-only authorization does not change Astra’s development lead/reviewer role and must not restrict end users: users can select any model supported by their connected provider and the application protocol. Discover the real model ID and fail rather than falling back. Deterministic unit/browser checks do not call a model.
 - Initial delivery is approximately 30 minutes of implementation, with frequent GitHub pushes and deployment to the Orbsie Vercel app.
@@ -392,7 +392,7 @@ single response.
   the requested result, constructing named objects, waiting for browser geometry,
   inspecting the rendered scene, and correcting a specific observed issue. These
   are action/result summaries, never hidden chain-of-thought or fabricated
-  thinking traces. Do not claim inspection before it actually occurs.
+  thinking traces. Print each update as its own assistant message directly in the parent chat thread, in chronological order; do not nest an activity panel or history box inside the conversation. Announce only the latest update accessibly. Do not claim inspection before it actually occurs.
 - Add an actual model-driven inspect-and-revise loop. After browser workers finish
   a candidate revision, return revision-bound scene/geometry feedback and a
   rendered view to a vision-capable selected model. The model must assess the
@@ -413,3 +413,17 @@ single response.
   unsupported vision, provider failure and preserved gameplay. Then run bounded
   live Luna acceptance across ChatGPT, OpenRouter and Gateway; distinguish those
   results from fixtures. End-user model choices remain unrestricted.
+
+## Durable ChatGPT connection — owner update 2026-09-13
+
+Remember the authorized ChatGPT connection across normal browser/app restarts,
+including restoration when the temporary execution host expires or is recreated.
+Keep provider credentials encrypted server-side and isolated by authenticated owner;
+never store them in browser storage or a project. Preserve refreshed credentials
+without allowing stale hosts or concurrent saves to resurrect a disconnected
+account. Explicit Disconnect removes durable access. Keep login email-free and
+do not show ready from a remembered model preference alone. Diagnose mid-session
+stream interruption separately from authentication expiry; preserve completed
+objects and avoid hidden duplicate generation retries. Bounded host renewal must
+not be cut short by an independent process timer. Acceptance requires actual
+restart/restore/generation, disconnect, isolation and failure-recovery evidence.

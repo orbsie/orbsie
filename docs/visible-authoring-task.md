@@ -17,7 +17,8 @@ commands in apply near720, evaluates/builds browser geometry near740–800, then
 marks success at a final commit near980. UI conversation is in orbsie.tsx around
 1500. Use these real lifecycle points rather than timers producing fake stages.
 
-- Show a compact activity block in the conversation during creation and edits,
+- Show individual assistant progress messages directly in the parent conversation
+  during creation and edits (owner update: no nested activity panel),
   including first-request waiting, named entity construction, actual local
   geometry preparation, applied changes, completion, cancellation and failure.
 - Use short plain-language action/result summaries. Never expose private model
