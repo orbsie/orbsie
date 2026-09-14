@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "ecaacaf",
+  "source": "isolated production build .next/server/app/index.html",
+  "serverRenderedHeadings": [{ "tag": "h1", "text": "Create a world" }],
+  "descriptionPresent": true,
+  "canonicalCount": 0,
+  "openGraphMetadataCount": 0,
+  "twitterCardMetadataCount": 0,
+  "anchorCount": 0,
+  "robotsSourceFilePresent": false,
+  "sitemapSourceFilePresent": false,
+  "conclusion": "The app is not an empty client-only shell. Improve accurate public content, canonical/social metadata and crawler discovery while preserving the game entrance. This baseline does not prove search-engine indexing."
+}
