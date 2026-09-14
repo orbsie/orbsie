@@ -40,14 +40,14 @@ Player artifacts rebuilt after capture; root devserver3091/session48628 stopped.
 
 ## Production
 
-Current production release a68cac4 (main source a9975fd+bfb82d7): https://orbsie.com
-alias for https://orbsie-eer17l2tm-grappeggias-projects.vercel.app. Includes ChatGPT presets,
+Current production release795c585 (main source a9975fd+bfb82d7+69a3237): https://orbsie.com
+alias for https://orbsie-e44b50ua0-grappeggias-projects.vercel.app. Includes ChatGPT presets,
 sandbox policy gingerbread fix, graphics/focus/replay/accessibility fixes and real
 activity UI. Capture and creative prompt now deployed; review loop not implemented. Activity is truthful
 waiting/building/preparing/applied/completed/cancelled/failed, bounded18events,
 accessible latest/history and stale-run guards;16tests+desktop/390px fixture pass.
 It is not model reasoning or visual inspection.
-Release checkout /tmp/orbsie-chatgpt-release-4eb9ce8 detacheda68cac4; known generated
+Release checkout /tmp/orbsie-chatgpt-release-4eb9ce8 detached795c585; known generated
 next-env.d.ts dirty. Existing Vercel CLI auth/scope grappeggias-projects. Do not
 print credentials. Other old local process handles must be revalidated before use.
 
@@ -194,3 +194,8 @@ closes on expiry. This is combined lifecycle fixture evidence, not40min live
 provider run or proof of owner's exact failure cause. Unsafe initial persistence
 draft removed by worker; durable implementation remains queued under
 docs/chatgpt-durable-connection-task.md. Luna now implements chat UX contract.
+
+Timer fix deployed: release795c585, main69a3237. Local/Vercelbuilds passed; / and
+/api/config200. Evidence chatgpt-host-timer-release-20260913/report.json. Old private
+host artifacts still trigger existing stale-host connection policy; no durable
+auth migration yet. Release generated changes stashed safely before cherry-pick.

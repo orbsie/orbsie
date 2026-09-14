@@ -1,0 +1,23 @@
+{
+  "deployment": "https://orbsie-e44b50ua0-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "releaseCommit": "795c585",
+  "sourceCommit": "69a3237",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/api/config",
+      "status": 200
+    }
+  ],
+  "localBuild": "passed",
+  "vercelBuild": "passed",
+  "focusedTests": 2,
+  "typecheck": "passed",
+  "sourceHash": "3bdb154df217bf1f3e9e250d2ec55bb4a14faf6b688d1eaf0c6333f5861c96c2",
+  "liveModelCalls": 0,
+  "scope": "Host process cap fix; deterministic timer and local HTTP fixture. No live renewed-provider acceptance or durable login persistence."
+}
