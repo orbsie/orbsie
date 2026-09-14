@@ -197,3 +197,14 @@ Luna private-controller/transport task FINISHED: reports43 focused tests,typeche
 format/diffcheck,build:chatgpt-host pass. Root final source/test review still pending;
 DO NOT accept/commit/deploy that uncommitted implementation before review. Reuse
 host_session_renewal for fixes/next orchestration. No worker task processes remain.
+
+Private lifecycle FINAL REVIEW REJECTED, worker followup active: login seal aborts
+its own HTTP signal because stopGeneration includes control requests; snapshot is
+captured before close; close errors falsely mark legacy runtime stopped; hasActive
+only guard permits legacy fallback after clear and no coordinated legacy/init
+transition. Preaborted initialize can seal before runtimePromise exists then still
+start a runtime. Worker fixing with real-handler+NodeHTTP tests (earlier tests
+mocked handler or invoked callback directly and missed integration). Require
+postclose rotated cache, failedclose poison, sticky managed mode, pending/connected
+legacy admission guards and preaborted no-factory evidence. Do not accept prior43
+checks as complete integration proof. Root Android resources all terminal.
