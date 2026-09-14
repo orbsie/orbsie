@@ -1,0 +1,8 @@
+{
+  "date": "2026-09-14T01:25:02.508Z",
+  "scope": "actual pinned runtime initialization with empty isolated app-owned auth directory; no login or model calls",
+  "version": "codex-cli 0.153.4",
+  "passed": true,
+  "accountAbsent": true,
+  "snapshotAbsent": true
+}

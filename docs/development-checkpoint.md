@@ -148,3 +148,11 @@ snapshot survives owned directory removal. No live/provider acceptance claimed.
 Next bounded worker stage: private managed operation lifecycle/controller before
 server-vault/public restoration wiring. Shared3040/3096 servers left untouched;
 worker owns no running servers. Prior implementation-review blockers resolved.
+
+Root pinned-runtime verification: actual codex-cli0.153.4 from offline npm cache
+initialized compiled current runtime with empty isolated CODEX_HOME/file config;
+account/read(refreshToken:false) returned no account, close completed and retained
+snapshot was null. No login/model calls/developer credentials. Evidence
+chatgpt-runtime-config-20260913/report.json. This verifies packaged configuration,
+not managed-token refresh or signed-in provider acceptance. Temp directory removed.
+Latest quota38%remaining; private lifecycle worker still active.
