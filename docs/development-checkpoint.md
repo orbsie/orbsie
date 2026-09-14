@@ -26,8 +26,8 @@ No live calls, production migration/deployment or browser E2E in this handoff.
 Next: docs/authoring-hosted-authority-task.md (actual private completion negotiation,
 managed host record, durable consumer, public hosted route), then reviewer execution
 and browser integration under docs/agentic-review-loop-task.md. Full goal intact.
-Synthetic PG15 container orbsie-authoring-route-20260914 will be stopped now after
-acceptance (auto-removes); only synthetic test data.
+Synthetic PG15 container orbsie-authoring-route-20260914 stopped and auto-removed
+after acceptance; only synthetic test data. Initial integration commit3a97e3f.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Ledger5cedb2e accepted after root fixes/review and actual PostgreSQL5/5 plus legacy
 trial2/2 tests (zero skips). Worker unit/reset/trial14passed/1DBskip and typecheck
