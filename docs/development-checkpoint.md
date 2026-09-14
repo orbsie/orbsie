@@ -129,3 +129,13 @@ Root reapplied schema successfully (idempotent); both tables had zero fixture ro
 Isolated container stopped/removed. Worker confirmed no old dev server remains.
 Next bridge retains updated app-owned auth cache before failure/cancel directory
 cleanup; no public persistence or production migration has been enabled yet.
+
+Runtime bridge first diff reviewed: initial import/rotated-close restore implemented,
+18 targeted tests and typecheck passed, but NOT accepted yet. Root found missing
+explicit file credential-store config and snapshot await delaying SIGKILL timer.
+Worker fixing those with stalled-snapshot regression, bounded capture and nonblocking
+no-follow open. No live calls. Durable orchestration decision now recorded in
+chatgpt-durable-connection-task.md: per-operation process inside reusable private
+sandbox, lease covers process through seal/snapshot; never release with live RPC.
+Public route cleanup headroom, private restore transport and logout-first revocation
+remain implementation work. Latest quota39%remaining; no production change this turn.
