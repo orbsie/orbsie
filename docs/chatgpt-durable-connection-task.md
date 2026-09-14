@@ -72,3 +72,25 @@ these fixtures; actual signed-in hosted restart/generation remains release gate.
 
 Deliver in bounded cohesive stages with root review of each finished diff. Do not
 introduce partial server persistence under a UI success claim.
+
+## Current handoff 1: vault foundations only
+
+Implement additive private tables and purpose-separated AES-GCM/HKDF storage for
+at most64KiB opaque app-owned cache, thirty-day expiry, and exclusive refresh
+leases with connection/version/epoch fencing. No public endpoint or UI claim yet.
+Metadata reads must not decrypt; only successful exclusive lease returns cache.
+Verify active owner/session for every operation, protect against concurrent logout,
+and recheck a fresh database clock after lock waits. Session expiry also constrains
+lease headroom. Expired remembered records may be retired atomically when a new
+authorized connection is remembered. Disconnect deletes ciphertext and preserves
+the revoked connection fence. Validate byte length before allocating a cache copy.
+
+Real DB test must route the actual storage functions to an independent PostgreSQL
+pool, not merely create SQL tables while those functions still use a mocked
+client. Verify persisted rows, single lease winner, rollback, expiry after a lock
+wait, session deletion, and stale save after revoke/reconnect. Root prepared an
+isolated loopback/tmpfs database for this handoff; never use production credentials.
+
+After root accepts primitives, implement the app-owned runtime cache bridge and
+private host transport, then route/session restoration integration. Preserve the
+complete restart-to-generation acceptance target across these bounded handoffs.

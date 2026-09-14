@@ -14,7 +14,7 @@ crypto/lifecycle tests and opt-in PostgreSQL contention test. No public persiste
 enablement yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
 app-owned managed auth cache/private host lifecycle and truthful browser restoration.
 
-Quota latest41%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
+Quota latest40%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
 stop workers/live calls below20%. Goal token count is not subscription quota.
 Live tests Luna only; end users unrestricted. Owner approved neededcalls; API4096
 output/call, Gatewaymax5/test, flagship3calls, no blind retries. Hosted180s/512KiB
@@ -120,3 +120,9 @@ Docker cached postgres:15-alpine available. Prior real trial concurrency baselin
 cd0e42b passed12claims/3admitted9exhausted using independentpool; container removed.
 Use new loopback-only tmpfs container, synthetic users/sessions, apply additive
 schema; run opted-in vault contention test. No production migration untilreview.
+
+Active vault review: metadata read must not expose unleased cache; protect session
+check vs logout and refresh DB clock after locks; test was found using mocked
+functions despite real SQLsetup and is being corrected. Isolated root DB ready:
+containerorbsie-vault-db-20260913, loopback127.0.0.1:32769/orbsie_vault_test,
+postgres trust (synthetic only). Root must run opted-in test then stop/remove it.
