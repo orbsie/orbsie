@@ -1,0 +1,12 @@
+{
+  "at": "2026-09-14T02:00:24.977597+00:00",
+  "cua": "CUA_REPL_ENABLED_SURFACES is required",
+  "devtoolsBrowserReachable": true,
+  "existingChatGPTTab": 3,
+  "chatGPTState": "signed out; existing UI shows Log in and Sign up for free",
+  "openRouterState": "existing page is sign-in",
+  "newTabsOpened": 0,
+  "loginAttempts": 0,
+  "modelCalls": 0,
+  "conclusion": "owner-signed-in browser unavailable through current tools"
+}

@@ -208,3 +208,10 @@ mocked handler or invoked callback directly and missed integration). Require
 postclose rotated cache, failedclose poison, sticky managed mode, pending/connected
 legacy admission guards and preaborted no-factory evidence. Do not accept prior43
 checks as complete integration proof. Root Android resources all terminal.
+
+Browser revalidation during durable work: CUA still requires enabled surfaces;
+DevTools listpages reachable, existing ChatGPT page3 explicitly signed out in a11y
+snapshot (Log in/Sign up), OpenRouter page2 sign-in. No new tabs/login/model calls.
+Evidence browser-access-check-20260913-durable. Owner's signed-in Chrome remains
+unavailable; do not copy cookies/use rawCDP or repeat login requests. Worker fixes
+still active; latest quota36%remaining.
