@@ -20,6 +20,13 @@ stays separate. No live calls/deployment or complete browser review-loop claim.
 Worker /root/host_session_renewal now implements one bounded reviewer execution
 task in docs/scene-review-execution-task.md: real API/hosted one-call transports
 and semantically validated correction batches; no live calls or public endpoints.
+First executor handoff NOT accepted despite13tests/typecheck passing. Root found
+missing schema/current-phase instructions, duplicated hosted input, configured
+output formats bypassed/invalid strict schema, missing API output-token cap,
+optional API effort restriction, missing finish-reason acceptance, and response
+reader cancellation/preflight validation gaps. Worker now fixes these with actual
+request-format, malformed/truncated/hosted failure, all-or-none/procedural and
+mid-read cancellation tests. New module/tests remain uncommitted WIP until review.
 Next public admission/browser contract records review ledger cancellation gaps
 in docs/agentic-review-loop-task.md. Hosted acceptance commit43113e8.
 Initial API task finished. Root
