@@ -161,3 +161,27 @@ describe("hosted ChatGPT generation", () => {
     ).toThrow("complete");
   });
 });
+
+it("sends only a validated client run correlation header", () => {
+  const clientRunId = "22222222-2222-4222-8222-222222222222";
+  const hosted = generationRequest(
+    {
+      provider: "chatgpt-hosted",
+      model: "gpt-5.1",
+      effort: "low",
+      key: "",
+    },
+    { prompt: "test" },
+    { clientRunId },
+  );
+  expect(hosted.init.headers).toEqual({
+    "Content-Type": "application/json",
+    "X-Orbsie-Client-Run-Id": clientRunId,
+  });
+  const invalid = generationRequest(
+    { provider: "free", model: "", key: "" },
+    { prompt: "test" },
+    { clientRunId: "prompt-and-secret" },
+  );
+  expect(invalid.init.headers).toEqual({ "Content-Type": "application/json" });
+});

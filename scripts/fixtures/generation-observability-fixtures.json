@@ -1,0 +1,64 @@
+[
+  {
+    "name": "valid-commit",
+    "chunks": [
+      "{\"type\":\"set_environment\"}\n{\"type\":\"commit_revision\",\"message\":\"Done\"}\n"
+    ],
+    "expected": "completed"
+  },
+  {
+    "name": "utf8-json-split",
+    "chunks": [
+      "{\"type\":\"set_",
+      "environment\"}\n",
+      "{\"type\":\"commit_revision\",\"message\":\"Done\"}\n"
+    ],
+    "expected": "completed"
+  },
+  {
+    "name": "clean-eof-without-commit",
+    "chunks": ["{\"type\":\"set_environment\"}\n"],
+    "expected": "clean-eof-without-commit"
+  },
+  {
+    "name": "invalid-final-commit",
+    "chunks": [
+      "{\"type\":\"set_environment\"}\n{\"type\":\"commit_revision\"}\n"
+    ],
+    "schemaError": true,
+    "expected": "parser-failure"
+  },
+  {
+    "name": "semantic-apply-failure",
+    "chunks": [
+      "{\"type\":\"set_transform\",\"id\":\"missing-object\",\"position\":[0,0,0]}\n"
+    ],
+    "applyError": true,
+    "expected": "parser-failure"
+  },
+  {
+    "name": "provider-error",
+    "chunks": ["{\"error\":\"redacted\",\"code\":\"PROVIDER_STREAM_ERROR\"}\n"],
+    "expected": "stream-error"
+  },
+  {
+    "name": "thrown-read",
+    "readError": true,
+    "expected": "transport-error"
+  },
+  {
+    "name": "deadline",
+    "abort": "deadline",
+    "expected": "deadline"
+  },
+  {
+    "name": "user-cancellation",
+    "abort": "client",
+    "expected": "client-abort"
+  },
+  {
+    "name": "stale-run",
+    "stale": true,
+    "expected": "stale-run"
+  }
+]

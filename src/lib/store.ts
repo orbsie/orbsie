@@ -62,6 +62,11 @@ import {
   type AuthoringActivityDraft,
   type AuthoringActivityKind,
 } from "./authoring-activity";
+import {
+  beginClientGenerationDiagnostic,
+  clearGenerationDiagnostics,
+  type ClientGenerationDiagnosticController,
+} from "./generation-diagnostics-client";
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -270,6 +275,7 @@ let activeAuthoringRun:
       controller: AbortController;
       runId: string;
       projectId: string;
+      diagnostic: ClientGenerationDiagnosticController;
       publish: (
         kind: AuthoringActivityKind,
         message: string,
@@ -281,6 +287,10 @@ let activeAuthoringRun:
 function clearActiveAuthoringRun() {
   const run = activeAuthoringRun;
   activeAuthoringRun = undefined;
+  run?.diagnostic.terminal({
+    reason: "stale-run",
+    failureCode: "unknown",
+  });
   run?.clear();
 }
 function invalidatePendingLoad() {
@@ -537,9 +547,10 @@ export const useOrb = create<State>((setState, getState) => ({
   async resetLocalData() {
     invalidatePendingLoad();
     finishActiveExperience("cancelled");
+    clearActiveAuthoringRun();
     active?.abort();
     active = undefined;
-    clearActiveAuthoringRun();
+    clearGenerationDiagnostics();
     await clear();
     setState({
       drafts: [],
@@ -555,9 +566,9 @@ export const useOrb = create<State>((setState, getState) => ({
     const epoch = invalidatePendingLoad();
     const startingProject = getState().project;
     finishActiveExperience("cancelled");
+    clearActiveAuthoringRun();
     active?.abort();
     active = undefined;
-    clearActiveAuthoringRun();
     let history: LocalHistory | undefined;
     if (!play) {
       history = readLocalHistory(getState().draftHistory[project.id], project);
@@ -617,10 +628,15 @@ export const useOrb = create<State>((setState, getState) => ({
       current.project.id === run.projectId
     )
       run.publish("cancelled", "Stopped. Finished objects are safe.");
+    run?.diagnostic.terminal({
+      reason: "client-abort",
+      abortSource: "client",
+      failureCode: "cancelled",
+    });
     finishActiveExperience("cancelled");
+    clearActiveAuthoringRun();
     active?.abort();
     active = undefined;
-    clearActiveAuthoringRun();
     const s = getState();
     const committedWorld = committed(s.project, baseline);
     setState({
@@ -675,9 +691,9 @@ export const useOrb = create<State>((setState, getState) => ({
       return;
     }
     finishActiveExperience("cancelled");
+    clearActiveAuthoringRun();
     active?.abort();
     active = undefined;
-    clearActiveAuthoringRun();
     const controller = new AbortController();
     active = controller;
     const { signal } = controller;
@@ -738,6 +754,38 @@ export const useOrb = create<State>((setState, getState) => ({
       });
     };
     const runId = crypto.randomUUID();
+    const diagnosticProvider =
+      connection.provider === "chatgpt-hosted"
+        ? "chatgpt"
+        : connection.provider === "openrouter" ||
+            connection.provider === "gateway" ||
+            connection.provider === "free"
+          ? connection.provider
+          : "free";
+    const diagnostic = beginClientGenerationDiagnostic({
+      runId,
+      provider: diagnosticProvider,
+      quality: connection.quality,
+      reasoningEffort:
+        connection.effort === "low" ||
+        connection.effort === "medium" ||
+        connection.effort === "high"
+          ? connection.effort
+          : undefined,
+      serviceTier: connection.provider === "free" ? undefined : "default",
+      renderer: connection.renderer,
+      capabilities:
+        typeof navigator === "undefined"
+          ? undefined
+          : {
+              touch: navigator.maxTouchPoints > 0,
+              coarsePointer:
+                typeof window !== "undefined" &&
+                window.matchMedia?.("(pointer: coarse)").matches === true,
+              online: navigator.onLine !== false,
+            },
+      initialRevision: project.revision,
+    });
     let activityThrottle: ReturnType<typeof createAuthoringActivityThrottle>;
     const publishActivity = (
       kind: AuthoringActivityKind,
@@ -788,6 +836,7 @@ export const useOrb = create<State>((setState, getState) => ({
       controller,
       runId,
       projectId: project.id,
+      diagnostic,
       publish: publishActivity,
       clear: activityThrottle.clear,
     };
@@ -824,7 +873,28 @@ export const useOrb = create<State>((setState, getState) => ({
         void cancelCloudGenerationRun(durableRun.id).catch(() => undefined);
     };
     signal.addEventListener("abort", cancelDurable, { once: true });
+    const recordClientAbort = () =>
+      diagnostic.terminal({
+        reason: "client-abort",
+        abortSource: "client",
+        failureCode: "cancelled",
+      });
+    signal.addEventListener("abort", recordClientAbort, { once: true });
     let lastAppliedCommand: Command["type"] | undefined;
+    let streamEnded = false;
+    let streamErrorRecord = false;
+    let observationLimit = false;
+    let parserFailure = false;
+    let applyFailure = false;
+    let providerTimeout = false;
+    let providerFinishReason:
+      | "stop"
+      | "length"
+      | "tool_calls"
+      | "content_filter"
+      | "error"
+      | "other"
+      | undefined;
     const apply = async (input: ModelCommand) => {
       if (signal.aborted || active !== controller) return false;
       let s = getState();
@@ -919,6 +989,7 @@ export const useOrb = create<State>((setState, getState) => ({
         });
         s = getState();
       } else command = commandSchema.parse(modelCommand);
+      diagnostic.noteCommand(command.type);
       const envelope = {
         version: 1 as const,
         projectId: s.project.id,
@@ -928,7 +999,16 @@ export const useOrb = create<State>((setState, getState) => ({
         baseRevision: s.project.revision,
         command,
       };
-      const result = applyOperation(s.project, envelope, cursor);
+      let result: ReturnType<typeof applyOperation>;
+      try {
+        result = applyOperation(s.project, envelope, cursor);
+      } catch (error) {
+        // A parsed command can still fail against the current scene (for
+        // example, a setter targeting an object that no longer exists). Keep
+        // that semantic validation failure distinct from a broken stream.
+        applyFailure = true;
+        throw error;
+      }
       if (journal && durableRun) {
         if (!journalCurrent()) return false;
         if (
@@ -955,6 +1035,8 @@ export const useOrb = create<State>((setState, getState) => ({
       baseline = committed(result.project, baseline);
       cursor = result.cursor;
       lastAppliedCommand = command.type;
+      if (command.type === "commit_revision")
+        diagnostic.commit(result.project.revision);
       const updatedId =
         command.type === "reserve_entity"
           ? command.entity.id
@@ -1063,22 +1145,50 @@ export const useOrb = create<State>((setState, getState) => ({
         }
       }
       {
-        const request = generationRequest(connection, {
-          prompt,
-          project,
-          selected,
-          localModeling: false,
-          browserModeling: browserModelingAvailable(),
-          modelingFeedback:
-            getState().modelingFeedback?.projectId === project.id
-              ? getState().modelingFeedback
-              : undefined,
-          generationFeedback: retryFeedback,
-        });
+        diagnostic.phase("provider-start");
+        const request = generationRequest(
+          connection,
+          {
+            prompt,
+            project,
+            selected,
+            localModeling: false,
+            browserModeling: browserModelingAvailable(),
+            modelingFeedback:
+              getState().modelingFeedback?.projectId === project.id
+                ? getState().modelingFeedback
+                : undefined,
+            generationFeedback: retryFeedback,
+          },
+          { clientRunId: runId },
+        );
+        if (typeof request.init.body === "string")
+          diagnostic.noteInputBytes(
+            new TextEncoder().encode(request.init.body).byteLength,
+          );
         const response = await fetch(request.url, { ...request.init, signal });
+        diagnostic.requestId(response.headers.get("X-Orbsie-Request-Id"));
+        diagnostic.phase("response-headers");
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
           failureFeedback = generationFeedbackForFailure(project.id, body);
+          if (failureFeedback?.finishReason)
+            providerFinishReason = failureFeedback.finishReason;
+          const failureCode =
+            response.status === 402 || response.status === 429
+              ? "quota"
+              : response.status === 401
+                ? "connection-required"
+                : response.status >= 500
+                  ? "host-unavailable"
+                  : response.status === 400
+                    ? "invalid-input"
+                    : "provider-rejected";
+          diagnostic.terminal({
+            reason: "provider-error",
+            failureCode,
+            httpStatus: response.status,
+          });
           if (active === controller && !signal.aborted)
             setState({
               generationErrorCode:
@@ -1087,12 +1197,35 @@ export const useOrb = create<State>((setState, getState) => ({
           throw Error(body.error ?? "Connection failed. Your world is safe.");
         }
         if (signal.aborted || active !== controller) return;
-        const reader = response.body!.getReader();
+        if (!response.body) {
+          diagnostic.terminal({
+            reason: "transport-error",
+            failureCode: "transport",
+          });
+          throw Error("The provider response did not include a stream.");
+        }
+        const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let pending = "";
+        const classifyStreamError = (record: unknown) => {
+          const feedback = generationFeedbackForFailure(project.id, record);
+          if (feedback?.finishReason)
+            providerFinishReason = feedback.finishReason;
+          if (
+            feedback &&
+            (feedback.code === "PROVIDER_STREAM_ERROR" ||
+              feedback.code === "CHATGPT_GENERATION_ERROR")
+          ) {
+            providerTimeout = feedback.reason === "timeout";
+            streamErrorRecord = true;
+          } else if (feedback) parserFailure = true;
+          else streamErrorRecord = true;
+        };
         const consumeRecord = async (record: unknown) => {
           const feedback = generationFeedbackForFailure(project.id, record);
           if (feedback) failureFeedback = feedback;
+          if (feedback?.finishReason)
+            providerFinishReason = feedback.finishReason;
           if (
             record &&
             typeof record === "object" &&
@@ -1100,31 +1233,95 @@ export const useOrb = create<State>((setState, getState) => ({
             typeof (record as Record<string, unknown>).error === "string"
           )
             throw Error((record as Record<string, unknown>).error as string);
-          return apply(record as ModelCommand);
+          diagnostic.phase("apply");
+          try {
+            return await apply(record as ModelCommand);
+          } catch (error) {
+            applyFailure =
+              applyFailure ||
+              error instanceof ZodError ||
+              error instanceof SyntaxError;
+            throw error;
+          }
         };
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            streamEnded = true;
+            break;
+          }
+          diagnostic.noteOutputBytes(value.byteLength);
+          diagnostic.phase("first-byte");
           pending += decoder.decode(value, { stream: true });
-          if (pending.length > 100000)
+          if (pending.length > 100000) {
+            observationLimit = true;
+            diagnostic.terminal({
+              reason: "output-limit",
+              failureCode: "output-limit",
+            });
             throw Error("The provider sent an oversized scene update.");
+          }
           const lines = pending.split("\n");
           pending = lines.pop()!;
           for (const line of lines) {
             if (!line.trim()) continue;
-            const record = JSON.parse(line);
+            let record: unknown;
+            try {
+              record = JSON.parse(line);
+            } catch (error) {
+              parserFailure = true;
+              diagnostic.terminal({
+                reason: "parser-failure",
+                failureCode: "parser",
+              });
+              throw error;
+            }
+            if (
+              record &&
+              typeof record === "object" &&
+              !Array.isArray(record) &&
+              typeof (record as Record<string, unknown>).error === "string"
+            ) {
+              classifyStreamError(record);
+            }
             if (!(await consumeRecord(record))) {
               await reader.cancel().catch(() => undefined);
               return;
             }
           }
         }
-        if (pending.trim() && !(await consumeRecord(JSON.parse(pending))))
-          return;
-        if (lastAppliedCommand !== "commit_revision")
+        if (pending.trim()) {
+          let record: unknown;
+          try {
+            record = JSON.parse(pending);
+          } catch (error) {
+            parserFailure = true;
+            diagnostic.terminal({
+              reason: "parser-failure",
+              failureCode: "parser",
+            });
+            throw error;
+          }
+          if (
+            record &&
+            typeof record === "object" &&
+            !Array.isArray(record) &&
+            typeof (record as Record<string, unknown>).error === "string"
+          ) {
+            classifyStreamError(record);
+          }
+          if (!(await consumeRecord(record))) return;
+        }
+        if (lastAppliedCommand !== "commit_revision") {
+          diagnostic.terminal({
+            reason: "clean-eof-without-commit",
+            failureCode: "parser",
+            finishReason: providerFinishReason,
+          });
           throw Error(
             "The connection ended before committing the scene. Finished objects are safe; try continuing your request.",
           );
+        }
       }
       if (active === controller && !signal.aborted) {
         markExperience(project.id, "generationComplete", experienceToken);
@@ -1144,9 +1341,69 @@ export const useOrb = create<State>((setState, getState) => ({
           modelingFeedback: undefined,
         });
         await getState().save();
+        diagnostic.terminal({ reason: "completed" });
         settleWithoutRenderer();
       }
     } catch (error) {
+      if (signal.aborted) {
+        diagnostic.terminal({
+          reason: "client-abort",
+          abortSource: "client",
+          failureCode: "cancelled",
+          finishReason: providerFinishReason,
+        });
+      } else if (
+        active !== controller ||
+        getState().project.id !== project.id
+      ) {
+        diagnostic.terminal({ reason: "stale-run", failureCode: "unknown" });
+      } else if (observationLimit) {
+        diagnostic.terminal({
+          reason: "output-limit",
+          failureCode: "output-limit",
+          finishReason: providerFinishReason,
+        });
+      } else if (applyFailure) {
+        diagnostic.terminal({
+          reason: "parser-failure",
+          failureCode: "invalid-input",
+          finishReason: providerFinishReason,
+        });
+      } else if (providerTimeout) {
+        diagnostic.terminal({
+          reason: "deadline",
+          failureCode: "timeout",
+          finishReason: providerFinishReason,
+        });
+      } else if (streamErrorRecord) {
+        diagnostic.terminal({
+          reason: "stream-error",
+          failureCode: "transport",
+          finishReason: providerFinishReason,
+        });
+      } else if (
+        parserFailure ||
+        error instanceof ZodError ||
+        error instanceof SyntaxError
+      ) {
+        diagnostic.terminal({
+          reason: "parser-failure",
+          failureCode: "parser",
+          finishReason: providerFinishReason,
+        });
+      } else if (streamEnded && lastAppliedCommand !== "commit_revision") {
+        diagnostic.terminal({
+          reason: "clean-eof-without-commit",
+          failureCode: "parser",
+          finishReason: providerFinishReason,
+        });
+      } else {
+        diagnostic.terminal({
+          reason: "transport-error",
+          failureCode: "transport",
+          finishReason: providerFinishReason,
+        });
+      }
       if (active === controller && !signal.aborted) {
         finishRunExperience("error");
         publishActivity("failed", "This request could not be completed.");
@@ -1183,8 +1440,14 @@ export const useOrb = create<State>((setState, getState) => ({
       }
     } finally {
       signal.removeEventListener("abort", cancelDurable);
+      signal.removeEventListener("abort", recordClientAbort);
       if (durableRun?.state === "running") cancelDurable();
       if (active === controller) {
+        diagnostic.terminal({
+          reason: signal.aborted ? "client-abort" : "stale-run",
+          abortSource: signal.aborted ? "client" : undefined,
+          failureCode: signal.aborted ? "cancelled" : "unknown",
+        });
         finishRunExperience("cancelled");
         active = undefined;
         if (activeAuthoringRun?.controller === controller)

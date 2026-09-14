@@ -87,6 +87,10 @@ const OAUTH_PENDING_KEY = "orbsie-openrouter-oauth";
 const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
+import {
+  exportGenerationDiagnostics,
+  recordStartupDiagnostic,
+} from "@/lib/generation-diagnostics-client";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import ChatGPTConnection, {
   parseChatGPTSnapshot,
@@ -201,6 +205,9 @@ export default function Orbsie() {
   const [prompt, setPrompt] = useState("");
   const [rendererAvailability, setRendererAvailability] =
     useState<RendererAvailability>("initializing");
+  const [rendererMode, setRendererMode] = useState<
+    "webgl" | "software" | "unknown"
+  >("unknown");
   const [graphicsError, setGraphicsError] = useState("");
   const [graphicsAdvisory, setGraphicsAdvisory] = useState(false);
   const [graphicsHelpVisible, setGraphicsHelpVisible] = useState(false);
@@ -214,6 +221,7 @@ export default function Orbsie() {
   const handleRendererReady = useCallback(
     (renderer: "webgl" | "software" = "webgl") => {
       if (rendererAvailabilityRef.current === "unavailable") return;
+      setRendererMode(renderer);
       if (renderer === "webgl") {
         setGraphicsError("");
         setGraphicsAdvisory(false);
@@ -837,6 +845,8 @@ export default function Orbsie() {
       setChatGPTStartupNeedsSession(false);
       setChatGPTStartupNeedsConfig(false);
       setChatGPTRestoreStatus("restoring");
+      const startedAt = performance.now();
+      const stageDurations: Partial<Record<"status" | "models", number>> = {};
       const isCurrent = () =>
         !controller.signal.aborted &&
         chatGPTRestoreRequest.current === controller &&
@@ -845,7 +855,15 @@ export default function Orbsie() {
         expectedProvider === activeProvider.current;
       void restoreChatGPTStartup({
         preference,
-        fetcher: (input, init) => fetch(input, init),
+        fetcher: async (input, init) => {
+          const stage = input.endsWith("/models") ? "models" : "status";
+          const stageStartedAt = performance.now();
+          try {
+            return await fetch(input, init);
+          } finally {
+            stageDurations[stage] = performance.now() - stageStartedAt;
+          }
+        },
         signal: controller.signal,
         isCurrent,
         parseStatus: (value) => {
@@ -856,6 +874,40 @@ export default function Orbsie() {
       })
         .then((result: ChatGPTStartupRestoreResult) => {
           if (!isCurrent() || result.kind === "stale") return;
+          const durationMs = performance.now() - startedAt;
+          const stageDuration = (stage: "status" | "models") =>
+            Math.max(0, Math.floor(stageDurations[stage] ?? durationMs));
+          if (result.kind === "transient") {
+            recordStartupDiagnostic({
+              stage: result.stage === "models" ? "catalog" : "status",
+              outcome: "transient",
+              tier: preference.tier,
+              durationMs: stageDuration(result.stage),
+            });
+          } else if (result.kind === "reconnect") {
+            recordStartupDiagnostic({
+              stage: result.stage === "models" ? "catalog" : "status",
+              outcome: "reconnect",
+              tier: preference.tier,
+              durationMs: stageDuration(result.stage),
+            });
+          } else {
+            recordStartupDiagnostic({
+              stage: "status",
+              outcome: "ready",
+              tier: preference.tier,
+              durationMs: stageDuration("status"),
+            });
+            recordStartupDiagnostic({
+              stage: "catalog",
+              outcome:
+                result.kind === "selection-required"
+                  ? "selection-required"
+                  : "ready",
+              tier: preference.tier,
+              durationMs: stageDuration("models"),
+            });
+          }
           chatGPTRestoreRequest.current = null;
           if (result.kind === "restored") {
             setChatGPTModels(result.models as ChatGPTModelOption[]);
@@ -866,6 +918,7 @@ export default function Orbsie() {
                 provider: "chatgpt-hosted",
                 model: result.model,
                 effort: result.effort,
+                quality: result.tier,
                 key: "",
               },
               true,
@@ -879,6 +932,7 @@ export default function Orbsie() {
               {
                 provider: "chatgpt-hosted",
                 model: "",
+                quality: result.tier,
                 key: "",
               },
               true,
@@ -893,6 +947,12 @@ export default function Orbsie() {
         .catch(() => {
           if (!isCurrent()) return;
           chatGPTRestoreRequest.current = null;
+          recordStartupDiagnostic({
+            stage: "status",
+            outcome: "transient",
+            tier: preference.tier,
+            durationMs: performance.now() - startedAt,
+          });
           setChatGPTRestoreStatus("transient");
         });
     },
@@ -914,6 +974,7 @@ export default function Orbsie() {
       setChatGPTStartupNeedsConfig(false);
       setChatGPTRestoreStatus("restoring");
       setChatGPTStartupNeedsSession(true);
+      const startedAt = performance.now();
       const isCurrent = () =>
         !controller.signal.aborted &&
         chatGPTStartupSessionRequest.current === controller &&
@@ -935,6 +996,12 @@ export default function Orbsie() {
           chatGPTStartupSessionRequest.current = null;
           // Better Auth returns JSON null when the session cookie is missing.
           if (data === null) {
+            recordStartupDiagnostic({
+              stage: "session",
+              outcome: "reconnect",
+              tier: preference.tier,
+              durationMs: performance.now() - startedAt,
+            });
             setChatGPTStartupNeedsSession(true);
             setChatGPTRestoreStatus("reconnect");
             return;
@@ -944,11 +1011,23 @@ export default function Orbsie() {
             typeof data !== "object" ||
             !Object.prototype.hasOwnProperty.call(data, "user")
           ) {
+            recordStartupDiagnostic({
+              stage: "session",
+              outcome: "transient",
+              tier: preference.tier,
+              durationMs: performance.now() - startedAt,
+            });
             setChatGPTStartupNeedsSession(true);
             setChatGPTRestoreStatus("transient");
             return;
           }
           if (data.user === null) {
+            recordStartupDiagnostic({
+              stage: "session",
+              outcome: "reconnect",
+              tier: preference.tier,
+              durationMs: performance.now() - startedAt,
+            });
             setChatGPTStartupNeedsSession(true);
             setChatGPTRestoreStatus("reconnect");
             return;
@@ -957,10 +1036,22 @@ export default function Orbsie() {
             typeof data.user !== "object" ||
             typeof (data.user as { name?: unknown }).name !== "string"
           ) {
+            recordStartupDiagnostic({
+              stage: "session",
+              outcome: "transient",
+              tier: preference.tier,
+              durationMs: performance.now() - startedAt,
+            });
             setChatGPTStartupNeedsSession(true);
             setChatGPTRestoreStatus("transient");
             return;
           }
+          recordStartupDiagnostic({
+            stage: "session",
+            outcome: "ready",
+            tier: preference.tier,
+            durationMs: performance.now() - startedAt,
+          });
           setUser(data.user);
           void refreshCloud();
           setChatGPTStartupNeedsSession(false);
@@ -973,6 +1064,12 @@ export default function Orbsie() {
         .catch(() => {
           if (!isCurrent()) return;
           chatGPTStartupSessionRequest.current = null;
+          recordStartupDiagnostic({
+            stage: "session",
+            outcome: "transient",
+            tier: preference.tier,
+            durationMs: performance.now() - startedAt,
+          });
           setChatGPTStartupNeedsSession(true);
           setChatGPTRestoreStatus("transient");
         });
@@ -996,6 +1093,7 @@ export default function Orbsie() {
       setChatGPTStartupNeedsSession(false);
       setChatGPTStartupNeedsConfig(true);
       setChatGPTRestoreStatus("restoring");
+      const startedAt = performance.now();
       const isCurrent = () =>
         !controller.signal.aborted &&
         chatGPTStartupConfigRequest.current === controller &&
@@ -1017,6 +1115,12 @@ export default function Orbsie() {
         .then((nextCapabilities) => {
           if (!isCurrent()) return;
           chatGPTStartupConfigRequest.current = null;
+          recordStartupDiagnostic({
+            stage: "configuration",
+            outcome: "ready",
+            tier: preference.tier,
+            durationMs: performance.now() - startedAt,
+          });
           setCapabilities(nextCapabilities);
           setChatGPTStartupNeedsConfig(false);
           if (!nextCapabilities.accounts || !nextCapabilities.chatgptHosted) {
@@ -1033,6 +1137,12 @@ export default function Orbsie() {
         .catch(() => {
           if (!isCurrent()) return;
           chatGPTStartupConfigRequest.current = null;
+          recordStartupDiagnostic({
+            stage: "configuration",
+            outcome: "transient",
+            tier: preference.tier,
+            durationMs: performance.now() - startedAt,
+          });
           setChatGPTStartupNeedsConfig(true);
           setChatGPTStartupNeedsSession(false);
           setChatGPTRestoreStatus("transient");
@@ -1093,6 +1203,7 @@ export default function Orbsie() {
       provider: "chatgpt-hosted",
       model,
       effort,
+      quality: preset ?? undefined,
       key: "",
     });
     setModal(null);
@@ -1207,6 +1318,7 @@ export default function Orbsie() {
     setConnection({
       ...connection,
       model: option.model,
+      quality: option.label,
       ...(connection.provider === "chatgpt-hosted" && option.effort
         ? { effort: option.effort }
         : {}),
@@ -1293,6 +1405,13 @@ export default function Orbsie() {
       setChatGPTStartupNeedsConfig(true);
       setChatGPTRestoreStatus("restoring");
     }
+    const startupStillCurrent = () =>
+      Boolean(
+        startupPreference &&
+        initialAccountGeneration === accountGeneration.current &&
+        initialConnectionVersion === connectionVersion.current &&
+        initialProvider === activeProvider.current,
+      );
     void refreshTrial();
     if (location.hash.startsWith("#orb=")) {
       try {
@@ -1304,6 +1423,7 @@ export default function Orbsie() {
         s.set({ error: "This shared world could not be opened." });
       }
     } else void s.recover();
+    const configStartedAt = performance.now();
     fetch("/api/config", { credentials: "same-origin", cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw Error("Configuration unavailable");
@@ -1313,12 +1433,15 @@ export default function Orbsie() {
         return value as typeof capabilities;
       })
       .then((c) => {
+        const startupCurrent = startupStillCurrent();
+        if (startupCurrent)
+          recordStartupDiagnostic({
+            stage: "configuration",
+            outcome: "ready",
+            tier: startupPreference!.tier,
+            durationMs: performance.now() - configStartedAt,
+          });
         setCapabilities(c);
-        const startupCurrent =
-          startupPreference &&
-          initialAccountGeneration === accountGeneration.current &&
-          initialConnectionVersion === connectionVersion.current &&
-          initialProvider === activeProvider.current;
         if (startupCurrent && (!c.accounts || !c.chatgptHosted)) {
           setChatGPTStartupNeedsConfig(false);
           setChatGPTStartupNeedsSession(true);
@@ -1342,6 +1465,7 @@ export default function Orbsie() {
             );
             return;
           }
+          const sessionStartedAt = performance.now();
           fetch("/api/auth/get-session", {
             credentials: "same-origin",
             cache: "no-store",
@@ -1352,22 +1476,41 @@ export default function Orbsie() {
               return r.json();
             })
             .then((d) => {
+              if (startupStillCurrent()) {
+                const sessionUser = parseProviderSessionUser(d?.user);
+                const sessionOutcome =
+                  d === null || d?.user === null
+                    ? "reconnect"
+                    : sessionUser
+                      ? "ready"
+                      : "transient";
+                recordStartupDiagnostic({
+                  stage: "session",
+                  outcome: sessionOutcome,
+                  tier: startupPreference!.tier,
+                  durationMs: performance.now() - sessionStartedAt,
+                });
+              }
+              const sessionUser = parseProviderSessionUser(d?.user);
               if (
-                d?.user &&
-                initialAccountGeneration === accountGeneration.current
+                sessionUser &&
+                initialAccountGeneration === accountGeneration.current &&
+                (!startupPreference || startupStillCurrent())
               ) {
-                setUser(d.user);
+                setUser(sessionUser);
                 void refreshCloud();
               }
             })
             .catch(() => {
-              if (
-                startupPreference &&
-                initialAccountGeneration === accountGeneration.current &&
-                initialConnectionVersion === connectionVersion.current &&
-                initialProvider === activeProvider.current
-              ) {
-                setChatGPTPreferredTier(startupPreference.tier);
+              if (startupStillCurrent())
+                recordStartupDiagnostic({
+                  stage: "session",
+                  outcome: "transient",
+                  tier: startupPreference!.tier,
+                  durationMs: performance.now() - sessionStartedAt,
+                });
+              if (startupStillCurrent()) {
+                setChatGPTPreferredTier(startupPreference!.tier);
                 setChatGPTStartupNeedsSession(true);
                 setChatGPTRestoreStatus("transient");
               }
@@ -1375,13 +1518,15 @@ export default function Orbsie() {
         }
       })
       .catch(() => {
-        if (
-          startupPreference &&
-          initialAccountGeneration === accountGeneration.current &&
-          initialConnectionVersion === connectionVersion.current &&
-          initialProvider === activeProvider.current
-        ) {
-          setChatGPTPreferredTier(startupPreference.tier);
+        if (startupStillCurrent())
+          recordStartupDiagnostic({
+            stage: "configuration",
+            outcome: "transient",
+            tier: startupPreference!.tier,
+            durationMs: performance.now() - configStartedAt,
+          });
+        if (startupStillCurrent()) {
+          setChatGPTPreferredTier(startupPreference!.tier);
           setChatGPTStartupNeedsSession(false);
           setChatGPTStartupNeedsConfig(true);
           setChatGPTRestoreStatus("transient");
@@ -1495,7 +1640,7 @@ export default function Orbsie() {
     const selectedConnectionVersion = connectionVersion.current;
     try {
       if (rendererAvailabilityRef.current !== "ready") return;
-      let selectedConnection = connection;
+      let selectedConnection = { ...connection, renderer: rendererMode };
       if (!isGenerationReady(connection)) {
         if (connection.provider === "chatgpt-hosted") {
           setModal("settings");
@@ -1526,7 +1671,12 @@ export default function Orbsie() {
           setModal(user || !capabilities.accounts ? "settings" : "account");
           return;
         }
-        selectedConnection = { provider: "free", model: "", key: "" };
+        selectedConnection = {
+          provider: "free",
+          model: "",
+          key: "",
+          renderer: rendererMode,
+        };
       }
       if (rendererAvailabilityRef.current !== "ready") return;
       submittedPrompt.current = instruction;
@@ -1769,6 +1919,21 @@ export default function Orbsie() {
       setModalError(e instanceof Error ? e.message : "Export failed.");
     } finally {
       setBusy(false);
+    }
+  };
+  const downloadDiagnostics = () => {
+    try {
+      const blob = new Blob([exportGenerationDiagnostics()], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "orbsie-generation-diagnostics.json";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setModalError("Diagnostics could not be downloaded.");
     }
   };
   const share = async () => {
@@ -2603,22 +2768,33 @@ export default function Orbsie() {
       {(s.error || s.notice) && (
         <div className={`toast ${s.error ? "error" : ""}`} role="status">
           <span className="toast-copy">{s.error || s.notice}</span>
-          {s.error && generationRecovery && (
+          {s.error && (
             <div className="toast-actions">
-              <button
-                type="button"
-                className="toast-action retry"
-                disabled={s.building}
-                onClick={retryFailedGeneration}
-              >
-                Try again
-              </button>
+              {generationRecovery && (
+                <>
+                  <button
+                    type="button"
+                    className="toast-action retry"
+                    disabled={s.building}
+                    onClick={retryFailedGeneration}
+                  >
+                    Try again
+                  </button>
+                  <button
+                    type="button"
+                    className="toast-action"
+                    onClick={restoreLastWorking}
+                  >
+                    Use last working
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="toast-action"
-                onClick={restoreLastWorking}
+                onClick={downloadDiagnostics}
               >
-                Use last working
+                Download diagnostics
               </button>
             </div>
           )}
@@ -2936,6 +3112,48 @@ export default function Orbsie() {
                   Disconnect and clear key
                 </button>
               )}
+              <div className="local-data-row">
+                <span className="fine-print">
+                  Content-free troubleshooting history stays on this device.
+                </span>
+                <button
+                  type="button"
+                  className="text-button diagnostics-download"
+                  onClick={downloadDiagnostics}
+                >
+                  Download diagnostics
+                </button>
+                {resetArmed ? (
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={busy}
+                    onClick={() => {
+                      setResetArmed(false);
+                      void (async () => {
+                        setBusy(true);
+                        try {
+                          await s.resetLocalData();
+                          location.reload();
+                        } finally {
+                          setBusy(false);
+                        }
+                      })();
+                    }}
+                  >
+                    Really delete? Tap again to erase local drafts
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={busy}
+                    onClick={() => setResetArmed(true)}
+                  >
+                    Reset saved data on this device
+                  </button>
+                )}
+              </div>
             </>
           )}
           {modal === "share" && (
@@ -3347,6 +3565,13 @@ export default function Orbsie() {
                     Saved data: ~{storageUsage}
                   </span>
                 )}
+                <button
+                  type="button"
+                  className="text-button diagnostics-download"
+                  onClick={downloadDiagnostics}
+                >
+                  Download diagnostics
+                </button>
                 {resetArmed ? (
                   <button
                     type="button"

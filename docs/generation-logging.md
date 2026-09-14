@@ -1,5 +1,28 @@
 # Investigating a generation failure
 
+Use **Download diagnostics** beside a generation error or in **Connections**.
+The download is created on the device; it is not uploaded automatically. It retains
+up to 20 bounded entries and is at most 64 KiB. It includes provider/tier, release
+when configured, request/run IDs, phase timings, renderer capabilities, command
+counts and revision/outcome information. Unverified model names are omitted.
+
+History survives reload when browser storage is available. An interrupted active
+run retains an explicitly incomplete snapshot. **Reset saved data on this device**
+clears diagnostic history together with local drafts. If storage is unavailable,
+logging remains best effort and must not prevent generation.
+
+Run synthetic failure replays without credentials or model calls:
+
+```sh
+node scripts/replay-generation-diagnostics.mjs
+```
+
+The checked-in fixtures execute production stream observation, protocol validation
+and the client store through the focused test harness. They cover successful
+commit, missing commit, malformed/schema-invalid output, semantic scene errors,
+read failure, cancellation and stale-run handling. These are synthetic regression
+checks, not live-provider acceptance.
+
 Generation routes return `X-Orbsie-Request-Id`. Search application logs for that
 UUID to join public-route, provider and hosted-runtime records. A validated
 `X-Orbsie-Client-Run-Id` joins the browser run to those records; neither identifier
@@ -16,7 +39,8 @@ Check the terminal reason and failure code before treating an HTTP 200 as succes
 `parser-failure`, `provider-error`, `transport-error`, `deadline` and `client-abort`
 describe different recovery paths. `observation-limit` means the bounded observer
 could not fully inspect a record; it does not mean that transport or geometry
-failed. The provider adapter and client validation remain authoritative.
+failed. `output-limit` instead identifies an application-enforced output bound.
+The provider adapter and client validation remain authoritative.
 
 Hosted credential persistence is recorded separately as
 `credentialFinalization`. Saving credentials does not establish that scene
@@ -40,5 +64,5 @@ rejected requests without model calls. Vercel CLI 59.11.7 historical logs projec
 only the first log message per request, even with `--expand --json`; use the
 request details to see all events. Returned event arrays may be unordered: use
 phase names and monotonic durations. Evidence: `evidence/generation-observability-
-deployment-20260913/acceptance.json`. Client diagnostic download remains a separate
-acceptance item in `generation-observability-task.md`.
+deployment-20260913/acceptance.json`. Client diagnostic release acceptance is tracked in
+`generation-observability-task.md`.

@@ -191,3 +191,11 @@ history, bound crypto UUID receiver, wire actual public buildID, plain semantic
 applyOperation errors classification, prevent late snapshot/header writes after
 terminal/reset. Same Luna worker. Dev46589 stopped130; report/screenshots remain
 .vercel/diagnostics-corrected (not final production acceptance). Quota26%remaining.
+
+Stage2 final diff root-reviewed and accepted for production-build verification.
+Corrected real observer/protocol+store replay, semantic apply classification,
+clear epoch/terminal snapshot guards, storage denial, crypto receiver, direct
+Next public build ID, phone toast rows. Worker final22tests/3files+typecheck pass;
+real replay2suites pass; last build-ID helper8tests+typecheck pass. Root prior
+desktop/phone browser fixture passed; final built UI/build-ID verification next.
+No live calls. Logging handbook updated with export and replay workflow.

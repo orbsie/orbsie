@@ -997,6 +997,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
 }
@@ -1600,6 +1601,26 @@ kbd {
     bottom: 122px;
     width: calc(100% - 30px);
     font-size: 10px;
+  }
+  .toast.error {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px 10px;
+  }
+  .toast.error .toast-copy {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  .toast.error .toast-actions {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+  }
+  .toast.error > button:last-child {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
   }
   .sheet-open .toast {
     bottom: calc(43dvh + 150px);
@@ -2238,11 +2259,32 @@ kbd {
 }
 
 /* Compatibility mode is playable; its advice must not cover the game. */
-.graphics-guidance.is-advisory { flex-direction: row; align-items: start; gap: 12px; }
-.graphics-guidance.is-advisory details { flex: 1; margin: 0; font-size: 12px; }
-.graphics-guidance.is-advisory > button { padding: 0 4px; font-size: 18px; line-height: 1; }
-.graphics-error.is-advisory { width: min(360px, calc(100% - 32px)); padding: 10px 14px; }
-.graphics-player-error:has(.is-advisory) { top: 64px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); min-width: 0; padding: 10px 14px; }
+.graphics-guidance.is-advisory {
+  flex-direction: row;
+  align-items: start;
+  gap: 12px;
+}
+.graphics-guidance.is-advisory details {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+}
+.graphics-guidance.is-advisory > button {
+  padding: 0 4px;
+  font-size: 18px;
+  line-height: 1;
+}
+.graphics-error.is-advisory {
+  width: min(360px, calc(100% - 32px));
+  padding: 10px 14px;
+}
+.graphics-player-error:has(.is-advisory) {
+  top: 64px;
+  transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px));
+  min-width: 0;
+  padding: 10px 14px;
+}
 @media (max-width: 650px) {
   .is-workspace .graphics-error.is-advisory {
     /* Leave the mobile workspace heading, toolbar, and HUD unobscured. */

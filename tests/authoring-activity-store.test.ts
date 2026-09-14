@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -27,6 +28,10 @@ vi.mock("idb-keyval", () => ({
 import { blankProject, commandSchema, type Command } from "../src/lib/protocol";
 import { fixtureEntities } from "../src/lib/fixtures";
 import { useOrb } from "../src/lib/store";
+import {
+  clearGenerationDiagnostics,
+  readGenerationDiagnostics,
+} from "../src/lib/generation-diagnostics-client";
 
 const connection = { provider: "free" as const, model: "", key: "" };
 const browserMetadata = {
@@ -54,6 +59,23 @@ const browserJob = {
   },
 };
 
+const replayFixturePath =
+  process.env.ORBSIE_GENERATION_DIAGNOSTIC_FIXTURE ??
+  new URL(
+    "../scripts/fixtures/generation-observability-fixtures.json",
+    import.meta.url,
+  ).pathname;
+const replayFixtures = JSON.parse(
+  readFileSync(replayFixturePath, "utf8"),
+) as Array<{
+  name: string;
+  chunks?: string[];
+  expected: string;
+  readError?: boolean;
+  stale?: boolean;
+  abort?: string;
+}>;
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: Error) => void;
@@ -68,6 +90,12 @@ function response(commands: Command[]) {
   return new Response(
     `${commands.map((command) => JSON.stringify(command)).join("\n")}\n`,
   );
+}
+
+function rawResponse(body: string) {
+  return new Response(body, {
+    headers: { "Content-Type": "application/x-ndjson" },
+  });
 }
 
 function commandsForLantern() {
@@ -99,6 +127,7 @@ function commandsForLantern() {
 
 beforeEach(async () => {
   vi.useFakeTimers();
+  clearGenerationDiagnostics();
   mocks.db.clear();
   mocks.browserBuild.mockReset();
   vi.stubGlobal("Worker", class {});
@@ -110,6 +139,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   useOrb.getState().stop();
+  clearGenerationDiagnostics();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -124,6 +154,34 @@ async function waitForPreparation() {
 }
 
 describe("store authoring activity", () => {
+  it("correlates the generation request and clears diagnostics with local data", async () => {
+    mocks.browserBuild.mockResolvedValue(browserMetadata);
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      response(commandsForLantern()),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const [diagnostic] = readGenerationDiagnostics();
+    expect(diagnostic).toMatchObject({
+      kind: "generation",
+      provider: "free",
+      terminal: { reason: "completed" },
+      initialRevision: 0,
+      commandCounts: {
+        reserve_entity: 1,
+        set_geometry: 1,
+        commit_revision: 1,
+      },
+    });
+    const requestInit = fetcher.mock.calls[0]?.[1];
+    expect(requestInit?.headers).toMatchObject({
+      "X-Orbsie-Client-Run-Id": expect.any(String),
+    });
+    await useOrb.getState().resetLocalData();
+    expect(readGenerationDiagnostics()).toEqual([]);
+  });
+
   it("reports waiting, entity, geometry, applied, and completion at real milestones", async () => {
     const build = deferred<typeof browserMetadata>();
     mocks.browserBuild.mockImplementation(() => build.promise);
@@ -165,6 +223,184 @@ describe("store authoring activity", () => {
     ).toBe(false);
   });
 
+  it("records clean EOF without a commit after preserving applied edits", async () => {
+    mocks.browserBuild.mockResolvedValue(browserMetadata);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        response(commandsForLantern().slice(0, 2)),
+      ),
+    );
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "clean-eof-without-commit",
+    });
+    expect(
+      useOrb.getState().project.entities.some((e) => e.id === "lantern"),
+    ).toBe(true);
+  });
+
+  it("classifies invalid streamed commands as client validation failures", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => rawResponse('{"type":"invalid"}\n')),
+    );
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "parser-failure",
+      failureCode: "invalid-input",
+    });
+    expect(
+      diagnostic && diagnostic.kind === "generation" ? diagnostic.phases : [],
+    ).toContainEqual(expect.objectContaining({ phase: "apply" }));
+  });
+
+  it("classifies a parsed command rejected by the current scene as validation", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        rawResponse(
+          '{"type":"set_transform","id":"missing-object","position":[0,0,0]}\n',
+        ),
+      ),
+    );
+
+    await useOrb.getState().run("Move the missing object", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "parser-failure",
+      failureCode: "invalid-input",
+    });
+    expect(useOrb.getState().error).toContain("no longer exists");
+  });
+
+  it("replays stream fixtures through the production store", async () => {
+    const storeCases = replayFixtures.filter(
+      (fixture) => !fixture.stale && fixture.abort === undefined,
+    );
+    for (const fixture of storeCases) {
+      clearGenerationDiagnostics();
+      const body = fixture.readError
+        ? new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.error(new Error("fixture reader failure"));
+            },
+          })
+        : undefined;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn<typeof fetch>(async () =>
+          body
+            ? new Response(body)
+            : rawResponse((fixture.chunks ?? []).join("")),
+        ),
+      );
+
+      await useOrb.getState().run(`Replay ${fixture.name}`, connection);
+      const diagnostic = readGenerationDiagnostics().find(
+        (entry) => entry.kind === "generation",
+      );
+      expect(
+        diagnostic && diagnostic.kind === "generation"
+          ? diagnostic.terminal?.reason
+          : undefined,
+      ).toBe(fixture.expected);
+    }
+  });
+
+  it("preserves a thrown reader as a transport failure", async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.error(new Error("private reader detail"));
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => new Response(body)),
+    );
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "transport-error",
+      failureCode: "transport",
+    });
+    expect(JSON.stringify(readGenerationDiagnostics())).not.toContain(
+      "private reader detail",
+    );
+  });
+
+  it("separates the client output bound from passive observer limits", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () => rawResponse("x".repeat(100_001))),
+    );
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "output-limit",
+      failureCode: "output-limit",
+    });
+  });
+
+  it("maps provider quota responses, including HTTP 429", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async () =>
+        Response.json({ error: "quota detail" }, { status: 429 }),
+      ),
+    );
+
+    await useOrb.getState().run("Build a lantern", connection);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({
+      reason: "provider-error",
+      failureCode: "quota",
+      httpStatus: 429,
+    });
+  });
+
   it("keeps cancellation terminal when delayed geometry finishes late", async () => {
     const build = deferred<typeof browserMetadata>();
     mocks.browserBuild.mockImplementation(() => build.promise);
@@ -183,6 +419,14 @@ describe("store authoring activity", () => {
     expect(activity.at(-1)?.kind).toBe("cancelled");
     expect(activity.some((event) => event.kind === "completed")).toBe(false);
     expect(useOrb.getState().building).toBe(false);
+    const diagnostic = readGenerationDiagnostics().find(
+      (entry) => entry.kind === "generation",
+    );
+    expect(
+      diagnostic && diagnostic.kind === "generation"
+        ? diagnostic.terminal
+        : undefined,
+    ).toMatchObject({ reason: "client-abort" });
   });
 
   it("does not repopulate cleared activity from a late worker callback", async () => {
@@ -201,6 +445,7 @@ describe("store authoring activity", () => {
 
     expect(useOrb.getState().authoringActivity).toEqual([]);
     expect(useOrb.getState().building).toBe(false);
+    expect(readGenerationDiagnostics()).toEqual([]);
   });
 
   it("reports a truthful bounded failure without exposing implementation details", async () => {
@@ -254,5 +499,11 @@ describe("store authoring activity", () => {
     expect(activity.map((event) => event.message)).not.toContain(
       "Preparing Lantern geometry…",
     );
+    expect(
+      readGenerationDiagnostics().some(
+        (entry) =>
+          entry.kind === "generation" && entry.runId !== activity.at(-1)?.runId,
+      ),
+    ).toBe(true);
   });
 });

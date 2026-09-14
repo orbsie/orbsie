@@ -18,7 +18,11 @@ export type ChatGPTStartupRestoreResult =
       tier: ChatGPTPresetLabel;
       models: ChatGPTPresetModel[];
     }
-  | { kind: "reconnect"; tier: ChatGPTPresetLabel }
+  | {
+      kind: "reconnect";
+      tier: ChatGPTPresetLabel;
+      stage: "status" | "models";
+    }
   | {
       kind: "transient";
       tier: ChatGPTPresetLabel;
@@ -98,13 +102,13 @@ export async function restoreChatGPTStartup(
   if (signal.aborted || !isCurrent()) return { kind: "stale" };
   if (!statusResponse.ok) {
     return isConnectionRequired(statusValue) || statusResponse.status === 401
-      ? { kind: "reconnect", tier: preference.tier }
+      ? { kind: "reconnect", tier: preference.tier, stage: "status" }
       : transient("status");
   }
   const status = options.parseStatus(statusValue);
   if (!status) return transient("status");
   if (status.authStatus === "disconnected")
-    return { kind: "reconnect", tier: preference.tier };
+    return { kind: "reconnect", tier: preference.tier, stage: "status" };
   if (status.authStatus !== "connected") return transient("status");
 
   let modelsResponse: RestoreResponse;
@@ -126,7 +130,7 @@ export async function restoreChatGPTStartup(
   if (signal.aborted || !isCurrent()) return { kind: "stale" };
   if (!modelsResponse.ok) {
     return isConnectionRequired(modelsValue) || modelsResponse.status === 401
-      ? { kind: "reconnect", tier: preference.tier }
+      ? { kind: "reconnect", tier: preference.tier, stage: "models" }
       : transient("models");
   }
   const models = options.parseModels(modelsValue);

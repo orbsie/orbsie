@@ -137,13 +137,21 @@ describe("ChatGPT startup preference", () => {
         ),
       ),
     );
-    expect(revoked).toEqual({ kind: "reconnect", tier: "Budget" });
+    expect(revoked).toEqual({
+      kind: "reconnect",
+      tier: "Budget",
+      stage: "status",
+    });
     const disconnected = await restore(() =>
       Promise.resolve(
         response({ lifecycle: "idle", authStatus: "disconnected" }),
       ),
     );
-    expect(disconnected).toEqual({ kind: "reconnect", tier: "Budget" });
+    expect(disconnected).toEqual({
+      kind: "reconnect",
+      tier: "Budget",
+      stage: "status",
+    });
     const unknown = await restore(() =>
       Promise.resolve(response({ lifecycle: "idle", authStatus: "unknown" })),
     );
@@ -180,6 +188,21 @@ describe("ChatGPT startup preference", () => {
       stage: "status",
     });
     expect(catalog).not.toHaveBeenCalled();
+  });
+
+  it("labels a catalog reconnect at the catalog stage", async () => {
+    const result = await restore((url) =>
+      Promise.resolve(
+        url.endsWith("status")
+          ? response({ lifecycle: "idle", authStatus: "connected" })
+          : response({ code: "CHATGPT_CONNECTION_REQUIRED" }, { status: 401 }),
+      ),
+    );
+    expect(result).toEqual({
+      kind: "reconnect",
+      tier: "Budget",
+      stage: "models",
+    });
   });
 
   it("discards a delayed response after a manual provider change", async () => {

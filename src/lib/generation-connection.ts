@@ -1,11 +1,14 @@
 import type { ModelingFeedback } from "./modeling-feedback";
 import type { GenerationFeedback } from "./generation-feedback";
+import { validatedClientRunId } from "./generation-observability";
 
 export type GenerationConnection = {
   provider: string;
   model: string;
   key: string;
   effort?: string;
+  quality?: "Quality" | "Balanced" | "Budget";
+  renderer?: "webgl" | "software" | "unknown";
 };
 
 export function isGenerationReady(connection: GenerationConnection): boolean {
@@ -36,6 +39,7 @@ export function companionOrigin(value: string): string {
 export function generationRequest(
   connection: GenerationConnection,
   payload: object,
+  options: { clientRunId?: string } = {},
 ): { url: string; init: RequestInit } {
   const hosted = connection.provider === "chatgpt-hosted";
   if (
@@ -70,7 +74,16 @@ export function generationRequest(
       url: "/api/chatgpt/generate",
       init: {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(validatedClientRunId(options.clientRunId)
+            ? {
+                "X-Orbsie-Client-Run-Id": validatedClientRunId(
+                  options.clientRunId,
+                )!,
+              }
+            : {}),
+        },
         credentials: "same-origin",
         redirect: "error",
         cache: "no-store",
@@ -84,6 +97,13 @@ export function generationRequest(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(validatedClientRunId(options.clientRunId)
+          ? {
+              "X-Orbsie-Client-Run-Id": validatedClientRunId(
+                options.clientRunId,
+              )!,
+            }
+          : {}),
       },
       body: JSON.stringify({
         ...payload,
