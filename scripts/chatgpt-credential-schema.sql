@@ -9,6 +9,22 @@ CREATE TABLE IF NOT EXISTS chatgpt_credential_connections (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- The intent fence is separate from the remembered connection.  A revoked
+-- intent remains as a tombstone so a late login completion cannot recreate a
+-- connection after Disconnect.
+CREATE TABLE IF NOT EXISTS chatgpt_credential_intents (
+  owner_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
+  epoch integer NOT NULL DEFAULT 0 CHECK (epoch >= 0),
+  pending_attempt_id text,
+  revoked_at timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE chatgpt_credential_connections
+  ADD COLUMN IF NOT EXISTS intent_epoch integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS host_attempt_id text;
+
 CREATE UNIQUE INDEX IF NOT EXISTS chatgpt_credential_active_owner_idx
   ON chatgpt_credential_connections(owner_id)
   WHERE revoked_at IS NULL;

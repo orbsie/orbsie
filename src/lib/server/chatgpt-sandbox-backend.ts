@@ -277,9 +277,11 @@ export function createChatGPTSandboxBackend(options: {
       }
       throw Error("ChatGPT host did not become ready.");
     },
-    async destroy(name: string) {
+    async destroy(name: string, signal?: AbortSignal) {
       try {
-        await (await get(name)).delete({ signal: AbortSignal.timeout(30_000) });
+        await (
+          await get(name, signal)
+        ).delete({ signal: signalFor(signal, 30_000) });
       } catch (error) {
         if (!(error instanceof APIError && error.response.status === 404))
           throw error;

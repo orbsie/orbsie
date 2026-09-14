@@ -4,6 +4,11 @@ import { checkOrigin, getAuth, HttpError } from "@/lib/server/auth";
 import type { readChatGPTHost } from "@/lib/server/chatgpt-host-registry";
 import { createChatGPTHostManager } from "@/lib/server/chatgpt-host-manager";
 import { ChatGPTHostStaleError } from "@/lib/server/chatgpt-host-service";
+import {
+  ChatGPTDurableServiceError,
+  createChatGPTDurableService,
+} from "@/lib/server/chatgpt-durable-service";
+import { ChatGPTCredentialVaultError } from "@/lib/server/chatgpt-credential-vault";
 import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 
 export const runtime = "nodejs";
@@ -53,6 +58,44 @@ function publicError(error: unknown): Response {
       { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
       409,
     );
+  if (error instanceof ChatGPTDurableServiceError) {
+    const status =
+      error.code === "missing"
+        ? 409
+        : error.code === "revoked"
+          ? 409
+          : error.code === "busy"
+            ? 409
+            : error.code === "expired" || error.code === "insufficient-headroom"
+              ? 503
+              : 502;
+    return json(
+      {
+        ...(error.code === "missing" || error.code === "revoked"
+          ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+          : {}),
+        error: error.message,
+      },
+      status,
+    );
+  }
+  if (error instanceof ChatGPTCredentialVaultError) {
+    const status =
+      error.code === "unauthorized"
+        ? 401
+        : error.code === "active-connection"
+          ? 409
+          : 502;
+    return json(
+      {
+        error:
+          status === 502
+            ? "ChatGPT connection could not be completed."
+            : error.message,
+      },
+      status,
+    );
+  }
   if (error instanceof HttpError) {
     const mapped =
       error.status === 401
@@ -227,6 +270,7 @@ async function run(
   method: "GET" | "POST",
   context: RouteContext,
 ) {
+  const routeDeadlineAt = Date.now() + maxDuration * 1000;
   if (process.env.ORBSIE_CHATGPT_HOSTED !== "1")
     return json({ error: "Not found." }, 404);
 
@@ -258,8 +302,17 @@ async function run(
   const manager = createChatGPTHostManager({
     artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
   });
+  const durable = createChatGPTDurableService({ manager });
 
   if (action === "models") {
+    const durableModels = await durable.models(
+      identity,
+      request.signal,
+      routeDeadlineAt,
+    );
+    if (durableModels) return json({ models: durableModels });
+    if (!(await durable.legacyAccessAllowed(identity, request.signal)))
+      failure(409, "Connect your ChatGPT account first.");
     const host = await manager.read(identity);
     if (!host) failure(409, "Connect your ChatGPT account first.");
     const value = await hostResponse(manager, host, "models");
@@ -271,18 +324,61 @@ async function run(
     return json({ models });
   }
   if (action === "status") {
+    const restored = await durable.status(
+      identity,
+      request.signal,
+      routeDeadlineAt,
+    );
+    if (restored) return json(restored);
+    if (!(await durable.legacyAccessAllowed(identity, request.signal)))
+      return json(disconnected());
     const host = await manager.read(identity);
     if (!host) return json(disconnected());
-    return json(snapshot(await hostResponse(manager, host, "status")));
+    const value = await hostResponse(manager, host, "status");
+    if (
+      value &&
+      typeof value === "object" &&
+      (value as Record<string, unknown>).lifecycle === "completed" &&
+      (value as Record<string, unknown>).authStatus === "connected"
+    ) {
+      const completed = await durable.completeAdmittedLogin(
+        identity,
+        host,
+        request.signal,
+      );
+      if (!completed)
+        await durable.migrateLegacyLogin(identity, host, request.signal);
+    }
+    return json(snapshot(value));
   }
 
   if (action === "start") {
-    const host = await manager.ensure(identity);
-    return json(challenge(await hostResponse(manager, host, "start")));
+    const admitted = await durable.start(identity, request.signal);
+    try {
+      return json(
+        challenge(
+          await hostResponse(
+            manager,
+            admitted.host as NonNullable<Host>,
+            "start",
+          ),
+        ),
+      );
+    } catch (error) {
+      await durable
+        .cancelIntent(identity, admitted.intent.epoch)
+        .catch(() => undefined);
+      await manager.disconnect(identity).catch(() => undefined);
+      throw error;
+    }
   }
 
   let host: NonNullable<Host> | null = null;
   let remoteFailed = false;
+  let durableRevoked = false;
+  let capturedOwnerHosts: Parameters<
+    typeof manager.disconnectCapturedHosts
+  >[0] = [];
   try {
     host = await manager.read(identity);
   } catch (error) {
@@ -291,7 +387,14 @@ async function run(
     if (!(error instanceof ChatGPTHostStaleError)) remoteFailed = true;
   }
   let remote: unknown;
-  if (host) {
+  if (action === "logout") {
+    // Revoke before any provider call. A slow/failed remote logout must not
+    // leave a cache that a new browser session can restore.
+    const revocation = await durable.disconnect(identity);
+    durableRevoked = revocation.revoked;
+    capturedOwnerHosts = revocation.hosts;
+  }
+  if (host && !(action === "logout" && durableRevoked)) {
     try {
       remote = await hostResponse(manager, host, action as "cancel" | "logout");
     } catch {
@@ -300,12 +403,17 @@ async function run(
   }
   let disconnectedHost = false;
   try {
-    disconnectedHost = await manager.disconnect(identity);
+    if (action === "logout")
+      await manager.disconnectCapturedHosts(capturedOwnerHosts);
+    else disconnectedHost = await manager.disconnect(identity);
   } catch {
     throw new RouteFailure(502, "ChatGPT host cleanup could not be completed.");
   }
   if (remoteFailed)
     throw new RouteFailure(502, "ChatGPT request could not be completed.");
+  if (action === "logout") return json(disconnected());
+  if (action === "cancel")
+    await durable.cancelIntent(identity).catch(() => undefined);
   if (!host || disconnectedHost) return json(disconnected());
   return json(snapshot(remote));
 }

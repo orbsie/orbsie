@@ -7,6 +7,11 @@ import {
 } from "@/lib/server/auth";
 import { createChatGPTHostManager } from "@/lib/server/chatgpt-host-manager";
 import { ChatGPTHostStaleError } from "@/lib/server/chatgpt-host-service";
+import {
+  ChatGPTDurableServiceError,
+  createChatGPTDurableService,
+} from "@/lib/server/chatgpt-durable-service";
+import { ChatGPTCredentialVaultError } from "@/lib/server/chatgpt-credential-vault";
 import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 import { chatGPTSceneRequestSchema } from "@/lib/server/chatgpt-scene-stream";
 export const runtime = "nodejs";
@@ -19,6 +24,7 @@ export async function POST(request: Request) {
     process.env.ORBSIE_CHATGPT_GENERATION !== "1"
   )
     return Response.json({ error: "Not found." }, { status: 404, headers });
+  const routeDeadlineAt = Date.now() + ROUTE_DEADLINE_MS;
   const routeSignal = AbortSignal.any([
     request.signal,
     AbortSignal.timeout(ROUTE_DEADLINE_MS),
@@ -49,28 +55,15 @@ export async function POST(request: Request) {
       artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
     });
     routeSignal.throwIfAborted();
-    const host = await manager.acquireForGeneration(identity, {
-      signal: routeSignal,
-    });
-    if (!host) throw new HttpError(409, "Connect your ChatGPT account first.");
-    routeSignal.throwIfAborted();
-    const response = await manager.request(host, "generate", {
-      input: input.data,
-      signal: routeSignal,
-    });
-    if (
-      !response.ok ||
-      !response.body ||
-      response.headers.get("content-type")?.split(";")[0] !==
-        "application/x-ndjson"
-    ) {
-      await response.body?.cancel();
-      throw new HttpError(
-        502,
-        "ChatGPT generation could not start. Check your connection and retry.",
-      );
-    }
-    return new Response(response.body, {
+    const durable = createChatGPTDurableService({ manager });
+    const body = await durable.generate(
+      identity,
+      input.data,
+      routeSignal,
+      routeDeadlineAt,
+    );
+    if (!body) throw new HttpError(409, "Connect your ChatGPT account first.");
+    return new Response(body, {
       headers: {
         ...headers,
         "Content-Type": "application/x-ndjson",
@@ -82,6 +75,37 @@ export async function POST(request: Request) {
       return Response.json(
         { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
         { status: 409, headers },
+      );
+    if (error instanceof ChatGPTDurableServiceError)
+      return Response.json(
+        {
+          ...(error.code === "missing" || error.code === "revoked"
+            ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+            : {}),
+          error: error.message,
+        },
+        {
+          status:
+            error.code === "missing" ||
+            error.code === "revoked" ||
+            error.code === "busy"
+              ? 409
+              : 502,
+          headers,
+        },
+      );
+    if (error instanceof ChatGPTCredentialVaultError)
+      return Response.json(
+        {
+          ...(error.code === "unauthorized"
+            ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+            : {}),
+          error:
+            error.code === "unauthorized"
+              ? "Sign in to Orbsie first."
+              : "ChatGPT connection could not be completed.",
+        },
+        { status: error.code === "unauthorized" ? 401 : 502, headers },
       );
     return Response.json(
       {

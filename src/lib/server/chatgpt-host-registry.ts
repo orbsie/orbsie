@@ -12,6 +12,36 @@ const RENEWAL_LOCK_TIMEOUT_MS = 2_000;
 const RENEWAL_STATEMENT_TIMEOUT_MS = 35_000;
 const READ_STATEMENT_TIMEOUT_MS = 35_000;
 type Identity = { ownerId: string; sessionId: string };
+
+export type ChatGPTHostCleanupTarget = {
+  ownerId: string;
+  sessionId: string;
+  attemptId: string;
+  sandboxName: string;
+};
+
+/** Validate and normalize registry metadata before using it for teardown. */
+export function chatGPTHostCleanupTarget(row: {
+  owner_id: string;
+  session_id: string;
+  attempt_id: string;
+  sandbox_name: string | null;
+}): ChatGPTHostCleanupTarget {
+  if (
+    !/^[\x20-\x7e]{1,256}$/.test(row.owner_id) ||
+    !/^[\x20-\x7e]{1,256}$/.test(row.session_id) ||
+    !/^[A-Za-z0-9_-]{1,256}$/.test(row.attempt_id) ||
+    (row.sandbox_name !== null &&
+      row.sandbox_name !== `orbsie-chatgpt-${row.attempt_id}`)
+  )
+    throw new Error("Invalid ChatGPT cleanup metadata.");
+  return {
+    ownerId: row.owner_id,
+    sessionId: row.session_id,
+    attemptId: row.attempt_id,
+    sandboxName: `orbsie-chatgpt-${row.attempt_id}`,
+  };
+}
 function secret() {
   const value = process.env.BETTER_AUTH_SECRET;
   if (!value || Buffer.byteLength(value) < 32)
@@ -389,12 +419,42 @@ export async function readChatGPTHost(
 }
 
 /** Cleanup metadata only; never decrypt an expired host capability. */
-export async function readExpiredChatGPTHost(identity: Identity) {
-  const result = await database().query(
-    `SELECT attempt_id FROM chatgpt_hosts
-     WHERE session_id=$1 AND owner_id=$2 AND expires_at<=now()`,
-    [identity.sessionId, identity.ownerId],
-  );
+export async function readExpiredChatGPTHost(
+  identity: Identity,
+  options: { signal?: AbortSignal } = {},
+) {
+  let result;
+  if (!options.signal) {
+    result = await database().query(
+      `SELECT attempt_id FROM chatgpt_hosts
+       WHERE session_id=$1 AND owner_id=$2 AND expires_at<=now()`,
+      [identity.sessionId, identity.ownerId],
+    );
+  } else {
+    const client = await connectBounded(options.signal);
+    let transaction = false;
+    try {
+      await client.query("BEGIN");
+      transaction = true;
+      await client.query(
+        `SET LOCAL statement_timeout = '${READ_STATEMENT_TIMEOUT_MS}ms'`,
+      );
+      options.signal.throwIfAborted();
+      result = await client.query(
+        `SELECT attempt_id FROM chatgpt_hosts
+         WHERE session_id=$1 AND owner_id=$2 AND expires_at<=now()`,
+        [identity.sessionId, identity.ownerId],
+      );
+      options.signal.throwIfAborted();
+      await client.query("COMMIT");
+      transaction = false;
+    } catch (error) {
+      if (transaction) await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
   const row = result.rows[0];
   if (!row) return null;
   // Provisioning failures may have no stored name or capability yet.
@@ -418,6 +478,27 @@ export async function readSessionChatGPTHost(identity: Identity) {
     attemptId: row.attempt_id as string,
     sandboxName: `orbsie-chatgpt-${row.attempt_id}`,
   };
+}
+
+/** Capture every host currently owned by an account before revocation cleanup. */
+export async function readOwnerChatGPTHosts(
+  identity: Pick<Identity, "ownerId">,
+): Promise<ChatGPTHostCleanupTarget[]> {
+  const result = await database().query<{
+    owner_id: string;
+    session_id: string;
+    attempt_id: string;
+    sandbox_name: string | null;
+  }>(
+    `SELECT owner_id,session_id,attempt_id,sandbox_name
+     FROM chatgpt_hosts WHERE owner_id=$1`,
+    [identity.ownerId],
+  );
+  return result.rows.map((row) => {
+    if (row.owner_id !== identity.ownerId)
+      throw new Error("Invalid ChatGPT cleanup metadata.");
+    return chatGPTHostCleanupTarget(row);
+  });
 }
 
 /** Call only after runtime deletion; attempt matching protects a newer host. */

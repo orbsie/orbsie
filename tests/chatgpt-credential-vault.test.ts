@@ -348,3 +348,70 @@ describe("ChatGPT credential vault lifecycle", () => {
     );
   });
 });
+
+describe("credential finalization cancellation", () => {
+  const lease = {
+    connectionId: context.connectionId,
+    connectionVersion: 1,
+    leaseId: "lease",
+    leaseEpoch: 1,
+  };
+
+  it("rejects a stalled pool acquisition and releases the late client without writing", async () => {
+    let resolveClient!: (client: unknown) => void;
+    const pending = new Promise((resolve) => {
+      resolveClient = resolve;
+    });
+    state.database.mockReturnValue({ connect: () => pending });
+    const controller = new AbortController();
+    const operation = saveChatGPTCredentialCache(
+      actor,
+      lease,
+      new TextEncoder().encode("rotated"),
+      { signal: controller.signal },
+    );
+    const rejection = expect(operation).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    controller.abort();
+    await rejection;
+    const client = { query: vi.fn(), release: vi.fn() };
+    resolveClient(client);
+    await Promise.resolve();
+    expect(client.release).toHaveBeenCalledOnce();
+    expect(client.query).not.toHaveBeenCalled();
+  });
+
+  it("destroys a stalled transaction on cancellation without a late commit", async () => {
+    let rejectQuery!: (error: Error) => void;
+    const client = {
+      query: vi.fn((sql: string) =>
+        sql.includes('FROM "session"')
+          ? new Promise((_resolve, reject) => {
+              rejectQuery = reject;
+            })
+          : Promise.resolve({ rows: [] }),
+      ),
+      release: vi.fn((destroy?: boolean) => {
+        if (destroy) rejectQuery(new Error("connection destroyed"));
+      }),
+    };
+    state.database.mockReturnValue({ connect: async () => client });
+    const controller = new AbortController();
+    const operation = saveChatGPTCredentialCache(
+      actor,
+      lease,
+      new TextEncoder().encode("rotated"),
+      { signal: controller.signal },
+    );
+    const rejection = expect(operation).rejects.toThrow("connection destroyed");
+    await vi.waitFor(() => expect(rejectQuery).toBeTypeOf("function"));
+    controller.abort();
+    await rejection;
+    expect(client.release).toHaveBeenCalledExactlyOnceWith(true);
+    expect(client.query).not.toHaveBeenCalledWith("COMMIT");
+    expect(
+      client.query.mock.calls.some(([sql]) => sql.startsWith("UPDATE")),
+    ).toBe(false);
+  });
+});

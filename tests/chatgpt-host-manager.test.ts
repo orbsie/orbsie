@@ -2,6 +2,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   expired: vi.fn(),
   sessionHost: vi.fn(),
+  ownerHosts: vi.fn(),
   release: vi.fn(),
   read: vi.fn(),
   readForDisconnect: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/lib/server/chatgpt-host-registry", () => ({
   readExpiredChatGPTHost: mocks.expired,
   readSessionChatGPTHost: mocks.sessionHost,
+  readOwnerChatGPTHosts: mocks.ownerHosts,
   releaseChatGPTHost: mocks.release,
   claimChatGPTHost: vi.fn(),
   completeChatGPTHost: vi.fn(),
@@ -50,6 +52,7 @@ beforeEach(() => {
     sandboxName: "orbsie-chatgpt-old",
   });
   mocks.release.mockResolvedValue(true);
+  mocks.ownerHosts.mockResolvedValue([]);
 });
 test("expired host is destroyed and released before a new host is ensured", async () => {
   const events: string[] = [];
@@ -210,4 +213,39 @@ test("session teardown is a no-op without a host and retains metadata on API fai
     "unavailable",
   );
   expect(mocks.release).not.toHaveBeenCalled();
+});
+
+test("disconnects only the exact owner host attempts captured before revocation", async () => {
+  const targets = [
+    {
+      ownerId: identity.ownerId,
+      sessionId: "session-other",
+      attemptId: "attempt-other",
+      sandboxName: "orbsie-chatgpt-attempt-other",
+    },
+    {
+      ownerId: identity.ownerId,
+      sessionId: identity.sessionId,
+      attemptId: "attempt-current",
+      sandboxName: "orbsie-chatgpt-attempt-current",
+    },
+  ];
+  mocks.ownerHosts.mockResolvedValue(targets);
+  const manager = createChatGPTHostManager({ artifactDirectory: "unused" });
+  const captured = await manager.captureOwnerHosts(identity);
+  await manager.disconnectCapturedHosts(captured);
+  expect(mocks.ownerHosts).toHaveBeenCalledWith(identity);
+  expect(mocks.destroy).toHaveBeenNthCalledWith(
+    1,
+    "orbsie-chatgpt-attempt-other",
+  );
+  expect(mocks.release).toHaveBeenNthCalledWith(
+    1,
+    { ownerId: identity.ownerId, sessionId: "session-other" },
+    "attempt-other",
+  );
+  expect(mocks.destroy).toHaveBeenNthCalledWith(
+    2,
+    "orbsie-chatgpt-attempt-current",
+  );
 });

@@ -8,11 +8,17 @@ const state = vi.hoisted(() => ({ database: vi.fn() }));
 vi.mock("../src/lib/server/auth", () => ({ database: state.database }));
 
 import {
+  beginChatGPTCredentialIntent,
+  openChatGPTCredentialCache,
+  bindChatGPTCredentialIntentHost,
   leaseChatGPTCredentialCache,
   readChatGPTCredentialCache,
   rememberChatGPTCredentialCache,
+  revokeChatGPTCredentialAuthorityAndCaptureHosts,
+  revokeChatGPTCredentialAuthority,
   revokeChatGPTCredentialConnection,
   saveChatGPTCredentialCache,
+  withChatGPTCredentialLeaseAdmission,
 } from "../src/lib/server/chatgpt-credential-vault";
 
 const runDatabaseTest =
@@ -50,6 +56,14 @@ async function waitForDatabaseLock(setup: Pool, pids: number[]): Promise<void> {
   }
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
 it.runIf(runDatabaseTest)(
   "serializes real refresh leases and fences revoke, expiry, and session races",
   async () => {
@@ -84,6 +98,9 @@ it.runIf(runDatabaseTest)(
       );
       await setup.query(
         await readFile("scripts/chatgpt-credential-schema.sql", "utf8"),
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-host-schema.sql", "utf8"),
       );
       await setup.query(`INSERT INTO "user"(id) VALUES ($1)`, [ownerId]);
       await setup.query(
@@ -334,6 +351,316 @@ it.runIf(runDatabaseTest)(
       await setup
         .query(`DELETE FROM "session" WHERE "userId"=$1`, [ownerId])
         .catch(() => undefined);
+      await setup
+        .query(`DELETE FROM "user" WHERE id=$1`, [ownerId])
+        .catch(() => undefined);
+      await setup.end();
+      await realPool.end();
+    }
+  },
+  30_000,
+);
+
+it.runIf(runDatabaseTest)(
+  "fences concurrent initial login remember against disconnect and preserves the tombstone",
+  async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw Error("DATABASE_URL is required for this test.");
+    const setup = new Pool({ connectionString: databaseUrl, max: 4 });
+    const realPool = new Pool({ connectionString: databaseUrl, max: 4 });
+    state.database.mockReturnValue(realPool);
+    const ownerId = `intent-test-${randomUUID()}`;
+    const freshOwnerId = `intent-fresh-${randomUUID()}`;
+    const firstSession = `intent-session-${randomUUID()}`;
+    const secondSession = `intent-other-${randomUUID()}`;
+    const actor = { ownerId, sessionId: firstSession };
+    try {
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "user" (id text PRIMARY KEY)`,
+      );
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "session" (
+           id text PRIMARY KEY,
+           "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+           "expiresAt" timestamptz NOT NULL
+         )`,
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-credential-schema.sql", "utf8"),
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-host-schema.sql", "utf8"),
+      );
+      await setup.query(`INSERT INTO "user"(id) VALUES ($1)`, [ownerId]);
+      await setup.query(`INSERT INTO "user"(id) VALUES ($1)`, [freshOwnerId]);
+      await setup.query(
+        `INSERT INTO "session"(id,"userId","expiresAt")
+         VALUES ($1,$3,clock_timestamp()+interval '1 hour'),
+                ($2,$3,clock_timestamp()+interval '1 hour')`,
+        [firstSession, secondSession, ownerId],
+      );
+      const results = await Promise.allSettled([
+        beginChatGPTCredentialIntent(actor),
+        beginChatGPTCredentialIntent({ ownerId, sessionId: secondSession }),
+      ]);
+      const admitted = results.filter(
+        (
+          result,
+        ): result is PromiseFulfilledResult<{
+          epoch: number;
+          pendingAttemptId: string | null;
+        }> => result.status === "fulfilled",
+      );
+      expect(admitted).toHaveLength(1);
+      const rejected = results.filter((result) => result.status === "rejected");
+      expect(rejected).toHaveLength(1);
+      await bindChatGPTCredentialIntentHost(
+        actor,
+        admitted[0]!.value.epoch,
+        "attempt-race",
+      );
+
+      const remember = rememberChatGPTCredentialCache(
+        actor,
+        new TextEncoder().encode("race-cache"),
+        {
+          expectedIntentEpoch: admitted[0]!.value.epoch,
+          expectedHostAttemptId: "attempt-race",
+        },
+      );
+      const disconnectActor = { ownerId, sessionId: secondSession };
+      const disconnect = revokeChatGPTCredentialAuthority(disconnectActor);
+      const race = await Promise.allSettled([remember, disconnect]);
+      expect(race[1]).toMatchObject({ status: "fulfilled" });
+      const active = await setup.query(
+        `SELECT id FROM chatgpt_credential_connections
+         WHERE owner_id=$1 AND revoked_at IS NULL`,
+        [ownerId],
+      );
+      expect(active.rows).toEqual([]);
+      const stored = await setup.query(
+        `SELECT v.connection_id FROM chatgpt_credential_vault v
+         JOIN chatgpt_credential_connections c ON c.id=v.connection_id
+         WHERE c.owner_id=$1`,
+        [ownerId],
+      );
+      expect(stored.rows).toEqual([]);
+      const intent = await setup.query<{
+        epoch: number;
+        revoked_at: Date | null;
+      }>(
+        `SELECT epoch,revoked_at FROM chatgpt_credential_intents WHERE owner_id=$1`,
+        [ownerId],
+      );
+      expect(intent.rows[0]?.epoch).toBeGreaterThan(admitted[0]!.value.epoch);
+      expect(intent.rows[0]?.revoked_at).not.toBeNull();
+      // An explicit new Start can issue a later epoch, while restore/status
+      // never creates one implicitly from the tombstone.
+      const next = await beginChatGPTCredentialIntent(actor);
+      expect(next.epoch).toBeGreaterThan(admitted[0]!.value.epoch);
+      const freshSessionId = `intent-fresh-session-${randomUUID()}`;
+      await setup.query(
+        `INSERT INTO "session"(id,"userId","expiresAt")
+         VALUES ($1,$2,clock_timestamp()+interval '1 hour')`,
+        [freshSessionId, freshOwnerId],
+      );
+      const freshActor = { ownerId: freshOwnerId, sessionId: freshSessionId };
+      await expect(revokeChatGPTCredentialAuthority(freshActor)).resolves.toBe(
+        false,
+      );
+      await expect(
+        beginChatGPTCredentialIntent(freshActor),
+      ).resolves.toMatchObject({ epoch: 2 });
+    } finally {
+      await setup
+        .query(`DELETE FROM "user" WHERE id=$1`, [ownerId])
+        .catch(() => undefined);
+      await setup
+        .query(`DELETE FROM "user" WHERE id=$1`, [freshOwnerId])
+        .catch(() => undefined);
+      await setup.end();
+      await realPool.end();
+    }
+  },
+  30_000,
+);
+
+it.runIf(runDatabaseTest)(
+  "serializes runtime admission with disconnect in both orderings",
+  async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw Error("DATABASE_URL is required for this test.");
+    const setup = new Pool({ connectionString: databaseUrl, max: 4 });
+    const realPool = new Pool({ connectionString: databaseUrl, max: 4 });
+    state.database.mockReturnValue(realPool);
+    const ownerId = `admission-test-${randomUUID()}`;
+    const firstSession = `admission-session-${randomUUID()}`;
+    const secondSession = `admission-other-${randomUUID()}`;
+    const firstActor = { ownerId, sessionId: firstSession };
+    const secondActor = { ownerId, sessionId: secondSession };
+    try {
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "user" (id text PRIMARY KEY)`,
+      );
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "session" (
+           id text PRIMARY KEY,
+           "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+           "expiresAt" timestamptz NOT NULL
+         )`,
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-credential-schema.sql", "utf8"),
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-host-schema.sql", "utf8"),
+      );
+      await setup.query(`INSERT INTO "user"(id) VALUES ($1)`, [ownerId]);
+      await setup.query(
+        `INSERT INTO "session"(id,"userId","expiresAt")
+         VALUES ($1,$3,clock_timestamp()+interval '1 hour'),
+                ($2,$3,clock_timestamp()+interval '1 hour')`,
+        [firstSession, secondSession, ownerId],
+      );
+      const capturedAttemptId = randomUUID();
+      await setup.query(
+        `INSERT INTO chatgpt_hosts
+         (session_id,owner_id,attempt_id,state,sandbox_name,capability_ciphertext,expires_at)
+         VALUES ($1,$2,$3,'ready',$4,'synthetic-capability',clock_timestamp()+interval '1 hour')`,
+        [
+          secondSession,
+          ownerId,
+          capturedAttemptId,
+          `orbsie-chatgpt-${capturedAttemptId}`,
+        ],
+      );
+
+      const connection = await rememberChatGPTCredentialCache(
+        firstActor,
+        new TextEncoder().encode("admission-cache"),
+      );
+      const leased = await leaseChatGPTCredentialCache(
+        firstActor,
+        connection.connectionId,
+      );
+      if (leased.kind !== "leased") throw Error("expected an admission lease");
+
+      // Verify real pg cancellation during a blocked save, not only a fake
+      // client's release callback: the aborted transaction must never commit.
+      const pid = await realPool.query<{ pid: number }>(
+        "SELECT pg_backend_pid() AS pid",
+      );
+      const locker = await setup.connect();
+      try {
+        await locker.query("BEGIN");
+        await locker.query('SELECT id FROM "session" WHERE id=$1 FOR UPDATE', [
+          firstSession,
+        ]);
+        const controller = new AbortController();
+        const saving = saveChatGPTCredentialCache(
+          firstActor,
+          leased.lease,
+          new TextEncoder().encode("must-not-be-saved"),
+          { signal: controller.signal },
+        );
+        const rejectedSave = expect(saving).rejects.toBeDefined();
+        await waitForDatabaseLock(setup, [pid.rows[0]!.pid]);
+        controller.abort();
+        await rejectedSave;
+        await locker.query("ROLLBACK");
+        const stored = await setup.query<{ ciphertext: string }>(
+          "SELECT ciphertext FROM chatgpt_credential_vault WHERE connection_id=$1",
+          [connection.connectionId],
+        );
+        expect(
+          Buffer.from(
+            openChatGPTCredentialCache(stored.rows[0]!.ciphertext, {
+              ownerId,
+              connectionId: connection.connectionId,
+              connectionVersion: connection.connectionVersion,
+            }),
+          ).toString(),
+        ).toBe("admission-cache");
+      } finally {
+        await locker.query("ROLLBACK").catch(() => undefined);
+        locker.release();
+      }
+
+      const started = deferred<void>();
+      const release = deferred<void>();
+      const admission = withChatGPTCredentialLeaseAdmission(
+        firstActor,
+        leased.lease,
+        async () => {
+          started.resolve();
+          await release.promise;
+          return "runtime-started";
+        },
+      );
+      await started.promise;
+
+      let disconnectSettled = false;
+      const disconnect = revokeChatGPTCredentialAuthorityAndCaptureHosts(
+        secondActor,
+      ).then((value) => {
+        disconnectSettled = true;
+        return value;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(disconnectSettled).toBe(false);
+      release.resolve();
+      await expect(admission).resolves.toEqual({
+        kind: "admitted",
+        value: "runtime-started",
+      });
+      await expect(disconnect).resolves.toMatchObject({
+        revoked: true,
+        hosts: [
+          expect.objectContaining({
+            sessionId: secondSession,
+            attemptId: capturedAttemptId,
+            sandboxName: `orbsie-chatgpt-${capturedAttemptId}`,
+          }),
+        ],
+      });
+
+      // A stale lease obtained before a completed Disconnect cannot admit a
+      // new refresh-capable runtime. Start creates a new fenced epoch first.
+      const next = await beginChatGPTCredentialIntent(firstActor);
+      await bindChatGPTCredentialIntentHost(
+        firstActor,
+        next.epoch,
+        "admission-next",
+      );
+      const nextConnection = await rememberChatGPTCredentialCache(
+        firstActor,
+        new TextEncoder().encode("next-cache"),
+        {
+          expectedIntentEpoch: next.epoch,
+          expectedHostAttemptId: "admission-next",
+        },
+      );
+      const staleLease = await leaseChatGPTCredentialCache(
+        firstActor,
+        nextConnection.connectionId,
+      );
+      if (staleLease.kind !== "leased") throw Error("expected next lease");
+      await expect(
+        revokeChatGPTCredentialAuthorityAndCaptureHosts(secondActor),
+      ).resolves.toMatchObject({ revoked: true });
+      let calledAfterDisconnect = false;
+      await expect(
+        withChatGPTCredentialLeaseAdmission(
+          firstActor,
+          staleLease.lease,
+          async () => {
+            calledAfterDisconnect = true;
+            return "must-not-start";
+          },
+        ),
+      ).resolves.toEqual({ kind: "missing" });
+      expect(calledAfterDisconnect).toBe(false);
+    } finally {
       await setup
         .query(`DELETE FROM "user" WHERE id=$1`, [ownerId])
         .catch(() => undefined);

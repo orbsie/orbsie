@@ -8,6 +8,19 @@ const mocks = vi.hoisted(() => ({
   ensure: vi.fn(),
   request: vi.fn(),
   disconnect: vi.fn(),
+  privateOperation: vi.fn(),
+  createDurable: vi.fn(),
+  durableStatus: vi.fn(),
+  durableModels: vi.fn(),
+  durableComplete: vi.fn(),
+  durableLegacyAllowed: vi.fn(),
+  durableGenerate: vi.fn(),
+  durableStart: vi.fn(),
+  durableMigrate: vi.fn(),
+  durableCancel: vi.fn(),
+  durableDisconnect: vi.fn(),
+  captureOwnerHosts: vi.fn(),
+  disconnectCapturedHosts: vi.fn(),
   getSession: vi.fn(),
   HttpError: class HttpError extends Error {
     status: number;
@@ -33,6 +46,10 @@ vi.mock("@/lib/server/chatgpt-host-registry", () => ({
 }));
 vi.mock("@/lib/server/chatgpt-host-manager", () => ({
   createChatGPTHostManager: mocks.createManager,
+}));
+vi.mock("@/lib/server/chatgpt-durable-service", () => ({
+  createChatGPTDurableService: mocks.createDurable,
+  ChatGPTDurableServiceError: class extends Error {},
 }));
 
 import { GET, POST } from "../src/app/api/chatgpt/[action]/route";
@@ -84,6 +101,32 @@ describe("authenticated ChatGPT routes", () => {
       ensure: mocks.ensure,
       request: mocks.request,
       disconnect: mocks.disconnect,
+      privateOperation: mocks.privateOperation,
+      captureOwnerHosts: mocks.captureOwnerHosts,
+      disconnectCapturedHosts: mocks.disconnectCapturedHosts,
+    });
+    mocks.durableStatus.mockResolvedValue(null);
+    mocks.durableModels.mockResolvedValue(null);
+    mocks.durableComplete.mockResolvedValue(false);
+    mocks.durableLegacyAllowed.mockResolvedValue(true);
+    mocks.durableStart.mockImplementation(async () => ({
+      host,
+      intent: { epoch: 1 },
+    }));
+    mocks.durableMigrate.mockResolvedValue(undefined);
+    mocks.durableCancel.mockResolvedValue(false);
+    mocks.durableDisconnect.mockResolvedValue({ revoked: false, hosts: [] });
+    mocks.captureOwnerHosts.mockResolvedValue([]);
+    mocks.disconnectCapturedHosts.mockResolvedValue(true);
+    mocks.createDurable.mockReturnValue({
+      status: mocks.durableStatus,
+      models: mocks.durableModels,
+      start: mocks.durableStart,
+      completeAdmittedLogin: mocks.durableComplete,
+      migrateLegacyLogin: mocks.durableMigrate,
+      legacyAccessAllowed: mocks.durableLegacyAllowed,
+      cancelIntent: mocks.durableCancel,
+      disconnect: mocks.durableDisconnect,
     });
   });
 
@@ -114,7 +157,8 @@ describe("authenticated ChatGPT routes", () => {
     } as RequestInit);
     const response = await POST(input, context("logout"));
     expect(response.status).toBe(200);
-    expect(mocks.disconnect).toHaveBeenCalledWith(identity);
+    expect(mocks.captureOwnerHosts).not.toHaveBeenCalled();
+    expect(mocks.disconnectCapturedHosts).toHaveBeenCalledWith([]);
   });
 
   it("uses the authenticated user and session, and status never provisions", async () => {
@@ -126,6 +170,20 @@ describe("authenticated ChatGPT routes", () => {
     });
     expect(mocks.readHost).toHaveBeenCalledWith(identity);
     expect(mocks.ensure).not.toHaveBeenCalled();
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
+
+  it("does not fall back to a legacy host after intent revocation", async () => {
+    mocks.durableStatus.mockResolvedValue(null);
+    mocks.durableLegacyAllowed.mockResolvedValue(false);
+    mocks.readHost.mockResolvedValue(host);
+    const response = await GET(request("status"), context("status"));
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({
+      lifecycle: "idle",
+      authStatus: "disconnected",
+    });
+    expect(mocks.readHost).not.toHaveBeenCalled();
     expect(mocks.request).not.toHaveBeenCalled();
   });
 
@@ -215,7 +273,10 @@ describe("authenticated ChatGPT routes", () => {
       verificationUrl: "https://auth.openai.com/codex/device",
       expiresAt: 123,
     });
-    expect(mocks.ensure).toHaveBeenCalledWith(identity);
+    expect(mocks.durableStart).toHaveBeenCalledWith(
+      identity,
+      expect.any(AbortSignal),
+    );
     expect(mocks.request).toHaveBeenCalledWith(host, "start");
   });
 
@@ -280,9 +341,16 @@ describe("authenticated ChatGPT routes", () => {
 
   it("cleans up logout and returns a disconnected public state", async () => {
     mocks.readHost.mockResolvedValue(host);
-    mocks.request.mockResolvedValueOnce(
-      Response.json({ lifecycle: "cancelled", authStatus: "disconnected" }),
-    );
+    const captured = {
+      ownerId: identity.ownerId,
+      sessionId: "other-session",
+      attemptId: "other-attempt",
+      sandboxName: "orbsie-chatgpt-other-attempt",
+    };
+    mocks.durableDisconnect.mockResolvedValue({
+      revoked: true,
+      hosts: [captured],
+    });
     const response = await POST(
       request("logout", { method: "POST" }),
       context("logout"),
@@ -292,7 +360,8 @@ describe("authenticated ChatGPT routes", () => {
       lifecycle: "idle",
       authStatus: "disconnected",
     });
-    expect(mocks.disconnect).toHaveBeenCalledWith(identity);
+    expect(mocks.captureOwnerHosts).not.toHaveBeenCalled();
+    expect(mocks.disconnectCapturedHosts).toHaveBeenCalledWith([captured]);
   });
 
   it("rejects origins, query strings, bodies, and wrong actions or methods", async () => {

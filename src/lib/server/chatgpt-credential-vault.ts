@@ -7,6 +7,10 @@ import {
 } from "node:crypto";
 import type { PoolClient } from "pg";
 import { database } from "./auth";
+import {
+  chatGPTHostCleanupTarget,
+  type ChatGPTHostCleanupTarget,
+} from "./chatgpt-host-registry";
 
 export const CHATGPT_CREDENTIAL_VAULT_PURPOSE =
   "orbsie-chatgpt-credential-vault-v1";
@@ -44,7 +48,10 @@ export type ChatGPTCredentialLease = ChatGPTCredentialConnection & {
 
 export type ChatGPTCredentialLeaseResult =
   | { kind: "leased"; lease: ChatGPTCredentialLease }
-  | { kind: "missing" | "expired" | "busy" | "insufficient-headroom" };
+  | {
+      kind:
+        "missing" | "expired" | "busy" | "insufficient-headroom" | "revoked";
+    };
 
 export type ChatGPTCredentialSaveResult =
   { kind: "saved" } | { kind: "stale" | "missing" | "expired" };
@@ -67,6 +74,21 @@ export type ChatGPTCredentialCacheContext = {
   ownerId: string;
   connectionId: string;
   connectionVersion: number;
+};
+
+export type ChatGPTCredentialIntent = {
+  epoch: number;
+  pendingAttemptId: string | null;
+};
+
+export type ChatGPTCredentialRememberOptions = {
+  expectedIntentEpoch?: number;
+  expectedHostAttemptId?: string;
+};
+
+export type ChatGPTCredentialRevocation = {
+  revoked: boolean;
+  hosts: ChatGPTHostCleanupTarget[];
 };
 type Context = ChatGPTCredentialCacheContext;
 
@@ -262,6 +284,41 @@ async function currentClock(client: PoolClient) {
   return now;
 }
 
+async function connectBounded(signal?: AbortSignal): Promise<PoolClient> {
+  signal?.throwIfAborted();
+  const pending = database().connect();
+  if (!signal) return pending;
+  return new Promise<PoolClient>((resolve, reject) => {
+    let settled = false;
+    const finish = () => signal.removeEventListener("abort", abort);
+    const abort = () => {
+      if (settled) return;
+      settled = true;
+      finish();
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) abort();
+    pending.then(
+      (client) => {
+        if (settled) {
+          client.release();
+          return;
+        }
+        settled = true;
+        finish();
+        resolve(client);
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        finish();
+        reject(error);
+      },
+    );
+  });
+}
+
 function actorValue(actor: ChatGPTCredentialVaultActor) {
   if (!validPart(actor.ownerId) || !validPart(actor.sessionId)) throw invalid();
   return actor;
@@ -272,10 +329,34 @@ function connectionIdValue(value: string | undefined) {
   return value;
 }
 
-async function transaction<T>(fn: (client: PoolClient) => Promise<T>) {
-  const client = await database().connect();
+function intentEpochValue(value: unknown) {
+  if (!Number.isSafeInteger(value) || (value as number) < 1) throw invalid();
+  return value as number;
+}
+
+function attemptIdValue(value: string | undefined) {
+  if (value !== undefined && !/^[A-Za-z0-9_-]{1,256}$/.test(value))
+    throw invalid();
+  return value;
+}
+
+async function transaction<T>(
+  fn: (client: PoolClient) => Promise<T>,
+  signal?: AbortSignal,
+) {
+  const client = await connectBounded(signal);
   let begun = false;
+  let discarded = false;
+  const abort = () => {
+    if (discarded) return;
+    discarded = true;
+    // Destroy this checked-out connection: a queued query or pool wait must
+    // not outlive credential-finalization authority and later commit a write.
+    client.release(true);
+  };
+  signal?.addEventListener("abort", abort, { once: true });
   try {
+    signal?.throwIfAborted();
     await client.query("BEGIN");
     begun = true;
     await client.query(
@@ -284,15 +365,19 @@ async function transaction<T>(fn: (client: PoolClient) => Promise<T>) {
     await client.query(
       `SET LOCAL statement_timeout = '${CHATGPT_CREDENTIAL_STATEMENT_TIMEOUT_MS}ms'`,
     );
+    signal?.throwIfAborted();
     const value = await fn(client);
+    signal?.throwIfAborted();
     await client.query("COMMIT");
     begun = false;
     return value;
   } catch (error) {
-    if (begun) await client.query("ROLLBACK").catch(() => undefined);
+    if (begun && !discarded)
+      await client.query("ROLLBACK").catch(() => undefined);
     throw error;
   } finally {
-    client.release();
+    signal?.removeEventListener("abort", abort);
+    if (!discarded) client.release();
   }
 }
 
@@ -310,6 +395,18 @@ async function requireActiveSession(
   const expiresAt = dateValue(result.rows[0]?.expires_at);
   if (!expiresAt) throw unauthorized();
   return expiresAt;
+}
+
+/** Serialize all connection-intent and vault mutations for an owner. */
+async function lockOwner(
+  client: PoolClient,
+  actor: ChatGPTCredentialVaultActor,
+) {
+  const result = await client.query<{ id: string }>(
+    `SELECT id FROM "user" WHERE id=$1 FOR UPDATE`,
+    [actor.ownerId],
+  );
+  if (!result.rows.length) throw unauthorized();
 }
 
 function assertSessionCurrent(expiresAt: Date, now: Date) {
@@ -341,9 +438,17 @@ function leaseView(row: VaultRow, cache: Uint8Array): ChatGPTCredentialLease {
 export async function rememberChatGPTCredentialCache(
   actorInput: ChatGPTCredentialVaultActor,
   cacheInput: Uint8Array,
+  options: ChatGPTCredentialRememberOptions = {},
 ) {
   const actor = actorValue(actorInput);
   const cache = cacheBuffer(cacheInput);
+  const expectedIntentEpoch =
+    options.expectedIntentEpoch === undefined
+      ? undefined
+      : intentEpochValue(options.expectedIntentEpoch);
+  const expectedHostAttemptId = attemptIdValue(options.expectedHostAttemptId);
+  if (expectedIntentEpoch === undefined && expectedHostAttemptId !== undefined)
+    throw invalid();
   const connectionId = randomUUID();
   const connectionVersion = 1;
   const ciphertext = sealChatGPTCredentialCache(cache, {
@@ -354,6 +459,26 @@ export async function rememberChatGPTCredentialCache(
 
   return transaction(async (client) => {
     const sessionExpiresAt = await requireActiveSession(client, actor);
+    if (expectedIntentEpoch !== undefined) await lockOwner(client, actor);
+    if (expectedIntentEpoch !== undefined) {
+      const intent = await client.query<{
+        epoch: number;
+        pending_attempt_id: string | null;
+        revoked_at: Date | string | null;
+      }>(
+        `SELECT epoch,pending_attempt_id,revoked_at FROM chatgpt_credential_intents
+         WHERE owner_id=$1 FOR UPDATE`,
+        [actor.ownerId],
+      );
+      const row = intent.rows[0];
+      if (
+        !row ||
+        row.epoch !== expectedIntentEpoch ||
+        row.pending_attempt_id !== (expectedHostAttemptId ?? null) ||
+        row.revoked_at
+      )
+        throw unauthorized();
+    }
     const current = await client.query<{
       id: string;
       expires_at: Date | string;
@@ -387,14 +512,31 @@ export async function rememberChatGPTCredentialCache(
     const expiresAt = new Date(
       currentNow.getTime() + CHATGPT_CREDENTIAL_RETENTION_MS,
     );
-    const inserted = await client.query<ConnectionRow>(
-      `INSERT INTO chatgpt_credential_connections
-       (id,owner_id,connection_version,expires_at)
-       VALUES ($1,$2,$3,$4)
-       ON CONFLICT DO NOTHING
-       RETURNING id,owner_id,connection_version,expires_at,revoked_at`,
-      [connectionId, actor.ownerId, connectionVersion, expiresAt],
-    );
+    const inserted =
+      expectedIntentEpoch === undefined
+        ? await client.query<ConnectionRow>(
+            `INSERT INTO chatgpt_credential_connections
+             (id,owner_id,connection_version,expires_at)
+             VALUES ($1,$2,$3,$4)
+             ON CONFLICT DO NOTHING
+             RETURNING id,owner_id,connection_version,expires_at,revoked_at`,
+            [connectionId, actor.ownerId, connectionVersion, expiresAt],
+          )
+        : await client.query<ConnectionRow>(
+            `INSERT INTO chatgpt_credential_connections
+             (id,owner_id,connection_version,expires_at,intent_epoch,host_attempt_id)
+             VALUES ($1,$2,$3,$4,$5,$6)
+             ON CONFLICT DO NOTHING
+             RETURNING id,owner_id,connection_version,expires_at,revoked_at`,
+            [
+              connectionId,
+              actor.ownerId,
+              connectionVersion,
+              expiresAt,
+              expectedIntentEpoch,
+              expectedHostAttemptId ?? null,
+            ],
+          );
     if (!inserted.rows.length) throw activeConnection();
     await client.query(
       `INSERT INTO chatgpt_credential_vault
@@ -402,8 +544,297 @@ export async function rememberChatGPTCredentialCache(
        VALUES ($1,$2,$3)`,
       [connectionId, actor.ownerId, ciphertext],
     );
+    if (expectedIntentEpoch !== undefined) {
+      await client.query(
+        `UPDATE chatgpt_credential_intents
+         SET pending_attempt_id=NULL,updated_at=clock_timestamp()
+         WHERE owner_id=$1 AND epoch=$2 AND pending_attempt_id=$3`,
+        [actor.ownerId, expectedIntentEpoch, expectedHostAttemptId ?? null],
+      );
+    }
     return connectionView(inserted.rows[0]);
   });
+}
+
+/**
+ * Complete a login explicitly admitted by Start. A missing intent is returned
+ * to let the caller use the migration-only path for legacy logins; a revoked
+ * or differently-bound intent is never replaced.
+ */
+export async function completeChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  attemptIdInput: string,
+  options: { signal?: AbortSignal } = {},
+) {
+  const actor = actorValue(actorInput);
+  const attemptId = attemptIdValue(attemptIdInput);
+  if (!attemptId) throw invalid();
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const result = await client.query<{
+      epoch: number;
+      pending_attempt_id: string | null;
+      revoked_at: Date | string | null;
+    }>(
+      `SELECT epoch,pending_attempt_id,revoked_at
+       FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const row = result.rows[0];
+    if (!row) return null;
+    if (row.revoked_at || row.pending_attempt_id !== attemptId)
+      throw unauthorized();
+    return { epoch: row.epoch, pendingAttemptId: attemptId };
+  }, options.signal);
+}
+
+/** Check whether a legacy runtime may still be consulted during migration. */
+export async function canUseLegacyChatGPTHost(
+  actorInput: ChatGPTCredentialVaultActor,
+  options: { signal?: AbortSignal } = {},
+) {
+  const actor = actorValue(actorInput);
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const result = await client.query<{ revoked_at: Date | string | null }>(
+      `SELECT revoked_at FROM chatgpt_credential_intents
+       WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    return !result.rows[0]?.revoked_at;
+  }, options.signal);
+}
+
+/**
+ * Admit an explicit device-login attempt. The owner intent row is the fence
+ * for a connection that does not exist yet, so Disconnect can invalidate it
+ * before a late login callback tries to remember its cache.
+ */
+export async function beginChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  options: { signal?: AbortSignal } = {},
+): Promise<ChatGPTCredentialIntent> {
+  const actor = actorValue(actorInput);
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{
+      epoch: number;
+      pending_attempt_id: string | null;
+    }>(
+      `SELECT epoch,pending_attempt_id FROM chatgpt_credential_intents
+       WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const active = await client.query<{ id: string }>(
+      `SELECT id FROM chatgpt_credential_connections
+       WHERE owner_id=$1 AND revoked_at IS NULL AND expires_at>clock_timestamp()
+       FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const currentNow = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, currentNow);
+    if (active.rows.length || intent.rows[0]?.pending_attempt_id)
+      throw activeConnection();
+    const epoch = (intent.rows[0]?.epoch ?? 0) + 1;
+    const reservation = `pending:${epoch}`;
+    await client.query(
+      `INSERT INTO chatgpt_credential_intents(owner_id,epoch,pending_attempt_id,revoked_at,updated_at)
+       VALUES ($1,$2,$3,NULL,clock_timestamp())
+       ON CONFLICT(owner_id) DO UPDATE SET epoch=EXCLUDED.epoch,
+         pending_attempt_id=EXCLUDED.pending_attempt_id,revoked_at=NULL,updated_at=clock_timestamp()`,
+      [actor.ownerId, epoch, reservation],
+    );
+    return { epoch, pendingAttemptId: reservation };
+  }, options.signal);
+}
+
+/** Bind a newly admitted host attempt to the still-pending owner intent. */
+export async function bindChatGPTCredentialIntentHost(
+  actorInput: ChatGPTCredentialVaultActor,
+  epochInput: number,
+  attemptIdInput: string,
+  options: { signal?: AbortSignal } = {},
+) {
+  const actor = actorValue(actorInput);
+  const epoch = intentEpochValue(epochInput);
+  const attemptId = attemptIdValue(attemptIdInput);
+  if (!attemptId) throw invalid();
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{
+      epoch: number;
+      pending_attempt_id: string | null;
+    }>(
+      `SELECT epoch,pending_attempt_id FROM chatgpt_credential_intents
+       WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const row = intent.rows[0];
+    if (!row || row.epoch !== epoch) throw unauthorized();
+    if (
+      row.pending_attempt_id &&
+      row.pending_attempt_id !== attemptId &&
+      row.pending_attempt_id !== `pending:${epoch}`
+    )
+      throw activeConnection();
+    await client.query(
+      `UPDATE chatgpt_credential_intents SET pending_attempt_id=$1,updated_at=clock_timestamp()
+       WHERE owner_id=$2 AND epoch=$3`,
+      [attemptId, actor.ownerId, epoch],
+    );
+    return { epoch, pendingAttemptId: attemptId };
+  }, options.signal);
+}
+
+/** Migration-only admission for a verified legacy login started before this fence existed. */
+export async function admitLegacyChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  attemptIdInput: string,
+  options: { signal?: AbortSignal } = {},
+) {
+  const actor = actorValue(actorInput);
+  const attemptId = attemptIdValue(attemptIdInput);
+  if (!attemptId) throw invalid();
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{ epoch: number }>(
+      `SELECT epoch FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const active = await client.query<{ id: string }>(
+      `SELECT id FROM chatgpt_credential_connections
+       WHERE owner_id=$1 AND revoked_at IS NULL AND expires_at>clock_timestamp()
+       FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const currentNow = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, currentNow);
+    if (active.rows.length) throw activeConnection();
+    if (intent.rows.length) throw unauthorized();
+    await client.query(
+      `INSERT INTO chatgpt_credential_intents(owner_id,epoch,pending_attempt_id,updated_at)
+       VALUES ($1,1,$2,clock_timestamp())`,
+      [actor.ownerId, attemptId],
+    );
+    return { epoch: 1, pendingAttemptId: attemptId };
+  }, options.signal);
+}
+
+/** Cancel a newly admitted login without revoking a previously remembered connection. */
+export async function cancelChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  epochInput?: number,
+) {
+  const actor = actorValue(actorInput);
+  const epoch =
+    epochInput === undefined ? undefined : intentEpochValue(epochInput);
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{ epoch: number }>(
+      `SELECT epoch FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const row = intent.rows[0];
+    if (!row || (epoch !== undefined && row.epoch !== epoch)) return false;
+    const active = await client.query<{ id: string }>(
+      `SELECT id FROM chatgpt_credential_connections
+       WHERE owner_id=$1 AND revoked_at IS NULL AND expires_at>clock_timestamp()
+       FOR UPDATE`,
+      [actor.ownerId],
+    );
+    if (active.rows.length) return false;
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    await client.query(
+      `UPDATE chatgpt_credential_intents
+       SET epoch=epoch+1,pending_attempt_id=NULL,revoked_at=clock_timestamp(),updated_at=clock_timestamp()
+       WHERE owner_id=$1 AND epoch=$2`,
+      [actor.ownerId, row.epoch],
+    );
+    return true;
+  });
+}
+
+/** Revoke authority and capture every owner host under one owner fence. */
+export async function revokeChatGPTCredentialAuthorityAndCaptureHosts(
+  actorInput: ChatGPTCredentialVaultActor,
+): Promise<ChatGPTCredentialRevocation> {
+  const actor = actorValue(actorInput);
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{ epoch: number }>(
+      `SELECT epoch FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const hosts = await client.query<{
+      owner_id: string;
+      session_id: string;
+      attempt_id: string;
+      sandbox_name: string | null;
+    }>(
+      `SELECT owner_id,session_id,attempt_id,sandbox_name
+       FROM chatgpt_hosts WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    if (intent.rows.length) {
+      await client.query(
+        `UPDATE chatgpt_credential_intents
+         SET epoch=epoch+1,pending_attempt_id=NULL,revoked_at=clock_timestamp(),updated_at=clock_timestamp()
+         WHERE owner_id=$1`,
+        [actor.ownerId],
+      );
+    } else {
+      await client.query(
+        `INSERT INTO chatgpt_credential_intents(owner_id,epoch,revoked_at,updated_at)
+         VALUES ($1,1,clock_timestamp(),clock_timestamp())`,
+        [actor.ownerId],
+      );
+    }
+    const connections = await client.query<{ id: string }>(
+      `SELECT id FROM chatgpt_credential_connections
+       WHERE owner_id=$1 AND revoked_at IS NULL FOR UPDATE`,
+      [actor.ownerId],
+    );
+    for (const row of connections.rows) {
+      await client.query(
+        `UPDATE chatgpt_credential_connections
+         SET revoked_at=clock_timestamp(),connection_version=connection_version+1,updated_at=clock_timestamp()
+         WHERE id=$1 AND owner_id=$2`,
+        [row.id, actor.ownerId],
+      );
+      await client.query(
+        `DELETE FROM chatgpt_credential_vault WHERE connection_id=$1`,
+        [row.id],
+      );
+    }
+    return {
+      revoked: connections.rows.length > 0,
+      hosts: hosts.rows.map(chatGPTHostCleanupTarget),
+    };
+  });
+}
+
+/** Revoke remembered authority before any remote logout or sandbox cleanup. */
+export async function revokeChatGPTCredentialAuthority(
+  actorInput: ChatGPTCredentialVaultActor,
+) {
+  return (await revokeChatGPTCredentialAuthorityAndCaptureHosts(actorInput))
+    .revoked;
 }
 
 /** Read connection metadata; decrypted cache bytes are returned only by a lease. */
@@ -452,6 +883,7 @@ export async function readChatGPTCredentialCache(
 export async function leaseChatGPTCredentialCache(
   actorInput: ChatGPTCredentialVaultActor,
   connectionIdInput?: string,
+  options: { signal?: AbortSignal } = {},
 ): Promise<ChatGPTCredentialLeaseResult> {
   const actor = actorValue(actorInput);
   const connectionId = connectionIdValue(connectionIdInput);
@@ -471,7 +903,18 @@ export async function leaseChatGPTCredentialCache(
       [actor.ownerId, connectionId ?? null, actor.sessionId],
     );
     const row = result.rows[0];
-    if (!row) return { kind: "missing" };
+    if (!row) {
+      const intent = await client.query<{ revoked_at: Date | string | null }>(
+        `SELECT revoked_at FROM chatgpt_credential_intents
+         WHERE owner_id=$1 FOR UPDATE`,
+        [actor.ownerId],
+      );
+      const missingNow = await currentClock(client);
+      assertSessionCurrent(sessionExpiresAt, missingNow);
+      return intent.rows[0]?.revoked_at
+        ? { kind: "revoked" }
+        : { kind: "missing" };
+    }
     const currentNow = await currentClock(client);
     assertSessionCurrent(sessionExpiresAt, currentNow);
     const expiresAt = dateValue(row.expires_at);
@@ -541,7 +984,67 @@ export async function leaseChatGPTCredentialCache(
         cache,
       ),
     };
-  });
+  }, options.signal);
+}
+
+/**
+ * Hold the owner/connection fence while admitting a refresh-capable runtime.
+ * Disconnect uses the same owner lock, so it either revokes before admission
+ * or waits until the private initialize has completed and can capture it.
+ */
+export async function withChatGPTCredentialLeaseAdmission<T>(
+  actorInput: ChatGPTCredentialVaultActor,
+  lease: Pick<
+    ChatGPTCredentialLease,
+    "connectionId" | "connectionVersion" | "leaseId" | "leaseEpoch"
+  >,
+  operation: () => Promise<T>,
+  options: { signal?: AbortSignal } = {},
+): Promise<
+  { kind: "admitted"; value: T } | { kind: "missing" | "expired" | "stale" }
+> {
+  const actor = actorValue(actorInput);
+  connectionIdValue(lease.connectionId);
+  if (
+    !validPart(lease.leaseId) ||
+    !Number.isSafeInteger(lease.leaseEpoch) ||
+    lease.leaseEpoch < 1
+  )
+    throw invalid();
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const result = await client.query<VaultRow>(
+      `SELECT c.id,c.owner_id,c.connection_version,c.expires_at,c.revoked_at,
+              v.ciphertext,v.lease_id,v.lease_epoch,v.lease_until
+       FROM chatgpt_credential_connections c
+       JOIN chatgpt_credential_vault v
+         ON v.connection_id=c.id AND v.owner_id=c.owner_id
+       WHERE c.id=$1 AND c.owner_id=$2 AND c.revoked_at IS NULL
+       FOR UPDATE OF c,v`,
+      [lease.connectionId, actor.ownerId],
+    );
+    const row = result.rows[0];
+    if (!row) return { kind: "missing" };
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const expiresAt = dateValue(row.expires_at);
+    const leaseUntil = dateValue(row.lease_until);
+    if (!expiresAt || expiresAt.getTime() <= now.getTime())
+      return { kind: "expired" };
+    if (
+      row.connection_version !== lease.connectionVersion ||
+      row.lease_id !== lease.leaseId ||
+      row.lease_epoch !== lease.leaseEpoch ||
+      !leaseUntil ||
+      leaseUntil.getTime() <= now.getTime()
+    )
+      return { kind: "stale" };
+    options.signal?.throwIfAborted();
+    const value = await operation();
+    options.signal?.throwIfAborted();
+    return { kind: "admitted", value };
+  }, options.signal);
 }
 
 export async function saveChatGPTCredentialCache(
@@ -551,6 +1054,7 @@ export async function saveChatGPTCredentialCache(
     "connectionId" | "connectionVersion" | "leaseId" | "leaseEpoch"
   >,
   cacheInput: Uint8Array,
+  options: { signal?: AbortSignal } = {},
 ): Promise<ChatGPTCredentialSaveResult> {
   const actor = actorValue(actorInput);
   const cache = cacheBuffer(cacheInput);
@@ -622,7 +1126,7 @@ export async function saveChatGPTCredentialCache(
       ],
     );
     return { kind: "saved" };
-  });
+  }, options.signal);
 }
 
 export async function releaseChatGPTCredentialLease(
@@ -631,6 +1135,7 @@ export async function releaseChatGPTCredentialLease(
     ChatGPTCredentialLease,
     "connectionId" | "leaseId" | "leaseEpoch"
   >,
+  options: { signal?: AbortSignal } = {},
 ): Promise<ChatGPTCredentialReleaseResult> {
   const actor = actorValue(actorInput);
   connectionIdValue(lease.connectionId);
@@ -665,7 +1170,7 @@ export async function releaseChatGPTCredentialLease(
       [lease.connectionId, actor.ownerId, lease.leaseId, lease.leaseEpoch],
     );
     return { kind: "released" };
-  });
+  }, options.signal);
 }
 
 /** Revoke authority atomically; the tombstone remains for stale-save fencing. */

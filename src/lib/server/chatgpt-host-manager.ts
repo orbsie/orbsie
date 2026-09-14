@@ -8,6 +8,7 @@ import {
   completeChatGPTHost,
   readChatGPTHost,
   readExpiredChatGPTHost,
+  readOwnerChatGPTHosts,
   readSessionChatGPTHost,
   renewChatGPTHost,
   releaseChatGPTHost,
@@ -44,12 +45,39 @@ export function createChatGPTHostManager(
   });
   async function cleanupExpired(
     identity: Parameters<typeof readChatGPTHost>[0],
+    options: { signal?: AbortSignal } = {},
   ) {
-    const expired = await readExpiredChatGPTHost(identity);
+    options.signal?.throwIfAborted();
+    const expired = await readExpiredChatGPTHost(identity, options);
     if (!expired) return false;
+    options.signal?.throwIfAborted();
     await backend.destroy(expired.sandboxName);
+    options.signal?.throwIfAborted();
     return releaseChatGPTHost(identity, expired.attemptId);
   }
+  const acquireForOperation = async (
+    identity: Parameters<typeof readChatGPTHost>[0],
+    minHeadroomMs: number,
+    options: { signal?: AbortSignal } = {},
+  ) => {
+    const host = await readCurrentHost(identity, options);
+    if (!host) return null;
+    if (!host.artifactDigest) throw new ChatGPTHostStaleError();
+    const renewed = await renewChatGPTHost(
+      identity,
+      host.attemptId,
+      host.artifactDigest,
+      {
+        minHeadroomMs,
+        signal: options.signal,
+        renew: (lockedHost, targetExpiresAt, signal) =>
+          backend.renew(lockedHost, targetExpiresAt, signal),
+      },
+    );
+    if (renewed.kind === "stale") throw new ChatGPTHostStaleError();
+    if (renewed.kind !== "ready") return null;
+    return renewed.host;
+  };
   return {
     async teardownSession(identity: Parameters<typeof readChatGPTHost>[0]) {
       const host = await readSessionChatGPTHost(identity);
@@ -57,32 +85,26 @@ export function createChatGPTHostManager(
       await backend.destroy(host.sandboxName);
       return releaseChatGPTHost(identity, host.attemptId);
     },
-    async ensure(identity: Parameters<typeof readChatGPTHost>[0]) {
-      await cleanupExpired(identity);
+    async ensure(
+      identity: Parameters<typeof readChatGPTHost>[0],
+      options: { signal?: AbortSignal } = {},
+    ) {
+      options.signal?.throwIfAborted();
+      await cleanupExpired(identity, options);
+      options.signal?.throwIfAborted();
       return service.ensure(identity);
     },
     read: readCurrentHost,
+    acquireForOperation,
     async acquireForGeneration(
       identity: Parameters<typeof readChatGPTHost>[0],
       options: { signal?: AbortSignal } = {},
     ) {
-      const host = await readCurrentHost(identity, options);
-      if (!host) return null;
-      if (!host.artifactDigest) throw new ChatGPTHostStaleError();
-      const renewed = await renewChatGPTHost(
+      return acquireForOperation(
         identity,
-        host.attemptId,
-        host.artifactDigest,
-        {
-          minHeadroomMs: CHATGPT_GENERATION_HEADROOM_MS,
-          signal: options.signal,
-          renew: (lockedHost, targetExpiresAt, signal) =>
-            backend.renew(lockedHost, targetExpiresAt, signal),
-        },
+        CHATGPT_GENERATION_HEADROOM_MS,
+        options,
       );
-      if (renewed.kind === "stale") throw new ChatGPTHostStaleError();
-      if (renewed.kind !== "ready") return null;
-      return renewed.host;
     },
     async disconnect(identity: Parameters<typeof readChatGPTHost>[0]) {
       if (await cleanupExpired(identity)) return true;
@@ -90,5 +112,28 @@ export function createChatGPTHostManager(
     },
     cleanupExpired,
     request: backend.request,
+    privateOperation: (
+      host: Parameters<typeof backend.privateOperation>[0],
+      operation: Parameters<typeof backend.privateOperation>[1],
+      input: unknown,
+      options: { signal?: AbortSignal } = {},
+    ) => backend.privateOperation(host, operation, input, options.signal),
+    destroyHost: backend.destroy,
+    releaseHost: releaseChatGPTHost,
+    async captureOwnerHosts(identity: Parameters<typeof readChatGPTHost>[0]) {
+      return readOwnerChatGPTHosts(identity);
+    },
+    async disconnectCapturedHosts(
+      hosts: Awaited<ReturnType<typeof readOwnerChatGPTHosts>>,
+    ) {
+      for (const host of hosts) {
+        await backend.destroy(host.sandboxName);
+        await releaseChatGPTHost(
+          { ownerId: host.ownerId, sessionId: host.sessionId },
+          host.attemptId,
+        );
+      }
+      return true;
+    },
   };
 }

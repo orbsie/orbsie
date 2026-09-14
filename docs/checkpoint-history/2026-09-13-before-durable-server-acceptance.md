@@ -178,36 +178,41 @@ No root test processes remain. Shared3040/3096 servers left untouched by worker.
 History for vault/runtime/private review: checkpoint-history/2026-09-13-before-
 private-host-acceptance.md. Do not repeat accepted investigations/tests absent gap.
 
-## Durable server integration accepted (not deployed)
+## Active server orchestration handoff
 
-Owner intent/attempt fencing, atomic revoke+owner-host snapshot, initialization
-admission under same owner lock, new-login completion separate from legacy migration,
-tombstone fallback rejection, status/models/generate restoration, sealed rotated
-cache save and bounded independent cleanup. Root reviewed final diff; prior rejected
-handoffs retained in history. Root added public generation->real private HTTP
-success/error/cancel->new-runtime restoration coverage (4tests). Model/runtime RPC
-and vault mocked there; real PostgreSQL separately proves authority races/rollback.
-Worker47route/service/manager+15vault/registry passed. Root33focused tests after
-cleanup deadline changes,3realPG tests including aborted blocked save preserving
-ciphertext, and typecheck passed. No live model calls or deployment in this stage.
+Luna host_session_renewal is implementing durable service/public routes and initial
+login intent fencing; not accepted or deployed. Root isolated PostgreSQL container
+orbsie-durable-race-db-20260913 is running, loopback32770, DBorbsie_test/postgres,
+synthetic trust auth/tmpfs256MiB/1CPU. Worker has URL; remove after reviewed tests.
+Root early review found absent-intent SELECT FOR UPDATE does not serialize two
+owner sessions: stale begin upsert can overwrite concurrent Disconnect. Worker
+notified to serialize existing owner/intent admission, use fresh post-lock clocks,
+and prove first-intent races. Final diff and evidence review still required.
+Quota latest65%used/35%remaining; stop all workers/livecalls below20%remaining.
+Durable and self-review task docs now preserve intent and managed-review contracts.
 
-Quiet activity accepted: per-run2second intermediate coalescing, immediate first
-and terminal messages, stale timers cleared;11focused activity/store tests passed.
-Geometry/input/persistence unthrottled. Main-page startup preference restoration is
-NEXT: secure app session+nonsecret provider/tier, no modal required, preserve tier
-and manual changes, no credential browser storage. Worker host_session_renewal only.
+Latest root integration check: 2026-09-13 19:38 local command output,
+`npx vitest run tests/chatgpt-durable-service.test.ts tests/chatgpt-route.test.ts
+tests/chatgpt-generate-route.test.ts` passed3files/32tests in1.78s, session25416
+terminal0. Worker notified; source still changing, so this is interim evidence,
+not final acceptance. Real intent DB races/private lifecycle integration pending.
+New owner resilience/activity2s/SEO/logging requirements committed in prompt.md
+and docs/resilience-activity-seo-task.md (0675470,4590fd8). New unbounded navigation
+and code-free login requirements preserved; root source audit in
+unbounded-world-task.md and official OAuth feasibility gap in
+ai-connection-priority.md. No replacement browser OAuth availability claimed.
 
-## Resources and remaining priorities
+Server worker final handoff was NOT accepted: reported5suites/48tests,2realPGtests,
+typecheck/format/diffcheck pass. Root found new Start->begin/bind intent then status
+calls migration-only admitLegacy (rejects existing intent), so normal new login
+cannot remember credentials. Also Disconnect revokes vault but only current-session
+host destroyed; other owner host can continue refresh. Missing-vault legacy
+status/models fallback not gated by tombstone. Same worker restarted for bounded
+corrections +real route/service/private-controller integration, rotated-cache
+restore success/error/cancel, forced separate-session DB race orders. No deploy.
 
-Isolated PostgreSQL orbsie-durable-race-db-20260913 running, loopback32770,
-DBorbsie_test/postgres, synthetic trust/tmpfs256MiB/1CPU. Remove after final checks.
-Isolated release checkout /tmp/orbsie-durable-release-20260913 at8526b5d, npm ci
---ignore-scripts --prefer-offline completed239packages. No build/env/migration/deploy
-there yet. Advance to accepted commit. Existing production unchanged.
-Quota latest68%used/32%remaining; stop all workers/livecalls below20%remaining.
-New user resilience/2s activity/SEO/logging and unbounded navigation/code-free login
-requirements committed in prompt.md. Contracts: resilience-activity-seo-task.md,
-unbounded-world-task.md, ai-connection-priority.md (official OAuth registration
-feasibility unproven; device login does not satisfy new code-free requirement).
-Production2hour log check onlyHTTP200/no completion diagnostics, evidence
-stream-resilience-log-check-20260913. Preserve full agentic/provider/mobile scope.
+Release preparation: isolated detached checkout
+/tmp/orbsie-durable-release-20260913 at8526b5d, npm ci --ignore-scripts
+--prefer-offline --no-audit --no-fund completed239packages/7s (session61622 exit0).
+No build, environment copy, migration or deployment there yet. Advance only to
+reviewed integration commit; existing production/release checkout unchanged.

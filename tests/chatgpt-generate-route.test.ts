@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(),
   acquire: vi.fn(),
   request: vi.fn(),
+  privateOperation: vi.fn(),
+  createDurable: vi.fn(),
+  durableGenerate: vi.fn(),
   HttpError: class extends Error {
     constructor(
       public status: number,
@@ -31,6 +34,10 @@ vi.mock("@/lib/server/chatgpt-host-manager", () => ({
     acquireForGeneration: mocks.acquire,
     request: mocks.request,
   }),
+}));
+vi.mock("@/lib/server/chatgpt-durable-service", () => ({
+  createChatGPTDurableService: mocks.createDurable,
+  ChatGPTDurableServiceError: class extends Error {},
 }));
 vi.mock(
   "@/lib/server/chatgpt-scene-stream",
@@ -79,6 +86,12 @@ describe("hosted ChatGPT generation route", () => {
         headers: { "content-type": "application/x-ndjson" },
       }),
     );
+    mocks.durableGenerate.mockResolvedValue(
+      new Response('{"type":"commit_revision","message":"ready"}\n', {
+        headers: { "content-type": "application/x-ndjson" },
+      }).body,
+    );
+    mocks.createDurable.mockReturnValue({ generate: mocks.durableGenerate });
   });
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -97,7 +110,7 @@ describe("hosted ChatGPT generation route", () => {
       code: "CHATGPT_CONNECTION_REQUIRED",
     });
     expect(mocks.acquire).not.toHaveBeenCalled();
-    mocks.acquire.mockResolvedValueOnce(null);
+    mocks.durableGenerate.mockResolvedValueOnce(null);
     const missingHost = await POST(request());
     expect(missingHost.status).toBe(409);
     expect(await missingHost.json()).toMatchObject({
@@ -106,7 +119,7 @@ describe("hosted ChatGPT generation route", () => {
     expect(mocks.request).not.toHaveBeenCalled();
   });
   it("fails stale deployed hosts before sending a generation request", async () => {
-    mocks.acquire.mockRejectedValueOnce(new ChatGPTHostStaleError());
+    mocks.durableGenerate.mockRejectedValueOnce(new ChatGPTHostStaleError());
     const response = await POST(request());
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({
@@ -133,24 +146,19 @@ describe("hosted ChatGPT generation route", () => {
     const response = await POST(request());
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("commit_revision");
-    expect(mocks.acquire).toHaveBeenCalledWith(
+    expect(mocks.durableGenerate).toHaveBeenCalledWith(
       {
         ownerId: "owner",
         sessionId: "session",
       },
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
-    );
-    expect(mocks.request).toHaveBeenCalledWith(
-      expect.objectContaining({ capability: "private-token" }),
-      "generate",
       expect.objectContaining({
-        input: expect.objectContaining({
-          model: "gpt-5.6-luna",
-          effort: "low",
-        }),
-        signal: expect.any(AbortSignal),
+        model: "gpt-5.6-luna",
+        effort: "low",
       }),
+      expect.any(AbortSignal),
+      expect.any(Number),
     );
+    expect(mocks.request).not.toHaveBeenCalled();
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
   it("retains modeling feedback through the hosted route", async () => {
@@ -165,12 +173,11 @@ describe("hosted ChatGPT generation route", () => {
     };
     const response = await POST(request({ ...payload(), modelingFeedback }));
     expect(response.status).toBe(200);
-    expect(mocks.request).toHaveBeenCalledWith(
-      expect.objectContaining({ capability: "private-token" }),
-      "generate",
-      expect.objectContaining({
-        input: expect.objectContaining({ modelingFeedback }),
-      }),
+    expect(mocks.durableGenerate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ modelingFeedback }),
+      expect.anything(),
+      expect.any(Number),
     );
   });
   it("retains project-scoped generation feedback through the hosted route", async () => {
@@ -186,12 +193,11 @@ describe("hosted ChatGPT generation route", () => {
       request({ ...payload(), project, generationFeedback }),
     );
     expect(response.status).toBe(200);
-    expect(mocks.request).toHaveBeenCalledWith(
-      expect.objectContaining({ capability: "private-token" }),
-      "generate",
-      expect.objectContaining({
-        input: expect.objectContaining({ generationFeedback }),
-      }),
+    expect(mocks.durableGenerate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ generationFeedback }),
+      expect.anything(),
+      expect.any(Number),
     );
   });
   it("rejects cross-project generation feedback before contacting the host", async () => {
@@ -208,11 +214,11 @@ describe("hosted ChatGPT generation route", () => {
       }),
     );
     expect(response.status).toBe(400);
-    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.durableGenerate).not.toHaveBeenCalled();
   });
   it("redacts non-stream host failures", async () => {
-    mocks.request.mockResolvedValueOnce(
-      new Response("private provider diagnostic", { status: 500 }),
+    mocks.durableGenerate.mockRejectedValueOnce(
+      new Error("private provider diagnostic"),
     );
     const response = await POST(request());
     expect(response.status).toBe(502);
