@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-14T03:22:24.089Z",
+  "releaseCommit": "ecaacaf",
+  "origin": "https://orbsie.com",
+  "schemaSha256": "c300524177125ae620703389defa1cdab48439b3a2a6edfa0a80b87ed94dc3e4",
+  "verifiedColumns": [
+    {
+      "table_name": "chatgpt_credential_connections",
+      "column_name": "host_attempt_id"
+    },
+    {
+      "table_name": "chatgpt_credential_connections",
+      "column_name": "intent_epoch"
+    },
+    {
+      "table_name": "chatgpt_credential_intents",
+      "column_name": "epoch"
+    },
+    {
+      "table_name": "chatgpt_credential_intents",
+      "column_name": "owner_id"
+    },
+    {
+      "table_name": "chatgpt_credential_intents",
+      "column_name": "pending_attempt_id"
+    },
+    {
+      "table_name": "chatgpt_credential_intents",
+      "column_name": "revoked_at"
+    }
+  ],
+  "applicationDeployed": false,
+  "credentialsCopied": false
+}

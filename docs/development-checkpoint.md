@@ -199,11 +199,14 @@ and manual changes, no credential browser storage. Worker host_session_renewal o
 
 ## Resources and remaining priorities
 
-Isolated PostgreSQL orbsie-durable-race-db-20260913 running, loopback32770,
-DBorbsie_test/postgres, synthetic trust/tmpfs256MiB/1CPU. Remove after final checks.
-Isolated release checkout /tmp/orbsie-durable-release-20260913 at8526b5d, npm ci
---ignore-scripts --prefer-offline completed239packages. No build/env/migration/deploy
-there yet. Advance to accepted commit. Existing production unchanged.
+Isolated PostgreSQL orbsie-durable-race-db-20260913 stopped/removed after accepted
+real database checks. No root test process remains.
+Isolated release checkout /tmp/orbsie-durable-release-20260913 at ecaacaf. npm build
+passed Next16.3.4/typecheck/static pages/privatehost/browserworkers (36229 exit0).
+Generated next-env.d.ts/player runtime/source changed only in release checkout;
+preserve/stash before advancing to next accepted UI commit. Application not deployed.
+Production additive intent schema migrated/6columns verified (14361 exit0), evidence
+chatgpt-intent-production-migration-20260913. No real credentials copied.
 Quota latest68%used/32%remaining; stop all workers/livecalls below20%remaining.
 New user resilience/2s activity/SEO/logging and unbounded navigation/code-free login
 requirements committed in prompt.md. Contracts: resilience-activity-seo-task.md,
