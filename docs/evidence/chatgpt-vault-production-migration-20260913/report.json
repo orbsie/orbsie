@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-14T01:26:29.980Z",
+  "project": "orbsie",
+  "environment": "production",
+  "origin": "https://orbsie.com",
+  "schemaSha256": "42afa4fcd20cf6ae5d00b0c6adc4a33554478e114334db90307b80be0ed720a0",
+  "scope": "additive credential tables/indexes only; no existing credential data copied",
+  "passed": true,
+  "tables": [
+    "chatgpt_credential_connections",
+    "chatgpt_credential_vault"
+  ]
+}

@@ -156,3 +156,12 @@ snapshot was null. No login/model calls/developer credentials. Evidence
 chatgpt-runtime-config-20260913/report.json. This verifies packaged configuration,
 not managed-token refresh or signed-in provider acceptance. Temp directory removed.
 Latest quota38%remaining; private lifecycle worker still active.
+
+Production vault schema applied and verified transactionally (only additive new
+credential tables/indexes,2second lock timeout/10second statement timeout). Fresh
+Vercel production env matched https://orbsie.com; no existing credential data copied.
+Evidence chatgpt-vault-production-migration-20260913/report.json includes schema hash.
+Protected env file /home/marcos/.cache/orbsie/durable-login-production/production.env
+(mode0600,parent0700), never print contents. Migration process45795 terminal success.
+This supersedes earlier pending-production-migration notes: schema ready, public
+runtime persistence/restore NOT deployed. Full provider/browser gates still open.
