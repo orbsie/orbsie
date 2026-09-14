@@ -152,6 +152,11 @@ Production browser synthetic fixture47567 passed/terminal0: exactly1 synthetic
 Budget request+reply and all recovery cases. Evidence chatgpt-startup-live-fixture-
 20260913; root viewed phone screenshot. No provider calls. No root processes remain.
 
+Gateway funding recheck: GET /v1/credits returned200 with balance-0.0033684 on
+2026-09-14T06:46Z (local Sep13); no model calls or billing changes. Existing owner
+funding question remains pending. Do not retry inference until positive credits or
+owner funding confirmation. Evidence gateway-credit-check-20260913.
+
 Gateway diagnostic update: one instrumented request using isolated deployed480782d
 returned HTTP402 positive-credit-balance required (includingBYOK), no sceneoutput,
 no retry. Owner async question pending to replenish account. This blocks Gateway

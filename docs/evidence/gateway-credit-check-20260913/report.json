@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-09-14T06:46:13.999Z",
+  "method": "GET",
+  "endpoint": "https://ai-gateway.vercel.sh/v1/credits",
+  "httpStatus": 200,
+  "balance": -0.0033684,
+  "positiveCreditBalance": false,
+  "modelCalls": 0,
+  "scope": "Configured Gateway test credential; no generation or billing changes",
+  "source": "https://raw.githubusercontent.com/vercel/ai/main/packages/gateway/src/gateway-fetch-metadata.ts"
+}
