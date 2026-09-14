@@ -296,6 +296,10 @@ try {
       };
     });
   expect(checks.flatProductionActivity.finalReplyAfterActivity).toBe(true);
+  // This fixture commits immediately: intermediate applied events must be
+  // coalesced away, leaving the initial wait and immediate terminal result.
+  expect(checks.flatProductionActivity.activityCount).toBe(2);
+  checks.immediateBurstCoalesced = true;
   await page.screenshot({ path: `${output}/flat-chat-phone.png` });
   expect(generations).toBe(1);
   expect(requests.some((path) => path.startsWith("/api/auth"))).toBe(false);
@@ -306,6 +310,7 @@ try {
   expect(errors).toEqual([]);
   const report = {
     passed: true,
+    appSourceCommit: process.env.ORBSIE_APP_SOURCE_COMMIT ?? "unverified",
     fixtureGenerations: generations,
     providerNetworkCalls: 0,
     authenticatedRequests: 0,
