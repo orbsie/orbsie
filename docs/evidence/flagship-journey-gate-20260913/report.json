@@ -1,0 +1,52 @@
+{
+  "providerCalls": 0,
+  "passed": true,
+  "scope": "Historical partial reports remain incomplete; no fresh gameplay was run.",
+  "results": [
+    {
+      "source": "docs/evidence/provider-e2e/gateway-flagship-story/gateway.json",
+      "version": 1,
+      "status": "incomplete",
+      "missing": [
+        "fresh-live-generation",
+        "complete-story-scope",
+        "fresh-visible-creation",
+        "movement-during-generation",
+        "creation-win-reset",
+        "scoped-mushroom-edit",
+        "seven-collectible-edit",
+        "seven-win-reset",
+        "original-undo",
+        "undo-win-reset",
+        "same-project-refresh-export",
+        "standalone-win-reset",
+        "signed-out-publication",
+        "current-publication-artifacts",
+        "published-win-restart"
+      ],
+      "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+    },
+    {
+      "source": "docs/evidence/provider-e2e/openrouter.json",
+      "version": 1,
+      "status": "incomplete",
+      "missing": [
+        "fresh-live-generation",
+        "complete-story-scope",
+        "movement-during-generation",
+        "creation-win-reset",
+        "scoped-mushroom-edit",
+        "seven-collectible-edit",
+        "seven-win-reset",
+        "original-undo",
+        "undo-win-reset",
+        "same-project-refresh-export",
+        "standalone-win-reset",
+        "signed-out-publication",
+        "current-publication-artifacts",
+        "published-win-restart"
+      ],
+      "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+    }
+  ]
+}

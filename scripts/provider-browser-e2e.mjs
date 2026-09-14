@@ -40,6 +40,7 @@ import {
   validateFreshGameplayObservation,
   waitForFreshGameplayObservation,
 } from "./lib/fresh-flagship-gameplay.mjs";
+import { flagshipJourneyAcceptance } from "./lib/flagship-journey-acceptance.mjs";
 import { createTraversalTouchInput } from "./lib/traversal-touch-input.mjs";
 
 /**
@@ -2254,6 +2255,7 @@ export function emptyReport(config, provenance) {
 }
 
 async function writeReport(report, config) {
+  report.flagshipJourneyAcceptance = flagshipJourneyAcceptance(report);
   await mkdir(REPORT_DIR, { recursive: true });
   const path = join(REPORT_DIR, `${config.provider}.json`);
   const clean = JSON.parse(JSON.stringify(report));
@@ -5230,6 +5232,11 @@ export async function runFreshFlagshipGameplay(
         revision: reset.revision,
         scoreIds: reset.scoreIds,
         reset: reset.reset,
+        score: reset.gameScore,
+        status: reset.status,
+        lifecycleAdvanced:
+          reset.reset > resetBefore ||
+          reset.sessionGeneration > won.sessionGeneration,
         player: reset.player,
       },
     };
@@ -7835,6 +7842,8 @@ async function runPublication(
     projectId: expectedProject.id,
     revision: expectedRevision,
     artifactEvidence,
+    signedOut: true,
+    editorProviderRequests: publicApiRequests.length,
   };
 }
 
@@ -8778,7 +8787,7 @@ async function run(config, report = emptyReport(config)) {
       report.hosted.generationStatus = "inference-observed";
     }
 
-    const followOn = await runProjectFollowOnPhases({
+    report.followOn = await runProjectFollowOnPhases({
       project: projectAfterEdit,
       refresh: async ({ revision }) => {
         await page.reload({ waitUntil: "domcontentloaded" });
@@ -9092,7 +9101,7 @@ async function main() {
     const result = await run(config, report);
     const reportPath = await writeReport(result, config);
     console.log(
-      `Configured provider checks passed; sanitized report: ${reportPath}`,
+      `Configured provider checks passed; flagship journey ${result.flagshipJourneyAcceptance.status}; sanitized report: ${reportPath}`,
     );
   } catch (error) {
     if (config) {

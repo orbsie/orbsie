@@ -23,6 +23,11 @@ Shared typed scene-review result interface39a5bce: six targeted tests and typech
 pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
+Root added flagshipJourneyAcceptance to every provider report/CLI:11focused
+contract tests and2follow-on tests pass; two historical partial reports correctly
+remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
+standalone/publication traversal producers remain required. Current whole-tree
+typecheck awaits worker WIP completion (scene-binding.ts union narrowing).
 
 Quota last76%used/24%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.

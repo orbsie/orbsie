@@ -170,3 +170,27 @@ Keep partial reports useful and preserve their evidence; distinguish configured
 check success from complete journey acceptance in the CLI. Add targeted negative
 cases for omitted seven/undo/publication traversal and mismatched revisions,
 plus a positive complete evidence contract. Do not add model calls for this gate.
+
+### Completeness gate implemented (2026-09-13)
+
+`scripts/lib/flagship-journey-acceptance.mjs` derives a separate gameplay-journey
+result every time the provider harness writes a report. The CLI distinguishes
+configured-check success from complete/incomplete flagship acceptance. Eleven
+focused contract cases pass, as do two existing follow-on tests; two preserved
+historical provider reports correctly classify incomplete. Evidence:
+`docs/evidence/flagship-journey-gate-20260913`. No browser/model calls were made.
+
+The gate requires fresh visible creation and movement during generation; bound
+five/seven/undo-five collection, platform contact/motion, portal win and actual
+reset observations; same-project refresh/export; standalone win/reset; signed-out
+publication with matching current artifact bytes and win/restart. Authentication,
+visual quality and physical-device acceptance remain separate. An accepted test
+contract is not evidence that a live provider completed this journey.
+
+Required producer work remains: populate `phases.goal7.gameplay`,
+`phases.undo.gameplay`, `standaloneGameplay`, and `publication.gameplay` using actual
+traversals. Only set story status passed and remove structural limitations after
+those checks succeed. Each gameplay record follows the existing creation result
+shape, including reset status/score/lifecycle advance/player position. Root added
+those reset observation fields, signed-out publication context evidence, and the
+follow-on identity to future reports; no missing phase is fabricated or backfilled.
