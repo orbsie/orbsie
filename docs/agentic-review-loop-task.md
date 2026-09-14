@@ -151,3 +151,42 @@ operation binding. Cancellation and failed review must finalize credentials with
 independent cleanup headroom exactly as initial generation does. Test the private
 HTTP hop through the real handler/controller and server orchestration, including
 Disconnect during review and stale replies after project or account changes.
+
+### Lifecycle wiring source review (2026-09-13)
+
+The storage-only handoff does not make a client review flag authoritative. Before
+public admission, add an internal completion/failure callback to each adapter and
+wire it through its actual route/private host lifecycle. Call completion only after
+validated provider termination and the final committed server shadow; await the
+ledger transition before advertising review availability. Failure, cancellation,
+callback/database error, or an incomplete stream closes review authority. Keep
+phase tokens private to server orchestration and never return them in diagnostics
+or browser responses. Test commit followed by provider error, trailing commands,
+EOF without commit, cancellation after last command, and completion-write failure.
+
+Source evidence: generation.ts currently stages commit only for structured output;
+NDJSON emits commit immediately, and its finally block sees lastCommandType even
+after a later transport failure. That is not an adequate ledger completion signal.
+chatgpt-scene-stream.ts already defers commit until generator completion but needs
+the explicit authoritative callback and private-host forwarding. Do not infer
+success from the observability wrapper, a client flag, or an emitted commit alone.
+
+Use a canonical scene-binding projection shared by server and browser. Validate
+ordinary authored fields and preserve entity IDs, game program, transforms,
+materials, stage and asset policy. Exclude presentation caches, history timestamps,
+and baked model bytes. For browser-manifold retain the canonical recipe; for a
+browser-procedural result bind canonical source/provenance and normalize its
+rendered recipe/cache representation deliberately. applyModelOperation currently
+removes procedural geometry in the server shadow while store.ts records its
+source/hash and evaluated recipe, so hashing those Project objects directly will
+not agree. The adapter must retain trusted procedural provenance while validating
+operations. Test a legitimate procedural result plus substituted source, altered
+transform, changed game rule and unrelated-entity mutation. Browser-produced
+geometry is rendering evidence, not independent server authority.
+
+API-linked users currently do not need Orbsie email authentication. Derive their
+run identity from a server-signed browser identity, optionally additionally binding
+the connected credential with a domain-separated digest; never introduce an email
+login gate or store the credential. Hosted runs bind the secure owner/session
+identity. Preserve exact provider-admitted effort strings: the existing ChatGPT
+preset resolver supports provider-returned efforts, not just low/medium/high.
