@@ -8,14 +8,14 @@ acceptance history: checkpoint-history/2026-09-13-before-durable-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing **server generation observability**.
+/root/host_session_renewal is implementing **client diagnostic history/export**.
 New clean-context spawn failed host thread limit; reuse existing worker.
-Contract docs/generation-observability-task.md. Current stage owns shared helper,
-server generation routes/adapters/private transport/durable service and focused
-synthetic tests. Client store/export control is subsequent stage. Root owns release
-checkout, evidence, checkpoint and deployment. No live calls for logging stage.
+Contract docs/generation-observability-task.md. Server stage dba95bc accepted and
+deployed. Worker owns browser helper/store/export UI/startup diagnostics/replay
+fixtures and targeted checks. Root owns scripts/verify-generation-diagnostics.mjs,
+release checkout, evidence, checkpoint and deployment. No live logging-stage calls.
 
-Quota last71%used/29%remaining. Read
+Quota last73%used/27%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
@@ -25,11 +25,13 @@ Never echo credentials. Use completion notifications, avoid status-only turns.
 ## Production and accepted release
 
 Production https://orbsie.com ->
-https://orbsie-2apogiskc-grappeggias-projects.vercel.app, source **480782d**.
-Isolated checkout /tmp/orbsie-durable-release-20260913 at480782d. Local build and
-Vercel remote build passed. Deploy63140 terminal0, alias confirmed. Anonymous HTTP
-checks home/config/auth-null/status401 passed; evidence
-chatgpt-durable-deployment-20260913. No real-provider generation in this release.
+https://orbsie-7y9kfo9yy-grappeggias-projects.vercel.app, source **dba95bc**.
+Isolated checkout /tmp/orbsie-durable-release-20260913 atdba95bc. Local build and
+Vercel remote build passed. Deploy33697 terminal0, alias confirmed. Both generation
+routes rejected400/401 with correlated UUIDs and exactly1terminal/builddba95bc
+verified in actual Vercel logs; generation-observability-deployment-20260913.
+No real-provider generation in this release. Prior startup480782d HTTP/browser
+synthetic acceptance remains recorded in chatgpt-durable-deployment-20260913.
 Release generated next-env/player runtime/source dirty; preserve before advancing.
 Previous ecaacaf generated outputs stashed safely. Old checkout
 /tmp/orbsie-chatgpt-release-4eb9ce8 and stashes preserved.
