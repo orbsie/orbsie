@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-13",
+  "scope": "Vercel production, /api/chatgpt/generate, preceding two hours, maximum 100 records",
+  "queryExitCode": 0,
+  "records": 1,
+  "httpStatuses": { "200": 1 },
+  "nonemptyDiagnosticMessages": 0,
+  "modelCallsMade": 0,
+  "conclusion": "Request metadata confirms one HTTP 200 but contains no scene-commit or termination diagnostic. It does not identify the cause of reported incomplete streams or establish successful generation.",
+  "nextEvidence": "Correlate bounded server/private-host completion and termination metadata with client last-applied command. Reproduce interrupted streams without logging credentials or raw model content."
+}

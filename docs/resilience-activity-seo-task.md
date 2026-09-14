@@ -42,3 +42,31 @@ Do not add fake reviews, prices, unsupported OAuth claims or hidden keyword stuf
 Keep the game entrance/layout/mobile controls intact. Validate server HTML without
 JavaScript, route content types, absolute canonical/sitemap URLs, private exclusion,
 and production origin output after deployment. Ranking/indexing is not guaranteed.
+
+## Logging and reproduction — additional owner request
+
+Initial source inspection: generation adapters attach bounded diagnostics to error
+records, but production route request logs contain no generation terminal summary.
+The two-hour production query returned one HTTP200/no diagnostic message; see
+stream-resilience-log-check-20260913. Implement correlation and terminal outcomes
+as part of the next resilience task, not an unrelated logging framework rewrite.
+
+Use typed structured events with version, generated run/request correlation IDs,
+release/artifact identifier, provider/model, monotonic durations, phase, bounded
+counts, last command type/revision and enumerated reason. Exactly one terminal
+outcome per admitted run; normal HTTP headers must not log as generation success.
+Cover initial request, first byte, first valid command, commit, transport EOF,
+abort origin, deadline, parser/schema error and credential-finalization outcome.
+Host/public/client must retain correlation without exposing host capabilities.
+Never log arbitrary Error.message, headers, credential cache, prompt/model text,
+login URLs, screenshot bytes or project objects. Bound cardinality and event rate;
+keep command-level chatter summarized instead of logging every vertex/operation.
+
+Extend existing diagnostic observer/replay tools and generation journal where useful.
+Provide owner-triggered safe diagnostics export (not automatic third-party upload),
+including a precise reproduction checklist and known missing evidence. Deterministic
+fixture replay covers byte splits, EOF after valid operations, timeout, cancel and
+invalid final commit. A full private-content capture is separate, explicit and
+bounded; ordinary diagnostics stay content-free. Test sentinel secrets in every
+error path, export size limits, stable correlation, one terminal summary and no
+behavioral changes to valid generation. Preserve provider test/model/call limits.

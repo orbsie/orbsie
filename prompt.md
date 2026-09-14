@@ -540,3 +540,17 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   never expose private projects, credentials, account or provider callback pages.
   Verify returned HTML and crawler routes on the deployed public origin. Search
   indexing and ranking are external outcomes, not guaranteed by these changes.
+
+## Reproducible diagnostics — owner update
+
+- [ ] Significantly improve structured logging across all provider generation paths
+  and the client scene lifecycle. Correlate request/run IDs across browser, public
+  route, hosted runtime and recovery. Record release, provider/model, phase timings,
+  command counts/types, last committed revision, finish reason, cancellation/deadline
+  source and bounded error codes. Distinguish HTTP success from scene success.
+- [ ] Provide a bounded diagnostic export and deterministic replay workflow that
+  helps reproduce stream interruption, malformed output and stale scene updates.
+  Keep credentials, authorization URLs/codes, cookies, raw prompts, provider output
+  and private project content out of ordinary logs. Any richer reproduction artifact
+  must have explicit content boundaries, redaction, retention and owner-controlled
+  sharing. Test redaction and limits. Logs alone do not prove provider acceptance.
