@@ -1,0 +1,441 @@
+{
+  "passed": true,
+  "providerCalls": 0,
+  "checks": {
+    "restoreWithoutSettings": true,
+    "promptUsesSavedTier": true,
+    "initialStatusCalls": 1,
+    "generationCalls": 1,
+    "generationBodies": [
+      {
+        "model": "gpt-5.6-luna",
+        "effort": "low"
+      }
+    ],
+    "reloadRestoresWithoutSettings": true,
+    "disconnectClearsRestoreOnReload": true,
+    "pendingRestoreDoesNotSpendFreePrompt": true,
+    "transientRetry": true,
+    "configFailureRetry": true,
+    "delayedConfigDoesNotSpendFreePrompt": true,
+    "sessionFailureRetry": true,
+    "malformedSessionRetry": true,
+    "manualProviderSwitchCancelsRestore": true,
+    "missingSessionReconnect": true
+  },
+  "diagnostics": [
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "PUT",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "POST",
+      "path": "/api/generation-runs",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "POST",
+      "path": "/api/chatgpt/generate",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "PUT",
+      "path": "/api/generation-runs",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "PATCH",
+      "path": "/api/generation-runs",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "POST",
+      "path": "/api/chatgpt/logout",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "primary",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 503
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "status-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 503
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "config-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 503
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "session-transient",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/projects",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/status",
+      "status": 200
+    },
+    {
+      "label": "malformed-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/chatgpt/models",
+      "status": 200
+    },
+    {
+      "label": "manual-switch",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "manual-switch",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "manual-switch",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/models",
+      "status": 200
+    },
+    {
+      "label": "manual-switch",
+      "kind": "requestfailed",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "label": "manual-switch",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/models",
+      "status": 200
+    },
+    {
+      "label": "missing-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/trial",
+      "status": 200
+    },
+    {
+      "label": "missing-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "label": "missing-session",
+      "kind": "requestfinished",
+      "method": "GET",
+      "path": "/api/auth/get-session",
+      "status": 200
+    }
+  ]
+}

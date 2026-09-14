@@ -1,0 +1,34 @@
+{
+  "deployment": "https://orbsie-2apogiskc-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "sourceCommit": "480782d",
+  "passed": true,
+  "providerCalls": 0,
+  "checks": {
+    "/": {
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "containsCreateWorld": true
+    },
+    "/api/config": {
+      "status": 200,
+      "contentType": "application/json",
+      "capabilities": {
+        "accounts": true,
+        "chatgptHosted": true,
+        "chatgptGeneration": true
+      }
+    },
+    "/api/auth/get-session": {
+      "status": 200,
+      "contentType": "application/json",
+      "missingSessionIsNull": true
+    },
+    "/api/chatgpt/status": {
+      "status": 401,
+      "contentType": "application/json",
+      "connectionRequired": false
+    }
+  },
+  "scope": "Anonymous public HTTP checks only; owner authenticated generation not verified."
+}
