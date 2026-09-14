@@ -27,6 +27,7 @@ import {
   validateSceneReviewImage,
   type SceneReviewImage,
 } from "../review-image";
+import type { GenerationObservation } from "./generation-observability";
 
 export const chatGPTSceneRequestSchema = z
   .object({
@@ -48,7 +49,10 @@ export function createChatGPTSceneStream(
   generator: ReturnType<typeof createChatGPTGeneration>,
   signal?: AbortSignal,
   /** Internal loop option; public request schemas remain unchanged. */
-  options?: { reviewImage?: unknown },
+  options?: {
+    reviewImage?: unknown;
+    observability?: GenerationObservation;
+  },
 ) {
   const input = chatGPTSceneRequestSchema.parse(raw);
   if (
@@ -91,6 +95,7 @@ export function createChatGPTSceneStream(
     ? AbortSignal.any([signal, local.signal])
     : local.signal;
   const encoder = new TextEncoder();
+  const observation = options?.observability;
   let cancelled = false;
   return new ReadableStream<Uint8Array>(
     {
@@ -99,6 +104,10 @@ export function createChatGPTSceneStream(
           buffer = "",
           count = 0,
           pendingCommit: ModelCommand | undefined;
+        let providerReturned = false;
+        let committed = false;
+        let failed = false;
+        let missingCommit = false;
         let cursor: Cursor = {
           runId: crypto.randomUUID(),
           sequence: 0,
@@ -128,6 +137,8 @@ export function createChatGPTSceneStream(
               null,
               "No scene commands may follow commit_revision.",
             );
+          observation?.noteCommand();
+          observation?.noteOutputBytes(encoder.encode(line + "\n").byteLength);
           if (command.type === "commit_revision") {
             pendingCommit = command;
             return;
@@ -150,6 +161,7 @@ export function createChatGPTSceneStream(
           enqueue(command);
         };
         try {
+          observation?.phase("provider-start");
           await generator.generate({
             model: input.model,
             effort: input.effort,
@@ -163,6 +175,8 @@ export function createChatGPTSceneStream(
             signal: combined,
             onText(delta) {
               combined.throwIfAborted();
+              observation?.noteInputBytes(Buffer.byteLength(delta));
+              observation?.phase("first-byte");
               buffer += delta;
               if (Buffer.byteLength(buffer) > 128 * 1024)
                 throw Error("Scene command is too large.");
@@ -171,13 +185,16 @@ export function createChatGPTSceneStream(
               for (const line of lines) emit(line);
             },
           });
+          providerReturned = true;
           emit(buffer);
           combined.throwIfAborted();
-          if (!pendingCommit)
+          if (!pendingCommit) {
+            missingCommit = true;
             throw new SceneProtocolError(
               null,
               "The model did not finish with a commit_revision.",
             );
+          }
           const commit = pendingCommit;
           pendingCommit = undefined;
           const applied = applyModelOperation(
@@ -195,8 +212,66 @@ export function createChatGPTSceneStream(
           );
           working = applied.project;
           cursor = applied.cursor;
+          committed = true;
+          observation?.commit();
           enqueue(commit);
         } catch (error) {
+          failed = true;
+          const chatGPTError =
+            error instanceof ChatGPTGenerationError ? error : undefined;
+          const providerStatus =
+            chatGPTError?.sceneDiagnostic?.diagnostic.providerStatus;
+          const timedOut =
+            (combined.aborted && combined.reason?.name === "TimeoutError") ||
+            chatGPTError?.reason === "timeout";
+          const clientAborted = combined.aborted && !timedOut;
+          const generationCancelled = chatGPTError?.reason === "cancelled";
+          const providerFailure =
+            chatGPTError?.reason === "rpc-rejection" ||
+            chatGPTError?.reason === "terminal-failure" ||
+            chatGPTError?.reason === "model-unavailable";
+          const diagnostic = generationDiagnostic(error, count, null);
+          const validationFailure =
+            diagnostic !== undefined &&
+            !providerFailure &&
+            chatGPTError?.reason !== "runtime-closed" &&
+            chatGPTError?.reason !== "timeout" &&
+            chatGPTError?.reason !== "cancelled";
+          observation?.terminal({
+            reason: timedOut
+              ? "deadline"
+              : clientAborted || generationCancelled
+                ? "client-abort"
+                : missingCommit
+                  ? "clean-eof-without-commit"
+                  : providerFailure
+                    ? "provider-error"
+                    : validationFailure
+                      ? "parser-failure"
+                      : providerReturned && !committed
+                        ? "clean-eof-without-commit"
+                        : "parser-failure",
+            abortSource: timedOut
+              ? "deadline"
+              : clientAborted || generationCancelled
+                ? "client"
+                : undefined,
+            failureCode: timedOut
+              ? "timeout"
+              : clientAborted || generationCancelled
+                ? "cancelled"
+                : providerFailure
+                  ? providerStatus === 402
+                    ? "quota"
+                    : "provider-rejected"
+                  : validationFailure || missingCommit
+                    ? "parser"
+                    : chatGPTError?.reason === "runtime-closed"
+                      ? "host-unavailable"
+                      : "parser",
+            httpStatus:
+              typeof providerStatus === "number" ? providerStatus : undefined,
+          });
           let safeError = error;
           if (!(error instanceof ChatGPTGenerationError)) {
             const scene = generationDiagnostic(error, count, null);
@@ -207,19 +282,39 @@ export function createChatGPTSceneStream(
                 { sceneDiagnostic: scene },
               );
           }
-          const diagnostic = generationDiagnostic(safeError, count, null);
+          const safeDiagnostic = generationDiagnostic(safeError, count, null);
           if (!cancelled && !combined.aborted)
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
                   error:
                     "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
-                  ...(diagnostic ?? {}),
+                  ...(safeDiagnostic ?? {}),
                 }) + "\n",
               ),
             );
         } finally {
+          const finishedAborted = combined.aborted;
+          const finishedFailed = failed;
+          const finishedCommitted = committed;
           local.abort();
+          if (!finishedFailed && finishedCommitted && !finishedAborted)
+            observation?.terminal({ reason: "completed" });
+          else if (!finishedFailed && finishedAborted)
+            observation?.terminal({
+              reason:
+                combined.reason?.name === "TimeoutError"
+                  ? "deadline"
+                  : "client-abort",
+              abortSource:
+                combined.reason?.name === "TimeoutError"
+                  ? "deadline"
+                  : "client",
+              failureCode:
+                combined.reason?.name === "TimeoutError"
+                  ? "timeout"
+                  : "cancelled",
+            });
           if (!cancelled) controller.close();
         }
       },

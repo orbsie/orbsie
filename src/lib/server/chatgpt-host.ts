@@ -10,6 +10,11 @@ import {
   type ManagedOperationBinding,
 } from "./chatgpt-managed-operation";
 import { CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES } from "./chatgpt-managed-credential-store";
+import {
+  validatedClientRunId,
+  validatedGenerationRequestId,
+  type GenerationObservationCorrelation,
+} from "./generation-observability";
 
 type HostSession = Pick<
   ChatGPTDeviceSession,
@@ -225,6 +230,28 @@ function operationBinding(value: unknown): ManagedOperationBinding | null {
     operationId: item.operationId as string,
     epoch: item.epoch as number,
   };
+}
+
+function operationCorrelation(
+  headers: Headers,
+): GenerationObservationCorrelation | undefined {
+  const rawRequestId = headers.get("x-orbsie-request-id");
+  const rawClientRunId = headers.get("x-orbsie-client-run-id");
+  if (rawRequestId === null && rawClientRunId === null) return undefined;
+  const requestId = validatedGenerationRequestId(rawRequestId);
+  if (!requestId)
+    throw new ChatGPTManagedOperationError(
+      "invalid",
+      "The private operation correlation is invalid.",
+    );
+  const clientRunId =
+    rawClientRunId === null ? undefined : validatedClientRunId(rawClientRunId);
+  if (rawClientRunId !== null && !clientRunId)
+    throw new ChatGPTManagedOperationError(
+      "invalid",
+      "The private operation correlation is invalid.",
+    );
+  return { requestId, ...(clientRunId ? { clientRunId } : {}) };
 }
 
 function decodeCache(value: unknown): Uint8Array | undefined {
@@ -495,6 +522,7 @@ export function createChatGPTHostHandler({
             binding,
             value.input,
             request.signal,
+            operationCorrelation(request.headers),
           );
           return new Response(stream, {
             headers: {

@@ -14,16 +14,40 @@ import {
 import { ChatGPTCredentialVaultError } from "@/lib/server/chatgpt-credential-vault";
 import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
 import { chatGPTSceneRequestSchema } from "@/lib/server/chatgpt-scene-stream";
+import {
+  clientRunIdFromRequest,
+  createGenerationObservation,
+  generationRequestId,
+  observeGenerationStream,
+  withGenerationRequestId,
+} from "@/lib/server/generation-observability";
 export const runtime = "nodejs";
 export const maxDuration = 180;
 const ROUTE_DEADLINE_MS = 180_000;
 const headers = { "Cache-Control": "private, no-store" };
 export async function POST(request: Request) {
+  const requestId = generationRequestId();
+  const routeObservation = createGenerationObservation({
+    layer: "route",
+    requestId,
+    clientRunId: clientRunIdFromRequest(request),
+    provider: "chatgpt",
+  });
+  const respond = (response: Response) =>
+    withGenerationRequestId(response, requestId);
   if (
     process.env.ORBSIE_CHATGPT_HOSTED !== "1" ||
     process.env.ORBSIE_CHATGPT_GENERATION !== "1"
-  )
-    return Response.json({ error: "Not found." }, { status: 404, headers });
+  ) {
+    routeObservation.terminal({
+      reason: "unknown",
+      failureCode: "unknown",
+      httpStatus: 404,
+    });
+    return respond(
+      Response.json({ error: "Not found." }, { status: 404, headers }),
+    );
+  }
   const routeDeadlineAt = Date.now() + ROUTE_DEADLINE_MS;
   const routeSignal = AbortSignal.any([
     request.signal,
@@ -61,63 +85,141 @@ export async function POST(request: Request) {
       input.data,
       routeSignal,
       routeDeadlineAt,
+      {
+        requestId,
+        clientRunId: routeObservation.clientRunId,
+      },
     );
     if (!body) throw new HttpError(409, "Connect your ChatGPT account first.");
-    return new Response(body, {
-      headers: {
-        ...headers,
-        "Content-Type": "application/x-ndjson",
-        "X-Accel-Buffering": "no",
-      },
-    });
-  } catch (error) {
-    if (error instanceof ChatGPTHostStaleError)
-      return Response.json(
-        { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
-        { status: 409, headers },
-      );
-    if (error instanceof ChatGPTDurableServiceError)
-      return Response.json(
+    return respond(
+      new Response(
+        observeGenerationStream(body, routeObservation, routeSignal),
         {
-          ...(error.code === "missing" || error.code === "revoked"
-            ? { code: "CHATGPT_CONNECTION_REQUIRED" }
-            : {}),
-          error: error.message,
+          headers: {
+            ...headers,
+            "Content-Type": "application/x-ndjson",
+            "X-Accel-Buffering": "no",
+          },
         },
-        {
-          status:
-            error.code === "missing" ||
+      ),
+    );
+  } catch (error) {
+    const timedOut =
+      routeSignal.aborted && routeSignal.reason?.name === "TimeoutError";
+    const clientAborted = routeSignal.aborted && !timedOut;
+    const status =
+      error instanceof ChatGPTHostStaleError
+        ? 409
+        : error instanceof ChatGPTDurableServiceError
+          ? error.code === "missing" ||
             error.code === "revoked" ||
             error.code === "busy"
-              ? 409
-              : 502,
-          headers,
-        },
+            ? 409
+            : 502
+          : error instanceof ChatGPTCredentialVaultError
+            ? error.code === "unauthorized"
+              ? 401
+              : 502
+            : error instanceof HttpError
+              ? error.status
+              : 502;
+    const failureCode = timedOut
+      ? "timeout"
+      : clientAborted
+        ? "cancelled"
+        : error instanceof ChatGPTHostStaleError
+          ? "connection-required"
+          : error instanceof ChatGPTDurableServiceError
+            ? error.code === "missing" || error.code === "revoked"
+              ? "connection-required"
+              : error.code === "expired"
+                ? "timeout"
+                : error.code === "busy" ||
+                    error.code === "unavailable" ||
+                    error.code === "finalization"
+                  ? "host-unavailable"
+                  : "transport"
+            : error instanceof ChatGPTCredentialVaultError
+              ? error.code === "unauthorized"
+                ? "connection-required"
+                : "host-unavailable"
+              : error instanceof HttpError
+                ? error.status === 400 || error.status === 413
+                  ? "invalid-input"
+                  : error.status === 401
+                    ? "connection-required"
+                    : error.status >= 500
+                      ? "host-unavailable"
+                      : "unknown"
+                : "transport";
+    routeObservation.terminal({
+      reason: timedOut
+        ? "deadline"
+        : clientAborted
+          ? "client-abort"
+          : error instanceof HttpError &&
+              (error.status === 400 || error.status === 413)
+            ? "parser-failure"
+            : "transport-error",
+      abortSource: timedOut ? "deadline" : clientAborted ? "client" : undefined,
+      failureCode,
+      httpStatus: status,
+    });
+    if (error instanceof ChatGPTHostStaleError)
+      return respond(
+        Response.json(
+          { code: CHATGPT_STALE_CONNECTION_CODE, error: error.message },
+          { status: 409, headers },
+        ),
+      );
+    if (error instanceof ChatGPTDurableServiceError)
+      return respond(
+        Response.json(
+          {
+            ...(error.code === "missing" || error.code === "revoked"
+              ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+              : {}),
+            error: error.message,
+          },
+          {
+            status:
+              error.code === "missing" ||
+              error.code === "revoked" ||
+              error.code === "busy"
+                ? 409
+                : 502,
+            headers,
+          },
+        ),
       );
     if (error instanceof ChatGPTCredentialVaultError)
-      return Response.json(
+      return respond(
+        Response.json(
+          {
+            ...(error.code === "unauthorized"
+              ? { code: "CHATGPT_CONNECTION_REQUIRED" }
+              : {}),
+            error:
+              error.code === "unauthorized"
+                ? "Sign in to Orbsie first."
+                : "ChatGPT connection could not be completed.",
+          },
+          { status: error.code === "unauthorized" ? 401 : 502, headers },
+        ),
+      );
+    return respond(
+      Response.json(
         {
-          ...(error.code === "unauthorized"
+          ...(error instanceof HttpError && [401, 409].includes(error.status)
             ? { code: "CHATGPT_CONNECTION_REQUIRED" }
             : {}),
           error:
-            error.code === "unauthorized"
-              ? "Sign in to Orbsie first."
-              : "ChatGPT connection could not be completed.",
+            error instanceof HttpError
+              ? error.message
+              : "ChatGPT generation could not be completed.",
         },
-        { status: error.code === "unauthorized" ? 401 : 502, headers },
-      );
-    return Response.json(
-      {
-        ...(error instanceof HttpError && [401, 409].includes(error.status)
-          ? { code: "CHATGPT_CONNECTION_REQUIRED" }
-          : {}),
-        error:
-          error instanceof HttpError
-            ? error.message
-            : "ChatGPT generation could not be completed.",
-      },
-      { status: error instanceof HttpError ? error.status : 502, headers },
+        { status: error instanceof HttpError ? error.status : 502, headers },
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import { APIError, Sandbox } from "@vercel/sandbox";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { GenerationObservationCorrelation } from "./generation-observability";
 
 type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
@@ -110,6 +111,7 @@ export function createChatGPTSandboxBackend(options: {
     operation: ChatGPTPrivateOperation,
     input: unknown,
     signal?: AbortSignal,
+    correlation?: GenerationObservationCorrelation,
   ) {
     if (host.expiresAt.getTime() <= Date.now())
       throw Error("ChatGPT host expired.");
@@ -130,6 +132,14 @@ export function createChatGPTSandboxBackend(options: {
       headers: {
         authorization: `Bearer ${host.capability}`,
         "content-type": "application/json",
+        ...(operation === "generate" && correlation
+          ? {
+              "x-orbsie-request-id": correlation.requestId,
+              ...(correlation.clientRunId
+                ? { "x-orbsie-client-run-id": correlation.clientRunId }
+                : {}),
+            }
+          : {}),
       },
       body,
       redirect: "error",

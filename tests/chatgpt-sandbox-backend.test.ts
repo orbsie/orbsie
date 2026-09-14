@@ -71,6 +71,41 @@ test("routes private operations to explicit server-only paths", async () => {
   );
 });
 
+test("carries observability correlation in headers while preserving the body shape", async () => {
+  sdk.get.mockResolvedValue({
+    status: "running",
+    domain: () => "https://sb-example.vercel.run",
+  });
+  const fetch = vi.fn().mockResolvedValue(
+    new Response("{}", {
+      headers: { "content-type": "application/x-ndjson" },
+    }),
+  );
+  vi.stubGlobal("fetch", fetch);
+  await backend.privateOperation(
+    host,
+    "generate",
+    { operationId: "operation", epoch: 1, input: { prompt: "bounded" } },
+    undefined,
+    {
+      requestId: "11111111-1111-4111-8111-111111111111",
+      clientRunId: "22222222-2222-4222-8222-222222222222",
+    },
+  );
+  const [, init] = fetch.mock.calls[0] as [string, RequestInit];
+  expect(JSON.parse(String(init.body))).toEqual({
+    operationId: "operation",
+    epoch: 1,
+    input: { prompt: "bounded" },
+  });
+  expect(init.headers).toEqual({
+    authorization: "Bearer private-token",
+    "content-type": "application/json",
+    "x-orbsie-request-id": "11111111-1111-4111-8111-111111111111",
+    "x-orbsie-client-run-id": "22222222-2222-4222-8222-222222222222",
+  });
+});
+
 test("bounds private control bodies before contacting a sandbox", async () => {
   const fetch = vi.fn();
   vi.stubGlobal("fetch", fetch);

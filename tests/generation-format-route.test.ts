@@ -23,6 +23,8 @@ vi.mock("@/lib/server/trial", async () => ({
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 import { FREE_MODEL } from "../src/lib/server/trial";
+import { HttpError } from "../src/lib/server/auth";
+import { GenerationProviderError } from "../src/lib/server/generation";
 import { POST } from "../src/app/api/generate/route";
 
 afterEach(() => {
@@ -36,6 +38,7 @@ afterEach(() => {
 function request(
   provider: "free" | "openrouter" | "gateway",
   extra: Record<string, unknown> = {},
+  extraHeaders: Record<string, string> = {},
 ) {
   vi.stubEnv("BETTER_AUTH_URL", "https://orbsie.test");
   vi.stubEnv("AI_GATEWAY_API_KEY_FREE", "private-synthetic-shared-key");
@@ -46,6 +49,7 @@ function request(
     headers: {
       origin: "https://orbsie.test",
       "Content-Type": "application/json",
+      ...extraHeaders,
     },
     body: JSON.stringify({
       provider,
@@ -88,6 +92,9 @@ it("selects the advertised format for anonymous OpenRouter BYOK", async () => {
   setup(modelWith(true, false));
   const response = await POST(request("openrouter"));
   expect(response.status).toBe(200);
+  expect(response.headers.get("x-orbsie-request-id")).toMatch(
+    /^[0-9a-f-]{36}$/,
+  );
   expect(deps.claim).not.toHaveBeenCalled();
   expect(deps.generate).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -96,6 +103,80 @@ it("selects the advertised format for anonymous OpenRouter BYOK", async () => {
       outputFormat: "json-object",
     }),
   );
+});
+
+it("returns a fresh request ID and keeps the client run as correlation only", async () => {
+  setup();
+  const clientRunId = "33333333-3333-4333-8333-333333333333";
+  const response = await POST(
+    request("gateway", {}, { "x-orbsie-client-run-id": clientRunId }),
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("x-orbsie-request-id")).toMatch(
+    /^[0-9a-f-]{36}$/,
+  );
+  expect(deps.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      observability: expect.anything(),
+    }),
+  );
+  expect(deps.generate.mock.calls[0][0].observability.clientRunId).toBe(
+    clientRunId,
+  );
+});
+
+it("records a provider rejection with its bounded HTTP status", async () => {
+  const events: unknown[] = [];
+  const info = vi
+    .spyOn(console, "info")
+    .mockImplementation((line?: unknown) => {
+      if (typeof line === "string") events.push(JSON.parse(line));
+    });
+  setup();
+  deps.generate.mockRejectedValueOnce(
+    new GenerationProviderError(402, "private provider body"),
+  );
+  const response = await POST(request("gateway"));
+  expect(response.status).toBe(402);
+  expect(response.headers.get("x-orbsie-request-id")).toMatch(
+    /^[0-9a-f-]{36}$/,
+  );
+  expect(events).toContainEqual(
+    expect.objectContaining({
+      event: "terminal",
+      layer: "provider",
+      terminalReason: "provider-error",
+      failureCode: "quota",
+      httpStatus: 402,
+    }),
+  );
+  expect(info).toHaveBeenCalled();
+  info.mockRestore();
+});
+
+it("records model-admission failure without treating it as a provider body", async () => {
+  const events: unknown[] = [];
+  const info = vi
+    .spyOn(console, "info")
+    .mockImplementation((line?: unknown) => {
+      if (typeof line === "string") events.push(JSON.parse(line));
+    });
+  deps.preflight.mockRejectedValueOnce(
+    new HttpError(503, "private catalog detail"),
+  );
+  const response = await POST(request("gateway"));
+  expect(response.status).toBe(503);
+  expect(events).toContainEqual(
+    expect.objectContaining({
+      event: "terminal",
+      layer: "route",
+      terminalReason: "transport-error",
+      failureCode: "host-unavailable",
+      httpStatus: 503,
+    }),
+  );
+  expect(JSON.stringify(events)).not.toContain("private catalog detail");
+  info.mockRestore();
 });
 
 it("selects schema output when OpenRouter advertises only structured_outputs", async () => {

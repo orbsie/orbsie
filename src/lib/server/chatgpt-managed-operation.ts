@@ -4,6 +4,10 @@ import { listChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
 import { createChatGPTSceneStream } from "./chatgpt-scene-stream";
 import { CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES } from "./chatgpt-managed-credential-store";
 import type { ChatGPTRuntime } from "./chatgpt-runtime";
+import {
+  createGenerationObservation,
+  type GenerationObservationCorrelation,
+} from "./generation-observability";
 
 export const CHATGPT_MANAGED_OPERATION_MAX_MS = 180_000;
 
@@ -49,6 +53,7 @@ export type ChatGPTManagedOperationController = {
     binding: ManagedOperationBinding,
     input: unknown,
     signal?: AbortSignal,
+    correlation?: GenerationObservationCorrelation,
   ): Promise<ReadableStream<Uint8Array>>;
   seal(
     binding: ManagedOperationBinding,
@@ -547,6 +552,7 @@ export function createChatGPTManagedOperationController(options: {
     binding: ManagedOperationBinding,
     input: unknown,
     signal?: AbortSignal,
+    correlation?: GenerationObservationCorrelation,
   ): Promise<ReadableStream<Uint8Array>> => {
     const current = await readySlot(binding);
     const operationSignal = combinedSignal(current, signal, now);
@@ -554,14 +560,30 @@ export function createChatGPTManagedOperationController(options: {
       void stopAndSeal(current).catch(() => undefined);
     };
     signal?.addEventListener("abort", onAbort, { once: true });
+    const observation = correlation
+      ? createGenerationObservation({
+          layer: "provider",
+          requestId: correlation.requestId,
+          clientRunId: correlation.clientRunId,
+          provider: "chatgpt",
+          serviceTier: "default",
+        })
+      : undefined;
     try {
       return createChatGPTSceneStream(
         input,
         current.generator!,
         operationSignal,
+        {
+          observability: observation,
+        },
       );
     } catch (error) {
       signal?.removeEventListener("abort", onAbort);
+      observation?.terminal({
+        reason: "parser-failure",
+        failureCode: "invalid-input",
+      });
       throw error;
     }
   };

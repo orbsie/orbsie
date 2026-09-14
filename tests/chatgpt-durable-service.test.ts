@@ -33,6 +33,7 @@ vi.mock("../src/lib/server/chatgpt-credential-vault", () => ({
 import { createChatGPTDurableService } from "../src/lib/server/chatgpt-durable-service";
 
 const identity = { ownerId: "owner", sessionId: "session" };
+const generationRequestId = "11111111-1111-4111-8111-111111111111";
 const host = {
   attemptId: "attempt",
   sandboxName: "orbsie-chatgpt-attempt",
@@ -413,5 +414,118 @@ describe("private durable ChatGPT operation orchestration", () => {
     expect(sequence.calls).toEqual(["initialize", "generate", "seal", "clear"]);
     expect(vault.save).toHaveBeenCalledTimes(1);
     expect(vault.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves a hosted transport failure when the generation reader throws", async () => {
+    setup();
+    const sourceError = Error("private stream detail");
+    const source = new ReadableStream<Uint8Array>({
+      pull() {
+        throw sourceError;
+      },
+    });
+    let initializedDeadline = 0;
+    const sequence = managerFor(async (_name, input) => {
+      const operationInput = input as {
+        operationId?: string;
+        epoch?: number;
+        deadlineAt?: number;
+      };
+      if (_name === "initialize") {
+        initializedDeadline = operationInput.deadlineAt!;
+        return json({
+          operationId: operationInput.operationId,
+          epoch: 4,
+          deadlineAt: operationInput.deadlineAt,
+        });
+      }
+      if (_name === "generate")
+        return new Response(source, {
+          headers: { "content-type": "application/x-ndjson" },
+        });
+      if (_name === "seal")
+        return json({
+          operationId: operationInput.operationId,
+          epoch: 4,
+          deadlineAt: initializedDeadline,
+          expired: false,
+          cache: Buffer.from("rotated").toString("base64"),
+        });
+      return json({ cleared: true });
+    });
+    const events: unknown[] = [];
+    const info = vi
+      .spyOn(console, "info")
+      .mockImplementation((line?: unknown) => {
+        if (typeof line === "string") events.push(JSON.parse(line));
+      });
+    try {
+      const service = createChatGPTDurableService({
+        manager: sequence.manager,
+      });
+      const stream = await service.generate(
+        identity,
+        { prompt: "bounded" },
+        undefined,
+        undefined,
+        { requestId: generationRequestId },
+      );
+      if (!stream) throw Error("expected managed stream");
+      await expect(stream.getReader().read()).rejects.toBe(sourceError);
+      expect(sequence.calls).toEqual([
+        "initialize",
+        "generate",
+        "seal",
+        "clear",
+      ]);
+      expect(vault.save).toHaveBeenCalledTimes(1);
+      expect(vault.release).toHaveBeenCalledTimes(1);
+      const terminals = events.filter(
+        (event) => (event as Record<string, unknown>).event === "terminal",
+      );
+      expect(terminals).toHaveLength(1);
+      expect(terminals[0]).toMatchObject({
+        layer: "hosted",
+        requestId: generationRequestId,
+        terminalReason: "transport-error",
+        failureCode: "transport",
+        credentialFinalization: "saved",
+      });
+    } finally {
+      info.mockRestore();
+    }
+  });
+
+  it("emits a hosted terminal when credential acquisition fails", async () => {
+    setup();
+    const sequence = managerFor(async () => json({}));
+    sequence.manager.ensure.mockRejectedValueOnce(
+      Error("private host startup detail"),
+    );
+    const events: unknown[] = [];
+    const info = vi
+      .spyOn(console, "info")
+      .mockImplementation((line?: unknown) => {
+        if (typeof line === "string") events.push(JSON.parse(line));
+      });
+    const service = createChatGPTDurableService({
+      manager: sequence.manager,
+    });
+    await expect(
+      service.generate(identity, { prompt: "bounded" }, undefined, undefined, {
+        requestId: generationRequestId,
+      }),
+    ).rejects.toThrow("private host startup detail");
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: "terminal",
+        layer: "hosted",
+        requestId: generationRequestId,
+        terminalReason: "transport-error",
+        failureCode: "host-unavailable",
+      }),
+    );
+    expect(JSON.stringify(events)).not.toContain("private host startup detail");
+    info.mockRestore();
   });
 });

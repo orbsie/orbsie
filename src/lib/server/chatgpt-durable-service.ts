@@ -17,6 +17,10 @@ import {
 import { validateChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
 import { ChatGPTHostStaleError } from "./chatgpt-host-service";
 import { CHATGPT_MANAGED_OPERATION_MAX_MS } from "./chatgpt-managed-operation";
+import {
+  createGenerationObservation,
+  type GenerationObservationCorrelation,
+} from "./generation-observability";
 
 const CLEANUP_HEADROOM_MS = 12_000;
 const PRIVATE_RESPONSE_MAX_BYTES = 256 * 1024;
@@ -51,7 +55,10 @@ type DurableManager = {
       | "clear"
       | "loginSeal",
     input: unknown,
-    options?: { signal?: AbortSignal },
+    options?: {
+      signal?: AbortSignal;
+      correlation?: GenerationObservationCorrelation;
+    },
   ): Promise<Response>;
   request(
     host: Host,
@@ -584,15 +591,54 @@ export function createChatGPTDurableService(options: {
     input: unknown,
     signal?: AbortSignal,
     routeDeadlineAt?: number,
+    correlation?: GenerationObservationCorrelation,
   ): Promise<ReadableStream<Uint8Array> | null> {
-    const active = await acquire(identity, signal, routeDeadlineAt);
+    const hostedObservation = correlation
+      ? createGenerationObservation({
+          layer: "hosted",
+          requestId: correlation.requestId,
+          clientRunId: correlation.clientRunId,
+          provider: "chatgpt",
+          serviceTier: "default",
+        })
+      : undefined;
+    let active: Awaited<ReturnType<typeof acquire>>;
+    try {
+      active = await acquire(identity, signal, routeDeadlineAt);
+    } catch (error) {
+      hostedObservation?.terminal({
+        reason: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client-abort"
+          : "transport-error",
+        abortSource: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client"
+          : undefined,
+        failureCode: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "timeout"
+            : "cancelled"
+          : error instanceof ChatGPTDurableServiceError &&
+              (error.code === "missing" || error.code === "revoked")
+            ? "connection-required"
+            : "host-unavailable",
+      });
+      throw error;
+    }
     let source: ReadableStream<Uint8Array>;
     try {
+      hostedObservation?.phase("provider-start");
       const response = await manager.privateOperation(
         active.host,
         "generate",
-        { ...operationIdentity(active.binding), input },
-        { signal },
+        {
+          ...operationIdentity(active.binding),
+          input,
+        },
+        { signal, correlation },
       );
       if (
         !response.ok ||
@@ -606,9 +652,34 @@ export function createChatGPTDurableService(options: {
         );
       source = response.body;
     } catch (error) {
+      const timedOut =
+        signal?.aborted && signal.reason?.name === "TimeoutError";
       try {
         await finalize(identity, active.lease, active.host, active.binding);
+        hostedObservation?.terminal({
+          reason: timedOut
+            ? "deadline"
+            : signal?.aborted
+              ? "client-abort"
+              : "transport-error",
+          abortSource: timedOut
+            ? "deadline"
+            : signal?.aborted
+              ? "client"
+              : undefined,
+          failureCode: timedOut
+            ? "timeout"
+            : signal?.aborted
+              ? "cancelled"
+              : "host-unavailable",
+          credentialFinalization: "saved",
+        });
       } catch (finalizationError) {
+        hostedObservation?.terminal({
+          reason: "credential-finalization-failed",
+          failureCode: "host-unavailable",
+          credentialFinalization: "failed",
+        });
         throw finalizationError;
       }
       throw error;
@@ -616,6 +687,8 @@ export function createChatGPTDurableService(options: {
     const reader = source.getReader();
     let abortHandler: (() => void) | undefined;
     let finalization: Promise<void> | undefined;
+    let locallyCancelled = false;
+    let streamReadFailed = false;
     const finish = async () => {
       if (!finalization) {
         if (abortHandler) signal?.removeEventListener("abort", abortHandler);
@@ -626,9 +699,44 @@ export function createChatGPTDurableService(options: {
           active.binding,
         );
       }
-      await finalization;
+      try {
+        await finalization;
+        hostedObservation?.terminal({
+          reason:
+            locallyCancelled || signal?.aborted
+              ? signal?.reason?.name === "TimeoutError"
+                ? "deadline"
+                : "client-abort"
+              : streamReadFailed
+                ? "transport-error"
+                : "completed",
+          abortSource:
+            locallyCancelled || signal?.aborted
+              ? signal?.reason?.name === "TimeoutError"
+                ? "deadline"
+                : "client"
+              : undefined,
+          credentialFinalization: "saved",
+          failureCode:
+            locallyCancelled || signal?.aborted
+              ? signal?.reason?.name === "TimeoutError"
+                ? "timeout"
+                : "cancelled"
+              : streamReadFailed
+                ? "transport"
+                : undefined,
+        });
+      } catch (error) {
+        hostedObservation?.terminal({
+          reason: "credential-finalization-failed",
+          failureCode: "host-unavailable",
+          credentialFinalization: "failed",
+        });
+        throw error;
+      }
     };
     abortHandler = () => {
+      locallyCancelled = true;
       // Begin cleanup before asking an untrusted/stalled upstream reader to
       // cancel; request abort must never postpone the authority release.
       void finish().catch(() => undefined);
@@ -646,13 +754,19 @@ export function createChatGPTDurableService(options: {
           if (next.done) {
             await finish();
             controller.close();
-          } else controller.enqueue(next.value);
+          } else {
+            hostedObservation?.noteInputBytes(next.value.byteLength);
+            hostedObservation?.phase("first-byte");
+            controller.enqueue(next.value);
+          }
         } catch (error) {
+          streamReadFailed = !(locallyCancelled || signal?.aborted);
           await finish().catch(() => undefined);
           controller.error(error);
         }
       },
       async cancel(reason) {
+        locallyCancelled = true;
         const cleanup = finish();
         await Promise.race([
           reader.cancel(reason).catch(() => undefined),

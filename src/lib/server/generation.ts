@@ -51,11 +51,13 @@ import {
   validateSceneReviewImage,
   type SceneReviewImage,
 } from "../review-image";
+import type { GenerationObservation } from "./generation-observability";
 
 export class GenerationProviderError extends Error {
   constructor(
     public status: number,
     message: string,
+    public providerStatus = status,
   ) {
     super(message);
   }
@@ -91,7 +93,7 @@ function providerFailure(status: number) {
     502,
     "Your provider is temporarily unavailable. Please try again shortly.",
   ];
-  return new GenerationProviderError(code, message);
+  return new GenerationProviderError(code, message, status);
 }
 export const commandJSONSchema = z.toJSONSchema(commandSchema);
 export const authoringPromptSections = {
@@ -276,6 +278,7 @@ export async function generateCommands({
   outputFormat = "ndjson",
   reviewImage,
   capabilities,
+  observability,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -294,7 +297,10 @@ export async function generateCommands({
   capabilities?: ModelCapabilities;
   /** Internal trusted review capture, bound below to this project snapshot. */
   reviewImage?: unknown;
+  /** Internal server observation; never supplied by the public request body. */
+  observability?: GenerationObservation;
 }) {
+  const observation = observability;
   const validatedReviewImage =
     reviewImage === undefined
       ? undefined
@@ -358,25 +364,59 @@ export async function generateCommands({
       "payload-too-large",
       "This review request exceeds the provider input limit.",
     );
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-      ...(provider === "openrouter"
-        ? { "HTTP-Referer": "https://orbsie.com", "X-Title": "Orbsie" }
-        : {}),
-    },
-    body: serializedRequestBody,
-    signal,
-  });
+  observation?.phase("provider-start");
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        ...(provider === "openrouter"
+          ? { "HTTP-Referer": "https://orbsie.com", "X-Title": "Orbsie" }
+          : {}),
+      },
+      body: serializedRequestBody,
+      signal,
+    });
+  } catch (error) {
+    const timedOut = signal.aborted && signal.reason?.name === "TimeoutError";
+    const clientAborted = signal.aborted && !timedOut;
+    observation?.terminal({
+      reason: timedOut
+        ? "deadline"
+        : clientAborted
+          ? "client-abort"
+          : "transport-error",
+      abortSource: timedOut ? "deadline" : clientAborted ? "client" : undefined,
+      failureCode: timedOut
+        ? "timeout"
+        : clientAborted
+          ? "cancelled"
+          : "transport",
+    });
+    throw error;
+  }
   if (!response.ok) {
     await response.body?.cancel();
+    observation?.terminal({
+      reason: "provider-error",
+      failureCode: response.status === 402 ? "quota" : "provider-rejected",
+      httpStatus: response.status,
+    });
     throw providerFailure(response.status);
+  }
+  const providerBody = response.body;
+  if (!providerBody) {
+    observation?.terminal({
+      reason: "transport-error",
+      failureCode: "transport",
+    });
+    throw Error("Provider response body is missing.");
   }
   return new ReadableStream({
     async start(controller) {
-      const reader = response.body!.getReader();
+      const reader = providerBody.getReader();
       const decoder = new TextDecoder();
       const encoder = new TextEncoder();
       let buffer = "",
@@ -384,6 +424,7 @@ export async function generateCommands({
         working = project,
         count = 0,
         lastCommandType = "";
+      let missingCommit = false;
       const structuredOutput = outputFormat !== "ndjson";
       const strictStructuredOutput = outputFormat === "json-schema-strict";
       let pendingCommit:
@@ -424,6 +465,11 @@ export async function generateCommands({
         working = applied.project;
         cursor = applied.cursor;
         lastCommandType = command.type;
+        observation?.noteCommand();
+        observation?.noteOutputBytes(
+          encoder.encode(JSON.stringify(command) + "\n").byteLength,
+        );
+        if (command.type === "commit_revision") observation?.commit();
         controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
       }
       function emit(line: string) {
@@ -496,6 +542,8 @@ export async function generateCommands({
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+          observation?.noteInputBytes(value.byteLength);
+          observation?.phase("first-byte");
           buffer += decoder.decode(value, { stream: true });
           if (buffer.length > 200000)
             throw Error("Provider event exceeded the size limit.");
@@ -584,6 +632,7 @@ export async function generateCommands({
           );
         }
         if (lastCommandType !== "commit_revision") {
+          missingCommit = true;
           const message =
             "Generation ended before committing this turn. Finished objects are preserved; retry to continue.";
           if (finishReason === "length")
@@ -591,7 +640,53 @@ export async function generateCommands({
           throw new SceneProtocolError(finishReason, message);
         }
       } catch (error) {
+        const aborted = signal.aborted;
         const diagnostic = generationDiagnostic(error, count, finishReason);
+        const parserFailure =
+          diagnostic !== undefined && !(error instanceof ProviderStreamError);
+        observation?.terminal({
+          reason: aborted
+            ? signal.reason?.name === "TimeoutError"
+              ? "deadline"
+              : "client-abort"
+            : missingCommit
+              ? "clean-eof-without-commit"
+              : error instanceof ProviderStreamError
+                ? "provider-error"
+                : error instanceof SceneJSONError ||
+                    error instanceof SceneProtocolError ||
+                    error instanceof TruncatedSceneStreamError ||
+                    parserFailure
+                  ? "parser-failure"
+                  : "transport-error",
+          abortSource: aborted
+            ? signal.reason?.name === "TimeoutError"
+              ? "deadline"
+              : "client"
+            : undefined,
+          failureCode: aborted
+            ? signal.reason?.name === "TimeoutError"
+              ? "timeout"
+              : "cancelled"
+            : missingCommit
+              ? "parser"
+              : error instanceof ProviderStreamError
+                ? error.providerStatus === 402
+                  ? "quota"
+                  : "provider-rejected"
+                : error instanceof SceneJSONError ||
+                    error instanceof SceneProtocolError ||
+                    error instanceof TruncatedSceneStreamError ||
+                    parserFailure
+                  ? "parser"
+                  : "transport",
+          httpStatus:
+            error instanceof ProviderStreamError &&
+            error.providerStatus !== null
+              ? error.providerStatus
+              : undefined,
+          finishReason: finishReason ?? undefined,
+        });
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
@@ -606,6 +701,11 @@ export async function generateCommands({
           ),
         );
       } finally {
+        if (!signal.aborted && lastCommandType === "commit_revision")
+          observation?.terminal({
+            reason: "completed",
+            finishReason: finishReason ?? undefined,
+          });
         await reader.cancel().catch(() => {});
         controller.close();
       }

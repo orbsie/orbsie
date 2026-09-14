@@ -10,6 +10,14 @@ const mocks = vi.hoisted(() => ({
   privateOperation: vi.fn(),
   createDurable: vi.fn(),
   durableGenerate: vi.fn(),
+  DurableError: class extends Error {
+    constructor(
+      public code: string,
+      message: string,
+    ) {
+      super(message);
+    }
+  },
   HttpError: class extends Error {
     constructor(
       public status: number,
@@ -37,7 +45,7 @@ vi.mock("@/lib/server/chatgpt-host-manager", () => ({
 }));
 vi.mock("@/lib/server/chatgpt-durable-service", () => ({
   createChatGPTDurableService: mocks.createDurable,
-  ChatGPTDurableServiceError: class extends Error {},
+  ChatGPTDurableServiceError: mocks.DurableError,
 }));
 vi.mock(
   "@/lib/server/chatgpt-scene-stream",
@@ -52,12 +60,16 @@ const payload = () => ({
   project: blankProject(),
   browserModeling: true,
 });
-const request = (body: unknown = payload()) =>
+const request = (
+  body: unknown = payload(),
+  extraHeaders: Record<string, string> = {},
+) =>
   new Request("https://orbsie.test/api/chatgpt/generate", {
     method: "POST",
     headers: {
       origin: "https://orbsie.test",
       "content-type": "application/json",
+      ...extraHeaders,
     },
     body: JSON.stringify(body),
   });
@@ -99,7 +111,11 @@ describe("hosted ChatGPT generation route", () => {
   });
   it("requires explicit generation enablement", async () => {
     vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "0");
-    expect((await POST(request())).status).toBe(404);
+    const response = await POST(request());
+    expect(response.status).toBe(404);
+    expect(response.headers.get("x-orbsie-request-id")).toMatch(
+      /^[0-9a-f-]{36}$/,
+    );
     expect(mocks.auth).not.toHaveBeenCalled();
   });
   it("requires sign-in and a preexisting owned host", async () => {
@@ -128,6 +144,30 @@ describe("hosted ChatGPT generation route", () => {
     });
     expect(mocks.request).not.toHaveBeenCalled();
   });
+  it("records a durable host admission failure with a bounded status", async () => {
+    const events: unknown[] = [];
+    const info = vi
+      .spyOn(console, "info")
+      .mockImplementation((line?: unknown) => {
+        if (typeof line === "string") events.push(JSON.parse(line));
+      });
+    mocks.durableGenerate.mockRejectedValueOnce(
+      new mocks.DurableError("busy", "private durable detail"),
+    );
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: "terminal",
+        layer: "route",
+        terminalReason: "transport-error",
+        failureCode: "host-unavailable",
+        httpStatus: 409,
+      }),
+    );
+    expect(JSON.stringify(events)).not.toContain("private durable detail");
+    info.mockRestore();
+  });
   it("rejects origin failures and caller-supplied owner or capability fields", async () => {
     mocks.origin.mockImplementationOnce(() => {
       throw new mocks.HttpError(403, "Wrong origin");
@@ -143,7 +183,10 @@ describe("hosted ChatGPT generation route", () => {
     expect(mocks.request).not.toHaveBeenCalled();
   });
   it("streams generation via the signed-in session and selected model", async () => {
-    const response = await POST(request());
+    const clientRunId = "22222222-2222-4222-8222-222222222222";
+    const response = await POST(
+      request(payload(), { "x-orbsie-client-run-id": clientRunId }),
+    );
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("commit_revision");
     expect(mocks.durableGenerate).toHaveBeenCalledWith(
@@ -157,6 +200,13 @@ describe("hosted ChatGPT generation route", () => {
       }),
       expect.any(AbortSignal),
       expect.any(Number),
+      expect.objectContaining({
+        requestId: expect.any(String),
+        clientRunId,
+      }),
+    );
+    expect(response.headers.get("x-orbsie-request-id")).toMatch(
+      /^[0-9a-f-]{36}$/,
     );
     expect(mocks.request).not.toHaveBeenCalled();
     expect(response.headers.get("cache-control")).toBe("private, no-store");
@@ -178,6 +228,7 @@ describe("hosted ChatGPT generation route", () => {
       expect.objectContaining({ modelingFeedback }),
       expect.anything(),
       expect.any(Number),
+      expect.objectContaining({ requestId: expect.any(String) }),
     );
   });
   it("retains project-scoped generation feedback through the hosted route", async () => {
@@ -198,6 +249,7 @@ describe("hosted ChatGPT generation route", () => {
       expect.objectContaining({ generationFeedback }),
       expect.anything(),
       expect.any(Number),
+      expect.objectContaining({ requestId: expect.any(String) }),
     );
   });
   it("rejects cross-project generation feedback before contacting the host", async () => {

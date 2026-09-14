@@ -147,3 +147,11 @@ unchangedbody+optionalcorrelationheader=>200/one syntheticcall. Existing sandbox
 reuse means body change would break rolling deployment. Worker moving correlation
 to headers via manager/backend, preserving body/capability/epoch; evidence
 observability-protocol-compat-20260913. Root quota72%used/28%remaining.
+
+Stage1 server observability corrected and root-reviewed: actual hosted read failure
+now transport-error independently of saved credentials; success before cleanup
+abort, parser/quota classifications, bounded observer UTF8/final/large records,
+JSON-line sink and rolling-compatible private headers accepted. Worker85tests in
+7suites+typecheck/format pass; root8 actual private-HTTP integration tests pass.
+No live model calls or deployment for this stage yet. Client export/history and
+startup diagnostics remain next bounded task. Runbook docs/generation-logging.md.

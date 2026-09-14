@@ -28,10 +28,81 @@ import {
   resolveGenerationOutputFormat,
 } from "@/lib/server/generation-output-format";
 import type { GenerationOutputFormat } from "@/lib/server/generation-output-format";
+import {
+  clientRunIdFromRequest,
+  createGenerationObservation,
+  generationRequestId,
+  observeGenerationStream,
+  withGenerationRequestId,
+} from "@/lib/server/generation-observability";
 export const maxDuration = 180;
 export async function POST(request: Request) {
+  const requestId = generationRequestId();
+  const routeObservation = createGenerationObservation({
+    layer: "route",
+    requestId,
+    clientRunId: clientRunIdFromRequest(request),
+  });
+  const respond = (response: Response) =>
+    withGenerationRequestId(response, requestId);
+  const generationSignal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(175000),
+  ]);
+  const routeFailure = (error?: unknown) => {
+    const timedOut =
+      generationSignal.aborted &&
+      generationSignal.reason?.name === "TimeoutError";
+    const clientAborted = generationSignal.aborted && !timedOut;
+    const httpStatus =
+      error instanceof GenerationProviderError
+        ? error.providerStatus
+        : error instanceof TrialExhausted
+          ? 429
+          : error instanceof HttpError
+            ? error.status
+            : 500;
+    const providerRejected = error instanceof GenerationProviderError;
+    const quota = error instanceof TrialExhausted || httpStatus === 402;
+    routeObservation.terminal({
+      reason: timedOut
+        ? "deadline"
+        : clientAborted
+          ? "client-abort"
+          : providerRejected || quota
+            ? "provider-error"
+            : error instanceof HttpError &&
+                (error.status === 400 || error.status === 413)
+              ? "parser-failure"
+              : "transport-error",
+      abortSource: timedOut ? "deadline" : clientAborted ? "client" : undefined,
+      failureCode: timedOut
+        ? "timeout"
+        : clientAborted
+          ? "cancelled"
+          : quota
+            ? "quota"
+            : providerRejected
+              ? "provider-rejected"
+              : error instanceof HttpError
+                ? error.status === 400 || error.status === 413
+                  ? "invalid-input"
+                  : error.status === 401
+                    ? "connection-required"
+                    : error.status >= 500
+                      ? "host-unavailable"
+                      : "unknown"
+                : error instanceof GenerationFormatConfigError
+                  ? "invalid-input"
+                  : "transport",
+      ...(httpStatus !== undefined ? { httpStatus } : {}),
+    });
+  };
   let identity: TrialIdentity | undefined;
   let remaining: number | undefined;
+  let admittedModelId: string | undefined;
+  let providerObservation:
+    ReturnType<typeof createGenerationObservation> | undefined;
   try {
     checkOrigin(request);
     const parsed = z
@@ -81,6 +152,7 @@ export async function POST(request: Request) {
         FREE_MODEL,
         request.signal,
       );
+      admittedModelId = model.id;
       outputFormat = resolveGenerationOutputFormat({
         provider: "gateway",
         model: FREE_MODEL,
@@ -95,6 +167,7 @@ export async function POST(request: Request) {
         parsed.data.model!,
         request.signal,
       );
+      admittedModelId = model.id;
       outputFormat = resolveGenerationOutputFormat({
         provider: parsed.data.provider as "openrouter" | "gateway",
         model: parsed.data.model!,
@@ -102,6 +175,15 @@ export async function POST(request: Request) {
         overrides: formatOverrides,
       });
     }
+    providerObservation = createGenerationObservation({
+      layer: "provider",
+      requestId,
+      clientRunId: routeObservation.clientRunId,
+      provider: free
+        ? "free"
+        : (parsed.data.provider as "gateway" | "openrouter"),
+      admittedModel: admittedModelId,
+    });
     const stream = await generateCommands({
       ...parsed.data,
       provider: free
@@ -110,35 +192,75 @@ export async function POST(request: Request) {
       model: free ? FREE_MODEL : parsed.data.model!,
       key: free ? process.env.AI_GATEWAY_API_KEY_FREE! : parsed.data.key!,
       maxTokens,
-      signal: AbortSignal.any([request.signal, AbortSignal.timeout(175000)]),
+      signal: generationSignal,
       outputFormat,
+      observability: providerObservation,
     });
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "application/x-ndjson",
-        "Cache-Control": "no-store",
-        "X-Accel-Buffering": "no",
-        ...(identity
-          ? {
-              "Set-Cookie": identity.cookie,
-              "X-Orbsie-Trial-Remaining": String(remaining),
-            }
-          : {}),
-      },
-    });
-  } catch (e) {
-    if (e instanceof GenerationFormatConfigError)
-      return apiError(new HttpError(500, e.message));
-    if (e instanceof TrialExhausted)
-      return Response.json(
-        { error: e.message, code: "FREE_LIMIT_REACHED", remaining: 0 },
+    return respond(
+      new Response(
+        observeGenerationStream(stream, routeObservation, generationSignal),
         {
-          status: 429,
           headers: {
+            "Content-Type": "application/x-ndjson",
             "Cache-Control": "no-store",
-            ...(identity ? { "Set-Cookie": identity.cookie } : {}),
+            "X-Accel-Buffering": "no",
+            ...(identity
+              ? {
+                  "Set-Cookie": identity.cookie,
+                  "X-Orbsie-Trial-Remaining": String(remaining),
+                }
+              : {}),
           },
         },
+      ),
+    );
+  } catch (e) {
+    if (providerObservation) {
+      const providerAborted = generationSignal.aborted;
+      providerObservation.terminal({
+        reason: providerAborted
+          ? generationSignal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client-abort"
+          : e instanceof GenerationProviderError
+            ? "provider-error"
+            : "transport-error",
+        abortSource: providerAborted
+          ? generationSignal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client"
+          : undefined,
+        failureCode: providerAborted
+          ? generationSignal.reason?.name === "TimeoutError"
+            ? "timeout"
+            : "cancelled"
+          : e instanceof GenerationProviderError
+            ? e.status === 402
+              ? "quota"
+              : "provider-rejected"
+            : "transport",
+        httpStatus: generationSignal.aborted
+          ? undefined
+          : e instanceof GenerationProviderError
+            ? e.providerStatus
+            : 500,
+      });
+    }
+    routeFailure(e);
+    if (e instanceof GenerationFormatConfigError)
+      return respond(apiError(new HttpError(500, e.message)));
+    if (e instanceof TrialExhausted)
+      return respond(
+        Response.json(
+          { error: e.message, code: "FREE_LIMIT_REACHED", remaining: 0 },
+          {
+            status: 429,
+            headers: {
+              "Cache-Control": "no-store",
+              ...(identity ? { "Set-Cookie": identity.cookie } : {}),
+            },
+          },
+        ),
       );
     if (identity) {
       const response = apiError(
@@ -153,20 +275,24 @@ export async function POST(request: Request) {
       if (remaining !== undefined)
         response.headers.set("X-Orbsie-Trial-Remaining", String(remaining));
       response.headers.set("Cache-Control", "no-store");
-      return response;
+      return respond(response);
     }
     if (e instanceof GenerationProviderError && e.status === 401)
-      return Response.json(
-        { error: e.message, code: "PROVIDER_AUTH_REJECTED" },
-        { status: 401, headers: { "Cache-Control": "no-store" } },
+      return respond(
+        Response.json(
+          { error: e.message, code: "PROVIDER_AUTH_REJECTED" },
+          { status: 401, headers: { "Cache-Control": "no-store" } },
+        ),
       );
     if (e instanceof GenerationProviderError && e.status === 403)
-      return Response.json(
-        { error: e.message, code: "PROVIDER_ACCESS_DENIED" },
-        { status: 403, headers: { "Cache-Control": "no-store" } },
+      return respond(
+        Response.json(
+          { error: e.message, code: "PROVIDER_ACCESS_DENIED" },
+          { status: 403, headers: { "Cache-Control": "no-store" } },
+        ),
       );
     if (e instanceof GenerationProviderError)
-      return apiError(new HttpError(e.status, e.message));
-    return apiError(e);
+      return respond(apiError(new HttpError(e.status, e.message)));
+    return respond(apiError(e));
   }
 }

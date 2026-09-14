@@ -209,6 +209,33 @@ describe("private managed ChatGPT operation controller", () => {
     await controller.close();
   });
 
+  it("terminates provider observation when scene stream creation rejects synchronously", async () => {
+    const { controller } = fixture();
+    const binding = base("operation-sync-input");
+    await controller.initialize(binding);
+    const events: unknown[] = [];
+    const info = vi
+      .spyOn(console, "info")
+      .mockImplementation((line?: unknown) => {
+        if (typeof line === "string") events.push(JSON.parse(line));
+      });
+    await expect(
+      controller.generate(binding, { invalid: true }, undefined, {
+        requestId: "11111111-1111-4111-8111-111111111111",
+      }),
+    ).rejects.toThrow();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: "terminal",
+        layer: "provider",
+        terminalReason: "parser-failure",
+        failureCode: "invalid-input",
+      }),
+    );
+    info.mockRestore();
+    await controller.clear(binding);
+  });
+
   it("stops and seals at the operation deadline before admitting another RPC", async () => {
     let clock = 10_000;
     const { controller, runtime } = fixture({ now: () => clock });

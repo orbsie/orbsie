@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 import { createChatGPTSceneStream } from "../src/lib/server/chatgpt-scene-stream";
+import { createGenerationObservation } from "../src/lib/server/generation-observability";
 import { generationFeedbackForFailure } from "../src/lib/generation-feedback";
 type Input = Parameters<
   Parameters<typeof createChatGPTSceneStream>[1]["generate"]
@@ -57,6 +58,32 @@ describe("hosted ChatGPT scene stream", () => {
     const input = generator.generate.mock.calls[0][0];
     expect(JSON.parse(input.input).localModeling).toBe(false);
     expect(input.model).toBe("gpt-5.6-luna");
+  });
+  it("records completed hosted generation before local cleanup", async () => {
+    const events: unknown[] = [];
+    const observation = createGenerationObservation({
+      layer: "provider",
+      requestId: "11111111-1111-4111-8111-111111111111",
+      provider: "chatgpt",
+      admittedModel: "gpt-5.6-luna",
+      sink: (event) => events.push(event),
+    });
+    const result = await output(
+      createChatGPTSceneStream(
+        request(),
+        {
+          generate: async (i) => i.onText(`${commit}\n`),
+        },
+        undefined,
+        { observability: observation },
+      ),
+    );
+    expect(result).toContain("commit_revision");
+    expect(
+      events.filter(
+        (event) => (event as Record<string, unknown>).event === "terminal",
+      ),
+    ).toEqual([expect.objectContaining({ terminalReason: "completed" })]);
   });
   it("never emits a pending final commit after provider failure", async () => {
     const result = await output(
