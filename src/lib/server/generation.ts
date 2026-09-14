@@ -52,6 +52,13 @@ import {
   type SceneReviewImage,
 } from "../review-image";
 import type { GenerationObservation } from "./generation-observability";
+import {
+  createAuthoringLifecycle,
+  updateSceneProvenance,
+  type AuthoringLifecycleHooks,
+  type SceneProvenanceMap,
+  initialSceneProvenance,
+} from "../scene-binding";
 
 export class GenerationProviderError extends Error {
   constructor(
@@ -279,6 +286,7 @@ export async function generateCommands({
   reviewImage,
   capabilities,
   observability,
+  lifecycle,
 }: {
   provider: "openrouter" | "gateway";
   model: string;
@@ -299,8 +307,21 @@ export async function generateCommands({
   reviewImage?: unknown;
   /** Internal server observation; never supplied by the public request body. */
   observability?: GenerationObservation;
+  /** Internal completion authority; public routes do not provide this hook. */
+  lifecycle?: AuthoringLifecycleHooks;
 }) {
   const observation = observability;
+  const consumerAbort = new AbortController();
+  const streamSignal = AbortSignal.any([signal, consumerAbort.signal]);
+  let latestProject = project;
+  const provenance: SceneProvenanceMap = lifecycle
+    ? initialSceneProvenance(project)
+    : new Map();
+  const lifecycleController = createAuthoringLifecycle(
+    lifecycle,
+    streamSignal,
+    () => ({ project: latestProject, provenance }),
+  );
   const validatedReviewImage =
     reviewImage === undefined
       ? undefined
@@ -380,8 +401,10 @@ export async function generateCommands({
       signal,
     });
   } catch (error) {
-    const timedOut = signal.aborted && signal.reason?.name === "TimeoutError";
-    const clientAborted = signal.aborted && !timedOut;
+    await lifecycleController.fail(error);
+    const timedOut =
+      streamSignal.aborted && streamSignal.reason?.name === "TimeoutError";
+    const clientAborted = streamSignal.aborted && !timedOut;
     observation?.terminal({
       reason: timedOut
         ? "deadline"
@@ -399,24 +422,37 @@ export async function generateCommands({
   }
   if (!response.ok) {
     await response.body?.cancel();
+    const error = providerFailure(response.status);
+    await lifecycleController.fail(error);
     observation?.terminal({
       reason: "provider-error",
       failureCode: response.status === 402 ? "quota" : "provider-rejected",
       httpStatus: response.status,
     });
-    throw providerFailure(response.status);
+    throw error;
   }
   const providerBody = response.body;
   if (!providerBody) {
+    const error = Error("Provider response body is missing.");
+    await lifecycleController.fail(error);
     observation?.terminal({
       reason: "transport-error",
       failureCode: "transport",
     });
-    throw Error("Provider response body is missing.");
+    throw error;
   }
   return new ReadableStream({
     async start(controller) {
       const reader = providerBody.getReader();
+      const cancelReader = () => {
+        void reader.cancel().catch(() => {});
+      };
+      if (streamSignal.aborted) {
+        await reader.cancel().catch(() => {});
+        if (!consumerAbort.signal.aborted) controller.close();
+        return;
+      }
+      streamSignal.addEventListener("abort", cancelReader, { once: true });
       const decoder = new TextDecoder();
       const encoder = new TextEncoder();
       let buffer = "",
@@ -425,6 +461,7 @@ export async function generateCommands({
         count = 0,
         lastCommandType = "";
       let missingCommit = false;
+      let commitSeen = false;
       const structuredOutput = outputFormat !== "ndjson";
       const strictStructuredOutput = outputFormat === "json-schema-strict";
       let pendingCommit:
@@ -463,7 +500,9 @@ export async function generateCommands({
           throw new SceneProtocolError(finishReason);
         }
         working = applied.project;
+        latestProject = working;
         cursor = applied.cursor;
+        updateSceneProvenance(provenance, command);
         lastCommandType = command.type;
         observation?.noteCommand();
         observation?.noteOutputBytes(
@@ -474,6 +513,11 @@ export async function generateCommands({
       }
       function emit(line: string) {
         if (!line.trim()) return;
+        if (commitSeen)
+          throw new SceneProtocolError(
+            finishReason,
+            "No scene commands may follow commit_revision.",
+          );
         if (++count > 250)
           throw Error(
             "This turn reached its scene update limit. Continue from the saved world.",
@@ -534,6 +578,7 @@ export async function generateCommands({
           return;
         }
         applyAndEnqueue(command);
+        if (command.type === "commit_revision") commitSeen = true;
       }
       const envelopeDecoder = structuredOutput
         ? new SceneCommandEnvelopeDecoder({ onCommand: emit })
@@ -639,14 +684,27 @@ export async function generateCommands({
             throw new TruncatedSceneStreamError(finishReason, message);
           throw new SceneProtocolError(finishReason, message);
         }
+        if (finishReason && finishReason !== "stop") {
+          if (finishReason === "length")
+            throw new TruncatedSceneStreamError(
+              finishReason,
+              "The model response ended before the scene was complete. Finished objects are preserved; retry to continue.",
+            );
+          throw new SceneProtocolError(
+            finishReason,
+            "The model did not complete this scene update.",
+          );
+        }
+        await lifecycleController.complete();
       } catch (error) {
-        const aborted = signal.aborted;
+        await lifecycleController.fail(error);
+        const aborted = streamSignal.aborted;
         const diagnostic = generationDiagnostic(error, count, finishReason);
         const parserFailure =
           diagnostic !== undefined && !(error instanceof ProviderStreamError);
         observation?.terminal({
           reason: aborted
-            ? signal.reason?.name === "TimeoutError"
+            ? streamSignal.reason?.name === "TimeoutError"
               ? "deadline"
               : "client-abort"
             : missingCommit
@@ -660,12 +718,12 @@ export async function generateCommands({
                   ? "parser-failure"
                   : "transport-error",
           abortSource: aborted
-            ? signal.reason?.name === "TimeoutError"
+            ? streamSignal.reason?.name === "TimeoutError"
               ? "deadline"
               : "client"
             : undefined,
           failureCode: aborted
-            ? signal.reason?.name === "TimeoutError"
+            ? streamSignal.reason?.name === "TimeoutError"
               ? "timeout"
               : "cancelled"
             : missingCommit
@@ -687,28 +745,41 @@ export async function generateCommands({
               : undefined,
           finishReason: finishReason ?? undefined,
         });
-        controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              error:
-                error instanceof Error &&
-                !(error instanceof z.ZodError) &&
-                !(error instanceof SyntaxError)
-                  ? error.message
-                  : "The model returned an invalid scene update. Finished objects are preserved.",
-              ...(diagnostic ?? {}),
-            }) + "\n",
-          ),
-        );
+        if (!streamSignal.aborted)
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                error: lifecycleController.completionFailed()
+                  ? "The scene completion could not be recorded. Finished objects are preserved."
+                  : error instanceof Error &&
+                      !(error instanceof z.ZodError) &&
+                      !(error instanceof SyntaxError)
+                    ? error.message
+                    : "The model returned an invalid scene update. Finished objects are preserved.",
+                ...(diagnostic ?? {}),
+              }) + "\n",
+            ),
+          );
       } finally {
-        if (!signal.aborted && lastCommandType === "commit_revision")
+        if (
+          !streamSignal.aborted &&
+          lastCommandType === "commit_revision" &&
+          !lifecycleController.completionFailed()
+        )
           observation?.terminal({
             reason: "completed",
             finishReason: finishReason ?? undefined,
           });
         await reader.cancel().catch(() => {});
-        controller.close();
+        streamSignal.removeEventListener("abort", cancelReader);
+        if (!consumerAbort.signal.aborted) controller.close();
       }
+    },
+    cancel(reason) {
+      consumerAbort.abort(reason);
+      return lifecycleController.fail(
+        reason instanceof Error ? reason : Error("Generation cancelled."),
+      );
     },
   });
 }

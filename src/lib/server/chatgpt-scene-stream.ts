@@ -28,6 +28,13 @@ import {
   type SceneReviewImage,
 } from "../review-image";
 import type { GenerationObservation } from "./generation-observability";
+import {
+  createAuthoringLifecycle,
+  initialSceneProvenance,
+  updateSceneProvenance,
+  type AuthoringLifecycleHooks,
+  type SceneProvenanceMap,
+} from "../scene-binding";
 
 export const chatGPTSceneRequestSchema = z
   .object({
@@ -52,6 +59,7 @@ export function createChatGPTSceneStream(
   options?: {
     reviewImage?: unknown;
     observability?: GenerationObservation;
+    lifecycle?: AuthoringLifecycleHooks;
   },
 ) {
   const input = chatGPTSceneRequestSchema.parse(raw);
@@ -96,6 +104,16 @@ export function createChatGPTSceneStream(
     : local.signal;
   const encoder = new TextEncoder();
   const observation = options?.observability;
+  const lifecycle = options?.lifecycle;
+  let latestProject = input.project;
+  const provenance: SceneProvenanceMap = lifecycle
+    ? initialSceneProvenance(input.project)
+    : new Map();
+  const lifecycleController = createAuthoringLifecycle(
+    lifecycle,
+    combined,
+    () => ({ project: latestProject, provenance }),
+  );
   let cancelled = false;
   return new ReadableStream<Uint8Array>(
     {
@@ -157,7 +175,9 @@ export function createChatGPTSceneStream(
             cursor,
           );
           working = applied.project;
+          latestProject = working;
           cursor = applied.cursor;
+          updateSceneProvenance(provenance, command);
           enqueue(command);
         };
         try {
@@ -211,12 +231,16 @@ export function createChatGPTSceneStream(
             cursor,
           );
           working = applied.project;
+          latestProject = working;
           cursor = applied.cursor;
+          updateSceneProvenance(provenance, commit);
           committed = true;
           observation?.commit();
           enqueue(commit);
+          await lifecycleController.complete();
         } catch (error) {
           failed = true;
+          await lifecycleController.fail(error);
           const chatGPTError =
             error instanceof ChatGPTGenerationError ? error : undefined;
           const providerStatus =
@@ -287,8 +311,9 @@ export function createChatGPTSceneStream(
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
-                  error:
-                    "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
+                  error: lifecycleController.completionFailed()
+                    ? "The scene completion could not be recorded. Finished objects are preserved; retry to continue."
+                    : "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
                   ...(safeDiagnostic ?? {}),
                 }) + "\n",
               ),
@@ -298,7 +323,12 @@ export function createChatGPTSceneStream(
           const finishedFailed = failed;
           const finishedCommitted = committed;
           local.abort();
-          if (!finishedFailed && finishedCommitted && !finishedAborted)
+          if (
+            !finishedFailed &&
+            finishedCommitted &&
+            !finishedAborted &&
+            !lifecycleController.completionFailed()
+          )
             observation?.terminal({ reason: "completed" });
           else if (!finishedFailed && finishedAborted)
             observation?.terminal({
@@ -318,9 +348,12 @@ export function createChatGPTSceneStream(
           if (!cancelled) controller.close();
         }
       },
-      cancel() {
+      cancel(reason) {
         cancelled = true;
-        local.abort();
+        local.abort(reason);
+        return lifecycleController.fail(
+          reason instanceof Error ? reason : Error("Generation cancelled."),
+        );
       },
     },
     { highWaterMark: 64 * 1024, size: (chunk) => chunk.byteLength },

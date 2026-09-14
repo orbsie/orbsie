@@ -234,3 +234,21 @@ functions, forward internal phase tokens to browser JSON, or rely on a callback 
 exists only inside an isolated executor with no ledger integration. Avoid breaking
 older private hosts by adding unsolicited strict-schema request-body fields. Exercise
 the actual HTTP handler/controller, durable wrapper, seal failure and Disconnect.
+
+### Completion cancellation and durable writes
+
+The shared adapter lifecycle now passes an operation AbortSignal into completion
+and failure hooks, and stops waiting for an uncooperative hook after cancellation.
+That does not cancel an already-started database transaction or undo a committed
+write. The route integration must carry cancellation into durable completion:
+check after lock acquisition and before the transaction commits, roll back on
+cancellation, and test cancellation while the completion writer is waiting on a
+row lock. Do not rely on checking the signal once before calling the ledger.
+Failure hooks receive the already-aborted operation signal as context; durable
+failure cleanup needs its own bounded cleanup allowance. Test the actual ledger
+state after delayed completion settles, not only callback invocation counts.
+
+Current completeInitialAuthoringRun accepts no signal, and failAuthoringRun only
+admits active/reviewing/final-review with the private phase token. A completion
+that commits first clears that token. Resolve this ordering explicitly in the
+integration contract without reopening failed runs or weakening replay checks.

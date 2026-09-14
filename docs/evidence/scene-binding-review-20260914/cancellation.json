@@ -1,0 +1,9 @@
+{
+  "syntheticOnly": true,
+  "providerCalls": 0,
+  "cancelDuringCompletion": {
+    "signalAborted": true,
+    "failureCallbacks": 1,
+    "errorEmitted": false
+  }
+}

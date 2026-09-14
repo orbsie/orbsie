@@ -1,0 +1,23 @@
+{
+  "status": "accepted-internal-foundation",
+  "providerCalls": 0,
+  "review": "Astra reviewed final diff and independent production-path probes after Luna fixes",
+  "validation": {
+    "workerPriorBroadTests": 54,
+    "workerFinalFocusedTests": 30,
+    "typecheck": "passed",
+    "format": "passed",
+    "diffCheck": "passed",
+    "rootProbes": [
+      "procedural server/browser digest equality",
+      "trailing command rejects completion",
+      "pending completion cancellation invokes failure once"
+    ]
+  },
+  "limits": [
+    "No public review routes or browser loop enabled",
+    "No live provider, deployment or browser E2E in this handoff",
+    "Durable transaction cancellation requires next integration acceptance"
+  ],
+  "baseline": "../scene-binding-review-baseline-20260913"
+}

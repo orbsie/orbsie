@@ -1,0 +1,14 @@
+{
+  "syntheticOnly": true,
+  "providerCalls": 0,
+  "procedural": {
+    "sameProject": true,
+    "sameRevision": true,
+    "digestsEqual": true
+  },
+  "trailingCommands": {
+    "completionCallbacks": 0,
+    "failureCallbacks": 1,
+    "errorEmitted": true
+  }
+}

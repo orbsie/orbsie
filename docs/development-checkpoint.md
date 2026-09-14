@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-13. Full goal remains **all prompt.md, E2E validated with
+Updated 2026-09-14. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
 acceptance history: checkpoint-history/2026-09-13-before-durable-release.md and
 checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
@@ -9,10 +9,12 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing canonical scene binding/procedural
-provenance and internal adapter completion/failure hooks. Task contract:
-docs/authoring-scene-binding-task.md. Public review routes/browser loop are not
-being enabled by this handoff. No nested agents or live calls.
+/root/host_session_renewal finished the canonical scene binding/procedural
+provenance and internal adapter completion/failure hooks. Root accepted the final
+diff after the rejected first handoff and two smaller final fixes. Task contract:
+docs/authoring-scene-binding-task.md. No public review routes/browser loop enabled,
+no live calls or deployment in this handoff. Next: actual route/private hosted
+completion authority and review admission, then reviewer/browser integration.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Ledger5cedb2e accepted after root fixes/review and actual PostgreSQL5/5 plus legacy
 trial2/2 tests (zero skips). Worker unit/reset/trial14passed/1DBskip and typecheck
@@ -23,14 +25,19 @@ Shared typed scene-review result interface39a5bce: six targeted tests and typech
 pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
-Binding first handoff rejected after root review despite35tests/typecheck passing:
-procedural client includes evaluated recipe absent in server shadow; trailing
-NDJSON commit->command->commit authorizes completion; cancel-during-hook may finish
-late. Root production-path probe reproduced all three (zero calls); cancellation used
-the retained rejected-handoff bundle to avoid worker WIP. Evidence
-scene-binding-review-baseline-20260913. Worker fix pass must add actual server/client
-operation equality, strict termination and shared abort-aware lifecycle controller.
-Do not accept/deploy this WIP until the specific regression matrix passes review.
+Binding accepted after root regressions: production server/browser procedural
+digests match, trailing NDJSON commit->command->commit fails without completion,
+and pending-hook cancellation fails once and consumes late results. Shared
+abort-aware lifecycle controller; ordinary Manifold recipes retained, source hashes
+and stale provenance checked, failure-only hooks cannot turn failed or cancelled state into completion.
+Worker broad targeted pass54tests before final two fixes; final focused30tests,
+typecheck/format/diffcheck passed. Root reviewed all final changes and independent
+production-path probes. Evidence scene-binding-review-20260914; rejected baseline
+scene-binding-review-baseline-20260913 retained. No browser/live-provider E2E claim.
+Important next integration constraint: callback AbortSignal alone cannot cancel a
+DB transaction. Carry cancellation through lock/commit and inspect settled ledger
+state; failure cleanup needs independent bounded headroom. Contract appended to
+docs/agentic-review-loop-task.md. Do not enable public multi-call yet.
 Root added flagshipJourneyAcceptance to every provider report/CLI:12focused
 contract tests and2follow-on tests pass; two historical partial reports correctly
 remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
