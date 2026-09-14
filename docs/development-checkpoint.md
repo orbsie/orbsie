@@ -23,11 +23,18 @@ Shared typed scene-review result interface39a5bce: six targeted tests and typech
 pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
+Binding first handoff rejected after root review despite35tests/typecheck passing:
+procedural client includes evaluated recipe absent in server shadow; trailing
+NDJSON commit->command->commit authorizes completion; cancel-during-hook may finish
+late. Root production-path probe reproduced first two (zero calls), evidence
+scene-binding-review-baseline-20260913. Worker fix pass must add actual server/client
+operation equality, strict termination and shared abort-aware lifecycle controller.
+Do not accept/deploy this WIP until the specific regression matrix passes review.
 Root added flagshipJourneyAcceptance to every provider report/CLI:12focused
 contract tests and2follow-on tests pass; two historical partial reports correctly
 remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
-standalone/publication traversal producers remain required. Current whole-tree
-typecheck awaits worker WIP completion (scene-binding.ts union narrowing).
+standalone/publication traversal producers remain required. Whole-tree
+typecheck passed with the first binding handoff; its behavioral review failed.
 
 Quota last76%used/24%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.

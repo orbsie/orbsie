@@ -1,0 +1,17 @@
+{
+  "scope": "Root reproduction against rejected scene-binding handoff WIP; not acceptance",
+  "syntheticOnly": true,
+  "providerCalls": 0,
+  "procedural": {
+    "sameProject": true,
+    "sameRevision": true,
+    "digestsEqual": false
+  },
+  "trailingCommands": {
+    "completionCallbacks": 1,
+    "failureCallbacks": 0,
+    "errorEmitted": false
+  },
+  "probeSource": ".vercel/scene-binding-review/probe.ts",
+  "nextAction": "Worker must correct normalization and termination guards and add actual production-path regressions."
+}
