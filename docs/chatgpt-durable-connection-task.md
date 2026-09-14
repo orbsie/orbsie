@@ -109,3 +109,53 @@ then release the lease. Preserve no-resurrection after Disconnect. Report abrupt
 host/platform termination limits honestly; never claim a stale original token
 snapshot is sufficient. Test simulated cache rotation followed by forced RPC close
 and reconstruction of a fresh runtime from the saved updated cache.
+
+## Integration source audit (2026-09-13, after vault acceptance)
+
+Current public status/models actions call manager.read only; absent host returns
+Disconnected even if durable authority will exist. Generation acquire likewise
+returns null without reconstruction. Restore must be an explicit authenticated
+manager operation shared by these paths, with verified account/read before Ready.
+Do not implement restoration only in the Start button.
+
+Current generation route returns response.body directly. A durable-use lifecycle
+must instead own stream finalization: on normal EOF, error, reader cancellation
+and request abort, attempt updated private cache capture/save under an independent
+bounded cleanup signal, then release authority. Never expose cache in NDJSON.
+Capture must remain possible after generation safetyCleanup closes the RPC.
+Do not count a partial stream as a committed scene, or silently replay inference.
+
+Current logout sends remote logout before manager.disconnect. Durable revocation
+must precede remote calls so a failed/slow provider logout cannot leave credentials
+restorable. Login cancel is different from Disconnect: cancelling a pending new
+challenge must not accidentally revoke a previously remembered account. Preserve
+this distinction in route tests and UI wording.
+
+The sandbox health probe currently requires disconnected+idle after provisioning.
+Do not weaken it to accept arbitrary preauthenticated hosts. Keep provisioning
+empty and use a separate authenticated private initialization/restore operation,
+which imports before starting the managed process that will use the cache. The
+private host HTTP adapter currently rejects every non-generation request body;
+adding a restore operation requires explicit method/path/body bounds in both the
+HTTP adapter and handler, not only a backend client method.
+
+### Required ownership rule before enabling public restoration
+
+A vault lease is an exclusive right to run a refresh-capable managed process, not
+just to write the resulting ciphertext. Releasing a lease while that process can
+still make account/read, model/list or generation calls allows two hosts to rotate
+the same credential. The next orchestration stage must retain authority for the
+entire process lifetime, or terminate/snapshot that process before releasing it.
+Choose and implement one complete lifecycle; do not merely wrap database saves.
+If leases can expire while a host remains reachable, enforce a private-host
+execution deadline and reject old-epoch admission, with shutdown before another
+lease can be admitted. Database save fencing alone does not prevent provider-side
+refresh races. Exercise two sessions plus a delayed old host in integration tests.
+
+Private host transport must not add cache actions to the public [action] allowlist.
+Test that public response projection strips any unexpected sensitive host fields.
+The existing sandbox outbound allowlist contains only provider domains, so a host
+callback to an Orbsie persistence endpoint is not currently available. Do not rely
+on such a callback without explicitly implementing and validating its authorization,
+network policy and bounded shutdown behavior. Prefer trusted server orchestration
+for the first complete lifecycle.
