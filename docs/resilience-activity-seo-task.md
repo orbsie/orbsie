@@ -78,3 +78,17 @@ invalid final commit. A full private-content capture is separate, explicit and
 bounded; ordinary diagnostics stay content-free. Test sentinel secrets in every
 error path, export size limits, stable correlation, one terminal summary and no
 behavioral changes to valid generation. Preserve provider test/model/call limits.
+
+## Recovery message finding from accepted-source browser build (2026-09-14)
+
+Root built2d02761 and ran the desktop/phone diagnostics fixture with mocked provider
+responses. Logging/privacy, reload/reset and layout assertions pass. The phone
+recovery toast still shows raw JSON.parse SyntaxError text (including an output
+fragment) instead of a concise scene-update explanation. Evidence:
+docs/evidence/authoring-initial-build-20260914/recovery-390.png.
+store.ts parses NDJSON and the outer catch displays Error.message. In the recovery
+handoff, classify parser/schema failures into safe actionable user messages, retain
+the existing structured diagnostic classification, and preserve user-owned finished
+objects/recovery actions. Add a rendered fixture asserting raw output fragments
+and internal JSON syntax messages do not appear in the toast. This is an observed
+UX gap, not evidence that diagnostic downloads contain private output.

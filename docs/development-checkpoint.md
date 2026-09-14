@@ -28,9 +28,11 @@ and typecheck/format passed. Evidence authoring-initial-integration-20260914.
 No live calls, production migration/deployment or browser E2E in this handoff.
 After hosted authority: reviewer execution and browser integration under
 docs/agentic-review-loop-task.md. Full goal intact. Root separate accepted-source
-production build started for2d02761 in/tmp/orbsie-authoring-initial-build-20260914
-(session5290); node_modules copied independently, no provider secrets needed.
-This build excludes active worker WIP and does not deploy or enable reviews.
+production build2d02761 passed in/tmp/orbsie-authoring-initial-build-20260914.
+Desktop/phone synthetic diagnostics regression passed, root viewed screenshots;
+raw parser toast wording remains a recorded recovery UX gap. Evidence
+authoring-initial-build-20260914. Build5290/fixture66708 exit0; server15549 stopped130.
+This excludes active worker WIP; no deployment, live calls or physical-device claim.
 Synthetic PG15 container orbsie-authoring-route-20260914 stopped and auto-removed
 after acceptance; only synthetic test data. Initial integration commit3a97e3f.
 New clean-context spawn failed host thread limit; reuse existing worker.

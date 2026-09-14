@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "2d02761",
+  "build": "passed",
+  "isolatedCheckout": "/tmp/orbsie-authoring-initial-build-20260914",
+  "providerCalls": 0,
+  "productionDeployed": false,
+  "browserRegression": "passed-desktop-and-phone-viewport",
+  "rootVisualReview": [
+    "recovery-1440.png",
+    "recovery-390.png"
+  ],
+  "limits": [
+    "Synthetic provider responses; not live-provider or physical-device E2E",
+    "Raw parser wording remains a recovery UX gap, recorded in resilience-activity-seo-task.md"
+  ],
+  "processes": {
+    "build5290": "exit0",
+    "fixture66708": "exit0",
+    "server15549": "intentionally-stopped130"
+  }
+}

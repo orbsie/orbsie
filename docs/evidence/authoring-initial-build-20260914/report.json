@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "providerCalls": 0,
+  "checks": [
+    {
+      "width": 1440,
+      "syntheticGenerationCalls": 1,
+      "requestCorrelation": true,
+      "terminalReason": "clean-eof-without-commit",
+      "privateContentAbsent": true,
+      "downloadBytes": 1742,
+      "noHorizontalOverflow": true,
+      "retainedAfterReload": true,
+      "clearedByReset": true,
+      "pageErrors": 0
+    },
+    {
+      "width": 390,
+      "syntheticGenerationCalls": 1,
+      "requestCorrelation": true,
+      "terminalReason": "parser-failure",
+      "privateContentAbsent": true,
+      "downloadBytes": 1732,
+      "noHorizontalOverflow": true,
+      "retainedAfterReload": true,
+      "clearedByReset": true,
+      "pageErrors": 0
+    }
+  ]
+}
