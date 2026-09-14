@@ -190,3 +190,23 @@ notified to serialize existing owner/intent admission, use fresh post-lock clock
 and prove first-intent races. Final diff and evidence review still required.
 Quota latest65%used/35%remaining; stop all workers/livecalls below20%remaining.
 Durable and self-review task docs now preserve intent and managed-review contracts.
+
+Latest root integration check: 2026-09-13 19:38 local command output,
+`npx vitest run tests/chatgpt-durable-service.test.ts tests/chatgpt-route.test.ts
+tests/chatgpt-generate-route.test.ts` passed3files/32tests in1.78s, session25416
+terminal0. Worker notified; source still changing, so this is interim evidence,
+not final acceptance. Real intent DB races/private lifecycle integration pending.
+New owner resilience/activity2s/SEO/logging requirements committed in prompt.md
+and docs/resilience-activity-seo-task.md (0675470,4590fd8). New unbounded navigation
+and code-free login requirements preserved; root source audit in
+unbounded-world-task.md and official OAuth feasibility gap in
+ai-connection-priority.md. No replacement browser OAuth availability claimed.
+
+Server worker final handoff was NOT accepted: reported5suites/48tests,2realPGtests,
+typecheck/format/diffcheck pass. Root found new Start->begin/bind intent then status
+calls migration-only admitLegacy (rejects existing intent), so normal new login
+cannot remember credentials. Also Disconnect revokes vault but only current-session
+host destroyed; other owner host can continue refresh. Missing-vault legacy
+status/models fallback not gated by tombstone. Same worker restarted for bounded
+corrections +real route/service/private-controller integration, rotated-cache
+restore success/error/cancel, forced separate-session DB race orders. No deploy.
