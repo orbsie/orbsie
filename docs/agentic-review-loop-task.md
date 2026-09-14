@@ -292,3 +292,12 @@ then match its scene binding before a final capture/request. Never apply a final
 review correction. All errors preserve saved good objects and offer explicit
 continuation; they cannot spend an unseen fourth call. Keep review summaries in
 the existing two-second activity cadence and flatten them into chat messages.
+
+Review integration must extend the deployed diagnostics through these new calls:
+retain the original client run ID, issue/correlate a distinct server request ID per
+phase, and record initial/review/final-review identity, call index, timings, bounded
+outcome and scope. Use typed allowlisted logging fields; never log raw review text,
+image, scene, prompt, keys or phase tokens. Cancellation and ledger completion are
+separate from hosted credential finalization. Include review/correction/final failure
+in local Download diagnostics and deterministic replays, without doubling local
+history entries or letting stale phase callbacks overwrite a newer user request.
