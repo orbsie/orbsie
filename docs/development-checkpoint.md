@@ -9,7 +9,10 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal finished docs/authoring-initial-route-task.md. Root
+/root/host_session_renewal is implementing docs/authoring-hosted-authority-task.md
+with explicit status-header negotiation, private managed completion record, durable
+consumer and hosted route/coordinator wiring. Actual private HTTP tests required;
+no UI/reviewer execution/live calls/deployment. Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
 review fixes. Retained initial token fences abort during COMMIT acknowledgement;
 review admission atomically replaces it. Pool acquisition and local DB lock/query
@@ -23,9 +26,11 @@ production route/parser malformed output and scrubbed writer rejection. Worker
 54route/ledger compatibility checks,6PG ledger checks, final6pool acquisition checks
 and typecheck/format passed. Evidence authoring-initial-integration-20260914.
 No live calls, production migration/deployment or browser E2E in this handoff.
-Next: docs/authoring-hosted-authority-task.md (actual private completion negotiation,
-managed host record, durable consumer, public hosted route), then reviewer execution
-and browser integration under docs/agentic-review-loop-task.md. Full goal intact.
+After hosted authority: reviewer execution and browser integration under
+docs/agentic-review-loop-task.md. Full goal intact. Root separate accepted-source
+production build started for2d02761 in/tmp/orbsie-authoring-initial-build-20260914
+(session5290); node_modules copied independently, no provider secrets needed.
+This build excludes active worker WIP and does not deploy or enable reviews.
 Synthetic PG15 container orbsie-authoring-route-20260914 stopped and auto-removed
 after acceptance; only synthetic test data. Initial integration commit3a97e3f.
 New clean-context spawn failed host thread limit; reuse existing worker.
