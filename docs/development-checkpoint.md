@@ -8,13 +8,13 @@ checkpoint-history/2026-09-13-before-durable-login-vault.md and earlier archives
 
 Astra low/default architecture, contracts, every diff review and integration;
 one Luna xhigh/default worker, no nested agents, Fast off. Reuse
-/root/host_session_renewal. Worker currently implements durable credential-vault
-FOUNDATIONS only: new encrypted store/lease fencing, additive schema/migration,
-crypto/lifecycle tests and opt-in PostgreSQL contention test. No public persistence
+/root/host_session_renewal. Vault foundations accepted: encrypted store/lease fencing, additive schema, six
+unit tests and real PostgreSQL contention/rollback/expiry tests passed. Worker now
+implements the private isolated runtime cache import/snapshot bridge. No public persistence
 enablement yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
 app-owned managed auth cache/private host lifecycle and truthful browser restoration.
 
-Quota latest40%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
+Quota latest39%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
 stop workers/live calls below20%. Goal token count is not subscription quota.
 Live tests Luna only; end users unrestricted. Owner approved neededcalls; API4096
 output/call, Gatewaymax5/test, flagship3calls, no blind retries. Hosted180s/512KiB
@@ -121,8 +121,11 @@ cd0e42b passed12claims/3admitted9exhausted using independentpool; container remo
 Use new loopback-only tmpfs container, synthetic users/sessions, apply additive
 schema; run opted-in vault contention test. No production migration untilreview.
 
-Active vault review: metadata read must not expose unleased cache; protect session
-check vs logout and refresh DB clock after locks; test was found using mocked
-functions despite real SQLsetup and is being corrected. Isolated root DB ready:
-containerorbsie-vault-db-20260913, loopback127.0.0.1:32769/orbsie_vault_test,
-postgres trust (synthetic only). Root must run opted-in test then stop/remove it.
+Vault foundation review complete: metadata-only reads, exclusive cache lease,
+session locks/fresh-clock admission, stale save fencing and byte bounds accepted.
+Real DB regression passed including confirmed lock wait across session expiry and
+forced vault insert failure proving rollback/no orphan connection. Typecheck passed.
+Root reapplied schema successfully (idempotent); both tables had zero fixture rows.
+Isolated container stopped/removed. Worker confirmed no old dev server remains.
+Next bridge retains updated app-owned auth cache before failure/cancel directory
+cleanup; no public persistence or production migration has been enabled yet.
