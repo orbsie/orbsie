@@ -190,3 +190,14 @@ the connected credential with a domain-separated digest; never introduce an emai
 login gate or store the credential. Hosted runs bind the secure owner/session
 identity. Preserve exact provider-admitted effort strings: the existing ChatGPT
 preset resolver supports provider-returned efforts, not just low/medium/high.
+
+### Shared result interface
+
+`src/lib/scene-review.ts` defines the versioned result schema and phase/scope/
+revision-bound parser. Six targeted tests cover acceptance, first corrections,
+final partial verdict, stale/evidence mismatch, contradictions, bounds and issue
+references. Commit commands are excluded from model corrections: orchestration
+owns the final correction commit. This parser does not authorize review calls or
+establish semantic validity; integration must run existing asset-policy and scene
+operation checks before applying any correction. It is not yet wired to providers
+or the browser and is not evidence of a working inspect/correct loop.
