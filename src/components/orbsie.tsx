@@ -89,6 +89,7 @@ const OAUTH_STORAGE_MESSAGE =
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import ChatGPTConnection, {
+  parseChatGPTSnapshot,
   parseChatGPTModels,
   type ChatGPTModelOption,
   type ProviderSessionUser,
@@ -101,6 +102,17 @@ import {
   selectedModelQuality,
 } from "../lib/model-quality-presets";
 import { GraphicsGuidance } from "./graphics-guidance";
+import {
+  clearChatGPTStartupPreference,
+  readChatGPTStartupPreference,
+  writeChatGPTStartupPreference,
+  type ChatGPTStartupPreference,
+} from "../lib/chatgpt-startup-preference";
+import {
+  restoreChatGPTStartup,
+  type ChatGPTStartupRestoreResult,
+} from "../lib/chatgpt-startup-restore";
+import type { ChatGPTPresetLabel } from "../lib/chatgpt-model-presets";
 const World = dynamic(() => import("./world"), {
   ssr: false,
   loading: () => (
@@ -112,6 +124,8 @@ const World = dynamic(() => import("./world"), {
 type Connection = GenerationConnection;
 type RendererAvailability = "initializing" | "ready" | "unavailable";
 type ProviderLogoKind = "chatgpt" | "openrouter" | "gateway";
+type ChatGPTRestoreStatus =
+  "idle" | "restoring" | "transient" | "reconnect" | "selection-required";
 
 const providerLogoSources: Record<ProviderLogoKind, string> = {
   chatgpt: "/providers/openai.svg",
@@ -259,10 +273,22 @@ export default function Orbsie() {
   });
   const activeProvider = useRef(connection.provider);
   const connectionVersion = useRef(0);
-  const setConnection = (next: Parameters<typeof setConnectionState>[0]) => {
+  const setConnection = useCallback((next: Connection, restoring = false) => {
     connectionVersion.current++;
+    if (!restoring) {
+      chatGPTRestoreRequest.current?.abort();
+      chatGPTRestoreRequest.current = null;
+      chatGPTStartupSessionRequest.current?.abort();
+      chatGPTStartupSessionRequest.current = null;
+      chatGPTStartupConfigRequest.current?.abort();
+      chatGPTStartupConfigRequest.current = null;
+      setChatGPTStartupNeedsSession(false);
+      setChatGPTStartupNeedsConfig(false);
+      setChatGPTRestoreStatus("idle");
+    }
     setConnectionState(next);
-  };
+    if (next.provider !== "chatgpt-hosted") clearChatGPTStartupPreference();
+  }, []);
   const [oauthBusy, setOAuthBusy] = useState(false);
   const [oauthMessage, setOAuthMessage] = useState("");
   const oauthCompletion = useRef<Promise<string> | null>(null);
@@ -510,6 +536,18 @@ export default function Orbsie() {
     "idle" | "loading" | "ready" | "error"
   >("idle");
   const chatGPTModelsRequest = useRef<AbortController | null>(null);
+  const [chatGPTRestoreStatus, setChatGPTRestoreStatus] =
+    useState<ChatGPTRestoreStatus>("idle");
+  const [chatGPTPreferredTier, setChatGPTPreferredTier] =
+    useState<ChatGPTPresetLabel | null>(null);
+  const chatGPTRestoreRequest = useRef<AbortController | null>(null);
+  const chatGPTStartupSessionRequest = useRef<AbortController | null>(null);
+  const chatGPTStartupConfigRequest = useRef<AbortController | null>(null);
+  const [chatGPTStartupNeedsSession, setChatGPTStartupNeedsSession] =
+    useState(false);
+  const [chatGPTStartupNeedsConfig, setChatGPTStartupNeedsConfig] =
+    useState(false);
+  const previousConnectionProvider = useRef(connection.provider);
   const modelCatalogRequest = useRef<AbortController | null>(null);
   const [storageUsage, setStorageUsage] = useState("");
   const [resetArmed, setResetArmed] = useState(false);
@@ -532,6 +570,9 @@ export default function Orbsie() {
   const projectScope = useRef(createProjectScope(s.project.id));
   const accountGeneration = useRef(0);
   useEffect(() => {
+    const providerChanged =
+      previousConnectionProvider.current !== connection.provider;
+    previousConnectionProvider.current = connection.provider;
     activeProvider.current = connection.provider;
     modelCatalogRequest.current?.abort();
     modelCatalogRequest.current = null;
@@ -541,12 +582,20 @@ export default function Orbsie() {
       chatGPTModelsRequest.current = null;
       setChatGPTModels([]);
       setChatGPTModelsStatus("idle");
+      if (providerChanged) {
+        chatGPTRestoreRequest.current?.abort();
+        chatGPTRestoreRequest.current = null;
+        setChatGPTRestoreStatus("idle");
+      }
     }
   }, [connection.provider]);
   useEffect(
     () => () => {
       modelCatalogRequest.current?.abort();
       chatGPTModelsRequest.current?.abort();
+      chatGPTRestoreRequest.current?.abort();
+      chatGPTStartupSessionRequest.current?.abort();
+      chatGPTStartupConfigRequest.current?.abort();
     },
     [],
   );
@@ -559,6 +608,17 @@ export default function Orbsie() {
     providerSessionController.current?.abort();
     providerSessionController.current = null;
     providerSession.current = null;
+    chatGPTRestoreRequest.current?.abort();
+    chatGPTRestoreRequest.current = null;
+    chatGPTStartupSessionRequest.current?.abort();
+    chatGPTStartupSessionRequest.current = null;
+    chatGPTStartupConfigRequest.current?.abort();
+    chatGPTStartupConfigRequest.current = null;
+    setChatGPTStartupNeedsSession(false);
+    setChatGPTStartupNeedsConfig(false);
+    setChatGPTRestoreStatus("idle");
+    setChatGPTPreferredTier(null);
+    clearChatGPTStartupPreference();
     connectionVersion.current++;
     accountGeneration.current++;
     if (connection.provider === "chatgpt-hosted")
@@ -763,7 +823,272 @@ export default function Orbsie() {
     [chatGPTModelsStatus],
   );
 
-  const useChatGPT = (model: string, effort: string) => {
+  const beginChatGPTStartupRestore = useCallback(
+    (
+      preference: ChatGPTStartupPreference,
+      expectedVersion = connectionVersion.current,
+      expectedProvider = activeProvider.current,
+    ) => {
+      chatGPTRestoreRequest.current?.abort();
+      const controller = new AbortController();
+      chatGPTRestoreRequest.current = controller;
+      const generation = accountGeneration.current;
+      setChatGPTPreferredTier(preference.tier);
+      setChatGPTStartupNeedsSession(false);
+      setChatGPTStartupNeedsConfig(false);
+      setChatGPTRestoreStatus("restoring");
+      const isCurrent = () =>
+        !controller.signal.aborted &&
+        chatGPTRestoreRequest.current === controller &&
+        generation === accountGeneration.current &&
+        expectedVersion === connectionVersion.current &&
+        expectedProvider === activeProvider.current;
+      void restoreChatGPTStartup({
+        preference,
+        fetcher: (input, init) => fetch(input, init),
+        signal: controller.signal,
+        isCurrent,
+        parseStatus: (value) => {
+          const snapshot = parseChatGPTSnapshot(value);
+          return snapshot ? { authStatus: snapshot.authStatus } : null;
+        },
+        parseModels: (value) => parseChatGPTModels(value),
+      })
+        .then((result: ChatGPTStartupRestoreResult) => {
+          if (!isCurrent() || result.kind === "stale") return;
+          chatGPTRestoreRequest.current = null;
+          if (result.kind === "restored") {
+            setChatGPTModels(result.models as ChatGPTModelOption[]);
+            setChatGPTModelsStatus("ready");
+            setChatGPTRestoreStatus("idle");
+            setConnection(
+              {
+                provider: "chatgpt-hosted",
+                model: result.model,
+                effort: result.effort,
+                key: "",
+              },
+              true,
+            );
+            return;
+          }
+          if (result.kind === "selection-required") {
+            setChatGPTModels(result.models as ChatGPTModelOption[]);
+            setChatGPTModelsStatus("ready");
+            setConnection(
+              {
+                provider: "chatgpt-hosted",
+                model: "",
+                key: "",
+              },
+              true,
+            );
+            setChatGPTRestoreStatus("selection-required");
+            return;
+          }
+          setChatGPTRestoreStatus(
+            result.kind === "transient" ? "transient" : "reconnect",
+          );
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          chatGPTRestoreRequest.current = null;
+          setChatGPTRestoreStatus("transient");
+        });
+    },
+    [setConnection],
+  );
+
+  const restoreChatGPTStartupSession = useCallback(
+    (
+      preference: ChatGPTStartupPreference,
+      expectedVersion = connectionVersion.current,
+      expectedProvider = activeProvider.current,
+    ) => {
+      chatGPTStartupSessionRequest.current?.abort();
+      chatGPTRestoreRequest.current?.abort();
+      const controller = new AbortController();
+      chatGPTStartupSessionRequest.current = controller;
+      const generation = accountGeneration.current;
+      setChatGPTPreferredTier(preference.tier);
+      setChatGPTStartupNeedsConfig(false);
+      setChatGPTRestoreStatus("restoring");
+      setChatGPTStartupNeedsSession(true);
+      const isCurrent = () =>
+        !controller.signal.aborted &&
+        chatGPTStartupSessionRequest.current === controller &&
+        generation === accountGeneration.current &&
+        expectedVersion === connectionVersion.current &&
+        expectedProvider === activeProvider.current;
+      void fetch("/api/auth/get-session", {
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) throw Error("Session unavailable");
+          return response.json();
+        })
+        .then((data) => {
+          if (!isCurrent()) return;
+          chatGPTStartupSessionRequest.current = null;
+          // Better Auth returns JSON null when the session cookie is missing.
+          if (data === null) {
+            setChatGPTStartupNeedsSession(true);
+            setChatGPTRestoreStatus("reconnect");
+            return;
+          }
+          if (
+            !data ||
+            typeof data !== "object" ||
+            !Object.prototype.hasOwnProperty.call(data, "user")
+          ) {
+            setChatGPTStartupNeedsSession(true);
+            setChatGPTRestoreStatus("transient");
+            return;
+          }
+          if (data.user === null) {
+            setChatGPTStartupNeedsSession(true);
+            setChatGPTRestoreStatus("reconnect");
+            return;
+          }
+          if (
+            typeof data.user !== "object" ||
+            typeof (data.user as { name?: unknown }).name !== "string"
+          ) {
+            setChatGPTStartupNeedsSession(true);
+            setChatGPTRestoreStatus("transient");
+            return;
+          }
+          setUser(data.user);
+          void refreshCloud();
+          setChatGPTStartupNeedsSession(false);
+          beginChatGPTStartupRestore(
+            preference,
+            expectedVersion,
+            expectedProvider,
+          );
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          chatGPTStartupSessionRequest.current = null;
+          setChatGPTStartupNeedsSession(true);
+          setChatGPTRestoreStatus("transient");
+        });
+    },
+    [beginChatGPTStartupRestore],
+  );
+
+  const restoreChatGPTStartupConfig = useCallback(
+    (
+      preference: ChatGPTStartupPreference,
+      expectedVersion = connectionVersion.current,
+      expectedProvider = activeProvider.current,
+    ) => {
+      chatGPTStartupConfigRequest.current?.abort();
+      chatGPTStartupSessionRequest.current?.abort();
+      chatGPTRestoreRequest.current?.abort();
+      const controller = new AbortController();
+      chatGPTStartupConfigRequest.current = controller;
+      const generation = accountGeneration.current;
+      setChatGPTPreferredTier(preference.tier);
+      setChatGPTStartupNeedsSession(false);
+      setChatGPTStartupNeedsConfig(true);
+      setChatGPTRestoreStatus("restoring");
+      const isCurrent = () =>
+        !controller.signal.aborted &&
+        chatGPTStartupConfigRequest.current === controller &&
+        generation === accountGeneration.current &&
+        expectedVersion === connectionVersion.current &&
+        expectedProvider === activeProvider.current;
+      void fetch("/api/config", {
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) throw Error("Configuration unavailable");
+          const value: unknown = await response.json();
+          if (!value || typeof value !== "object")
+            throw Error("Configuration invalid");
+          return value as typeof capabilities;
+        })
+        .then((nextCapabilities) => {
+          if (!isCurrent()) return;
+          chatGPTStartupConfigRequest.current = null;
+          setCapabilities(nextCapabilities);
+          setChatGPTStartupNeedsConfig(false);
+          if (!nextCapabilities.accounts || !nextCapabilities.chatgptHosted) {
+            setChatGPTStartupNeedsSession(true);
+            setChatGPTRestoreStatus("reconnect");
+            return;
+          }
+          restoreChatGPTStartupSession(
+            preference,
+            expectedVersion,
+            expectedProvider,
+          );
+        })
+        .catch(() => {
+          if (!isCurrent()) return;
+          chatGPTStartupConfigRequest.current = null;
+          setChatGPTStartupNeedsConfig(true);
+          setChatGPTStartupNeedsSession(false);
+          setChatGPTRestoreStatus("transient");
+        });
+    },
+    [restoreChatGPTStartupSession],
+  );
+
+  const retryChatGPTStartupRestore = useCallback(() => {
+    const preference = readChatGPTStartupPreference();
+    if (!preference) {
+      setChatGPTRestoreStatus("idle");
+      return;
+    }
+    if (chatGPTStartupNeedsConfig) {
+      restoreChatGPTStartupConfig(
+        preference,
+        connectionVersion.current,
+        activeProvider.current,
+      );
+      return;
+    }
+    if (chatGPTStartupNeedsSession) {
+      restoreChatGPTStartupSession(
+        preference,
+        connectionVersion.current,
+        activeProvider.current,
+      );
+      return;
+    }
+    beginChatGPTStartupRestore(
+      preference,
+      connectionVersion.current,
+      activeProvider.current,
+    );
+  }, [
+    beginChatGPTStartupRestore,
+    chatGPTStartupNeedsConfig,
+    chatGPTStartupNeedsSession,
+    restoreChatGPTStartupConfig,
+    restoreChatGPTStartupSession,
+  ]);
+
+  const useChatGPT = (
+    model: string,
+    effort: string,
+    preset?: ChatGPTPresetLabel | null,
+  ) => {
+    if (preset) {
+      setChatGPTPreferredTier(preset);
+      writeChatGPTStartupPreference(preset);
+    } else {
+      setChatGPTPreferredTier(null);
+      clearChatGPTStartupPreference();
+    }
+    setChatGPTRestoreStatus("idle");
     setConnection({
       provider: "chatgpt-hosted",
       model,
@@ -772,15 +1097,23 @@ export default function Orbsie() {
     });
     setModal(null);
   };
-  const disconnectChatGPT = useCallback(() => {
-    if (connection.provider === "chatgpt-hosted") {
-      chatGPTModelsRequest.current?.abort();
-      chatGPTModelsRequest.current = null;
-      setChatGPTModels([]);
-      setChatGPTModelsStatus("idle");
-      setConnection({ provider: "chatgpt-hosted", model: "", key: "" });
-    }
-  }, [connection.provider]);
+  const disconnectChatGPT = useCallback(
+    (explicit = false) => {
+      if (connection.provider === "chatgpt-hosted") {
+        chatGPTModelsRequest.current?.abort();
+        chatGPTModelsRequest.current = null;
+        setChatGPTModels([]);
+        setChatGPTModelsStatus("idle");
+        setConnection({ provider: "chatgpt-hosted", model: "", key: "" });
+      }
+      if (explicit) {
+        setChatGPTPreferredTier(null);
+        clearChatGPTStartupPreference();
+        setChatGPTRestoreStatus("idle");
+      }
+    },
+    [connection.provider, setConnection],
+  );
   useEffect(
     () =>
       useOrb.subscribe((state) => {
@@ -834,12 +1167,17 @@ export default function Orbsie() {
     modelsProvider === connection.provider ? models : [],
     chatGPTModels,
   );
-  const selectedQuality = selectedModelQuality(
-    connection.provider,
-    connection.model,
-    connection.effort,
-    qualityOptions,
-  );
+  const selectedQuality =
+    selectedModelQuality(
+      connection.provider,
+      connection.model,
+      connection.effort,
+      qualityOptions,
+    ) ??
+    (connection.provider === "chatgpt-hosted" &&
+    chatGPTRestoreStatus === "selection-required"
+      ? chatGPTPreferredTier
+      : null);
   const qualityCatalogStatus =
     connection.provider === "chatgpt-hosted"
       ? chatGPTModelsStatus
@@ -860,6 +1198,12 @@ export default function Orbsie() {
     option: ReturnType<typeof modelQualityOptions>[number],
   ) => {
     if (!option.available || !option.model) return;
+    if (connection.provider === "chatgpt-hosted") {
+      const tier = option.label as ChatGPTPresetLabel;
+      setChatGPTPreferredTier(tier);
+      writeChatGPTStartupPreference(tier);
+      setChatGPTRestoreStatus("idle");
+    }
     setConnection({
       ...connection,
       model: option.model,
@@ -940,8 +1284,16 @@ export default function Orbsie() {
     else setCloudBaseline(null);
   };
   useEffect(() => {
-    void refreshTrial();
     const initialAccountGeneration = accountGeneration.current;
+    const initialConnectionVersion = connectionVersion.current;
+    const initialProvider = activeProvider.current;
+    const startupPreference = readChatGPTStartupPreference();
+    if (startupPreference) {
+      setChatGPTPreferredTier(startupPreference.tier);
+      setChatGPTStartupNeedsConfig(true);
+      setChatGPTRestoreStatus("restoring");
+    }
+    void refreshTrial();
     if (location.hash.startsWith("#orb=")) {
       try {
         const project = decodeWorld(location.hash.slice(5));
@@ -952,16 +1304,53 @@ export default function Orbsie() {
         s.set({ error: "This shared world could not be opened." });
       }
     } else void s.recover();
-    fetch("/api/config")
-      .then((r) => r.json())
+    fetch("/api/config", { credentials: "same-origin", cache: "no-store" })
+      .then(async (r) => {
+        if (!r.ok) throw Error("Configuration unavailable");
+        const value: unknown = await r.json();
+        if (!value || typeof value !== "object")
+          throw Error("Configuration invalid");
+        return value as typeof capabilities;
+      })
       .then((c) => {
         setCapabilities(c);
+        const startupCurrent =
+          startupPreference &&
+          initialAccountGeneration === accountGeneration.current &&
+          initialConnectionVersion === connectionVersion.current &&
+          initialProvider === activeProvider.current;
+        if (startupCurrent && (!c.accounts || !c.chatgptHosted)) {
+          setChatGPTStartupNeedsConfig(false);
+          setChatGPTStartupNeedsSession(true);
+          setChatGPTRestoreStatus("reconnect");
+        }
         if (
           c.accounts &&
           initialAccountGeneration === accountGeneration.current
-        )
-          fetch("/api/auth/get-session")
-            .then((r) => (r.ok ? r.json() : null))
+        ) {
+          if (
+            startupPreference &&
+            c.chatgptHosted &&
+            initialConnectionVersion === connectionVersion.current &&
+            initialProvider === activeProvider.current
+          ) {
+            setChatGPTStartupNeedsConfig(false);
+            restoreChatGPTStartupSession(
+              startupPreference,
+              initialConnectionVersion,
+              initialProvider,
+            );
+            return;
+          }
+          fetch("/api/auth/get-session", {
+            credentials: "same-origin",
+            cache: "no-store",
+            redirect: "error",
+          })
+            .then(async (r) => {
+              if (!r.ok) throw Error("Session unavailable");
+              return r.json();
+            })
             .then((d) => {
               if (
                 d?.user &&
@@ -971,10 +1360,34 @@ export default function Orbsie() {
                 void refreshCloud();
               }
             })
-            .catch(() => {});
+            .catch(() => {
+              if (
+                startupPreference &&
+                initialAccountGeneration === accountGeneration.current &&
+                initialConnectionVersion === connectionVersion.current &&
+                initialProvider === activeProvider.current
+              ) {
+                setChatGPTPreferredTier(startupPreference.tier);
+                setChatGPTStartupNeedsSession(true);
+                setChatGPTRestoreStatus("transient");
+              }
+            });
+        }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        if (
+          startupPreference &&
+          initialAccountGeneration === accountGeneration.current &&
+          initialConnectionVersion === connectionVersion.current &&
+          initialProvider === activeProvider.current
+        ) {
+          setChatGPTPreferredTier(startupPreference.tier);
+          setChatGPTStartupNeedsSession(false);
+          setChatGPTStartupNeedsConfig(true);
+          setChatGPTRestoreStatus("transient");
+        }
+      });
+  }, [restoreChatGPTStartupSession]);
   useEffect(() => {
     if (!chatFollowsLatest.current) return;
     const frame = window.requestAnimationFrame(() => {
@@ -1069,6 +1482,12 @@ export default function Orbsie() {
     dictation.cancel();
     const instruction = text.trim();
     if (!instruction) return;
+    if (
+      chatGPTPreferredTier &&
+      chatGPTRestoreStatus !== "idle" &&
+      connection.provider !== "chatgpt-hosted"
+    )
+      return;
     submission.current.checking = true;
     const sequence = ++submission.current.sequence;
     const current = useOrb.getState();
@@ -1871,6 +2290,60 @@ export default function Orbsie() {
             </>
           )}
           <form className="prompt-form" onSubmit={submit}>
+            {chatGPTRestoreStatus !== "idle" && (
+              <div
+                className="setup-note"
+                role={
+                  chatGPTRestoreStatus === "transient" ||
+                  chatGPTRestoreStatus === "reconnect"
+                    ? "alert"
+                    : "status"
+                }
+                data-testid="chatgpt-startup-restore"
+              >
+                {chatGPTRestoreStatus === "restoring" &&
+                  "Restoring your ChatGPT connection…"}
+                {chatGPTRestoreStatus === "transient" && (
+                  <>
+                    ChatGPT is temporarily unavailable. Your saved choice is
+                    still here.
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={retryChatGPTStartupRestore}
+                    >
+                      Retry
+                    </button>
+                  </>
+                )}
+                {chatGPTRestoreStatus === "reconnect" && (
+                  <>
+                    ChatGPT needs to be connected again. Your saved quality
+                    choice is still here.
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => setModal("settings")}
+                    >
+                      Reconnect ChatGPT
+                    </button>
+                  </>
+                )}
+                {chatGPTRestoreStatus === "selection-required" && (
+                  <>
+                    Saved ChatGPT quality “{chatGPTPreferredTier}” is not
+                    available in this catalog. Choose another quality.
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => setModal("settings")}
+                    >
+                      Choose quality
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             {selected && !landing && (
               <div className="selection-chip">
                 <Leaf size={13} />

@@ -331,8 +331,12 @@ export default function ChatGPTConnection({
   startRequest: number;
   onStartRequestConsumed: () => void;
   generationEnabled: boolean;
-  onUseChatGPT: (model: string, effort: string) => void;
-  onDisconnect: () => void;
+  onUseChatGPT: (
+    model: string,
+    effort: string,
+    preset?: ChatGPTPresetLabel | null,
+  ) => void;
+  onDisconnect: (explicit?: boolean) => void;
 }) {
   const [view, setView] = useState<View>(initialView);
   const [copied, setCopied] = useState<"" | "ok" | "fail">("");
@@ -593,7 +597,7 @@ export default function ChatGPTConnection({
           return;
         }
         setView(viewFromSnapshot(snapshot));
-        if (snapshot.authStatus === "disconnected") onDisconnect();
+        if (snapshot.authStatus === "disconnected") onDisconnect(true);
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || !currentRequest(controller, current))
@@ -928,7 +932,13 @@ export default function ChatGPTConnection({
                 <button
                   className="primary full"
                   disabled={!selectedModel || !selectedEffort}
-                  onClick={() => onUseChatGPT(selectedModel, selectedEffort)}
+                  onClick={() =>
+                    onUseChatGPT(
+                      selectedModel,
+                      selectedEffort,
+                      selection.preset,
+                    )
+                  }
                 >
                   Use ChatGPT <ArrowUpRight size={15} aria-hidden="true" />
                 </button>
