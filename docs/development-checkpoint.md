@@ -11,7 +11,12 @@ Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
 /root/host_session_renewal is implementing docs/authoring-initial-route-task.md:
 gated API initial issuance and validated completion/failure -> durable ledger,
-including cancellation/DB races. Previous binding1c740bd accepted. Root reviewed
+including cancellation/DB races. First route handoff was not accepted:39targeted
+tests passed but cancellation fence and real route/parser matrix were omitted.
+Worker now implements retained initial phase-token cleanup authority (completed,
+slots2 only), replaced atomically by first review admission; carry abort through
+DB lock/precommit and reconcile abort during COMMIT acknowledgment. Previous
+binding1c740bd accepted. Root reviewed
 route/trial/ledger sources and owns acceptance, PG fixture and next hosted contract
 (docs/authoring-hosted-authority-task.md). No public review endpoint/browser loop,
 live calls, production migration or deployment in this handoff.
@@ -27,6 +32,10 @@ Shared typed scene-review result interface39a5bce: six targeted tests and typech
 pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
 Root owns release evidence, checkpoint, deployment and integration review.
+Private completion-record shared interfaceaf2213e:13focused tests pass; worker
+whole-tree typecheck passes. Metadata validation only, not wired to transport.
+Initial/hosted contracts9d819f6; active route work remains uncommitted pending
+root acceptance of the missing race and actual parser tests.
 Binding accepted after root regressions: production server/browser procedural
 digests match, trailing NDJSON commit->command->commit fails without completion,
 and pending-hook cancellation fails once and consumes late results. Shared
@@ -46,7 +55,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last77%used/23%remaining. Read
+Quota last78%used/22%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
