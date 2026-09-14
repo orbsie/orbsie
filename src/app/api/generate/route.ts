@@ -29,6 +29,11 @@ import {
 } from "@/lib/server/generation-output-format";
 import type { GenerationOutputFormat } from "@/lib/server/generation-output-format";
 import {
+  admitInitialAuthoringRun,
+  authoringReviewConfigured,
+  type InitialAuthoringAdmission,
+} from "@/lib/server/authoring-run-admission";
+import {
   clientRunIdFromRequest,
   createGenerationObservation,
   generationRequestId,
@@ -101,6 +106,7 @@ export async function POST(request: Request) {
   let identity: TrialIdentity | undefined;
   let remaining: number | undefined;
   let admittedModelId: string | undefined;
+  let authoringAdmission: InitialAuthoringAdmission | undefined;
   let providerObservation:
     ReturnType<typeof createGenerationObservation> | undefined;
   try {
@@ -117,10 +123,16 @@ export async function POST(request: Request) {
         selected: entitySchema.shape.id.optional(),
         modelingFeedback: modelingFeedbackSchema.optional(),
         generationFeedback: generationFeedbackSchema.optional(),
+        authoringReview: z.boolean().default(false),
       })
       .safeParse(await boundedJSON(request));
     if (!parsed.success)
       throw new HttpError(400, "Check your connection and world data.");
+    if (parsed.data.authoringReview && !authoringReviewConfigured())
+      throw new HttpError(
+        503,
+        "Authoring review is temporarily unavailable. Retry shortly.",
+      );
     if (
       parsed.data.generationFeedback &&
       parsed.data.generationFeedback.projectId !== parsed.data.project.id
@@ -160,7 +172,7 @@ export async function POST(request: Request) {
         overrides: formatOverrides,
       });
       identity = trialIdentity(request);
-      remaining = await claimTrial(identity);
+      if (!parsed.data.authoringReview) remaining = await claimTrial(identity);
     } else {
       const model = await requireGenerationModel(
         parsed.data.provider as "openrouter" | "gateway",
@@ -174,6 +186,24 @@ export async function POST(request: Request) {
         capabilities: model.capabilities,
         overrides: formatOverrides,
       });
+    }
+    if (parsed.data.authoringReview) {
+      authoringAdmission = await admitInitialAuthoringRun({
+        request,
+        project: parsed.data.project,
+        prompt: parsed.data.prompt,
+        provider: free
+          ? "free"
+          : (parsed.data.provider as "gateway" | "openrouter"),
+        model: admittedModelId!,
+        selected: parsed.data.selected,
+        localModeling: parsed.data.localModeling,
+        browserModeling: parsed.data.browserModeling,
+        signal: generationSignal,
+        trialIdentity: identity,
+      });
+      if (authoringAdmission.trialRemaining !== null)
+        remaining = authoringAdmission.trialRemaining;
     }
     providerObservation = createGenerationObservation({
       layer: "provider",
@@ -195,6 +225,7 @@ export async function POST(request: Request) {
       signal: generationSignal,
       outputFormat,
       observability: providerObservation,
+      lifecycle: authoringAdmission?.lifecycle,
     });
     return respond(
       new Response(
@@ -204,17 +235,24 @@ export async function POST(request: Request) {
             "Content-Type": "application/x-ndjson",
             "Cache-Control": "no-store",
             "X-Accel-Buffering": "no",
-            ...(identity
+            ...(identity || authoringAdmission?.trialCookie
               ? {
-                  "Set-Cookie": identity.cookie,
-                  "X-Orbsie-Trial-Remaining": String(remaining),
+                  "Set-Cookie":
+                    authoringAdmission?.trialCookie ?? identity!.cookie,
+                  ...(remaining === undefined
+                    ? {}
+                    : { "X-Orbsie-Trial-Remaining": String(remaining) }),
                 }
+              : {}),
+            ...(authoringAdmission
+              ? { "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId }
               : {}),
           },
         },
       ),
     );
   } catch (e) {
+    if (authoringAdmission) await authoringAdmission.fail(e);
     if (providerObservation) {
       const providerAborted = generationSignal.aborted;
       providerObservation.terminal({

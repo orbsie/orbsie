@@ -143,12 +143,35 @@ export async function claimTrialInTransaction(
 }
 export async function withDatabaseTransaction<T>(
   work: (client: PoolClient) => Promise<T>,
+  options: {
+    signal?: AbortSignal;
+    lockTimeoutMs?: number;
+    statementTimeoutMs?: number;
+    acquireTimeoutMs?: number;
+  } = {},
 ) {
-  const client = await database().connect();
+  const timeouts = validateTransactionTimeouts(options);
+  const clientPromise = database().connect();
+  const client = await acquireDatabaseClient(clientPromise, {
+    signal: options.signal,
+    acquireTimeoutMs: timeouts.acquireTimeoutMs,
+  });
   let releaseError: Error | undefined;
   try {
     await client.query("BEGIN");
+    if (timeouts.lockTimeoutMs !== undefined)
+      await client.query(
+        `SET LOCAL lock_timeout = '${timeouts.lockTimeoutMs}ms'`,
+      );
+    if (timeouts.statementTimeoutMs !== undefined)
+      await client.query(
+        `SET LOCAL statement_timeout = '${timeouts.statementTimeoutMs}ms'`,
+      );
+    if (options.signal?.aborted)
+      throw options.signal.reason ?? Error("Transaction cancelled.");
     const result = await work(client);
+    if (options.signal?.aborted)
+      throw options.signal.reason ?? Error("Transaction cancelled.");
     await client.query("COMMIT");
     return result;
   } catch (error) {
@@ -166,6 +189,89 @@ export async function withDatabaseTransaction<T>(
     // evict it instead of returning it to the pool for another request.
     client.release(releaseError);
   }
+}
+
+async function acquireDatabaseClient(
+  clientPromise: Promise<PoolClient>,
+  options: {
+    signal?: AbortSignal;
+    acquireTimeoutMs?: number;
+  },
+) {
+  const pending = clientPromise;
+  const boundedAcquire =
+    options.acquireTimeoutMs === undefined
+      ? undefined
+      : boundedTimeout(options.acquireTimeoutMs);
+  if (options.signal?.aborted) {
+    void pending.then((client) => client.release()).catch(() => undefined);
+    throw options.signal.reason ?? Error("Transaction cancelled.");
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let removeAbort: (() => void) | undefined;
+  const guards: Promise<never>[] = [];
+  if (boundedAcquire !== undefined)
+    guards.push(
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(Error("Database connection acquisition timed out.")),
+          boundedAcquire,
+        );
+      }),
+    );
+  if (options.signal) {
+    guards.push(
+      new Promise<never>((_, reject) => {
+        const abort = () =>
+          reject(options.signal!.reason ?? Error("Transaction cancelled."));
+        if (options.signal!.aborted) abort();
+        else {
+          options.signal!.addEventListener("abort", abort, { once: true });
+          removeAbort = () =>
+            options.signal!.removeEventListener("abort", abort);
+        }
+      }),
+    );
+  }
+  try {
+    return await Promise.race([pending, ...guards]);
+  } catch (error) {
+    // The guard may lose the race to a client that has already resolved but
+    // whose result was never returned. Consume that result and release it in
+    // every rejected acquisition path, including pre-aborted signals.
+    void pending.then((client) => client.release()).catch(() => undefined);
+    throw error;
+  } finally {
+    if (timer) clearTimeout(timer);
+    removeAbort?.();
+  }
+}
+
+function validateTransactionTimeouts(options: {
+  lockTimeoutMs?: number;
+  statementTimeoutMs?: number;
+  acquireTimeoutMs?: number;
+}) {
+  return {
+    lockTimeoutMs:
+      options.lockTimeoutMs === undefined
+        ? undefined
+        : boundedTimeout(options.lockTimeoutMs),
+    statementTimeoutMs:
+      options.statementTimeoutMs === undefined
+        ? undefined
+        : boundedTimeout(options.statementTimeoutMs),
+    acquireTimeoutMs:
+      options.acquireTimeoutMs === undefined
+        ? undefined
+        : boundedTimeout(options.acquireTimeoutMs),
+  };
+}
+
+function boundedTimeout(value: number) {
+  if (!Number.isSafeInteger(value) || value < 1 || value > 60_000)
+    throw new RangeError("Database transaction timeout is invalid.");
+  return value;
 }
 export async function claimTrial(identity: TrialIdentity) {
   return withDatabaseTransaction((client) =>

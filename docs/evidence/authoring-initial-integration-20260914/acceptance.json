@@ -1,0 +1,62 @@
+{
+  "status": "accepted-gated-initial-api-integration",
+  "providerCalls": 0,
+  "rootVerification": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "tests": [
+      {
+        "name": "fences actual durable completion when cancellation precedes its acknowledgement",
+        "status": "passed"
+      },
+      {
+        "name": "uses the production parser and records authoritative completion",
+        "status": "passed"
+      },
+      {
+        "name": "fails the admitted phase on incomplete EOF, trailing commands, and provider errors",
+        "status": "passed"
+      },
+      {
+        "name": "fences an admitted phase when the route consumer cancels the production stream",
+        "status": "passed"
+      },
+      {
+        "name": "fails the phase when completion is durable but its callback settles after cancellation",
+        "status": "passed"
+      },
+      {
+        "name": "scrubs completion-writer rejection and closes the admitted phase",
+        "status": "passed"
+      },
+      {
+        "name": "closes the admitted phase on malformed model output",
+        "status": "passed"
+      }
+    ]
+  },
+  "workerVerification": {
+    "routeLedgerCompatibilityTests": 54,
+    "postgresLedgerTests": 6,
+    "finalPoolAcquisitionTests": 6,
+    "typecheck": "passed",
+    "format": "passed",
+    "diffCheck": "passed"
+  },
+  "sourceSha256": {
+    "src/app/api/generate/route.ts": "552062fac9e42665ffc358090644bdbd94afec06faf5070d0adb302868aa8b62",
+    "src/lib/server/authoring-run-admission.ts": "20a256164f406947008c8bde3ec8224c272917136ebd2fe9abe40513f25dc550",
+    "src/lib/server/authoring-run-ledger.ts": "51272ecebf2995a4449fe90e5531dab4c75c0af92fbb681f7c132a9d6f98f49d",
+    "src/lib/server/trial.ts": "43adbfd8c6960601fec2b90c7537e7b38d7d01d704a5082a88b6b1393c0ae68f",
+    "tests/authoring-coordinator-database.test.ts": "c2e290124afd7fd5c8c36d96c1a717e8891c8b3632f4be4f03ec7f6da109bd82",
+    "tests/authoring-initial-route-parser.test.ts": "a086d94a19347bb66b06a1ab408a30c012c7cb5a05fc7652e27f3889a83961e8",
+    "tests/trial-transaction.test.ts": "879f0ec2c3154d97c2158cd960a33e31b759f7fdeb012d4184309795ca0bdd04"
+  },
+  "limits": [
+    "Server flag and request opt-in required; production flag not enabled",
+    "No public review endpoint, hosted completion transport or browser inspect/correct loop yet",
+    "No live model calls, browser E2E, production migration or deployment",
+    "Database tests exercise actual PG transactions with deliberate local acknowledgement delay, not infrastructure/network outage certification"
+  ]
+}

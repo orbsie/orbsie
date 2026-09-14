@@ -9,22 +9,25 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing docs/authoring-initial-route-task.md:
-gated API initial issuance and validated completion/failure -> durable ledger,
-including cancellation/DB races. First route handoff was not accepted:39targeted
-tests passed but cancellation fence and real route/parser matrix were omitted.
-Second handoff53targeted tests/6PG tests/typecheck passed, but root found
-unbounded failure cleanup and missing actual coordinator COMMIT-ack cancellation
-coverage. Retained initial token transition is approved: completed+slots2 only;
-first review replaces token atomically. Worker final fix now bounds pool/lock/
-statement waits and adds actual coordinator delayed-ack, writer-rejection, request
-cancel/malformed parser cases and proves PG waiter reached lock. Still unaccepted. Previous
-binding1c740bd accepted. Root reviewed
-route/trial/ledger sources and owns acceptance, PG fixture and next hosted contract
-(docs/authoring-hosted-authority-task.md). No public review endpoint/browser loop,
-live calls, production migration or deployment in this handoff.
-Synthetic PG15 container orbsie-authoring-route-20260914 is live on127.0.0.1:32772;
-stop after DB acceptance (auto-removes). Only synthetic test data.
+/root/host_session_renewal finished docs/authoring-initial-route-task.md. Root
+accepted final API initial issuance/completion/failure wiring after three focused
+review fixes. Retained initial token fences abort during COMMIT acknowledgement;
+review admission atomically replaces it. Pool acquisition and local DB lock/query
+waits are bounded, late acquired clients released. Free opt-in charges one prompt
+and reserves three global units atomically; linked API has no email/free-charge
+gate. Existing one-call path preserved. ORBSIE_AUTHORING_REVIEW=1 plus request
+opt-in required; production not enabled, no public review endpoint/browser loop.
+Root seven integration checks passed (no skips), including actual PG durable
+commit held before acknowledgement -> cancellation -> failed -> review denied,
+production route/parser malformed output and scrubbed writer rejection. Worker
+54route/ledger compatibility checks,6PG ledger checks, final6pool acquisition checks
+and typecheck/format passed. Evidence authoring-initial-integration-20260914.
+No live calls, production migration/deployment or browser E2E in this handoff.
+Next: docs/authoring-hosted-authority-task.md (actual private completion negotiation,
+managed host record, durable consumer, public hosted route), then reviewer execution
+and browser integration under docs/agentic-review-loop-task.md. Full goal intact.
+Synthetic PG15 container orbsie-authoring-route-20260914 will be stopped now after
+acceptance (auto-removes); only synthetic test data.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Ledger5cedb2e accepted after root fixes/review and actual PostgreSQL5/5 plus legacy
 trial2/2 tests (zero skips). Worker unit/reset/trial14passed/1DBskip and typecheck
@@ -37,8 +40,8 @@ pass. Not wired to models/browser. Lifecycle/procedural-binding source review
 Root owns release evidence, checkpoint, deployment and integration review.
 Private completion-record shared interfaceaf2213e:13focused tests pass; worker
 whole-tree typecheck passes. Metadata validation only, not wired to transport.
-Initial/hosted contracts9d819f6; active route work remains uncommitted pending
-root acceptance of the missing race and actual parser tests.
+Initial/hosted contracts9d819f6. Latest initial API integration accepted locally;
+its production enablement waits for the complete bounded review loop.
 Binding accepted after root regressions: production server/browser procedural
 digests match, trailing NDJSON commit->command->commit fails without completion,
 and pending-hook cancellation fails once and consumes late results. Shared

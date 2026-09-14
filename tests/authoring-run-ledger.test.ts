@@ -62,6 +62,7 @@ function fakeDatabase(
       snapshot = null;
       return { rows: [] };
     }
+    if (text.startsWith("SET LOCAL ")) return { rows: [] };
     if (text.startsWith("INSERT INTO orbsie_trial_usage")) {
       const key = String(params[0]);
       if (!trialUsage.has(key)) trialUsage.set(key, 0);
@@ -130,7 +131,6 @@ function fakeDatabase(
       ledger.phase = "completed";
       ledger.completed_revision = Number(params[1]);
       ledger.completed_scene_digest = String(params[2]);
-      ledger.phase_token_hash = null;
       return { rowCount: 1, rows: [] };
     }
     if (text.includes("SET phase='failed'")) {
@@ -511,6 +511,60 @@ describe("internal authoring-run ledger", () => {
         expectedSceneBindingDigest: "c".repeat(64),
       }),
     ).rejects.toMatchObject({ code: "phase-conflict" });
+  });
+
+  it("retains the initial fence for cancellation after completion and replaces it on review admission", async () => {
+    const database = fakeDatabase();
+    const issued = await issueAuthoringRun({
+      ...binding,
+      initialRevision: 0,
+      initialSceneDigest: "c".repeat(64),
+    });
+    await completeInitialAuthoringRun({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: issued.phaseToken,
+      revision: 1,
+      sceneBindingDigest: "d".repeat(64),
+    });
+    await failAuthoringRun({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: issued.phaseToken,
+      revision: 1,
+      sceneBindingDigest: "d".repeat(64),
+    });
+    expect(database.ledger?.phase).toBe("failed");
+
+    const reviewed = await issueAuthoringRun({
+      ...binding,
+      initialRevision: 0,
+      initialSceneDigest: "c".repeat(64),
+    });
+    await completeInitialAuthoringRun({
+      ...binding,
+      runId: reviewed.runId,
+      phaseToken: reviewed.phaseToken,
+      revision: 1,
+      sceneBindingDigest: "d".repeat(64),
+    });
+    await admitAuthoringReview({
+      ...binding,
+      runId: reviewed.runId,
+      reviewPhase: "review",
+      expectedRevision: 1,
+      expectedSceneBindingDigest: "d".repeat(64),
+    });
+    await expect(
+      failAuthoringRun({
+        ...binding,
+        runId: reviewed.runId,
+        phaseToken: reviewed.phaseToken,
+        revision: 1,
+        sceneBindingDigest: "d".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "token-mismatch" });
+    expect(database.ledger?.phase).toBe("reviewing");
   });
 
   it("rejects a phase transition after the bounded run TTL", async () => {

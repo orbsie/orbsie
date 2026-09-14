@@ -33,7 +33,7 @@ export class AuthoringRunLedgerError extends Error {
   }
 }
 
-type Binding = {
+export type AuthoringRunBinding = {
   identityHash: string;
   projectId: string;
   provider: AuthoringProvider;
@@ -42,28 +42,29 @@ type Binding = {
   requestFingerprint: string;
 };
 
-export type IssueAuthoringRunInput = Binding & {
+export type IssueAuthoringRunInput = AuthoringRunBinding & {
   initialRevision: number;
   initialSceneDigest: string;
   /** Present only for a free run; the caller must obtain it from trialIdentity. */
   trialIdentity?: TrialIdentity;
 };
 
-export type CompleteInitialAuthoringRunInput = Binding & {
+export type CompleteInitialAuthoringRunInput = AuthoringRunBinding & {
   runId: string;
   phaseToken: string;
   revision: number;
   sceneBindingDigest: string;
+  signal?: AbortSignal;
 };
 
-export type AdmitAuthoringReviewInput = Binding & {
+export type AdmitAuthoringReviewInput = AuthoringRunBinding & {
   runId: string;
   reviewPhase: AuthoringReviewPhase;
   expectedRevision: number;
   expectedSceneBindingDigest: string;
 };
 
-export type CompleteAuthoringReviewInput = Binding & {
+export type CompleteAuthoringReviewInput = AuthoringRunBinding & {
   runId: string;
   phaseToken: string;
   reviewPhase: AuthoringReviewPhase;
@@ -144,7 +145,7 @@ function assertDigest(value: string, label: string) {
     throw new AuthoringRunLedgerError("invalid-input", `${label} is invalid.`);
 }
 
-function assertBinding(value: Binding) {
+function assertBinding(value: AuthoringRunBinding) {
   assertDigest(value.identityHash, "identity");
   assertDigest(value.requestFingerprint, "request fingerprint");
   if (
@@ -243,7 +244,7 @@ async function lockedRun(client: PoolClient, runId: string) {
   } satisfies LedgerRow;
 }
 
-function assertSameBinding(row: LedgerRow, input: Binding) {
+function assertSameBinding(row: LedgerRow, input: AuthoringRunBinding) {
   if (
     row.identity_hash !== input.identityHash ||
     row.project_id !== input.projectId ||
@@ -337,35 +338,49 @@ export async function completeInitialAuthoringRun(
   assertPrivateToken(input.phaseToken);
   assertRevision(input.revision, "Completed revision");
   assertDigest(input.sceneBindingDigest, "Scene binding digest");
-  return withDatabaseTransaction(async (client) => {
-    const row = await lockedRun(client, input.runId);
-    assertSameBinding(row, input);
-    assertPhaseToken(row, input.phaseToken);
-    if (row.phase !== "active")
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "The initial authoring phase is no longer active.",
+  return withDatabaseTransaction(
+    async (client) => {
+      if (input.signal?.aborted)
+        throw input.signal.reason ?? Error("Generation cancelled.");
+      const row = await lockedRun(client, input.runId);
+      if (input.signal?.aborted)
+        throw input.signal.reason ?? Error("Generation cancelled.");
+      assertSameBinding(row, input);
+      assertPhaseToken(row, input.phaseToken);
+      if (row.phase !== "active")
+        throw new AuthoringRunLedgerError(
+          "phase-conflict",
+          "The initial authoring phase is no longer active.",
+        );
+      if (input.revision < row.initial_revision)
+        throw new AuthoringRunLedgerError(
+          "revision-mismatch",
+          "The completed revision moved backwards.",
+        );
+      if (input.signal?.aborted)
+        throw input.signal.reason ?? Error("Generation cancelled.");
+      const updated = await client.query(
+        "UPDATE orbsie_authoring_runs SET phase='completed',completed_revision=$2,completed_scene_digest=$3,updated_at=clock_timestamp() WHERE run_id=$1 AND phase='active' AND expires_at > clock_timestamp()",
+        [input.runId, input.revision, input.sceneBindingDigest],
       );
-    if (input.revision < row.initial_revision)
-      throw new AuthoringRunLedgerError(
-        "revision-mismatch",
-        "The completed revision moved backwards.",
-      );
-    const updated = await client.query(
-      "UPDATE orbsie_authoring_runs SET phase='completed',completed_revision=$2,completed_scene_digest=$3,phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase='active' AND expires_at > clock_timestamp()",
-      [input.runId, input.revision, input.sceneBindingDigest],
-    );
-    if (updated.rowCount !== 1)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "The initial authoring phase changed before completion.",
-      );
-    return {
-      runId: input.runId,
-      phase: "completed" as const,
-      revision: input.revision,
-    };
-  });
+      if (updated.rowCount !== 1)
+        throw new AuthoringRunLedgerError(
+          "phase-conflict",
+          "The initial authoring phase changed before completion.",
+        );
+      return {
+        runId: input.runId,
+        phase: "completed" as const,
+        revision: input.revision,
+      };
+    },
+    {
+      signal: input.signal,
+      acquireTimeoutMs: 5000,
+      lockTimeoutMs: 5000,
+      statementTimeoutMs: 10000,
+    },
+  );
 }
 
 export async function failAuthoringRun(
@@ -374,26 +389,39 @@ export async function failAuthoringRun(
   assertBinding(input);
   assertRunId(input.runId);
   assertPrivateToken(input.phaseToken);
-  return withDatabaseTransaction(async (client) => {
-    const row = await lockedRun(client, input.runId);
-    assertSameBinding(row, input);
-    assertPhaseToken(row, input.phaseToken);
-    if (!["active", "reviewing", "final-review"].includes(row.phase))
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "The authoring phase cannot be failed now.",
+  return withDatabaseTransaction(
+    async (client) => {
+      const row = await lockedRun(client, input.runId);
+      assertSameBinding(row, input);
+      assertPhaseToken(row, input.phaseToken);
+      if (
+        !["active", "reviewing", "final-review"].includes(row.phase) &&
+        !(
+          row.phase === "completed" &&
+          row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS
+        )
+      )
+        throw new AuthoringRunLedgerError(
+          "phase-conflict",
+          "The authoring phase cannot be failed now.",
+        );
+      const updated = await client.query(
+        "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp() AND (phase <> 'completed' OR remaining_review_slots=$3)",
+        [input.runId, row.phase, AUTHORING_RUN_REVIEW_SLOTS],
       );
-    const updated = await client.query(
-      "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp()",
-      [input.runId, row.phase],
-    );
-    if (updated.rowCount !== 1)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "Authoring phase changed before failure.",
-      );
-    return { runId: input.runId, phase: "failed" as const };
-  });
+      if (updated.rowCount !== 1)
+        throw new AuthoringRunLedgerError(
+          "phase-conflict",
+          "Authoring phase changed before failure.",
+        );
+      return { runId: input.runId, phase: "failed" as const };
+    },
+    {
+      acquireTimeoutMs: 5000,
+      lockTimeoutMs: 5000,
+      statementTimeoutMs: 10000,
+    },
+  );
 }
 
 export async function admitAuthoringReview(input: AdmitAuthoringReviewInput) {

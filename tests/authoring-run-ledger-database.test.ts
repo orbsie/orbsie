@@ -13,6 +13,7 @@ import {
   AuthoringRunLedgerError,
   completeAuthoringReview,
   completeInitialAuthoringRun,
+  failAuthoringRun,
   issueAuthoringRun,
   readAuthoringRun,
 } from "../src/lib/server/authoring-run-ledger";
@@ -341,6 +342,114 @@ describe("authoring run ledger PostgreSQL contention", () => {
         );
         expect(rows.rows[0].count).toBe(0);
       } finally {
+        await pool!.query(
+          "DELETE FROM orbsie_authoring_runs WHERE identity_hash=$1",
+          [trial.identityHash],
+        );
+        await pool!.query(
+          "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+      }
+    },
+    30000,
+  );
+
+  run(
+    "cancellation while completion waits on a row lock leaves the run active and the initial fence cannot fail a newer review",
+    async () => {
+      const prefix = `ledger:${Date.now()}:cancel-fence`;
+      const trial = identity(prefix, 30);
+      const issued = await issueAuthoringRun(binding(trial));
+      const holder = await pool!.connect();
+      try {
+        await holder.query("BEGIN");
+        await holder.query(
+          "SELECT run_id FROM orbsie_authoring_runs WHERE run_id=$1 FOR UPDATE",
+          [issued.runId],
+        );
+        const abort = new AbortController();
+        const completion = completeInitialAuthoringRun({
+          ...binding(trial),
+          runId: issued.runId,
+          phaseToken: issued.phaseToken,
+          revision: 1,
+          sceneBindingDigest: "d".repeat(64),
+          signal: abort.signal,
+        });
+        let lockObserved = false;
+        for (let attempt = 0; attempt < 100 && !lockObserved; attempt++) {
+          const waiting = await pool!.query<{ waiting: boolean }>(
+            "SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND wait_event_type='Lock' AND state='active' AND query ILIKE '%orbsie_authoring_runs%') AS waiting",
+          );
+          lockObserved = waiting.rows[0]?.waiting === true;
+          if (!lockObserved)
+            await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        if (!lockObserved) {
+          abort.abort(Error("synthetic cancellation"));
+          await holder.query("ROLLBACK");
+          await completion.catch(() => undefined);
+          throw Error(
+            "The completion transaction never reached row-lock wait.",
+          );
+        }
+        abort.abort(Error("synthetic cancellation"));
+        await holder.query("ROLLBACK");
+        await expect(completion).rejects.toThrow("synthetic cancellation");
+        await expect(readAuthoringRun(issued.runId)).resolves.toMatchObject({
+          phase: "active",
+        });
+
+        const durable = await completeInitialAuthoringRun({
+          ...binding(trial),
+          runId: issued.runId,
+          phaseToken: issued.phaseToken,
+          revision: 1,
+          sceneBindingDigest: "d".repeat(64),
+        });
+        expect(durable.phase).toBe("completed");
+        await failAuthoringRun({
+          ...binding(trial),
+          runId: issued.runId,
+          phaseToken: issued.phaseToken,
+          revision: 1,
+          sceneBindingDigest: "d".repeat(64),
+        });
+        await expect(readAuthoringRun(issued.runId)).resolves.toMatchObject({
+          phase: "failed",
+        });
+
+        const reviewed = await issueAuthoringRun(binding(trial));
+        await completeInitialAuthoringRun({
+          ...binding(trial),
+          runId: reviewed.runId,
+          phaseToken: reviewed.phaseToken,
+          revision: 1,
+          sceneBindingDigest: "d".repeat(64),
+        });
+        await admitAuthoringReview({
+          ...binding(trial),
+          runId: reviewed.runId,
+          reviewPhase: "review",
+          expectedRevision: 1,
+          expectedSceneBindingDigest: "d".repeat(64),
+        });
+        await expect(
+          failAuthoringRun({
+            ...binding(trial),
+            runId: reviewed.runId,
+            phaseToken: reviewed.phaseToken,
+            revision: 1,
+            sceneBindingDigest: "d".repeat(64),
+          }),
+        ).rejects.toMatchObject({ code: "token-mismatch" });
+        await expect(readAuthoringRun(reviewed.runId)).resolves.toMatchObject({
+          phase: "reviewing",
+        });
+      } finally {
+        await holder.query("ROLLBACK").catch(() => undefined);
+        holder.release();
         await pool!.query(
           "DELETE FROM orbsie_authoring_runs WHERE identity_hash=$1",
           [trial.identityHash],
