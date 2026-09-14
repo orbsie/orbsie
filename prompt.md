@@ -530,7 +530,7 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   output, and validate recovery from actual interruption. Preserve committed objects,
   stable IDs, undo and saved state. Never fabricate a successful commit or blindly
   replay geometry/model calls. Recovery must remain bounded and visible.
-- [ ] Display progress/activity chat updates no more often than once every two
+- [x] Display progress/activity chat updates no more often than once every two
   seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
   Keep final results/errors and controls timely; do not throttle actual scene updates,
   input, rendering or provider processing. Prevent stale updates after stop/new run.
@@ -540,6 +540,11 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   never expose private projects, credentials, account or provider callback pages.
   Verify returned HTML and crawler routes on the deployed public origin. Search
   indexing and ranking are external outcomes, not guaranteed by these changes.
+
+Quiet progress acceptance: sourceecaacaf is included in deployed4a9d2d6. The
+2-second coalescer and stale-run cancellation have targeted regression coverage;
+the production-build desktop/phone fixture passed without provider calls. See
+docs/evidence/quiet-chat-browser-20260913. Stream-recovery acceptance is separate.
 
 SEO acceptance: deployed source4a9d2d6 passed live HTML, robots, sitemap, social
 image and existing shared-world canonical/noindex checks. Desktop/phone main-flow
