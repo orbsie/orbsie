@@ -43,6 +43,14 @@ Keep the game entrance/layout/mobile controls intact. Validate server HTML witho
 JavaScript, route content types, absolute canonical/sitemap URLs, private exclusion,
 and production origin output after deployment. Ranking/indexing is not guaranteed.
 
+Root source check: `scripts/schema.sql` has publication URLs/metadata but no
+search-discovery consent field. Start sitemap with the public homepage only;
+do not enumerate `orbs` as a shortcut. Keep per-world share metadata accurate,
+but use `noindex` for share pages until a deliberate discoverability setting exists.
+Do not block their crawl with robots.txt while relying on a page-level noindex
+directive. API/auth/callback paths must not enter the sitemap. Root layout canonical
+must not accidentally canonicalize every published world to `/`.
+
 ## Logging and reproduction — additional owner request
 
 Initial source inspection: generation adapters attach bounded diagnostics to error
