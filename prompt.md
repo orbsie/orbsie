@@ -98,6 +98,43 @@ Use a persistent renderer and scene lifecycle. Keep the canvas mounted through t
 
 Implement explicit UI states such as landing, descending, building, editing, playing, and publishing. Build progress and camera progress are independent; a network delay must not freeze the interface.
 
+### Unbounded implementation world and navigation — owner addition
+
+When the user enters implementation mode (building/editing after the planet
+arrival), remove the circular parcel constraint. The initial planet remains the
+entrance, but the active workspace must extend freely in every horizontal
+direction. This supersedes any fixed circular workspace boundary in earlier
+parcel requirements; a larger hidden circle does not fulfill it.
+
+- [ ] Remove radius-based authoring, camera and default gameplay restrictions.
+  Objects can be generated, placed, selected and edited beyond the original
+  parcel. Default terrain must extend or stream as needed without an artificial
+  circular cliff. Explicitly authored islands, walls and game boundaries remain
+  legitimate parts of a requested game.
+- [ ] Add compact map-style navigation: visible zoom-in and zoom-out buttons,
+  a compass showing the current heading, and a compass action that restores
+  north-up orientation. Define north consistently in world coordinates across
+  rendering, camera controls and saved projects. Resetting north preserves the
+  current location and zoom. Provide a separate frame-world/return-to-content
+  action so the user can recover after panning away.
+- [ ] Support mouse/trackpad pan and zoom plus touch drag and pinch-to-zoom.
+  Keep navigation distinct from object manipulation and gameplay controls;
+  gestures on chat or controls must not move the world. Use accessible names,
+  keyboard-operable buttons, comfortable mobile touch targets and reduced-motion
+  behavior. Keep controls clear of the mobile chat sheet and player controls.
+- [ ] Implement the unbounded experience through streamed/chunked terrain,
+  visibility culling and appropriate coordinate-precision handling, rather than
+  allocating infinite geometry. Preserve stable entity IDs and world positions
+  through generation, navigation, save/reload, undo, export and publication.
+  Runtime resource budgets remain enforced without imposing the old circular
+  authoring boundary.
+- [ ] Validate construction and editing well outside the former parcel, repeated
+  long-distance navigation, zoom controls, compass heading and north reset,
+  return-to-content, touch interaction and ongoing generation/gameplay. Cover
+  both WebGL and software renderers, desktop and Android, persistence and
+  independent published playback. Measure performance with a growing world;
+  do not claim literal infinite memory, precision or rendering capacity.
+
 ## 5. Objects form from orbs
 
 Create a reusable `OrbFormation` system. It is a core product component, not decorative polish added at the end.
@@ -379,6 +416,64 @@ Latest connection UX requirement: Connect → authorize/sign in → return conne
 
 Firm owner constraint: all AI connection workflows must work entirely in the browser, with no installation, local companion, terminal commands or pasted connection links. Existing local ChatGPT experiments do not satisfy the subscription connector requirement.
 
+### Code-free ChatGPT subscription login — owner addition
+
+Target experience: **Connect with ChatGPT → approve on OpenAI → return to Orbsie,
+connected**. No device-code entry, installation, extension, local companion,
+terminal command, or separate Orbsie email/password gate. Initial authorization
+remains on OpenAI's page; subsequent credential refresh and normal session
+restoration happen in the background. Existing device-code login is an interim
+workflow and does not satisfy this additional acceptance requirement.
+
+- [ ] **Verify feasibility before promising availability.** Establish a supported
+  OpenAI OAuth client registration and HTTPS callback for Orbsie, subscription
+  inference entitlement, refresh/revocation behavior, and permitted hosted usage.
+  Record official documentation or provider confirmation and a working callback
+  proof. Identity-only OpenAI login does not establish subscription inference
+  access. The currently documented Codex browser flow uses a localhost callback;
+  its hosted success-page option does not establish support for an Orbsie callback.
+- [ ] **Implement browser authorization if supported.** Start a short-lived,
+  single-use login attempt bound to the initiating secure Orbsie session, using
+  OAuth state and PKCE as supported by the approved flow. Redirect to OpenAI for
+  sign-in and consent, then return to the registered HTTPS callback. Reuse the
+  user's existing OpenAI session when OpenAI permits it. Handle cancelled or
+  expired attempts without losing the current world.
+- [ ] **Complete the callback server-side.** Validate attempt/session binding,
+  state and expiry; exchange the authorization code server-side and verify the
+  provider identity. Establish or associate the Orbsie session without an email
+  password gate. Prevent callback replay, account confusion and implicit merging
+  of unrelated accounts. Apply the durable connection's Disconnect/intent fence
+  so late callbacks cannot restore revoked access.
+- [ ] **Persist and refresh securely.** Store provider credentials encrypted and
+  owner-bound server-side, never in browser storage, URLs, logs, model context or
+  projects. Restore across ordinary restarts, serialize refresh, preserve rotated
+  credentials after interruption, and revoke access on Disconnect. Ask the user
+  to reconnect when authorization actually becomes invalid.
+- [ ] **Integrate the generation runtime.** Use the documented externally managed
+  ChatGPT token interface only after verifying compatibility with credentials
+  obtained through the approved OAuth flow. That interface is not itself an
+  authorization flow or evidence of client-registration eligibility. Retain
+  operation deadlines, credential leases, cancellation, and the visible
+  Quality/Balanced/Budget selections.
+- [ ] **Validate the complete workflow.** Test desktop and Android browser login,
+  already-signed-in OpenAI sessions, cancelled approval, expired/replayed callback,
+  reload, token expiry/refresh, interrupted generation, concurrent tabs, isolation,
+  and Disconnect racing callback or refresh. Then verify live subscription-backed
+  creation, targeted editing, play, recovery, reload, export and signed-out
+  publication. Fixtures alone do not prove provider OAuth or subscription access.
+
+If OpenAI does not support the required client/callback/entitlement arrangement,
+record the concrete provider dependency and keep this requirement open. Do not
+substitute automated device-code entry, copied browser cookies, a rewritten
+localhost redirect, an API key, or a local installation and call the target met.
+Preserve existing working provider paths while investigating; this addition does
+not authorize removing the current connection flow before its replacement passes.
+
+Documentation checked for this plan:
+- [Codex authentication and remote login](https://learn.chatgpt.com/docs/auth#login-on-headless-devices)
+- [App Server browser login](https://learn.chatgpt.com/docs/app-server#3-log-in-with-chatgpt-browser-flow)
+- [Externally managed ChatGPT tokens](https://learn.chatgpt.com/docs/app-server#3c-log-in-with-externally-managed-chatgpt-tokens-chatgptauthtokens)
+
 Latest modeling requirement: no Blender connection, companion setup, or installation may be required or surfaced. New geometry must execute with resources in the local browser through the browser modeling worker. Native Blender runtime/package work is superseded for product delivery; retain only compatibility with already baked saved assets.
 
 
@@ -427,3 +522,21 @@ stream interruption separately from authentication expiry; preserve completed
 objects and avoid hidden duplicate generation retries. Bounded host renewal must
 not be cut short by an independent process timer. Acceptance requires actual
 restart/restore/generation, disconnect, isolation and failure-recovery evidence.
+
+## Stream resilience, quiet progress, and discoverability — owner update
+
+- [ ] Investigate and reduce frequent streams ending before commit_revision. Record
+  where termination occurs, distinguish transport loss, provider failure and invalid
+  output, and validate recovery from actual interruption. Preserve committed objects,
+  stable IDs, undo and saved state. Never fabricate a successful commit or blindly
+  replay geometry/model calls. Recovery must remain bounded and visible.
+- [ ] Display progress/activity chat updates no more often than once every two
+  seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
+  Keep final results/errors and controls timely; do not throttle actual scene updates,
+  input, rendering or provider processing. Prevent stale updates after stop/new run.
+- [ ] Make the public Orbsie site crawler-discoverable and SEO friendly: meaningful
+  server-rendered public text and headings, canonical URL, accurate title/description,
+  social sharing metadata, robots and sitemap. Index only intended public content;
+  never expose private projects, credentials, account or provider callback pages.
+  Verify returned HTML and crawler routes on the deployed public origin. Search
+  indexing and ranking are external outcomes, not guaranteed by these changes.

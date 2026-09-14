@@ -243,3 +243,16 @@ A completed HTTP stream alone is not evidence of a committed scene. Keep the
 existing completion-event requirement and last-good-scene behavior while adding
 credential finalization. The cleanup path must run after success, malformed or
 incomplete streams, errors, and cancellation; it must not retry model inference.
+
+### Browser tier restoration detail
+
+Current `defaultChatGPTPresetSelection` deliberately chooses Balanced, then another
+available model for first-time catalog initialization. A saved explicit tier must
+instead resolve that same tier via `resolveChatGPTPresetOptions`: do not silently
+turn a remembered Budget choice into a more expensive option when its model is
+absent. Keep its label and show a usable selection-required state. Persist only a
+versioned allowlisted provider/tier preference, never a serialized Connection
+(which contains `key`). Storage failure or malformed/stale preference must not
+break startup. The existing startup effect in `orbsie.tsx` reads config/session;
+use its account guard and capture the connection version before asynchronous work.
+A manual tier selection during restoration must win even if provider is unchanged.

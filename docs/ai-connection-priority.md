@@ -86,3 +86,28 @@ Production-runtime checkpoint: unpromoted deployment `orbsie-aldgc97us-grappeggi
 Release checkpoint: source `b8cc648` built on Vercel and was promoted to `https://orbsie.com` as `dpl_6UPQyCvoKeYTceJCwxY11YxzdRzV`. Both hosted/generation flags are enabled on this deployment. The signed-out hosted route returns401; a real production browser smoke shows the ChatGPT subscription panel and Orbsie sign-in gate without page errors. Local companion pairing and request paths were removed; the browser regression opens a legacy hash and verifies zero companion requests while creation/edit/reload still pass. Thirty-one targeted tests, production build and artifact tracing passed. The owner has been asked to complete official ChatGPT consent in Chrome; no subscription login or live inference is claimed.
 
 Flag-restoration checkpoint — September 10, 2026: the later production environment recreation had dropped `ORBSIE_CHATGPT_HOSTED` and `ORBSIE_CHATGPT_GENERATION`, so `/api/config` omitted `chatgptHosted` and the connector panel was hidden behind the unavailable note; the owner could not attempt the connection at all. Both flags were re-added through the Vercel CLI for production, and deployment `orbsie-fznvqg6s1-grappeggias-projects.vercel.app` was promoted to `https://orbsie.com`. Verified after promotion: `/api/config` returns both capability flags, the signed-out hosted route returns401, `verify-chatgpt-host-package.mjs` passes, and the production synthetic suite passes against `https://orbsie.com` (`verify-hosted-chatgpt-generation-ui`, `verify-provider-reconnect` all four 401/403 scenarios, `verify-openrouter-oauth-ui`) with zero live provider calls. The settings modal also received the owner-approved minimal trim (removed the stacked browser-only paragraph, compact unavailable note, single-line key-privacy and ranking fine print, tighter shared modal spacing) with all pinned script selectors preserved; TypeScript, 850 unit tests, the production build and the connection-notices/creation-access browser checks pass. One caveat recorded: `verify-creation-access` counts exactly two `/api/trial` calls and fails only against a dev server where React StrictMode double-invokes mount effects; production mode passes. Real subscription consent, model discovery after consent and live hosted generation remain the outstanding owner gate.
+
+## Code-free login feasibility check — 2026-09-13
+
+The new `prompt.md` requirement remains open. The official App Server
+[browser flow](https://learn.chatgpt.com/docs/app-server#3-log-in-with-chatgpt-browser-flow)
+returned by the documentation tool still specifies a localhost callback hosted by
+App Server. Its hosted success page changes the post-callback page, not the
+registered callback. The documented
+[external token interface](https://learn.chatgpt.com/docs/app-server#3c-log-in-with-externally-managed-chatgpt-tokens-chatgptauthtokens)
+is experimental, requires the host to already own authentication, and delegates
+401 token refresh to that host; it does not describe obtaining an approved hosted
+OAuth client or subscription entitlement. It also retries the original request
+after successful refresh, so any future integration needs to distinguish that
+provider authentication behavior from Orbsie's prohibition on hidden inference
+retries when recording call acceptance evidence.
+
+Official documentation searches for ChatGPT hosted OAuth callback/subscription and
+client registration did not establish an Orbsie HTTPS callback registration path.
+This is missing feasibility evidence, not proof that no provider arrangement can
+exist. Required next evidence: provider-supported client registration, registered
+Orbsie HTTPS redirect, approved subscription inference use, and a real callback
+exchange. No registration, callback exchange, or external-token inference was
+attempted in this read-only check. Do not rewrite the localhost redirect or
+present device-code login as satisfying this new requirement. Continue the durable
+managed-cache work for the existing path while this separate gate remains open.
