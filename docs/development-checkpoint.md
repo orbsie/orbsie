@@ -13,9 +13,12 @@ One Luna xhigh/default worker, no nested agents, Fast off. Current worker
 gated API initial issuance and validated completion/failure -> durable ledger,
 including cancellation/DB races. First route handoff was not accepted:39targeted
 tests passed but cancellation fence and real route/parser matrix were omitted.
-Worker now implements retained initial phase-token cleanup authority (completed,
-slots2 only), replaced atomically by first review admission; carry abort through
-DB lock/precommit and reconcile abort during COMMIT acknowledgment. Previous
+Second handoff53targeted tests/6PG tests/typecheck passed, but root found
+unbounded failure cleanup and missing actual coordinator COMMIT-ack cancellation
+coverage. Retained initial token transition is approved: completed+slots2 only;
+first review replaces token atomically. Worker final fix now bounds pool/lock/
+statement waits and adds actual coordinator delayed-ack, writer-rejection, request
+cancel/malformed parser cases and proves PG waiter reached lock. Still unaccepted. Previous
 binding1c740bd accepted. Root reviewed
 route/trial/ledger sources and owns acceptance, PG fixture and next hosted contract
 (docs/authoring-hosted-authority-task.md). No public review endpoint/browser loop,
