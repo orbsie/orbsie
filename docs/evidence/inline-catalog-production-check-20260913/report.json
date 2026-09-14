@@ -1,0 +1,36 @@
+{
+  "checks": [
+    {
+      "provider": "openrouter",
+      "status": 200,
+      "count": 368,
+      "accepted": false,
+      "presets": []
+    },
+    {
+      "provider": "gateway",
+      "status": 200,
+      "count": 299,
+      "accepted": true,
+      "presets": [
+        {
+          "label": "Quality",
+          "available": true,
+          "model": "openai/gpt-6-astra"
+        },
+        {
+          "label": "Balanced",
+          "available": true,
+          "model": "openai/gpt-5.6-luna"
+        },
+        {
+          "label": "Budget",
+          "available": true,
+          "model": "zai/glm-5.3-flash"
+        }
+      ]
+    }
+  ],
+  "liveModelCalls": 0,
+  "scope": "Actual production catalogs accepted by new inline UI parser; no model invocation or OAuth acceptance."
+}
