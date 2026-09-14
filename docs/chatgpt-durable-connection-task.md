@@ -94,3 +94,18 @@ isolated loopback/tmpfs database for this handoff; never use production credenti
 After root accepts primitives, implement the app-owned runtime cache bridge and
 private host transport, then route/session restoration integration. Preserve the
 complete restart-to-generation acceptance target across these bounded handoffs.
+
+### Runtime integration finding for the next handoff
+
+Root source review: createIsolatedChatGPTRpc.close terminates the provider process
+and removes the entire owned directory. Generation safetyCleanup invokes that
+close on interrupted/unconfirmed turns. Therefore saving credentials only after a
+successful generation misses rotated auth on failure/cancel. The runtime bridge
+must take a bounded app-owned cache snapshot before directory removal and expose
+it only to trusted private-host persistence handling; no weakening of process
+termination to keep credentials alive. Finalization must attempt fenced snapshot
+save for success, failure and cancellation with a separate bounded cleanup budget,
+then release the lease. Preserve no-resurrection after Disconnect. Report abrupt
+host/platform termination limits honestly; never claim a stale original token
+snapshot is sufficient. Test simulated cache rotation followed by forced RPC close
+and reconstruction of a fresh runtime from the saved updated cache.
