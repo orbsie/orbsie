@@ -9,21 +9,20 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing the internal atomic authoring-run ledger
-and shared trial transaction primitives. Public review routes/browser loop are not
-being enabled by this handoff. Contract: docs/agentic-review-loop-task.md.
+/root/host_session_renewal is implementing canonical scene binding/procedural
+provenance and internal adapter completion/failure hooks. Task contract:
+docs/authoring-scene-binding-task.md. Public review routes/browser loop are not
+being enabled by this handoff. No nested agents or live calls.
 New clean-context spawn failed host thread limit; reuse existing worker.
-Logging and SEO are deployed and verified; no live model calls for either release.
-Root reviewed ledger WIP and requested fixes for HMAC comparison, first-review
-acceptance terminalization, final verdict-only scene binding, pg bigint decoding,
-provider effort preservation and actual-PG rollback/finalization coverage. Worker
-has not handed off final evidence yet; do not accept or deploy ledger prematurely.
-Shared typed scene-review result interface committed39a5bce; six targeted tests
-and current typecheck pass. Not wired to models/browser. Root source review and
-next lifecycle/procedural-binding requirements committed9f8e7dd.
-Root owns release evidence, checkpoint, deployment and actual PostgreSQL acceptance.
-Synthetic PostgreSQL container orbsie-authoring-ledger-20260913 is ready on local
-port32771; root must stop it after ledger acceptance (no production data).
+Ledger5cedb2e accepted after root fixes/review and actual PostgreSQL5/5 plus legacy
+trial2/2 tests (zero skips). Worker unit/reset/trial14passed/1DBskip and typecheck
+passed. Evidence authoring-ledger-postgres-20260913. Internal storage only; no
+production migration/deployment or public review wiring yet. Temporary PostgreSQL
+container stopped after acceptance; auto-removes, synthetic data only.
+Shared typed scene-review result interface39a5bce: six targeted tests and typecheck
+pass. Not wired to models/browser. Lifecycle/procedural-binding source review
+9f8e7dd and next task6eddec8. Logging and SEO remain deployed and accepted.
+Root owns release evidence, checkpoint, deployment and integration review.
 
 Quota last75%used/25%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.

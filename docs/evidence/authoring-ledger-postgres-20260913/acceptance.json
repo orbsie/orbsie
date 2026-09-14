@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "5cedb2e",
+  "passed": true,
+  "database": "isolated PostgreSQL 15 (synthetic data only)",
+  "providerCalls": 0,
+  "ledgerTests": 5,
+  "legacyTrialTests": 2,
+  "skipped": 0,
+  "verified": [
+    "atomic three-global-unit reservation with one visitor/network charge",
+    "concurrent admission has one winner",
+    "ledger insert failure rolls back quota writes",
+    "first acceptance terminalizes",
+    "final review cannot open another phase",
+    "revision values round-trip through PostgreSQL bigint",
+    "unit-aware remaining allowance",
+    "legacy three-of-twelve trial contention and network exhaustion"
+  ],
+  "scope": "Internal storage handoff only; not deployed or connected to public review routes or browser loop."
+}

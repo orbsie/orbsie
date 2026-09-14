@@ -201,3 +201,19 @@ owns the final correction commit. This parser does not authorize review calls or
 establish semantic validity; integration must run existing asset-policy and scene
 operation checks before applying any correction. It is not yet wired to providers
 or the browser and is not evidence of a working inspect/correct loop.
+
+### Internal storage acceptance
+
+Commit5cedb2e implements the internal ledger and shared trial transactions. Root
+review corrected token comparison, bigint decoding, phase/verdict validation,
+first-acceptance finalization and failed-rollback pool eviction. Actual isolated
+PostgreSQL ledger5/5 and legacy trial2/2 checks passed without skips; worker focused
+unit/reset/trial suites14passed/1DBskip and typecheck passed. Evidence:
+`docs/evidence/authoring-ledger-postgres-20260913`.
+
+This reserves three shared global inference units per free authoring request while
+charging one visitor/network prompt; unused reserved units are not refunded.
+Legacy requests retain one-call accounting. Internal storage is accepted, not
+production-migrated or wired to public review admission. Next handoff is
+`docs/authoring-scene-binding-task.md`, followed by route/private lifecycle and
+browser reviewer integration. The complete agentic loop remains unfinished.
