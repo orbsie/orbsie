@@ -12,7 +12,12 @@ One Luna xhigh/default worker, no nested agents, Fast off. Current worker
 /root/host_session_renewal is implementing docs/authoring-hosted-authority-task.md
 with explicit status-header negotiation, private managed completion record, durable
 consumer and hosted route/coordinator wiring. Actual private HTTP tests required;
-no UI/reviewer execution/live calls/deployment. Initial API task finished. Root
+no UI/reviewer execution/live calls/deployment. Hosted first handoff not accepted:
+worker9private-route/22HTTP-backend/25host-service checks and typecheck passed,
+but root found pre-aborted filter creation and late metadata-emission races plus
+missing private-wire mutation, writer-rejection and post-scene seal-failure cases.
+Worker now fixes these and restricts completion header to status/generate. Keep
+WIP uncommitted until root reviews actual matrix. Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
 review fixes. Retained initial token fences abort during COMMIT acknowledgement;
 review admission atomically replaces it. Pool acquisition and local DB lock/query
