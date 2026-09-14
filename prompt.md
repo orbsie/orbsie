@@ -543,14 +543,20 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
 
 ## Reproducible diagnostics — owner update
 
-- [ ] Significantly improve structured logging across all provider generation paths
+- [x] Significantly improve structured logging across all provider generation paths
   and the client scene lifecycle. Correlate request/run IDs across browser, public
   route, hosted runtime and recovery. Record release, provider/model, phase timings,
   command counts/types, last committed revision, finish reason, cancellation/deadline
   source and bounded error codes. Distinguish HTTP success from scene success.
-- [ ] Provide a bounded diagnostic export and deterministic replay workflow that
+- [x] Provide a bounded diagnostic export and deterministic replay workflow that
   helps reproduce stream interruption, malformed output and stale scene updates.
   Keep credentials, authorization URLs/codes, cookies, raw prompts, provider output
   and private project content out of ordinary logs. Any richer reproduction artifact
   must have explicit content boundaries, redaction, retention and owner-controlled
   sharing. Test redaction and limits. Logs alone do not prove provider acceptance.
+
+Diagnostics acceptance: server dba95bc/client b518e68 deployed; actual correlated
+Vercel logs and desktop/phone synthetic browser downloads verified. Production-code
+replay and targeted regressions pass. See docs/generation-logging.md and
+docs/evidence/client-diagnostics-live-fixture-20260913. No live-provider generation
+or physical-device acceptance is implied by these logging checks.

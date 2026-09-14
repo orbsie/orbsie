@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "b518e68",
+  "deployment": "https://orbsie-37jjiobee-grappeggias-projects.vercel.app",
+  "providerCalls": 0,
+  "runtimeSmoke": {
+    "requestId": "9eff7af7-07f4-4bee-8ef9-869661fb78bd",
+    "clientRunId": "2d032357-a28c-42dd-b302-29c547416ee0",
+    "httpStatus": 400,
+    "events": [
+      {
+        "schemaVersion": 1,
+        "layer": "route",
+        "requestId": "9eff7af7-07f4-4bee-8ef9-869661fb78bd",
+        "clientRunId": "2d032357-a28c-42dd-b302-29c547416ee0",
+        "buildId": "b518e68",
+        "event": "phase",
+        "phase": "admission",
+        "durationMs": 0
+      },
+      {
+        "schemaVersion": 1,
+        "layer": "route",
+        "requestId": "9eff7af7-07f4-4bee-8ef9-869661fb78bd",
+        "clientRunId": "2d032357-a28c-42dd-b302-29c547416ee0",
+        "buildId": "b518e68",
+        "event": "terminal",
+        "terminalReason": "parser-failure",
+        "failureCode": "invalid-input",
+        "httpStatus": 400,
+        "durationMs": 14
+      }
+    ]
+  },
+  "productionLogVisibility": "passed",
+  "browserFixturePassed": true,
+  "expectedPublicBuildId": "b518e68"
+}

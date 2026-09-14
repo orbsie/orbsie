@@ -2,8 +2,7 @@
 
 Updated 2026-09-13. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
-acceptance history: checkpoint-history/2026-09-13-before-durable-release.md and
-checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
+acceptance history: checkpoint-history/2026-09-13-before-durable-release.md.
 
 ## Execution
 
@@ -12,13 +11,12 @@ One Luna xhigh/default worker, no nested agents, Fast off. Current worker
 /root/host_session_renewal is implementing **SEO crawlability/metadata**.
 New clean-context spawn failed host thread limit; reuse existing worker.
 Logging client stage b518e68 committed, root production build and desktop/phone
-download+startup fixtures pass (including public buildID). Deployed and live
-browser fixture27399 plus actual server log correlation pass; zero model calls.
+download+startup fixtures pass (including public buildID). Deployment pending.
 Worker next contract docs/seo-crawlability-task.md, homepage-only sitemap/noindex
 shared worlds, targeted metadata checks. Root owns release checkout, logging
 evidence, checkpoint and deployment. No live model calls for logging or SEO.
 
-Quota last74%used/26%remaining. Read
+Quota last73%used/27%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
@@ -28,13 +26,11 @@ Never echo credentials. Use completion notifications, avoid status-only turns.
 ## Production and accepted release
 
 Production https://orbsie.com ->
-https://orbsie-37jjiobee-grappeggias-projects.vercel.app, source **b518e68**.
-Isolated checkout /tmp/orbsie-durable-release-20260913 atb518e68. Local build and
-Vercel remote build passed. Deploy55666 terminal0, alias confirmed. Both server
-routes verified on dba95bc; new buildb518e68 runtime400 has correlated UUID and
-exactly1terminal in actual Vercel logs. Both public/server build IDs set b518e68.
-Evidence client-diagnostics-live-fixture-20260913; built desktop/phone download
-and startup regressions pass. Root viewed phone layout. Localserver36459 stopped.
+https://orbsie-7y9kfo9yy-grappeggias-projects.vercel.app, source **dba95bc**.
+Isolated checkout /tmp/orbsie-durable-release-20260913 atdba95bc. Local build and
+Vercel remote build passed. Deploy33697 terminal0, alias confirmed. Both generation
+routes rejected400/401 with correlated UUIDs and exactly1terminal/builddba95bc
+verified in actual Vercel logs; generation-observability-deployment-20260913.
 No real-provider generation in this release. Prior startup480782d HTTP/browser
 synthetic acceptance remains recorded in chatgpt-durable-deployment-20260913.
 Release generated next-env/player runtime/source dirty; preserve before advancing.
@@ -79,11 +75,11 @@ remains separate. No full inspect/correct loop yet.
 
 ## Remaining implementation and acceptance (preserve full prompt scope)
 
-1. Logging/export/replay implemented and deployed (see below). Actual recurring
-   interruption diagnosis and provider recovery acceptance remain. Clean EOF
-   without commit alone does not establish network failure. Optional further
-   private-host/control-route lifecycle logs remain a following extension.
-   Contract resilience-activity-seo-task.md.
+1. Server logging current, then client safe diagnostic export/replay and actual
+   interruption diagnosis. HTTP200 does not mean commit; clean EOF without
+   commit_revision alone does not prove network failure. Never log raw content,
+   credentials or arbitrary errors; exactlyone terminal/layer. Contracts
+   generation-observability-task.md, resilience-activity-seo-task.md.
 2. Actual agentic inspect/correct/finalverify loop: agentic-review-loop-task.md.
    Atomic anonymous/auth run ledger, reserve3callunits, max2reviews, same provider/
    model/effort, revision-bound image/typedverdict, oneundo/runcontroller, honest
@@ -143,25 +139,72 @@ Private exact257byte response at /home/marcos/.cache/orbsie/provider-tests/
 framing-20260913/response.sse0600; parent0700. Tool9976cc9 adds bounded exactSSE
 capture and nonblocking limit cancellation;10focused tests pass. No root processes.
 
-## Accepted reproducible diagnostics
+Server observability first handoff78tests/7files+typecheck passed, but root review
+REJECTED it pending corrections. Critical: hosted scene finally aborted local signal
+before outcome check, falsely logging every success as cancellation. Also schema
+errors misclassified as transport, freequota429 logged500, observer64KiB bound can
+mislabel valid geometry, missing observer/cancel/UTF8/error regressions, JSON-line
+sink needed. Worker correcting same bounded stage; no deploy/acceptance yet.
+Root actual480782d private handler proof: extra observability JSONfield=>400,
+unchangedbody+optionalcorrelationheader=>200/one syntheticcall. Existing sandbox
+reuse means body change would break rolling deployment. Worker moving correlation
+to headers via manager/backend, preserving body/capability/epoch; evidence
+observability-protocol-compat-20260913. Root quota72%used/28%remaining.
 
-Server dba95bc: fresh request UUID and validated client-run header, JSON-line
-phase/terminal counters/timings/build metadata, provider/schema/EOF/deadline/cancel
-classification, credential cleanup independent of scene success. Rolling private
-transport keeps body unchanged, optional headers compatible with old480782d host.
-Worker85targeted tests+root8privateHTTP integration tests pass; actual Vercel logs
-verified for both routes. Never expose global server history or arbitrary errors.
+Stage1 server observability corrected and root-reviewed: actual hosted read failure
+now transport-error independently of saved credentials; success before cleanup
+abort, parser/quota classifications, bounded observer UTF8/final/large records,
+JSON-line sink and rolling-compatible private headers accepted. Worker85tests in
+7suites+typecheck/format pass; root8 actual private-HTTP integration tests pass.
+No live model calls or deployment for this stage yet. Client export/history and
+startup diagnostics remain next bounded task. Runbook docs/generation-logging.md.
 
-Client b518e68: 20entries/64KiB max, strict projection/no prompts/output/credentials/
-URLs/unverified model IDs, stage/revision/typecounts/quality/renderer/finish info,
-partial in-progress snapshots, authoritative clear epoch and terminal guards.
-Download in recovery and all connection states; reload persistence and reset.
-Storage denial tolerated. Direct NEXT_PUBLIC_ORBSIE_BUILD_ID compiled/verified.
-Replay CLI executes production observer/protocol and client store fixtures.
-Final worker22tests/3files+typecheck, replay2suites, build-ID helper8tests pass.
-Root built and live-site browser fixtures pass desktop1440/phone390 EOF/parser,
-IDs/build ID/privacy/reload/reset, no overflow/pageerrors. Startup regression
-requires1synthetic Budget/Luna request+reply and recovery checks. Zero live model
-calls; not physical-device/provider acceptance. See docs/generation-logging.md.
-Evidence client-diagnostics-production-build-20260913, client-diagnostics-startup-
-regression-20260913 and client-diagnostics-live-fixture-20260913.
+Server logging dba95bc deployed to orbsie-7y9kfo9yy-grappeggias-projects.vercel.app,
+aliased orbsie.com; local+remote build pass. Explicit ORBSIE_BUILD_ID=dba95bc.
+Both public generate routes tested with rejected requests (400/401), zero model
+calls: UUID correlation, correct HTTP/failure code, build ID and exactly1terminal
+verified in actual Vercel request-detail logs. CLI59.11.7 historical logs shows
+only first log per request; direct scoped request-logs rows reveal both events.
+Evidence generation-observability-deployment-20260913. Stage2 client diagnostics
+assigned to same sole Luna worker, no nested/live calls. Root deploy33697 done.
+
+Stage2 first handoff22tests/typecheck rejected on root review pending privacy and
+reliability corrections: arbitrary bounded model/timestamp/startupID strings,
+getItem denial can throw, start timestamp recorded at end, no build/type counts/
+initial revision, misleading parser/limit/429 classification, startup stage timing,
+and missing replay/negative store coverage. Same Luna correcting. Root owns
+scripts/verify-generation-diagnostics.mjs, preliminary desktop+phone download,
+reload/reset fixture under .vercel/diagnostics-preliminary. Local dev5285 on3013
+started for synthetic fixture50399; no model calls. A separate modal-anchor probe
+briefly loaded local home before setContent and issued read-only config/trial
+requests; no generation. Preliminary50399/47285 fail: settings download absent
+after reload without provider, placement gap sent to Luna. Root viewed screenshot;
+5285 stopped intentionally (130). Prototype tests are not acceptance evidence.
+
+Stage2 corrective handoff36tests/typecheck +9 parallel-classifier replay cases
+reviewed. Root actual dev browser download fixture87775 PASSED desktop1440 and
+phone390: cleanEOF/parser classifications, IDs, private sentinels absent, reload
+retention, disconnected settings access, reset clears, no overflow/pageerrors.
+Root viewed phone recovery/settings; requested readable 2-row phone toast.
+Further corrections pending: replay must execute real production store (current
+script duplicates classifier), storage-remove denial must not reload cleared
+history, bound crypto UUID receiver, wire actual public buildID, plain semantic
+applyOperation errors classification, prevent late snapshot/header writes after
+terminal/reset. Same Luna worker. Dev46589 stopped130; report/screenshots remain
+.vercel/diagnostics-corrected (not final production acceptance). Quota26%remaining.
+
+Stage2 final diff root-reviewed and accepted for production-build verification.
+Corrected real observer/protocol+store replay, semantic apply classification,
+clear epoch/terminal snapshot guards, storage denial, crypto receiver, direct
+Next public build ID, phone toast rows. Worker final22tests/3files+typecheck pass;
+real replay2suites pass; last build-ID helper8tests+typecheck pass. Root prior
+desktop/phone browser fixture passed; final built UI/build-ID verification next.
+No live calls. Logging handbook updated with export and replay workflow.
+
+Final b518e68 production build34026 pass. Built browser downloads43939 pass on
+desktop/phone with explicit public buildb518e68 assertions, root viewed phone
+two-row toast. Startup restoration1789 regression pass (synthetic Budget call
+and final assistant reply, config/session/status/malformed/reload/disconnect).
+Evidence client-diagnostics-production-build-20260913 and client-diagnostics-
+startup-regression-20260913. Root prodserver36459 still3013; deploy55666 running.
+Same Luna now owns bounded SEO task while root deploys pinned logging commit.
