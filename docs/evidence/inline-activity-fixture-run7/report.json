@@ -1,0 +1,136 @@
+{
+  "passed": true,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "e903bcad-d927-420a-bb4f-77ee7088babc",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    },
+    {
+      "projectId": "e903bcad-d927-420a-bb4f-77ee7088babc",
+      "revision": 3,
+      "prompt": "Warm the lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "✧Waiting for a response…",
+      "✧Building Lantern…",
+      "✧Lantern is taking shape.",
+      "✧Preparing Lantern geometry…",
+      "✧Applied the shape for Lantern.",
+      "✧Applied the final scene update.",
+      "✧Generation complete. Changes are applied."
+    ],
+    "workspaceTransitionSettled": true,
+    "narrowActivityBounds": [
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      }
+    ],
+    "latestPhoneVisibility": {
+      "visible": true,
+      "top": 631.84375,
+      "bottom": 650.59375,
+      "containerTop": 533.09375,
+      "containerBottom": 713
+    },
+    "narrowPhone": {
+      "bounds": [
+        {
+          "x": 23,
+          "y": 447.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 478.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 508.84375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 539.59375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 570.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 601.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 631.84375,
+          "width": 344,
+          "height": 18.75
+        }
+      ],
+      "latestVisibility": {
+        "visible": true,
+        "top": 631.84375,
+        "bottom": 650.59375,
+        "containerTop": 533.09375,
+        "containerBottom": 713
+      },
+      "noHorizontalOverflow": true
+    },
+    "cancelled": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": []
+}

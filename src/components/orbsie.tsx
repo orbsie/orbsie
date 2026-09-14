@@ -43,7 +43,7 @@ import {
   noticeForGenerationCode,
 } from "@/lib/connection-messages";
 import { CHATGPT_STALE_CONNECTION_CODE } from "@/lib/chatgpt-connection-errors";
-import { modelModes, type CatalogModel } from "@/lib/model-modes";
+import { modelModesForProvider, type CatalogModel } from "@/lib/model-modes";
 import { modelRankingMetadata } from "@/lib/model-rankings";
 import {
   scopedValue,
@@ -88,10 +88,18 @@ const OAUTH_STORAGE_MESSAGE =
   "OpenRouter sign-in needs browser storage. Enable site storage and try again.";
 import { exportWorld, shareWorld, decodeWorld } from "@/lib/export";
 import { parcelTransitionController } from "@/lib/parcel-transition";
-import { latestAuthoringActivity } from "@/lib/authoring-activity";
 import ChatGPTConnection, {
+  parseChatGPTModels,
+  type ChatGPTModelOption,
   type ProviderSessionUser,
 } from "./chatgpt-connection";
+import ModelQualitySelector from "./model-quality-selector";
+import {
+  modelQualityOptions,
+  isCurrentCatalogRequest,
+  parseCatalogModels,
+  selectedModelQuality,
+} from "../lib/model-quality-presets";
 import { GraphicsGuidance } from "./graphics-guidance";
 const World = dynamic(() => import("./world"), {
   ssr: false,
@@ -249,6 +257,7 @@ export default function Orbsie() {
     model: "",
     key: "",
   });
+  const activeProvider = useRef(connection.provider);
   const connectionVersion = useRef(0);
   const setConnection = (next: Parameters<typeof setConnectionState>[0]) => {
     connectionVersion.current++;
@@ -470,6 +479,12 @@ export default function Orbsie() {
   const [modalNotice, setModalNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [models, setModels] = useState<CatalogModel[]>([]);
+  const [modelsProvider, setModelsProvider] = useState("");
+  const [modelCatalogCache, setModelCatalogCache] = useState<
+    Record<string, CatalogModel[]>
+  >({});
+  const [modelCatalogLoading, setModelCatalogLoading] = useState(false);
+  const [modelCatalogError, setModelCatalogError] = useState(false);
   const [modelSearch, setModelSearch] = useState("");
   const visibleModels = models.filter((model) =>
     `${model.name} ${model.id}`
@@ -490,6 +505,12 @@ export default function Orbsie() {
   const [signup, setSignup] = useState(false);
   const [providerHint, setProviderHint] = useState("");
   const [chatGPTStartRequest, setChatGPTStartRequest] = useState(0);
+  const [chatGPTModels, setChatGPTModels] = useState<ChatGPTModelOption[]>([]);
+  const [chatGPTModelsStatus, setChatGPTModelsStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const chatGPTModelsRequest = useRef<AbortController | null>(null);
+  const modelCatalogRequest = useRef<AbortController | null>(null);
   const [storageUsage, setStorageUsage] = useState("");
   const [resetArmed, setResetArmed] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
@@ -510,6 +531,25 @@ export default function Orbsie() {
     publication != null && !terminalPublicationStates.has(publication.state);
   const projectScope = useRef(createProjectScope(s.project.id));
   const accountGeneration = useRef(0);
+  useEffect(() => {
+    activeProvider.current = connection.provider;
+    modelCatalogRequest.current?.abort();
+    modelCatalogRequest.current = null;
+    setModelCatalogLoading(false);
+    if (connection.provider !== "chatgpt-hosted") {
+      chatGPTModelsRequest.current?.abort();
+      chatGPTModelsRequest.current = null;
+      setChatGPTModels([]);
+      setChatGPTModelsStatus("idle");
+    }
+  }, [connection.provider]);
+  useEffect(
+    () => () => {
+      modelCatalogRequest.current?.abort();
+      chatGPTModelsRequest.current?.abort();
+    },
+    [],
+  );
   const captureCloudRequest = () => {
     const inProject = projectScope.current.capture();
     const generation = accountGeneration.current;
@@ -586,6 +626,143 @@ export default function Orbsie() {
     [],
   );
 
+  const loadProviderModels = useCallback(
+    (provider: string, force = false) => {
+      if (provider !== "openrouter" && provider !== "gateway") return;
+      const cached = modelCatalogCache[provider];
+      if (!force && cached) {
+        modelCatalogRequest.current?.abort();
+        modelCatalogRequest.current = null;
+        setModelsProvider(provider);
+        setModels(cached);
+        setModelCatalogLoading(false);
+        setModelCatalogError(false);
+        return;
+      }
+      modelCatalogRequest.current?.abort();
+      modelCatalogRequest.current = null;
+      const controller = new AbortController();
+      modelCatalogRequest.current = controller;
+      const generation = accountGeneration.current;
+      setModelsProvider(provider);
+      setModels([]);
+      setModelCatalogLoading(true);
+      setModelCatalogError(false);
+      void fetch(`/api/models?provider=${provider}`, {
+        signal: controller.signal,
+        credentials: "same-origin",
+        cache: "no-store",
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw Error(data.error);
+          return data;
+        })
+        .then((data) => {
+          if (
+            !isCurrentCatalogRequest(
+              controller,
+              modelCatalogRequest.current,
+              generation,
+              accountGeneration.current,
+              provider,
+              activeProvider.current,
+            )
+          )
+            return;
+          const next = parseCatalogModels(data.models);
+          if (!next) throw Error("Model catalog invalid");
+          setModelCatalogCache((current) => ({ ...current, [provider]: next }));
+          setModelsProvider(provider);
+          setModels(next);
+          setConnectionState((current) => {
+            if (current.provider !== provider || current.model) return current;
+            const balanced = modelModesForProvider(provider).find(
+              (mode) =>
+                mode.label === "Balanced" &&
+                next.some((model: CatalogModel) => model.id === mode.id),
+            );
+            return { ...current, model: balanced?.id ?? "" };
+          });
+        })
+        .catch(() => {
+          if (
+            isCurrentCatalogRequest(
+              controller,
+              modelCatalogRequest.current,
+              generation,
+              accountGeneration.current,
+              provider,
+              activeProvider.current,
+            )
+          )
+            setModelCatalogError(true);
+        })
+        .finally(() => {
+          if (
+            isCurrentCatalogRequest(
+              controller,
+              modelCatalogRequest.current,
+              generation,
+              accountGeneration.current,
+              provider,
+              activeProvider.current,
+            )
+          ) {
+            modelCatalogRequest.current = null;
+            setModelCatalogLoading(false);
+          }
+        });
+    },
+    [modelCatalogCache],
+  );
+
+  const loadChatGPTModels = useCallback(
+    (force = false) => {
+      if (!force && chatGPTModelsStatus === "ready") return;
+      chatGPTModelsRequest.current?.abort();
+      const controller = new AbortController();
+      chatGPTModelsRequest.current = controller;
+      const generation = accountGeneration.current;
+      setChatGPTModelsStatus("loading");
+      void fetch("/api/chatgpt/models", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw Error("ChatGPT model catalog unavailable");
+          return data;
+        })
+        .then((data) => {
+          if (
+            controller.signal.aborted ||
+            generation !== accountGeneration.current ||
+            activeProvider.current !== "chatgpt-hosted" ||
+            chatGPTModelsRequest.current !== controller
+          )
+            return;
+          const next = parseChatGPTModels(data);
+          if (!next) throw Error("ChatGPT model catalog invalid");
+          setChatGPTModels(next);
+          setChatGPTModelsStatus("ready");
+        })
+        .catch(() => {
+          if (
+            !controller.signal.aborted &&
+            generation === accountGeneration.current &&
+            activeProvider.current === "chatgpt-hosted" &&
+            chatGPTModelsRequest.current === controller
+          )
+            setChatGPTModelsStatus("error");
+        });
+    },
+    [chatGPTModelsStatus],
+  );
+
   const useChatGPT = (model: string, effort: string) => {
     setConnection({
       provider: "chatgpt-hosted",
@@ -596,8 +773,13 @@ export default function Orbsie() {
     setModal(null);
   };
   const disconnectChatGPT = useCallback(() => {
-    if (connection.provider === "chatgpt-hosted")
+    if (connection.provider === "chatgpt-hosted") {
+      chatGPTModelsRequest.current?.abort();
+      chatGPTModelsRequest.current = null;
+      setChatGPTModels([]);
+      setChatGPTModelsStatus("idle");
       setConnection({ provider: "chatgpt-hosted", model: "", key: "" });
+    }
   }, [connection.provider]);
   useEffect(
     () =>
@@ -616,12 +798,25 @@ export default function Orbsie() {
   const [objectList, setObjectList] = useState(false);
   const [publicView, setPublicView] = useState(false);
   const chat = useRef<HTMLDivElement>(null);
+  const chatFollowsLatest = useRef(true);
+  const chatAutoScroll = useRef(false);
+  const chatUserScrollIntent = useRef(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const composer = useRef<HTMLElement>(null);
   const gameplayRegion = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const focusGameplayRegion = useCallback(() => {
     gameplayRegion.current?.focus({ preventScroll: true });
+  }, []);
+  const scrollChatToLatest = useCallback(() => {
+    const element = chat.current;
+    if (!element) return;
+    chatAutoScroll.current = true;
+    element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
+    window.requestAnimationFrame(() => {
+      chatAutoScroll.current = false;
+      chatFollowsLatest.current = true;
+    });
   }, []);
   const landing = s.phase === "landing";
   const selected = s.project.entities.find((e) => e.id === s.selected);
@@ -634,16 +829,91 @@ export default function Orbsie() {
       e.behavior?.type === "collect" &&
       s.score.includes(e.id),
   ).length;
-  const latestActivity = latestAuthoringActivity(s.authoringActivity);
+  const qualityOptions = modelQualityOptions(
+    connection.provider,
+    modelsProvider === connection.provider ? models : [],
+    chatGPTModels,
+  );
+  const selectedQuality = selectedModelQuality(
+    connection.provider,
+    connection.model,
+    connection.effort,
+    qualityOptions,
+  );
+  const qualityCatalogStatus =
+    connection.provider === "chatgpt-hosted"
+      ? chatGPTModelsStatus
+      : modelsProvider !== connection.provider
+        ? "idle"
+        : modelCatalogLoading
+          ? "loading"
+          : modelCatalogError
+            ? "error"
+            : "ready";
+  const qualityProviderLabel =
+    connection.provider === "chatgpt-hosted"
+      ? "ChatGPT"
+      : connection.provider === "openrouter"
+        ? "OpenRouter"
+        : "AI Gateway";
+  const selectQuality = (
+    option: ReturnType<typeof modelQualityOptions>[number],
+  ) => {
+    if (!option.available || !option.model) return;
+    setConnection({
+      ...connection,
+      model: option.model,
+      ...(connection.provider === "chatgpt-hosted" && option.effort
+        ? { effort: option.effort }
+        : {}),
+    });
+  };
+  const latestActivityId = s.authoringActivity.at(-1)?.id;
+  const lastUserMessageIndex =
+    s.authoringActivity.length > 0
+      ? s.project.messages.reduce(
+          (last, message, index) => (message.role === "user" ? index : last),
+          -1,
+        )
+      : -1;
+  const messagesBeforeActivity =
+    lastUserMessageIndex >= 0
+      ? s.project.messages.slice(0, lastUserMessageIndex + 1)
+      : s.project.messages;
+  const messagesAfterActivity =
+    lastUserMessageIndex >= 0
+      ? s.project.messages.slice(lastUserMessageIndex + 1)
+      : [];
+  const renderProjectMessage = (
+    m: (typeof s.project.messages)[number],
+    index: number,
+  ) => (
+    <div key={`message-${index}`} className={`message ${m.role}`}>
+      {m.role === "assistant" && <span className="assistant-icon">✧</span>}
+      <div>
+        {m.entityId && (
+          <span className="entity-chip">
+            <Leaf size={12} />
+            {s.project.entities.find((e) => e.id === m.entityId)?.label ??
+              "Selected object"}
+          </span>
+        )}
+        <p>{m.text}</p>
+      </div>
+    </div>
+  );
   useLayoutEffect(() => {
     parcelTransitionController.setTarget(landing ? 0 : 1);
     return parcelTransitionController.attachUi(composer.current);
   }, [landing, publicView, s.phase]);
   useEffect(() => {
-    const refresh = () => parcelTransitionController.refreshUi();
+    const refresh = () => {
+      parcelTransitionController.refreshUi();
+      if (chatFollowsLatest.current) scrollChatToLatest();
+    };
     window.addEventListener("resize", refresh);
     return () => window.removeEventListener("resize", refresh);
-  }, []);
+  }, [scrollChatToLatest]);
   const refreshCloud = async () => {
     const isCurrent = captureCloudRequest();
     const projectId = useOrb.getState().project.id;
@@ -706,11 +976,21 @@ export default function Orbsie() {
       .catch(() => {});
   }, []);
   useEffect(() => {
-    chat.current?.scrollTo({
-      top: chat.current.scrollHeight,
-      behavior: "smooth",
+    if (!chatFollowsLatest.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      scrollChatToLatest();
     });
-  }, [s.project.messages.length]);
+    return () => window.cancelAnimationFrame(frame);
+  }, [latestActivityId, s.project.messages.length, scrollChatToLatest]);
+  useEffect(() => {
+    const element = chat.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      if (chatFollowsLatest.current) scrollChatToLatest();
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [landing, scrollChatToLatest]);
   useEffect(() => {
     if (modal) {
       dialog.current?.showModal();
@@ -721,45 +1001,11 @@ export default function Orbsie() {
     }
   }, [modal]);
   useEffect(() => {
-    if (
-      !modal ||
-      modal !== "settings" ||
-      connection.provider === "chatgpt-hosted"
-    )
+    if (modal !== "settings" || connection.provider === "chatgpt-hosted")
       return;
-    const controller = new AbortController();
-    setModels([]);
     setModelSearch("");
-    fetch(`/api/models?provider=${connection.provider}`, {
-      signal: controller.signal,
-    })
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw Error(data.error);
-        return data;
-      })
-      .then((d) => {
-        if (controller.signal.aborted) return;
-        setModels(d.models ?? []);
-        setConnectionState((current) => ({
-          ...current,
-          model:
-            current.model ||
-            (d.models?.some(
-              (model: { id: string }) => model.id === modelModes[1].id,
-            )
-              ? modelModes[1].id
-              : ""),
-        }));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted)
-          setModalError(
-            "The model catalog is unavailable. Please reopen settings to retry.",
-          );
-      });
-    return () => controller.abort();
-  }, [modal, connection.provider]);
+    loadProviderModels(connection.provider);
+  }, [connection.provider, loadProviderModels, modal]);
   useEffect(() => {
     if (
       !user ||
@@ -1513,51 +1759,75 @@ export default function Orbsie() {
                   <Leaf size={17} />
                 </button>
               </div>
-              <div className="chat-messages" ref={chat}>
-                {s.project.messages.map((m, i) => (
-                  <div key={i} className={`message ${m.role}`}>
-                    {m.role === "assistant" && (
-                      <span className="assistant-icon">✧</span>
-                    )}
-                    <div>
-                      {m.entityId && (
-                        <span className="entity-chip">
-                          <Leaf size={12} />
-                          {s.project.entities.find((e) => e.id === m.entityId)
-                            ?.label ?? "Selected object"}
-                        </span>
-                      )}
-                      <p>{m.text}</p>
-                    </div>
-                  </div>
-                ))}
-                {latestActivity && (
-                  <section
-                    className="authoring-activity"
-                    aria-label="Creation activity"
-                    data-project-id={latestActivity.projectId}
-                    data-run-id={latestActivity.runId}
-                  >
+              <div
+                className="chat-messages"
+                ref={chat}
+                tabIndex={0}
+                onWheel={() => {
+                  chatUserScrollIntent.current = true;
+                }}
+                onTouchMove={() => {
+                  chatUserScrollIntent.current = true;
+                }}
+                onPointerDown={() => {
+                  chatUserScrollIntent.current = true;
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "ArrowUp" ||
+                    event.key === "ArrowDown" ||
+                    event.key === "PageUp" ||
+                    event.key === "PageDown" ||
+                    event.key === "Home" ||
+                    event.key === "End" ||
+                    event.key === " "
+                  )
+                    chatUserScrollIntent.current = true;
+                }}
+                onScroll={(event) => {
+                  if (chatAutoScroll.current || !chatUserScrollIntent.current)
+                    return;
+                  chatUserScrollIntent.current = false;
+                  const element = event.currentTarget;
+                  chatFollowsLatest.current =
+                    element.scrollHeight -
+                      element.scrollTop -
+                      element.clientHeight <
+                    32;
+                }}
+              >
+                {messagesBeforeActivity.map(renderProjectMessage)}
+                {s.authoringActivity.map((activity, index) => {
+                  const latest = index === s.authoringActivity.length - 1;
+                  return (
                     <div
-                      className={`authoring-activity-latest is-${latestActivity.kind}`}
-                      role="status"
-                      aria-live="polite"
-                      aria-atomic="true"
+                      key={activity.id}
+                      className={`message assistant authoring-activity-message${latest ? " authoring-activity-latest" : ""} is-${activity.kind}`}
+                      role={latest ? "status" : undefined}
+                      aria-live={latest ? "polite" : undefined}
+                      aria-atomic={latest ? "true" : undefined}
+                      aria-label={latest ? "Latest creation update" : undefined}
+                      data-project-id={activity.projectId}
+                      data-run-id={activity.runId}
                     >
-                      {s.building && <span className="pulse-orb" />}
-                      <span>{latestActivity.message}</span>
+                      <span className="assistant-icon" aria-hidden="true">
+                        {latest && s.building ? (
+                          <span className="pulse-orb" />
+                        ) : (
+                          "✧"
+                        )}
+                      </span>
+                      <div>
+                        <p>{activity.message}</p>
+                      </div>
                     </div>
-                    <ol aria-label="Recent creation steps" aria-live="off">
-                      {s.authoringActivity.slice(-6, -1).map((activity) => (
-                        <li key={activity.id}>
-                          <span
-                            className={`activity-dot is-${activity.kind}`}
-                          />
-                          {activity.message}
-                        </li>
-                      ))}
-                    </ol>
-                  </section>
+                  );
+                })}
+                {messagesAfterActivity.map((message, index) =>
+                  renderProjectMessage(
+                    message,
+                    messagesBeforeActivity.length + index,
+                  ),
                 )}
                 {!s.building && s.project.entities.length > 0 && (
                   <div className="suggested-edits">
@@ -1642,34 +1912,55 @@ export default function Orbsie() {
               }}
             />
             <div className="composer-bottom">
-              <button
-                type="button"
-                className="mode-button"
-                onClick={() => {
-                  setModal("settings");
-                }}
-              >
-                {providerLogoKind(connection.provider) ? (
-                  <ProviderLogo
-                    provider={providerLogoKind(connection.provider)!}
-                    className="provider-logo-inline"
-                  />
-                ) : (
-                  <span className="mode-dot" />
-                )}
-                {isGenerationReady(connection)
-                  ? connection.provider === "chatgpt-hosted"
-                    ? `ChatGPT · ${connection.model}`
-                    : connection.provider === "openrouter"
-                      ? "OpenRouter"
-                      : "AI Gateway"
-                  : connection.provider === "chatgpt-hosted"
+              {isGenerationReady(connection) &&
+              connection.provider !== "free" ? (
+                <ModelQualitySelector
+                  providerLabel={qualityProviderLabel}
+                  leading={
+                    providerLogoKind(connection.provider) ? (
+                      <ProviderLogo
+                        provider={providerLogoKind(connection.provider)!}
+                        className="provider-logo-inline"
+                      />
+                    ) : undefined
+                  }
+                  selected={selectedQuality}
+                  options={qualityOptions}
+                  status={qualityCatalogStatus}
+                  onOpen={() =>
+                    connection.provider === "chatgpt-hosted"
+                      ? loadChatGPTModels()
+                      : loadProviderModels(connection.provider)
+                  }
+                  onRetry={() =>
+                    connection.provider === "chatgpt-hosted"
+                      ? loadChatGPTModels(true)
+                      : loadProviderModels(connection.provider, true)
+                  }
+                  onSelect={selectQuality}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="mode-button"
+                  onClick={() => setModal("settings")}
+                >
+                  {providerLogoKind(connection.provider) ? (
+                    <ProviderLogo
+                      provider={providerLogoKind(connection.provider)!}
+                      className="provider-logo-inline"
+                    />
+                  ) : (
+                    <span className="mode-dot" />
+                  )}
+                  {connection.provider === "chatgpt-hosted"
                     ? "Choose ChatGPT model"
                     : trial.enabled && trial.remaining > 0
                       ? `${trial.remaining} free prompts`
                       : "Connect provider"}
-                <ChevronDown size={12} />
-              </button>
+                  <ChevronDown size={12} />
+                </button>
+              )}
               <div className="composer-actions">
                 {dictation.listening && (
                   <span className="dictation-status" role="status">
@@ -1727,7 +2018,7 @@ export default function Orbsie() {
               <span className="mode-dot" />
               {isGenerationReady(connection) && connection.provider !== "free"
                 ? connection.provider === "chatgpt-hosted"
-                  ? `ChatGPT selected · ${connection.effort} reasoning`
+                  ? `ChatGPT · ${selectedQuality ?? "Custom model"}`
                   : "AI key added"
                 : connection.provider === "chatgpt-hosted"
                   ? "Choose ChatGPT model"
@@ -2009,7 +2300,7 @@ export default function Orbsie() {
                     role="group"
                     aria-label="Creation quality"
                   >
-                    {modelModes.map((mode) => {
+                    {modelModesForProvider(connection.provider).map((mode) => {
                       const available = models.some(
                         (model) => model.id === mode.id,
                       );

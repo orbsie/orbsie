@@ -188,24 +188,72 @@ try {
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
   const latest = page.locator(".authoring-activity-latest");
-  await expect(latest).toHaveText("Waiting for a response…");
+  const latestText = latest.locator("p");
+  await expect(latestText).toHaveText("Waiting for a response…");
   report.checks.waitingBeforeEntity = true;
   await expect(
     page
-      .locator(".authoring-activity li")
+      .locator(".authoring-activity-message")
       .filter({ hasText: "Building Lantern…" }),
   ).toHaveCount(1);
   report.checks.namedConstruction = true;
-  await expect(latest).toHaveText("Preparing Lantern geometry…");
+  await expect(latestText).toHaveText("Preparing Lantern geometry…");
   report.checks.geometryPreparation = true;
-  await expect(latest).toHaveText("Generation complete. Changes are applied.");
+  await expect(latestText).toHaveText(
+    "Generation complete. Changes are applied.",
+  );
   const saved = await storageSnapshot(page);
   assert.equal(saved.project.entities[0].id, "lantern");
   assert.equal(saved.project.entities[0].stage, "ready");
   report.checks.completed = true;
   report.checks.activityHistory = await page
-    .locator(".authoring-activity li")
+    .locator(".authoring-activity-message")
     .allTextContents();
+  assert.equal(await page.locator(".authoring-activity").count(), 0);
+  report.checks.flatSiblingMessages = true;
+  assert.equal(
+    await page
+      .locator('.authoring-activity-message[aria-live="polite"]')
+      .count(),
+    1,
+  );
+  report.checks.singleLatestLiveAnnouncement = true;
+  assert(
+    report.checks.activityHistory.findIndex((text) =>
+      text.includes("Waiting for a response…"),
+    ) <
+      report.checks.activityHistory.findIndex((text) =>
+        text.includes("Building Lantern…"),
+      ),
+  );
+  assert(
+    report.checks.activityHistory.findIndex((text) =>
+      text.includes("Building Lantern…"),
+    ) <
+      report.checks.activityHistory.findIndex((text) =>
+        text.includes("Preparing Lantern geometry…"),
+      ),
+  );
+  assert(
+    report.checks.activityHistory.findIndex((text) =>
+      text.includes("Preparing Lantern geometry…"),
+    ) <
+      report.checks.activityHistory.findIndex((text) =>
+        text.includes("Generation complete."),
+      ),
+  );
+  report.checks.activityChronology = true;
+  const conversationHistory = await page
+    .locator(".chat-messages .message")
+    .allTextContents();
+  const waitingMessageIndex = conversationHistory.findIndex((text) =>
+    text.includes("Waiting for a response…"),
+  );
+  const appliedMessageIndex = conversationHistory.findLastIndex((text) =>
+    text.includes("Applied."),
+  );
+  assert(waitingMessageIndex >= 0 && appliedMessageIndex > waitingMessageIndex);
+  report.checks.parentThreadChronology = true;
   await page.screenshot({ path: `${output}/desktop-complete.png` });
 
   await expect
@@ -220,38 +268,76 @@ try {
     .toEqual({ translate: "", width: "" });
   report.checks.workspaceTransitionSettled = true;
   await page.setViewportSize({ width: 390, height: 844 });
-  const activityBox = page.locator(".authoring-activity");
-  await expect(activityBox).toBeVisible();
+  const activityMessages = page.locator(".authoring-activity-message");
+  await expect(activityMessages.first()).toBeVisible();
   await expect
     .poll(
       async () => {
-        const box = await activityBox.boundingBox();
-        report.checks.narrowActivityBounds = box;
-        return Boolean(box && box.x >= 0 && box.x + box.width <= 390);
+        const boxes = await activityMessages.evaluateAll((elements) =>
+          elements.map((element) => {
+            const box = element.getBoundingClientRect();
+            return { x: box.x, width: box.width };
+          }),
+        );
+        report.checks.narrowActivityBounds = boxes;
+        return boxes.every((box) => box.x >= 0 && box.x + box.width <= 390);
       },
       { timeout: 5000 },
     )
     .toBe(true);
-  const bounds = await activityBox.boundingBox();
-  report.checks.narrowActivityBounds = bounds;
-  assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390);
+  const bounds = await activityMessages.evaluateAll((elements) =>
+    elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    }),
+  );
+  assert(bounds.every((box) => box.x >= 0 && box.x + box.width <= 390));
   assert.equal(
-    await activityBox.evaluate(
-      (element) => element.scrollWidth <= element.clientWidth,
-    ),
+    await page
+      .locator(".chat-messages")
+      .evaluate((element) => element.scrollWidth <= element.clientWidth),
     true,
   );
-  report.checks.narrowPhone = { bounds, noHorizontalOverflow: true };
+  const readLatestVisibility = () =>
+    page.locator(".chat-messages").evaluate((element) => {
+      const latest = element.querySelector(".authoring-activity-latest");
+      if (!latest) return { visible: false };
+      const container = element.getBoundingClientRect();
+      const box = latest.getBoundingClientRect();
+      return {
+        visible: box.top >= container.top && box.bottom <= container.bottom,
+        top: box.top,
+        bottom: box.bottom,
+        containerTop: container.top,
+        containerBottom: container.bottom,
+      };
+    });
+  await expect
+    .poll(
+      async () => {
+        const visibility = await readLatestVisibility();
+        report.checks.latestPhoneVisibility = visibility;
+        return visibility.visible;
+      },
+      { timeout: 3000, intervals: [50, 100, 250] },
+    )
+    .toBe(true);
+  const latestVisibility = report.checks.latestPhoneVisibility;
+  report.checks.narrowPhone = {
+    bounds,
+    latestVisibility,
+    noHorizontalOverflow: true,
+  };
   await page.screenshot({ path: `${output}/narrow-phone-complete.png` });
 
   await page.locator("#prompt").fill("Warm the lantern");
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect(latest).toHaveText("Waiting for a response…");
+  await expect(latestText).toHaveText("Waiting for a response…");
   await expect(
     page.getByRole("button", { name: "Stop", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
-  await expect(latest).toHaveText("Stopped. Finished objects are safe.");
+  await expect(latestText).toHaveText("Stopped. Finished objects are safe.");
   report.checks.cancelled = true;
   report.passed = true;
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));

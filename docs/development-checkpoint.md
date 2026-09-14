@@ -199,3 +199,16 @@ Timer fix deployed: release795c585, main69a3237. Local/Vercelbuilds passed; / an
 /api/config200. Evidence chatgpt-host-timer-release-20260913/report.json. Old private
 host artifacts still trigger existing stale-host connection policy; no durable
 auth migration yet. Release generated changes stashed safely before cherry-pick.
+
+Accepted chat UX: direct anchored three-tier dropdown, provider-specific IDs,
+validated catalog/inline retry/stale guards; progress as chronological sibling
+assistant messages and follow-latest scrolling with resize/user opt-out. Root
+reviewed diff and screenshots.25tests across model-quality-presets,
+chatgpt-model-presets,model-catalog,authoring-activity,authoring-activity-store;
+typecheck/format/diffcheck pass. Final selector fixture run6 proves actual1440x1000
+and390x844 menu bounds; prior run5 mislabeled phone as desktop, retained. Activity
+run9 proves flat order/latestphonevisibility/cancel; prior failures retained.
+Root actual catalog check afteraliasfix acceptsOpenRouter368/Gateway299, all3tiers
+available; initial failure and correctedhash saved. No live modelcalls.
+Workerdevserver localhost3013 PID1669045 launchsession13398, revalidatebeforeuse.
+Nextworker: durable credential vault primitives, no public persistence success yet.

@@ -1,0 +1,53 @@
+{
+  "checks": [
+    {
+      "provider": "openrouter",
+      "status": 200,
+      "count": 368,
+      "accepted": true,
+      "presets": [
+        {
+          "label": "Quality",
+          "available": true,
+          "model": "openai/gpt-6-astra"
+        },
+        {
+          "label": "Balanced",
+          "available": true,
+          "model": "openai/gpt-5.6-luna"
+        },
+        {
+          "label": "Budget",
+          "available": true,
+          "model": "z-ai/glm-5.3-flash"
+        }
+      ]
+    },
+    {
+      "provider": "gateway",
+      "status": 200,
+      "count": 299,
+      "accepted": true,
+      "presets": [
+        {
+          "label": "Quality",
+          "available": true,
+          "model": "openai/gpt-6-astra"
+        },
+        {
+          "label": "Balanced",
+          "available": true,
+          "model": "openai/gpt-5.6-luna"
+        },
+        {
+          "label": "Budget",
+          "available": true,
+          "model": "zai/glm-5.3-flash"
+        }
+      ]
+    }
+  ],
+  "parserHash": "281330c02866c5c129a578ba848ab550cdf47f4091763acf1db71e4e57a4402b",
+  "liveModelCalls": 0,
+  "scope": "Production catalogs accepted after alias validation fix; no model invocation."
+}

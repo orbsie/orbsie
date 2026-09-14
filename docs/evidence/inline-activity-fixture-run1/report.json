@@ -1,0 +1,29 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "44fd3d5e-7469-4c18-90ff-fa922b93946d",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "expect(locator).toHaveText(expected) failed\n\nLocator:  locator('.authoring-activity-latest')\nExpected: \"Generation complete. Changes are applied.\"\nReceived: \"✧Generation complete. Changes are applied.\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveText\" locator('.authoring-activity-latest') with timeout 5000ms\n  - waiting for locator('.authoring-activity-latest')\n    6 × locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" aria-label=\"Latest creation update\" data-run-id=\"15b588cd-0b84-45ac-a23d-c72444b6d640\" data-project-id=\"44fd3d5e-7469-4c18-90ff-fa922b93946d\" class=\"message assistant authoring-activity-message authoring-activity-latest is-preparing\">…</div>\n      - unexpected value \"Preparing Lantern geometry…\"\n    6 × locator resolved to <div role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" aria-label=\"Latest creation update\" data-run-id=\"15b588cd-0b84-45ac-a23d-c72444b6d640\" data-project-id=\"44fd3d5e-7469-4c18-90ff-fa922b93946d\" class=\"message assistant authoring-activity-message authoring-activity-latest is-completed\">…</div>\n      - unexpected value \"✧Generation complete. Changes are applied.\"\n"
+}

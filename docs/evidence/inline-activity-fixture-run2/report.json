@@ -1,0 +1,39 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "889f5803-eb74-4e77-b4c9-19cbb8f1d826",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "✧Waiting for a response…",
+      "✧Building Lantern…",
+      "✧Lantern is taking shape.",
+      "✧Preparing Lantern geometry…",
+      "✧Applied the shape for Lantern.",
+      "✧Applied the final scene update.",
+      "✧Generation complete. Changes are applied."
+    ]
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "The expression evaluated to a falsy value:\n\n  assert(\n"
+}

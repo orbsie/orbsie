@@ -31,6 +31,14 @@ const models = [
     outputPrice: 0.9,
   },
   {
+    id: "z-ai/glm-5.3-flash",
+    name: "GLM fixture",
+    qualityRank: 4,
+    inputPrice: 0.1,
+    cachedInputPrice: 0.05,
+    outputPrice: 0.4,
+  },
+  {
     id: "test/unknown",
     name: "Other model with a longer name",
     qualityRank: null,
@@ -52,6 +60,7 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
 });
 let generations = 0;
+const checks = {};
 const requests = [],
   errors = [];
 await context.route("**/api/**", async (route) => {
@@ -105,9 +114,12 @@ try {
   await page.getByRole("button", { name: "Connect provider" }).click();
   await expect(page.getByLabel("API key", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Connect your API key to create and edit your world.", {
-      exact: false,
-    }),
+    page.getByText(
+      "Connect your AI account or API key to create and edit your world.",
+      {
+        exact: false,
+      },
+    ),
   ).toBeVisible();
   await expect(modeButtons).toHaveText(["Quality", "Balanced", "Budget"]);
   await expect(
@@ -115,7 +127,7 @@ try {
   ).toBeDisabled();
   await expect(page.locator(".model-catalog")).not.toBeVisible();
   await page.getByText("Advanced", { exact: true }).click();
-  await expect(page.locator(".model-catalog-row")).toHaveCount(4);
+  await expect(page.locator(".model-catalog-row")).toHaveCount(5);
   expect(
     await page
       .locator(".model-catalog-row")
@@ -184,6 +196,73 @@ try {
   await expect(page.locator("#prompt")).toHaveValue(
     "A world created without an Orbsie account",
   );
+  checks.draftPreserved = true;
+  const qualityTrigger = page.locator(".quality-selector-trigger");
+  await expect(qualityTrigger).toContainText("OpenRouter");
+  expect(await page.locator("dialog[open]").count()).toBe(0);
+  checks.noDialogForDirectChoice = true;
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await qualityTrigger.click();
+  const qualityMenu = page.getByRole("menu", { name: "Creation quality" });
+  await expect(qualityMenu).toBeVisible();
+  expect(await qualityMenu.getByRole("menuitemradio").count()).toBe(3);
+  await expect(qualityMenu.getByRole("menuitemradio")).toHaveText([
+    "QualityMore room for complex worlds",
+    "BalancedA capable everyday choice",
+    "BudgetFaster, lower-cost creation",
+  ]);
+  const desktopMenuBounds = await qualityMenu.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return {
+      left: box.left,
+      right: box.right,
+      top: box.top,
+      bottom: box.bottom,
+      withinViewport:
+        box.left >= 0 &&
+        box.right <= innerWidth &&
+        box.top >= 0 &&
+        box.bottom <= innerHeight,
+      viewport: { width: innerWidth, height: innerHeight },
+    };
+  });
+  expect(desktopMenuBounds.withinViewport).toBe(true);
+  checks.desktopDirectDropdown = true;
+  checks.desktopMenuBounds = desktopMenuBounds;
+  await page.screenshot({ path: `${output}/quality-open-desktop.png` });
+  await qualityMenu.getByRole("menuitemradio", { name: /Balanced/ }).click();
+  await expect(qualityTrigger).toContainText("Balanced");
+  await qualityTrigger.click();
+  await page.keyboard.press("Escape");
+  await expect(qualityMenu).not.toBeVisible();
+  await expect(qualityTrigger).toBeFocused();
+  checks.escapeReturnsFocus = true;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await qualityTrigger.click();
+  await expect(qualityMenu).toBeVisible();
+  const phoneMenuBounds = await qualityMenu.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return {
+      left: box.left,
+      right: box.right,
+      top: box.top,
+      bottom: box.bottom,
+      withinViewport: box.left >= 0 && box.right <= innerWidth,
+      viewport: { width: innerWidth, height: innerHeight },
+      noDocumentOverflow: document.documentElement.scrollWidth <= innerWidth,
+    };
+  });
+  expect(phoneMenuBounds.withinViewport).toBe(true);
+  expect(phoneMenuBounds.noDocumentOverflow).toBe(true);
+  checks.phoneDirectDropdown = true;
+  checks.phoneMenuBounds = phoneMenuBounds;
+  await page.screenshot({ path: `${output}/quality-open-phone.png` });
+  await qualityMenu.getByRole("menuitemradio", { name: /Budget/ }).click();
+  await expect(qualityTrigger).toContainText("Budget");
+  await qualityTrigger.click();
+  await qualityMenu.getByRole("menuitemradio", { name: /Quality/ }).click();
+  await expect(qualityTrigger).toContainText("Quality");
+  checks.choiceUpdatesTrigger = true;
   await page.screenshot({ path: `${output}/landing-mobile.png` });
   await page.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.locator(".saved")).toHaveText("Saved on this device", {
@@ -203,6 +282,7 @@ try {
     authenticatedRequests: 0,
     errors,
     models: models.map(({ id }) => id),
+    checks,
   };
   await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

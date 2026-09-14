@@ -1,0 +1,127 @@
+{
+  "passed": true,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "421c3f1e-d62d-4ead-9e27-40c6fd36e065",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    },
+    {
+      "projectId": "421c3f1e-d62d-4ead-9e27-40c6fd36e065",
+      "revision": 3,
+      "prompt": "Warm the lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "✧Waiting for a response…",
+      "✧Building Lantern…",
+      "✧Lantern is taking shape.",
+      "✧Preparing Lantern geometry…",
+      "✧Applied the shape for Lantern.",
+      "✧Applied the final scene update.",
+      "✧Generation complete. Changes are applied."
+    ],
+    "workspaceTransitionSettled": true,
+    "narrowActivityBounds": [
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      }
+    ],
+    "narrowPhone": {
+      "bounds": [
+        {
+          "x": 23,
+          "y": 640.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 671.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 701.84375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 732.59375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 763.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 794.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 824.84375,
+          "width": 344,
+          "height": 18.75
+        }
+      ],
+      "noHorizontalOverflow": true
+    },
+    "cancelled": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:34175/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "unexpectedRequests": []
+}

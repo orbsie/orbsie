@@ -1,0 +1,81 @@
+{
+  "passed": false,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "f2b02d53-77ef-4672-9827-65891a4c7775",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "✧Waiting for a response…",
+      "✧Building Lantern…",
+      "✧Lantern is taking shape.",
+      "✧Preparing Lantern geometry…",
+      "✧Applied the shape for Lantern.",
+      "✧Applied the final scene update.",
+      "✧Generation complete. Changes are applied."
+    ],
+    "flatSiblingMessages": true,
+    "singleLatestLiveAnnouncement": true,
+    "activityChronology": true,
+    "parentThreadChronology": true,
+    "workspaceTransitionSettled": true,
+    "narrowActivityBounds": [
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      }
+    ],
+    "latestPhoneVisibility": {
+      "visible": false,
+      "top": 786.84375,
+      "bottom": 805.59375,
+      "containerTop": 533.09375,
+      "containerBottom": 713
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "unexpectedRequests": [],
+  "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+}

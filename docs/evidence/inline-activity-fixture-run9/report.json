@@ -1,0 +1,145 @@
+{
+  "passed": true,
+  "scope": "deterministic local authoring stream with real editor and geometry worker",
+  "liveModelCalls": 0,
+  "streamDelaysMs": [
+    160,
+    160,
+    160
+  ],
+  "cancellationStreamDelayMs": 5000,
+  "workerDelayMs": 260,
+  "requests": [
+    {
+      "projectId": "593a07cb-faa9-4b9d-b740-6b4c8ae6c6a7",
+      "revision": 0,
+      "prompt": "Build a lantern"
+    },
+    {
+      "projectId": "593a07cb-faa9-4b9d-b740-6b4c8ae6c6a7",
+      "revision": 3,
+      "prompt": "Warm the lantern"
+    }
+  ],
+  "checks": {
+    "waitingBeforeEntity": true,
+    "namedConstruction": true,
+    "geometryPreparation": true,
+    "completed": true,
+    "activityHistory": [
+      "✧Waiting for a response…",
+      "✧Building Lantern…",
+      "✧Lantern is taking shape.",
+      "✧Preparing Lantern geometry…",
+      "✧Applied the shape for Lantern.",
+      "✧Applied the final scene update.",
+      "✧Generation complete. Changes are applied."
+    ],
+    "flatSiblingMessages": true,
+    "singleLatestLiveAnnouncement": true,
+    "activityChronology": true,
+    "parentThreadChronology": true,
+    "workspaceTransitionSettled": true,
+    "narrowActivityBounds": [
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      },
+      {
+        "x": 23,
+        "width": 344
+      }
+    ],
+    "latestPhoneVisibility": {
+      "visible": true,
+      "top": 631.84375,
+      "bottom": 650.59375,
+      "containerTop": 533.09375,
+      "containerBottom": 713
+    },
+    "narrowPhone": {
+      "bounds": [
+        {
+          "x": 23,
+          "y": 602.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 633.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 663.84375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 694.59375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 725.34375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 756.09375,
+          "width": 344,
+          "height": 18.75
+        },
+        {
+          "x": 23,
+          "y": 786.84375,
+          "width": 344,
+          "height": 18.75
+        }
+      ],
+      "latestVisibility": {
+        "visible": true,
+        "top": 631.84375,
+        "bottom": 650.59375,
+        "containerTop": 533.09375,
+        "containerBottom": 713
+      },
+      "noHorizontalOverflow": true
+    },
+    "cancelled": true
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [
+    {
+      "url": "http://127.0.0.1:32783/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "unexpectedRequests": []
+}
