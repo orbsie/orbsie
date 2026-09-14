@@ -176,3 +176,13 @@ Require actual local Node HTTP transport test (not only direct handler calls),
 legacy-path lockout after managed adoption, and private verified-login seal/export
 so newly logged-in users can enter vault storage. No public routes/vault wiring yet.
 Do not restart worker or duplicate investigation; await completion evidence.
+
+Root Android preflight: emulator-5580 running, execsession76916 (PID1935533 launch),
+orbsie_api35_phone/API35,2cores/3072MiB/SwiftShader, affinity30,31. Chrome124 old.
+Coldboot repeated first-run flow; verified same US July30,2026 terms approved by
+owner, continued without account, disabled reporting, declined notifications.
+Current production main-page planet/composer renders; no blocking graphics dialog.
+Evidence android-current-preflight-20260913. No modelcalls/gameplay claim. Emulator
+intentionally left running for next mobile checks; stop with adb emu kill when done.
+All UI dump sessions terminal (including59775). Temp screenshots /tmp/orbsie-android-current.
+Luna private lifecycle worker still active; quota latest37%remaining.
