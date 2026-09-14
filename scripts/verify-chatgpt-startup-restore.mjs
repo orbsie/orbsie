@@ -110,7 +110,7 @@ async function installCommonRoutes(
     if (path === "/api/config") {
       configCalls++;
       if (delayConfig) await configGate;
-      if (transientConfig && configCalls <= 2)
+      if (transientConfig)
         return route.fulfill({ status: 503, json: { error: "temporary" } });
       return route.fulfill({
         json: {
@@ -127,9 +127,9 @@ async function installCommonRoutes(
       if (delaySession) await sessionGate;
       if (missingSession)
         return route.fulfill({ contentType: "application/json", body: "null" });
-      if (transientSession && sessionCalls <= 2)
+      if (transientSession)
         return route.fulfill({ status: 503, json: { error: "temporary" } });
-      if (malformedSession && sessionCalls <= 2)
+      if (malformedSession)
         return route.fulfill({ json: { user: { id: "fixture-user" } } });
       return route.fulfill({
         json: {
@@ -209,7 +209,7 @@ async function installCommonRoutes(
     }
     if (path === "/api/chatgpt/status") {
       statusCalls++;
-      if (transientStatus && statusCalls === 1)
+      if (transientStatus)
         return route.fulfill({
           status: 503,
           json: { error: "ChatGPT host is temporarily unavailable." },
@@ -250,6 +250,12 @@ async function installCommonRoutes(
     throw Error(`Unexpected API request: ${path}`);
   });
   return {
+    recover: () => {
+      transientConfig = false;
+      transientSession = false;
+      malformedSession = false;
+      transientStatus = false;
+    },
     statusCalls: () => statusCalls,
     sessionCalls: () => sessionCalls,
     trialCalls: () => trialCalls,
@@ -358,6 +364,7 @@ try {
   expect(transientRoutes.trialCalls()).toBe(trialCallsBeforePendingSubmit);
   expect(transientRoutes.generationCalls()).toBe(0);
   report.checks.pendingRestoreDoesNotSpendFreePrompt = true;
+  transientRoutes.recover();
   await restoreNotice.getByRole("button", { name: "Retry" }).click();
   await expect(
     transientPage.locator(".quality-selector-trigger"),
@@ -399,12 +406,13 @@ try {
   await expect(configNotice).toContainText("temporarily unavailable", {
     timeout: 15000,
   });
+  configRoutes.recover();
   await configNotice.getByRole("button", { name: "Retry" }).click();
   await expect(configPage.locator(".quality-selector-trigger")).toContainText(
     "ChatGPT · Budget",
     { timeout: 15000 },
   );
-  expect(configRoutes.configCalls()).toBeGreaterThanOrEqual(3);
+  expect(configRoutes.configCalls()).toBeGreaterThanOrEqual(2);
   report.checks.configFailureRetry = true;
   report.checks.delayedConfigDoesNotSpendFreePrompt = true;
   await configContext.close();
@@ -429,6 +437,7 @@ try {
   await expect(sessionNotice).toContainText("temporarily unavailable", {
     timeout: 15000,
   });
+  sessionRoutes.recover();
   await sessionNotice.getByRole("button", { name: "Retry" }).click();
   await expect(sessionPage.locator(".quality-selector-trigger")).toContainText(
     "ChatGPT · Budget",
@@ -458,11 +467,12 @@ try {
   await expect(malformedNotice).toContainText("temporarily unavailable", {
     timeout: 15000,
   });
+  malformedRoutes.recover();
   await malformedNotice.getByRole("button", { name: "Retry" }).click();
   await expect(
     malformedPage.locator(".quality-selector-trigger"),
   ).toContainText("ChatGPT · Budget", { timeout: 15000 });
-  expect(malformedRoutes.sessionCalls()).toBeGreaterThanOrEqual(3);
+  expect(malformedRoutes.sessionCalls()).toBeGreaterThanOrEqual(2);
   report.checks.malformedSessionRetry = true;
   await malformedContext.close();
 

@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "480782d",
+  "releaseCheckout": "/tmp/orbsie-durable-release-20260913",
+  "nextBuildId": "krIymPrcdi8wEtNU0Ngcg",
+  "buildPassed": true,
+  "browserFixturePassed": true,
+  "liveProviderCalls": 0,
+  "scope": "Production build with synthetic API fixtures; real remembered credentials and deployed-provider generation remain separate acceptance gates.",
+  "reviewCorrections": [
+    "Require actual generation request and final assistant reply",
+    "Match Better Auth missing-cookie JSON null",
+    "Recover synthetic outages explicitly instead of assuming StrictMode request count"
+  ]
+}
