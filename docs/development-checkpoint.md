@@ -135,3 +135,15 @@ classification in acceptance.json. Original malformed-output failure not reprodu
 Private exact257byte response at /home/marcos/.cache/orbsie/provider-tests/
 framing-20260913/response.sse0600; parent0700. Tool9976cc9 adds bounded exactSSE
 capture and nonblocking limit cancellation;10focused tests pass. No root processes.
+
+Server observability first handoff78tests/7files+typecheck passed, but root review
+REJECTED it pending corrections. Critical: hosted scene finally aborted local signal
+before outcome check, falsely logging every success as cancellation. Also schema
+errors misclassified as transport, freequota429 logged500, observer64KiB bound can
+mislabel valid geometry, missing observer/cancel/UTF8/error regressions, JSON-line
+sink needed. Worker correcting same bounded stage; no deploy/acceptance yet.
+Root actual480782d private handler proof: extra observability JSONfield=>400,
+unchangedbody+optionalcorrelationheader=>200/one syntheticcall. Existing sandbox
+reuse means body change would break rolling deployment. Worker moving correlation
+to headers via manager/backend, preserving body/capability/epoch; evidence
+observability-protocol-compat-20260913. Root quota72%used/28%remaining.
