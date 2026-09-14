@@ -8,6 +8,8 @@ import {
   diagnosticFromGenerationOutput,
   reportForRun,
   writePrivateArtifact,
+  writePrivateCapture,
+  MAX_CAPTURE_BYTES,
 } from "../scripts/lib/scene-json-diagnostic.mjs";
 
 const temporaryDirectories = [];
@@ -190,5 +192,39 @@ describe("scene JSON diagnostic helpers", () => {
     await writePrivateArtifact(artifact, '{"type":"bad"');
     expect(await readFile(artifact, "utf8")).toBe('{"type":"bad"\n');
     expect((await stat(artifact)).mode & 0o077).toBe(0);
+  });
+
+  it("preserves exact SSE bytes privately for replay and rejects oversized captures", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "orbsie-sse-replay-test-"));
+    temporaryDirectories.push(directory);
+    const artifact = join(directory, "response.sse");
+    const input = sse('{"type":"commit_revision","message":"café"}\n', "stop");
+    await writePrivateCapture(artifact, input);
+    expect(new Uint8Array(await readFile(artifact))).toEqual(input);
+    expect((await stat(artifact)).mode & 0o077).toBe(0);
+    expect(analyzeCapturedSse(await readFile(artifact)).finishReason).toBe(
+      "stop",
+    );
+    await expect(writePrivateCapture(artifact, input)).rejects.toThrow();
+    await expect(
+      writePrivateCapture(
+        join(directory, "too-large.sse"),
+        new Uint8Array(MAX_CAPTURE_BYTES + 1),
+      ),
+    ).rejects.toThrow("byte limit");
+  });
+
+  it("does not wait for a stalled upstream cancellation after reaching the capture limit", async () => {
+    const source = new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes("too much"));
+      },
+      cancel() {
+        return new Promise(() => {});
+      },
+    });
+    const result = await captureBody(source, 3, 100);
+    expect(result.overflow).toBe(true);
+    expect(new TextDecoder().decode(result.bytes)).toBe("too");
   });
 });

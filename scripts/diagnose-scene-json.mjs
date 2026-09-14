@@ -5,8 +5,8 @@
  * This command is intentionally inert until --confirm and --output are both
  * present. It reads the mode-0600 key only after those gates pass, tees one
  * expected Gateway completion response, and writes a sanitized report. A raw
- * malformed line is written only when an explicit absolute, mode-0600 path
- * outside the repository is supplied.
+ * malformed line or exact SSE capture is written only when an explicit absolute,
+ * mode-0600 path outside the repository is supplied. Captures are at most 1 MiB.
  */
 import { build } from "esbuild";
 import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises";
@@ -24,6 +24,7 @@ import {
   MAX_CAPTURE_BYTES,
   reportForRun,
   writePrivateArtifact,
+  writePrivateCapture,
 } from "./lib/scene-json-diagnostic.mjs";
 
 const MAX_KEY_BYTES = 16 * 1024;
@@ -38,6 +39,7 @@ function usage() {
     --output /absolute/path/report.json \\
     --key-file /absolute/path/gateway.env \\
     [--raw-artifact /absolute/path/offending-line.txt] \\
+    [--raw-sse-artifact /absolute/path/provider-response.sse] \\
     [--prompt "a tree with blue strawberries"] \\
     [--timeout-ms 120000]
 
@@ -57,6 +59,7 @@ function parseArgs(argv) {
     output: undefined,
     keyFile: undefined,
     rawArtifact: undefined,
+    rawSseArtifact: undefined,
     prompt: DEFAULT_PROMPT,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     help: false,
@@ -76,6 +79,7 @@ function parseArgs(argv) {
       argument === "--output" ||
       argument === "--key-file" ||
       argument === "--raw-artifact" ||
+      argument === "--raw-sse-artifact" ||
       argument === "--prompt" ||
       argument === "--timeout-ms";
     if (!valueOption) fail(`Unknown argument: ${argument}`);
@@ -84,6 +88,7 @@ function parseArgs(argv) {
     if (argument === "--output") options.output = value;
     else if (argument === "--key-file") options.keyFile = value;
     else if (argument === "--raw-artifact") options.rawArtifact = value;
+    else if (argument === "--raw-sse-artifact") options.rawSseArtifact = value;
     else if (argument === "--prompt") options.prompt = value;
     else options.timeoutMs = Number(value);
   }
@@ -168,6 +173,10 @@ async function run(options) {
     assertPrivateArtifactPath(options.rawArtifact);
     await assertNewOutput(resolve(options.rawArtifact));
   }
+  if (options.rawSseArtifact) {
+    assertPrivateArtifactPath(options.rawSseArtifact);
+    await assertNewOutput(resolve(options.rawSseArtifact));
+  }
 
   // Keep this read after every opt-in and output-path gate above.
   const key = await readGatewayKey(resolve(options.keyFile));
@@ -242,6 +251,8 @@ async function run(options) {
         timedOut: false,
       };
   const upstream = analyzeCapturedSse(capture.bytes);
+  if (options.rawSseArtifact)
+    await writePrivateCapture(options.rawSseArtifact, capture.bytes);
   const generation = diagnosticFromGenerationOutput(generationOutput);
   const report = reportForRun({
     status: runStatus,

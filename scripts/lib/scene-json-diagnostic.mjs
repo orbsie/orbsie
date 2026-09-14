@@ -114,14 +114,14 @@ export async function captureBody(
         const remaining = maxBytes - capturedBytes;
         if (remaining <= 0) {
           overflow = true;
-          await reader.cancel("capture limit").catch(() => {});
+          void reader.cancel("capture limit").catch(() => {});
           break;
         }
         if (bytes.byteLength > remaining) {
           chunks.push(bytes.slice(0, remaining));
           capturedBytes += remaining;
           overflow = true;
-          await reader.cancel("capture limit").catch(() => {});
+          void reader.cancel("capture limit").catch(() => {});
           break;
         }
         chunks.push(bytes);
@@ -130,7 +130,7 @@ export async function captureBody(
     } catch {
       // Preserve the bounded prefix; never propagate provider text or errors.
       readError = true;
-      await reader.cancel("capture read failure").catch(() => {});
+      void reader.cancel("capture read failure").catch(() => {});
     }
   } finally {
     if (timeout !== undefined) clearTimeout(timeout);
@@ -387,10 +387,20 @@ function requireSeparator() {
 }
 
 export async function writePrivateArtifact(artifactPath, line) {
+  return writePrivateCapture(
+    artifactPath,
+    new TextEncoder().encode(`${line}\n`),
+  );
+}
+
+/** Exact bounded response bytes for offline parser replay, never a public report. */
+export async function writePrivateCapture(artifactPath, bytes) {
+  if (!(bytes instanceof Uint8Array) || bytes.byteLength > MAX_CAPTURE_BYTES)
+    throw new Error("The private capture exceeds its byte limit.");
   const absolute = assertPrivateArtifactPath(artifactPath);
   const handle = await open(absolute, "wx", 0o600);
   try {
-    await handle.writeFile(`${line}\n`, { encoding: "utf8" });
+    await handle.writeFile(bytes);
   } finally {
     await handle.close();
   }
