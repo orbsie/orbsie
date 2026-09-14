@@ -68,7 +68,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last78%used/22%remaining. Read
+Quota last79%used/21%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
@@ -183,8 +183,9 @@ Production browser synthetic fixture47567 passed/terminal0: exactly1 synthetic
 Budget request+reply and all recovery cases. Evidence chatgpt-startup-live-fixture-
 20260913; root viewed phone screenshot. No provider calls. No root processes remain.
 
-Gateway funding recheck: GET /v1/credits returned200 with balance-0.0033684 on
-2026-09-14T06:46Z (local Sep13); no model calls or billing changes. Existing owner
+Gateway funding recheck: GET /v1/credits returned200 with balance-0.0033684 again
+on2026-09-14T07:57Z (local Sep14); no model calls or billing changes. New evidence
+gateway-credit-check-20260914; previous Sep13 evidence retained. Existing owner
 funding question remains pending. Do not retry inference until positive credits or
 owner funding confirmation. Evidence gateway-credit-check-20260913.
 
