@@ -139,3 +139,12 @@ chatgpt-durable-connection-task.md: per-operation process inside reusable privat
 sandbox, lease covers process through seal/snapshot; never release with live RPC.
 Public route cleanup headroom, private restore transport and logout-first revocation
 remain implementation work. Latest quota39%remaining; no production change this turn.
+
+Runtime bridge accepted after corrections: 19/19 focused runtime/store/shutdown
+checks and typecheck passed. Root reviewed forced delayed-read SIGKILL at2seconds,
+late-read invalidation and rotated-cache copy isolation. Explicit isolated file
+store config,64KiB no-follow/nonblocking reads,1second snapshot bounds; retained
+snapshot survives owned directory removal. No live/provider acceptance claimed.
+Next bounded worker stage: private managed operation lifecycle/controller before
+server-vault/public restoration wiring. Shared3040/3096 servers left untouched;
+worker owns no running servers. Prior implementation-review blockers resolved.

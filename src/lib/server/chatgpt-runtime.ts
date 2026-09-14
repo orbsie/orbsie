@@ -1,15 +1,31 @@
 import { validChatGPTGenerationRequest } from "./chatgpt-generation-policy";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  open,
+  readFile,
+  rm,
+  type FileHandle,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type ChatGPTDeviceRpc } from "./chatgpt-device-session";
 import { ChatGPTRpcError } from "../generation-diagnostics";
+import {
+  CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES,
+  createChatGPTManagedCredentialStore,
+  type ChatGPTManagedCredentialStore,
+} from "./chatgpt-managed-credential-store";
 
 const RPC_TIMEOUT_MS = 30_000;
 const MAX_PENDING = 16;
 const MAX_LINE_BYTES = 64 * 1024;
 const SHUTDOWN_GRACE_MS = 2_000;
+const CREDENTIAL_SNAPSHOT_TIMEOUT_MS = 1_000;
+const CREDENTIALS_STORE_CONFIG = 'cli_auth_credentials_store = "file"\n';
 const ALLOWED_METHODS = new Set([
   "account/read",
   "model/list",
@@ -35,6 +51,15 @@ type JsonRpc = {
   error?: unknown;
 };
 
+export type ChatGPTRuntimeCredentialSnapshot = {
+  cache: Uint8Array;
+};
+
+export type ChatGPTRuntime = ChatGPTDeviceRpc & {
+  close(): Promise<void>;
+  getCredentialSnapshot(): Promise<ChatGPTRuntimeCredentialSnapshot | null>;
+};
+
 const failure = (message: string) => Error(message);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -55,11 +80,19 @@ function writeJson(stdin: NodeJS.WritableStream, value: unknown) {
  * inherited by the child.
  */
 export async function createIsolatedChatGPTRpc(
-  options: { allowGeneration?: boolean } = {},
-): Promise<ChatGPTDeviceRpc & { close(): Promise<void> }> {
+  options: {
+    allowGeneration?: boolean;
+    initialCredentialCache?: Uint8Array;
+  } = {},
+): Promise<ChatGPTRuntime> {
   let root: string | undefined;
   let child: ChildProcess | undefined;
   let closePromise: Promise<void> | undefined;
+  let credentialStore: ChatGPTManagedCredentialStore | undefined;
+  let credentialSnapshot: ChatGPTRuntimeCredentialSnapshot | null | undefined;
+  let snapshotPromise: Promise<void> | undefined;
+  let snapshotGeneration = 0;
+  let snapshotInvalidated = false;
   const pending = new Map<number, Pending>();
   const threads = new Set<string>();
   const turns = new Map<string, Set<string>>();
@@ -84,6 +117,59 @@ export async function createIsolatedChatGPTRpc(
       child.once("exit", () => resolve());
     });
 
+  const captureCredentialSnapshot = async () => {
+    const store = credentialStore;
+    if (!store || snapshotInvalidated) return;
+    const previous = snapshotPromise;
+    let capture: Promise<void>;
+    capture = (async () => {
+      if (previous) await previous;
+      if (snapshotInvalidated || credentialStore !== store) return;
+      const generation = ++snapshotGeneration;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const snapshot = Promise.resolve().then(() => store.snapshot());
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(failure("ChatGPT credential snapshot timed out.")),
+            CREDENTIAL_SNAPSHOT_TIMEOUT_MS,
+          );
+        });
+        const cache = await Promise.race([snapshot, timeout]);
+        if (
+          !snapshotInvalidated &&
+          credentialStore === store &&
+          generation === snapshotGeneration
+        )
+          credentialSnapshot = cache ? { cache: Uint8Array.from(cache) } : null;
+      } catch {
+        // A failed or unsafe file is never returned as an old credential.
+        if (
+          !snapshotInvalidated &&
+          credentialStore === store &&
+          generation === snapshotGeneration
+        )
+          credentialSnapshot = null;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    })();
+    snapshotPromise = capture;
+    try {
+      await capture;
+    } finally {
+      if (snapshotPromise === capture) snapshotPromise = undefined;
+    }
+  };
+
+  const getCredentialSnapshot = async () => {
+    if (closePromise) await closePromise;
+    else await captureCredentialSnapshot();
+    return credentialSnapshot
+      ? { cache: Uint8Array.from(credentialSnapshot.cache) }
+      : null;
+  };
+
   const close = async () => {
     if (closePromise) return closePromise;
     closed = true;
@@ -97,30 +183,43 @@ export async function createIsolatedChatGPTRpc(
     });
     rejectPending(failure("ChatGPT App Server was closed."));
     const current = child;
-    closePromise = (async () => {
-      if (current && !exited) {
-        try {
-          current.kill("SIGTERM");
-        } catch {
-          // The process may have exited between the state check and kill.
-        }
-        const timer = setTimeout(() => {
-          if (!exited) {
-            try {
-              current.kill("SIGKILL");
-            } catch {
-              // The exit listener remains authoritative for cleanup.
-            }
-          }
-        }, SHUTDOWN_GRACE_MS);
-        await waitForExit();
-        clearTimeout(timer);
+    let escalationTimer: ReturnType<typeof setTimeout> | undefined;
+    if (current && !exited) {
+      try {
+        current.kill("SIGTERM");
+      } catch {
+        // The process may have exited between the state check and kill.
       }
-      listeners.clear();
-      if (root) {
-        const owned = root;
-        root = undefined;
-        await rm(owned, { recursive: true, force: true });
+      escalationTimer = setTimeout(() => {
+        if (!exited) {
+          try {
+            current.kill("SIGKILL");
+          } catch {
+            // The exit listener remains authoritative for cleanup.
+          }
+        }
+      }, SHUTDOWN_GRACE_MS);
+    }
+    const captureBeforeClose = captureCredentialSnapshot();
+    closePromise = (async () => {
+      try {
+        await captureBeforeClose;
+        if (current && !exited) {
+          await waitForExit();
+        }
+        await captureCredentialSnapshot();
+      } finally {
+        if (escalationTimer) clearTimeout(escalationTimer);
+        // Invalidate all late filesystem reads before deleting the owned home.
+        snapshotInvalidated = true;
+        snapshotGeneration += 1;
+        credentialStore = undefined;
+        listeners.clear();
+        if (root) {
+          const owned = root;
+          root = undefined;
+          await rm(owned, { recursive: true, force: true });
+        }
       }
     })();
     return closePromise;
@@ -236,6 +335,43 @@ export async function createIsolatedChatGPTRpc(
     root = await mkdtemp(join(tmpdir(), "orbsie-chatgpt-runtime-"));
     const credentials = join(root, "codex-home");
     await mkdir(credentials, { mode: 0o700 });
+    credentialStore = createChatGPTManagedCredentialStore(credentials);
+    await credentialStore.initialize(
+      options.initialCredentialCache === undefined
+        ? undefined
+        : (() => {
+            if (
+              !(options.initialCredentialCache instanceof Uint8Array) ||
+              options.initialCredentialCache.byteLength === 0 ||
+              options.initialCredentialCache.byteLength >
+                CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES
+            )
+              throw failure("The managed ChatGPT credential cache is invalid.");
+            return Uint8Array.from(options.initialCredentialCache);
+          })(),
+    );
+    const configPath = join(credentials, "config.toml");
+    let configHandle: FileHandle | undefined;
+    try {
+      configHandle = await open(
+        configPath,
+        fsConstants.O_WRONLY |
+          fsConstants.O_CREAT |
+          fsConstants.O_EXCL |
+          fsConstants.O_NOFOLLOW,
+        0o600,
+      );
+      await configHandle.writeFile(CREDENTIALS_STORE_CONFIG, "utf8");
+    } finally {
+      await configHandle?.close().catch(() => undefined);
+    }
+    const configInfo = await lstat(configPath);
+    if (
+      !configInfo.isFile() ||
+      (configInfo.mode & 0o077) !== 0 ||
+      (await readFile(configPath, "utf8")) !== CREDENTIALS_STORE_CONFIG
+    )
+      throw failure("ChatGPT file credential storage could not be configured.");
     const processHandle = spawn("codex", ["app-server", "--stdio"], {
       cwd: root,
       env: {
@@ -368,7 +504,7 @@ export async function createIsolatedChatGPTRpc(
     );
     await initialized;
     writeJson(processHandle.stdin!, { method: INITIALIZED, params: {} });
-    return { request, subscribe, close };
+    return { request, subscribe, close, getCredentialSnapshot };
   } catch (error) {
     await close().catch(() => undefined);
     if (

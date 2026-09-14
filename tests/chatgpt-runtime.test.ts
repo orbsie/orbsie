@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { access, rm, stat } from "node:fs/promises";
+import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const spawnMock = vi.hoisted(() => vi.fn());
@@ -60,11 +60,18 @@ describe("isolated ChatGPT App Server runtime", () => {
     spawnMock.mockReset();
   });
 
-  async function start(autoExit = false, allowGeneration = false) {
+  async function start(
+    autoExit = false,
+    allowGeneration = false,
+    initialCredentialCache?: Uint8Array,
+  ) {
     const child = new FakeChild();
     child.autoExit = autoExit;
     spawnMock.mockReturnValueOnce(child);
-    const runtime = await createIsolatedChatGPTRpc({ allowGeneration });
+    const runtime = await createIsolatedChatGPTRpc({
+      allowGeneration,
+      initialCredentialCache,
+    });
     live.push({ runtime, child });
     const call = spawnMock.mock.calls.at(-1)!;
     return { runtime, child, spawnOptions: call[2] as Record<string, unknown> };
@@ -175,6 +182,12 @@ describe("isolated ChatGPT App Server runtime", () => {
     expect(env.CODEX_HOME).toBe(`${cwd}/codex-home`);
     expect((await stat(cwd)).mode & 0o777).toBe(0o700);
     expect((await stat(env.CODEX_HOME)).mode & 0o777).toBe(0o700);
+    expect(await readFile(`${env.CODEX_HOME}/config.toml`, "utf8")).toBe(
+      'cli_auth_credentials_store = "file"\n',
+    );
+    expect((await stat(`${env.CODEX_HOME}/config.toml`)).mode & 0o777).toBe(
+      0o600,
+    );
     const messages = child.stdin.writes.map((line) => JSON.parse(line));
     expect(messages.slice(0, 2)).toEqual([
       expect.objectContaining({
@@ -185,6 +198,40 @@ describe("isolated ChatGPT App Server runtime", () => {
     ]);
     await finish(runtime, child);
     await expect(access(cwd)).rejects.toThrow();
+  });
+
+  it("retains a rotated auth cache across forced close and fresh runtime restore", async () => {
+    const initial = new TextEncoder().encode("initial-managed-cache");
+    const rotated = new TextEncoder().encode("rotated-managed-cache");
+    const first = await start(false, false, initial);
+    const firstEnv = first.spawnOptions.env as Record<string, string>;
+    const authPath = `${firstEnv.CODEX_HOME}/auth.json`;
+    await writeFile(authPath, rotated, { mode: 0o600 });
+    const closing = first.runtime.close();
+    first.child.emit("exit", 0, null);
+    await closing;
+    await expect(access(String(first.spawnOptions.cwd))).rejects.toThrow();
+    await expect(first.runtime.getCredentialSnapshot()).resolves.toEqual({
+      cache: rotated,
+    });
+    const retained = await first.runtime.getCredentialSnapshot();
+    expect(retained).toEqual({ cache: rotated });
+    retained!.cache[0] ^= 1;
+    await expect(first.runtime.getCredentialSnapshot()).resolves.toEqual({
+      cache: rotated,
+    });
+
+    const second = await start(
+      false,
+      false,
+      (await first.runtime.getCredentialSnapshot())!.cache,
+    );
+    expect(
+      await readFile(
+        `${(second.spawnOptions.env as Record<string, string>).CODEX_HOME}/auth.json`,
+      ),
+    ).toEqual(Buffer.from(rotated));
+    await finish(second.runtime, second.child);
   });
 
   it("allows only auth operations and only the device login mode", async () => {
