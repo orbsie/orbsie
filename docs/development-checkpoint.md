@@ -165,3 +165,14 @@ Protected env file /home/marcos/.cache/orbsie/durable-login-production/productio
 (mode0600,parent0700), never print contents. Migration process45795 terminal success.
 This supersedes earlier pending-production-migration notes: schema ready, public
 runtime persistence/restore NOT deployed. Full provider/browser gates still open.
+
+Private controller/transport worker remains active (one Luna). Current ownership:
+chatgpt-managed-operation.ts, chatgpt-host.ts, chatgpt-sandbox-backend.ts,
+scripts/chatgpt-host-server.ts and targeted tests. Draft NOT accepted yet. Root
+review requested: don't free slot after failed termination; wait for deferred
+runtime startup before seal/clear can confirm shutdown; single-use IDs include
+failed initialization and never become reusable after bounded history eviction.
+Require actual local Node HTTP transport test (not only direct handler calls),
+legacy-path lockout after managed adoption, and private verified-login seal/export
+so newly logged-in users can enter vault storage. No public routes/vault wiring yet.
+Do not restart worker or duplicate investigation; await completion evidence.
