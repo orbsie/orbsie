@@ -26,7 +26,8 @@ Root owns release evidence, checkpoint, deployment and integration review.
 Binding first handoff rejected after root review despite35tests/typecheck passing:
 procedural client includes evaluated recipe absent in server shadow; trailing
 NDJSON commit->command->commit authorizes completion; cancel-during-hook may finish
-late. Root production-path probe reproduced first two (zero calls), evidence
+late. Root production-path probe reproduced all three (zero calls); cancellation used
+the retained rejected-handoff bundle to avoid worker WIP. Evidence
 scene-binding-review-baseline-20260913. Worker fix pass must add actual server/client
 operation equality, strict termination and shared abort-aware lifecycle controller.
 Do not accept/deploy this WIP until the specific regression matrix passes review.
@@ -36,7 +37,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last76%used/24%remaining. Read
+Quota last77%used/23%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,

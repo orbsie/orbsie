@@ -1,0 +1,13 @@
+{
+  "scope": "Root cancellation reproduction using retained rejected-handoff bundle; not acceptance",
+  "syntheticOnly": true,
+  "providerCalls": 0,
+  "baselineBundleSha256": "e1fb7217cf6a92290277b74a10df0c82f3c3a41b293cdbf30883d4acea92d03a",
+  "cancelDuringCompletion": {
+    "signalAborted": true,
+    "failureCallbacks": 0,
+    "errorEmitted": false
+  },
+  "probeSource": ".vercel/scene-binding-review/cancel-baseline.mjs",
+  "nextAction": "Shared lifecycle controller must notify failure on cancellation during a pending completion hook and fence late completion."
+}
