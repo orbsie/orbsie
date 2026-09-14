@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-14T02:05:45.364Z",
+  "scope": "actual pinned Codex runtime and real Node HTTP private operation lifecycle, empty isolated credentials",
+  "version": "codex-cli 0.153.4",
+  "modelCalls": 0,
+  "loginCalls": 0,
+  "passed": true,
+  "initializeStatus": 200,
+  "statusHttp": 200,
+  "accountStatus": "disconnected",
+  "sealStatus": 200,
+  "cacheAbsent": true,
+  "clearStatus": 200,
+  "legacyAfterClear": 409
+}

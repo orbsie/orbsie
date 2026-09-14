@@ -45,6 +45,48 @@ test("routes only to a running host without resuming its sandbox", async () => {
     }),
   );
 });
+
+test("routes private operations to explicit server-only paths", async () => {
+  sdk.get.mockResolvedValue({
+    status: "running",
+    domain: () => "https://sb-example.vercel.run",
+  });
+  const fetch = vi.fn().mockResolvedValue(new Response('{"ok":true}'));
+  vi.stubGlobal("fetch", fetch);
+  await backend.privateOperation(host, "loginSeal", {});
+  expect(sdk.get).toHaveBeenCalledWith(
+    expect.objectContaining({ name, resume: false }),
+  );
+  expect(fetch).toHaveBeenCalledWith(
+    "https://sb-example.vercel.run/private/login/seal",
+    expect.objectContaining({
+      method: "POST",
+      body: "{}",
+      redirect: "error",
+      headers: {
+        authorization: "Bearer private-token",
+        "content-type": "application/json",
+      },
+    }),
+  );
+});
+
+test("bounds private control bodies before contacting a sandbox", async () => {
+  const fetch = vi.fn();
+  vi.stubGlobal("fetch", fetch);
+  await expect(
+    backend.privateOperation(host, "status", {
+      operationId: "x",
+      epoch: 1,
+      extra: "x".repeat(130 * 1024),
+    }),
+  ).rejects.toThrow("too large");
+  await expect(
+    backend.privateOperation(host, "status", undefined),
+  ).rejects.toThrow("Invalid private operation request");
+  expect(sdk.get).not.toHaveBeenCalled();
+  expect(fetch).not.toHaveBeenCalled();
+});
 test("expired and stopped hosts do not receive a request", async () => {
   const fetch = vi.fn();
   vi.stubGlobal("fetch", fetch);

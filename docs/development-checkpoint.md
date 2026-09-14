@@ -9,12 +9,12 @@ checkpoint-history/2026-09-13-before-durable-login-vault.md and earlier archives
 Astra low/default architecture, contracts, every diff review and integration;
 one Luna xhigh/default worker, no nested agents, Fast off. Reuse
 /root/host_session_renewal. Vault foundations accepted: encrypted store/lease fencing, additive schema, six
-unit tests and real PostgreSQL contention/rollback/expiry tests passed. Worker now
-implements the private isolated runtime cache import/snapshot bridge. No public persistence
+unit tests and real PostgreSQL contention/rollback/expiry tests passed. Private runtime/controller stages are accepted; next worker stage is server vault
+orchestration and public route integration, followed by main-page restoration. No public persistence
 enablement yet. Contract docs/chatgpt-durable-connection-task.md. Next integrate
 app-owned managed auth cache/private host lifecycle and truthful browser restoration.
 
-Quota latest39%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
+Quota latest36%remaining. Check /home/marcos/.cache/orbsie/read-codex-quota.py;
 stop workers/live calls below20%. Goal token count is not subscription quota.
 Live tests Luna only; end users unrestricted. Owner approved neededcalls; API4096
 output/call, Gatewaymax5/test, flagship3calls, no blind retries. Hosted180s/512KiB
@@ -114,104 +114,66 @@ OpenRouter key .env.openrouter.local0600; Gateway private
 - Fullprompt freebudget/exhaustion/cancel/recovery/isolation/UX, actual modelreview
   loop +controlledqualityeval, providerE2E, publication and GitHubpush.
 
-## Isolated DB test setup
+## Accepted durable foundations (not deployed)
 
-Docker cached postgres:15-alpine available. Prior real trial concurrency baseline
-cd0e42b passed12claims/3admitted9exhausted using independentpool; container removed.
-Use new loopback-only tmpfs container, synthetic users/sessions, apply additive
-schema; run opted-in vault contention test. No production migration untilreview.
+Vault5df8c95: AES-GCM/HKDF owner/version binding,64KiB bounded opaque cache,
+30day retention,10min exclusive fenced leases and fresh DB/session authorization.
+6unit tests+realPostgres independent pool contention/expiry-during-lockwait/forced
+insert rollback passed. Root reviewed. Test container removed. Production additive
+schema applied transactionally and verified: evidence chatgpt-vault-production-
+migration-20260913. Protected fresh env /home/marcos/.cache/orbsie/durable-login-
+production/production.env0600 (parent0700); never echo. No real cache copied yet.
 
-Vault foundation review complete: metadata-only reads, exclusive cache lease,
-session locks/fresh-clock admission, stale save fencing and byte bounds accepted.
-Real DB regression passed including confirmed lock wait across session expiry and
-forced vault insert failure proving rollback/no orphan connection. Typecheck passed.
-Root reapplied schema successfully (idempotent); both tables had zero fixture rows.
-Isolated container stopped/removed. Worker confirmed no old dev server remains.
-Next bridge retains updated app-owned auth cache before failure/cancel directory
-cleanup; no public persistence or production migration has been enabled yet.
+Runtimebcfc786: isolated auth.json import, explicit file storage config,64KiB
+no-follow/nonblocking reads,1second snapshot bounds, SIGKILL independent of reads,
+post-close retained copied snapshot and late-read invalidation.19tests+typecheck.
+Root actual pinned Codex0.153.4 empty-runtime initialization/account-read/cleanup
+passed without login/modelcalls: chatgpt-runtime-config-20260913.
 
-Runtime bridge first diff reviewed: initial import/rotated-close restore implemented,
-18 targeted tests and typecheck passed, but NOT accepted yet. Root found missing
-explicit file credential-store config and snapshot await delaying SIGKILL timer.
-Worker fixing those with stalled-snapshot regression, bounded capture and nonblocking
-no-follow open. No live calls. Durable orchestration decision now recorded in
-chatgpt-durable-connection-task.md: per-operation process inside reusable private
-sandbox, lease covers process through seal/snapshot; never release with live RPC.
-Public route cleanup headroom, private restore transport and logout-first revocation
-remain implementation work. Latest quota39%remaining; no production change this turn.
+Private controller/transport ACCEPTED after final corrections: one operation slot,
+ID/epoch/deadline, single-use failed admissions,64attempt lifetime cap, deferred
+startup/termination fencing, private capability-only initialize/status/models/
+generate/seal/clear and verified-login seal. Sticky managed mode closes legacy
+admission; serialized legacy transition, post-close cache, failedclose poison,
+separate generation/control cancellation.48focused tests,typecheck,format/diffcheck,
+build:chatgpt-host passed. Root reviewed real HTTP tests (only runtime mocked).
+Root actual pinned0.153.4+NodeHTTP empty-operation init/status/seal/clear/legacy409
+passed: chatgpt-private-pinned-http-20260913. No login/inference. Test67719 terminal.
+Earlier43test draft rejected; corrective findings/evidence retained in history.
 
-Runtime bridge accepted after corrections: 19/19 focused runtime/store/shutdown
-checks and typecheck passed. Root reviewed forced delayed-read SIGKILL at2seconds,
-late-read invalidation and rotated-cache copy isolation. Explicit isolated file
-store config,64KiB no-follow/nonblocking reads,1second snapshot bounds; retained
-snapshot survives owned directory removal. No live/provider acceptance claimed.
-Next bounded worker stage: private managed operation lifecycle/controller before
-server-vault/public restoration wiring. Shared3040/3096 servers left untouched;
-worker owns no running servers. Prior implementation-review blockers resolved.
+## Next durable integration
 
-Root pinned-runtime verification: actual codex-cli0.153.4 from offline npm cache
-initialized compiled current runtime with empty isolated CODEX_HOME/file config;
-account/read(refreshToken:false) returned no account, close completed and retained
-snapshot was null. No login/model calls/developer credentials. Evidence
-chatgpt-runtime-config-20260913/report.json. This verifies packaged configuration,
-not managed-token refresh or signed-in provider acceptance. Temp directory removed.
-Latest quota38%remaining; private lifecycle worker still active.
+Contract docs/chatgpt-durable-connection-task.md. Reusable sandbox HTTP service with
+operation-scoped managed processes; lease covers process until confirmed seal.
+Server restore on status/models/generate, verify account before Ready, persist
+updated cache on success/error/cancel with independent bounded cleanup budget and
+route headroom. Initial login seal->remember needs atomic attempt/revocation fence:
+late initial remember must not resurrect Disconnect (save fencing alone insufficient).
+Disconnect revokes before remote cleanup, across relevant owner hosts; preserve
+valid preferences on transport errors. No raw cache public payloads/logs/modeldata.
 
-Production vault schema applied and verified transactionally (only additive new
-credential tables/indexes,2second lock timeout/10second statement timeout). Fresh
-Vercel production env matched https://orbsie.com; no existing credential data copied.
-Evidence chatgpt-vault-production-migration-20260913/report.json includes schema hash.
-Protected env file /home/marcos/.cache/orbsie/durable-login-production/production.env
-(mode0600,parent0700), never print contents. Migration process45795 terminal success.
-This supersedes earlier pending-production-migration notes: schema ready, public
-runtime persistence/restore NOT deployed. Full provider/browser gates still open.
+UI currently resets to OpenRouter on mount and only modal checks ChatGPT status.
+Need nonsecret provider+tier preference and verified startup restore on `/`, guarded
+against manual provider/account changes. No email gate or anonymous rebootstrap on
+transient failure. Automatic restart-to-prompt browser fixture +real owner acceptance
+still required. Full review loop/provider/mobile goal remains intact above.
 
-Private controller/transport worker remains active (one Luna). Current ownership:
-chatgpt-managed-operation.ts, chatgpt-host.ts, chatgpt-sandbox-backend.ts,
-scripts/chatgpt-host-server.ts and targeted tests. Draft NOT accepted yet. Root
-review requested: don't free slot after failed termination; wait for deferred
-runtime startup before seal/clear can confirm shutdown; single-use IDs include
-failed initialization and never become reusable after bounded history eviction.
-Require actual local Node HTTP transport test (not only direct handler calls),
-legacy-path lockout after managed adoption, and private verified-login seal/export
-so newly logged-in users can enter vault storage. No public routes/vault wiring yet.
-Do not restart worker or duplicate investigation; await completion evidence.
+## Current access and resource state
 
-Root Android preflight: emulator-5580 running, execsession76916 (PID1935533 launch),
-orbsie_api35_phone/API35,2cores/3072MiB/SwiftShader, affinity30,31. Chrome124 old.
-Coldboot repeated first-run flow; verified same US July30,2026 terms approved by
-owner, continued without account, disabled reporting, declined notifications.
-Current production main-page planet/composer renders; no blocking graphics dialog.
-Evidence android-current-preflight-20260913. No modelcalls/gameplay claim. Emulator
-intentionally left running for next mobile checks; stop with adb emu kill when done.
-All UI dump sessions terminal (including59775). Temp screenshots /tmp/orbsie-android-current.
-Luna private lifecycle worker still active; quota latest37%remaining.
+Browser latest rechecked: CUA requires CUA_REPL_ENABLED_SURFACES; DevTools reachable
+but existing ChatGPTpage3 explicitly signedout and OpenRouterpage2 sign-in. No new
+login tabs/cookie copying/rawCDP. Evidence browser-access-check-20260913-durable.
+Owner-signed-in browser remains unavailable; don't repeat unchanged checks.
 
-Android saved-game replay passed actual touch Right->score7, Up->win/final7,
-PlayAgain->score0/overlaygone, Left->loss/final0, PlayAgain->overlaygone. Current
-standalone runtime plus unchanged saved Gateway project/models (hashes in evidence
-android-player-replay-20260913), not fresh provider/publication/flagship acceptance.
-Root viewed six screenshots. Zero modelcalls. Local server46673 and emulator76916
-both stopped with terminal exit0, adb reverse3187 removed. Supersedes running note.
-Luna private-controller/transport task FINISHED: reports43 focused tests,typecheck,
-format/diffcheck,build:chatgpt-host pass. Root final source/test review still pending;
-DO NOT accept/commit/deploy that uncommitted implementation before review. Reuse
-host_session_renewal for fixes/next orchestration. No worker task processes remain.
+Android emulator current preflight and actual saved-game replay passed: Right score7,
+Up win/final7, PlayAgain reset0, Left loss0, restart overlaygone. Root viewed six
+screenshots; current player runtime+unchanged saved Gateway project, hashes retained
+in android-player-replay-20260913. No new generation/publication/flagship/physical
+performance claim. AVDorbsie_api35_phone/API35/Chrome124,2cores/3GiB/SwiftShader;
+Chrome first-run used existing owner approval matching US July30,2026 terms, no
+account, optionalreportingoff/notificationsdeclined. Olderbrowser only.
+Emulator76916 and localserver46673 both terminal exit0; reverse3187 removed.
+No root test processes remain. Shared3040/3096 servers left untouched by worker.
 
-Private lifecycle FINAL REVIEW REJECTED, worker followup active: login seal aborts
-its own HTTP signal because stopGeneration includes control requests; snapshot is
-captured before close; close errors falsely mark legacy runtime stopped; hasActive
-only guard permits legacy fallback after clear and no coordinated legacy/init
-transition. Preaborted initialize can seal before runtimePromise exists then still
-start a runtime. Worker fixing with real-handler+NodeHTTP tests (earlier tests
-mocked handler or invoked callback directly and missed integration). Require
-postclose rotated cache, failedclose poison, sticky managed mode, pending/connected
-legacy admission guards and preaborted no-factory evidence. Do not accept prior43
-checks as complete integration proof. Root Android resources all terminal.
-
-Browser revalidation during durable work: CUA still requires enabled surfaces;
-DevTools listpages reachable, existing ChatGPT page3 explicitly signed out in a11y
-snapshot (Log in/Sign up), OpenRouter page2 sign-in. No new tabs/login/model calls.
-Evidence browser-access-check-20260913-durable. Owner's signed-in Chrome remains
-unavailable; do not copy cookies/use rawCDP or repeat login requests. Worker fixes
-still active; latest quota36%remaining.
+History for vault/runtime/private review: checkpoint-history/2026-09-13-before-
+private-host-acceptance.md. Do not repeat accepted investigations/tests absent gap.

@@ -3,7 +3,15 @@ import {
   ChatGPTDeviceSessionError,
   type ChatGPTDeviceSession,
 } from "../src/lib/server/chatgpt-device-session";
-import { createChatGPTHostHandler } from "../src/lib/server/chatgpt-host";
+import {
+  ChatGPTPrivateLoginSealError,
+  createChatGPTHostHandler,
+  type ChatGPTPrivateLoginSeal,
+} from "../src/lib/server/chatgpt-host";
+import type {
+  ChatGPTManagedOperationController,
+  ChatGPTManagedOperationInitialize,
+} from "../src/lib/server/chatgpt-managed-operation";
 
 const token = "t".repeat(64);
 
@@ -36,6 +44,47 @@ function fixture() {
       },
     });
   return { session, handler, request };
+}
+
+function privateFixture() {
+  const { session, request } = fixture();
+  const managed = {
+    initialize: vi.fn(async (input: ChatGPTManagedOperationInitialize) => ({
+      operationId: input.operationId,
+      epoch: input.epoch,
+      deadlineAt: input.deadlineAt,
+    })),
+    status: vi.fn(async () => ({ status: "connected" as const })),
+    models: vi.fn(async () => []),
+    generate: vi.fn(
+      async () =>
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.close();
+          },
+        }),
+    ),
+    seal: vi.fn(async (binding: { operationId: string; epoch: number }) => ({
+      ...binding,
+      deadlineAt: Date.now() + 1_000,
+      expired: false,
+      cache: new TextEncoder().encode("managed-cache"),
+    })),
+    clear: vi.fn(async () => undefined),
+    hasActiveOperation: vi.fn(() => false),
+    close: vi.fn(async () => undefined),
+  } satisfies ChatGPTManagedOperationController;
+  const privateLoginSeal: ChatGPTPrivateLoginSeal = vi.fn(async () =>
+    new TextEncoder().encode("login-cache"),
+  );
+  const handler = createChatGPTHostHandler({
+    session,
+    token,
+    managedOperation: managed,
+    privateLoginSeal,
+    legacyRouteAllowed: () => !managed.hasActiveOperation(),
+  });
+  return { handler, request, managed, privateLoginSeal };
 }
 
 async function body(response: Response) {
@@ -248,4 +297,144 @@ describe("server-only ChatGPT host handler", () => {
     await expect(second).resolves.toMatchObject({ status: 409 });
     expect(session.start).toHaveBeenCalledTimes(2);
   });
+
+  it("serves private operation transport and privately seals a legacy login", async () => {
+    const { handler, request, managed, privateLoginSeal } = privateFixture();
+    const binding = { operationId: "operation-private", epoch: 3 };
+    const init = await handler(
+      request("/private/operation/initialize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...binding,
+          deadlineAt: Date.now() + 60_000,
+        }),
+      }),
+    );
+    expect(init.status).toBe(200);
+    expect(await body(init)).toMatchObject(binding);
+    expect(managed.initialize).toHaveBeenCalledWith(
+      expect.objectContaining(binding),
+      expect.any(AbortSignal),
+    );
+
+    const sealed = await handler(
+      request("/private/login/seal", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(sealed.status).toBe(200);
+    expect(await body(sealed)).toEqual({
+      cache: Buffer.from("login-cache").toString("base64"),
+    });
+    expect(privateLoginSeal).toHaveBeenCalledWith(expect.any(AbortSignal));
+  });
+
+  it("bounds and authenticates every private route without exposing credentials", async () => {
+    const { handler, request, managed } = privateFixture();
+    const invalidMethod = await handler(
+      request("/private/operation/status", { method: "GET" }),
+    );
+    expect(invalidMethod.status).toBe(405);
+    const origin = await handler(
+      request("/private/login/seal", {
+        method: "POST",
+        headers: {
+          Origin: "https://evil.example",
+          "content-type": "application/json",
+        },
+        body: "{}",
+      }),
+    );
+    expect(origin.status).toBe(403);
+    const query = await handler(
+      request("/private/login/seal?retry=1", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(query.status).toBe(400);
+    const oversized = await handler(
+      request("/private/login/seal", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ value: "x".repeat(130 * 1024) }),
+      }),
+    );
+    expect(oversized.status).toBe(413);
+    const malformed = await handler(
+      request("/private/login/seal", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ unexpected: true }),
+      }),
+    );
+    expect(malformed.status).toBe(400);
+    const failure = await handler(
+      request("/private/operation/status", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ operationId: "old", epoch: 1 }),
+      }),
+    );
+    expect(failure.status).toBe(200);
+    expect(managed.status).toHaveBeenCalled();
+    const unauthorized = await handler(
+      request(
+        "/private/operation/status",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ operationId: "old", epoch: 1 }),
+        },
+        "wrong",
+      ),
+    );
+    expect(unauthorized.status).toBe(401);
+
+    managed.hasActiveOperation.mockReturnValue(true);
+    const legacyBypass = await handler(
+      request("/login/status", { method: "GET" }),
+    );
+    expect(legacyBypass.status).toBe(409);
+    expect(await body(legacyBypass)).toEqual({
+      error: "The private ChatGPT operation must be used.",
+    });
+  });
+
+  it.each([
+    ["pending", 409, "Complete or cancel"],
+    ["unverified", 409, "Verify the ChatGPT"],
+    ["managed", 409, "already managed"],
+    ["closed", 410, "already sealed"],
+  ] as const)(
+    "maps private login seal %s safely",
+    async (code, status, message) => {
+      const { session, request } = fixture();
+      const privateLoginSeal = vi.fn(async () => {
+        throw new ChatGPTPrivateLoginSealError(code, "provider secret");
+      });
+      const handler = createChatGPTHostHandler({
+        session,
+        token,
+        privateLoginSeal,
+      });
+      const result = await handler(
+        request("/private/login/seal", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        }),
+      );
+      expect(result.status).toBe(status);
+      const text = await result.text();
+      expect(JSON.parse(text)).toEqual({
+        error: expect.stringContaining(message),
+      });
+      expect(text).not.toContain("provider secret");
+    },
+  );
 });

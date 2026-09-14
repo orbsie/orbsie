@@ -7,6 +7,14 @@ type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
 type Operation =
   "generate" | "models" | "status" | "start" | "cancel" | "logout";
+export type ChatGPTPrivateOperation =
+  | "initialize"
+  | "status"
+  | "models"
+  | "generate"
+  | "seal"
+  | "clear"
+  | "loginSeal";
 const routes = {
   generate: ["POST", "/generate"],
   models: ["GET", "/models"],
@@ -14,6 +22,15 @@ const routes = {
   start: ["POST", "/login/start"],
   cancel: ["POST", "/login/cancel"],
   logout: ["POST", "/logout"],
+} as const;
+const privateRoutes = {
+  initialize: ["POST", "/private/operation/initialize"],
+  status: ["POST", "/private/operation/status"],
+  models: ["POST", "/private/operation/models"],
+  generate: ["POST", "/private/operation/generate"],
+  seal: ["POST", "/private/operation/seal"],
+  clear: ["POST", "/private/operation/clear"],
+  loginSeal: ["POST", "/private/login/seal"],
 } as const;
 const validName = (name: string) => /^orbsie-chatgpt-[a-f0-9-]{36}$/.test(name);
 export const CHATGPT_GENERATION_TIMEOUT_MS = 175_000;
@@ -88,6 +105,42 @@ export function createChatGPTSandboxBackend(options: {
     });
   }
 
+  async function privateOperation(
+    host: Host,
+    operation: ChatGPTPrivateOperation,
+    input: unknown,
+    signal?: AbortSignal,
+  ) {
+    if (host.expiresAt.getTime() <= Date.now())
+      throw Error("ChatGPT host expired.");
+    const body = JSON.stringify(input);
+    if (typeof body !== "string")
+      throw Error("Invalid private operation request.");
+    if (
+      Buffer.byteLength(body) >
+      (operation === "generate" ? 512 * 1024 : 128 * 1024)
+    )
+      throw Error("Private ChatGPT operation request is too large.");
+    const sandbox = await get(host.sandboxName, signal);
+    if (sandbox.status !== "running")
+      throw Error("ChatGPT host is unavailable.");
+    const [, path] = privateRoutes[operation];
+    return fetch(sandbox.domain(3000) + path, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${host.capability}`,
+        "content-type": "application/json",
+      },
+      body,
+      redirect: "error",
+      cache: "no-store",
+      signal: signalFor(
+        signal,
+        operation === "generate" ? CHATGPT_GENERATION_TIMEOUT_MS : 35_000,
+      ),
+    });
+  }
+
   async function renew(
     host: Host,
     targetExpiresAt: Date,
@@ -150,6 +203,7 @@ export function createChatGPTSandboxBackend(options: {
 
   return {
     request,
+    privateOperation,
     renew,
     async artifactDigest() {
       return (await readArtifacts()).digest;
