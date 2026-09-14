@@ -232,3 +232,14 @@ Next logging handoff: docs/generation-observability-task.md (2cafab4) specifies
 correlation, layer-specific terminal outcomes, bounded content-free exports, and
 synthetic replay. Implementation still pending. No model calls needed for that
 stage. Existing plan remains docs/resilience-activity-seo-task.md.
+
+Startup review remains OPEN. Worker24focused tests/typecheck/format passed; local
+run5 corrected StrictMode fixture reports pass, but root found generationCalls:0
+while promptUsesSavedTier:true. Do not accept this as restart-to-prompt proof.
+Worker is correcting fixture to require one actual synthetic generate request with
+Budget payload and completed assistant reply, plus configuration retry, malformed
+session classification and delayed-config free-spend guard. Session failure fixture
+initially failed only first StrictMode request (aborted), so second correctly restored;
+that apparent hang was fixture error. Root viewed run5 phone screenshot, layoutfits.
+Root latest quota71%used/29%remaining. Release ecaacaf generated outputs now safely
+stashed before startup integration; no latest app deployment. Logging not started.
