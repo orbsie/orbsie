@@ -534,12 +534,16 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
   Keep final results/errors and controls timely; do not throttle actual scene updates,
   input, rendering or provider processing. Prevent stale updates after stop/new run.
-- [ ] Make the public Orbsie site crawler-discoverable and SEO friendly: meaningful
+- [x] Make the public Orbsie site crawler-discoverable and SEO friendly: meaningful
   server-rendered public text and headings, canonical URL, accurate title/description,
   social sharing metadata, robots and sitemap. Index only intended public content;
   never expose private projects, credentials, account or provider callback pages.
   Verify returned HTML and crawler routes on the deployed public origin. Search
   indexing and ranking are external outcomes, not guaranteed by these changes.
+
+SEO acceptance: deployed source4a9d2d6 passed live HTML, robots, sitemap, social
+image and existing shared-world canonical/noindex checks. Desktop/phone main-flow
+regression passed without model calls. See docs/evidence/seo-live-20260913.
 
 ## Reproducible diagnostics — owner update
 

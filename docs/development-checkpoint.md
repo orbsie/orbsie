@@ -9,16 +9,16 @@ checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
 
 Astra low/default owns contracts, every diff review, integration and acceptance.
 One Luna xhigh/default worker, no nested agents, Fast off. Current worker
-/root/host_session_renewal is implementing **SEO crawlability/metadata**.
+/root/host_session_renewal is implementing the internal atomic authoring-run ledger
+and shared trial transaction primitives. Public review routes/browser loop are not
+being enabled by this handoff. Contract: docs/agentic-review-loop-task.md.
 New clean-context spawn failed host thread limit; reuse existing worker.
-Logging client stage b518e68 committed, root production build and desktop/phone
-download+startup fixtures pass (including public buildID). Deployed and live
-browser fixture27399 plus actual server log correlation pass; zero model calls.
-Worker next contract docs/seo-crawlability-task.md, homepage-only sitemap/noindex
-shared worlds, targeted metadata checks. Root owns release checkout, logging
-evidence, checkpoint and deployment. No live model calls for logging or SEO.
+Logging and SEO are deployed and verified; no live model calls for either release.
+Root owns release evidence, checkpoint, deployment and actual PostgreSQL acceptance.
+Synthetic PostgreSQL container orbsie-authoring-ledger-20260913 is ready on local
+port32771; root must stop it after ledger acceptance (no production data).
 
-Quota last74%used/26%remaining. Read
+Quota last75%used/25%remaining. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
@@ -28,15 +28,15 @@ Never echo credentials. Use completion notifications, avoid status-only turns.
 ## Production and accepted release
 
 Production https://orbsie.com ->
-https://orbsie-37jjiobee-grappeggias-projects.vercel.app, source **b518e68**.
-Isolated checkout /tmp/orbsie-durable-release-20260913 atb518e68. Local build and
-Vercel remote build passed. Deploy55666 terminal0, alias confirmed. Both server
-routes verified on dba95bc; new buildb518e68 runtime400 has correlated UUID and
-exactly1terminal in actual Vercel logs. Both public/server build IDs set b518e68.
-Evidence client-diagnostics-live-fixture-20260913; built desktop/phone download
-and startup regressions pass. Root viewed phone layout. Localserver36459 stopped.
-No real-provider generation in this release. Prior startup480782d HTTP/browser
-synthetic acceptance remains recorded in chatgpt-durable-deployment-20260913.
+https://orbsie-m7loroa8a-grappeggias-projects.vercel.app, source **4a9d2d6**.
+Isolated checkout /tmp/orbsie-durable-release-20260913 at4a9d2d6. Local and Vercel
+builds passed; deploy69452 terminal0, alias confirmed. Public/server build IDs
+set4a9d2d6. Live crawler checks passed, including an existing shared world with
+its own canonical URL and noindex metadata. Built desktop/phone diagnostic
+regression passed. Evidence seo-live-20260913, seo-production-build-20260913 and
+seo-main-flow-regression-20260913. Localserver90973 stopped. Zero model calls.
+Prior logging b518e68 actual runtime log correlation and download/startup fixtures
+remain accepted; startup480782d evidence in chatgpt-durable-deployment-20260913.
 Release generated next-env/player runtime/source dirty; preserve before advancing.
 Previous ecaacaf generated outputs stashed safely. Old checkout
 /tmp/orbsie-chatgpt-release-4eb9ce8 and stashes preserved.
@@ -97,9 +97,9 @@ remains separate. No full inspect/correct loop yet.
    mushroomedit, slowplatform+2=>7winreset, Undo5winreset, reload/export and fresh
    signedout publication winrestart. provider-live-gameplay-task.md. Old immutable
    artifacts use old runtime; do not mutate them to manufacture acceptance.
-6. SEO/crawler metadata/routes/public HTML; source baseline642a3cc. No discovery
-   consent field in schema: homepage sitemap first, no automatic world enumeration.
-   Public world share metadata accurate; no private account/API/callback indexing.
+6. SEO accepted on deployed4a9d2d6: homepage-only sitemap, crawler metadata and
+   server-rendered text; shared worlds have own canonical and noindex. Future
+   opt-in world discovery requires an explicit consent contract.
 7. Unbounded world/navigation, both renderers/mobile/save/publication: contract
    unbounded-world-task.md. Current radial8.4 clamp/camera constraints unresolved.
 8. Code-free browser-only ChatGPT OAuth remains feasibility requirement. Official
