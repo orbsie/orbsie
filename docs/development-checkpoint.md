@@ -17,24 +17,27 @@ passed. Evidence authoring-hosted-authority-20260914. Private completion records
 are negotiated before inference, consumed only after clean private EOF and stripped
 from public output. Cancel fences completion; post-scene credential seal failure
 stays separate. No live calls/deployment or complete browser review-loop claim.
-Worker /root/host_session_renewal now implements one bounded reviewer execution
-task in docs/scene-review-execution-task.md: real API/hosted one-call transports
-and semantically validated correction batches; no live calls or public endpoints.
-First executor handoff NOT accepted despite13tests/typecheck passing. Root found
-missing schema/current-phase instructions, duplicated hosted input, configured
-output formats bypassed/invalid strict schema, missing API output-token cap,
-optional API effort restriction, missing finish-reason acceptance, and response
-reader cancellation/preflight validation gaps. Worker now fixes these with actual
-request-format, malformed/truncated/hosted failure, all-or-none/procedural and
-mid-read cancellation tests. Second handoff20tests/typecheck passes, still not
-accepted: strict prompt advertised both wrapped and canonical schemas; procedural
-syntax guidance missing and its fixture was not valid browser code; browser/server
-binding comparison, all-or-none and env override evidence missing; late fetch body
-cleanup and silently ignored hosted maxTokens remain. Worker fixes this same batch,
-with optional narrow modeling-policy guidance refactor preserving existing defaults.
-New module/tests remain uncommitted WIP until final review.
-Next public admission/browser contract records review ledger cancellation gaps
-in docs/agentic-review-loop-task.md. Hosted acceptance commit43113e8.
+Reviewer executor accepted after three focused handoffs and root final prompt
+correction. Worker23targeted tests/typecheck passed; root final6targeted tests passed
+(17 omitted by name filter), whole-tree typecheck and diff check passed. Actual
+QuickJS expression evaluation and browser-style operation/provenance binding match
+the server correction result. Evidence scene-review-execution-20260914. Both API
+providers and hosted generator adapter return validated correction batches; exact
+selection, configured format, API output cap, clean completion, image scope,
+semantic all-or-none application and cancellation tested. Hosted generator is mocked;
+not actual private-hop/browser/live E2E. No public review endpoint enabled/deployed.
+Next is public review admission + managed hosted review operation + browser loop
+under docs/agentic-review-loop-task.md, including its recorded review-ledger late
+COMMIT cancellation gaps and diagnostics. Do not repeat finished investigation.
+
+USAGE STOP: authoritative quota now81%used/19%remaining (2026-09-14). Worker
+/root/host_session_renewal was already completed and explicitly interrupted; no
+active worker or live-call/test process remains. Stop implementation/workers/live
+calls per owner's below20% rule until allowance recovers or owner changes the rule.
+This is the first goal turn encountering this usage blocker; goal is NOT complete
+and not yet marked blocked under the three-consecutive-turn audit requirement.
+Only acceptance/checkpoint saving occurred after observing the threshold.
+
 Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
 review fixes. Retained initial token fences abort during COMMIT acknowledgement;
@@ -91,7 +94,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last80%used/20%remaining; stop immediately if it drops below20%. Read
+Quota last81%used/19%remaining: usage stop is active. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
