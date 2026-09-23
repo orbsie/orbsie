@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 23 gameplay draw-culling parity accepted locally: software (`2ae0145`)
+and WebGL (`9f45a28`) now skip offscreen rendering/picking using current
+effective transforms and the player-follow camera while keeping complete
+gameplay simulation and mounted formation state. The WebGL frustum updates
+after the Player frame and before Formation callbacks, using renderer-local
+camera and mesh matrices after origin rebasing. Forming, selected, unknown
+and portal bounds remain conservative. Astra reviewed both diffs. Full
+suite: 195 passed/6 skipped files, 1,657 passed/26 skipped tests; Next
+production build/TypeScript passed and standalone player was regenerated
+(`1c7eeed`). Browser draw-count/frame-time and mobile acceptance remain
+unmeasured. Resource eviction is the next bounded requirement; visual asset
+readiness currently influences collision fallback, so preserve game authority
+while bounding memory (`docs/distant-formation-resource-task.md`).
+
 Sep 23 software gameplay draw culling accepted locally (`2ae0145`): the
 fallback renderer uses cached geometry-local bounds transformed by the
 current runtime/game matrix and the player-follow camera frustum to skip
