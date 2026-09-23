@@ -89,6 +89,18 @@ Flag-restoration checkpoint — September 10, 2026: the later production environ
 
 ## Code-free login feasibility check — 2026-09-13
 
+Rechecked the official [App Server sign-in contract](https://learn.chatgpt.com/docs/app-server)
+and [Codex authentication guidance](https://learn.chatgpt.com/docs/auth) on
+2026-09-22. `useHostedLoginSuccessPage` still leaves the browser authorization
+callback on `http://localhost:<port>/auth/callback`; the hosted page is shown
+only after that callback. The documented `chatgptAuthTokens` mode remains
+experimental and starts with tokens supplied by a host that already owns the
+user's authorization lifecycle. Neither document establishes an HTTPS OAuth
+callback/client registration for Orbsie or proves subscription-backed inference
+rights for such a client. This is a documentation gap, not evidence that a
+provider-approved arrangement is impossible; keep the browser-only connection
+requirement open.
+
 The new `prompt.md` requirement remains open. The official App Server
 [browser flow](https://learn.chatgpt.com/docs/app-server#3-log-in-with-chatgpt-browser-flow)
 returned by the documentation tool still specifies a localhost callback hosted by
