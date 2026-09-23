@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 23 current-build OpenRouter live acceptance (`openrouter-post-residency`):
+an isolated local production server with exact origin and 4,096-token ceiling
+ran the standard two-call browser journey on `openai/gpt-6-luna`, low/default.
+Both `/api/generate` calls returned HTTP 200; creation, selected material edit,
+local recovery, export and standalone playback passed with no fallback,
+external request or generation-budget violation. The harness checkout was
+clean at `c1e8621`; the application source commit remained unrecorded in the
+report, so this is not remotely attested deployment evidence. The captured
+world has a structurally present island/tree/crystal but a small, sparse visual
+composition. It does not satisfy delightful-asset, full flagship gameplay,
+publication, or physical-mobile acceptance. Sanitized artifacts and the
+exact-two-call report are in
+`docs/evidence/provider-e2e/openrouter-post-residency/`. The isolated server
+was stopped. During setup, a worker accidentally included the local test key
+in a private tool result; it is absent from committed artifacts and was not
+repeated. Owner should rotate that key when convenient.
+
 Sep 23 renderer residency browser fixture accepted locally after Astra review:
 `scripts/verify-formation-residency.mjs` drives an isolated 120-entity scene
 through the actual WebGL World and software Canvas renderer. Chromium

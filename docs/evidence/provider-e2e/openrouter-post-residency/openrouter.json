@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-09-23T12:09:28.269Z",
+  "provenance": {
+    "checkedAt": "2026-09-23T12:09:28.269Z",
+    "harness": {
+      "checkoutSHA": "c1e8621e63f37bc96927bbe4aab68a6f8549b647",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": null,
+      "status": "unrecorded"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3014",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 2,
+  "creation": {
+    "status": "passed",
+    "operations": 8,
+    "firstReservationMs": 5767,
+    "seedObserved": true,
+    "catalogEntities": 1,
+    "proceduralEntities": 2,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790165373998,
+        "path": "/api/generate"
+      },
+      {
+        "request": 2,
+        "atMs": 1790165383302,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "edit.png",
+    "share.png",
+    "world.zip",
+    "standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 9584.5,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  },
+  "followOn": {
+    "projectId": "1b13e410-4d79-4b7f-aaf0-c9a57c112a4d",
+    "revision": 10
+  },
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "movement-during-generation",
+      "creation-win-reset",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  }
+}
