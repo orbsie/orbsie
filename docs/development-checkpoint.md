@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 WebGL open-ground slice accepted locally (`b63b674`): the planet
+descent keeps its small circular patch, then hides cylinder, water, pebbles
+and contact shadows as a bounded 7×7 world-aligned tile neighborhood becomes
+visible at flat y=0. Tile keys preserve overlapping geometry and root review
+added explicit disposal for evicted geometry props after checking installed
+R3F behavior. Camera far clipping covers the selected ground footprint. A
+valid below-ground camera target now returns bounded selection rather than
+throwing (`6522ea6`, 9 focused tests). Integrated suite: 190 passed/6 skipped
+files, 1,621 passed/26 skipped tests; Next production build/TypeScript passed,
+and independent player artifacts were regenerated (`a8b6d35`). No browser
+visual seam or precision acceptance was possible here. Software ground and
+entity culling are still open; do not deploy this partial renderer parity.
+
 Sep 23 terrain chunk-selection core accepted locally (`435a158`): signed
 world-aligned 64m base keys, power-of-two LOD, a bounded 7×7 selection sized
 for the shared 43-degree/30-degree camera footprint including focus height,
