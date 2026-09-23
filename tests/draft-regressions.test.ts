@@ -20,6 +20,8 @@ vi.mock("idb-keyval", () => ({
 }));
 import { useOrb } from "../src/lib/store";
 import { blankProject } from "../src/lib/protocol";
+import { fixtureEntities } from "../src/lib/fixtures";
+import { decodeWorld, encodeWorld } from "../src/lib/export";
 beforeEach(() => {
   db.values.clear();
   db.queue = Promise.resolve();
@@ -106,12 +108,51 @@ it("persists undo and redo as newer revisions without making the writer read-onl
     title: "After",
   });
 });
+it("preserves distant object positions through undo, local save, and share export", async () => {
+  const entity = fixtureEntities()[0];
+  const before = {
+    ...blankProject(),
+    revision: 1,
+    entities: [
+      { ...entity, position: [1_500, 0, -1_200] as [number, number, number] },
+    ],
+  };
+  const after = {
+    ...before,
+    revision: 2,
+    entities: [
+      {
+        ...entity,
+        position: [500_000, 0, -250_000] as [number, number, number],
+      },
+    ],
+  };
+  await useOrb.getState().load(after);
+  await useOrb.getState().save();
+  useOrb.setState({ history: [before] });
+
+  useOrb.getState().undo();
+  await useOrb.getState().save();
+  expect(useOrb.getState().project.entities[0].position).toEqual([
+    1_500, 0, -1_200,
+  ]);
+
+  useOrb.getState().redo();
+  await useOrb.getState().save();
+  const saved = db.values.get("orbsie-library")[after.id];
+  expect(saved.entities[0].position).toEqual([500_000, 0, -250_000]);
+  expect(decodeWorld(encodeWorld(saved)).entities[0].position).toEqual([
+    500_000, 0, -250_000,
+  ]);
+});
 it("keeps a divergent local branch after loading and saving the same cloud ID", async () => {
   const local = { ...blankProject(), title: "Local branch", revision: 3 };
   await useOrb.getState().load(local);
   await useOrb.getState().save();
   await useOrb.getState().preserveLocalCopy();
-  await useOrb.getState().load({ ...local, title: "Cloud branch", revision: 4 });
+  await useOrb
+    .getState()
+    .load({ ...local, title: "Cloud branch", revision: 4 });
   await useOrb.getState().save();
   const copies = Object.values(
     db.values.get("orbsie-library"),
