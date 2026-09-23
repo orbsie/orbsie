@@ -21,6 +21,11 @@ ready formation at progress 1. A changed geometry revision still uses the
 normal targeted morph. Maintain the existing allocation cancellation and
 StrictMode disposal behavior; late async asset results must not resurrect an
 evicted resource. Never dispose shared cache geometry owned by another caller.
+`Player` currently consults global `isAssetGeometryReady` and
+`isGeneratedGeometryReady` counts when assembling collision entities. Releasing
+the last visual hook can flip those counts; ensure that evicting a distant
+visual does not silently remove its game authority, and that approaching it
+loads any geometry needed for accurate collision before interaction.
 
 Measure resident geometry, textures, and asset leases while panning through a
 growing synthetic world, revisiting objects, selecting a distant object, and
