@@ -6,6 +6,14 @@ permits distant positions and movement, but the renderers still present a fixed
 parcel. This task supplies a visually continuous default ground without
 changing the authoritative scene coordinates.
 
+Execute as bounded slices with one worker at a time: (1) a deterministic,
+budgeted chunk-selection and level-of-detail contract with seam tests; (2)
+WebGL ground and visible-object culling; (3) matching software ground,
+visibility and picking; (4) measured precision repair and gameplay camera
+tracking; (5) browser/mobile performance and published-player acceptance.
+Retain a working renderer at each handoff and review each slice before the
+next. A single large render rewrite would make regressions hard to isolate.
+
 ## Source boundaries to preserve
 
 - `src/components/world.tsx` renders two fixed cylinders, a water disk,
