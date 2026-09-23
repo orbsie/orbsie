@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { Project } from "../protocol";
+import { HttpError } from "./auth";
 
 const identifier = z
   .string()
@@ -94,3 +96,59 @@ export type SceneReviewStructuralObservations = z.infer<
 >;
 
 export const SCENE_REVIEW_OBSERVATIONS_MAX_BYTES = 64 * 1024;
+
+/** Validate renderer claims against the exact scene being reviewed. */
+export function validateSceneReviewStructuralObservations(
+  project: Pick<Project, "id" | "revision" | "entities">,
+  observations: SceneReviewStructuralObservations | undefined,
+) {
+  if (!observations) return;
+  if (
+    observations.projectId !== project.id ||
+    observations.revision !== project.revision
+  )
+    throw new HttpError(
+      400,
+      "Structural observations belong to another scene revision.",
+    );
+  const entityIds = new Set(project.entities.map((entity) => entity.id));
+  const assertEntity = (id: string) => {
+    if (!entityIds.has(id))
+      throw new HttpError(
+        400,
+        "Structural observations contain an unknown object.",
+      );
+  };
+  for (const item of observations.bounds ?? []) assertEntity(item.entityId);
+  for (const item of observations.supports ?? []) {
+    assertEntity(item.entityId);
+    if (item.supportEntityId) assertEntity(item.supportEntityId);
+  }
+  for (const item of observations.gameReferences ?? []) {
+    assertEntity(item.entityId);
+    for (const id of item.referencedBy) assertEntity(id);
+  }
+  for (const item of observations.workerErrors ?? [])
+    if (item.entityId) assertEntity(item.entityId);
+}
+
+export function sceneReviewFeedback(
+  feedback: string | undefined,
+  observations: SceneReviewStructuralObservations | undefined,
+): string | undefined {
+  const observationText = observations
+    ? `STRUCTURAL OBSERVATIONS: ${JSON.stringify(observations)}`
+    : undefined;
+  const combined = feedback
+    ? observationText
+      ? `${feedback}\n${observationText}`
+      : feedback
+    : observationText;
+  if (
+    combined !== undefined &&
+    new TextEncoder().encode(combined).byteLength >
+      SCENE_REVIEW_OBSERVATIONS_MAX_BYTES
+  )
+    throw new HttpError(400, "The scene review feedback is too large.");
+  return combined;
+}

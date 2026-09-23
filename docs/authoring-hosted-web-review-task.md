@@ -12,7 +12,10 @@ Authenticate the owner/session through the existing BetterAuth guest-capable
 path; an Orbsie email/password is not a prerequisite. Validate the same original
 prompt, selected ID, model, effort, modeling flags, scene, optional image and
 bounded structural observations as the API route. Reuse the shared server-only
-identity/fingerprint and scene-binding coordinator. Never accept client digest,
+identity/fingerprint and scene-binding coordinator, plus
+`validateSceneReviewStructuralObservations` and `sceneReviewFeedback` from
+`scene-review-observations.ts` so the two routes apply the same bounds. Never
+accept client digest,
 phase token, capability or slot count as authority.
 
 The durable service must acquire the current credential lease and managed host,

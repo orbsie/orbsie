@@ -41,9 +41,9 @@ import {
   withGenerationRequestId,
 } from "../../../../lib/server/generation-observability";
 import {
-  SCENE_REVIEW_OBSERVATIONS_MAX_BYTES,
+  sceneReviewFeedback,
   sceneReviewStructuralObservationsSchema,
-  type SceneReviewStructuralObservations,
+  validateSceneReviewStructuralObservations,
 } from "../../../../lib/server/scene-review-observations";
 import {
   emitAuthoringReviewDiagnostic,
@@ -76,58 +76,6 @@ const reviewRequestSchema = z
   .strict();
 
 type ReviewRequest = z.infer<typeof reviewRequestSchema>;
-
-function reviewFeedback(input: ReviewRequest) {
-  const observationText = input.structuralObservations
-    ? `STRUCTURAL OBSERVATIONS: ${JSON.stringify(input.structuralObservations)}`
-    : undefined;
-  const feedback = input.feedback
-    ? observationText
-      ? `${input.feedback}\n${observationText}`
-      : input.feedback
-    : observationText;
-  if (
-    feedback !== undefined &&
-    new TextEncoder().encode(feedback).byteLength >
-      SCENE_REVIEW_OBSERVATIONS_MAX_BYTES
-  )
-    throw new HttpError(400, "The scene review feedback is too large.");
-  return feedback;
-}
-
-function validateStructuralObservations(
-  project: ReviewRequest["project"],
-  observations: SceneReviewStructuralObservations | undefined,
-) {
-  if (!observations) return;
-  if (
-    observations.projectId !== project.id ||
-    observations.revision !== project.revision
-  )
-    throw new HttpError(
-      400,
-      "Structural observations belong to another scene revision.",
-    );
-  const entityIds = new Set(project.entities.map((entity) => entity.id));
-  const assertEntity = (id: string) => {
-    if (!entityIds.has(id))
-      throw new HttpError(
-        400,
-        "Structural observations contain an unknown object.",
-      );
-  };
-  for (const item of observations.bounds ?? []) assertEntity(item.entityId);
-  for (const item of observations.supports ?? []) {
-    assertEntity(item.entityId);
-    if (item.supportEntityId) assertEntity(item.supportEntityId);
-  }
-  for (const item of observations.gameReferences ?? []) {
-    assertEntity(item.entityId);
-    for (const id of item.referencedBy) assertEntity(id);
-  }
-  for (const item of observations.workerErrors ?? [])
-    if (item.entityId) assertEntity(item.entityId);
-}
 
 function publicError(error: unknown, signal: AbortSignal): HttpError {
   if (signal.aborted)
@@ -201,8 +149,14 @@ export async function POST(request: Request) {
     if (!parsed.success)
       throw new HttpError(400, "Check your connection and world data.");
     const input = parsed.data;
-    validateStructuralObservations(input.project, input.structuralObservations);
-    const feedback = reviewFeedback(input);
+    validateSceneReviewStructuralObservations(
+      input.project,
+      input.structuralObservations,
+    );
+    const feedback = sceneReviewFeedback(
+      input.feedback,
+      input.structuralObservations,
+    );
     const model = requestedModel(input);
     const provider = input.provider === "free" ? "gateway" : input.provider;
     if (input.provider === "free" && !trialEnabled())
