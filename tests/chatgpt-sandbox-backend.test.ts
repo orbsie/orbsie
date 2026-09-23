@@ -11,6 +11,11 @@ import {
   computeChatGPTArtifactDigest,
   createChatGPTSandboxBackend,
 } from "../src/lib/server/chatgpt-sandbox-backend";
+import { blankProject } from "../src/lib/protocol";
+import {
+  PRIVATE_SCENE_REVIEW_HEADER,
+  PRIVATE_SCENE_REVIEW_VERSION,
+} from "../src/lib/server/chatgpt-scene-review";
 const name = "orbsie-chatgpt-11111111-1111-4111-8111-111111111111";
 const host = {
   sandboxName: name,
@@ -121,6 +126,77 @@ test("only negotiates scene completion on status and generation requests", async
     authorization: "Bearer private-token",
     "content-type": "application/json",
   });
+});
+
+test("carries review negotiation and correlation over the generation timeout", async () => {
+  sdk.get.mockResolvedValue({
+    status: "running",
+    domain: () => "https://sb-example.vercel.run",
+  });
+  const fetch = vi.fn().mockResolvedValue(
+    new Response("{}", {
+      headers: { [PRIVATE_SCENE_REVIEW_HEADER]: "1" },
+    }),
+  );
+  vi.stubGlobal("fetch", fetch);
+  const project = blankProject();
+  await backend.privateOperation(
+    host,
+    "review",
+    {
+      operationId: "operation",
+      epoch: 1,
+      model: "gpt-5.6-luna",
+      effort: "low",
+      project,
+      prompt: "Create a small world",
+      browserModeling: false,
+      phase: "review",
+    },
+    undefined,
+    {
+      requestId: "11111111-1111-4111-8111-111111111111",
+      clientRunId: "22222222-2222-4222-8222-222222222222",
+    },
+    undefined,
+    PRIVATE_SCENE_REVIEW_VERSION,
+  );
+  const [, init] = fetch.mock.calls[0] as [string, RequestInit];
+  expect(init.headers).toEqual({
+    authorization: "Bearer private-token",
+    "content-type": "application/json",
+    "x-orbsie-request-id": "11111111-1111-4111-8111-111111111111",
+    "x-orbsie-client-run-id": "22222222-2222-4222-8222-222222222222",
+    [PRIVATE_SCENE_REVIEW_HEADER]: "1",
+  });
+  expect(init.signal).toBeInstanceOf(AbortSignal);
+  expect(fetch).toHaveBeenCalledWith(
+    "https://sb-example.vercel.run/private/operation/review",
+    expect.objectContaining({ signal: expect.any(AbortSignal) }),
+  );
+});
+
+test("rejects an old host during review preflight before a review request", async () => {
+  sdk.get.mockResolvedValue({
+    status: "running",
+    domain: () => "https://sb-example.vercel.run",
+  });
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(new Response('{"status":"connected"}'));
+  vi.stubGlobal("fetch", fetch);
+  await expect(
+    backend.privateOperation(
+      host,
+      "status",
+      { operationId: "operation", epoch: 1 },
+      undefined,
+      undefined,
+      undefined,
+      PRIVATE_SCENE_REVIEW_VERSION,
+    ),
+  ).rejects.toThrow("does not support scene review");
+  expect(fetch).toHaveBeenCalledOnce();
 });
 
 test("bounds private control bodies before contacting a sandbox", async () => {

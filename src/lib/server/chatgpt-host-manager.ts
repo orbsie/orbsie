@@ -16,6 +16,7 @@ import {
 import { CHATGPT_GENERATION_HEADROOM_MS } from "./chatgpt-sandbox-backend";
 import type { GenerationObservationCorrelation } from "./generation-observability";
 import { PRIVATE_SCENE_COMPLETION_VERSION } from "./chatgpt-scene-completion";
+import { PRIVATE_SCENE_REVIEW_VERSION } from "./chatgpt-scene-review";
 
 export function createChatGPTHostManager(
   options: Parameters<typeof createChatGPTSandboxBackend>[0],
@@ -122,6 +123,7 @@ export function createChatGPTHostManager(
         signal?: AbortSignal;
         correlation?: GenerationObservationCorrelation;
         sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION;
+        sceneReviewVersion?: typeof PRIVATE_SCENE_REVIEW_VERSION;
       } = {},
     ) =>
       backend.privateOperation(
@@ -131,6 +133,7 @@ export function createChatGPTHostManager(
         options.signal,
         options.correlation,
         options.sceneCompletionVersion,
+        options.sceneReviewVersion,
       ),
     destroyHost: backend.destroy,
     releaseHost: releaseChatGPTHost,

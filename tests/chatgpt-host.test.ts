@@ -12,6 +12,11 @@ import type {
   ChatGPTManagedOperationController,
   ChatGPTManagedOperationInitialize,
 } from "../src/lib/server/chatgpt-managed-operation";
+import { blankProject } from "../src/lib/protocol";
+import {
+  PRIVATE_SCENE_REVIEW_HEADER,
+  PRIVATE_SCENE_REVIEW_VERSION,
+} from "../src/lib/server/chatgpt-scene-review";
 
 const token = "t".repeat(64);
 
@@ -64,6 +69,32 @@ function privateFixture() {
           },
         }),
     ),
+    review: vi.fn(async () => {
+      const project = blankProject();
+      return {
+        type: "orbsie.private.scene-review" as const,
+        version: PRIVATE_SCENE_REVIEW_VERSION,
+        operationId: "operation-private",
+        epoch: 3,
+        review: {
+          version: 1 as const,
+          projectId: project.id,
+          reviewedRevision: project.revision,
+          scope: "structural-only" as const,
+          verdict: "accept" as const,
+          summary: "The scene is ready.",
+          issues: [],
+          corrections: [],
+        },
+        corrections: [],
+        binding: {
+          version: 1 as const,
+          projectId: project.id,
+          revision: project.revision,
+          digest: "a".repeat(64),
+        },
+      };
+    }),
     seal: vi.fn(async (binding: { operationId: string; epoch: number }) => ({
       ...binding,
       deadlineAt: Date.now() + 1_000,
@@ -403,6 +434,152 @@ describe("server-only ChatGPT host handler", () => {
     expect(await body(legacyBypass)).toEqual({
       error: "The private ChatGPT operation must be used.",
     });
+  });
+
+  it("negotiates review separately and binds the request to the operation epoch", async () => {
+    const { handler, request, managed } = privateFixture();
+    const binding = { operationId: "operation-private", epoch: 3 };
+    const project = blankProject();
+    const headers = {
+      "content-type": "application/json",
+      [PRIVATE_SCENE_REVIEW_HEADER]: String(PRIVATE_SCENE_REVIEW_VERSION),
+    };
+    const preflight = await handler(
+      request("/private/operation/status", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(binding),
+      }),
+    );
+    expect(preflight.status).toBe(200);
+    expect(preflight.headers.get(PRIVATE_SCENE_REVIEW_HEADER)).toBe("1");
+
+    const review = await handler(
+      request("/private/operation/review", {
+        method: "POST",
+        headers: {
+          ...headers,
+          "x-orbsie-request-id": "11111111-1111-4111-8111-111111111111",
+        },
+        body: JSON.stringify({
+          ...binding,
+          model: "gpt-5.6-luna",
+          effort: "low",
+          project,
+          prompt: "Create a small world",
+          browserModeling: false,
+          phase: "review",
+        }),
+      }),
+    );
+    expect(review.status).toBe(200);
+    expect(review.headers.get(PRIVATE_SCENE_REVIEW_HEADER)).toBe("1");
+    expect(await body(review)).toMatchObject({
+      type: "orbsie.private.scene-review",
+      operationId: binding.operationId,
+      epoch: binding.epoch,
+    });
+    expect(managed.review).toHaveBeenCalledWith(
+      binding,
+      expect.objectContaining({ model: "gpt-5.6-luna", epoch: 3 }),
+      expect.any(AbortSignal),
+      expect.objectContaining({
+        requestId: "11111111-1111-4111-8111-111111111111",
+      }),
+    );
+
+    const stale = await handler(
+      request("/private/operation/review", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          ...binding,
+          epoch: 2,
+          model: "gpt-5.6-luna",
+          effort: "low",
+          project,
+          prompt: "Create a small world",
+          browserModeling: false,
+          phase: "review",
+        }),
+      }),
+    );
+    expect(stale.status).toBe(409);
+    expect(managed.review).toHaveBeenCalledOnce();
+  });
+
+  it("rejects review before preflight and enforces the bounded private response", async () => {
+    const { handler, request, managed } = privateFixture();
+    const project = blankProject();
+    const payload = {
+      operationId: "operation-private",
+      epoch: 3,
+      model: "gpt-5.6-luna",
+      effort: "low",
+      project,
+      prompt: "Create a small world",
+      browserModeling: false,
+      phase: "review" as const,
+    };
+    const noPreflight = await handler(
+      request("/private/operation/review", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          [PRIVATE_SCENE_REVIEW_HEADER]: "1",
+        },
+        body: JSON.stringify(payload),
+      }),
+    );
+    expect(noPreflight.status).toBe(400);
+    expect(managed.review).not.toHaveBeenCalled();
+
+    managed.review.mockResolvedValueOnce({
+      type: "orbsie.private.scene-review",
+      version: 1,
+      operationId: payload.operationId,
+      epoch: payload.epoch,
+      review: {
+        version: 1,
+        projectId: project.id,
+        reviewedRevision: project.revision,
+        scope: "structural-only",
+        verdict: "accept",
+        summary: "x".repeat(300 * 1024),
+        issues: [],
+        corrections: [],
+      },
+      corrections: [],
+      binding: {
+        version: 1,
+        projectId: project.id,
+        revision: project.revision,
+        digest: "a".repeat(64),
+      },
+    });
+    const preflight = await handler(
+      request("/private/operation/status", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          [PRIVATE_SCENE_REVIEW_HEADER]: "1",
+        },
+        body: JSON.stringify({ operationId: payload.operationId, epoch: 3 }),
+      }),
+    );
+    expect(preflight.status).toBe(200);
+    const oversized = await handler(
+      request("/private/operation/review", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          [PRIVATE_SCENE_REVIEW_HEADER]: "1",
+        },
+        body: JSON.stringify(payload),
+      }),
+    );
+    expect(oversized.status).toBe(502);
+    expect(await oversized.text()).not.toContain("x".repeat(100));
   });
 
   it.each([

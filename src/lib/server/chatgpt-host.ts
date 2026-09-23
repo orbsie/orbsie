@@ -19,6 +19,11 @@ import {
   PRIVATE_SCENE_COMPLETION_HEADER,
   PRIVATE_SCENE_COMPLETION_VERSION,
 } from "./chatgpt-scene-completion";
+import {
+  PRIVATE_SCENE_REVIEW_HEADER,
+  PRIVATE_SCENE_REVIEW_VERSION,
+  parsePrivateSceneReviewRequest,
+} from "./chatgpt-scene-review";
 
 type HostSession = Pick<
   ChatGPTDeviceSession,
@@ -52,6 +57,7 @@ const headers = {
 };
 const PRIVATE_CONTROL_BODY_MAX_BYTES = 128 * 1024;
 const PRIVATE_GENERATION_BODY_MAX_BYTES = 512 * 1024;
+const PRIVATE_REVIEW_BODY_MAX_BYTES = 512 * 1024;
 const PRIVATE_RESPONSE_MAX_BYTES = 256 * 1024;
 
 function response(body: unknown, status = 200) {
@@ -406,6 +412,9 @@ export function createChatGPTHostHandler({
 
   let negotiatedSceneCompletionVersion:
     typeof PRIVATE_SCENE_COMPLETION_VERSION | undefined;
+  let negotiatedSceneReviewVersion:
+    typeof PRIVATE_SCENE_REVIEW_VERSION | undefined;
+  let negotiatedSceneReviewBinding: ManagedOperationBinding | undefined;
   return async (request: Request) => {
     if (request.headers.has("origin"))
       return response(
@@ -460,10 +469,13 @@ export function createChatGPTHostHandler({
         return response({ error: "Query parameters are not allowed." }, 400);
       const isPrivateGeneration =
         url.pathname === "/private/operation/generate";
+      const isPrivateReview = url.pathname === "/private/operation/review";
       const parsed = await readJSON(
         request,
-        isPrivateGeneration
-          ? PRIVATE_GENERATION_BODY_MAX_BYTES
+        isPrivateGeneration || isPrivateReview
+          ? isPrivateReview
+            ? PRIVATE_REVIEW_BODY_MAX_BYTES
+            : PRIVATE_GENERATION_BODY_MAX_BYTES
           : PRIVATE_CONTROL_BODY_MAX_BYTES,
       );
       if (parsed.error) return parsed.error;
@@ -496,6 +508,8 @@ export function createChatGPTHostHandler({
             request.signal,
           );
           negotiatedSceneCompletionVersion = undefined;
+          negotiatedSceneReviewVersion = undefined;
+          negotiatedSceneReviewBinding = undefined;
           return privateJSON(initialized);
         }
         const binding = operationBinding(value);
@@ -517,18 +531,36 @@ export function createChatGPTHostHandler({
           const completionVersion = requestedSceneCompletionVersion(
             request.headers,
           );
+          const reviewHeader = request.headers.get(PRIVATE_SCENE_REVIEW_HEADER);
+          if (
+            reviewHeader !== null &&
+            reviewHeader !== String(PRIVATE_SCENE_REVIEW_VERSION)
+          )
+            throw new ChatGPTManagedOperationError(
+              "invalid",
+              "The private scene review version is invalid.",
+            );
           const status = await managedOperation.status(binding, request.signal);
+          request.signal.throwIfAborted();
           if (completionVersion !== undefined)
             negotiatedSceneCompletionVersion = completionVersion;
-          return privateJSON(
-            status,
-            200,
-            completionVersion === undefined
-              ? undefined
+          if (reviewHeader !== null)
+            negotiatedSceneReviewVersion = PRIVATE_SCENE_REVIEW_VERSION;
+          if (reviewHeader !== null)
+            negotiatedSceneReviewBinding = {
+              operationId: binding.operationId,
+              epoch: binding.epoch,
+            };
+          return privateJSON(status, 200, {
+            ...(completionVersion === undefined
+              ? {}
               : {
                   [PRIVATE_SCENE_COMPLETION_HEADER]: String(completionVersion),
-                },
-          );
+                }),
+            ...(reviewHeader === null
+              ? {}
+              : { [PRIVATE_SCENE_REVIEW_HEADER]: reviewHeader }),
+          });
         }
         if (url.pathname === "/private/operation/models") {
           if (
@@ -584,6 +616,61 @@ export function createChatGPTHostHandler({
             },
           });
         }
+        if (url.pathname === "/private/operation/review") {
+          if (negotiatedSceneReviewVersion !== PRIVATE_SCENE_REVIEW_VERSION)
+            throw new ChatGPTManagedOperationError(
+              "invalid",
+              "The private scene review version was not negotiated.",
+            );
+          if (
+            !negotiatedSceneReviewBinding ||
+            negotiatedSceneReviewBinding.operationId !== binding.operationId ||
+            negotiatedSceneReviewBinding.epoch !== binding.epoch
+          )
+            throw new ChatGPTManagedOperationError(
+              "stale",
+              "The managed ChatGPT operation is stale.",
+            );
+          if (
+            request.headers.get(PRIVATE_SCENE_REVIEW_HEADER) !==
+            String(PRIVATE_SCENE_REVIEW_VERSION)
+          )
+            throw new ChatGPTManagedOperationError(
+              "invalid",
+              "The private scene review version was not negotiated.",
+            );
+          if (typeof managedOperation.review !== "function")
+            return response(
+              { error: "Private scene review is unavailable." },
+              503,
+            );
+          let reviewRequest;
+          try {
+            reviewRequest = parsePrivateSceneReviewRequest(value);
+          } catch {
+            throw new ChatGPTManagedOperationError(
+              "invalid",
+              "Invalid private scene review request.",
+            );
+          }
+          if (
+            reviewRequest.operationId !== binding.operationId ||
+            reviewRequest.epoch !== binding.epoch
+          )
+            throw new ChatGPTManagedOperationError(
+              "stale",
+              "The managed ChatGPT operation is stale.",
+            );
+          const result = await managedOperation.review(
+            binding,
+            reviewRequest,
+            request.signal,
+            operationCorrelation(request.headers),
+          );
+          return privateJSON(result, 200, {
+            [PRIVATE_SCENE_REVIEW_HEADER]: String(PRIVATE_SCENE_REVIEW_VERSION),
+          });
+        }
         if (url.pathname === "/private/operation/seal") {
           if (
             Object.keys(value).some(
@@ -617,6 +704,8 @@ export function createChatGPTHostHandler({
             );
           await managedOperation.clear(binding);
           negotiatedSceneCompletionVersion = undefined;
+          negotiatedSceneReviewVersion = undefined;
+          negotiatedSceneReviewBinding = undefined;
           return privateJSON({ cleared: true });
         }
         return response({ error: "Not found." }, 404);

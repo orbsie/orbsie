@@ -3,6 +3,17 @@ import { createChatGPTGeneration } from "./chatgpt-generation";
 import { listChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
 import { createChatGPTSceneStream } from "./chatgpt-scene-stream";
 import { CHATGPT_MANAGED_CREDENTIAL_CACHE_MAX_BYTES } from "./chatgpt-managed-credential-store";
+import { imageInputSupport } from "../input-modalities";
+import {
+  executeSceneReview,
+  type SceneReviewExecutionInput,
+} from "./scene-review-execution";
+import {
+  parsePrivateSceneReviewRequest,
+  parsePrivateSceneReviewResult,
+  privateSceneReviewResult,
+  type PrivateSceneReviewResult,
+} from "./chatgpt-scene-review";
 import {
   PRIVATE_SCENE_COMPLETION_VERSION,
   type PrivateSceneCompletion,
@@ -60,6 +71,12 @@ export type ChatGPTManagedOperationController = {
     correlation?: GenerationObservationCorrelation,
     sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
   ): Promise<ReadableStream<Uint8Array>>;
+  review?(
+    binding: ManagedOperationBinding,
+    input: unknown,
+    signal?: AbortSignal,
+    correlation?: GenerationObservationCorrelation,
+  ): Promise<PrivateSceneReviewResult>;
   seal(
     binding: ManagedOperationBinding,
     signal?: AbortSignal,
@@ -553,6 +570,150 @@ export function createChatGPTManagedOperationController(options: {
       listChatGPTModels(current.runtime!, current.session!),
     );
 
+  const review = async (
+    binding: ManagedOperationBinding,
+    input: unknown,
+    signal?: AbortSignal,
+    correlation?: GenerationObservationCorrelation,
+  ): Promise<PrivateSceneReviewResult> => {
+    const current = await readySlot(binding);
+    const operationSignal = combinedSignal(current, signal, now);
+    const onAbort = () => {
+      void stopAndSeal(current).catch(() => undefined);
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    const observation = correlation
+      ? createGenerationObservation({
+          layer: "provider",
+          requestId: correlation.requestId,
+          clientRunId: correlation.clientRunId,
+          provider: "chatgpt",
+          serviceTier: "default",
+        })
+      : undefined;
+    try {
+      let request: ReturnType<typeof parsePrivateSceneReviewRequest>;
+      try {
+        request = parsePrivateSceneReviewRequest(input);
+      } catch {
+        throw invalid("The private scene review request is invalid.");
+      }
+      if (
+        request.operationId !== current.operationId ||
+        request.epoch !== current.epoch
+      )
+        throw new ChatGPTManagedOperationError(
+          "stale",
+          "The managed ChatGPT operation is stale.",
+        );
+      operationSignal.throwIfAborted();
+
+      // The catalog is read from this exact managed runtime before inference.
+      // A caller cannot claim support for a model, effort, or image input.
+      const catalog = await awaitAbort(
+        listChatGPTModels(current.runtime!, current.session!),
+        operationSignal,
+      );
+      const selected = catalog.find(
+        (candidate) => candidate.model === request.model,
+      );
+      if (
+        !selected ||
+        !selected.supportedReasoningEfforts.includes(request.effort)
+      )
+        throw new ChatGPTManagedOperationError(
+          "unavailable",
+          "The requested ChatGPT review capability is unavailable.",
+        );
+      const imageSupport = imageInputSupport(selected.inputModalities);
+      if (request.reviewImage && imageSupport !== true)
+        throw new ChatGPTManagedOperationError(
+          "unavailable",
+          "The requested ChatGPT review image capability is unavailable.",
+        );
+      const capabilities: NonNullable<
+        SceneReviewExecutionInput["capabilities"]
+      > = {
+        text: { supported: true, source: "catalog" },
+        streamingText: { supported: true, source: "catalog" },
+        tools: { supported: false, source: "catalog" },
+        structuredOutput: { supported: false, source: "catalog" },
+        imageInput: {
+          supported: imageSupport,
+          source: imageSupport === "unknown" ? "unspecified" : "catalog",
+        },
+      };
+      const result = await awaitAbort(
+        executeSceneReview({
+          provider: "chatgpt",
+          model: selected.model,
+          effort: request.effort,
+          project: request.project,
+          prompt: request.prompt,
+          ...(request.selected === undefined
+            ? {}
+            : { selected: request.selected }),
+          browserModeling: request.browserModeling,
+          phase: request.phase,
+          ...(request.reviewImage ? { reviewImage: request.reviewImage } : {}),
+          ...(request.feedback === undefined
+            ? {}
+            : { feedback: request.feedback }),
+          capabilities,
+          signal: operationSignal,
+          hostedGenerator: current.generator,
+        }),
+        operationSignal,
+      );
+      operationSignal.throwIfAborted();
+      if (
+        current.invalidated ||
+        current.phase !== "ready" ||
+        !sameBinding(current, binding)
+      )
+        throw new ChatGPTManagedOperationError(
+          "aborted",
+          "The managed ChatGPT operation was canceled.",
+        );
+      const privateResult = parsePrivateSceneReviewResult(
+        privateSceneReviewResult(binding, result),
+        {
+          operationId: binding.operationId,
+          epoch: binding.epoch,
+          projectId: request.project.id,
+          revision: request.project.revision,
+          phase: request.phase,
+          browserModeling: request.browserModeling,
+        },
+      );
+      observation?.terminal({ reason: "completed" });
+      return privateResult;
+    } catch (error) {
+      observation?.terminal({
+        reason:
+          operationSignal.aborted && signal?.reason?.name === "TimeoutError"
+            ? "deadline"
+            : operationSignal.aborted
+              ? "client-abort"
+              : "provider-error",
+        abortSource: operationSignal.aborted ? "client" : undefined,
+        failureCode: operationSignal.aborted ? "cancelled" : "host-unavailable",
+      });
+      if (error instanceof ChatGPTManagedOperationError) throw error;
+      if (operationSignal.aborted)
+        throw new ChatGPTManagedOperationError(
+          "aborted",
+          "The managed ChatGPT operation was canceled.",
+        );
+      throw new ChatGPTManagedOperationError(
+        "unavailable",
+        "The managed ChatGPT scene review failed.",
+      );
+    } finally {
+      signal?.removeEventListener("abort", onAbort);
+    }
+  };
+
   const generate = async (
     binding: ManagedOperationBinding,
     input: unknown,
@@ -720,6 +881,7 @@ export function createChatGPTManagedOperationController(options: {
     status,
     models,
     generate,
+    review,
     seal,
     clear,
     hasActiveOperation,

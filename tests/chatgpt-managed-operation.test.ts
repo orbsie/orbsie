@@ -40,6 +40,7 @@ class FakeRuntime implements ChatGPTRuntime {
             displayName: "Luna",
             hidden: false,
             supportedReasoningEfforts: [{ reasoningEffort: "low" }],
+            defaultReasoningEffort: "low",
           },
         ],
         nextCursor: null,
@@ -64,6 +65,41 @@ class FakeRuntime implements ChatGPTRuntime {
 
   async getCredentialSnapshot(): Promise<ChatGPTRuntimeCredentialSnapshot | null> {
     return this.cache ? { cache: Uint8Array.from(this.cache) } : null;
+  }
+}
+
+class ReviewRuntime extends FakeRuntime {
+  override async request(method: string, params?: unknown): Promise<unknown> {
+    if (method !== "turn/start") return super.request(method, params);
+    this.requests.push({ method, params });
+    const threadId =
+      params && typeof params === "object" && "threadId" in params
+        ? String((params as { threadId: unknown }).threadId)
+        : "thread-1";
+    const output = JSON.stringify({
+      version: 1,
+      projectId: "review-project",
+      reviewedRevision: 0,
+      scope: "structural-only",
+      verdict: "accept",
+      summary: "The scene is ready.",
+      issues: [],
+      corrections: [],
+    });
+    for (const listener of this.listeners) {
+      listener({
+        method: "item/agentMessage/delta",
+        params: { threadId, turnId: "turn-1", delta: output },
+      });
+      listener({
+        method: "turn/completed",
+        params: {
+          threadId,
+          turn: { id: "turn-1", status: "completed" },
+        },
+      });
+    }
+    return { turn: { id: "turn-1" } };
   }
 }
 
@@ -331,5 +367,111 @@ describe("private managed ChatGPT operation controller", () => {
     await expect(initializing).rejects.toMatchObject({ code: "expired" });
     expect(runtime.closeMock).toHaveBeenCalledOnce();
     await controller.close();
+  });
+
+  it("executes a typed review through the managed catalog and generation runtime", async () => {
+    const runtime = new ReviewRuntime();
+    const controller = createChatGPTManagedOperationController({
+      createRuntime: vi.fn(async () => runtime),
+    });
+    const binding = base("operation-review");
+    await controller.initialize(binding);
+    const project = blankProject();
+    project.id = "review-project";
+    const result = await controller.review!(binding, {
+      operationId: binding.operationId,
+      epoch: binding.epoch,
+      model: "gpt-5.6-luna",
+      effort: "low",
+      project,
+      prompt: "Create a small world",
+      browserModeling: false,
+      phase: "review",
+    });
+    expect(result).toMatchObject({
+      type: "orbsie.private.scene-review",
+      operationId: binding.operationId,
+      epoch: binding.epoch,
+      review: { verdict: "accept", projectId: project.id },
+      binding: { projectId: project.id, revision: 0 },
+    });
+    expect(runtime.requests.map(({ method }) => method)).toContain(
+      "thread/start",
+    );
+    expect(runtime.requests.map(({ method }) => method)).toContain(
+      "turn/start",
+    );
+    expect(result).not.toHaveProperty("project");
+    expect(result).not.toHaveProperty("provenance");
+    await controller.clear(binding);
+  });
+
+  it("rejects unsupported effort before starting model inference", async () => {
+    const { controller, runtime } = fixture();
+    const binding = base("operation-review-unsupported");
+    await controller.initialize(binding);
+    const project = blankProject();
+    await expect(
+      controller.review!(binding, {
+        operationId: binding.operationId,
+        epoch: binding.epoch,
+        model: "gpt-5.6-luna",
+        effort: "high",
+        project,
+        prompt: "Create a small world",
+        browserModeling: false,
+        phase: "review",
+      }),
+    ).rejects.toMatchObject({ code: "unavailable" });
+    expect(runtime.requests.map(({ method }) => method)).not.toContain(
+      "thread/start",
+    );
+    await controller.clear(binding);
+  });
+
+  it("fences stale epochs and aborts a late review reply", async () => {
+    const { controller, runtime } = fixture();
+    const binding = base("operation-review-stale");
+    await controller.initialize(binding);
+    const project = blankProject();
+    await expect(
+      controller.review!(
+        { ...binding, epoch: binding.epoch + 1 },
+        {
+          operationId: binding.operationId,
+          epoch: binding.epoch,
+          model: "gpt-5.6-luna",
+          effort: "low",
+          project,
+          prompt: "Create a small world",
+          browserModeling: false,
+          phase: "review",
+        },
+      ),
+    ).rejects.toMatchObject({ code: "stale" });
+
+    const abort = new AbortController();
+    const pending = controller.review!(
+      binding,
+      {
+        operationId: binding.operationId,
+        epoch: binding.epoch,
+        model: "gpt-5.6-luna",
+        effort: "low",
+        project,
+        prompt: "Create a small world",
+        browserModeling: false,
+        phase: "review",
+      },
+      abort.signal,
+    );
+    await vi.waitFor(() => {
+      expect(runtime.requests.map(({ method }) => method)).toContain(
+        "turn/start",
+      );
+    });
+    abort.abort();
+    await expect(pending).rejects.toMatchObject({ code: "aborted" });
+    expect(runtime.closeMock).toHaveBeenCalled();
   });
 });

@@ -7,6 +7,12 @@ import {
   PRIVATE_SCENE_COMPLETION_HEADER,
   PRIVATE_SCENE_COMPLETION_VERSION,
 } from "./chatgpt-scene-completion";
+import {
+  PRIVATE_SCENE_REVIEW_HEADER,
+  PRIVATE_SCENE_REVIEW_REQUEST_MAX_BYTES,
+  PRIVATE_SCENE_REVIEW_VERSION,
+  parsePrivateSceneReviewRequest,
+} from "./chatgpt-scene-review";
 
 type Credentials = { token: string; teamId: string; projectId: string };
 type Host = { sandboxName: string; capability: string; expiresAt: Date };
@@ -17,6 +23,7 @@ export type ChatGPTPrivateOperation =
   | "status"
   | "models"
   | "generate"
+  | "review"
   | "seal"
   | "clear"
   | "loginSeal";
@@ -33,6 +40,7 @@ const privateRoutes = {
   status: ["POST", "/private/operation/status"],
   models: ["POST", "/private/operation/models"],
   generate: ["POST", "/private/operation/generate"],
+  review: ["POST", "/private/operation/review"],
   seal: ["POST", "/private/operation/seal"],
   clear: ["POST", "/private/operation/clear"],
   loginSeal: ["POST", "/private/login/seal"],
@@ -117,27 +125,33 @@ export function createChatGPTSandboxBackend(options: {
     signal?: AbortSignal,
     correlation?: GenerationObservationCorrelation,
     sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
+    sceneReviewVersion?: typeof PRIVATE_SCENE_REVIEW_VERSION,
   ) {
     if (host.expiresAt.getTime() <= Date.now())
       throw Error("ChatGPT host expired.");
-    const body = JSON.stringify(input);
+    const validatedInput =
+      operation === "review" ? parsePrivateSceneReviewRequest(input) : input;
+    const body = JSON.stringify(validatedInput);
     if (typeof body !== "string")
       throw Error("Invalid private operation request.");
-    if (
-      Buffer.byteLength(body) >
-      (operation === "generate" ? 512 * 1024 : 128 * 1024)
-    )
+    const maxBytes =
+      operation === "generate"
+        ? 512 * 1024
+        : operation === "review"
+          ? PRIVATE_SCENE_REVIEW_REQUEST_MAX_BYTES
+          : 128 * 1024;
+    if (Buffer.byteLength(body) > maxBytes)
       throw Error("Private ChatGPT operation request is too large.");
     const sandbox = await get(host.sandboxName, signal);
     if (sandbox.status !== "running")
       throw Error("ChatGPT host is unavailable.");
     const [, path] = privateRoutes[operation];
-    return fetch(sandbox.domain(3000) + path, {
+    const response = await fetch(sandbox.domain(3000) + path, {
       method: "POST",
       headers: {
         authorization: `Bearer ${host.capability}`,
         "content-type": "application/json",
-        ...(operation === "generate" && correlation
+        ...((operation === "generate" || operation === "review") && correlation
           ? {
               "x-orbsie-request-id": correlation.requestId,
               ...(correlation.clientRunId
@@ -151,15 +165,33 @@ export function createChatGPTSandboxBackend(options: {
               [PRIVATE_SCENE_COMPLETION_HEADER]: String(sceneCompletionVersion),
             }
           : {}),
+        ...(sceneReviewVersion !== undefined &&
+        (operation === "status" || operation === "review")
+          ? {
+              [PRIVATE_SCENE_REVIEW_HEADER]: String(sceneReviewVersion),
+            }
+          : {}),
       },
       body,
       redirect: "error",
       cache: "no-store",
       signal: signalFor(
         signal,
-        operation === "generate" ? CHATGPT_GENERATION_TIMEOUT_MS : 35_000,
+        operation === "generate" || operation === "review"
+          ? CHATGPT_GENERATION_TIMEOUT_MS
+          : 35_000,
       ),
     });
+    if (
+      sceneReviewVersion !== undefined &&
+      (operation === "status" || (operation === "review" && response.ok)) &&
+      response.headers.get(PRIVATE_SCENE_REVIEW_HEADER) !==
+        String(sceneReviewVersion)
+    ) {
+      await response.body?.cancel().catch(() => undefined);
+      throw Error("ChatGPT host does not support scene review.");
+    }
+    return response;
   }
 
   async function renew(
