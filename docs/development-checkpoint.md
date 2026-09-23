@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 23 OpenRouter browser OAuth diagnosis: `Connect with OpenRouter` from
+the local app navigated to OpenRouter's documented PKCE authorization route
+with a localhost callback and S256 challenge. In the accessible Chrome profile,
+OpenRouter's sign-in page showed “This action couldn't be completed” before
+credentials were entered; a separate direct visit to its sign-in URL showed
+the same message. The local PKCE and draft unit tests passed (12 tests).
+The actual account grant/callback is therefore unverified; the prior API-key
+live create/edit path is a separate passed milestone. No credentials or terms
+were submitted during this diagnosis.
+
+Sep 23 release visibility: the accessible GitHub Chrome tab is signed out and
+shows remote `main` at `422e03b` (Sep 10). Local `main` is 617 commits ahead of
+`origin/main` before this handoff. Current local features are therefore not
+represented by that GitHub page; browser-based GitHub push/review and a fresh
+deployment remain outstanding. A new ChatGPT device challenge was issued in a
+separate local tab and its temporary code/official URL shared with the owner for
+owner-entered consent; no grant or inference has been observed yet.
+
 Sep 23 Android emulator touch-hold fix: the current OpenRouter standalone ZIP
 loaded in Android 15 Chrome via loopback and displayed its movement controls.
 A 700 ms hold moved the world but opened Chrome's text-selection toolbar on
