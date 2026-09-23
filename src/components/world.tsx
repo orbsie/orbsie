@@ -120,6 +120,10 @@ import SoftwareWorld from "./software-world";
 let motionPreference: MediaQueryList | undefined;
 const ZERO_RENDER_ORIGIN: RenderOriginVec3 = [0, 0, 0];
 export const WEBGL_LOCAL_KEY_LIGHT_POSITION = [-8, 14, 7] as const;
+const webGLGeometryBoundsCache = new WeakMap<
+  THREE.BufferGeometry,
+  THREE.Box3 | null
+>();
 const reduced = () => {
   if (typeof window === "undefined") return false;
   motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -379,6 +383,7 @@ function disposeFormationResource(resource: FormationResource): void {
 function Formation({
   entity,
   visible,
+  gameplayVisibility,
   session,
   revision,
   onReviewState,
@@ -386,6 +391,7 @@ function Formation({
 }: {
   entity: Entity;
   visible: boolean;
+  gameplayVisibility: GameplayRenderVisibility;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
@@ -404,8 +410,10 @@ function Formation({
   const navigationHitData = useMemo(() => ({ orbsieNavigationHit: true }), []);
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
   const gameTintEnabled = useRef({ value: 0 });
+  const gameplayCulled = useRef(false);
   const target = useMemo(() => new THREE.Vector3(), []);
   const targetScale = useMemo(() => new THREE.Vector3(), []);
+  const gameplayBoundsScratch = useMemo(() => new THREE.Box3(), []);
   const projectId = useOrb((s) => s.project.id);
   const mainCamera = useThree((state) => state.camera);
   const selected = useOrb((s) => s.selected === entity.id);
@@ -736,16 +744,20 @@ function Formation({
     if (!group.current) return;
     const effective = playing ? session.effectiveEntity(entity) : entity;
     group.current.visible = effective !== null && visible;
+    gameplayCulled.current = false;
     const visibilityProbe = (
       globalThis as typeof globalThis & {
         __orbsieFormationVisibilityProbe?: Record<string, boolean>;
       }
     ).__orbsieFormationVisibilityProbe;
-    if (visibilityProbe)
-      visibilityProbe[entity.id] =
-        group.current.visible &&
-        (mesh.current?.visible === true || particles.current?.visible === true);
-    if (!effective) return;
+    if (!effective) {
+      if (visibilityProbe)
+        visibilityProbe[entity.id] =
+          group.current.visible &&
+          (mesh.current?.visible === true ||
+            particles.current?.visible === true);
+      return;
+    }
     const override = playing
       ? session.state?.entityOverrides[entity.id]
       : undefined;
@@ -785,6 +797,33 @@ function Formation({
       mesh.current.rotation.y += dt * 0.6;
     if (particles.current && mesh.current)
       particles.current.rotation.copy(mesh.current.rotation);
+    if (
+      playing &&
+      group.current.visible &&
+      gameplayVisibility.ready &&
+      !selected &&
+      !pendingAsset &&
+      entity.stage === "ready" &&
+      entity.behavior?.type !== "portal" &&
+      progress.current.value >= 1 &&
+      resource !== EMPTY_FORMATION_RESOURCE &&
+      geometry !== EMPTY_FORMATION_GEOMETRY &&
+      mesh.current
+    ) {
+      group.current.updateWorldMatrix(true, false);
+      mesh.current.updateWorldMatrix(true, false);
+      if (
+        !webGLGeometryVisibleInFrustum(
+          geometry,
+          mesh.current.matrixWorld,
+          gameplayVisibility.frustum,
+          gameplayBoundsScratch,
+        )
+      ) {
+        gameplayCulled.current = true;
+        group.current.visible = false;
+      }
+    }
     material.emissive.set(
       entity.stage !== "ready" || pendingAsset
         ? "#9debd4"
@@ -798,8 +837,13 @@ function Formation({
         : selected
           ? 0.18
           : 0;
+    if (visibilityProbe)
+      visibilityProbe[entity.id] =
+        group.current.visible &&
+        (mesh.current?.visible === true || particles.current?.visible === true);
   });
   const click = (event: ThreeEvent<MouseEvent>) => {
+    if (gameplayCulled.current) return;
     if (
       consumeNavigationClick(pointerIdFromEvent(event.nativeEvent as Event))
     ) {
@@ -837,6 +881,14 @@ function Formation({
         geometry={particleGeometry}
         material={particleMaterial}
         frustumCulled={false}
+        raycast={(raycaster, intersections) => {
+          if (gameplayCulled.current || !particles.current) return;
+          THREE.Points.prototype.raycast.call(
+            particles.current,
+            raycaster,
+            intersections,
+          );
+        }}
         onClick={click}
       />
       <mesh
@@ -849,7 +901,11 @@ function Formation({
         material={material}
         onClick={click}
         raycast={(raycaster, intersections) => {
-          if (mesh.current && (!playing || session.effectiveEntity(entity)))
+          if (
+            !gameplayCulled.current &&
+            mesh.current &&
+            (!playing || session.effectiveEntity(entity))
+          )
             THREE.Mesh.prototype.raycast.call(
               mesh.current,
               raycaster,
@@ -1352,6 +1408,81 @@ function applyWebGLRenderOrigin(
   workspaceFrame?.position.set(-origin[0], -origin[1], -origin[2]);
 }
 
+type GameplayRenderVisibility = {
+  frustum: THREE.Frustum;
+  projectionView: THREE.Matrix4;
+  ready: boolean;
+};
+
+function finiteBox(box: THREE.Box3): boolean {
+  return (
+    Number.isFinite(box.min.x) &&
+    Number.isFinite(box.min.y) &&
+    Number.isFinite(box.min.z) &&
+    Number.isFinite(box.max.x) &&
+    Number.isFinite(box.max.y) &&
+    Number.isFinite(box.max.z) &&
+    box.min.x <= box.max.x &&
+    box.min.y <= box.max.y &&
+    box.min.z <= box.max.z
+  );
+}
+
+/** Only a finite transformed geometry bound may suppress gameplay drawing. */
+export function webGLGeometryVisibleInFrustum(
+  geometry: THREE.BufferGeometry,
+  worldMatrix: THREE.Matrix4,
+  frustum: THREE.Frustum,
+  transformedBounds = new THREE.Box3(),
+): boolean {
+  let localBounds: THREE.Box3 | null | undefined;
+  if (webGLGeometryBoundsCache.has(geometry)) {
+    localBounds = webGLGeometryBoundsCache.get(geometry);
+  } else {
+    localBounds = null;
+    try {
+      geometry.computeBoundingBox();
+      if (geometry.boundingBox && finiteBox(geometry.boundingBox))
+        localBounds = geometry.boundingBox.clone();
+    } catch {
+      // Keep unclassifiable geometry visible.
+    }
+    webGLGeometryBoundsCache.set(geometry, localBounds);
+  }
+  if (!localBounds || !worldMatrix.elements.every(Number.isFinite)) return true;
+  try {
+    transformedBounds.copy(localBounds).applyMatrix4(worldMatrix);
+    if (!finiteBox(transformedBounds)) return true;
+    return frustum.intersectsBox(transformedBounds);
+  } catch {
+    return true;
+  }
+}
+
+function updateGameplayRenderVisibility(
+  state: GameplayRenderVisibility,
+  camera: THREE.Camera,
+): boolean {
+  try {
+    camera.updateMatrixWorld(true);
+    state.projectionView.multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse,
+    );
+    if (!state.projectionView.elements.every(Number.isFinite)) return false;
+    state.frustum.setFromProjectionMatrix(state.projectionView);
+    return state.frustum.planes.every(
+      (plane) =>
+        Number.isFinite(plane.constant) &&
+        Number.isFinite(plane.normal.x) &&
+        Number.isFinite(plane.normal.y) &&
+        Number.isFinite(plane.normal.z),
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Use the same settled navigation pose and projection as the WebGL camera. */
 export function visibleWebGLNavigationEntityIds(
   project: Project,
@@ -1649,6 +1780,14 @@ function Scene({
   const progress = useRef(0);
   const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
+  const gameplayVisibility = useMemo<GameplayRenderVisibility>(
+    () => ({
+      frustum: new THREE.Frustum(),
+      projectionView: new THREE.Matrix4(),
+      ready: false,
+    }),
+    [],
+  );
   const workspaceWorldFrame = useRef<THREE.Group>(null);
   const renderOrigin = useRef<RenderOriginVec3>(ZERO_RENDER_ORIGIN);
   const transitionSurface = useRef<THREE.Group>(null);
@@ -1973,6 +2112,7 @@ function Scene({
     scene,
   ]);
   useFrame((_, dt) => {
+    gameplayVisibility.ready = false;
     const target = phase === "landing" ? 0 : 1;
     parcelTransitionController.setTarget(target);
     const snapshot = parcelTransitionController.step(dt, reduced());
@@ -2152,7 +2292,12 @@ function Scene({
       );
       island.current.scale.setScalar(Math.max(0.001, blend));
     }
-  });
+    if (playViewActive)
+      gameplayVisibility.ready = updateGameplayRenderVisibility(
+        gameplayVisibility,
+        camera,
+      );
+  }, -0.5);
   return (
     <>
       {phase !== "editing" && (
@@ -2219,6 +2364,7 @@ function Scene({
               key={`${projectId}/${e.id}`}
               entity={e}
               visible={visibleEntityIds?.has(e.id) ?? true}
+              gameplayVisibility={gameplayVisibility}
               session={session}
               revision={revision}
               onReviewState={setFormationReviewState}
