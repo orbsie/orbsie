@@ -14,6 +14,16 @@ tracking; (5) browser/mobile performance and published-player acceptance.
 Retain a working renderer at each handoff and review each slice before the
 next. A single large render rewrite would make regressions hard to isolate.
 
+For slice 1, use signed integer keys `(lod, x, z)` on a world-aligned grid and
+power-of-two chunk sizes from a 64m base. Select a fixed, bounded neighborhood
+around an explicit camera/player focus; increase chunk size with camera
+distance and aspect so zooming out does not allocate unbounded tiles. The
+visible surface should sample appearance in world coordinates so shared edges
+match across chunk keys, eviction/revisit, and LOD changes. Keep collision
+height flat at the current y=0 until physics and visuals can change together.
+Reject non-finite inputs, avoid 32-bit integer bitwise math on large keys, and
+test negative coordinates, 10km travel, and the coordinate/zoom limits.
+
 ## Source boundaries to preserve
 
 - `src/components/world.tsx` renders two fixed cylinders, a water disk,
