@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 23 shared navigation buttons accepted locally: one World-wrapper control
+cluster serves WebGL, software fallback, editor and independent player. It
+offers zoom in/out, a heading compass/north reset preserving target and zoom,
+and frame content from committed ready-entity bounds. Bounds use actual local
+geometry or checked-in catalog/generated metadata and nested world transforms;
+tests cover distant groups, catalog assets and generated models. Root review
+reset button readiness at WebGL fallback and removed an unnecessary landscape
+chat-sheet resize. Full suite 188 passed/6 skipped files, 1,602 passed/26
+skipped tests; production build/TypeScript and formatting pass, with regenerated
+standalone player files. This remains local: mouse/wheel/touch gestures and
+mobile/WebGL/software visual acceptance are not done, nor is streamed terrain.
+
 Sep 22 navigation camera adapters accepted locally: the `World` wrapper owns
 one project-scoped navigation state across WebGL-to-software fallback; both
 renderers project the same target/heading/distance after the planet entrance

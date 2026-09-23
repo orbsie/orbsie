@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { requireCatalogAsset } from "../src/lib/asset-catalog";
 import {
   resolveSceneTransforms,
   transformBounds,
@@ -14,6 +15,30 @@ import {
   WORLD_NAVIGATION_LIMITS,
   type WorldNavigationBounds,
 } from "../src/lib/world-navigation";
+import { committedWorldNavigationBounds } from "../src/lib/world-navigation-bounds";
+import type { Project } from "../src/lib/protocol";
+
+function navigationTestProject(
+  id: string,
+  entities: Project["entities"],
+  groups: NonNullable<Project["groups"]> = [],
+): Project {
+  return {
+    version: 1,
+    id,
+    title: "Navigation bounds fixture",
+    seed: 1,
+    revision: 1,
+    entities,
+    groups,
+    environment: {
+      sky: "#ffffff",
+      ground: "#ffffff",
+      water: "#ffffff",
+    },
+    messages: [],
+  };
+}
 
 const portraitProjection = {
   viewportAspect: 390 / 844,
@@ -244,6 +269,185 @@ describe("shared world navigation", () => {
     expect(JSON.stringify(project)).toBe(snapshot);
     expect(project.revision).toBe(12);
     expect(project.entities[0].id).toBe("far-tree");
+  });
+
+  it("derives ready custom-geometry bounds through nested far-away groups", () => {
+    const project: Project = {
+      version: 1,
+      id: "far-groups",
+      title: "Far groups",
+      seed: 1,
+      revision: 3,
+      groups: [
+        {
+          id: "outer",
+          label: "Outer",
+          position: [25_000, 0, -30_000],
+          rotation: [0, 0, 0],
+          scale: [2, 1, 1],
+        },
+        {
+          id: "inner",
+          label: "Inner",
+          parentId: "outer",
+          position: [1_000, 0, 0],
+          rotation: [0, 0, 0],
+          scale: [1, 1, 1],
+        },
+      ],
+      entities: [
+        {
+          id: "distant-cube",
+          label: "Distant cube",
+          parentId: "inner",
+          position: [100, 0, 0],
+          scale: [2, 1, 1],
+          rotation: [0, 0, 0],
+          color: "#6ead60",
+          geometry: {
+            kind: "custom",
+            detail: "refined",
+            parts: [
+              {
+                shape: "box",
+                position: [0, 0, 0],
+                scale: [1, 1, 1],
+                rotation: [0, 0, 0],
+                color: "#6ead60",
+              },
+            ],
+          },
+          stage: "ready",
+        },
+        {
+          id: "unfinished",
+          label: "Unfinished object",
+          position: [800_000, 0, 800_000],
+          scale: [1, 1, 1],
+          color: "#6ead60",
+          stage: "seed",
+        },
+      ],
+      environment: {
+        sky: "#ffffff",
+        ground: "#ffffff",
+        water: "#ffffff",
+      },
+      messages: [],
+    };
+    const snapshot = JSON.stringify(project);
+    const bounds = committedWorldNavigationBounds(project);
+
+    expect(bounds).toHaveLength(1);
+    expect(bounds[0].min).toEqual([27_198, -0.5, -30_000.5]);
+    expect(bounds[0].max).toEqual([27_202, 0.5, -29_999.5]);
+    const framed = applyWorldNavigationCommand(
+      createWorldNavigationState({ target: [500_000, 0, 500_000] }),
+      {
+        type: "frame_content",
+        committedEntityBounds: bounds,
+        viewportAspect: 1.6,
+        verticalFovRadians: (43 * Math.PI) / 180,
+      },
+    );
+    expect(framed.target).toEqual([27_200, 0, -30_000]);
+    expect(framed.distance).toBeGreaterThan(
+      WORLD_NAVIGATION_LIMITS.minDistance,
+    );
+    expect(JSON.stringify(project)).toBe(snapshot);
+    expect(project.revision).toBe(3);
+  });
+
+  it("uses checked-in catalog asset bounds at a far transformed position", () => {
+    const project = navigationTestProject("far-catalog-asset", [
+      {
+        id: "far-tree",
+        label: "Far catalog tree",
+        position: [65_000, 3, -70_000],
+        scale: [2, 1.5, 3],
+        rotation: [0, 0, 0],
+        color: "#6ead60",
+        geometry: {
+          kind: "asset",
+          assetId: "kenney.nature.tree-default",
+          detail: "refined",
+        },
+        stage: "ready",
+      },
+    ]);
+    const catalogBounds = requireCatalogAsset(
+      "kenney.nature.tree-default",
+    ).bounds;
+    const worldMatrix = resolveSceneTransforms({
+      groups: project.groups,
+      entities: project.entities,
+    }).entities.get("far-tree")!.worldMatrix;
+    const bounds = committedWorldNavigationBounds(project);
+
+    expect(bounds).toEqual([
+      transformBounds(worldMatrix, {
+        min: [catalogBounds.min[0], catalogBounds.min[1], catalogBounds.min[2]],
+        max: [catalogBounds.max[0], catalogBounds.max[1], catalogBounds.max[2]],
+      }),
+    ]);
+    expect(bounds[0].min[0]).toBeCloseTo(64_999.245);
+    expect(bounds[0].max[1]).toBeCloseTo(5.4868311165);
+    expect(bounds[0].min[2]).toBeCloseTo(-70_000.9807735);
+  });
+
+  it("uses generated model metadata bounds through a far parent transform", () => {
+    const project = navigationTestProject(
+      "far-generated-metadata",
+      [
+        {
+          id: "generated-leaf",
+          label: "Generated model",
+          parentId: "far-parent",
+          position: [10_000, -5, 0],
+          scale: [2, 1, 3],
+          rotation: [0, 0, 0],
+          color: "#6ead60",
+          geometry: {
+            kind: "generated",
+            collision: "none",
+            detail: "refined",
+            job: {
+              backend: "browser-manifold",
+              recipe: {
+                version: 1,
+                revision: 0,
+                output: "body",
+                nodes: [{ id: "body", kind: "box", size: [1, 1, 1] }],
+              },
+            },
+            model: {
+              version: 1,
+              sha256: "a".repeat(64),
+              bytes: 100,
+              source: "browser-manifold",
+              kernelVersion: "3.3.2",
+              bounds: { min: [-2, -1, -4], max: [4, 3, 2] },
+              createdAt: "2026-09-12T00:00:00.000Z",
+            },
+          },
+          stage: "ready",
+        },
+      ],
+      [
+        {
+          id: "far-parent",
+          label: "Far parent",
+          position: [120_000, 0, -230_000],
+          rotation: [0, 0, 0],
+          scale: [2, 1, 1],
+        },
+      ],
+    );
+    const bounds = committedWorldNavigationBounds(project);
+
+    expect(bounds).toHaveLength(1);
+    expect(bounds[0].min).toEqual([139_992, -6, -230_012]);
+    expect(bounds[0].max).toEqual([140_016, -2, -229_994]);
   });
 
   it("frames the initial workspace when content is empty or invalid", () => {

@@ -62,7 +62,7 @@ const EMPTY_WORKSPACE_BOUNDS: WorldNavigationBounds = {
   min: [-10, -1, -10],
   max: [10, 4, 10],
 };
-const DEFAULT_DISTANCE = 24;
+export const WORLD_NAVIGATION_DEFAULT_DISTANCE = 24;
 const FRAME_MARGIN = 1.1;
 
 function clamp(value: number, low: number, high: number) {
@@ -104,7 +104,7 @@ function boundedTarget(target: WorldNavigationVec3): WorldNavigationVec3 {
 }
 
 function boundedDistance(distance: number): number {
-  if (Number.isNaN(distance)) return DEFAULT_DISTANCE;
+  if (Number.isNaN(distance)) return WORLD_NAVIGATION_DEFAULT_DISTANCE;
   return clamp(
     distance,
     WORLD_NAVIGATION_LIMITS.minDistance,
@@ -120,7 +120,9 @@ export function createWorldNavigationState(
     heading: Number.isFinite(initial.heading)
       ? normalizedHeading(initial.heading!)
       : 0,
-    distance: boundedDistance(initial.distance ?? DEFAULT_DISTANCE),
+    distance: boundedDistance(
+      initial.distance ?? WORLD_NAVIGATION_DEFAULT_DISTANCE,
+    ),
   };
 }
 

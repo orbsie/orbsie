@@ -42,7 +42,6 @@ import {
 import type { Entity, Project } from "@/lib/protocol";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import {
-  createWorldNavigationState,
   worldNavigationCameraPose,
   worldNavigationFarPlane,
   worldNavigationLandingLookTarget,
@@ -69,6 +68,7 @@ export type SoftwareGeometryEntry = {
 type SoftwareWorldProps = {
   navigation: WorldNavigationState;
   onReady?: () => void;
+  onNavigationReady?: () => void;
   onRendererReady?: (renderer?: "software") => void;
   onError?: (message: string) => void;
 };
@@ -568,6 +568,7 @@ function drawScene(
 export default function SoftwareWorld({
   navigation,
   onReady,
+  onNavigationReady,
   onRendererReady,
   onError,
 }: SoftwareWorldProps) {
@@ -651,14 +652,16 @@ export default function SoftwareWorld({
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
   const landingPose = useMemo(
-    () => worldNavigationCameraPose(createWorldNavigationState()),
-    [],
+    () => worldNavigationCameraPose(navigation),
+    [navigation],
   );
   const onReadyRef = useRef(onReady);
+  const onNavigationReadyRef = useRef(onNavigationReady);
   const onRendererReadyRef = useRef(onRendererReady);
   const onErrorRef = useRef(onError);
   const reviewProjectRef = useRef(project);
   const reviewPhaseRef = useRef(phase);
+  const navigationReadyNotified = useRef(false);
   const drawnRevisionRef = useRef<
     { projectId: string; revision: number } | undefined
   >(undefined);
@@ -675,6 +678,7 @@ export default function SoftwareWorld({
     notifySceneReviewCaptureChanged();
   }, []);
   onReadyRef.current = onReady;
+  onNavigationReadyRef.current = onNavigationReady;
   onRendererReadyRef.current = onRendererReady;
   onErrorRef.current = onError;
 
@@ -784,6 +788,8 @@ export default function SoftwareWorld({
   useLayoutEffect(() => {
     const firstMount = !transitionInitialized.current;
     const projectChanged = previousTransitionProjectId.current !== project.id;
+    if (projectChanged || phase === "landing" || phase === "descending")
+      navigationReadyNotified.current = false;
     const directWorkspace =
       phase === "editing" &&
       previousPhase.current === "landing" &&
@@ -1023,6 +1029,10 @@ export default function SoftwareWorld({
           transition.progress >= 1 &&
           initializedScene.current
         ) {
+          if (!navigationReadyNotified.current) {
+            navigationReadyNotified.current = true;
+            onNavigationReadyRef.current?.();
+          }
           const currentNavigation = navigationRef.current;
           const pose = worldNavigationCameraPose(currentNavigation);
           camera.position.set(...pose.position);

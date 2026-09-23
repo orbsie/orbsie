@@ -6,6 +6,7 @@ import {
   type ThreeEvent,
 } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, Stars } from "@react-three/drei";
+import { Minus, Plus, Scan } from "lucide-react";
 import {
   useEffect,
   useLayoutEffect,
@@ -59,13 +60,17 @@ import { isAssetId } from "@/lib/asset-catalog";
 import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
   createWorldNavigationState,
+  applyWorldNavigationCommand,
   worldNavigationCameraPose,
   worldNavigationFarPlane,
   worldNavigationLandingLookTarget,
   worldNavigationProjectState,
   WORLD_NAVIGATION_LIMITS,
   type WorldNavigationProjectState,
+  type WorldNavigationCommand,
+  WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
+import { committedWorldNavigationBounds } from "@/lib/world-navigation-bounds";
 import {
   entityGeometry,
   addFormationSource,
@@ -1210,10 +1215,12 @@ function Pebbles() {
 function Scene({
   onReady,
   onInputLatency,
+  onNavigationReady,
   navigation,
 }: {
   onReady?: () => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
+  onNavigationReady?: () => void;
   navigation: WorldNavigationProjectState["navigation"];
 }) {
   const session = useMemo(() => new GameSession(), []);
@@ -1395,9 +1402,10 @@ function Scene({
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
   const landingPose = useMemo(
-    () => worldNavigationCameraPose(createWorldNavigationState()),
-    [],
+    () => worldNavigationCameraPose(navigation),
+    [navigation],
   );
+  const navigationReadyNotified = useRef(false);
   const initializedScene = useRef(false);
   const previousProjectId = useRef(projectId);
   const previousPhase = useRef(phase);
@@ -1425,6 +1433,7 @@ function Scene({
     spin.current = parcelTransitionController.snapshot.spin;
     progress.current = parcelTransitionController.snapshot.progress;
     initialized.current = false;
+    navigationReadyNotified.current = false;
     notifySceneReviewCaptureChanged();
   }, [phase, projectId]);
   useEffect(() => parcelTransitionController.attachRenderer(), []);
@@ -1456,6 +1465,10 @@ function Scene({
       snapshot.progress >= 1 &&
       initialized.current
     ) {
+      if (!navigationReadyNotified.current) {
+        navigationReadyNotified.current = true;
+        onNavigationReady?.();
+      }
       const pose = worldNavigationCameraPose(navigation);
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
@@ -1656,6 +1669,94 @@ class Boundary extends Component<
     );
   }
 }
+
+function navigationZoomLabel(state: WorldNavigationProjectState["navigation"]) {
+  const percent = (WORLD_NAVIGATION_DEFAULT_DISTANCE / state.distance) * 100;
+  if (!Number.isFinite(percent) || percent < 0.01) return "<0.01%";
+  return `${percent >= 10 ? percent.toFixed(0) : percent.toFixed(1)}%`;
+}
+
+function WorldNavigationControls({
+  state,
+  notice,
+  enabled,
+  onCommand,
+  onFrame,
+}: {
+  state: WorldNavigationProjectState["navigation"];
+  notice: string;
+  enabled: boolean;
+  onCommand: (command: WorldNavigationCommand) => void;
+  onFrame: () => void;
+}) {
+  const headingDegrees = Math.round((state.heading * 180) / Math.PI) % 360;
+  const headingLabel = `${String(headingDegrees).padStart(3, "0")}°`;
+  const zoom = navigationZoomLabel(state);
+  return (
+    <div
+      className="world-navigation-controls"
+      role="group"
+      aria-label="World navigation"
+    >
+      <button
+        type="button"
+        aria-label={`Zoom in, currently ${zoom}`}
+        title={`Zoom in · ${zoom}`}
+        disabled={!enabled}
+        onClick={() => onCommand({ type: "zoom", factor: 0.8 })}
+      >
+        <Plus size={17} aria-hidden="true" />
+        <span>{zoom}</span>
+      </button>
+      <button
+        type="button"
+        aria-label={`Zoom out, currently ${zoom}`}
+        title={`Zoom out · ${zoom}`}
+        disabled={!enabled}
+        onClick={() => onCommand({ type: "zoom", factor: 1.25 })}
+      >
+        <Minus size={17} aria-hidden="true" />
+        <span>{zoom}</span>
+      </button>
+      <button
+        type="button"
+        className="world-navigation-compass"
+        aria-label={`Reset north. Current heading ${headingDegrees} degrees.`}
+        title={`Reset north · ${headingLabel}`}
+        disabled={!enabled}
+        onClick={() => onCommand({ type: "north_reset" })}
+      >
+        <svg
+          className="world-navigation-north-arrow"
+          viewBox="0 0 20 20"
+          style={{ transform: `rotate(${-headingDegrees}deg)` }}
+          aria-hidden="true"
+        >
+          <path d="M10 1 15.5 19 10 15.8 4.5 19 10 1Z" />
+        </svg>
+        <span>{headingLabel}</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Frame content"
+        title="Frame content"
+        disabled={!enabled}
+        onClick={onFrame}
+      >
+        <Scan size={16} aria-hidden="true" />
+        <span>Frame</span>
+      </button>
+      <span
+        className="world-navigation-notice"
+        role="status"
+        aria-live="polite"
+      >
+        {notice}
+      </span>
+    </div>
+  );
+}
+
 export default function World({
   onReady,
   onRendererReady,
@@ -1671,19 +1772,75 @@ export default function World({
   onRendererFallback?: (message: string) => void;
   rendererRetryToken?: number;
 } = {}) {
-  const projectId = useOrb((state) => state.project.id);
+  const project = useOrb((state) => state.project);
+  const projectId = project.id;
+  const phase = useOrb((state) => state.phase);
   const [navigationProject, setNavigationProject] = useState(() =>
     worldNavigationProjectState(projectId),
   );
+  const navigationProjectRef = useRef(navigationProject);
+  navigationProjectRef.current = navigationProject;
   const navigation =
     navigationProject.projectId === projectId
       ? navigationProject.navigation
       : createWorldNavigationState();
+  const [navigationNotice, setNavigationNotice] = useState("");
+  const [navigationReady, setNavigationReady] = useState(false);
   useLayoutEffect(() => {
-    setNavigationProject((previous) =>
-      worldNavigationProjectState(projectId, previous),
-    );
-  }, [projectId]);
+    if (
+      phase === "landing" ||
+      phase === "descending" ||
+      navigationProjectRef.current.projectId !== projectId
+    ) {
+      setNavigationReady(false);
+      setNavigationNotice("");
+    }
+    setNavigationProject((previous) => {
+      const next = worldNavigationProjectState(projectId, previous);
+      navigationProjectRef.current = next;
+      return next;
+    });
+  }, [phase, projectId]);
+  const dispatchNavigation = useCallback(
+    (command: WorldNavigationCommand) => {
+      const current = worldNavigationProjectState(
+        projectId,
+        navigationProjectRef.current,
+      );
+      try {
+        const next = {
+          ...current,
+          navigation: applyWorldNavigationCommand(current.navigation, command),
+        };
+        navigationProjectRef.current = next;
+        setNavigationProject(next);
+        setNavigationNotice("");
+      } catch {
+        setNavigationNotice(
+          command.type === "frame_content"
+            ? "World content is too large to fit in the supported zoom range."
+            : "Navigation could not be applied.",
+        );
+      }
+    },
+    [projectId],
+  );
+  const frameNavigation = useCallback(() => {
+    const currentProject = useOrb.getState().project;
+    const viewportAspect =
+      typeof window === "undefined"
+        ? 1
+        : window.innerWidth / Math.max(1, window.innerHeight);
+    dispatchNavigation({
+      type: "frame_content",
+      committedEntityBounds: committedWorldNavigationBounds(currentProject),
+      viewportAspect,
+      verticalFovRadians: (43 * Math.PI) / 180,
+    });
+  }, [dispatchNavigation]);
+  const notifyNavigationReady = useCallback(() => {
+    setNavigationReady(true);
+  }, []);
   const [failedAttempt, setFailedAttempt] = useState<number | null>(null);
   const [softwareFailedAttempt, setSoftwareFailedAttempt] = useState<
     number | null
@@ -1701,6 +1858,7 @@ export default function World({
     if (attemptRef.current !== attempt || failedAttemptRef.current === attempt)
       return;
     failedAttemptRef.current = attempt;
+    setNavigationReady(false);
     setFailedAttempt(attempt);
     onRendererFallback?.(message);
   };
@@ -1733,56 +1891,75 @@ export default function World({
   // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
   // adaptation so typing and scene revisions cannot restore full resolution.
   const [renderDpr, setRenderDpr] = useState(1);
+  let renderer: ReactNode;
   if (failedAttempt === attempt) {
     if (softwareFailedAttempt === attempt)
-      return onError ? null : <Unavailable />;
-    return (
-      <Boundary key={`software-${attempt}`} onError={notifySoftwareFailure}>
-        <SoftwareWorld
-          navigation={navigation}
-          onReady={notifySceneReady}
-          onRendererReady={() => notifyRendererReady("software")}
-          onError={notifySoftwareFailure}
-        />
+      renderer = onError ? null : <Unavailable />;
+    else
+      renderer = (
+        <Boundary key={`software-${attempt}`} onError={notifySoftwareFailure}>
+          <SoftwareWorld
+            navigation={navigation}
+            onReady={notifySceneReady}
+            onRendererReady={() => notifyRendererReady("software")}
+            onError={notifySoftwareFailure}
+            onNavigationReady={notifyNavigationReady}
+          />
+        </Boundary>
+      );
+  } else {
+    renderer = (
+      <Boundary key={attempt} onError={notifyPrimaryFailure}>
+        <Canvas
+          key={attempt}
+          shadows={{ type: THREE.PCFShadowMap }}
+          dpr={renderDpr}
+          camera={{ position: [0, 1.8, 10.4], fov: 43, near: 0.1, far: 250 }}
+          gl={(defaults) => {
+            try {
+              return new THREE.WebGLRenderer({
+                ...defaults,
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance",
+              });
+            } catch (error) {
+              // R3F configures the renderer asynchronously, outside the
+              // error boundary. Report construction failure here.
+              notifyPrimaryFailure(webglUnavailableMessage);
+              throw error;
+            }
+          }}
+          fallback={<CanvasFallback />}
+          onCreated={() => notifyRendererReady("webgl")}
+          onPointerMissed={() => {
+            if (!useOrb.getState().playing)
+              useOrb.getState().set({ selected: undefined });
+          }}
+        >
+          <AdaptiveResolution onChange={setRenderDpr} />
+          <Scene
+            navigation={navigation}
+            onReady={notifySceneReady}
+            onInputLatency={onInputLatency}
+            onNavigationReady={notifyNavigationReady}
+          />
+        </Canvas>
       </Boundary>
     );
   }
   return (
-    <Boundary key={attempt} onError={notifyPrimaryFailure}>
-      <Canvas
-        key={attempt}
-        shadows={{ type: THREE.PCFShadowMap }}
-        dpr={renderDpr}
-        camera={{ position: [0, 1.8, 10.4], fov: 43, near: 0.1, far: 250 }}
-        gl={(defaults) => {
-          try {
-            return new THREE.WebGLRenderer({
-              ...defaults,
-              antialias: true,
-              alpha: true,
-              powerPreference: "high-performance",
-            });
-          } catch (error) {
-            // R3F configures the renderer asynchronously, outside React's
-            // error boundary. Report the actual construction failure here.
-            notifyPrimaryFailure(webglUnavailableMessage);
-            throw error;
-          }
-        }}
-        fallback={<CanvasFallback />}
-        onCreated={() => notifyRendererReady("webgl")}
-        onPointerMissed={() => {
-          if (!useOrb.getState().playing)
-            useOrb.getState().set({ selected: undefined });
-        }}
-      >
-        <AdaptiveResolution onChange={setRenderDpr} />
-        <Scene
-          navigation={navigation}
-          onReady={notifySceneReady}
-          onInputLatency={onInputLatency}
+    <>
+      {phase === "editing" && softwareFailedAttempt !== attempt && (
+        <WorldNavigationControls
+          state={navigation}
+          notice={navigationNotice}
+          enabled={navigationReady}
+          onCommand={dispatchNavigation}
+          onFrame={frameNavigation}
         />
-      </Canvas>
-    </Boundary>
+      )}
+      {renderer}
+    </>
   );
 }
