@@ -5,6 +5,11 @@ import { resolveRuntimeScene } from "./scene-runtime";
 import { transformBounds, type LocalBounds } from "./scene-transform";
 import type { WorldNavigationBounds } from "./world-navigation";
 
+export type WorldNavigationEntityBounds = ReadonlyMap<
+  string,
+  WorldNavigationBounds | undefined
+>;
+
 function normalizedBounds(
   min: readonly number[],
   max: readonly number[],
@@ -52,6 +57,53 @@ function localEntityBounds(entity: Entity): LocalBounds | undefined {
   }
 }
 
+function movingWorldBounds(
+  entity: Entity,
+  bounds: WorldNavigationBounds,
+): WorldNavigationBounds {
+  if (entity.stage !== "ready" || entity.behavior?.type !== "move")
+    return bounds;
+  const amplitude = entity.behavior.amplitude ?? 0.5;
+  const axis = entity.behavior.axis ?? "y";
+  const axisIndex = axis === "x" ? 0 : axis === "y" ? 1 : 2;
+  const min = [...bounds.min] as [number, number, number];
+  const max = [...bounds.max] as [number, number, number];
+  min[axisIndex] -= amplitude;
+  max[axisIndex] += amplitude;
+  return { min, max };
+}
+
+/**
+ * Resolve drawable bounds for every entity stage. Entries with unknown or
+ * invalid bounds are kept in the map with `undefined` so visibility callers
+ * can conservatively leave those entities drawable.
+ */
+export function worldNavigationBoundsByEntity(
+  project: Project,
+): WorldNavigationEntityBounds {
+  const boundsByEntity = new Map<string, WorldNavigationBounds | undefined>(
+    project.entities.map((entity) => [entity.id, undefined]),
+  );
+  try {
+    const scene = resolveRuntimeScene(project);
+    for (const entity of project.entities) {
+      const worldMatrix = scene.entities.get(entity.id)?.worldMatrix;
+      if (!worldMatrix) continue;
+      try {
+        const local = localEntityBounds(entity);
+        if (!local) continue;
+        const world = transformBounds(worldMatrix, local);
+        boundsByEntity.set(entity.id, movingWorldBounds(entity, world));
+      } catch {
+        // Keep unknown geometry conservatively drawable.
+      }
+    }
+  } catch {
+    // Invalid graph data leaves every entity conservatively visible.
+  }
+  return boundsByEntity;
+}
+
 /** Resolve committed ready-entity bounds through their complete group transforms. */
 export function committedWorldNavigationBounds(
   project: Project,
@@ -65,11 +117,10 @@ export function committedWorldNavigationBounds(
       if (!worldMatrix) continue;
       try {
         const local = localEntityBounds(entity);
-        if (!local) continue;
-        bounds.push(transformBounds(worldMatrix, local));
+        if (local) bounds.push(transformBounds(worldMatrix, local));
       } catch {
-        // Ignore corrupt metadata or an unusable entity. The navigation
-        // command will return to the default view if none remain.
+        // Ignore invalid geometry for framing; this preserves the prior
+        // ready-only frame-content behavior.
       }
     }
     return bounds;
