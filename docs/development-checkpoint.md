@@ -8,8 +8,9 @@ or remembered connection, using a database-time exact epoch/placeholder
 comparison. A real PostgreSQL/service regression covers fresh and claimed
 attempts, remembered credentials, restart and old-epoch callback refusal.
 Worker 23 focused unit tests and two PostgreSQL cases passed; root reviewed
-the diff and production build/TypeScript/format checks passed. This follow-up
-is local only until a separate production deployment; no live model call.
+the diff and production build/TypeScript/format checks passed. Commit `faf6c48`
+was deployed as `dpl_Bs1Sgzyuyc6i39mcVFW4uQMfnHF8`; Vercel CLI reported
+Ready and the `orbsie.com` alias. No live model call or browser acceptance.
 
 Sep 22 expired ChatGPT challenge repair accepted locally: a real PostgreSQL
 reproduction confirmed that status hid the expired host while its bound owner
