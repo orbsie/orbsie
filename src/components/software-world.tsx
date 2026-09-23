@@ -40,6 +40,11 @@ import {
   type FormationTextureSample,
 } from "@/lib/formation-particles";
 import type { Entity, Project } from "@/lib/protocol";
+import {
+  worldNavigationBoundsByEntity,
+  type WorldNavigationEntityBounds,
+} from "@/lib/world-navigation-bounds";
+import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import {
   worldNavigationCameraPose,
@@ -286,6 +291,115 @@ type SoftwareFace = {
   color: string;
   depth: number;
 };
+
+type SoftwareVisibilityCache = {
+  project?: Project;
+  revision?: number;
+  boundsByEntity: WorldNavigationEntityBounds;
+  visibleEntityIds?: ReadonlySet<string>;
+  target: [number, number, number];
+  heading: number;
+  distance: number;
+  width: number;
+  height: number;
+  cameraWorld: number[];
+  projection: number[];
+};
+
+/** Whether a projected object center can be reached by a canvas pick. */
+export function softwarePickCenterIsVisible(
+  center: Readonly<{ x: number; y: number; z: number }>,
+  width: number,
+  height: number,
+): boolean {
+  return (
+    Number.isFinite(width) &&
+    width > 0 &&
+    Number.isFinite(height) &&
+    height > 0 &&
+    Number.isFinite(center.x) &&
+    Number.isFinite(center.y) &&
+    Number.isFinite(center.z) &&
+    center.x >= 0 &&
+    center.x <= width &&
+    center.y >= 0 &&
+    center.y <= height &&
+    center.z >= -1 &&
+    center.z <= 1
+  );
+}
+
+/** Keep the gameplay and transition draw paths uncullled. */
+export function softwareEntityPassesVisibility(
+  entityId: string,
+  visibleEntityIds?: ReadonlySet<string>,
+): boolean {
+  return visibleEntityIds === undefined || visibleEntityIds.has(entityId);
+}
+
+function sameMatrixSnapshot(
+  snapshot: number[],
+  matrix: THREE.Matrix4,
+): boolean {
+  const values = matrix.elements;
+  if (snapshot.length !== values.length) return false;
+  for (let index = 0; index < values.length; index++)
+    if (snapshot[index] !== values[index]) return false;
+  return true;
+}
+
+function visibleEntitiesForSettledWorkspace(
+  cache: SoftwareVisibilityCache,
+  project: Project,
+  navigation: WorldNavigationState,
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): ReadonlySet<string> {
+  const projectChanged =
+    cache.project !== project || cache.revision !== project.revision;
+  if (projectChanged) {
+    cache.project = project;
+    cache.revision = project.revision;
+    try {
+      cache.boundsByEntity = worldNavigationBoundsByEntity(project);
+    } catch {
+      cache.boundsByEntity = new Map(
+        project.entities.map((entity) => [entity.id, undefined]),
+      );
+    }
+    cache.visibleEntityIds = undefined;
+  }
+  const [targetX, targetY, targetZ] = navigation.target;
+  const cameraChanged =
+    cache.visibleEntityIds === undefined ||
+    cache.target[0] !== targetX ||
+    cache.target[1] !== targetY ||
+    cache.target[2] !== targetZ ||
+    cache.heading !== navigation.heading ||
+    cache.distance !== navigation.distance ||
+    cache.width !== width ||
+    cache.height !== height ||
+    !sameMatrixSnapshot(cache.cameraWorld, camera.matrixWorld) ||
+    !sameMatrixSnapshot(cache.projection, camera.projectionMatrix);
+  if (cameraChanged) {
+    cache.visibleEntityIds = selectVisibleWorldEntityIds(
+      project.entities,
+      cache.boundsByEntity,
+      camera,
+    );
+    cache.target = [targetX, targetY, targetZ];
+    cache.heading = navigation.heading;
+    cache.distance = navigation.distance;
+    cache.width = width;
+    cache.height = height;
+    cache.cameraWorld = [...camera.matrixWorld.elements];
+    cache.projection = [...camera.projectionMatrix.elements];
+  }
+  return (
+    cache.visibleEntityIds ?? new Set(project.entities.map(({ id }) => id))
+  );
+}
 
 export type SoftwareTerrainScreenPoint = Readonly<{ x: number; y: number }>;
 
@@ -541,8 +655,10 @@ function drawEntity(
     width,
     height,
   );
-  pick.push({ id: entity.id, x: center.x, y: center.y, radius: 32 });
-  if (selected || entity.behavior?.type === "portal")
+  const visibleCenter = softwarePickCenterIsVisible(center, width, height);
+  if (visibleCenter)
+    pick.push({ id: entity.id, x: center.x, y: center.y, radius: 32 });
+  if (visibleCenter && (selected || entity.behavior?.type === "portal"))
     markers.push({ entity, point: center });
 }
 
@@ -698,6 +814,7 @@ function drawScene(
   settledWorkspace: boolean,
   navigation: WorldNavigationState,
   terrainCache: TerrainChunkSelectionCache,
+  visibilityCache: SoftwareVisibilityCache,
 ) {
   const width = canvas.clientWidth || 1;
   const height = canvas.clientHeight || 1;
@@ -759,7 +876,19 @@ function drawScene(
   const faces: SoftwareFace[] = [];
   const markers: SoftwareMarker[] = [];
   const playing = useOrb.getState().playing;
+  const visibleEntityIds =
+    settledWorkspace && !playing
+      ? visibleEntitiesForSettledWorkspace(
+          visibilityCache,
+          project,
+          navigation,
+          camera,
+          width,
+          height,
+        )
+      : undefined;
   for (const entity of project.entities) {
+    if (!softwareEntityPassesVisibility(entity.id, visibleEntityIds)) continue;
     const effective = playing ? session.effectiveEntity(entity) : entity;
     if (!effective) continue;
     const entry = geometries.get(entity.id);
@@ -901,6 +1030,16 @@ export default function SoftwareWorld({
     distance: Number.NaN,
     aspect: Number.NaN,
     chunks: [],
+  });
+  const visibilityCacheRef = useRef<SoftwareVisibilityCache>({
+    boundsByEntity: new Map(),
+    target: [Number.NaN, Number.NaN, Number.NaN],
+    heading: Number.NaN,
+    distance: Number.NaN,
+    width: Number.NaN,
+    height: Number.NaN,
+    cameraWorld: [],
+    projection: [],
   });
   const generationRef = useRef(-1);
   const previousReset = useRef(reset);
@@ -1352,6 +1491,7 @@ export default function SoftwareWorld({
             initializedScene.current,
           navigationRef.current,
           terrainCacheRef.current,
+          visibilityCacheRef.current,
         );
         const drawnProject = drawnRevisionRef.current;
         if (

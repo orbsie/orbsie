@@ -5,9 +5,13 @@ import {
   playableEntities,
   projectSoftwareTerrainChunk,
   requiredGeometryReady,
+  softwareEntityPassesVisibility,
+  softwarePickCenterIsVisible,
   type SoftwareGeometryEntry,
 } from "../src/components/software-world";
 import { entitySchema, type Project } from "../src/lib/protocol";
+import type { WorldNavigationEntityBounds } from "../src/lib/world-navigation-bounds";
+import { selectVisibleWorldEntityIds } from "../src/lib/world-visibility";
 
 const project = (entities: Project["entities"]) => ({ entities }) as Project;
 
@@ -152,5 +156,50 @@ describe("software ground chunk projection", () => {
     expect(
       projectSoftwareTerrainChunk({ lod: 0, x: 0, z: -1 }, camera, 0, 844),
     ).toBeUndefined();
+  });
+});
+
+describe("software visibility and picking", () => {
+  it("gates settled draw work by the shared frustum while leaving gameplay uncullled", () => {
+    const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
+    camera.position.set(0, 12, 24);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+    const entities = [
+      { id: "visible" },
+      { id: "offscreen" },
+      { id: "unknown" },
+    ];
+    const boundsByEntity: WorldNavigationEntityBounds = new Map([
+      ["visible", { min: [-1, -1, -1], max: [1, 1, 1] }],
+      ["offscreen", { min: [99, -1, -31], max: [101, 1, -29] }],
+      ["unknown", undefined],
+    ]);
+    const visible = selectVisibleWorldEntityIds(
+      entities,
+      boundsByEntity,
+      camera,
+    );
+
+    expect(visible.has("visible")).toBe(true);
+    expect(visible.has("offscreen")).toBe(false);
+    expect(visible.has("unknown")).toBe(true);
+    expect(softwareEntityPassesVisibility("offscreen", visible)).toBe(false);
+    expect(softwareEntityPassesVisibility("offscreen")).toBe(true);
+  });
+
+  it("rejects offscreen, behind-camera, and nonfinite software pick centers", () => {
+    const center = { x: 120, y: 240, z: 0 };
+    expect(softwarePickCenterIsVisible(center, 390, 844)).toBe(true);
+    expect(softwarePickCenterIsVisible({ x: -1, y: 240, z: 0 }, 390, 844)).toBe(
+      false,
+    );
+    expect(
+      softwarePickCenterIsVisible({ x: 120, y: 240, z: 1.1 }, 390, 844),
+    ).toBe(false);
+    expect(
+      softwarePickCenterIsVisible({ x: Number.NaN, y: 240, z: 0 }, 390, 844),
+    ).toBe(false);
   });
 });
