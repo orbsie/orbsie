@@ -4,10 +4,12 @@ Local implementation and synthetic acceptance completed on 2026-09-22. The
 PostgreSQL regression confirmed the bound stale intent as the 409 cause and
 proved fenced replacement; 57 focused tests, the synthetic browser fixture,
 the full suite and production build passed. Evidence is in
-`docs/evidence/chatgpt-expired-challenge-recovery-20260922/`. Live deployment,
-consent and connected model discovery are still open. Computer use later
-rejected the Orbsie Chrome tab under its browser URL policy, so do not treat
-the synthetic code as a live verification code or bypass that browser block.
+`docs/evidence/chatgpt-expired-challenge-recovery-20260922/`. Production
+deployment `dpl_43oGviYEL27i59V2scKEF9s6s8Sk` is Ready and aliased to
+`orbsie.com`; consent and connected model discovery are still open. Computer
+use later rejected the Orbsie Chrome tab under its browser URL policy, so do
+not treat the synthetic code as a live verification code or bypass that browser
+block.
 
 The owner approved connecting Orbsie to the signed-in ChatGPT account in regular
 Chrome on 2026-09-22. The previously issued device challenge had disappeared
