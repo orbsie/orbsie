@@ -8,8 +8,16 @@ import {
   requiredGeometryReady,
   softwareEntityPassesVisibility,
   softwarePickCenterIsVisible,
+  terrainChunksForView,
+  type TerrainChunkSelectionCache,
   type SoftwareGeometryEntry,
 } from "../src/components/software-world";
+import {
+  createWorldNavigationState,
+  worldNavigationFollowState,
+  type WorldNavigationState,
+} from "../src/lib/world-navigation";
+import { worldTerrainChunkKeyAt } from "../src/lib/world-terrain";
 import { entitySchema, type Project } from "../src/lib/protocol";
 import type { WorldNavigationEntityBounds } from "../src/lib/world-navigation-bounds";
 import { selectVisibleWorldEntityIds } from "../src/lib/world-visibility";
@@ -157,6 +165,130 @@ describe("software ground chunk projection", () => {
     expect(
       projectSoftwareTerrainChunk({ lod: 0, x: 0, z: -1 }, camera, 0, 844),
     ).toBeUndefined();
+  });
+});
+
+describe("software gameplay terrain follow", () => {
+  const cache = (): TerrainChunkSelectionCache => ({
+    selectionKey: undefined,
+    chunks: [],
+  });
+
+  it("recenters terrain for far player travel, caches within a cell, and restores the editor view", () => {
+    const editorNavigation = createWorldNavigationState({
+      target: [160, 2, -230],
+      heading: 1.1,
+      distance: 24,
+    });
+    const editorSnapshot = JSON.stringify(editorNavigation);
+    const terrainCache = cache();
+    const editorChunks = terrainChunksForView(
+      terrainCache,
+      editorNavigation,
+      390 / 844,
+    );
+    const distantPosition = [65_430, 0.5, -72_190] as const;
+    const follow = worldNavigationFollowState(
+      editorNavigation,
+      distantPosition,
+    );
+    const followedChunks = terrainChunksForView(
+      terrainCache,
+      follow,
+      390 / 844,
+    );
+
+    expect(follow.target).toEqual(distantPosition);
+    expect(followedChunks).not.toBe(editorChunks);
+    expect(followedChunks).toHaveLength(49);
+    const center = followedChunks[24];
+    expect(center).toEqual(
+      worldTerrainChunkKeyAt(
+        distantPosition[0],
+        distantPosition[2],
+        center.lod,
+      ),
+    );
+
+    const sameCellPosition = [65_431, 3.5, -72_191] as const;
+    const withinCell = worldNavigationFollowState(
+      editorNavigation,
+      sameCellPosition,
+    );
+    expect(terrainChunksForView(terrainCache, withinCell, 390 / 844)).toBe(
+      followedChunks,
+    );
+
+    const nextCellPosition = [65_500, 3.5, -72_250] as const;
+    const nextCell = worldNavigationFollowState(
+      editorNavigation,
+      nextCellPosition,
+    );
+    const movedChunks = terrainChunksForView(terrainCache, nextCell, 390 / 844);
+    expect(movedChunks).not.toBe(followedChunks);
+    expect(movedChunks[24]).toEqual(
+      worldTerrainChunkKeyAt(
+        nextCellPosition[0],
+        nextCellPosition[2],
+        movedChunks[24].lod,
+      ),
+    );
+
+    const restoredChunks = terrainChunksForView(
+      terrainCache,
+      editorNavigation,
+      390 / 844,
+    );
+    expect(restoredChunks[24]).toEqual(
+      worldTerrainChunkKeyAt(
+        editorNavigation.target[0],
+        editorNavigation.target[2],
+        restoredChunks[24].lod,
+      ),
+    );
+    expect(JSON.stringify(editorNavigation)).toBe(editorSnapshot);
+  });
+
+  it("uses conservative height buckets and safely caches invalid follow input", () => {
+    const editorNavigation = createWorldNavigationState({
+      target: [0, 0, 0],
+      distance: 24,
+    });
+    const terrainCache = cache();
+    const atSpawnHeight = worldNavigationFollowState(
+      editorNavigation,
+      [0, 0.5, 5],
+    );
+    const first = terrainChunksForView(terrainCache, atSpawnHeight, 1);
+    const belowBucketEdge = worldNavigationFollowState(
+      editorNavigation,
+      [0, 3.9, 5],
+    );
+    expect(terrainChunksForView(terrainCache, belowBucketEdge, 1)).toBe(first);
+
+    const aboveBucketEdge = worldNavigationFollowState(
+      editorNavigation,
+      [0, 4.1, 5],
+    );
+    expect(terrainChunksForView(terrainCache, aboveBucketEdge, 1)).not.toBe(
+      first,
+    );
+
+    const invalidFollow = worldNavigationFollowState(editorNavigation, [
+      Number.NaN,
+      0,
+      0,
+    ]);
+    expect(invalidFollow.target).toEqual(editorNavigation.target);
+    const invalidCamera = {
+      ...editorNavigation,
+      target: [Number.NaN, 0, 0] as WorldNavigationState["target"],
+    };
+    const invalidChunks = terrainChunksForView(terrainCache, invalidCamera, 1);
+    expect(invalidChunks).toEqual([]);
+    expect(terrainChunksForView(terrainCache, invalidCamera, 1)).toBe(
+      invalidChunks,
+    );
   });
 });
 

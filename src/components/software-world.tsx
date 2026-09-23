@@ -49,6 +49,7 @@ import { parcelTransitionController } from "@/lib/parcel-transition";
 import {
   worldNavigationCameraPose,
   worldNavigationFarPlane,
+  worldNavigationFollowState,
   worldNavigationLandingLookTarget,
   type WorldNavigationState,
 } from "@/lib/world-navigation";
@@ -56,6 +57,7 @@ import type { WorldNavigationCommand } from "@/lib/world-navigation";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
   selectWorldTerrainChunks,
+  worldTerrainChunkKeyAt,
   worldTerrainChunkSize,
   worldTerrainGroundViewRadius,
   type WorldTerrainChunkKey,
@@ -806,37 +808,39 @@ export function requiredGeometryReady(
   });
 }
 
-type TerrainChunkSelectionCache = {
-  focusX: number;
-  focusY: number;
-  focusZ: number;
-  distance: number;
-  aspect: number;
+export type TerrainChunkSelectionCache = {
+  selectionKey: string | undefined;
   chunks: readonly WorldTerrainChunkKey[];
 };
 
-function terrainChunksForView(
+export function terrainChunksForView(
   cache: TerrainChunkSelectionCache,
   navigation: WorldNavigationState,
   aspect: number,
 ): readonly WorldTerrainChunkKey[] {
   const [focusX, focusY, focusZ] = navigation.target;
-  if (
-    cache.focusX === focusX &&
-    cache.focusY === focusY &&
-    cache.focusZ === focusZ &&
-    cache.distance === navigation.distance &&
-    cache.aspect === aspect
-  )
-    return cache.chunks;
-  cache.focusX = focusX;
-  cache.focusY = focusY;
-  cache.focusZ = focusZ;
-  cache.distance = navigation.distance;
-  cache.aspect = aspect;
+  let selectionKey: string;
+  let terrainFocus: WorldNavigationState["target"];
+  try {
+    const baseCell = worldTerrainChunkKeyAt(focusX, focusZ, 0);
+    const heightBucket = Math.ceil(focusY / 4);
+    terrainFocus = [focusX, heightBucket * 4, focusZ];
+    selectionKey = [
+      baseCell.x,
+      baseCell.z,
+      heightBucket,
+      navigation.distance,
+      aspect,
+    ].join(":");
+  } catch {
+    selectionKey = `invalid:${[focusX, focusY, focusZ, navigation.distance, aspect].join(":")}`;
+    terrainFocus = [Number.NaN, Number.NaN, Number.NaN];
+  }
+  if (cache.selectionKey === selectionKey) return cache.chunks;
+  cache.selectionKey = selectionKey;
   try {
     cache.chunks = selectWorldTerrainChunks({
-      focus: navigation.target,
+      focus: terrainFocus,
       distance: navigation.distance,
       aspect,
     });
@@ -1099,11 +1103,7 @@ export default function SoftwareWorld({
   const rendererReady = useRef(false);
   const picksRef = useRef<PickedEntity[]>([]);
   const terrainCacheRef = useRef<TerrainChunkSelectionCache>({
-    focusX: Number.NaN,
-    focusY: Number.NaN,
-    focusZ: Number.NaN,
-    distance: Number.NaN,
-    aspect: Number.NaN,
+    selectionKey: undefined,
     chunks: [],
   });
   const visibilityCacheRef = useRef<SoftwareVisibilityCache>({
@@ -1483,6 +1483,13 @@ export default function SoftwareWorld({
             });
           }
         } else inputRef.current.clear();
+        const savedNavigation = navigationRef.current;
+        const activeNavigation = current.playing
+          ? worldNavigationFollowState(
+              savedNavigation,
+              playerRef.current.position,
+            )
+          : savedNavigation;
         const target = currentPhase === "landing" ? 0 : 1;
         parcelTransitionController.setTarget(target);
         const transition = parcelTransitionController.step(delta, reduced());
@@ -1512,8 +1519,7 @@ export default function SoftwareWorld({
             navigationReadyNotified.current = true;
             onNavigationReadyRef.current?.();
           }
-          const currentNavigation = navigationRef.current;
-          const pose = worldNavigationCameraPose(currentNavigation);
+          const pose = worldNavigationCameraPose(activeNavigation);
           camera.position.set(...pose.position);
           camera.lookAt(...pose.target);
           let groundFar = 0;
@@ -1521,18 +1527,18 @@ export default function SoftwareWorld({
             const aspect =
               (canvas.clientWidth || 1) / Math.max(1, canvas.clientHeight || 1);
             groundFar =
-              currentNavigation.distance +
+              activeNavigation.distance +
               worldTerrainGroundViewRadius(
-                currentNavigation.distance,
+                activeNavigation.distance,
                 aspect,
-                currentNavigation.target[1],
+                activeNavigation.target[1],
               );
           } catch {
             // Keep the navigation far plane if the viewport cannot be used by
             // terrain selection; the renderer remains available regardless.
           }
           const far = Math.max(
-            worldNavigationFarPlane(currentNavigation),
+            worldNavigationFarPlane(activeNavigation),
             groundFar * 1.01,
           );
           if (camera.far !== far) {
@@ -1564,7 +1570,7 @@ export default function SoftwareWorld({
             transition.settled &&
             transition.progress >= 1 &&
             initializedScene.current,
-          navigationRef.current,
+          activeNavigation,
           terrainCacheRef.current,
           visibilityCacheRef.current,
         );
