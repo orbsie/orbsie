@@ -3,6 +3,11 @@ import { fixtureEntities } from "../src/lib/fixtures";
 import type { Entity } from "../src/lib/protocol";
 import { requireCatalogAsset } from "../src/lib/asset-catalog";
 import {
+  createGameProgramState,
+  stepGameProgram,
+  type GameProgram,
+} from "../src/lib/game-program";
+import {
   movingEntityPosition,
   stepGameplay,
   type PlayerState,
@@ -15,6 +20,83 @@ const player = (position: [number, number, number]): PlayerState => ({
 });
 
 describe("gameplay runtime", () => {
+  it("allows walking past the former circular parcel edge", () => {
+    const result = stepGameplay(
+      player([8.4, 0.42, 0]),
+      { x: 1, z: 0, jump: false },
+      [],
+      [],
+      0,
+      0.04,
+    );
+
+    expect(result.position[0]).toBeCloseTo(8.56);
+    expect(Math.hypot(result.position[0], result.position[2])).toBeGreaterThan(
+      8.4,
+    );
+  });
+
+  it("runs a far game path and collects and wins beyond the former edge", () => {
+    const program: GameProgram = {
+      variables: [],
+      rules: [
+        {
+          id: "send-collectible-farther",
+          trigger: { type: "start" },
+          conditions: [],
+          actions: [
+            {
+              type: "move_path",
+              entityId: "far-crystal",
+              points: [
+                [12_000, 0.8, 0],
+                [14_000, 0.8, 0],
+              ],
+              duration: 1,
+              loop: false,
+            },
+          ],
+        },
+      ],
+    };
+    const initial = createGameProgramState(program);
+    const started = stepGameProgram(program, initial, { type: "start" });
+    const halfway = stepGameProgram(program, started, {
+      type: "tick",
+      delta: 0.5,
+    });
+    const pathPosition = halfway.entityOverrides["far-crystal"]?.position;
+    expect(pathPosition).toEqual([13_000, 0.8, 0]);
+    expect(Math.hypot(pathPosition![0], pathPosition![2])).toBeGreaterThan(8.4);
+
+    const crystal = fixtureEntities().find(
+      (entity) => entity.behavior?.type === "collect",
+    )!;
+    const collectible: Entity = {
+      ...crystal,
+      id: "far-crystal",
+      position: [...pathPosition!],
+    };
+    const portal: Entity = {
+      ...crystal,
+      id: "far-portal",
+      label: "Far portal",
+      position: [...pathPosition!],
+      behavior: { type: "portal" },
+    };
+    const result = stepGameplay(
+      player([pathPosition![0], 0.42, pathPosition![2]]),
+      idle,
+      [collectible, portal],
+      [],
+      halfway.elapsed,
+      0.016,
+    );
+
+    expect(result.collected).toContain("far-crystal");
+    expect(result.won).toBe(true);
+  });
+
   it.each([
     [-2, 1, 2],
     [2, 1, -2],

@@ -51,6 +51,28 @@ describe("creative and playable authoring prompt", () => {
     );
   });
 
+  it("allows horizontal worlds while preserving explicit bounded game spaces", () => {
+    const prompt = systemPromptForCapabilities();
+    expect(prompt).toContain(
+      "default ground extends in every horizontal direction",
+    );
+    expect(prompt).toContain(
+      "Create a bounded island, walls, cliffs, or other barriers only when the user or game concept explicitly calls for them",
+    );
+    expect(prompt).toContain(
+      "Treat authored islands and barriers as visual geometry unless a supported interaction mechanic provides the requested behavior; do not imply or rely on physical containment from them",
+    );
+    expect(prompt).toContain(
+      "Entity and group position components may use finite parent-local coordinates from -1,000,000 to 1,000,000 meters",
+    );
+    expect(prompt).toContain("Use at most 70 objects");
+    expect(prompt).toContain(
+      "local custom-part positions, scales, and rotations",
+    );
+    expect(prompt).not.toContain("island has radius 8");
+    expect(prompt).not.toContain("Keep all objects on the island");
+  });
+
   it.each(
     formats.flatMap((outputFormat) =>
       [false, true].flatMap((localModeling) =>

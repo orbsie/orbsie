@@ -388,12 +388,6 @@ export function stepGameplay(
     supportTop = undefined;
   }
 
-  const radius = Math.hypot(position[0], position[2]);
-  if (radius > 8.4) {
-    position[0] *= 8.4 / radius;
-    position[2] *= 8.4 / radius;
-  }
-
   const collected = [...collectedBefore];
   for (const entity of entities) {
     if (

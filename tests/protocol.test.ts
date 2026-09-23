@@ -6,6 +6,7 @@ import {
   generatedGeometrySchema,
   commandSchema,
   committed,
+  MAX_SCENE_POSITION,
   projectSchema,
   type Command,
   type Cursor,
@@ -253,6 +254,176 @@ describe("scene protocol", () => {
       expect(shared.messages).toEqual([]);
     }
   });
+});
+it("keeps far entity and group positions through v1 project serialization", () => {
+  let { project, cursor } = setup();
+  const apply = (command: Command) => {
+    const result = applyOperation(
+      project,
+      {
+        version: 1,
+        projectId: project.id,
+        runId: cursor.runId,
+        operationId: `far-${cursor.sequence + 1}`,
+        sequence: cursor.sequence + 1,
+        baseRevision: project.revision,
+        command,
+      },
+      cursor,
+    );
+    project = result.project;
+    cursor = result.cursor;
+  };
+
+  apply({
+    ...seed,
+    entity: { ...seed.entity, position: [250, 0, -400] },
+  });
+  apply({
+    type: "set_transform",
+    id: "tree",
+    position: [12_345, 0, -5_432],
+  });
+  apply({
+    type: "set_geometry",
+    id: "tree",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+  apply({
+    type: "create_group",
+    group: {
+      id: "distant-group",
+      label: "Distant group",
+      position: [2_000, 0, 0],
+      scale: [1, 1, 1],
+    },
+  });
+  apply({
+    type: "set_group_transform",
+    id: "distant-group",
+    position: [6_000, 0, 0],
+  });
+  apply({
+    type: "reserve_entity",
+    entity: {
+      id: "far-child",
+      label: "Far child",
+      position: [300, 0, 0],
+      scale: [1, 1, 1],
+      color: "#00aa00",
+      parentId: "distant-group",
+      stage: "seed",
+    },
+  });
+  apply({
+    type: "set_geometry",
+    id: "far-child",
+    geometry: { kind: "tree", detail: "refined" },
+  });
+
+  const parsed = projectSchema.parse(JSON.parse(JSON.stringify(project)));
+  const decoded = decodeWorld(encodeWorld(parsed));
+  expect(decoded.version).toBe(1);
+  expect(
+    decoded.entities.find((entity) => entity.id === "tree")?.position,
+  ).toEqual([12_345, 0, -5_432]);
+  expect(
+    decoded.groups?.find((group) => group.id === "distant-group")?.position,
+  ).toEqual([6_000, 0, 0]);
+  expect(
+    decoded.entities.find((entity) => entity.id === "far-child"),
+  ).toMatchObject({
+    position: [300, 0, 0],
+    parentId: "distant-group",
+  });
+});
+
+it("bounds scene positions separately from local geometry, scale, and rotation", () => {
+  const distantPosition: [number, number, number] = [
+    MAX_SCENE_POSITION,
+    0,
+    -MAX_SCENE_POSITION,
+  ];
+  expect(
+    commandSchema.safeParse({
+      ...seed,
+      entity: { ...seed.entity, position: distantPosition },
+    }).success,
+  ).toBe(true);
+  expect(
+    commandSchema.safeParse({
+      ...seed,
+      entity: { ...seed.entity, position: [MAX_SCENE_POSITION + 1, 0, 0] },
+    }).success,
+  ).toBe(false);
+  expect(
+    commandSchema.safeParse({
+      ...seed,
+      entity: { ...seed.entity, position: distantPosition, scale: [101, 1, 1] },
+    }).success,
+  ).toBe(false);
+  expect(
+    commandSchema.safeParse({
+      ...seed,
+      entity: {
+        ...seed.entity,
+        position: distantPosition,
+        rotation: [0, 101, 0],
+      },
+    }).success,
+  ).toBe(false);
+  for (const localTransform of [
+    { position: [101, 0, 0] },
+    { scale: [1, 101, 1] },
+    { rotation: [0, 0, 101] },
+  ])
+    expect(
+      commandSchema.safeParse({
+        type: "set_geometry",
+        id: "tree",
+        geometry: {
+          kind: "custom",
+          detail: "refined",
+          parts: [
+            {
+              shape: "box",
+              position: [0, 0, 0],
+              scale: [1, 1, 1],
+              rotation: [0, 0, 0],
+              ...localTransform,
+              color: "#ffffff",
+            },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+  expect(
+    commandSchema.safeParse({
+      type: "set_transform",
+      id: "tree",
+      position: [250, 0, 0],
+      scale: [1, 101, 1],
+    }).success,
+  ).toBe(false);
+  expect(
+    commandSchema.safeParse({
+      type: "create_group",
+      group: {
+        id: "group",
+        label: "Group",
+        position: [250, 0, 0],
+        rotation: [101, 0, 0],
+      },
+    }).success,
+  ).toBe(false);
+  expect(
+    commandSchema.safeParse({
+      type: "set_group_transform",
+      id: "group",
+      position: distantPosition,
+      scale: [101, 1, 1],
+    }).success,
+  ).toBe(false);
 });
 it("preserves unrelated object identities during a scoped update", () => {
   const { project, cursor, op } = setup();

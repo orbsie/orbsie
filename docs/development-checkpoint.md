@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 22 unbounded-world phase 1 accepted locally: entity/group position and
+transform commands now allow finite ±1,000,000m coordinates, while local
+geometry/scale/rotation limits remain bounded; gameplay no longer clamps the
+player to radius 8.4, and the authoring prompt no longer assumes a mandatory
+island. Tests cover far scene operations, v1 serialization, movement and
+game-program interaction. Root reviewed the Luna diff. A full suite exposed a
+pre-existing ChatGPT route-test mock omission introduced by the credential
+recovery change; the two mocks now export the host idle lifetime (`a76ad27`).
+Full suite 187 passed/6 skipped files, 1,586 passed/26 skipped tests;
+production build/TypeScript, formatting and diff checks passed. This phase is
+local only: fixed-island rendering, shared camera navigation, observation
+bounds and chunked terrain/precision still need implementation and integrated
+acceptance before deployment. The navigation contract is
+`docs/unbounded-navigation-task.md`.
+
 Sep 22 official OpenAI docs recheck: the documented App Server browser login
 still sends its callback to localhost; the hosted success-page option does not
 document a replacement HTTPS callback. External-token mode assumes the host

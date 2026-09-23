@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   gameProgramSchema,
   collectGameProgramEntityIds,
+  GAME_PROGRAM_LIMITS,
   validateGameProgramReferences,
 } from "./game-program";
 import { modelingJobSchema } from "./modeling";
@@ -27,6 +28,17 @@ export const vector = z.tuple([
   z.number().finite().min(-100).max(100),
   z.number().finite().min(-100).max(100),
   z.number().finite().min(-100).max(100),
+]);
+// Entity and group translations use parent-local coordinates, or world
+// coordinates when they have no parent. Keep their finite range aligned with
+// game-program paths while local geometry, scale, and rotation stay bounded
+// by `vector`. At 1,000,000m, float32 render paths have roughly 6cm steps;
+// renderer-local origins and culling are handled separately from this schema.
+export const MAX_SCENE_POSITION = GAME_PROGRAM_LIMITS.maxNumericValue;
+export const scenePosition = z.tuple([
+  z.number().finite().min(-MAX_SCENE_POSITION).max(MAX_SCENE_POSITION),
+  z.number().finite().min(-MAX_SCENE_POSITION).max(MAX_SCENE_POSITION),
+  z.number().finite().min(-MAX_SCENE_POSITION).max(MAX_SCENE_POSITION),
 ]);
 export const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 export const partSchema = z.object({
@@ -135,7 +147,7 @@ export const behaviorSchema = z.object({
 export const entitySchema = z.object({
   id: z.string().regex(/^[\w-]{1,80}$/),
   label: z.string().max(100),
-  position: vector,
+  position: scenePosition,
   scale: vector.default([1, 1, 1]),
   rotation: vector.optional(),
   parentId: z
@@ -153,7 +165,7 @@ export type Entity = z.infer<typeof entitySchema>;
 export const groupSchema = z.object({
   id: z.string().regex(/^[\w-]{1,80}$/),
   label: z.string().max(100),
-  position: vector,
+  position: scenePosition,
   rotation: vector.optional(),
   scale: vector.default([1, 1, 1]).superRefine((scale, context) => {
     if (scale.some((component) => component <= 0))
@@ -236,7 +248,7 @@ const setMaterialCommandSchema = z.object({
 const setTransformCommandSchema = z.object({
   type: z.literal("set_transform"),
   id: z.string(),
-  position: vector.optional(),
+  position: scenePosition.optional(),
   rotation: vector.optional(),
   scale: vector.optional(),
   assetPolicy: assetRequestPolicySchema.optional(),
@@ -252,7 +264,7 @@ const removeGroupCommandSchema = z.object({
 const setGroupTransformCommandSchema = z.object({
   type: z.literal("set_group_transform"),
   id: z.string(),
-  position: vector.optional(),
+  position: scenePosition.optional(),
   rotation: vector.optional(),
   scale: vector.optional(),
 });
