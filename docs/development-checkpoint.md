@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 completed-formation hydration accepted locally (`84f7479`): Scene
+records only a ready, successfully loaded formation that actually reaches
+progress 1; a same-recipe remount can show its final mesh without replaying
+seed particles. Astra review caught a stale-resource race and required each
+resource to carry its recipe identity before completion or review readiness
+can advance. Records clear on project/entity/recipe change. Twelve targeted
+tests, TypeScript, formatting and diff checks passed. No resource is evicted
+yet; browser visuals remain unchecked. The current bounded worker slice
+decouples committed collision metadata from visual lease readiness in both
+renderers (`docs/visual-lease-gameplay-authority-task.md`).
+
 Sep 23 pure ready-formation residency policy accepted locally (`85e7016`):
 deterministic selection defaults to at most 48 full ready resources within a
 256-unit focus radius plus 64-unit retention hysteresis, prioritizes selected
