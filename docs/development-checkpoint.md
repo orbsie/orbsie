@@ -1,13 +1,14 @@
 # Development checkpoint
 
 Sep 22 integration seam: `2b601cd` exposes `authoringReview` from server
-configuration (requires switch, database and session secret) and preserves the
-hosted opt-in in `generationRequest`; 16 focused tests passed. `ee97d7a`
-adds `X-Orbsie-Review-Image-Supported: 1|0` to admitted API initial responses
-from the catalog capability; 4 route tests passed. `53e9bb7` specifies the
-equivalent hosted header and browser use. The single Luna private hosted-review
-transport worker is still active; its WIP is uncommitted and whole-tree
-typecheck is pending its finished diff. Feature remains off; no live calls or
+configuration and preserves hosted opt-in; `ee97d7a` adds the API model's
+admitted image-input header. Browser review request/response contracts are
+`02d689b` and `bdf82a3`; shared structural feedback is `bf46488`. Private
+ChatGPT review transport `e468f32` is accepted after root review: real
+backend→handler→managed-runtime HTTP fixture proves accept, stale epoch and
+abort/late reply; root 52 focused tests, typecheck, host bundle build and
+format pass. Next single Luna task: `docs/authoring-hosted-web-review-task.md`
+for the web-side lease/ledger route. Feature remains off; no live calls or
 deployment in this seam.
 
 Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
