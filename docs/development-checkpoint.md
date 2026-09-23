@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 visual lease/gameplay authority accepted locally (`57ef4f4`): WebGL
+tracks the recipe actually committed by each Formation rather than global
+asset readiness, and both renderers keep metadata-backed ready collisions and
+collection when a visual lease is absent. Pending targeted replacements use
+the last displayed recipe until commit; generated jobs without bounds remain
+provisional. Project-scoped display records and objective identity checks
+prevent cross-project/stale-recipe leaks. Astra reviewed the diff, requested
+per-entity and project-switch regressions, and accepted the corrections. Full
+suite: 198 passed/6 skipped files, 1,676 passed/26 skipped tests; production
+build/TypeScript passed and standalone player regenerated. Browser gameplay
+and residency measurements remain open. Next bounded slice: a lightweight,
+selectable ready-object proxy before Scene can evict full Formation resources.
+
 Sep 23 completed-formation hydration accepted locally (`84f7479`): Scene
 records only a ready, successfully loaded formation that actually reaches
 progress 1; a same-recipe remount can show its final mesh without replaying
