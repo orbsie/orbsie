@@ -1,5 +1,6 @@
 import { generationMaxTokens } from "@/lib/server/generation-limits";
 import { getAuth, isAdminEmail } from "@/lib/server/auth";
+import { authoringReviewConfigured } from "@/lib/server/authoring-run-admission";
 
 export async function GET(request: Request) {
   let admin = false;
@@ -22,6 +23,11 @@ export async function GET(request: Request) {
     ),
     google: !!(
       process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ),
+    authoringReview: !!(
+      authoringReviewConfigured() &&
+      process.env.DATABASE_URL &&
+      process.env.BETTER_AUTH_SECRET
     ),
     isAdmin: admin,
     ...(process.env.ORBSIE_CHATGPT_HOSTED === "1" &&

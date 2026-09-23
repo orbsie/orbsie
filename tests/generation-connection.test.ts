@@ -93,6 +93,7 @@ describe("hosted ChatGPT generation", () => {
         project: { id: "world" },
         selected: "tree",
         browserModeling: true,
+        authoringReview: true,
         localModeling: true,
         provider: "gateway",
         key: "payload-secret",
@@ -114,10 +115,24 @@ describe("hosted ChatGPT generation", () => {
       selected: "tree",
       browserModeling: true,
       localModeling: false,
+      authoringReview: true,
     });
     expect(request.init.body).not.toContain("should-not-send");
     expect(request.init.body).not.toContain("evil.example");
     expect(request.init.body).not.toContain("payload-secret");
+  });
+
+  it("keeps review opt-in disabled unless the browser explicitly enables it", () => {
+    const request = generationRequest(
+      {
+        provider: "chatgpt-hosted",
+        model: "gpt-5.1",
+        effort: "low",
+        key: "",
+      },
+      { prompt: "Make a garden", project: { id: "world" } },
+    );
+    expect(JSON.parse(request.init.body as string).authoringReview).toBe(false);
   });
 
   it("carries bounded generation feedback on an explicit hosted retry", () => {

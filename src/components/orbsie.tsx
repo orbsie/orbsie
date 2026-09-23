@@ -532,6 +532,7 @@ export default function Orbsie() {
     isAdmin: false,
     chatgptHosted: false,
     chatgptGeneration: false,
+    authoringReview: false,
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

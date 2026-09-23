@@ -69,6 +69,7 @@ export function generationRequest(
         : {}),
       browserModeling: source.browserModeling === true,
       localModeling: false,
+      authoringReview: source.authoringReview === true,
     };
     return {
       url: "/api/chatgpt/generate",
