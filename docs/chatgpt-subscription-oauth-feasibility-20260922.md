@@ -5,6 +5,11 @@ an implementation gate for `prompt.md`'s requested browser-only flow:
 **Connect with ChatGPT → approve on OpenAI → return to Orbsie, connected**, with
 no one-time code.
 
+Rechecked the same official App Server, authentication, and plugin OAuth pages
+on 2026-09-23. The documented App Server browser callback remains localhost;
+the documented device flow remains a URL plus user code. No Orbsie-style HTTPS
+subscription OAuth client registration or inference grant was established.
+
 ## What is documented
 
 - The Codex App Server `account/login/start` browser flow returns an `authUrl`
