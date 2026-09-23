@@ -40,7 +40,8 @@ Use sequential bounded handoffs rather than a single renderer rewrite:
 2. Shared navigation state and UI: connect pan/zoom/compass/frame-content to
    both renderers and published playback, with desktop and touch gesture
    isolation. North reset retains target and zoom. Keep it independent of
-   generation and gameplay input.
+   generation and gameplay input. The bounded implementation contract is
+   `docs/unbounded-navigation-task.md`.
 3. Chunked surface and precision: render only nearby terrain in WebGL and
    software, reuse/dispose chunks, cull entities for draw work without deleting
    them from authoritative project state, and keep far-away picking/contact
