@@ -7,18 +7,23 @@ admitted image-input header. Browser review request/response contracts are
 ChatGPT review transport `e468f32` is accepted after root review: real
 backend→handler→managed-runtime HTTP fixture proves accept, stale epoch and
 abort/late reply; root 52 focused tests, typecheck, host bundle build and
-format pass. Next single Luna task: `docs/authoring-hosted-web-review-task.md`
-for the web-side lease/ledger route. Feature remains off; no live calls or
-deployment in this seam.
+format pass. Hosted web orchestration `d8b1504` is now accepted: credential
+lease/status preflight precedes ledger admission, private results are bounded
+and replayed independently, and seal/save/clear plus an exact-token failure
+fence precede the public result. Root 56 focused tests, whole-tree typecheck,
+format/diff checks, host bundle and production Next build passed. The real
+durable→private HTTP→managed handler fixture includes accept, binding/epoch
+tamper and held-work abort with mocked RPC/vault/admission. No live calls.
 
-Sep 22 root handoff while that worker runs: `4c0c513` adds
+Sep 22 root browser handoff: `4c0c513` adds
 `assertAppliedAuthoringReviewBinding` for the browser to recompute the authored
 scene digest after correction; its focused test and format check pass. Browser
 task `docs/authoring-browser-review-task.md` now requires this guard, re-derives
 correction asset policy from the reviewed project, and pins the review opt-in
-at submission. Current hosted web route is unaccepted work in progress; root
-whole-tree typecheck passed after worker fixture repair. Do not deploy or claim
-browser E2E until the web route and browser loop are reviewed and integrated.
+at submission. It also requires a fresh cloud journal segment for corrections:
+the initial `commit_revision` closes the first journal. Next single Luna task
+is the browser review loop in that document. Feature remains off and undeployed;
+do not claim browser/live-provider E2E until the loop is reviewed and integrated.
 
 Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
