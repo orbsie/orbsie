@@ -90,6 +90,34 @@ describe("world navigation gesture recognizer", () => {
     expect(rotated.suppressClick).toBe(true);
   });
 
+  it("accumulates rapid rotation moves from the latest committed heading", () => {
+    const gestures = new WorldNavigationGestureController();
+    gestures.pointerDown({
+      pointerId: 12,
+      pointerType: "mouse",
+      button: "secondary",
+      x: 100,
+      y: 100,
+    });
+
+    let heading = 0;
+    const headings: number[] = [];
+    for (const x of [110, 120]) {
+      const moved = gestures.pointerMove(
+        { pointerId: 12, x, y: 100 },
+        { ...viewport, heading },
+      );
+      const command = moved.commands[0];
+      expect(command?.type).toBe("rotate_to_heading");
+      if (command?.type !== "rotate_to_heading") return;
+      heading = command.heading;
+      headings.push(heading);
+    }
+
+    expect(headings[0]).toBeCloseTo((Math.PI * 2 * 10) / viewport.width);
+    expect(headings[1]).toBeCloseTo((Math.PI * 2 * 20) / viewport.width);
+  });
+
   it("zooms with two-finger pinch and suppresses clicks for both pointers", () => {
     const gestures = new WorldNavigationGestureController();
     gestures.pointerDown({

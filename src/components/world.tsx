@@ -71,6 +71,7 @@ import {
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
 import { committedWorldNavigationBounds } from "@/lib/world-navigation-bounds";
+import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
   entityGeometry,
   addFormationSource,
@@ -103,6 +104,10 @@ const reduced = () => {
   motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
   return motionPreference.matches;
 };
+function pointerIdFromEvent(event: Event): number | undefined {
+  const pointerId = (event as PointerEvent).pointerId;
+  return Number.isInteger(pointerId) && pointerId >= 0 ? pointerId : undefined;
+}
 function AdaptiveResolution({ onChange }: { onChange: (dpr: number) => void }) {
   const { size } = useThree();
   const budget = useRef<RenderBudget | null>(null);
@@ -355,11 +360,13 @@ function Formation({
   session,
   revision,
   onReviewState,
+  consumeNavigationClick,
 }: {
   entity: Entity;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
+  consumeNavigationClick: (pointerId?: number) => boolean;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const particles = useRef<THREE.Points>(null);
@@ -371,6 +378,7 @@ function Formation({
   const progress = useRef({ value: 0 });
   const renderedRevision = useRef(-1);
   const reviewComplete = useRef(false);
+  const navigationHitData = useMemo(() => ({ orbsieNavigationHit: true }), []);
   const gameTint = useMemo(() => ({ value: new THREE.Color() }), []);
   const gameTintEnabled = useRef({ value: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -767,6 +775,12 @@ function Formation({
           : 0;
   });
   const click = (event: ThreeEvent<MouseEvent>) => {
+    if (
+      consumeNavigationClick(pointerIdFromEvent(event.nativeEvent as Event))
+    ) {
+      event.stopPropagation();
+      return;
+    }
     if (playing && !session.effectiveEntity(entity)) return;
     event.stopPropagation();
     if (playing && session.state) {
@@ -781,7 +795,12 @@ function Formation({
   };
   if (collected && entity.behavior?.type === "collect") return null;
   return (
-    <group ref={group} position={entity.position} scale={entity.scale}>
+    <group
+      ref={group}
+      userData={navigationHitData}
+      position={entity.position}
+      scale={entity.scale}
+    >
       <points
         ref={particles}
         onAfterRender={(_renderer, _scene, renderCamera) => {
@@ -1216,12 +1235,28 @@ function Scene({
   onReady,
   onInputLatency,
   onNavigationReady,
+  onNavigationCommand,
+  onNavigationClickSuppression,
+  clearNavigationGestures,
+  clearNavigationClickFallback,
+  consumeNavigationClick,
+  navigationGestureController,
+  navigationEnabled,
   navigation,
+  getNavigation,
 }: {
   onReady?: () => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
   onNavigationReady?: () => void;
+  onNavigationCommand: (command: WorldNavigationCommand) => void;
+  onNavigationClickSuppression: (pointerId: number) => void;
+  clearNavigationGestures: () => void;
+  clearNavigationClickFallback: () => void;
+  consumeNavigationClick: (pointerId?: number) => boolean;
+  navigationGestureController: WorldNavigationGestureController;
+  navigationEnabled: boolean;
   navigation: WorldNavigationProjectState["navigation"];
+  getNavigation: () => WorldNavigationProjectState["navigation"];
 }) {
   const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
@@ -1231,6 +1266,11 @@ function Scene({
     environment = useOrb((s) => s.project.environment),
     playing = useOrb((s) => s.playing);
   const { camera, size, gl, scene } = useThree();
+  const navigationRaycaster = useMemo(() => new THREE.Raycaster(), []);
+  const navigationNdc = useMemo(() => new THREE.Vector2(), []);
+  const navigationEnabledRef = useRef(navigationEnabled);
+  navigationEnabledRef.current =
+    navigationEnabled && phase === "editing" && !playing;
   const reviewEntitiesRef = useRef(entities);
   const reviewFrameRef = useRef<
     | {
@@ -1437,6 +1477,261 @@ function Scene({
     notifySceneReviewCaptureChanged();
   }, [phase, projectId]);
   useEffect(() => parcelTransitionController.attachRenderer(), []);
+  useEffect(() => {
+    navigationGestureController.reset();
+    if (!navigationEnabledRef.current) {
+      clearNavigationGestures();
+      return;
+    }
+
+    const canvas = gl.domElement;
+    // The scene owns touch pan/pinch while editing; DOM overlays remain
+    // separate targets and retain their own scroll and control behavior.
+    const previousTouchAction = canvas.style.touchAction;
+    canvas.style.touchAction = "none";
+    const rotatingPointers = new Set<number>();
+    let pendingContextMenuPointer: number | null = null;
+    let contextMenuTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const clearTransientState = () => {
+      rotatingPointers.clear();
+      pendingContextMenuPointer = null;
+      if (contextMenuTimeout !== undefined) {
+        clearTimeout(contextMenuTimeout);
+        contextMenuTimeout = undefined;
+      }
+    };
+    const resetGestureState = () => {
+      clearTransientState();
+      clearNavigationGestures();
+    };
+    const getViewport = () => {
+      const rect = canvas.getBoundingClientRect();
+      const currentNavigation = getNavigation();
+      if (camera instanceof THREE.PerspectiveCamera) {
+        return {
+          width: rect.width,
+          height: rect.height,
+          verticalFovRadians: (camera.fov * Math.PI) / 180,
+          distance: currentNavigation.distance,
+          heading: currentNavigation.heading,
+        };
+      }
+      return {
+        width: rect.width,
+        height: rect.height,
+        verticalFovRadians: (43 * Math.PI) / 180,
+        distance: currentNavigation.distance,
+        heading: currentNavigation.heading,
+      };
+    };
+    const hitNavigationObject = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return false;
+      navigationNdc.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      navigationRaycaster.near = camera.near;
+      navigationRaycaster.far = camera.far;
+      navigationRaycaster.setFromCamera(navigationNdc, camera);
+      const intersections = navigationRaycaster.intersectObjects(
+        scene.children,
+        true,
+      );
+      const nearestRelevant = intersections.find((intersection) => {
+        let object: THREE.Object3D | null = intersection.object;
+        let entityHit = false;
+        let visible = true;
+        while (object && object !== scene) {
+          if (!object.visible) visible = false;
+          if (object.userData.orbsieNavigationHit === true) entityHit = true;
+          object = object.parent;
+        }
+        if (!visible) return false;
+        if (entityHit) return true;
+        if (!(intersection.object instanceof THREE.Mesh)) return false;
+        const materials = Array.isArray(intersection.object.material)
+          ? intersection.object.material
+          : [intersection.object.material];
+        return materials.some(
+          (material) => !material.transparent && material.opacity >= 0.95,
+        );
+      });
+      if (!nearestRelevant) return false;
+      let object: THREE.Object3D | null = nearestRelevant.object;
+      while (object && object !== scene) {
+        if (object.userData.orbsieNavigationHit === true) return true;
+        object = object.parent;
+      }
+      return false;
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!navigationEnabledRef.current) return;
+      // A prior touch gesture may not synthesize a click. Expire its
+      // pointer-less fallback when a later scene interaction begins.
+      clearNavigationClickFallback();
+      if (pendingContextMenuPointer !== null) {
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+      const pointerType =
+        event.pointerType === "touch"
+          ? "touch"
+          : event.pointerType === "mouse"
+            ? "mouse"
+            : undefined;
+      if (!pointerType) return;
+      const button =
+        event.button === 0
+          ? "primary"
+          : event.button === 2
+            ? "secondary"
+            : "other";
+      navigationGestureController.pointerDown({
+        pointerId: event.pointerId,
+        pointerType,
+        x: event.clientX,
+        y: event.clientY,
+        button,
+        objectHit: hitNavigationObject(event),
+      });
+    };
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!navigationEnabledRef.current) return;
+      const result = navigationGestureController.pointerMove(
+        { pointerId: event.pointerId, x: event.clientX, y: event.clientY },
+        getViewport(),
+      );
+      if (result.suppressClick) onNavigationClickSuppression(event.pointerId);
+      for (const command of result.commands) {
+        if (command.type === "rotate_to_heading")
+          rotatingPointers.add(event.pointerId);
+        onNavigationCommand(command);
+      }
+      if (result.handled && event.cancelable) event.preventDefault();
+    };
+    const handlePointerUp = (event: PointerEvent) => {
+      const result = navigationGestureController.pointerUp(event.pointerId);
+      if (result.suppressClick) onNavigationClickSuppression(event.pointerId);
+      if (rotatingPointers.delete(event.pointerId)) {
+        pendingContextMenuPointer = event.pointerId;
+        if (contextMenuTimeout !== undefined) clearTimeout(contextMenuTimeout);
+        contextMenuTimeout = setTimeout(() => {
+          pendingContextMenuPointer = null;
+          contextMenuTimeout = undefined;
+        }, 750);
+      }
+    };
+    const handlePointerCancel = (event: PointerEvent) => {
+      navigationGestureController.pointerCancel(event.pointerId);
+      rotatingPointers.delete(event.pointerId);
+      if (pendingContextMenuPointer === event.pointerId) {
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+    };
+    const handleWheel = (event: WheelEvent) => {
+      if (!navigationEnabledRef.current) return;
+      const rect = canvas.getBoundingClientRect();
+      const pixelMultiplier =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? rect.height
+            : 1;
+      const result = navigationGestureController.wheel(
+        { deltaY: event.deltaY * pixelMultiplier },
+        getViewport(),
+      );
+      for (const command of result.commands) onNavigationCommand(command);
+      if (result.handled && event.cancelable) event.preventDefault();
+    };
+    const handleContextMenu = (event: MouseEvent) => {
+      if (rotatingPointers.size > 0 || pendingContextMenuPointer !== null) {
+        event.preventDefault();
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) resetGestureState();
+    };
+
+    canvas.addEventListener("pointerdown", handlePointerDown, true);
+    window.addEventListener("pointermove", handlePointerMove, {
+      capture: true,
+      passive: false,
+    });
+    window.addEventListener("pointerup", handlePointerUp, true);
+    window.addEventListener("pointercancel", handlePointerCancel, true);
+    canvas.addEventListener("wheel", handleWheel, {
+      capture: true,
+      passive: false,
+    });
+    canvas.addEventListener("contextmenu", handleContextMenu, true);
+    window.addEventListener("blur", resetGestureState);
+    window.addEventListener("resize", resetGestureState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    let observedCanvasSize: readonly [number, number] | undefined;
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver((entries) => {
+            const entry = entries[entries.length - 1];
+            if (!entry) return;
+            const nextSize: readonly [number, number] = [
+              entry.contentRect.width,
+              entry.contentRect.height,
+            ];
+            if (
+              observedCanvasSize &&
+              (observedCanvasSize[0] !== nextSize[0] ||
+                observedCanvasSize[1] !== nextSize[1])
+            )
+              resetGestureState();
+            observedCanvasSize = nextSize;
+          });
+    resizeObserver?.observe(canvas);
+
+    return () => {
+      canvas.removeEventListener("pointerdown", handlePointerDown, true);
+      window.removeEventListener("pointermove", handlePointerMove, true);
+      window.removeEventListener("pointerup", handlePointerUp, true);
+      window.removeEventListener("pointercancel", handlePointerCancel, true);
+      canvas.removeEventListener("wheel", handleWheel, true);
+      canvas.removeEventListener("contextmenu", handleContextMenu, true);
+      window.removeEventListener("blur", resetGestureState);
+      window.removeEventListener("resize", resetGestureState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      resizeObserver?.disconnect();
+      canvas.style.touchAction = previousTouchAction;
+      resetGestureState();
+    };
+  }, [
+    camera,
+    clearNavigationGestures,
+    clearNavigationClickFallback,
+    gl,
+    getNavigation,
+    navigationEnabled,
+    navigationGestureController,
+    navigationNdc,
+    navigationRaycaster,
+    onNavigationClickSuppression,
+    onNavigationCommand,
+    projectId,
+    scene,
+  ]);
   useFrame((_, dt) => {
     const target = phase === "landing" ? 0 : 1;
     parcelTransitionController.setTarget(target);
@@ -1589,6 +1884,7 @@ function Scene({
             session={session}
             revision={revision}
             onReviewState={setFormationReviewState}
+            consumeNavigationClick={consumeNavigationClick}
           />
         ))}
         <Player
@@ -1775,6 +2071,35 @@ export default function World({
   const project = useOrb((state) => state.project);
   const projectId = project.id;
   const phase = useOrb((state) => state.phase);
+  const playing = useOrb((state) => state.playing);
+  const navigationGestureController = useMemo(
+    () => new WorldNavigationGestureController(),
+    [],
+  );
+  const suppressedClickPointerId = useRef<number | null>(null);
+  const clearNavigationGestures = useCallback(() => {
+    navigationGestureController.reset();
+    suppressedClickPointerId.current = null;
+  }, [navigationGestureController]);
+  const markNavigationClickSuppressed = useCallback((pointerId: number) => {
+    suppressedClickPointerId.current = pointerId;
+  }, []);
+  const clearNavigationClickFallback = useCallback(() => {
+    suppressedClickPointerId.current = null;
+  }, []);
+  const consumeNavigationClick = useCallback(
+    (pointerId?: number) => {
+      const candidate =
+        pointerId ?? suppressedClickPointerId.current ?? undefined;
+      if (candidate === undefined) return false;
+      const consumed =
+        navigationGestureController.consumeClickSuppression(candidate);
+      if (consumed && suppressedClickPointerId.current === candidate)
+        suppressedClickPointerId.current = null;
+      return consumed;
+    },
+    [navigationGestureController],
+  );
   const [navigationProject, setNavigationProject] = useState(() =>
     worldNavigationProjectState(projectId),
   );
@@ -1784,10 +2109,23 @@ export default function World({
     navigationProject.projectId === projectId
       ? navigationProject.navigation
       : createWorldNavigationState();
+  const getNavigation = useCallback(
+    () =>
+      navigationProjectRef.current.projectId === projectId
+        ? navigationProjectRef.current.navigation
+        : createWorldNavigationState(),
+    [projectId],
+  );
   const [navigationNotice, setNavigationNotice] = useState("");
   const [navigationReady, setNavigationReady] = useState(false);
+  const previousRendererRetryToken = useRef(rendererRetryToken);
   useLayoutEffect(() => {
+    const rendererAttemptChanged =
+      previousRendererRetryToken.current !== rendererRetryToken;
+    previousRendererRetryToken.current = rendererRetryToken;
+    clearNavigationGestures();
     if (
+      rendererAttemptChanged ||
       phase === "landing" ||
       phase === "descending" ||
       navigationProjectRef.current.projectId !== projectId
@@ -1800,7 +2138,8 @@ export default function World({
       navigationProjectRef.current = next;
       return next;
     });
-  }, [phase, projectId]);
+  }, [clearNavigationGestures, phase, playing, projectId, rendererRetryToken]);
+  useEffect(() => () => clearNavigationGestures(), [clearNavigationGestures]);
   const dispatchNavigation = useCallback(
     (command: WorldNavigationCommand) => {
       const current = worldNavigationProjectState(
@@ -1858,6 +2197,7 @@ export default function World({
     if (attemptRef.current !== attempt || failedAttemptRef.current === attempt)
       return;
     failedAttemptRef.current = attempt;
+    clearNavigationGestures();
     setNavigationReady(false);
     setFailedAttempt(attempt);
     onRendererFallback?.(message);
@@ -1891,6 +2231,9 @@ export default function World({
   // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
   // adaptation so typing and scene revisions cannot restore full resolution.
   const [renderDpr, setRenderDpr] = useState(1);
+  // Keep gameplay's scene input exclusive to the player controls.
+  const navigationGesturesEnabled =
+    navigationReady && phase === "editing" && !playing;
   let renderer: ReactNode;
   if (failedAttempt === attempt) {
     if (softwareFailedAttempt === attempt)
@@ -1932,7 +2275,9 @@ export default function World({
           }}
           fallback={<CanvasFallback />}
           onCreated={() => notifyRendererReady("webgl")}
-          onPointerMissed={() => {
+          onPointerMissed={(event) => {
+            if (consumeNavigationClick(pointerIdFromEvent(event as Event)))
+              return;
             if (!useOrb.getState().playing)
               useOrb.getState().set({ selected: undefined });
           }}
@@ -1943,6 +2288,14 @@ export default function World({
             onReady={notifySceneReady}
             onInputLatency={onInputLatency}
             onNavigationReady={notifyNavigationReady}
+            onNavigationCommand={dispatchNavigation}
+            onNavigationClickSuppression={markNavigationClickSuppressed}
+            clearNavigationGestures={clearNavigationGestures}
+            clearNavigationClickFallback={clearNavigationClickFallback}
+            consumeNavigationClick={consumeNavigationClick}
+            navigationGestureController={navigationGestureController}
+            navigationEnabled={navigationGesturesEnabled}
+            getNavigation={getNavigation}
           />
         </Canvas>
       </Boundary>
