@@ -34,6 +34,7 @@ vi.mock("@/lib/server/auth", () => ({
   boundedJSON: (request: Request) => request.json(),
 }));
 vi.mock("@/lib/server/chatgpt-host-registry", () => ({
+  CHATGPT_HOST_IDLE_LIFETIME_MS: 10 * 60 * 1000,
   readChatGPTHost: mocks.read,
 }));
 vi.mock("@/lib/server/chatgpt-host-manager", () => ({

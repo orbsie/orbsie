@@ -49,6 +49,7 @@ vi.mock("@/lib/server/auth", () => ({
   HttpError: mocks.HttpError,
 }));
 vi.mock("@/lib/server/chatgpt-host-registry", () => ({
+  CHATGPT_HOST_IDLE_LIFETIME_MS: 10 * 60 * 1000,
   readChatGPTHost: mocks.readHost,
 }));
 vi.mock("@/lib/server/chatgpt-host-manager", () => ({
