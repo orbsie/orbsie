@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 22 Android Chrome layout check: the live `orbsie.com` home page and
+Connections dialog rendered in portrait and landscape on the Android 15
+midrange emulator, using its software graphics renderer. ChatGPT and other
+connection controls were reachable by scrolling. Evidence and exact limits:
+`docs/evidence/android-chrome-20260922/` (commit `6a4925f`). No prompt,
+provider connection, live model call, gameplay, or physical-device performance
+was tested. Regular Chrome was subsequently launched with the owner's profile,
+but computer use rejected binding the Orbsie tab under its browser URL policy;
+the rejection explicitly forbids browser-surface workarounds. Browser-based
+ChatGPT consent and signed-in acceptance remain unavailable in this session.
+
 Sep 22 stream recovery accepted locally: unfinished initial/edit operations
 remain visible while streaming but roll back to the last committed scene on
 clean EOF, invalid output, read loss or Stop. Saved local state, Undo/Redo,
