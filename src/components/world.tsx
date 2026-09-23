@@ -2243,6 +2243,14 @@ export default function World({
         <Boundary key={`software-${attempt}`} onError={notifySoftwareFailure}>
           <SoftwareWorld
             navigation={navigation}
+            getNavigation={getNavigation}
+            navigationGestureController={navigationGestureController}
+            navigationEnabled={navigationGesturesEnabled}
+            onNavigationCommand={dispatchNavigation}
+            onNavigationClickSuppression={markNavigationClickSuppressed}
+            clearNavigationGestures={clearNavigationGestures}
+            clearNavigationClickFallback={clearNavigationClickFallback}
+            consumeNavigationClick={consumeNavigationClick}
             onReady={notifySceneReady}
             onRendererReady={() => notifyRendererReady("software")}
             onError={notifySoftwareFailure}

@@ -47,6 +47,8 @@ import {
   worldNavigationLandingLookTarget,
   type WorldNavigationState,
 } from "@/lib/world-navigation";
+import type { WorldNavigationCommand } from "@/lib/world-navigation";
+import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
   notifySceneReviewCaptureChanged,
   captureSceneReview,
@@ -67,6 +69,14 @@ export type SoftwareGeometryEntry = {
 
 type SoftwareWorldProps = {
   navigation: WorldNavigationState;
+  getNavigation: () => WorldNavigationState;
+  navigationGestureController: WorldNavigationGestureController;
+  navigationEnabled: boolean;
+  onNavigationCommand: (command: WorldNavigationCommand) => void;
+  onNavigationClickSuppression: (pointerId: number) => void;
+  clearNavigationGestures: () => void;
+  clearNavigationClickFallback: () => void;
+  consumeNavigationClick: (pointerId?: number) => boolean;
   onReady?: () => void;
   onNavigationReady?: () => void;
   onRendererReady?: (renderer?: "software") => void;
@@ -567,6 +577,14 @@ function drawScene(
 
 export default function SoftwareWorld({
   navigation,
+  getNavigation,
+  navigationGestureController,
+  navigationEnabled,
+  onNavigationCommand,
+  onNavigationClickSuppression,
+  clearNavigationGestures,
+  clearNavigationClickFallback,
+  consumeNavigationClick,
   onReady,
   onNavigationReady,
   onRendererReady,
@@ -575,6 +593,7 @@ export default function SoftwareWorld({
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const navigationCameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const geometriesRef = useRef(new Map<string, SoftwareGeometryEntry>());
   const geometryGenerationRef = useRef(0);
   const disposedGeometriesRef = useRef(new WeakSet<THREE.BufferGeometry>());
@@ -632,6 +651,7 @@ export default function SoftwareWorld({
   );
   const project = useOrb((state) => state.project);
   const phase = useOrb((state) => state.phase);
+  const playing = useOrb((state) => state.playing);
   const selected = useOrb((state) => state.selected);
   const score = useOrb((state) => state.score);
   const reset = useOrb((state) => state.reset);
@@ -648,6 +668,9 @@ export default function SoftwareWorld({
   const initializedScene = useRef(false);
   const previousTransitionProjectId = useRef(project.id);
   const previousPhase = useRef(phase);
+  const navigationEnabledRef = useRef(navigationEnabled);
+  navigationEnabledRef.current =
+    navigationEnabled && phase === "editing" && !playing;
   const previousViewportMobile = useRef<boolean | undefined>(undefined);
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
@@ -833,6 +856,7 @@ export default function SoftwareWorld({
       notifySceneReviewCaptureChanged();
     }
     const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
+    navigationCameraRef.current = camera;
     camera.position.set(0, 1.8, 10.2);
     camera.lookAt(0, 0.35, 0);
     camera.updateMatrixWorld();
@@ -1102,6 +1126,7 @@ export default function SoftwareWorld({
     return () => {
       stopped = true;
       cancelAnimationFrame(frame);
+      navigationCameraRef.current = null;
       inputRef.current.clear();
       rendererReady.current = false;
       drawnRevisionRef.current = undefined;
@@ -1175,15 +1200,92 @@ export default function SoftwareWorld({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const pointerStarts = new Map<number, { x: number; y: number }>();
+    navigationGestureController.reset();
+    if (!navigationEnabledRef.current) clearNavigationGestures();
+    const previousTouchAction = canvas.style.touchAction;
+    if (navigationEnabledRef.current) canvas.style.touchAction = "none";
+    const rotatingPointers = new Set<number>();
+    let pendingContextMenuPointer: number | null = null;
+    let contextMenuTimeout: ReturnType<typeof setTimeout> | undefined;
+    let observedCanvasSize: readonly [number, number] | undefined;
+
+    const clearTransientState = () => {
+      rotatingPointers.clear();
+      pendingContextMenuPointer = null;
+      if (contextMenuTimeout !== undefined) {
+        clearTimeout(contextMenuTimeout);
+        contextMenuTimeout = undefined;
+      }
+    };
+    const resetGestureState = () => {
+      clearTransientState();
+      clearNavigationGestures();
+    };
+    const getViewport = () => {
+      const rect = canvas.getBoundingClientRect();
+      const camera = navigationCameraRef.current;
+      if (!camera) return undefined;
+      const currentNavigation = getNavigation();
+      return {
+        width: rect.width,
+        height: rect.height,
+        verticalFovRadians: (camera.fov * Math.PI) / 180,
+        distance: currentNavigation.distance,
+        heading: currentNavigation.heading,
+      };
+    };
+    const hitNavigationObject = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+      return [...picksRef.current]
+        .reverse()
+        .some(
+          (candidate) =>
+            Math.hypot(candidate.x - x, candidate.y - y) < candidate.radius,
+        );
+    };
     const pointerDown = (event: PointerEvent) => {
       pointerStarts.set(event.pointerId, {
         x: event.clientX,
         y: event.clientY,
       });
+      if (!navigationEnabledRef.current) return;
+      clearNavigationClickFallback();
+      if (pendingContextMenuPointer !== null) {
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+      const pointerType =
+        event.pointerType === "touch"
+          ? "touch"
+          : event.pointerType === "mouse"
+            ? "mouse"
+            : undefined;
+      if (!pointerType) return;
+      const button =
+        event.button === 0
+          ? "primary"
+          : event.button === 2
+            ? "secondary"
+            : "other";
+      navigationGestureController.pointerDown({
+        pointerId: event.pointerId,
+        pointerType,
+        x: event.clientX,
+        y: event.clientY,
+        button,
+        objectHit: hitNavigationObject(event),
+      });
     };
     const click = (event: PointerEvent) => {
       const start = pointerStarts.get(event.pointerId);
       pointerStarts.delete(event.pointerId);
+      if (consumeNavigationClick(event.pointerId)) return;
       if (
         start &&
         Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8
@@ -1205,15 +1307,139 @@ export default function SoftwareWorld({
     };
     const cancel = (event: PointerEvent) =>
       pointerStarts.delete(event.pointerId);
-    canvas.addEventListener("pointerdown", pointerDown);
+    const move = (event: PointerEvent) => {
+      if (!navigationEnabledRef.current) return;
+      const viewport = getViewport();
+      if (!viewport) return;
+      const result = navigationGestureController.pointerMove(
+        { pointerId: event.pointerId, x: event.clientX, y: event.clientY },
+        viewport,
+      );
+      if (result.suppressClick) onNavigationClickSuppression(event.pointerId);
+      for (const command of result.commands) {
+        if (command.type === "rotate_to_heading")
+          rotatingPointers.add(event.pointerId);
+        onNavigationCommand(command);
+      }
+      if (result.handled && event.cancelable) event.preventDefault();
+    };
+    const up = (event: PointerEvent) => {
+      const result = navigationGestureController.pointerUp(event.pointerId);
+      if (result.suppressClick) onNavigationClickSuppression(event.pointerId);
+      if (rotatingPointers.delete(event.pointerId)) {
+        pendingContextMenuPointer = event.pointerId;
+        if (contextMenuTimeout !== undefined) clearTimeout(contextMenuTimeout);
+        contextMenuTimeout = setTimeout(() => {
+          pendingContextMenuPointer = null;
+          contextMenuTimeout = undefined;
+        }, 750);
+      }
+    };
+    const pointerCancel = (event: PointerEvent) => {
+      navigationGestureController.pointerCancel(event.pointerId);
+      pointerStarts.delete(event.pointerId);
+      rotatingPointers.delete(event.pointerId);
+      if (pendingContextMenuPointer === event.pointerId) {
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+    };
+    const wheel = (event: WheelEvent) => {
+      if (!navigationEnabledRef.current) return;
+      const rect = canvas.getBoundingClientRect();
+      const pixelMultiplier =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? rect.height
+            : 1;
+      const viewport = getViewport();
+      if (!viewport) return;
+      const result = navigationGestureController.wheel(
+        { deltaY: event.deltaY * pixelMultiplier },
+        viewport,
+      );
+      for (const command of result.commands) onNavigationCommand(command);
+      if (result.handled && event.cancelable) event.preventDefault();
+    };
+    const contextMenu = (event: MouseEvent) => {
+      if (rotatingPointers.size > 0 || pendingContextMenuPointer !== null) {
+        event.preventDefault();
+        pendingContextMenuPointer = null;
+        if (contextMenuTimeout !== undefined) {
+          clearTimeout(contextMenuTimeout);
+          contextMenuTimeout = undefined;
+        }
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) resetGestureState();
+    };
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver((entries) => {
+            const entry = entries[entries.length - 1];
+            if (!entry) return;
+            const nextSize: readonly [number, number] = [
+              entry.contentRect.width,
+              entry.contentRect.height,
+            ];
+            if (
+              observedCanvasSize &&
+              (observedCanvasSize[0] !== nextSize[0] ||
+                observedCanvasSize[1] !== nextSize[1])
+            )
+              resetGestureState();
+            observedCanvasSize = nextSize;
+          });
+    resizeObserver?.observe(canvas);
+
+    canvas.addEventListener("pointerdown", pointerDown, true);
     canvas.addEventListener("pointerup", click);
     canvas.addEventListener("pointercancel", cancel);
+    window.addEventListener("pointermove", move, {
+      capture: true,
+      passive: false,
+    });
+    window.addEventListener("pointerup", up, true);
+    window.addEventListener("pointercancel", pointerCancel, true);
+    canvas.addEventListener("wheel", wheel, { capture: true, passive: false });
+    canvas.addEventListener("contextmenu", contextMenu, true);
+    window.addEventListener("blur", resetGestureState);
+    window.addEventListener("resize", resetGestureState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      canvas.removeEventListener("pointerdown", pointerDown);
+      canvas.removeEventListener("pointerdown", pointerDown, true);
       canvas.removeEventListener("pointerup", click);
       canvas.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("pointermove", move, true);
+      window.removeEventListener("pointerup", up, true);
+      window.removeEventListener("pointercancel", pointerCancel, true);
+      canvas.removeEventListener("wheel", wheel, true);
+      canvas.removeEventListener("contextmenu", contextMenu, true);
+      window.removeEventListener("blur", resetGestureState);
+      window.removeEventListener("resize", resetGestureState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      resizeObserver?.disconnect();
+      canvas.style.touchAction = previousTouchAction;
+      resetGestureState();
     };
-  }, [session]);
+  }, [
+    clearNavigationClickFallback,
+    clearNavigationGestures,
+    consumeNavigationClick,
+    getNavigation,
+    navigationEnabled,
+    navigationGestureController,
+    onNavigationClickSuppression,
+    onNavigationCommand,
+    project.id,
+    session,
+  ]);
 
   return (
     <div className="software-world" aria-label="Software world renderer">
