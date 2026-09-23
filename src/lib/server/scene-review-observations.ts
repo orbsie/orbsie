@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Project } from "../protocol";
+import { MAX_SCENE_POSITION, type Project } from "../protocol";
 import { HttpError } from "./auth";
 
 const identifier = z
@@ -14,7 +14,15 @@ const projectId = z
   .max(80)
   .refine((value) => !/[\u0000-\u001f\u007f]/.test(value));
 const revision = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
-const coordinate = z.number().finite().min(-1000).max(1000);
+// Observed bounds can extend beyond an entity anchor after local geometry and
+// parent transforms. Keep a finite evidence envelope well beyond the scene's
+// ±1,000,000m authoring range without relaxing the byte/object budgets.
+const MAX_OBSERVED_COORDINATE = MAX_SCENE_POSITION * 1_000;
+const coordinate = z
+  .number()
+  .finite()
+  .min(-MAX_OBSERVED_COORDINATE)
+  .max(MAX_OBSERVED_COORDINATE);
 const vector3 = z.tuple([coordinate, coordinate, coordinate]);
 const assetIds = z.array(z.string().min(1).max(160)).max(160);
 
