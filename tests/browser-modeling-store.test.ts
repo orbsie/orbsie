@@ -377,7 +377,9 @@ it("keeps the newer run when an older browser build resolves late", async () => 
 it("rejects legacy jobs without invoking an external builder", async () => {
   relay(localJob);
   await useOrb.getState().run("Build this local model");
-  expect(useOrb.getState().error).toContain("browser-manifold");
+  expect(useOrb.getState().error).toBe(
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
+  );
   expect(mocks.browserBuild).not.toHaveBeenCalled();
 });
 

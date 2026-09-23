@@ -26,6 +26,10 @@ vi.mock("idb-keyval", () => ({
 import { getExperienceMetrics } from "../src/lib/experience-metrics";
 import { useOrb, type GenerationJournalConnection } from "../src/lib/store";
 import {
+  clearGenerationDiagnostics,
+  readGenerationDiagnostics,
+} from "../src/lib/generation-diagnostics-client";
+import {
   applyOperation,
   commandSchema,
   blankProject,
@@ -117,6 +121,7 @@ function change(): Command {
   };
 }
 beforeEach(() => {
+  clearGenerationDiagnostics();
   current = true;
   mocks.db.clear();
   mocks.append.mockReset();
@@ -175,6 +180,13 @@ it("keeps a lost-ACK checkpoint recoverable without applying or resending the op
   expect(useOrb.getState().project.entities[0].color).toBe(before);
   expect(mocks.append).toHaveBeenCalledOnce();
   expect(useOrb.getState().building).toBe(false);
+  expect(readGenerationDiagnostics()[0]).toMatchObject({
+    kind: "generation",
+    terminal: {
+      reason: "completion-record-failure",
+      failureCode: "host-unavailable",
+    },
+  });
 });
 it.each(["cancel", "account change"])(
   "suppresses local application after %s during an acknowledgement",
@@ -215,7 +227,9 @@ it("rejects a legacy modeling job before cloud acknowledgement or model upload",
   const fetcher = relay(legacyCommand);
   const before = useOrb.getState().project.entities[0].geometry;
   await useOrb.getState().run("Build a box", connection, journal);
-  expect(useOrb.getState().error).toContain("browser-manifold");
+  expect(useOrb.getState().error).toBe(
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
+  );
   expect(useOrb.getState().project.entities[0].geometry).toEqual(before);
   expect(mocks.append).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
@@ -262,9 +276,12 @@ it("uploads browser model bytes before durable acknowledgement", async () => {
 });
 
 it.each(["stop", "stream error"])(
-  "preserves the newest finished geometry on %s during a later coarse replacement",
+  "restores the previous committed geometry on %s during a coarse replacement",
   async (ending) => {
     const entityId = useOrb.getState().project.entities[0].id;
+    const originalEntity = structuredClone(
+      useOrb.getState().project.entities[0],
+    );
     let stream!: ReadableStreamDefaultController<Uint8Array>;
     const encoder = new TextEncoder();
     vi.stubGlobal(
@@ -309,8 +326,7 @@ it.each(["stop", "stream error"])(
     await run;
     const final = useOrb.getState().project.entities[0];
     expect(final.id).toBe(entityId);
-    expect(final.stage).toBe("ready");
-    expect(final.geometry?.kind).toBe("mushroom");
+    expect(final).toEqual(originalEntity);
     const [metrics] = getExperienceMetrics(useOrb.getState().project.id);
     expect(metrics.outcome).toBe(ending === "stop" ? "cancelled" : "error");
     expect(metrics.milestones.generationComplete).toBeNull();
@@ -349,7 +365,7 @@ it("keeps schema internals out of failed model updates and preserves finished en
   );
   await useOrb.getState().run("Change the shape", connection);
   expect(useOrb.getState().error).toBe(
-    "The model returned an invalid scene change. Try a simpler edit. Your finished world is safe.",
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
   );
   expect(useOrb.getState().project.entities).toEqual(before);
   expect(useOrb.getState().building).toBe(false);

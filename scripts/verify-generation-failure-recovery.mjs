@@ -65,8 +65,9 @@ const successCommands = (color, message) => [
   { type: "commit_revision", message },
 ];
 const safeGenerationFailure = {
+  failure: "parser-failure",
   error:
-    "The model returned an invalid scene update. Finished objects are preserved.",
+    "The model returned an invalid scene update. Your last working scene is safe.",
   code: "INVALID_SCENE_UPDATE",
   diagnostic: {
     operation: 3,
@@ -80,23 +81,23 @@ const safeGenerationFailure = {
     ],
   },
 };
-const failureCommands = (color, message, selected) => [
-  { type: "set_material", id: treeId, color },
-  ...(selected
-    ? []
-    : [
-        { type: "reserve_entity", entity: { ...pending, geometry: undefined } },
-      ]),
-  safeGenerationFailure,
-];
-
 const report = {
   mode: "fixture-generation-retry-feedback-real-editor",
   fixture: {
-    transport: "intercepted /api/generate NDJSON",
+    transport: "window.fetch interception with /api/generate ReadableStreams",
     liveInference: false,
     serverFundedCalls: false,
     databaseMutations: false,
+    viewports: {
+      desktop: { width: 1280, height: 900 },
+      android: { width: 390, height: 844 },
+    },
+    cases: [
+      "initial clean EOF after provisional scene operations",
+      "edit body read rejection after a provisional operation",
+      "invalid final commit after a provisional operation",
+      "split UTF-8 code point in an explicit retry",
+    ],
     structuredFailure: {
       code: safeGenerationFailure.code,
       finishReason: safeGenerationFailure.diagnostic.finishReason,
@@ -116,8 +117,6 @@ const report = {
   checks: {},
 };
 
-const stream = (commands) =>
-  commands.map((command) => JSON.stringify(command)).join("\n") + "\n";
 const summarizeRequest = (body) => ({
   prompt: body.prompt,
   selected: body.selected,
@@ -172,6 +171,126 @@ try {
     viewport: { width: 1280, height: 900 },
     reducedMotion: "reduce",
   });
+  await context.exposeBinding(
+    "__orbsieRecordGenerationRequest",
+    (_source, body) => {
+      report.requests.push(summarizeRequest(body));
+      return report.requests.length;
+    },
+  );
+  await context.addInitScript(
+    (fixture) => {
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async (input, init) => {
+        const request = new Request(
+          new URL(input.url ?? input, location.href),
+          init,
+        );
+        const target = new URL(request.url);
+        if (target.pathname !== "/api/generate" || request.method !== "POST")
+          return nativeFetch(input, init);
+
+        const body = await request.clone().json();
+        const number = await window.__orbsieRecordGenerationRequest(body);
+        const initialFailure = [
+          { type: "set_environment", sky: "#123456" },
+          {
+            type: "reserve_entity",
+            entity: {
+              id: "initial-pending",
+              label: "Unfinished initial object",
+              position: [0, 0, 0],
+              scale: [1, 1, 1],
+              color: "#f0c4a6",
+              assetPolicy: "new-only",
+              stage: "seed",
+            },
+          },
+        ];
+        const create = fixture.createCommands;
+        const failure = fixture.safeGenerationFailure;
+        const pendingEntity = fixture.pendingEntity;
+        const failedEdit = (color, includePending) => [
+          { type: "set_material", id: fixture.treeId, color },
+          ...(includePending
+            ? [{ type: "reserve_entity", entity: pendingEntity }]
+            : []),
+          failure,
+        ];
+        let commands;
+        if (number === 1) commands = initialFailure;
+        else if (number === 2) commands = create;
+        else if (number === 3) commands = failedEdit("#ff66aa", false);
+        else if (number === 4) commands = fixture.successUnselected;
+        else if (number === 5) {
+          const encoder = new TextEncoder();
+          const first = encoder.encode(
+            JSON.stringify({
+              type: "set_material",
+              id: fixture.treeId,
+              color: "#f5b56f",
+            }) + "\n",
+          );
+          return new Response(
+            new ReadableStream({
+              async start(controller) {
+                controller.enqueue(first);
+                await new Promise((resolve) => setTimeout(resolve, 0));
+                controller.error(new Error("private fixture reader detail"));
+              },
+            }),
+            { headers: { "Content-Type": "application/x-ndjson" } },
+          );
+        } else if (number === 6)
+          commands = [
+            { type: "set_material", id: fixture.treeId, color: "#c982df" },
+            { type: "commit_revision" },
+          ];
+        else if (number === 7) commands = failedEdit("#dd8a78", false);
+        else if (number === 8) commands = fixture.successSelected;
+        else
+          throw new Error(
+            "Unexpected generation request in the deterministic fixture.",
+          );
+
+        const encoder = new TextEncoder();
+        const text =
+          commands.map((command) => JSON.stringify(command)).join("\n") + "\n";
+        const bytes = encoder.encode(text);
+        const splitAt =
+          number === 4 ? bytes.findIndex((byte) => byte === 0xc3) : -1;
+        const stream = new ReadableStream({
+          async start(controller) {
+            if (splitAt >= 0) {
+              controller.enqueue(bytes.slice(0, splitAt + 1));
+              await new Promise((resolve) => setTimeout(resolve, 0));
+              controller.enqueue(bytes.slice(splitAt + 1));
+            } else {
+              controller.enqueue(bytes);
+            }
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          headers: { "Content-Type": "application/x-ndjson" },
+        });
+      };
+    },
+    {
+      createCommands,
+      safeGenerationFailure,
+      pendingEntity: { ...pending, geometry: undefined },
+      treeId,
+      successUnselected: successCommands(
+        "#8ac6dd",
+        "The unselected retry succeeded: café.",
+      ),
+      successSelected: successCommands(
+        "#a2d07f",
+        "The selected retry succeeded.",
+      ),
+    },
+  );
   await context.route("**/*", async (route) => {
     const request = route.request();
     const target = new URL(request.url());
@@ -206,52 +325,6 @@ try {
       return route.fulfill({ json: { models: [] } });
     if (path === "/api/trial" && method === "GET")
       return route.fulfill({ json: { enabled: true, remaining: 3, limit: 3 } });
-    if (path === "/api/generate" && method === "POST") {
-      const body = request.postDataJSON();
-      const number = report.requests.length + 1;
-      report.requests.push(summarizeRequest(body));
-      assert.equal(body.provider, "free");
-      assert.equal(body.key, "");
-      assert.equal(body.model, "");
-      const commands =
-        number === 1
-          ? createCommands
-          : number === 2
-            ? failureCommands(
-                "#ff66aa",
-                "The first failed edit.",
-                body.selected,
-              )
-            : number === 3
-              ? successCommands("#8ac6dd", "The unselected retry succeeded.")
-              : number === 4
-                ? failureCommands(
-                    "#f5b56f",
-                    "The dismissed failed edit.",
-                    body.selected,
-                  )
-                : number === 5
-                  ? failureCommands(
-                      "#c982df",
-                      "The latest valid checkpoint.",
-                      body.selected,
-                    )
-                  : number === 6
-                    ? failureCommands(
-                        "#dd8a78",
-                        "The selected retry failure.",
-                        body.selected,
-                      )
-                    : successCommands(
-                        "#a2d07f",
-                        "The selected retry succeeded.",
-                      );
-      return route.fulfill({
-        contentType: "application/x-ndjson",
-        headers: { "Cache-Control": "no-store" },
-        body: stream(commands),
-      });
-    }
     report.unexpectedApi.push({ method, path });
     await route.abort();
   });
@@ -280,6 +353,28 @@ try {
     .getByPlaceholder("What experience to build?")
     .fill("Build the recovery fixture");
   await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.locator(".toast.error")).toBeVisible();
+  assert.equal(report.requests.length, 1);
+  assert.equal(report.requests[0].selected, undefined);
+  assert.equal(report.requests[0].generationFeedback, undefined);
+  await expect(page.locator(".toast.error")).toContainText(
+    "Your last working scene is safe.",
+  );
+  await page.screenshot({ path: `${output}/desktop-initial-recovery.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: `${output}/android-initial-recovery.png` });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "Show objects", exact: true }).click();
+  await expect(page.locator(".object-list button")).toHaveCount(0);
+  await page.getByRole("button", { name: "Show objects", exact: true }).click();
+  await page.waitForTimeout(250);
+  assert.equal(report.requests.length, 1);
+  report.checks.initialFailureRestored = {
+    terminal: "clean-eof-without-commit",
+    provisionalReservationDiscarded: true,
+    noAutomaticRetry: true,
+  };
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
   const first = await waitForProject(
     page,
     (project) =>
@@ -294,24 +389,28 @@ try {
     revision: first.revision,
     entityIds: first.entities.map((entity) => entity.id),
   };
+  assert.equal(report.requests[1].prompt, report.requests[0].prompt);
 
   // No object was selected for this failed edit. Selecting another object
   // before retry must not change the original unselected request scope.
   await submitEdit(page, "Tint the tree blue");
   await expect(page.locator(".toast.error")).toBeVisible();
   const firstFailed = await getProject(page);
-  assert.equal(report.requests[1].selected, undefined);
-  assert.equal(report.requests[1].generationFeedback, undefined);
+  assert.equal(report.requests[2].selected, undefined);
+  assert.equal(report.requests[2].generationFeedback, undefined);
   assert.equal(firstFailed.entities.length, 2);
   assert.equal(
     firstFailed.entities.find((entity) => entity.id === treeId)?.color,
-    "#ff66aa",
+    tree.color,
   );
   assert.deepEqual(
     firstFailed.entities.find((entity) => entity.id === unrelatedId),
     originalUnrelated,
   );
-  await page.screenshot({ path: `${output}/recovery-actions.png` });
+  await page.screenshot({ path: `${output}/desktop-edit-recovery.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: `${output}/android-edit-recovery.png` });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await selectObject(page, "Unrelated rock");
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await waitForProject(
@@ -320,11 +419,11 @@ try {
       project.entities.find((entity) => entity.id === treeId)?.color ===
         "#8ac6dd" && project.entities.length === 2,
   );
-  assert.equal(report.requests[2].selected, undefined);
-  assert.equal(report.requests[2].prompt, report.requests[1].prompt);
-  assert.deepEqual(report.requests[2].generationFeedback, {
+  assert.equal(report.requests[3].selected, undefined);
+  assert.equal(report.requests[3].prompt, report.requests[2].prompt);
+  assert.deepEqual(report.requests[3].generationFeedback, {
     version: 1,
-    projectId: report.requests[1].projectId,
+    projectId: report.requests[2].projectId,
     code: "INVALID_SCENE_UPDATE",
     finishReason: "stop",
     issues: [
@@ -353,11 +452,11 @@ try {
   await submitEdit(page, "Make the selected tree amber");
   await expect(page.locator(".toast.error")).toBeVisible();
   const dismissed = await getProject(page);
-  assert.equal(report.requests[3].selected, treeId);
-  assert.equal(report.requests[3].generationFeedback, undefined);
+  assert.equal(report.requests[4].selected, treeId);
+  assert.equal(report.requests[4].generationFeedback, undefined);
   assert.equal(
     dismissed.entities.find((entity) => entity.id === treeId)?.color,
-    "#f5b56f",
+    "#8ac6dd",
   );
   assert.deepEqual(
     dismissed.entities.find((entity) => entity.id === unrelatedId),
@@ -368,7 +467,7 @@ try {
     .click();
   await expect(page.locator(".toast.error")).toHaveCount(0);
   await page.waitForTimeout(250);
-  assert.equal(report.requests.length, 4);
+  assert.equal(report.requests.length, 5);
   report.checks.dismissal = {
     requestCountAfterDismiss: report.requests.length,
     ordinaryPromptDidNotReuseFeedback: true,
@@ -377,11 +476,11 @@ try {
   await submitEdit(page, "Make the selected tree violet");
   await expect(page.locator(".toast.error")).toBeVisible();
   const latestCheckpoint = await getProject(page);
-  assert.equal(report.requests[4].selected, treeId);
-  assert.equal(report.requests[4].generationFeedback, undefined);
+  assert.equal(report.requests[5].selected, treeId);
+  assert.equal(report.requests[5].generationFeedback, undefined);
   assert.equal(
     latestCheckpoint.entities.find((entity) => entity.id === treeId)?.color,
-    "#c982df",
+    "#8ac6dd",
   );
   await page
     .getByRole("button", { name: "Use last working", exact: true })
@@ -392,13 +491,13 @@ try {
   const restored = await getProject(page);
   assert.equal(
     restored.entities.find((entity) => entity.id === treeId)?.color,
-    "#c982df",
+    "#8ac6dd",
   );
   assert.deepEqual(
     restored.entities.find((entity) => entity.id === unrelatedId),
     originalUnrelated,
   );
-  assert.equal(report.requests.length, 5);
+  assert.equal(report.requests.length, 6);
   report.checks.lastWorkingPreservedLatestIncrement = {
     treeColor: restored.entities.find((entity) => entity.id === treeId)?.color,
     unrelatedPreserved: true,
@@ -407,8 +506,8 @@ try {
 
   await submitEdit(page, "Make the selected tree green");
   await expect(page.locator(".toast.error")).toBeVisible();
-  assert.equal(report.requests[5].selected, treeId);
-  assert.equal(report.requests[5].generationFeedback, undefined);
+  assert.equal(report.requests[6].selected, treeId);
+  assert.equal(report.requests[6].generationFeedback, undefined);
   await selectObject(page, "Unrelated rock");
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await waitForProject(
@@ -417,11 +516,11 @@ try {
       project.entities.find((entity) => entity.id === treeId)?.color ===
         "#a2d07f" && project.entities.length === 2,
   );
-  assert.equal(report.requests[6].selected, treeId);
-  assert.equal(report.requests[6].prompt, report.requests[5].prompt);
-  assert.deepEqual(report.requests[6].generationFeedback, {
+  assert.equal(report.requests[7].selected, treeId);
+  assert.equal(report.requests[7].prompt, report.requests[6].prompt);
+  assert.deepEqual(report.requests[7].generationFeedback, {
     version: 1,
-    projectId: report.requests[5].projectId,
+    projectId: report.requests[6].projectId,
     code: "INVALID_SCENE_UPDATE",
     finishReason: "stop",
     issues: [
@@ -440,7 +539,7 @@ try {
   );
   await expect(page.locator(".toast.error")).toHaveCount(0);
   await page.waitForTimeout(350);
-  assert.equal(report.requests.length, 7);
+  assert.equal(report.requests.length, 8);
   assert.deepEqual(report.unexpectedApi, []);
   assert.deepEqual(report.blocked, []);
   assert.deepEqual(report.pageErrors, []);

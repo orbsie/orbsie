@@ -524,7 +524,7 @@ describe("generation diagnostics", () => {
     });
     const record = JSON.parse(await new Response(stream).text());
     expect(record.error).toBe(
-      "The model returned an invalid scene update. Finished objects are preserved.",
+      "The model returned a scene change that could not be applied.",
     );
     expect(record.code).toBe("INVALID_SCENE_UPDATE");
     expect(record.diagnostic.operation).toBe(1);

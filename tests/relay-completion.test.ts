@@ -76,16 +76,17 @@ it.each([false, true])(
     relay(earlierCommit ? [finish, ...partial] : partial);
     await useOrb.getState().run("Change this world");
     const state = useOrb.getState();
-    expect(state.error).toContain("before committing");
+    expect(state.error).toBe(
+      "The model stopped before finishing this scene update. Your last working scene is safe.",
+    );
     expect(state.building).toBe(false);
     expect(state.notice).not.toContain("Your world is saved");
     expect(
       state.project.entities.find((entity) => entity.id === original.id),
     ).toEqual(original);
     expect(
-      state.project.entities.find((entity) => entity.id === "finished-new")
-        ?.stage,
-    ).toBe("ready");
+      state.project.entities.find((entity) => entity.id === "finished-new"),
+    ).toBeUndefined();
     expect(
       state.project.entities.some((entity) => entity.id === "unfinished-new"),
     ).toBe(false);

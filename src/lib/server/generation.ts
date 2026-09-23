@@ -51,7 +51,10 @@ import {
   validateSceneReviewImage,
   type SceneReviewImage,
 } from "../review-image";
-import type { GenerationObservation } from "./generation-observability";
+import type {
+  GenerationObservation,
+  GenerationStreamFailureReason,
+} from "./generation-observability";
 import {
   createAuthoringLifecycle,
   updateSceneProvenance,
@@ -461,7 +464,6 @@ export async function generateCommands({
         count = 0,
         lastCommandType = "";
       let missingCommit = false;
-      let commitSeen = false;
       const structuredOutput = outputFormat !== "ndjson";
       const strictStructuredOutput = outputFormat === "json-schema-strict";
       let pendingCommit:
@@ -479,7 +481,7 @@ export async function generateCommands({
         value && typeof value === "object" && !Array.isArray(value)
           ? (value as Record<string, unknown>)
           : undefined;
-      function applyAndEnqueue(command: ModelCommand) {
+      function applyAndEnqueue(command: ModelCommand, deferCommit = false) {
         let applied: ReturnType<typeof applyModelOperation>;
         try {
           applied = applyModelOperation(
@@ -508,16 +510,13 @@ export async function generateCommands({
         observation?.noteOutputBytes(
           encoder.encode(JSON.stringify(command) + "\n").byteLength,
         );
-        if (command.type === "commit_revision") observation?.commit();
-        controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
+        if (!deferCommit) {
+          if (command.type === "commit_revision") observation?.commit();
+          controller.enqueue(encoder.encode(JSON.stringify(command) + "\n"));
+        }
       }
       function emit(line: string) {
         if (!line.trim()) return;
-        if (commitSeen)
-          throw new SceneProtocolError(
-            finishReason,
-            "No scene commands may follow commit_revision.",
-          );
         if (++count > 250)
           throw Error(
             "This turn reached its scene update limit. Continue from the saved world.",
@@ -568,17 +567,16 @@ export async function generateCommands({
             error instanceof Error ? error.message : undefined,
           );
         }
-        if (structuredOutput && pendingCommit)
+        if (pendingCommit)
           throw new SceneProtocolError(
             finishReason,
             "No scene commands may follow commit_revision.",
           );
-        if (structuredOutput && command.type === "commit_revision") {
+        if (command.type === "commit_revision") {
           pendingCommit = command;
           return;
         }
         applyAndEnqueue(command);
-        if (command.type === "commit_revision") commitSeen = true;
       }
       const envelopeDecoder = structuredOutput
         ? new SceneCommandEnvelopeDecoder({ onCommand: emit })
@@ -662,21 +660,17 @@ export async function generateCommands({
               finishReason,
               "The model did not complete this scene update.",
             );
-          if (pendingCommit) {
-            const commit = pendingCommit;
-            pendingCommit = undefined;
-            applyAndEnqueue(commit);
-          }
         } else if (records.trim()) emit(records);
         if (!count) {
           if (finishReason === "length")
             throw new TruncatedSceneStreamError(finishReason);
+          missingCommit = true;
           throw new SceneProtocolError(
             finishReason,
             "This model did not return any supported scene commands. Select another model.",
           );
         }
-        if (lastCommandType !== "commit_revision") {
+        if (!pendingCommit) {
           missingCommit = true;
           const message =
             "Generation ended before committing this turn. Finished objects are preserved; retry to continue.";
@@ -695,28 +689,56 @@ export async function generateCommands({
             "The model did not complete this scene update.",
           );
         }
+        const commit = pendingCommit;
+        if (!commit)
+          throw new SceneProtocolError(finishReason, "Missing scene commit.");
+        pendingCommit = undefined;
+        applyAndEnqueue(commit, true);
         await lifecycleController.complete();
+        observation?.commit();
+        controller.enqueue(encoder.encode(JSON.stringify(commit) + "\n"));
       } catch (error) {
         await lifecycleController.fail(error);
         const aborted = streamSignal.aborted;
+        const completionFailed = lifecycleController.completionFailed();
         const diagnostic = generationDiagnostic(error, count, finishReason);
         const parserFailure =
           diagnostic !== undefined && !(error instanceof ProviderStreamError);
+        const failure: GenerationStreamFailureReason = completionFailed
+          ? "completion-record-failure"
+          : aborted && streamSignal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : error instanceof TruncatedSceneStreamError ||
+                finishReason === "length"
+              ? "output-limit"
+              : missingCommit
+                ? "clean-eof-without-commit"
+                : error instanceof ProviderStreamError
+                  ? "provider-error"
+                  : error instanceof SceneJSONError ||
+                      error instanceof SceneProtocolError ||
+                      parserFailure
+                    ? "parser-failure"
+                    : "stream-error";
         observation?.terminal({
           reason: aborted
             ? streamSignal.reason?.name === "TimeoutError"
               ? "deadline"
               : "client-abort"
-            : missingCommit
-              ? "clean-eof-without-commit"
-              : error instanceof ProviderStreamError
-                ? "provider-error"
-                : error instanceof SceneJSONError ||
-                    error instanceof SceneProtocolError ||
-                    error instanceof TruncatedSceneStreamError ||
-                    parserFailure
-                  ? "parser-failure"
-                  : "transport-error",
+            : completionFailed
+              ? "completion-record-failure"
+              : failure === "output-limit"
+                ? "output-limit"
+                : missingCommit
+                  ? "clean-eof-without-commit"
+                  : error instanceof ProviderStreamError
+                    ? "provider-error"
+                    : error instanceof SceneJSONError ||
+                        error instanceof SceneProtocolError ||
+                        error instanceof TruncatedSceneStreamError ||
+                        parserFailure
+                      ? "parser-failure"
+                      : "transport-error",
           abortSource: aborted
             ? streamSignal.reason?.name === "TimeoutError"
               ? "deadline"
@@ -726,18 +748,22 @@ export async function generateCommands({
             ? streamSignal.reason?.name === "TimeoutError"
               ? "timeout"
               : "cancelled"
-            : missingCommit
-              ? "parser"
-              : error instanceof ProviderStreamError
-                ? error.providerStatus === 402
-                  ? "quota"
-                  : "provider-rejected"
-                : error instanceof SceneJSONError ||
-                    error instanceof SceneProtocolError ||
-                    error instanceof TruncatedSceneStreamError ||
-                    parserFailure
+            : completionFailed
+              ? "host-unavailable"
+              : failure === "output-limit"
+                ? "output-limit"
+                : missingCommit
                   ? "parser"
-                  : "transport",
+                  : error instanceof ProviderStreamError
+                    ? error.providerStatus === 402
+                      ? "quota"
+                      : "provider-rejected"
+                    : error instanceof SceneJSONError ||
+                        error instanceof SceneProtocolError ||
+                        error instanceof TruncatedSceneStreamError ||
+                        parserFailure
+                      ? "parser"
+                      : "transport",
           httpStatus:
             error instanceof ProviderStreamError &&
             error.providerStatus !== null
@@ -745,17 +771,25 @@ export async function generateCommands({
               : undefined,
           finishReason: finishReason ?? undefined,
         });
-        if (!streamSignal.aborted)
+        if (!consumerAbort.signal.aborted)
           controller.enqueue(
             encoder.encode(
               JSON.stringify({
-                error: lifecycleController.completionFailed()
-                  ? "The scene completion could not be recorded. Finished objects are preserved."
-                  : error instanceof Error &&
-                      !(error instanceof z.ZodError) &&
-                      !(error instanceof SyntaxError)
-                    ? error.message
-                    : "The model returned an invalid scene update. Finished objects are preserved.",
+                error:
+                  failure === "completion-record-failure"
+                    ? "The scene completion could not be recorded."
+                    : failure === "clean-eof-without-commit"
+                      ? "Generation ended before committing this turn."
+                      : failure === "output-limit"
+                        ? "The model reached its output limit before finishing."
+                        : failure === "provider-error"
+                          ? "The provider could not complete this generation."
+                          : failure === "deadline"
+                            ? "Generation took too long to finish."
+                            : failure === "stream-error"
+                              ? "The provider response was interrupted."
+                              : "The model returned a scene change that could not be applied.",
+                failure,
                 ...(diagnostic ?? {}),
               }) + "\n",
             ),

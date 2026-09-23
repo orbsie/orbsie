@@ -6,6 +6,7 @@ import {
 } from "../src/lib/scene-binding";
 import { generateCommands } from "../src/lib/server/generation";
 import { createChatGPTSceneStream } from "../src/lib/server/chatgpt-scene-stream";
+import { createGenerationObservation } from "../src/lib/server/generation-observability";
 
 const encoder = new TextEncoder();
 const commit = JSON.stringify({ type: "commit_revision", message: "Ready" });
@@ -133,8 +134,9 @@ it("does not complete when the provider fails after emitting a commit", async ()
     },
   });
   const text = await new Response(stream).text();
-  expect(text).toContain('"commit_revision"');
+  expect(text).not.toContain('"type":"commit_revision"');
   expect(text).toContain('"error"');
+  expect(text).toContain('"failure":"provider-error"');
   expect(completed).toHaveLength(0);
   expect(failed).toHaveLength(1);
 });
@@ -181,6 +183,10 @@ it("rejects NDJSON commands and non-stop termination after an emitted commit", a
 it("reports a provider read failure after commit without completion", async () => {
   const completed: unknown[] = [];
   const failed: unknown[] = [];
+  const provisional = JSON.stringify({
+    type: "set_environment",
+    sky: "#123456",
+  });
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -189,7 +195,7 @@ it("reports a provider read failure after commit without completion", async () =
           new ReadableStream<Uint8Array>({
             start(controller) {
               controller.enqueue(
-                encoder.encode(`data: ${contentEvent(`${commit}\n`)}\n\n`),
+                encoder.encode(`data: ${contentEvent(`${provisional}\n`)}\n\n`),
               );
               controller.error(Error("provider socket closed"));
             },
@@ -216,7 +222,15 @@ it("reports a provider read failure after commit without completion", async () =
 
 it("reports a completion-hook failure once without exposing its error text", async () => {
   const failed: unknown[] = [];
+  const events: unknown[] = [];
   const streamError = "private persistence detail";
+  const observation = createGenerationObservation({
+    layer: "provider",
+    requestId: "11111111-1111-4111-8111-111111111111",
+    clientRunId: "22222222-2222-4222-8222-222222222222",
+    provider: "gateway",
+    sink: (event) => events.push(event),
+  });
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -237,11 +251,22 @@ it("reports a completion-hook failure once without exposing its error text", asy
       },
       onFailure: record(failed),
     },
+    observability: observation,
   });
   const text = await new Response(stream).text();
   expect(text).not.toContain(streamError);
   expect(text).toContain("completion could not be recorded");
+  expect(text).toContain('"failure":"completion-record-failure"');
+  expect(text).not.toContain('"type":"commit_revision"');
   expect(failed).toHaveLength(1);
+  expect(events).not.toContainEqual(
+    expect.objectContaining({ event: "phase", phase: "commit" }),
+  );
+  expect(events.at(-1)).toMatchObject({
+    event: "terminal",
+    terminalReason: "completion-record-failure",
+    commandCount: 1,
+  });
 });
 
 it("does not complete when cancellation races a pending completion hook", async () => {
@@ -288,6 +313,10 @@ it("does not complete when cancellation races a pending completion hook", async 
 it("lets consumer cancellation fail promptly and consumes a rejected failure hook", async () => {
   const failed: unknown[] = [];
   let bodyCancelled = false;
+  const provisional = JSON.stringify({
+    type: "set_environment",
+    sky: "#123456",
+  });
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -296,7 +325,7 @@ it("lets consumer cancellation fail promptly and consumes a rejected failure hoo
           new ReadableStream<Uint8Array>({
             start(controller) {
               controller.enqueue(
-                encoder.encode(`data: ${contentEvent(`${commit}\n`)}\n\n`),
+                encoder.encode(`data: ${contentEvent(`${provisional}\n`)}\n\n`),
               );
             },
             cancel() {

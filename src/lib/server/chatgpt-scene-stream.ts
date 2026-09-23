@@ -27,7 +27,10 @@ import {
   validateSceneReviewImage,
   type SceneReviewImage,
 } from "../review-image";
-import type { GenerationObservation } from "./generation-observability";
+import type {
+  GenerationObservation,
+  GenerationStreamFailureReason,
+} from "./generation-observability";
 import {
   createAuthoringLifecycle,
   initialSceneProvenance,
@@ -234,10 +237,10 @@ export function createChatGPTSceneStream(
           latestProject = working;
           cursor = applied.cursor;
           updateSceneProvenance(provenance, commit);
+          await lifecycleController.complete();
           committed = true;
           observation?.commit();
           enqueue(commit);
-          await lifecycleController.complete();
         } catch (error) {
           failed = true;
           await lifecycleController.fail(error);
@@ -261,20 +264,41 @@ export function createChatGPTSceneStream(
             chatGPTError?.reason !== "runtime-closed" &&
             chatGPTError?.reason !== "timeout" &&
             chatGPTError?.reason !== "cancelled";
+          const completionFailed = lifecycleController.completionFailed();
+          const outputLimit =
+            diagnostic?.code === "TRUNCATED_SCENE_STREAM" ||
+            diagnostic?.diagnostic.finishReason === "length";
+          const failure: GenerationStreamFailureReason = completionFailed
+            ? "completion-record-failure"
+            : timedOut
+              ? "deadline"
+              : missingCommit
+                ? "clean-eof-without-commit"
+                : outputLimit
+                  ? "output-limit"
+                  : providerFailure
+                    ? "provider-error"
+                    : validationFailure
+                      ? "parser-failure"
+                      : "stream-error";
           observation?.terminal({
             reason: timedOut
               ? "deadline"
               : clientAborted || generationCancelled
                 ? "client-abort"
-                : missingCommit
-                  ? "clean-eof-without-commit"
-                  : providerFailure
-                    ? "provider-error"
-                    : validationFailure
-                      ? "parser-failure"
-                      : providerReturned && !committed
-                        ? "clean-eof-without-commit"
-                        : "parser-failure",
+                : completionFailed
+                  ? "completion-record-failure"
+                  : missingCommit
+                    ? "clean-eof-without-commit"
+                    : outputLimit
+                      ? "output-limit"
+                      : providerFailure
+                        ? "provider-error"
+                        : validationFailure
+                          ? "parser-failure"
+                          : providerReturned && !committed
+                            ? "clean-eof-without-commit"
+                            : "parser-failure",
             abortSource: timedOut
               ? "deadline"
               : clientAborted || generationCancelled
@@ -284,15 +308,19 @@ export function createChatGPTSceneStream(
               ? "timeout"
               : clientAborted || generationCancelled
                 ? "cancelled"
-                : providerFailure
-                  ? providerStatus === 402
-                    ? "quota"
-                    : "provider-rejected"
-                  : validationFailure || missingCommit
-                    ? "parser"
-                    : chatGPTError?.reason === "runtime-closed"
-                      ? "host-unavailable"
-                      : "parser",
+                : completionFailed
+                  ? "host-unavailable"
+                  : outputLimit
+                    ? "output-limit"
+                    : providerFailure
+                      ? providerStatus === 402
+                        ? "quota"
+                        : "provider-rejected"
+                      : validationFailure || missingCommit
+                        ? "parser"
+                        : chatGPTError?.reason === "runtime-closed"
+                          ? "host-unavailable"
+                          : "parser",
             httpStatus:
               typeof providerStatus === "number" ? providerStatus : undefined,
           });
@@ -307,13 +335,25 @@ export function createChatGPTSceneStream(
               );
           }
           const safeDiagnostic = generationDiagnostic(safeError, count, null);
-          if (!cancelled && !combined.aborted)
+          if (!cancelled)
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
-                  error: lifecycleController.completionFailed()
-                    ? "The scene completion could not be recorded. Finished objects are preserved; retry to continue."
-                    : "ChatGPT generation failed or was interrupted. Finished objects are preserved; retry to continue.",
+                  error:
+                    failure === "completion-record-failure"
+                      ? "The scene completion could not be recorded."
+                      : failure === "clean-eof-without-commit"
+                        ? "Generation ended before committing this turn."
+                        : failure === "output-limit"
+                          ? "The model reached its output limit before finishing."
+                          : failure === "provider-error"
+                            ? "The provider could not complete this generation."
+                            : failure === "deadline"
+                              ? "Generation took too long to finish."
+                              : failure === "stream-error"
+                                ? "The provider response was interrupted."
+                                : "The model returned a scene change that could not be applied.",
+                  failure,
                   ...(safeDiagnostic ?? {}),
                 }) + "\n",
               ),

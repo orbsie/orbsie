@@ -16,9 +16,19 @@
     "expected": "completed"
   },
   {
+    "name": "utf8-byte-split",
+    "splitUtf8": "{\"type\":\"commit_revision\",\"message\":\"caf\u00e9\"}\n",
+    "expected": "completed"
+  },
+  {
     "name": "clean-eof-without-commit",
     "chunks": ["{\"type\":\"set_environment\"}\n"],
     "expected": "clean-eof-without-commit"
+  },
+  {
+    "name": "mid-record-eof",
+    "chunks": ["{\"type\":\"commit_revision\""],
+    "expected": "parser-failure"
   },
   {
     "name": "invalid-final-commit",
@@ -38,8 +48,23 @@
   },
   {
     "name": "provider-error",
-    "chunks": ["{\"error\":\"redacted\",\"code\":\"PROVIDER_STREAM_ERROR\"}\n"],
-    "expected": "stream-error"
+    "chunks": ["{\"error\":\"redacted\",\"failure\":\"provider-error\",\"code\":\"PROVIDER_STREAM_ERROR\"}\n"],
+    "expected": "provider-error"
+  },
+  {
+    "name": "completion-record-failure",
+    "chunks": ["{\"error\":\"redacted\",\"failure\":\"completion-record-failure\"}\n"],
+    "expected": "completion-record-failure"
+  },
+  {
+    "name": "provider-deadline-record",
+    "chunks": ["{\"error\":\"redacted\",\"failure\":\"deadline\"}\n"],
+    "expected": "deadline"
+  },
+  {
+    "name": "output-length",
+    "chunks": ["{\"error\":\"redacted\",\"failure\":\"output-limit\"}\n"],
+    "expected": "output-limit"
   },
   {
     "name": "thrown-read",

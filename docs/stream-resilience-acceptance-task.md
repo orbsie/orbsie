@@ -1,5 +1,10 @@
 # Stream interruption and recovery acceptance
 
+Local implementation and deterministic rendered acceptance passed on Sep 22;
+see `docs/evidence/stream-resilience-20260922/` and the current development
+checkpoint. The live cross-provider step below is still open. The wording and
+failure-boundary notes that follow describe the original task state.
+
 This is the next bounded implementation handoff after the browser review loop is
 integrated. It closes the unchecked stream-resilience item in `prompt.md`; the
 existing diagnostic replay and logging work is a baseline, not acceptance of

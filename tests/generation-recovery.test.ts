@@ -137,32 +137,27 @@ it.each([
       project.entities[0].behavior?.type === "move",
   },
 ])(
-  "checkpoints a committed $name edit before a blocked stream commits",
+  "keeps a streamed $name edit provisional until its commit marker",
   async ({ command, changed }) => {
     const project = readyProject();
     await orb.getState().load(project);
+    await orb.getState().save();
     const release = blockedRelay(command);
     const generation = orb.getState().run("Edit this object");
-    await waitFor(() => {
-      const saved = db.values.get("orbsie-draft")?.project as
-        Project | undefined;
-      return Boolean(saved && changed(saved));
-    });
-
-    await reload();
-    const recovered = orb.getState().recovered;
-    expect(recovered).toBeDefined();
-    expect(changed(recovered!)).toBe(true);
-    expect(recovered!.entities[0].stage).toBe("ready");
+    await waitFor(() => changed(orb.getState().project));
+    expect(db.values.get("orbsie-draft")?.project).toEqual(project);
 
     release();
     await generation;
+    expect(orb.getState().project).toEqual(project);
+    expect(db.values.get("orbsie-draft")?.project).toEqual(project);
   },
 );
 
 it("keeps unfinished reservations out of an interrupted checkpoint", async () => {
   const project = readyProject();
   await orb.getState().load(project);
+  await orb.getState().save();
   const commands: Command[] = [
     {
       type: "reserve_entity",
@@ -211,17 +206,15 @@ it("keeps unfinished reservations out of an interrupted checkpoint", async () =>
       ),
   );
   const generation = orb.getState().run("Build this world");
-  await waitFor(() => {
-    const saved = db.values.get("orbsie-draft")?.project as Project | undefined;
-    return Boolean(
-      saved?.entities.some((entity) => entity.id === "finished-new"),
-    );
-  });
+  await waitFor(() =>
+    orb
+      .getState()
+      .project.entities.some((entity) => entity.id === "finished-new"),
+  );
+  expect(db.values.get("orbsie-draft")?.project).toEqual(project);
   await reload();
   const recovered = orb.getState().recovered!;
-  expect(
-    recovered.entities.some((entity) => entity.id === "finished-new"),
-  ).toBe(true);
+  expect(recovered).toEqual(project);
   expect(
     recovered.entities.some((entity) => entity.id === "unfinished-new"),
   ).toBe(false);
@@ -232,10 +225,24 @@ it("keeps unfinished reservations out of an interrupted checkpoint", async () =>
   await generation;
 });
 
-it("keeps the last valid increments for explicit recovery and clears stale recovery on undo/redo", async () => {
+it("restores the last committed project and UI history after a failed edit", async () => {
   const project = readyProject({ entities: fixtureEntities().slice(0, 2) });
   await orb.getState().load(project);
-  orb.getState().set({ selected: "tree-0" });
+  await orb.getState().save();
+  const earlier = { ...project, title: "Earlier title" };
+  const redoEntry = { ...project, title: "Future title" };
+  orb.getState().set({
+    selected: "tree-0",
+    history: [earlier],
+    future: [redoEntry],
+    playing: true,
+    score: ["tree-0"],
+    won: true,
+    lost: false,
+    gameScore: 5,
+    ruleRestartCount: 2,
+    reset: 3,
+  });
   const commands: Command[] = [
     { type: "set_material", id: "tree-0", color: "#ff66aa" },
     {
@@ -263,13 +270,27 @@ it("keeps the last valid increments for explicit recovery and clears stale recov
   expect(fetcher).toHaveBeenCalledOnce();
   expect(failed.building).toBe(false);
   expect(failed.project.entities).toHaveLength(2);
-  expect(failed.project.entities[0].color).toBe("#ff66aa");
+  expect(failed.project).toEqual(project);
   expect(failed.project.entities[1]).toEqual(project.entities[1]);
+  expect(failed.selected).toBe("tree-0");
+  expect(failed.playing).toBe(true);
+  expect(failed.score).toEqual(["tree-0"]);
+  expect(failed.won).toBe(true);
+  expect(failed.lost).toBe(false);
+  expect(failed.gameScore).toBe(5);
+  expect(failed.ruleRestartCount).toBe(2);
+  expect(failed.reset).toBe(3);
+  expect(failed.history).toEqual([earlier]);
+  expect(failed.future).toEqual([redoEntry]);
+  expect(db.values.get("orbsie-draft")?.project).toEqual(project);
+  expect(failed.error).toBe(
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
+  );
   expect(failed.generationRecovery).toEqual({
     projectId: project.id,
     prompt: "Make the selected tree pink",
     selected: "tree-0",
-    checkpoint: failed.project,
+    checkpoint: project,
   });
 
   // A later selection alone must not make the failed request recover against
@@ -281,6 +302,106 @@ it("keeps the last valid increments for explicit recovery and clears stale recov
   expect(orb.getState().generationRecovery).toBeUndefined();
   orb.getState().redo();
   expect(orb.getState().generationRecovery).toBeUndefined();
+});
+
+it("restores initial-generation UI state and reports clean EOF without a commit", async () => {
+  const project = blankProject();
+  await orb.getState().load(project);
+  orb.getState().set({
+    playing: true,
+    score: ["seed"],
+    won: true,
+    lost: false,
+    gameScore: 9,
+    ruleRestartCount: 4,
+    reset: 2,
+  });
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      new Response(
+        `${JSON.stringify({ type: "set_environment", sky: "#123456" })}\n`,
+      ),
+  );
+
+  await orb.getState().run("Create a world that stops early");
+
+  const failed = orb.getState();
+  expect(failed.project).toEqual(project);
+  expect(failed.phase).toBe("editing");
+  expect(failed.playing).toBe(true);
+  expect(failed.score).toEqual(["seed"]);
+  expect(failed.won).toBe(true);
+  expect(failed.gameScore).toBe(9);
+  expect(failed.ruleRestartCount).toBe(4);
+  expect(failed.reset).toBe(2);
+  expect(failed.error).toBe(
+    "The model stopped before finishing this scene update. Your last working scene is safe.",
+  );
+  expect(failed.generationRecovery?.checkpoint).toEqual(project);
+});
+
+it("ignores a canceled run's late bytes after a newer committed run", async () => {
+  const project = readyProject();
+  await orb.getState().load(project);
+  await orb.getState().save();
+  orb.getState().set({
+    selected: "tree-0",
+    playing: true,
+    score: ["tree-0"],
+    won: true,
+    gameScore: 5,
+  });
+  let lateController!: ReadableStreamDefaultController<Uint8Array>;
+  let request = 0;
+  vi.stubGlobal("fetch", async () => {
+    request++;
+    if (request === 1) {
+      const partial = new TextEncoder().encode(
+        `${JSON.stringify({ type: "set_material", id: "tree-0", color: "#123456" })}\n`,
+      );
+      return new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            lateController = controller;
+            controller.enqueue(partial);
+          },
+        }),
+      );
+    }
+    const commands = [
+      { type: "set_material", id: "tree-0", color: "#abcdef" },
+      { type: "commit_revision", message: "New run complete." },
+    ];
+    return new Response(
+      `${commands.map((command) => JSON.stringify(command)).join("\n")}\n`,
+    );
+  });
+
+  const abandoned = orb.getState().run("Abandon this edit");
+  await waitFor(() => orb.getState().project.entities[0]?.color === "#123456");
+  orb.getState().stop();
+  expect(orb.getState().project).toEqual(project);
+  expect(orb.getState().selected).toBe("tree-0");
+  expect(orb.getState().playing).toBe(true);
+  expect(orb.getState().score).toEqual(["tree-0"]);
+  expect(orb.getState().won).toBe(true);
+  expect(orb.getState().gameScore).toBe(5);
+
+  await orb.getState().run("Start a fresh edit");
+  expect(orb.getState().project.entities[0]?.color).toBe("#abcdef");
+  lateController.enqueue(
+    new TextEncoder().encode(
+      `${JSON.stringify({ type: "set_material", id: "tree-0", color: "#ff0000" })}\n${JSON.stringify({ type: "commit_revision", message: "Late stale commit." })}\n`,
+    ),
+  );
+  lateController.close();
+  await abandoned;
+
+  expect(orb.getState().project.entities[0]?.color).toBe("#abcdef");
+  expect(db.values.get("orbsie-draft")?.project.entities[0]?.color).toBe(
+    "#abcdef",
+  );
 });
 
 it("retains safe server diagnostics for an explicit retry without automatic calls", async () => {

@@ -8,6 +8,10 @@ import {
   generationDiagnosticPathKeys,
   generationDiagnosticReasons,
 } from "./generation-diagnostics";
+import {
+  validatedGenerationStreamFailure,
+  type GenerationStreamFailureReason,
+} from "./generation-observability";
 
 const finishReasons = [
   "stop",
@@ -49,6 +53,34 @@ export const generationFeedbackSchema = z
   .strict();
 
 export type GenerationFeedback = z.infer<typeof generationFeedbackSchema>;
+
+export function generationStreamFailureForRecord(
+  value: unknown,
+): GenerationStreamFailureReason | undefined {
+  return record(value)
+    ? validatedGenerationStreamFailure(record(value)?.failure)
+    : undefined;
+}
+
+export function generationFailureCopy(reason: GenerationStreamFailureReason) {
+  switch (reason) {
+    case "clean-eof-without-commit":
+      return "The model stopped before finishing this scene update. Your last working scene is safe.";
+    case "parser-failure":
+      return "The model returned a scene change that could not be applied. Your last working scene is safe.";
+    case "provider-error":
+      return "Your AI provider could not complete this request. Check its connection or try again.";
+    case "stream-error":
+    case "transport-error":
+      return "The provider response was interrupted. Your last working scene is safe.";
+    case "completion-record-failure":
+      return "The scene completion could not be recorded. Your last working scene is safe.";
+    case "deadline":
+      return "Generation took too long to finish. Your last working scene is safe.";
+    case "output-limit":
+      return "The model reached its output limit before finishing. Your last working scene is safe.";
+  }
+}
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === "object" && !Array.isArray(value)

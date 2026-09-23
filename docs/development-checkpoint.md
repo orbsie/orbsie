@@ -1,5 +1,28 @@
 # Development checkpoint
 
+Sep 22 stream recovery accepted locally: unfinished initial/edit operations
+remain visible while streaming but roll back to the last committed scene on
+clean EOF, invalid output, read loss or Stop. Saved local state, Undo/Redo,
+selection and gameplay state use that same baseline; a cloud journal's
+provisional checkpoint remains available only through explicit recovery.
+Provider, parser, transport, deadline, output-limit and completion-record
+failures now have bounded terminal classifications and safe browser copy. The
+API and hosted ChatGPT adapters withhold commit until durable completion.
+Root reviewed the final worker diff, the rendered desktop/390×844 recovery
+fixture (`docs/evidence/stream-resilience-20260922/`), diagnostic replay,
+full suite (1,575 pass, 24 skip) and production build. No live model calls or
+deployment; cross-provider live recovery acceptance remains open. Next bounded
+implementation: `docs/chatgpt-expired-challenge-recovery-task.md`.
+
+Sep 22 signed-in Chrome ChatGPT acceptance attempt: the owner approved the
+current device-code grant, but the earlier challenge had expired and a fresh
+`/api/chatgpt/start` returned HTTP 409 before issuing a new code. The browser
+and software renderer are functional; no new consent or model call occurred.
+An orphaned pending owner intent is a specific hypothesis, not yet proven by
+the status-only production log. Reproduce and repair the expired-challenge
+recovery with a Luna worker before retrying the consent. Direct redirect-based
+OAuth is a separate requirement and remains unverified.
+
 Sep 22 browser-access repair: regular Chrome was not running. The installed
 ChatGPT extension in the Default profile connected after Chrome was opened on
 the desktop. Computer use now exposes Chrome, and a fresh ChatGPT tab shows the

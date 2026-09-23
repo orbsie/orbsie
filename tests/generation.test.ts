@@ -1,6 +1,7 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { generateCommands } from "../src/lib/server/generation";
 import { blankProject } from "../src/lib/protocol";
+import { createGenerationObservation } from "../src/lib/server/generation-observability";
 afterEach(() => vi.unstubAllGlobals());
 it("routes OpenRouter Luna through OpenAI, Amazon Bedrock, then Azure", async () => {
   const encoder = new TextEncoder();
@@ -236,13 +237,14 @@ for (const provider of ["openrouter", "gateway"] as const) {
       const text = await new Response(stream).text();
       if (browserModeling) expect(text).toContain('"commit_revision"');
       else {
-        expect(text).toContain("Browser modeling is unavailable");
         const records = text
           .trim()
           .split("\n")
           .map((line) => JSON.parse(line));
         expect(records[0]).toMatchObject({ type: "reserve_entity" });
         expect(records[1]).toMatchObject({
+          error: "The model returned a scene change that could not be applied.",
+          failure: "parser-failure",
           code: "INVALID_SCENE_PROTOCOL",
           diagnostic: {
             operation: 2,
@@ -335,9 +337,11 @@ it("invalid generated operations fail closed without executing code", async () =
     project: blankProject(),
     signal: new AbortController().signal,
   });
-  expect(JSON.parse(await new Response(stream).text()).error).toContain(
-    "invalid scene update",
-  );
+  expect(JSON.parse(await new Response(stream).text())).toMatchObject({
+    error: "The model returned a scene change that could not be applied.",
+    failure: "parser-failure",
+    code: "INVALID_SCENE_UPDATE",
+  });
 });
 
 it("reports truncated generation after valid partial commands instead of claiming completion", async () => {
@@ -381,7 +385,10 @@ it("reports truncated generation after valid partial commands instead of claimin
     .split("\n")
     .map((line) => JSON.parse(line));
   expect(records[0]).toEqual(command);
-  expect(records[1].error).toContain("before committing");
+  expect(records[1]).toMatchObject({
+    error: "The model reached its output limit before finishing.",
+    failure: "output-limit",
+  });
   expect(records[1]).toMatchObject({
     code: "TRUNCATED_SCENE_STREAM",
     diagnostic: {
@@ -389,5 +396,56 @@ it("reports truncated generation after valid partial commands instead of claimin
       issues: [],
       finishReason: "length",
     },
+  });
+});
+
+it("reports normal provider EOF without a commit and withholds any success marker", async () => {
+  const events: unknown[] = [];
+  const observation = createGenerationObservation({
+    layer: "provider",
+    requestId: "11111111-1111-4111-8111-111111111111",
+    clientRunId: "22222222-2222-4222-8222-222222222222",
+    provider: "gateway",
+    sink: (event) => events.push(event),
+  });
+  const partial = JSON.stringify({
+    type: "set_environment",
+    sky: "#123456",
+  });
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      new Response(
+        `data: ${JSON.stringify({ choices: [{ delta: { content: `${partial}\n` } }] })}\n\ndata: [DONE]\n\n`,
+      ),
+  );
+  const stream = await generateCommands({
+    provider: "gateway",
+    model: "catalog-model",
+    key: "test-key",
+    prompt: "Test",
+    project: blankProject(),
+    signal: new AbortController().signal,
+    observability: observation,
+  });
+  const records = (await new Response(stream).text())
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  expect(records).toHaveLength(2);
+  expect(records[0]).toEqual({ ...JSON.parse(partial) });
+  expect(records[1]).toMatchObject({
+    failure: "clean-eof-without-commit",
+    code: "INVALID_SCENE_PROTOCOL",
+  });
+  expect(records.some((record) => record.type === "commit_revision")).toBe(
+    false,
+  );
+  expect(events.at(-1)).toMatchObject({
+    event: "terminal",
+    terminalReason: "clean-eof-without-commit",
+    failureCode: "parser",
+    requestId: "11111111-1111-4111-8111-111111111111",
+    clientRunId: "22222222-2222-4222-8222-222222222222",
   });
 });

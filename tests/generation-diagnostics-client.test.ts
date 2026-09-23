@@ -119,6 +119,26 @@ describe("browser generation diagnostics", () => {
     ).toMatchObject({ reason: "client-abort" });
   });
 
+  it("accepts completion-record failures as a terminal recovery cause", () => {
+    const diagnostic = beginClientGenerationDiagnostic({
+      runId,
+      provider: "gateway",
+    });
+    diagnostic.requestId(requestId);
+    diagnostic.terminal({
+      reason: "completion-record-failure",
+      failureCode: "host-unavailable",
+    });
+    expect(readGenerationDiagnostics()[0]).toMatchObject({
+      runId,
+      requestId,
+      terminal: {
+        reason: "completion-record-failure",
+        failureCode: "host-unavailable",
+      },
+    });
+  });
+
   it("projects persisted entries before exposing them", () => {
     const diagnostic = beginClientGenerationDiagnostic({
       runId,

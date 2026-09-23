@@ -70,6 +70,7 @@ const replayFixtures = JSON.parse(
 ) as Array<{
   name: string;
   chunks?: string[];
+  splitUtf8?: string;
   expected: string;
   readError?: boolean;
   stale?: boolean;
@@ -93,6 +94,31 @@ function response(commands: Command[]) {
 }
 
 function rawResponse(body: string) {
+  return new Response(body, {
+    headers: { "Content-Type": "application/x-ndjson" },
+  });
+}
+
+function responseForReplayFixture(fixture: (typeof replayFixtures)[number]) {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      if (fixture.readError) {
+        controller.error(new Error("fixture reader failure"));
+        return;
+      }
+      if (fixture.splitUtf8 !== undefined) {
+        const bytes = encoder.encode(fixture.splitUtf8);
+        const splitAt = bytes.findIndex((value) => value === 0xc3);
+        controller.enqueue(bytes.slice(0, splitAt + 1));
+        controller.enqueue(bytes.slice(splitAt + 1));
+      } else {
+        for (const chunk of fixture.chunks ?? [])
+          controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
   return new Response(body, {
     headers: { "Content-Type": "application/x-ndjson" },
   });
@@ -223,8 +249,9 @@ describe("store authoring activity", () => {
     ).toBe(false);
   });
 
-  it("records clean EOF without a commit after preserving applied edits", async () => {
+  it("rolls clean EOF without a commit back to the saved scene", async () => {
     mocks.browserBuild.mockResolvedValue(browserMetadata);
+    const before = structuredClone(useOrb.getState().project);
     vi.stubGlobal(
       "fetch",
       vi.fn<typeof fetch>(async () =>
@@ -243,9 +270,8 @@ describe("store authoring activity", () => {
     ).toMatchObject({
       reason: "clean-eof-without-commit",
     });
-    expect(
-      useOrb.getState().project.entities.some((e) => e.id === "lantern"),
-    ).toBe(true);
+    expect(useOrb.getState().project).toEqual(before);
+    expect(mocks.db.get("orbsie-draft")).toMatchObject({ project: before });
   });
 
   it("classifies invalid streamed commands as client validation failures", async () => {
@@ -293,7 +319,9 @@ describe("store authoring activity", () => {
       reason: "parser-failure",
       failureCode: "invalid-input",
     });
-    expect(useOrb.getState().error).toContain("no longer exists");
+    expect(useOrb.getState().error).toContain(
+      "Your last working scene is safe.",
+    );
   });
 
   it("replays stream fixtures through the production store", async () => {
@@ -302,20 +330,9 @@ describe("store authoring activity", () => {
     );
     for (const fixture of storeCases) {
       clearGenerationDiagnostics();
-      const body = fixture.readError
-        ? new ReadableStream<Uint8Array>({
-            start(controller) {
-              controller.error(new Error("fixture reader failure"));
-            },
-          })
-        : undefined;
       vi.stubGlobal(
         "fetch",
-        vi.fn<typeof fetch>(async () =>
-          body
-            ? new Response(body)
-            : rawResponse((fixture.chunks ?? []).join("")),
-        ),
+        vi.fn<typeof fetch>(async () => responseForReplayFixture(fixture)),
       );
 
       await useOrb.getState().run(`Replay ${fixture.name}`, connection);
@@ -330,7 +347,7 @@ describe("store authoring activity", () => {
     }
   });
 
-  it("preserves a thrown reader as a transport failure", async () => {
+  it("classifies a thrown reader as transport failure without exposing detail", async () => {
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.error(new Error("private reader detail"));
@@ -353,6 +370,9 @@ describe("store authoring activity", () => {
       reason: "transport-error",
       failureCode: "transport",
     });
+    expect(useOrb.getState().error).toContain(
+      "Your last working scene is safe.",
+    );
     expect(JSON.stringify(readGenerationDiagnostics())).not.toContain(
       "private reader detail",
     );

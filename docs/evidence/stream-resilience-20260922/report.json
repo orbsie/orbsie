@@ -1,0 +1,279 @@
+{
+  "mode": "fixture-generation-retry-feedback-real-editor",
+  "fixture": {
+    "transport": "window.fetch interception with /api/generate ReadableStreams",
+    "liveInference": false,
+    "serverFundedCalls": false,
+    "databaseMutations": false,
+    "viewports": {
+      "desktop": {
+        "width": 1280,
+        "height": 900
+      },
+      "android": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    "cases": [
+      "initial clean EOF after provisional scene operations",
+      "edit body read rejection after a provisional operation",
+      "invalid final commit after a provisional operation",
+      "split UTF-8 code point in an explicit retry"
+    ],
+    "structuredFailure": {
+      "code": "INVALID_SCENE_UPDATE",
+      "finishReason": "stop",
+      "issueCode": "invalid_type",
+      "issuePath": [
+        "geometry",
+        "job",
+        "recipe",
+        "nodes",
+        2
+      ],
+      "reason": "unreachable_recipe_node"
+    },
+    "treeId": "tree-0",
+    "unrelatedId": "rock-0",
+    "pendingId": "pending-0"
+  },
+  "requests": [
+    {
+      "prompt": "Build the recovery fixture",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "prompt": "Build the recovery fixture",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Tint the tree blue",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+        "code": "INVALID_SCENE_UPDATE",
+        "finishReason": "stop",
+        "issues": [
+          {
+            "code": "invalid_type",
+            "path": [
+              "geometry",
+              "job",
+              "recipe",
+              "nodes",
+              2
+            ],
+            "reason": "unreachable_recipe_node"
+          }
+        ]
+      }
+    },
+    {
+      "prompt": "Make the selected tree amber",
+      "selected": "tree-0",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree violet",
+      "selected": "tree-0",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "prompt": "Make the selected tree green",
+      "selected": "tree-0",
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+        "code": "INVALID_SCENE_UPDATE",
+        "finishReason": "stop",
+        "issues": [
+          {
+            "code": "invalid_type",
+            "path": [
+              "geometry",
+              "job",
+              "recipe",
+              "nodes",
+              2
+            ],
+            "reason": "unreachable_recipe_node"
+          }
+        ]
+      }
+    }
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    }
+  ],
+  "blocked": [],
+  "unexpectedApi": [],
+  "pageErrors": [],
+  "checks": {
+    "initialFailureRestored": {
+      "terminal": "clean-eof-without-commit",
+      "provisionalReservationDiscarded": true,
+      "noAutomaticRetry": true
+    },
+    "created": {
+      "projectId": "520a5a51-185b-441d-81c2-dedfa3536b7d",
+      "revision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    "unselectedRetryPreserved": {
+      "failedRequestSelected": null,
+      "retryRequestSelected": null,
+      "promptRestoredExactly": true,
+      "unrelatedPreserved": true,
+      "projectScopedFeedbackForwarded": true
+    },
+    "dismissal": {
+      "requestCountAfterDismiss": 5,
+      "ordinaryPromptDidNotReuseFeedback": true
+    },
+    "lastWorkingPreservedLatestIncrement": {
+      "treeColor": "#8ac6dd",
+      "unrelatedPreserved": true,
+      "requestCountAfterRestore": 6
+    },
+    "selectedRetryPreserved": {
+      "failedRequestSelected": "tree-0",
+      "retryRequestSelected": "tree-0",
+      "changedSelectionBeforeRetry": "rock-0",
+      "noAutomaticExtraRequest": true,
+      "projectScopedFeedbackForwarded": true
+    },
+    "interceptedGenerationRequests": {
+      "fixtureRequests": 8,
+      "liveInferenceCalls": 0
+    }
+  },
+  "status": "passed"
+}

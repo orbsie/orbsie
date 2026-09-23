@@ -215,6 +215,50 @@ describe("generation observability", () => {
     });
   });
 
+  it("preserves allowlisted stream terminal markers with one correlated terminal", async () => {
+    const cases = [
+      ["clean-eof-without-commit", "parser"],
+      ["parser-failure", "parser"],
+      ["provider-error", "provider-rejected"],
+      ["stream-error", "transport"],
+      ["completion-record-failure", "host-unavailable"],
+      ["deadline", "timeout"],
+      ["output-limit", "output-limit"],
+    ] as const;
+    for (const [failure, failureCode] of cases) {
+      const events: unknown[] = [];
+      const observation = createGenerationObservation({
+        layer: "route",
+        requestId,
+        clientRunId: runId,
+        sink: (event) => events.push(event),
+      });
+      const record = new TextEncoder().encode(
+        `${JSON.stringify({ error: "private text", failure })}\n`,
+      );
+      const source = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(record);
+          controller.close();
+        },
+      });
+      await new Response(observeGenerationStream(source, observation)).text();
+      const terminals = (events as Array<Record<string, unknown>>).filter(
+        (event) => event.event === "terminal",
+      );
+      expect(terminals).toHaveLength(1);
+      expect(terminals[0]).toMatchObject({
+        requestId,
+        clientRunId: runId,
+        terminalReason: failure,
+        failureCode,
+      });
+      if (failure === "deadline")
+        expect(terminals[0]).toHaveProperty("abortSource", "deadline");
+      expect(JSON.stringify(terminals)).not.toContain("private text");
+    }
+  });
+
   it("separates an overlong record from transport failure and discards its continuation", async () => {
     const events: unknown[] = [];
     const observation = createGenerationObservation({

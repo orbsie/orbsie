@@ -43,17 +43,40 @@ export const generationObservationTerminalReasons = [
   "parser-failure",
   "provider-error",
   "stream-error",
+  "transport-error",
+  "completion-record-failure",
   "client-abort",
   "deadline",
   "observation-limit",
   "output-limit",
-  "transport-error",
   "stale-run",
   "credential-finalization-failed",
   "unknown",
 ] as const;
 export type GenerationObservationTerminalReason =
   (typeof generationObservationTerminalReasons)[number];
+
+/** Safe terminal markers carried only on server-generated failure records. */
+export const generationStreamFailureReasons = [
+  "clean-eof-without-commit",
+  "parser-failure",
+  "provider-error",
+  "stream-error",
+  "transport-error",
+  "completion-record-failure",
+  "deadline",
+  "output-limit",
+] as const;
+export type GenerationStreamFailureReason =
+  (typeof generationStreamFailureReasons)[number];
+
+export function validatedGenerationStreamFailure(
+  value: unknown,
+): GenerationStreamFailureReason | undefined {
+  return (generationStreamFailureReasons as readonly unknown[]).includes(value)
+    ? (value as GenerationStreamFailureReason)
+    : undefined;
+}
 
 export const generationObservationAbortSources = [
   "client",
@@ -392,6 +415,7 @@ export function observeGenerationStream(
   let pending = "";
   let streamError = false;
   let malformedRecord = false;
+  let streamFailure: GenerationStreamFailureReason | undefined;
   let sawCommit = false;
   let observationLimit = false;
   let discardingLine = false;
@@ -422,8 +446,12 @@ export function observeGenerationStream(
           typeof item === "object" &&
           !Array.isArray(item) &&
           typeof (item as Record<string, unknown>).error === "string"
-        )
+        ) {
           streamError = true;
+          streamFailure = validatedGenerationStreamFailure(
+            (item as Record<string, unknown>).failure,
+          );
+        }
         if (
           item &&
           typeof item === "object" &&
@@ -464,31 +492,48 @@ export function observeGenerationStream(
                 : "client-abort"
               : observationLimit
                 ? "observation-limit"
-                : malformedRecord
-                  ? "parser-failure"
-                  : streamError
-                    ? "stream-error"
-                    : sawCommit
-                      ? "completed"
-                      : "clean-eof-without-commit",
+                : streamFailure
+                  ? streamFailure
+                  : malformedRecord
+                    ? "parser-failure"
+                    : streamError
+                      ? "stream-error"
+                      : sawCommit
+                        ? "completed"
+                        : "clean-eof-without-commit",
             signal?.aborted
               ? signal.reason?.name === "TimeoutError"
                 ? "deadline"
                 : "client"
-              : undefined,
+              : streamFailure === "deadline"
+                ? "deadline"
+                : undefined,
             signal?.aborted
               ? signal.reason?.name === "TimeoutError"
                 ? "timeout"
                 : "cancelled"
               : observationLimit
                 ? "observation-limit"
-                : malformedRecord
-                  ? "parser"
-                  : streamError
-                    ? "transport"
-                    : sawCommit
-                      ? undefined
-                      : "parser",
+                : streamFailure === "deadline"
+                  ? "timeout"
+                  : streamFailure === "output-limit"
+                    ? "output-limit"
+                    : streamFailure === "provider-error"
+                      ? "provider-rejected"
+                      : streamFailure === "completion-record-failure"
+                        ? "host-unavailable"
+                        : streamFailure === "parser-failure" ||
+                            streamFailure === "clean-eof-without-commit"
+                          ? "parser"
+                          : streamFailure === "stream-error"
+                            ? "transport"
+                            : malformedRecord
+                              ? "parser"
+                              : streamError
+                                ? "transport"
+                                : sawCommit
+                                  ? undefined
+                                  : "parser",
           );
           reader.releaseLock();
           controller.close();

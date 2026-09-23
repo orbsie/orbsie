@@ -19,6 +19,7 @@ import {
 type ReplayFixture = {
   name: string;
   chunks?: string[];
+  splitUtf8?: string;
   expected: string;
   readError?: boolean;
   abort?: "deadline" | "client";
@@ -48,6 +49,17 @@ function streamFor(fixture: ReplayFixture) {
       },
     });
   const encoder = new TextEncoder();
+  if (fixture.splitUtf8 !== undefined) {
+    const bytes = encoder.encode(fixture.splitUtf8);
+    const splitAt = bytes.findIndex((value) => value === 0xc3);
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, splitAt + 1));
+        controller.enqueue(bytes.slice(splitAt + 1));
+        controller.close();
+      },
+    });
+  }
   const chunks = (fixture.chunks ?? []).map((chunk) => encoder.encode(chunk));
   return new ReadableStream<Uint8Array>({
     start(controller) {

@@ -14,6 +14,10 @@ vi.mock("idb-keyval", () => ({
 import { fixtureEntities } from "../src/lib/fixtures";
 import { blankProject, commandSchema } from "../src/lib/protocol";
 import { useOrb } from "../src/lib/store";
+import {
+  clearGenerationDiagnostics,
+  readGenerationDiagnostics,
+} from "../src/lib/generation-diagnostics-client";
 
 const localJob = {
   version: 1 as const,
@@ -21,6 +25,7 @@ const localJob = {
 };
 
 beforeEach(() => {
+  clearGenerationDiagnostics();
   mocks.db.clear();
   const project = { ...blankProject(), entities: [fixtureEntities()[0]] };
   useOrb.getState().load(project);
@@ -60,7 +65,13 @@ it("rejects legacy modeling jobs without invoking an external builder", async ()
     useOrb.getState().project.entities[0].geometry,
   );
   await useOrb.getState().run("Build this model");
-  expect(useOrb.getState().error).toContain("browser-manifold");
+  expect(useOrb.getState().error).toBe(
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
+  );
+  expect(readGenerationDiagnostics()[0]).toMatchObject({
+    kind: "generation",
+    terminal: { reason: "parser-failure" },
+  });
   expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
   expect(fetcher).toHaveBeenCalledOnce();
   expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toMatchObject({
@@ -83,7 +94,9 @@ it("rejects provider-supplied legacy model identity before any builder call", as
     createdAt: "2026-09-08T00:00:00.000Z",
   });
   await useOrb.getState().run("Build this model");
-  expect(useOrb.getState().error).toContain("invalid scene change");
+  expect(useOrb.getState().error).toBe(
+    "The model returned a scene change that could not be applied. Your last working scene is safe.",
+  );
   expect(useOrb.getState().project.entities[0].geometry).toEqual(original);
   expect(fetcher).toHaveBeenCalledOnce();
 });

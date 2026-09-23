@@ -50,6 +50,7 @@ const terminalReasons = new Set<GenerationObservationTerminalReason>([
   "parser-failure",
   "provider-error",
   "stream-error",
+  "completion-record-failure",
   "client-abort",
   "deadline",
   "observation-limit",

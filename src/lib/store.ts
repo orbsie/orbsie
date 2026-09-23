@@ -56,8 +56,10 @@ import {
   type ModelingFeedback,
 } from "./modeling-feedback";
 import {
+  generationFailureCopy,
   generationFeedbackForFailure,
   generationFeedbackMatchesProject,
+  generationStreamFailureForRecord,
   type GenerationFeedback,
 } from "./generation-feedback";
 import {
@@ -74,6 +76,41 @@ import {
   type ClientGenerationDiagnosticController,
 } from "./generation-diagnostics-client";
 import { validatedClientRunId } from "./generation-observability";
+import type { GenerationStreamFailureReason } from "./generation-observability";
+import { CHATGPT_STALE_CONNECTION_CODE } from "./chatgpt-connection-errors";
+
+const generationErrorCodes = new Set([
+  "FREE_LIMIT_REACHED",
+  "PROVIDER_AUTH_REJECTED",
+  "PROVIDER_ACCESS_DENIED",
+  "CHATGPT_CONNECTION_REQUIRED",
+  CHATGPT_STALE_CONNECTION_CODE,
+]);
+
+function validatedGenerationErrorCode(value: unknown): string | undefined {
+  return typeof value === "string" && generationErrorCodes.has(value)
+    ? value
+    : undefined;
+}
+
+function generationFailureCode(reason: GenerationStreamFailureReason) {
+  switch (reason) {
+    case "clean-eof-without-commit":
+    case "parser-failure":
+      return "parser" as const;
+    case "provider-error":
+      return "provider-rejected" as const;
+    case "stream-error":
+    case "transport-error":
+      return "transport" as const;
+    case "completion-record-failure":
+      return "host-unavailable" as const;
+    case "deadline":
+      return "timeout" as const;
+    case "output-limit":
+      return "output-limit" as const;
+  }
+}
 export type GenerationJournalConnection = {
   isCurrent: () => boolean;
   begin: (
@@ -213,6 +250,20 @@ interface State {
   ) => Promise<boolean>;
   collect: (id: string) => void;
 }
+type GenerationUiCheckpoint = Pick<
+  State,
+  | "phase"
+  | "playing"
+  | "selected"
+  | "score"
+  | "won"
+  | "lost"
+  | "gameScore"
+  | "ruleRestartCount"
+  | "reset"
+  | "history"
+  | "future"
+>;
 type LeaseStorage = Pick<Storage, "getItem" | "setItem">;
 type DraftLease = { owner: string; expiresAt: number };
 const LEASE_MS = 45000;
@@ -315,6 +366,8 @@ let activeAuthoringRun:
       runId: string;
       projectId: string;
       diagnostic: ClientGenerationDiagnosticController;
+      recovery: GenerationUiCheckpoint;
+      initialRevision: number;
       publish: (
         kind: AuthoringActivityKind,
         message: string,
@@ -683,11 +736,37 @@ export const useOrb = create<State>((setState, getState) => ({
     active?.abort();
     active = undefined;
     const s = getState();
-    const committedWorld = committed(s.project, baseline);
+    const committedWorld = baseline ?? committed(s.project);
+    const recovery =
+      run && baseline?.revision === run.initialRevision
+        ? run.recovery
+        : undefined;
+    const recoverySelected =
+      recovery?.selected &&
+      committedWorld.entities.some((entity) => entity.id === recovery.selected)
+        ? recovery.selected
+        : undefined;
     setState({
-      phase: s.phase === "descending" ? "editing" : s.phase,
+      phase:
+        recovery?.phase === "landing" || (!recovery && s.phase === "descending")
+          ? "editing"
+          : (recovery?.phase ?? s.phase),
       building: false,
       project: committedWorld,
+      ...(recovery
+        ? {
+            selected: recoverySelected,
+            playing: recovery.playing,
+            score: recovery.score,
+            won: recovery.won,
+            lost: recovery.lost,
+            gameScore: recovery.gameScore,
+            ruleRestartCount: recovery.ruleRestartCount,
+            reset: recovery.reset,
+            history: recovery.history,
+            future: recovery.future,
+          }
+        : {}),
       generationRecovery: undefined,
       notice: "Stopped. Finished objects are safe.",
     });
@@ -735,6 +814,20 @@ export const useOrb = create<State>((setState, getState) => ({
       });
       return;
     }
+    const stateBeforeRun = getState();
+    const preservedUiState = {
+      phase: stateBeforeRun.phase,
+      selected: stateBeforeRun.selected,
+      playing: stateBeforeRun.playing,
+      score: stateBeforeRun.score,
+      won: stateBeforeRun.won,
+      lost: stateBeforeRun.lost,
+      gameScore: stateBeforeRun.gameScore,
+      ruleRestartCount: stateBeforeRun.ruleRestartCount,
+      reset: stateBeforeRun.reset,
+      history: stateBeforeRun.history,
+      future: stateBeforeRun.future,
+    };
     finishActiveExperience("cancelled");
     clearActiveAuthoringRun();
     active?.abort();
@@ -743,9 +836,9 @@ export const useOrb = create<State>((setState, getState) => ({
     active = controller;
     const { signal } = controller;
     const before =
-      getState().phase === "landing"
+      stateBeforeRun.phase === "landing"
         ? blankProject()
-        : committed(getState().project, baseline);
+        : committed(stateBeforeRun.project, baseline);
     const retryFeedback = generationFeedbackMatchesProject(
       generationFeedback,
       before.id,
@@ -755,7 +848,7 @@ export const useOrb = create<State>((setState, getState) => ({
     const ruleRestartsBeforeGeneration = getState().ruleRestartCount;
     baseline = before;
     const initial = before.entities.length === 0;
-    const selected = initial ? undefined : getState().selected;
+    const selected = initial ? undefined : stateBeforeRun.selected;
     let assetPolicy = deriveAssetPolicy(prompt, selected, before);
     const browserModeling = browserModelingAvailable();
     const reviewEnabled =
@@ -886,6 +979,8 @@ export const useOrb = create<State>((setState, getState) => ({
       runId,
       projectId: project.id,
       diagnostic,
+      recovery: preservedUiState,
+      initialRevision: before.revision,
       publish: publishActivity,
       clear: activityThrottle.clear,
     };
@@ -899,10 +994,6 @@ export const useOrb = create<State>((setState, getState) => ({
       generationRecovery: undefined,
       notice: "",
       saved: false,
-      history: initial
-        ? [before]
-        : [...getState().history, before].slice(-HISTORY_LIMIT),
-      future: [],
       authoringActivity: [],
     });
     publishActivity("waiting", "Waiting for a response…", project.revision);
@@ -932,9 +1023,11 @@ export const useOrb = create<State>((setState, getState) => ({
     let lastAppliedCommand: Command["type"] | undefined;
     let streamEnded = false;
     let streamErrorRecord = false;
+    let streamFailure: GenerationStreamFailureReason | undefined;
     let observationLimit = false;
     let parserFailure = false;
     let applyFailure = false;
+    let journalFailure = false;
     let providerTimeout = false;
     let providerFinishReason:
       | "stop"
@@ -955,12 +1048,18 @@ export const useOrb = create<State>((setState, getState) => ({
       if (signal.aborted || active !== controller || !writerCurrent())
         return false;
       let s = getState();
-      let modelCommand = enforceAssetPolicy(
-        s.project,
-        parseModelCommandForProcessing(input, false, browserModeling),
-        assetPolicy,
-      );
-      assertModelingCommand(modelCommand, false, browserModeling);
+      let modelCommand: ModelCommand;
+      try {
+        modelCommand = enforceAssetPolicy(
+          s.project,
+          parseModelCommandForProcessing(input, false, browserModeling),
+          assetPolicy,
+        );
+        assertModelingCommand(modelCommand, false, browserModeling);
+      } catch (error) {
+        applyFailure = true;
+        throw error;
+      }
       let command: Command;
       if (modelCommand.type === "reserve_entity")
         publishActivity(
@@ -1010,6 +1109,7 @@ export const useOrb = create<State>((setState, getState) => ({
                 ?.color ?? "#6ead60",
           });
         } catch (error) {
+          applyFailure = true;
           if (!signal.aborted && active === controller)
             setState({
               modelingFeedback: modelingFeedbackForFailure({
@@ -1064,29 +1164,35 @@ export const useOrb = create<State>((setState, getState) => ({
         throw error;
       }
       if (journal && durableRun) {
-        if (!journalCurrent()) return false;
-        if (
-          command.type === "set_geometry" &&
-          command.geometry.kind === "generated" &&
-          !(await uploadCloudGeneratedModels(result.project, journalCurrent))
-        )
-          return false;
-        const acknowledged = await appendCloudGenerationOperation(
-          envelope,
-          signal,
-        );
-        if (!journalCurrent()) return false;
-        if (
-          JSON.stringify(acknowledged.checkpoint) !==
-          JSON.stringify(projectSchema.parse(result.project))
-        )
-          throw Error(
-            "The cloud checkpoint differs from this update. Recover it before continuing.",
+        try {
+          if (!journalCurrent()) return false;
+          if (
+            command.type === "set_geometry" &&
+            command.geometry.kind === "generated" &&
+            !(await uploadCloudGeneratedModels(result.project, journalCurrent))
+          )
+            return false;
+          const acknowledged = await appendCloudGenerationOperation(
+            envelope,
+            signal,
           );
-        durableRun = acknowledged;
+          if (!journalCurrent()) return false;
+          if (
+            JSON.stringify(acknowledged.checkpoint) !==
+            JSON.stringify(projectSchema.parse(result.project))
+          )
+            throw Error(
+              "The cloud checkpoint differs from this update. Recover it before continuing.",
+            );
+          durableRun = acknowledged;
+        } catch (error) {
+          journalFailure = true;
+          streamFailure = "completion-record-failure";
+          throw error;
+        }
       }
-      // Keep the newest finished shape if a later operation is interrupted.
-      baseline = committed(result.project, baseline);
+      if (command.type === "commit_revision")
+        baseline = committed(result.project, baseline);
       cursor = result.cursor;
       lastAppliedCommand = command.type;
       if (command.type === "commit_revision")
@@ -1126,7 +1232,17 @@ export const useOrb = create<State>((setState, getState) => ({
           if (affected) noteSceneUpdate(project.id, entity, experienceToken);
         }
       }
-      setState({ project: result.project });
+      setState({
+        project: result.project,
+        ...(command.type === "commit_revision"
+          ? {
+              history: [...preservedUiState.history, before].slice(
+                -HISTORY_LIMIT,
+              ),
+              future: [],
+            }
+          : {}),
+      });
       if (command.type === "reserve_entity")
         publishActivity(
           "applied",
@@ -1165,21 +1281,7 @@ export const useOrb = create<State>((setState, getState) => ({
         );
       if (command.type === "reserve_entity")
         noteReservation(project.id, command.entity.id, experienceToken);
-      const checkpoint =
-        (command.type === "set_geometry" &&
-          command.geometry.detail === "refined") ||
-        command.type === "set_material" ||
-        command.type === "set_transform" ||
-        command.type === "set_behavior" ||
-        command.type === "set_game" ||
-        command.type === "set_environment" ||
-        command.type === "remove_entity" ||
-        command.type === "create_group" ||
-        command.type === "set_group_transform" ||
-        command.type === "remove_group" ||
-        command.type === "set_parent" ||
-        command.type === "commit_revision";
-      if (checkpoint) await getState().save();
+      if (command.type === "commit_revision") await getState().save();
       return !signal.aborted && active === controller;
     };
     const currentAt = (revision?: number) =>
@@ -1397,16 +1499,20 @@ export const useOrb = create<State>((setState, getState) => ({
       return final.review.verdict === "accept";
     };
     try {
-      await getState().save();
-      if (signal.aborted || active !== controller) return;
       if (journal) {
         if (!journalCurrent()) return;
-        durableRun = await journal.begin(
-          project,
-          cursor.runId,
-          prompt,
-          selected,
-        );
+        try {
+          durableRun = await journal.begin(
+            project,
+            cursor.runId,
+            prompt,
+            selected,
+          );
+        } catch (error) {
+          journalFailure = true;
+          streamFailure = "completion-record-failure";
+          throw error;
+        }
         if (!journalCurrent()) {
           cancelDurable();
           return;
@@ -1447,6 +1553,7 @@ export const useOrb = create<State>((setState, getState) => ({
         diagnostic.phase("response-headers");
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
+          streamFailure = "provider-error";
           failureFeedback = generationFeedbackForFailure(project.id, body);
           if (failureFeedback?.finishReason)
             providerFinishReason = failureFeedback.finishReason;
@@ -1467,13 +1574,13 @@ export const useOrb = create<State>((setState, getState) => ({
           });
           if (active === controller && !signal.aborted)
             setState({
-              generationErrorCode:
-                typeof body.code === "string" ? body.code : undefined,
+              generationErrorCode: validatedGenerationErrorCode(body.code),
             });
-          throw Error(body.error ?? "Connection failed. Your world is safe.");
+          throw Error("Generation request failed.");
         }
         if (signal.aborted || active !== controller) return;
         if (!response.body) {
+          streamFailure = "stream-error";
           diagnostic.terminal({
             reason: "transport-error",
             failureCode: "transport",
@@ -1484,6 +1591,8 @@ export const useOrb = create<State>((setState, getState) => ({
         const decoder = new TextDecoder();
         let pending = "";
         const classifyStreamError = (record: unknown) => {
+          streamFailure =
+            generationStreamFailureForRecord(record) ?? streamFailure;
           const feedback = generationFeedbackForFailure(project.id, record);
           if (feedback?.finishReason)
             providerFinishReason = feedback.finishReason;
@@ -1498,6 +1607,8 @@ export const useOrb = create<State>((setState, getState) => ({
           else streamErrorRecord = true;
         };
         const consumeRecord = async (record: unknown) => {
+          streamFailure =
+            generationStreamFailureForRecord(record) ?? streamFailure;
           const feedback = generationFeedbackForFailure(project.id, record);
           if (feedback) failureFeedback = feedback;
           if (feedback?.finishReason)
@@ -1513,17 +1624,26 @@ export const useOrb = create<State>((setState, getState) => ({
           try {
             return await apply(record as ModelCommand);
           } catch (error) {
-            applyFailure =
-              applyFailure ||
-              error instanceof ZodError ||
-              error instanceof SyntaxError;
+            if (!journalFailure)
+              applyFailure =
+                applyFailure ||
+                error instanceof ZodError ||
+                error instanceof SyntaxError;
             throw error;
           }
         };
         while (true) {
-          const { done, value } = await reader.read();
+          let next: ReadableStreamReadResult<Uint8Array>;
+          try {
+            next = await reader.read();
+          } catch (error) {
+            streamFailure = "transport-error";
+            throw error;
+          }
+          const { done, value } = next;
           if (done) {
             streamEnded = true;
+            pending += decoder.decode();
             break;
           }
           diagnostic.noteOutputBytes(value.byteLength);
@@ -1589,14 +1709,13 @@ export const useOrb = create<State>((setState, getState) => ({
           if (!(await consumeRecord(record))) return;
         }
         if (lastAppliedCommand !== "commit_revision") {
+          streamFailure = streamFailure ?? "clean-eof-without-commit";
           diagnostic.terminal({
             reason: "clean-eof-without-commit",
             failureCode: "parser",
             finishReason: providerFinishReason,
           });
-          throw Error(
-            "The connection ended before committing the scene. Finished objects are safe; try continuing your request.",
-          );
+          throw Error("Generation ended before committing this turn.");
         }
       }
       if (active === controller && !signal.aborted) {
@@ -1618,6 +1737,30 @@ export const useOrb = create<State>((setState, getState) => ({
         );
       }
     } catch (error) {
+      const stale =
+        active !== controller || getState().project.id !== project.id;
+      const failureReason: GenerationStreamFailureReason | undefined =
+        signal.aborted
+          ? undefined
+          : stale
+            ? undefined
+            : observationLimit
+              ? "output-limit"
+              : providerTimeout
+                ? "deadline"
+                : (streamFailure ??
+                  (providerFinishReason === "length"
+                    ? "output-limit"
+                    : applyFailure ||
+                        parserFailure ||
+                        error instanceof ZodError ||
+                        error instanceof SyntaxError
+                      ? "parser-failure"
+                      : streamEnded && lastAppliedCommand !== "commit_revision"
+                        ? "clean-eof-without-commit"
+                        : streamErrorRecord
+                          ? "stream-error"
+                          : "stream-error"));
       if (signal.aborted) {
         diagnostic.terminal({
           reason: "client-abort",
@@ -1625,71 +1768,49 @@ export const useOrb = create<State>((setState, getState) => ({
           failureCode: "cancelled",
           finishReason: providerFinishReason,
         });
-      } else if (
-        active !== controller ||
-        getState().project.id !== project.id
-      ) {
+      } else if (stale) {
         diagnostic.terminal({ reason: "stale-run", failureCode: "unknown" });
-      } else if (observationLimit) {
-        diagnostic.terminal({
-          reason: "output-limit",
-          failureCode: "output-limit",
-          finishReason: providerFinishReason,
-        });
-      } else if (applyFailure) {
-        diagnostic.terminal({
-          reason: "parser-failure",
-          failureCode: "invalid-input",
-          finishReason: providerFinishReason,
-        });
-      } else if (providerTimeout) {
-        diagnostic.terminal({
-          reason: "deadline",
-          failureCode: "timeout",
-          finishReason: providerFinishReason,
-        });
-      } else if (streamErrorRecord) {
-        diagnostic.terminal({
-          reason: "stream-error",
-          failureCode: "transport",
-          finishReason: providerFinishReason,
-        });
-      } else if (
-        parserFailure ||
-        error instanceof ZodError ||
-        error instanceof SyntaxError
-      ) {
-        diagnostic.terminal({
-          reason: "parser-failure",
-          failureCode: "parser",
-          finishReason: providerFinishReason,
-        });
-      } else if (streamEnded && lastAppliedCommand !== "commit_revision") {
-        diagnostic.terminal({
-          reason: "clean-eof-without-commit",
-          failureCode: "parser",
-          finishReason: providerFinishReason,
-        });
       } else {
+        const reason = failureReason ?? "stream-error";
         diagnostic.terminal({
-          reason: "transport-error",
-          failureCode: "transport",
+          reason,
+          failureCode:
+            applyFailure && !journalFailure
+              ? "invalid-input"
+              : generationFailureCode(reason),
           finishReason: providerFinishReason,
         });
       }
       if (active === controller && !signal.aborted) {
         finishRunExperience("error");
         publishActivity("failed", "This request could not be completed.");
-        const checkpoint = committed(getState().project, baseline);
+        const checkpoint = baseline ?? before;
+        const restoreUi =
+          checkpoint.revision > before.revision ? getState() : preservedUiState;
         const recoverySelected =
-          selected &&
-          checkpoint.entities.some((entity) => entity.id === selected)
-            ? selected
+          restoreUi.selected &&
+          checkpoint.entities.some((entity) => entity.id === restoreUi.selected)
+            ? restoreUi.selected
             : undefined;
         setState({
+          phase:
+            initial && restoreUi.phase === "landing"
+              ? "editing"
+              : initial && restoreUi.phase === "descending"
+                ? "editing"
+                : restoreUi.phase,
           building: false,
           project: checkpoint,
           selected: recoverySelected,
+          playing: restoreUi.playing,
+          score: restoreUi.score,
+          won: restoreUi.won,
+          lost: restoreUi.lost,
+          gameScore: restoreUi.gameScore,
+          ruleRestartCount: restoreUi.ruleRestartCount,
+          reset: restoreUi.reset,
+          history: restoreUi.history,
+          future: restoreUi.future,
           generationRecovery: reviewStarted
             ? undefined
             : {
@@ -1699,15 +1820,9 @@ export const useOrb = create<State>((setState, getState) => ({
                 checkpoint,
                 ...(failureFeedback ? { feedback: failureFeedback } : {}),
               },
-          error: signal.aborted
-            ? ""
-            : reviewStarted
-              ? "Scene saved, but review could not finish. Your world is safe."
-              : error instanceof ZodError
-                ? "The model returned an invalid scene change. Try a simpler edit. Your finished world is safe."
-                : error instanceof Error
-                  ? error.message
-                  : "Something went wrong. Your finished world is safe.",
+          error: reviewStarted
+            ? "Scene saved, but review could not finish. Your world is safe."
+            : generationFailureCopy(failureReason ?? "parser-failure"),
         });
         if (reviewStarted)
           publishActivity(
