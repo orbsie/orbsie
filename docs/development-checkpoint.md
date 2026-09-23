@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 22 follow-up local acceptance: a process can die after reserving
+`pending:<epoch>` and before binding a ChatGPT host. The vault now permits
+explicit restart only after the placeholder is at least 11 minutes old (the
+10-minute claim lifetime plus one-minute margin), with no current owner host
+or remembered connection, using a database-time exact epoch/placeholder
+comparison. A real PostgreSQL/service regression covers fresh and claimed
+attempts, remembered credentials, restart and old-epoch callback refusal.
+Worker 23 focused unit tests and two PostgreSQL cases passed; root reviewed
+the diff and production build/TypeScript/format checks passed. This follow-up
+is local only until a separate production deployment; no live model call.
+
 Sep 22 expired ChatGPT challenge repair accepted locally: a real PostgreSQL
 reproduction confirmed that status hid the expired host while its bound owner
 intent caused `/api/chatgpt/start` to return 409. The service now checks host

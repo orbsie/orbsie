@@ -9,6 +9,7 @@ import type { PoolClient } from "pg";
 import { database } from "./auth";
 import {
   chatGPTHostCleanupTarget,
+  CHATGPT_HOST_IDLE_LIFETIME_MS,
   type ChatGPTHostCleanupTarget,
 } from "./chatgpt-host-registry";
 
@@ -19,6 +20,11 @@ export const CHATGPT_CREDENTIAL_MAX_CACHE_BYTES = 64 * 1024;
 /** A generation may run for three minutes; retain five minutes of cleanup margin. */
 export const CHATGPT_CREDENTIAL_LEASE_MS = 10 * 60 * 1000;
 export const CHATGPT_CREDENTIAL_LEASE_MIN_HEADROOM_MS = 3 * 60 * 1000;
+/** Let a host claim finish or expire before reclaiming a stranded reservation. */
+export const CHATGPT_CREDENTIAL_INTENT_RESERVATION_GRACE_MS = 60 * 1000;
+export const CHATGPT_CREDENTIAL_INTENT_RESERVATION_STALE_MS =
+  CHATGPT_HOST_IDLE_LIFETIME_MS +
+  CHATGPT_CREDENTIAL_INTENT_RESERVATION_GRACE_MS;
 const CHATGPT_CREDENTIAL_LOCK_TIMEOUT_MS = 2_000;
 const CHATGPT_CREDENTIAL_STATEMENT_TIMEOUT_MS = 15_000;
 const CIPHER_VERSION = "v1";
@@ -82,7 +88,7 @@ export type ChatGPTCredentialIntent = {
 };
 
 export type ChatGPTCredentialIntentRecoverySource =
-  "host-missing" | "terminal-host";
+  "host-missing" | "terminal-host" | "abandoned-reservation";
 
 export type ChatGPTCredentialRememberOptions = {
   expectedIntentEpoch?: number;
@@ -700,11 +706,18 @@ export async function restartExpiredChatGPTCredentialIntent(
 ): Promise<ChatGPTCredentialIntent | null> {
   const actor = actorValue(actorInput);
   const epoch = intentEpochValue(expected.epoch);
-  const pendingAttemptId = attemptIdValue(expected.pendingAttemptId);
+  const pendingAttemptId = expected.pendingAttemptId;
+  const abandonedReservation = pendingAttemptId === `pending:${epoch}`;
+  const hostAttemptId = abandonedReservation
+    ? undefined
+    : attemptIdValue(pendingAttemptId);
   if (
-    !pendingAttemptId ||
-    pendingAttemptId === `pending:${epoch}` ||
-    (source !== "host-missing" && source !== "terminal-host")
+    (source === "abandoned-reservation"
+      ? !abandonedReservation
+      : abandonedReservation || !hostAttemptId) ||
+    (source !== "host-missing" &&
+      source !== "terminal-host" &&
+      source !== "abandoned-reservation")
   )
     throw invalid();
   return transaction(async (client) => {
@@ -750,27 +763,52 @@ export async function restartExpiredChatGPTCredentialIntent(
       const expiresAt = dateValue(host.expires_at);
       return !expiresAt || expiresAt.getTime() > now.getTime();
     });
-    const matchingHosts = currentHosts.filter(
-      (host) => host.attempt_id === pendingAttemptId,
-    );
-    if (
-      currentHosts.some((host) => host.attempt_id !== pendingAttemptId) ||
-      (source === "host-missing" && matchingHosts.length > 0) ||
-      (source === "terminal-host" && matchingHosts.length > 1)
-    )
-      return null;
+    if (source === "abandoned-reservation") {
+      // The placeholder has no bound host attempt. An owner host may still be
+      // provisioning after a delayed Start, so require every owner claim to
+      // have expired before reclaiming this reservation.
+      if (currentHosts.length) return null;
+    } else {
+      const matchingHosts = currentHosts.filter(
+        (host) => host.attempt_id === pendingAttemptId,
+      );
+      if (
+        currentHosts.some((host) => host.attempt_id !== pendingAttemptId) ||
+        (source === "host-missing" && matchingHosts.length > 0) ||
+        (source === "terminal-host" && matchingHosts.length > 1)
+      )
+        return null;
+    }
 
     const nextEpoch = epoch + 1;
     if (!Number.isSafeInteger(nextEpoch)) throw invalid();
     const reservation = `pending:${nextEpoch}`;
-    const updated = await client.query(
-      `UPDATE chatgpt_credential_intents
-       SET epoch=$4,pending_attempt_id=$5,updated_at=clock_timestamp()
-       WHERE owner_id=$1 AND epoch=$2 AND pending_attempt_id=$3
-         AND revoked_at IS NULL
-       RETURNING epoch`,
-      [actor.ownerId, epoch, pendingAttemptId, nextEpoch, reservation],
-    );
+    const updated =
+      source === "abandoned-reservation"
+        ? await client.query(
+            `UPDATE chatgpt_credential_intents
+             SET epoch=$4,pending_attempt_id=$5,updated_at=clock_timestamp()
+             WHERE owner_id=$1 AND epoch=$2 AND pending_attempt_id=$3
+               AND revoked_at IS NULL
+               AND updated_at <= clock_timestamp() - ($6::int * interval '1 millisecond')
+             RETURNING epoch`,
+            [
+              actor.ownerId,
+              epoch,
+              pendingAttemptId,
+              nextEpoch,
+              reservation,
+              CHATGPT_CREDENTIAL_INTENT_RESERVATION_STALE_MS,
+            ],
+          )
+        : await client.query(
+            `UPDATE chatgpt_credential_intents
+             SET epoch=$4,pending_attempt_id=$5,updated_at=clock_timestamp()
+             WHERE owner_id=$1 AND epoch=$2 AND pending_attempt_id=$3
+               AND revoked_at IS NULL
+             RETURNING epoch`,
+            [actor.ownerId, epoch, pendingAttemptId, nextEpoch, reservation],
+          );
     if (!updated.rows.length) return null;
     return { epoch: nextEpoch, pendingAttemptId: reservation };
   }, options.signal);

@@ -1506,7 +1506,20 @@ export function createChatGPTDurableService(options: {
     hostIdentity?: DurableIdentity;
   } | null> {
     const attemptId = intent.pendingAttemptId;
-    if (!attemptId || attemptId === `pending:${intent.epoch}`) return null;
+    if (!attemptId) return null;
+    if (attemptId === `pending:${intent.epoch}`) {
+      // A Start reserves its epoch before claiming a host. If that process
+      // dies, the database may retain the unbound placeholder indefinitely.
+      // The vault uses DB time, owner hosts and active connections to ensure
+      // the reservation has outlived a full host claim before fencing it.
+      const replacement = await restartExpiredChatGPTCredentialIntent(
+        identity,
+        { epoch: intent.epoch, pendingAttemptId: attemptId },
+        "abandoned-reservation",
+        { signal },
+      );
+      return replacement ? { intent: replacement } : null;
+    }
     const captureOwnerHosts = manager.captureOwnerHosts;
     const readHost = manager.read;
     if (!captureOwnerHosts || !readHost) return null;

@@ -318,6 +318,79 @@ describe("private durable ChatGPT operation orchestration", () => {
     });
   });
 
+  it("routes an unbound reservation through the database expiry fence", async () => {
+    setup();
+    const nextHost = {
+      ...host,
+      attemptId: "recovered-attempt",
+      sandboxName: "orbsie-chatgpt-recovered-attempt",
+    };
+    vault.begin.mockRejectedValueOnce(
+      new vault.VaultError("active-connection", "active intent"),
+    );
+    vault.readIntent.mockResolvedValue({
+      epoch: 7,
+      pendingAttemptId: "pending:7",
+    });
+    vault.restartIntent.mockResolvedValue({
+      epoch: 8,
+      pendingAttemptId: "pending:8",
+    });
+    vault.bind.mockResolvedValue({
+      epoch: 8,
+      pendingAttemptId: nextHost.attemptId,
+    });
+    const sequence = managerFor(() =>
+      json({ lifecycle: "idle", authStatus: "disconnected" }),
+    );
+    sequence.manager.ensure.mockResolvedValue(nextHost);
+    sequence.manager.request.mockResolvedValue(
+      json({ lifecycle: "idle", authStatus: "disconnected" }),
+    );
+    const service = createChatGPTDurableService({ manager: sequence.manager });
+
+    await expect(service.start(identity)).resolves.toMatchObject({
+      host: { attemptId: nextHost.attemptId },
+      intent: { epoch: 8, pendingAttemptId: "pending:8" },
+    });
+    expect(vault.restartIntent).toHaveBeenCalledWith(
+      identity,
+      { epoch: 7, pendingAttemptId: "pending:7" },
+      "abandoned-reservation",
+      { signal: undefined },
+    );
+    expect(sequence.manager.captureOwnerHosts).not.toHaveBeenCalled();
+    expect(sequence.manager.ensure).toHaveBeenCalledTimes(1);
+    expect(vault.bind).toHaveBeenCalledWith(identity, 8, nextHost.attemptId, {
+      signal: undefined,
+    });
+  });
+
+  it("preserves an unbound reservation when the vault has not aged it out", async () => {
+    setup();
+    vault.begin.mockRejectedValueOnce(
+      new vault.VaultError("active-connection", "active intent"),
+    );
+    vault.readIntent.mockResolvedValue({
+      epoch: 7,
+      pendingAttemptId: "pending:7",
+    });
+    vault.restartIntent.mockResolvedValue(null);
+    const sequence = managerFor(() => json({ lifecycle: "idle" }));
+    const service = createChatGPTDurableService({ manager: sequence.manager });
+
+    await expect(service.start(identity)).rejects.toMatchObject({
+      code: "login-pending",
+    });
+    expect(vault.restartIntent).toHaveBeenCalledWith(
+      identity,
+      { epoch: 7, pendingAttemptId: "pending:7" },
+      "abandoned-reservation",
+      { signal: undefined },
+    );
+    expect(sequence.manager.ensure).not.toHaveBeenCalled();
+  });
+
   it("keeps a live pending challenge single-owner and exposes a typed conflict", async () => {
     setup();
     const previousHost = {

@@ -9,6 +9,7 @@ vi.mock("../src/lib/server/auth", () => ({ database: state.database }));
 
 import {
   beginChatGPTCredentialIntent,
+  CHATGPT_CREDENTIAL_INTENT_RESERVATION_STALE_MS,
   openChatGPTCredentialCache,
   bindChatGPTCredentialIntentHost,
   leaseChatGPTCredentialCache,
@@ -103,6 +104,155 @@ async function insertWithRequiredSchemaValues(
     required.map((column) => values[column.column_name]),
   );
 }
+
+it.runIf(runDatabaseTest)(
+  "reclaims only an aged unbound reservation with no current owner authority",
+  async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw Error("DATABASE_URL is required for this test.");
+    const setup = new Pool({ connectionString: databaseUrl, max: 4 });
+    const realPool = new Pool({ connectionString: databaseUrl, max: 4 });
+    state.database.mockReturnValue(realPool);
+    const ownerId = `orphan-reservation-${randomUUID()}`;
+    const sessionId = `orphan-session-${randomUUID()}`;
+    const actor = { ownerId, sessionId };
+    const nextAttemptId = randomUUID();
+    const nextHost = {
+      attemptId: nextAttemptId,
+      sandboxName: `orbsie-chatgpt-${nextAttemptId}`,
+      capability: "synthetic-capability",
+      artifactDigest: "a".repeat(64),
+      expiresAt: new Date(Date.now() + 600_000),
+    };
+    const manager = {
+      ensure: vi.fn(async () => nextHost),
+      request: vi.fn(async () =>
+        Response.json({ lifecycle: "idle", authStatus: "disconnected" }),
+      ),
+      privateOperation: vi.fn(async () => Response.json({})),
+      disconnect: vi.fn(async () => true),
+      captureOwnerHosts: vi.fn(async () => []),
+      read: vi.fn(async () => nextHost),
+    };
+    try {
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "user" (id text PRIMARY KEY)`,
+      );
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "session" (
+           id text PRIMARY KEY,
+           "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+           "expiresAt" timestamptz NOT NULL
+         )`,
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-credential-schema.sql", "utf8"),
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-host-schema.sql", "utf8"),
+      );
+      const fixtureNow = new Date();
+      await insertWithRequiredSchemaValues(setup, "user", {
+        id: ownerId,
+        name: "Orphan reservation fixture",
+        email: `${ownerId}@example.test`,
+        emailVerified: false,
+        updatedAt: fixtureNow,
+      });
+      await insertWithRequiredSchemaValues(setup, "session", {
+        id: sessionId,
+        userId: ownerId,
+        expiresAt: new Date(fixtureNow.getTime() + 60 * 60 * 1000),
+        token: randomUUID(),
+        updatedAt: fixtureNow,
+      });
+      await setup.query(
+        `INSERT INTO chatgpt_credential_intents(owner_id,epoch,pending_attempt_id)
+         VALUES ($1,7,'pending:7')`,
+        [ownerId],
+      );
+
+      const service = createChatGPTDurableService({ manager });
+      // A fresh placeholder is a live reservation, even when Start has not
+      // bound a host yet. The service must not provision over it.
+      await expect(service.start(actor)).rejects.toMatchObject({
+        code: "login-pending",
+      });
+      expect(manager.ensure).not.toHaveBeenCalled();
+
+      // Once old enough, a current owner claim still blocks replacement.
+      await setup.query(
+        `UPDATE chatgpt_credential_intents
+         SET updated_at=clock_timestamp() - ($2::int * interval '1 millisecond')
+         WHERE owner_id=$1`,
+        [ownerId, CHATGPT_CREDENTIAL_INTENT_RESERVATION_STALE_MS + 1_000],
+      );
+      const claimedAttemptId = randomUUID();
+      await setup.query(
+        `INSERT INTO chatgpt_hosts
+           (session_id,owner_id,attempt_id,state,expires_at)
+         VALUES ($1,$2,$3,'provisioning',clock_timestamp()+interval '5 minutes')`,
+        [sessionId, ownerId, claimedAttemptId],
+      );
+      await expect(service.start(actor)).rejects.toMatchObject({
+        code: "login-pending",
+      });
+      expect(manager.ensure).not.toHaveBeenCalled();
+      await setup.query(
+        `DELETE FROM chatgpt_hosts WHERE owner_id=$1 AND attempt_id=$2`,
+        [ownerId, claimedAttemptId],
+      );
+
+      // A remembered connection remains authoritative even when its intent
+      // placeholder is stale; it is retained on the rejected restart.
+      const remembered = await rememberChatGPTCredentialCache(
+        actor,
+        new TextEncoder().encode("remembered-before-orphan-recovery"),
+      );
+      await expect(service.start(actor)).rejects.toMatchObject({
+        code: "active-connection",
+      });
+      expect(manager.ensure).not.toHaveBeenCalled();
+      await expect(readChatGPTCredentialCache(actor)).resolves.toMatchObject({
+        connectionId: remembered.connectionId,
+        connectionVersion: 1,
+      });
+
+      await expect(
+        revokeChatGPTCredentialConnection(actor, remembered.connectionId),
+      ).resolves.toBe(true);
+      await expect(service.start(actor)).resolves.toMatchObject({
+        host: { attemptId: nextAttemptId },
+        intent: { epoch: 8, pendingAttemptId: "pending:8" },
+      });
+      expect(manager.ensure).toHaveBeenCalledTimes(1);
+      const persisted = await setup.query(
+        `SELECT epoch,pending_attempt_id FROM chatgpt_credential_intents WHERE owner_id=$1`,
+        [ownerId],
+      );
+      expect(persisted.rows).toEqual([
+        { epoch: 8, pending_attempt_id: nextAttemptId },
+      ]);
+      await expect(
+        rememberChatGPTCredentialCache(
+          actor,
+          new TextEncoder().encode("late-orphan-callback"),
+          {
+            expectedIntentEpoch: 7,
+            expectedHostAttemptId: randomUUID(),
+          },
+        ),
+      ).rejects.toMatchObject({ code: "unauthorized" });
+    } finally {
+      await setup
+        .query(`DELETE FROM "user" WHERE id=$1`, [ownerId])
+        .catch(() => undefined);
+      await setup.end();
+      await realPool.end();
+    }
+  },
+  30_000,
+);
 
 it.runIf(runDatabaseTest)(
   "restarts an expired host intent at the database/service boundary and fences late saves",
