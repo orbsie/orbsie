@@ -1,0 +1,9 @@
+{
+  "checkedAtUtc": "2026-09-23T03:13:47.832087+00:00",
+  "endpoint": "https://ai-gateway.vercel.sh/v1/credits",
+  "httpStatus": 200,
+  "balance": "-0.0033684",
+  "positive": false,
+  "modelCalls": 0,
+  "testKey": "local protected file; omitted"
+}
