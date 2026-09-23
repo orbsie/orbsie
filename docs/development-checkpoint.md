@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 23 player-follow parity accepted locally: WebGL (`a74fef3`) and software
+(`8f9ff03`) cameras now derive a temporary play view from the authoritative
+player position while retaining saved editor heading/zoom. Both terrain
+selections recenter on world-aligned 64m cells and conservative 4m height
+buckets; software far clipping follows its active view. Stopping play returns
+to the editor view, and map controls are hidden during play. Astra reviewed
+both diffs. Full suite: 193 passed/6 skipped files, 1,642 passed/26 skipped
+tests; Next production build/TypeScript passed and standalone player assets
+were regenerated (`02194e3`). Browser visual, Android performance, precision
+near coordinate limits, gameplay draw culling, memory eviction, provider E2E,
+and deployment remain open. The next bounded rendering contract is in
+`docs/gameplay-draw-culling-task.md`; resource and origin contracts are in the
+adjacent task docs.
+
 Sep 23 WebGL gameplay-follow slice accepted locally (`a74fef3`): a pure
 temporary play navigation follows the authoritative player position while
 retaining the saved editor heading/zoom. The WebGL camera uses the Player's
