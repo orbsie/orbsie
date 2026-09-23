@@ -10,12 +10,18 @@ import {
   worldNavigationCameraPose,
   worldDirectionForHeading,
   worldNavigationFarPlane,
+  worldNavigationFollowState,
   worldNavigationLandingLookTarget,
   worldNavigationProjectState,
   WORLD_NAVIGATION_LIMITS,
   type WorldNavigationBounds,
+  type WorldNavigationVec3,
 } from "../src/lib/world-navigation";
 import { committedWorldNavigationBounds } from "../src/lib/world-navigation-bounds";
+import {
+  selectWorldTerrainChunks,
+  worldTerrainChunkKeyAt,
+} from "../src/lib/world-terrain";
 import type { Project } from "../src/lib/protocol";
 
 function navigationTestProject(
@@ -94,6 +100,61 @@ describe("shared world navigation", () => {
     expect(east.position[0]).toBeGreaterThan(east.target[0]);
     expect(east.position[2]).toBeCloseTo(east.target[2]);
     expect(east.target).toEqual(north.target);
+  });
+
+  it("follows far player travel for camera and terrain, then restores saved navigation", () => {
+    const savedNavigation = createWorldNavigationState({
+      target: [12_000, 4, -8_000],
+      heading: 1.7,
+      distance: 600,
+    });
+    const savedSnapshot = JSON.stringify(savedNavigation);
+    const farPlayer: WorldNavigationVec3 = [65_430, 9, -72_190];
+    const playView = worldNavigationFollowState(savedNavigation, farPlayer);
+
+    expect(playView.target).toEqual(farPlayer);
+    expect(worldNavigationCameraPose(playView).target).toEqual(farPlayer);
+    expect(playView.heading).toBe(savedNavigation.heading);
+    expect(playView.distance).toBe(savedNavigation.distance);
+    expect(JSON.stringify(savedNavigation)).toBe(savedSnapshot);
+
+    const terrain = selectWorldTerrainChunks({
+      focus: playView.target,
+      distance: playView.distance,
+      aspect: portraitProjection.viewportAspect,
+    });
+    expect(terrain).toHaveLength(49);
+    const terrainCenter = terrain[24];
+    expect(terrainCenter).toEqual(
+      worldTerrainChunkKeyAt(farPlayer[0], farPlayer[2], terrainCenter.lod),
+    );
+
+    const resetView = worldNavigationFollowState(savedNavigation, [0, 0.5, 5]);
+    expect(resetView.target).toEqual([0, 0.5, 5]);
+    expect(resetView.heading).toBe(savedNavigation.heading);
+    expect(resetView.distance).toBe(savedNavigation.distance);
+    expect(worldNavigationCameraPose(savedNavigation).target).toEqual(
+      savedNavigation.target,
+    );
+    expect(JSON.stringify(savedNavigation)).toBe(savedSnapshot);
+  });
+
+  it("keeps invalid player coordinates from corrupting the saved view", () => {
+    const savedNavigation = createWorldNavigationState({
+      target: [45, 2, -13],
+      heading: 0.7,
+      distance: 55,
+    });
+    expect(
+      worldNavigationFollowState(savedNavigation, [Number.NaN, 0, 0]),
+    ).toEqual(savedNavigation);
+    expect(
+      worldNavigationFollowState(savedNavigation, [
+        WORLD_NAVIGATION_LIMITS.maxTargetCoordinate * 2,
+        0,
+        0,
+      ]).target,
+    ).toEqual([WORLD_NAVIGATION_LIMITS.maxTargetCoordinate, 0, 0]);
   });
 
   it("starts at the shared landing look point and ends at the pose target", () => {

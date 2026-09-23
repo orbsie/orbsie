@@ -63,10 +63,12 @@ import {
   applyWorldNavigationCommand,
   worldNavigationCameraPose,
   worldNavigationFarPlane,
+  worldNavigationFollowState,
   worldNavigationLandingLookTarget,
   worldNavigationProjectState,
   type WorldNavigationProjectState,
   type WorldNavigationCommand,
+  type WorldNavigationVec3,
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
 import {
@@ -79,6 +81,7 @@ import { WorldNavigationGestureController } from "@/lib/world-navigation-gesture
 import {
   sampleWorldTerrainChunk,
   selectWorldTerrainChunks,
+  worldTerrainChunkKeyAt,
   worldTerrainChunkSize,
   worldTerrainGroundViewRadius,
   type WorldTerrainChunkKey,
@@ -877,10 +880,12 @@ function Formation({
 }
 function Player({
   session,
+  followPositionRef,
   onReady,
   onInputLatency,
 }: {
   session: GameSession;
+  followPositionRef: { current: WorldNavigationVec3 };
   onReady?: () => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
 }) {
@@ -912,9 +917,10 @@ function Player({
   }, [playing]);
   useEffect(() => {
     state.current = { position: [0, 0.5, 5], velocityY: 0 };
+    followPositionRef.current = state.current.position;
     usableEntities.current.clear();
     inputs.current.clear();
-  }, [reset, projectId]);
+  }, [followPositionRef, reset, projectId]);
   useEffect(() => {
     const legacyPointerIds = new Map<string, number | string>();
     const changeKey = (key: string, down: boolean) => {
@@ -996,10 +1002,12 @@ function Player({
       if (generation.current === session.resetGeneration) return false;
       generation.current = session.resetGeneration;
       state.current = { position: [0, 0.5, 5], velocityY: 0 };
+      followPositionRef.current = state.current.position;
       s.set({ score: [], gameScore: 0, won: false, lost: false });
       return true;
     };
     resetAvatar();
+    followPositionRef.current = state.current.position;
     const currentIds = new Set(s.project.entities.map((entity) => entity.id));
     for (const id of usableEntities.current.keys())
       if (!currentIds.has(id)) usableEntities.current.delete(id);
@@ -1082,6 +1090,7 @@ function Player({
       worldMatrices,
     );
     state.current = result;
+    followPositionRef.current = result.position;
     const beforeContacts = session.resetGeneration;
     session.emitContacts(result.contacts);
     if (session.resetGeneration === beforeContacts)
@@ -1414,8 +1423,13 @@ function Scene({
     environment = project.environment,
     playing = useOrb((s) => s.playing);
   const { camera, size, gl, scene } = useThree();
+  const playerPositionRef = useRef<WorldNavigationVec3>([0, 0.5, 5]);
   const navigationRaycaster = useMemo(() => new THREE.Raycaster(), []);
   const navigationNdc = useMemo(() => new THREE.Vector2(), []);
+  const [followTerrainChunks, setFollowTerrainChunks] = useState<
+    readonly WorldTerrainChunkKey[] | undefined
+  >();
+  const followTerrainSelectionKey = useRef<string | undefined>(undefined);
   const terrainAspect =
     size.width > 0 && size.height > 0 ? size.width / size.height : 1;
   const terrainChunks = useMemo(() => {
@@ -1966,6 +1980,55 @@ function Scene({
       camera.lookAt(...look);
       initialized.current = t > 0.99;
     }
+    const playViewActive =
+      playing &&
+      phase === "editing" &&
+      snapshot.settled &&
+      snapshot.progress >= 1 &&
+      initialized.current;
+    const activeNavigation = playViewActive
+      ? worldNavigationFollowState(navigation, playerPositionRef.current)
+      : navigation;
+    if (playViewActive) {
+      const terrainCell = worldTerrainChunkKeyAt(
+        activeNavigation.target[0],
+        activeNavigation.target[2],
+        0,
+      );
+      // Chunk refreshes happen only after a world-aligned cell crossing (or
+      // projection/zoom change), never for each player simulation tick.
+      const conservativeHeightBucket = Math.ceil(
+        activeNavigation.target[1] / 4,
+      );
+      const selectionKey = [
+        terrainCell.x,
+        terrainCell.z,
+        conservativeHeightBucket,
+        activeNavigation.distance,
+        terrainAspect,
+      ].join(":");
+      if (followTerrainSelectionKey.current !== selectionKey) {
+        followTerrainSelectionKey.current = selectionKey;
+        try {
+          setFollowTerrainChunks(
+            selectWorldTerrainChunks({
+              focus: [
+                activeNavigation.target[0],
+                conservativeHeightBucket * 4,
+                activeNavigation.target[2],
+              ],
+              distance: activeNavigation.distance,
+              aspect: terrainAspect,
+            }),
+          );
+        } catch {
+          setFollowTerrainChunks([]);
+        }
+      }
+    } else if (followTerrainSelectionKey.current !== undefined) {
+      followTerrainSelectionKey.current = undefined;
+      setFollowTerrainChunks(undefined);
+    }
     if (
       phase === "editing" &&
       snapshot.settled &&
@@ -1976,13 +2039,27 @@ function Scene({
         navigationReadyNotified.current = true;
         onNavigationReady?.();
       }
-      const pose = worldNavigationCameraPose(navigation);
+      const pose = worldNavigationCameraPose(activeNavigation);
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
       const perspectiveCamera = camera as THREE.PerspectiveCamera;
+      let activeTerrainFarPlane = terrainFarPlane;
+      if (playViewActive) {
+        try {
+          activeTerrainFarPlane =
+            activeNavigation.distance +
+            worldTerrainGroundViewRadius(
+              activeNavigation.distance,
+              terrainAspect,
+              activeNavigation.target[1],
+            );
+        } catch {
+          activeTerrainFarPlane = worldNavigationFarPlane(activeNavigation);
+        }
+      }
       const far = Math.max(
-        worldNavigationFarPlane(navigation),
-        terrainFarPlane,
+        worldNavigationFarPlane(activeNavigation),
+        activeTerrainFarPlane,
       );
       if (perspectiveCamera.far !== far) {
         perspectiveCamera.far = far;
@@ -2115,12 +2192,13 @@ function Scene({
         ))}
         <Player
           session={session}
+          followPositionRef={playerPositionRef}
           onReady={onReady}
           onInputLatency={onInputLatency}
         />
       </group>
       <group ref={defaultGround} visible={false}>
-        {terrainChunks.map((chunk) => (
+        {(followTerrainChunks ?? terrainChunks).map((chunk) => (
           <WorldTerrainChunk
             key={`${chunk.lod}:${chunk.x}:${chunk.z}`}
             chunk={chunk}
@@ -2527,7 +2605,7 @@ export default function World({
   }
   return (
     <>
-      {phase === "editing" && softwareFailedAttempt !== attempt && (
+      {phase === "editing" && !playing && softwareFailedAttempt !== attempt && (
         <WorldNavigationControls
           state={navigation}
           notice={navigationNotice}

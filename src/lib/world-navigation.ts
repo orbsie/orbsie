@@ -153,6 +153,26 @@ export function worldNavigationCameraPose(
   };
 }
 
+/**
+ * Derive a temporary play camera target from the authoritative player world
+ * position while retaining the editor's heading and zoom. The saved state is
+ * never changed, so ending play restores the authored view automatically.
+ */
+export function worldNavigationFollowState(
+  savedNavigation: WorldNavigationState,
+  playerPosition: WorldNavigationVec3,
+): WorldNavigationState {
+  const saved = createWorldNavigationState(savedNavigation);
+  const positionIsFinite =
+    Array.isArray(playerPosition) &&
+    playerPosition.length === 3 &&
+    playerPosition.every(Number.isFinite);
+  return {
+    ...saved,
+    target: positionIsFinite ? boundedTarget(playerPosition) : saved.target,
+  };
+}
+
 /** Preserve the original shared landing look start and end on the navigation target. */
 export function worldNavigationLandingLookTarget(
   progress: number,
