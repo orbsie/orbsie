@@ -58,6 +58,15 @@ import {
 import { isAssetId } from "@/lib/asset-catalog";
 import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
+  createWorldNavigationState,
+  worldNavigationCameraPose,
+  worldNavigationFarPlane,
+  worldNavigationLandingLookTarget,
+  worldNavigationProjectState,
+  WORLD_NAVIGATION_LIMITS,
+  type WorldNavigationProjectState,
+} from "@/lib/world-navigation";
+import {
   entityGeometry,
   addFormationSource,
   captureFormationSnapshot,
@@ -1063,11 +1072,11 @@ function Player({
         if (!effective) return [];
         const matrix = worldMatrices?.get(entity.id);
         const position = matrix
-          ? ([matrix.elements[12], matrix.elements[13], matrix.elements[14]] as [
-              number,
-              number,
-              number,
-            ])
+          ? ([
+              matrix.elements[12],
+              matrix.elements[13],
+              matrix.elements[14],
+            ] as [number, number, number])
           : movingEntityPosition(effective, clock.elapsedTime);
         return [
           {
@@ -1201,9 +1210,11 @@ function Pebbles() {
 function Scene({
   onReady,
   onInputLatency,
+  navigation,
 }: {
   onReady?: () => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
+  navigation: WorldNavigationProjectState["navigation"];
 }) {
   const session = useMemo(() => new GameSession(), []);
   const projectId = useOrb((s) => s.project.id);
@@ -1383,7 +1394,10 @@ function Scene({
   const origin = useMemo(() => new THREE.Vector3(), []);
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
-  const cameraLook = useMemo(() => new THREE.Vector3(), []);
+  const landingPose = useMemo(
+    () => worldNavigationCameraPose(createWorldNavigationState()),
+    [],
+  );
   const initializedScene = useRef(false);
   const previousProjectId = useRef(projectId);
   const previousPhase = useRef(phase);
@@ -1426,20 +1440,32 @@ function Scene({
     progress.current = snapshot.progress;
     spin.current = snapshot.spin;
     const t = progress.current;
-    if (phase === "landing" || t < 0.995 || !initialized.current) {
+    if (phase === "landing" || t < 1 || !initialized.current) {
       const mobile = size.width < 700;
       cameraStart.set(0, 1.8, mobile ? 14.5 : 10.2);
-      cameraEnd.set(13, mobile ? 17 : 15, mobile ? 22 : 20);
+      cameraEnd.set(...landingPose.position);
       camera.position.copy(cameraStart.lerp(cameraEnd, t));
-      const look = cameraLook.set(
-        size.width < 700 ? 0 : -2.7,
-        THREE.MathUtils.lerp(0.35, 0, t),
-        0,
-      );
-      look.x *= t;
-      camera.lookAt(look);
-      if (controls.current) controls.current.target.copy(look);
+      const look = worldNavigationLandingLookTarget(t, landingPose.target);
+      camera.lookAt(...look);
+      if (controls.current) controls.current.target.set(...look);
       initialized.current = t > 0.99;
+    }
+    if (
+      phase === "editing" &&
+      snapshot.settled &&
+      snapshot.progress >= 1 &&
+      initialized.current
+    ) {
+      const pose = worldNavigationCameraPose(navigation);
+      camera.position.set(...pose.position);
+      camera.lookAt(...pose.target);
+      const perspectiveCamera = camera as THREE.PerspectiveCamera;
+      const far = worldNavigationFarPlane(navigation);
+      if (perspectiveCamera.far !== far) {
+        perspectiveCamera.far = far;
+        perspectiveCamera.updateProjectionMatrix();
+      }
+      if (controls.current) controls.current.target.set(...pose.target);
     }
     if (target === 1 && snapshot.settled) {
       const current = useOrb.getState();
@@ -1569,10 +1595,10 @@ function Scene({
       </group>
       <OrbitControls
         ref={controls}
-        enabled={phase === "editing" && !playing && progress.current > 0.98}
+        enabled={false}
         enablePan={false}
-        minDistance={13}
-        maxDistance={34}
+        minDistance={WORLD_NAVIGATION_LIMITS.minDistance}
+        maxDistance={WORLD_NAVIGATION_LIMITS.maxDistance}
         minPolarAngle={0.25}
         maxPolarAngle={Math.PI / 2.3}
         enableDamping
@@ -1645,6 +1671,19 @@ export default function World({
   onRendererFallback?: (message: string) => void;
   rendererRetryToken?: number;
 } = {}) {
+  const projectId = useOrb((state) => state.project.id);
+  const [navigationProject, setNavigationProject] = useState(() =>
+    worldNavigationProjectState(projectId),
+  );
+  const navigation =
+    navigationProject.projectId === projectId
+      ? navigationProject.navigation
+      : createWorldNavigationState();
+  useLayoutEffect(() => {
+    setNavigationProject((previous) =>
+      worldNavigationProjectState(projectId, previous),
+    );
+  }, [projectId]);
   const [failedAttempt, setFailedAttempt] = useState<number | null>(null);
   const [softwareFailedAttempt, setSoftwareFailedAttempt] = useState<
     number | null
@@ -1700,6 +1739,7 @@ export default function World({
     return (
       <Boundary key={`software-${attempt}`} onError={notifySoftwareFailure}>
         <SoftwareWorld
+          navigation={navigation}
           onReady={notifySceneReady}
           onRendererReady={() => notifyRendererReady("software")}
           onError={notifySoftwareFailure}
@@ -1737,7 +1777,11 @@ export default function World({
         }}
       >
         <AdaptiveResolution onChange={setRenderDpr} />
-        <Scene onReady={notifySceneReady} onInputLatency={onInputLatency} />
+        <Scene
+          navigation={navigation}
+          onReady={notifySceneReady}
+          onInputLatency={onInputLatency}
+        />
       </Canvas>
     </Boundary>
   );

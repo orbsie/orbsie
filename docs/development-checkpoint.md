@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 22 navigation camera adapters accepted locally: the `World` wrapper owns
+one project-scoped navigation state across WebGL-to-software fallback; both
+renderers project the same target/heading/distance after the planet entrance
+settles, reset on project change, and extend the far clip plane with distance.
+Root review corrected transition start and end look targets to avoid visible
+orientation jumps. The bundled independent player was regenerated from the
+same sources. Full suite 188 passed/6 skipped files, 1,599 passed/26 skipped
+tests; production build/TypeScript and formatting pass. This is not deployable
+yet: OrbitControls are disabled until the shared buttons and pointer/trackpad
+gestures replace them. Streamed terrain, precision and visual acceptance also
+remain open.
+
 Sep 22 shared-navigation core accepted locally: immutable commands now cover
 world-space pan, zoom, clockwise heading from north (-Z), north reset retaining
 target/distance, and frame-content from committed world-space bounds. Frame

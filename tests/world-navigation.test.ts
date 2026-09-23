@@ -6,7 +6,11 @@ import {
 import {
   applyWorldNavigationCommand,
   createWorldNavigationState,
+  worldNavigationCameraPose,
   worldDirectionForHeading,
+  worldNavigationFarPlane,
+  worldNavigationLandingLookTarget,
+  worldNavigationProjectState,
   WORLD_NAVIGATION_LIMITS,
   type WorldNavigationBounds,
 } from "../src/lib/world-navigation";
@@ -40,6 +44,64 @@ describe("shared world navigation", () => {
     expect(reverseTurn.heading).toBeCloseTo((Math.PI * 3) / 2);
     expect(reverseTurn.heading).toBeGreaterThanOrEqual(0);
     expect(reverseTurn.heading).toBeLessThan(Math.PI * 2);
+  });
+
+  it("projects heading zero from the +Z side and rotates the camera pose", () => {
+    const north = worldNavigationCameraPose(
+      createWorldNavigationState({
+        target: [1200, 5, -900],
+        heading: 0,
+        distance: 24,
+      }),
+    );
+    expect(north.target).toEqual([1200, 5, -900]);
+    expect(north.position[0]).toBeCloseTo(1200);
+    expect(north.position[1]).toBeCloseTo(17);
+    expect(north.position[2]).toBeGreaterThan(north.target[2]);
+
+    const east = worldNavigationCameraPose(
+      createWorldNavigationState({
+        target: [1200, 5, -900],
+        heading: Math.PI / 2,
+        distance: 24,
+      }),
+    );
+    expect(east.position[0]).toBeGreaterThan(east.target[0]);
+    expect(east.position[2]).toBeCloseTo(east.target[2]);
+    expect(east.target).toEqual(north.target);
+  });
+
+  it("starts at the shared landing look point and ends at the pose target", () => {
+    const target = [1200, 5, -900] as const;
+    expect(worldNavigationLandingLookTarget(0, target)).toEqual([0, 0.35, 0]);
+    expect(worldNavigationLandingLookTarget(1, target)).toEqual(target);
+  });
+
+  it("preserves navigation within one project and resets it for another", () => {
+    const initial = worldNavigationProjectState("project-a");
+    const moved = {
+      projectId: initial.projectId,
+      navigation: createWorldNavigationState({
+        target: [3200, 12, -800],
+        heading: 1.3,
+        distance: 600,
+      }),
+    };
+
+    expect(worldNavigationProjectState("project-a", moved)).toBe(moved);
+    const changedProject = worldNavigationProjectState("project-b", moved);
+    expect(changedProject.projectId).toBe("project-b");
+    expect(changedProject.navigation).toEqual(createWorldNavigationState());
+    expect(moved.navigation.target).toEqual([3200, 12, -800]);
+  });
+
+  it("expands the camera far plane with distance for distant worlds", () => {
+    expect(worldNavigationFarPlane(createWorldNavigationState())).toBe(250);
+    expect(
+      worldNavigationFarPlane(
+        createWorldNavigationState({ distance: 1_000_000 }),
+      ),
+    ).toBe(2_000_000);
   });
 
   it("pans in world XZ and clamps target and zoom distance", () => {

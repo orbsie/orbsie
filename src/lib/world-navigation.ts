@@ -20,6 +20,16 @@ export type WorldNavigationState = Readonly<{
   distance: number;
 }>;
 
+export type WorldNavigationCameraPose = Readonly<{
+  position: WorldNavigationVec3;
+  target: WorldNavigationVec3;
+}>;
+
+export type WorldNavigationProjectState = Readonly<{
+  projectId: string;
+  navigation: WorldNavigationState;
+}>;
+
 export type WorldNavigationCommand =
   | Readonly<{ type: "pan"; delta: WorldNavigationVec2 }>
   | Readonly<{ type: "zoom"; factor: number }>
@@ -45,6 +55,9 @@ export const WORLD_NAVIGATION_LIMITS = Object.freeze({
 });
 
 const TWO_PI = Math.PI * 2;
+/** Fixed shared camera elevation used by both renderer adapters. */
+export const WORLD_NAVIGATION_CAMERA_ELEVATION_RADIANS = Math.PI / 6;
+const WORLD_NAVIGATION_MIN_FAR_PLANE = 250;
 const EMPTY_WORKSPACE_BOUNDS: WorldNavigationBounds = {
   min: [-10, -1, -10],
   max: [10, 4, 10],
@@ -109,6 +122,59 @@ export function createWorldNavigationState(
       : 0,
     distance: boundedDistance(initial.distance ?? DEFAULT_DISTANCE),
   };
+}
+
+/** Keep a navigation view while its project stays mounted; reset on project change. */
+export function worldNavigationProjectState(
+  projectId: string,
+  previous?: WorldNavigationProjectState,
+): WorldNavigationProjectState {
+  if (previous?.projectId === projectId) return previous;
+  return { projectId, navigation: createWorldNavigationState() };
+}
+
+/**
+ * Project a shared navigation state to a renderer-neutral camera pose.
+ * Heading zero puts the camera on +Z and looks toward geographic north (-Z).
+ */
+export function worldNavigationCameraPose(
+  state: WorldNavigationState,
+): WorldNavigationCameraPose {
+  const navigation = createWorldNavigationState(state);
+  const horizontalDistance =
+    navigation.distance * Math.cos(WORLD_NAVIGATION_CAMERA_ELEVATION_RADIANS);
+  return {
+    position: [
+      navigation.target[0] + Math.sin(navigation.heading) * horizontalDistance,
+      navigation.target[1] +
+        navigation.distance *
+          Math.sin(WORLD_NAVIGATION_CAMERA_ELEVATION_RADIANS),
+      navigation.target[2] + Math.cos(navigation.heading) * horizontalDistance,
+    ],
+    target: navigation.target,
+  };
+}
+
+/** Preserve the original shared landing look start and end on the navigation target. */
+export function worldNavigationLandingLookTarget(
+  progress: number,
+  target: WorldNavigationVec3,
+): WorldNavigationVec3 {
+  const amount = clamp(Number.isFinite(progress) ? progress : 0, 0, 1);
+  const start: WorldNavigationVec3 = [0, 0.35, 0];
+  return [
+    start[0] + (target[0] - start[0]) * amount,
+    start[1] + (target[1] - start[1]) * amount,
+    start[2] + (target[2] - start[2]) * amount,
+  ];
+}
+
+/** Scale the depth range with camera distance so distant framed worlds remain visible. */
+export function worldNavigationFarPlane(state: WorldNavigationState): number {
+  return Math.max(
+    WORLD_NAVIGATION_MIN_FAR_PLANE,
+    boundedDistance(state.distance) * 2,
+  );
 }
 
 /** Ground direction from the target toward the top of the screen. */

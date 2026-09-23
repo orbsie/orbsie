@@ -42,6 +42,13 @@ import {
 import type { Entity, Project } from "@/lib/protocol";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import {
+  createWorldNavigationState,
+  worldNavigationCameraPose,
+  worldNavigationFarPlane,
+  worldNavigationLandingLookTarget,
+  type WorldNavigationState,
+} from "@/lib/world-navigation";
+import {
   notifySceneReviewCaptureChanged,
   captureSceneReview,
   captureSceneCanvas,
@@ -60,6 +67,7 @@ export type SoftwareGeometryEntry = {
 };
 
 type SoftwareWorldProps = {
+  navigation: WorldNavigationState;
   onReady?: () => void;
   onRendererReady?: (renderer?: "software") => void;
   onError?: (message: string) => void;
@@ -295,7 +303,9 @@ function entityMatrix(
       time,
       override?.position,
     );
-  const effective = playing ? session.effectiveEntity(entity) ?? entity : entity;
+  const effective = playing
+    ? (session.effectiveEntity(entity) ?? entity)
+    : entity;
   const position = movingEntityPosition(effective, time);
   if (override?.position) position.splice(0, 3, ...override.position);
   return new THREE.Matrix4().compose(
@@ -445,10 +455,7 @@ export function requiredGeometryReady(
     )
       return true;
     const entry = geometries.get(entity.id);
-    return (
-      entry?.ready === true &&
-      entry.sourceRecipe === entity.geometry
-    );
+    return entry?.ready === true && entry.sourceRecipe === entity.geometry;
   });
 }
 
@@ -559,10 +566,13 @@ function drawScene(
 }
 
 export default function SoftwareWorld({
+  navigation,
   onReady,
   onRendererReady,
   onError,
 }: SoftwareWorldProps) {
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const geometriesRef = useRef(new Map<string, SoftwareGeometryEntry>());
   const geometryGenerationRef = useRef(0);
@@ -640,7 +650,10 @@ export default function SoftwareWorld({
   const previousViewportMobile = useRef<boolean | undefined>(undefined);
   const cameraStart = useMemo(() => new THREE.Vector3(), []);
   const cameraEnd = useMemo(() => new THREE.Vector3(), []);
-  const cameraLook = useMemo(() => new THREE.Vector3(), []);
+  const landingPose = useMemo(
+    () => worldNavigationCameraPose(createWorldNavigationState()),
+    [],
+  );
   const onReadyRef = useRef(onReady);
   const onRendererReadyRef = useRef(onRendererReady);
   const onErrorRef = useRef(onError);
@@ -770,8 +783,7 @@ export default function SoftwareWorld({
 
   useLayoutEffect(() => {
     const firstMount = !transitionInitialized.current;
-    const projectChanged =
-      previousTransitionProjectId.current !== project.id;
+    const projectChanged = previousTransitionProjectId.current !== project.id;
     const directWorkspace =
       phase === "editing" &&
       previousPhase.current === "landing" &&
@@ -992,20 +1004,34 @@ export default function SoftwareWorld({
         const progress = transition.progress;
         if (
           currentPhase === "landing" ||
-          progress < 0.995 ||
+          progress < 1 ||
           !initializedScene.current
         ) {
           cameraStart.set(0, 1.8, mobile ? 14.5 : 10.2);
-          cameraEnd.set(13, mobile ? 17 : 15, mobile ? 22 : 20);
+          cameraEnd.set(...landingPose.position);
           camera.position.copy(cameraStart.lerp(cameraEnd, progress));
-          cameraLook.set(
-            mobile ? 0 : -2.7,
-            THREE.MathUtils.lerp(0.35, 0, progress),
-            0,
+          const look = worldNavigationLandingLookTarget(
+            progress,
+            landingPose.target,
           );
-          cameraLook.x *= progress;
-          camera.lookAt(cameraLook);
+          camera.lookAt(...look);
           initializedScene.current = progress > 0.99;
+        }
+        if (
+          currentPhase === "editing" &&
+          transition.settled &&
+          transition.progress >= 1 &&
+          initializedScene.current
+        ) {
+          const currentNavigation = navigationRef.current;
+          const pose = worldNavigationCameraPose(currentNavigation);
+          camera.position.set(...pose.position);
+          camera.lookAt(...pose.target);
+          const far = worldNavigationFarPlane(currentNavigation);
+          if (camera.far !== far) {
+            camera.far = far;
+            camera.updateProjectionMatrix();
+          }
         }
         if (target === 1 && transition.settled) {
           const latest = useOrb.getState();
