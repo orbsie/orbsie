@@ -3,6 +3,8 @@ import {
   CHATGPT_STALE_CONNECTION_ACTION,
   CHATGPT_STALE_CONNECTION_MESSAGE,
   CHATGPT_DEVICE_URL,
+  CHATGPT_LOGIN_PENDING_ACTION,
+  isChatGPTLoginPendingError,
   isChatGPTStaleConnectionError,
   parseChatGPTChallenge,
   parseChatGPTModels,
@@ -38,6 +40,22 @@ describe("ChatGPT connection response guards", () => {
         error: "older deployment details",
       }),
     ).toBe(false);
+  });
+
+  it("offers status refresh for a typed live sign-in conflict", () => {
+    const response = {
+      code: "CHATGPT_LOGIN_PENDING",
+      error:
+        "A ChatGPT sign-in is still active. Check its status or finish it in the tab that started it.",
+    };
+    expect(isChatGPTLoginPendingError(response)).toBe(true);
+    expect(
+      isChatGPTLoginPendingError({
+        ...response,
+        error: "provider detail must not be shown",
+      }),
+    ).toBe(false);
+    expect(CHATGPT_LOGIN_PENDING_ACTION).toBe("Check sign-in status");
   });
 
   it("accepts the exact device URL and strips provider identifiers", () => {

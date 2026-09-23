@@ -7,11 +7,16 @@ import {
   cancelChatGPTCredentialIntent,
   completeChatGPTCredentialIntent,
   leaseChatGPTCredentialCache,
+  ChatGPTCredentialVaultError,
+  readPendingChatGPTCredentialIntent,
   rememberChatGPTCredentialCache,
   releaseChatGPTCredentialLease,
+  restartExpiredChatGPTCredentialIntent,
   revokeChatGPTCredentialAuthorityAndCaptureHosts,
   saveChatGPTCredentialCache,
   withChatGPTCredentialLeaseAdmission,
+  type ChatGPTCredentialIntent,
+  type ChatGPTCredentialIntentRecoverySource,
   type ChatGPTCredentialLease,
 } from "./chatgpt-credential-vault";
 import { validateChatGPTModels, type ChatGPTModel } from "./chatgpt-models";
@@ -90,6 +95,18 @@ type DurableManager = {
     options?: { signal?: AbortSignal; input?: unknown },
   ): Promise<Response>;
   disconnect(identity: DurableIdentity): Promise<boolean>;
+  read?(
+    identity: DurableIdentity,
+    options?: { signal?: AbortSignal },
+  ): Promise<Host | null>;
+  captureOwnerHosts?(identity: DurableIdentity): Promise<
+    {
+      ownerId: string;
+      sessionId: string;
+      attemptId: string;
+      sandboxName: string;
+    }[]
+  >;
   teardownSession?(identity: DurableIdentity): Promise<boolean>;
   destroyHost?(name: string, signal?: AbortSignal): Promise<void>;
   releaseHost?(identity: DurableIdentity, attemptId: string): Promise<boolean>;
@@ -101,6 +118,7 @@ export class ChatGPTDurableServiceError extends Error {
       | "missing"
       | "revoked"
       | "busy"
+      | "login-pending"
       | "expired"
       | "insufficient-headroom"
       | "unavailable"
@@ -111,6 +129,13 @@ export class ChatGPTDurableServiceError extends Error {
     super(message);
     this.name = "ChatGPTDurableServiceError";
   }
+}
+
+const loginPendingMessage =
+  "A ChatGPT sign-in is still active. Check its status or finish it in the tab that started it.";
+
+function loginPending() {
+  return new ChatGPTDurableServiceError("login-pending", loginPendingMessage);
 }
 
 function responseRecord(value: unknown): Record<string, unknown> | null {
@@ -1472,18 +1497,132 @@ export function createChatGPTDurableService(options: {
     }
   }
 
+  async function recoverExpiredLoginIntent(
+    identity: DurableIdentity,
+    intent: ChatGPTCredentialIntent,
+    signal?: AbortSignal,
+  ): Promise<{
+    intent: ChatGPTCredentialIntent;
+    hostIdentity?: DurableIdentity;
+  } | null> {
+    const attemptId = intent.pendingAttemptId;
+    if (!attemptId || attemptId === `pending:${intent.epoch}`) return null;
+    const captureOwnerHosts = manager.captureOwnerHosts;
+    const readHost = manager.read;
+    if (!captureOwnerHosts || !readHost) return null;
+    const ownerHosts = await captureOwnerHosts(identity);
+    const matching = ownerHosts.filter((host) => host.attemptId === attemptId);
+    if (matching.length > 1) return null;
+
+    let hostIdentity: DurableIdentity | undefined;
+    let source: ChatGPTCredentialIntentRecoverySource | undefined;
+    if (!matching.length) {
+      source = "host-missing";
+    } else {
+      const prior = matching[0]!;
+      hostIdentity = { ownerId: prior.ownerId, sessionId: prior.sessionId };
+      let previousHost: Host | null;
+      try {
+        previousHost = await readHost(hostIdentity, { signal });
+      } catch (error) {
+        if (!(error instanceof ChatGPTHostStaleError)) throw error;
+        source = "terminal-host";
+        previousHost = null;
+      }
+      if (previousHost) {
+        const status = responseRecord(
+          await readJSON(
+            await manager.request(previousHost, "status", { signal }),
+          ),
+        );
+        const terminal =
+          status?.lifecycle === "expired" ||
+          status?.lifecycle === "failed" ||
+          status?.lifecycle === "cancelled";
+        if (!terminal || status.authStatus === "connected") return null;
+        source = "terminal-host";
+      } else if (!source) {
+        source = "host-missing";
+      }
+    }
+
+    if (!source) return null;
+
+    const replacement = await restartExpiredChatGPTCredentialIntent(
+      identity,
+      { epoch: intent.epoch, pendingAttemptId: attemptId },
+      source,
+      { signal },
+    );
+    return replacement ? { intent: replacement, hostIdentity } : null;
+  }
+
   async function start(identity: DurableIdentity, signal?: AbortSignal) {
-    const intent = await beginChatGPTCredentialIntent(identity, { signal });
+    let intent: ChatGPTCredentialIntent;
+    let expiredHostIdentity: DurableIdentity | undefined;
+    try {
+      intent = await beginChatGPTCredentialIntent(identity, { signal });
+    } catch (error) {
+      if (
+        !(error instanceof ChatGPTCredentialVaultError) ||
+        error.code !== "active-connection"
+      )
+        throw error;
+      const pending = await readPendingChatGPTCredentialIntent(identity, {
+        signal,
+      });
+      if (!pending) throw error;
+      const recovered = await recoverExpiredLoginIntent(
+        identity,
+        pending,
+        signal,
+      );
+      if (!recovered) {
+        const stillPending = await readPendingChatGPTCredentialIntent(
+          identity,
+          {
+            signal,
+          },
+        );
+        if (stillPending) throw loginPending();
+        throw error;
+      }
+      intent = recovered.intent;
+      expiredHostIdentity = recovered.hostIdentity;
+    }
     let host: Host | undefined;
     try {
+      if (expiredHostIdentity) await manager.disconnect(expiredHostIdentity);
       host = await ensureHost(identity, signal);
       const existing = responseRecord(
         await readJSON(await manager.request(host, "status", { signal })),
       );
-      if (existing?.authStatus === "connected")
+      if (
+        existing?.authStatus === "connected" ||
+        existing?.lifecycle === "completed"
+      )
         throw new ChatGPTDurableServiceError(
           "busy",
           "Disconnect the existing ChatGPT account before replacing it.",
+        );
+      if (existing?.lifecycle === "pending") {
+        await bindChatGPTCredentialIntentHost(
+          identity,
+          intent.epoch,
+          host.attemptId,
+          { signal },
+        );
+        throw loginPending();
+      }
+      if (
+        !existing ||
+        !["idle", "expired", "failed", "cancelled"].includes(
+          String(existing.lifecycle),
+        )
+      )
+        throw new ChatGPTDurableServiceError(
+          "unavailable",
+          "ChatGPT account status could not be checked.",
         );
       await bindChatGPTCredentialIntentHost(
         identity,
@@ -1493,12 +1632,19 @@ export function createChatGPTDurableService(options: {
       );
       return { host, intent };
     } catch (error) {
-      await cancelChatGPTCredentialIntent(identity, intent.epoch).catch(
-        () => undefined,
-      );
+      if (
+        !(error instanceof ChatGPTDurableServiceError) ||
+        error.code !== "login-pending"
+      )
+        await cancelChatGPTCredentialIntent(identity, intent.epoch).catch(
+          () => undefined,
+        );
       if (
         host &&
-        !(error instanceof ChatGPTDurableServiceError && error.code === "busy")
+        !(
+          error instanceof ChatGPTDurableServiceError &&
+          (error.code === "busy" || error.code === "login-pending")
+        )
       )
         await manager.disconnect(identity).catch(() => undefined);
       throw error;

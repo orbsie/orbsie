@@ -6,6 +6,8 @@ const vault = vi.hoisted(() => ({
   release: vi.fn(),
   remember: vi.fn(),
   begin: vi.fn(),
+  readIntent: vi.fn(),
+  restartIntent: vi.fn(),
   bind: vi.fn(),
   completeIntent: vi.fn(),
   legacyAllowed: vi.fn(),
@@ -14,6 +16,13 @@ const vault = vi.hoisted(() => ({
   revoke: vi.fn(),
   revokeCapture: vi.fn(),
   admitLegacy: vi.fn(),
+  VaultError: class VaultError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+    }
+  },
 }));
 vi.mock("../src/lib/server/chatgpt-credential-vault", () => ({
   leaseChatGPTCredentialCache: vault.lease,
@@ -21,6 +30,8 @@ vi.mock("../src/lib/server/chatgpt-credential-vault", () => ({
   releaseChatGPTCredentialLease: vault.release,
   rememberChatGPTCredentialCache: vault.remember,
   beginChatGPTCredentialIntent: vault.begin,
+  readPendingChatGPTCredentialIntent: vault.readIntent,
+  restartExpiredChatGPTCredentialIntent: vault.restartIntent,
   bindChatGPTCredentialIntentHost: vault.bind,
   completeChatGPTCredentialIntent: vault.completeIntent,
   canUseLegacyChatGPTHost: vault.legacyAllowed,
@@ -28,6 +39,7 @@ vi.mock("../src/lib/server/chatgpt-credential-vault", () => ({
   cancelChatGPTCredentialIntent: vault.cancel,
   revokeChatGPTCredentialAuthorityAndCaptureHosts: vault.revokeCapture,
   admitLegacyChatGPTCredentialIntent: vault.admitLegacy,
+  ChatGPTCredentialVaultError: vault.VaultError,
 }));
 
 import { createChatGPTDurableService } from "../src/lib/server/chatgpt-durable-service";
@@ -70,7 +82,7 @@ function managerFor(
   return {
     calls,
     manager: {
-      ensure: vi.fn(async () => host),
+      ensure: vi.fn(async (): Promise<typeof host> => host),
       acquireForOperation: vi.fn(async () => host),
       privateOperation: vi.fn(async (_host, name, input) => {
         calls.push(name);
@@ -80,6 +92,17 @@ function managerFor(
       disconnect: vi.fn(async () => true),
       destroyHost: vi.fn(async () => undefined),
       releaseHost: vi.fn(async () => true),
+      read: vi.fn(async (): Promise<typeof host | null> => host),
+      captureOwnerHosts: vi.fn(
+        async (): Promise<
+          {
+            ownerId: string;
+            sessionId: string;
+            attemptId: string;
+            sandboxName: string;
+          }[]
+        > => [],
+      ),
     },
   };
 }
@@ -90,6 +113,8 @@ function setup() {
   vault.save.mockResolvedValue({ kind: "saved" });
   vault.release.mockResolvedValue({ kind: "released" });
   vault.begin.mockResolvedValue({ epoch: 1, pendingAttemptId: null });
+  vault.readIntent.mockResolvedValue(null);
+  vault.restartIntent.mockResolvedValue(null);
   vault.bind.mockResolvedValue({ epoch: 1, pendingAttemptId: host.attemptId });
   vault.completeIntent.mockResolvedValue({
     epoch: 1,
@@ -224,6 +249,111 @@ describe("private durable ChatGPT operation orchestration", () => {
     const sequence = managerFor(async () => json({}));
     const service = createChatGPTDurableService({ manager: sequence.manager });
     await expect(service.models(identity)).resolves.toBeNull();
+    expect(sequence.manager.ensure).not.toHaveBeenCalled();
+  });
+
+  it("restarts a terminal old challenge under a new intent and host fence", async () => {
+    setup();
+    const previousHost = {
+      ...host,
+      attemptId: "old-attempt",
+      sandboxName: "orbsie-chatgpt-old-attempt",
+    };
+    const nextHost = {
+      ...host,
+      attemptId: "next-attempt",
+      sandboxName: "orbsie-chatgpt-next-attempt",
+    };
+    vault.begin.mockRejectedValueOnce(
+      new vault.VaultError("active-connection", "active intent"),
+    );
+    vault.readIntent.mockResolvedValue({
+      epoch: 7,
+      pendingAttemptId: previousHost.attemptId,
+    });
+    vault.restartIntent.mockResolvedValue({
+      epoch: 8,
+      pendingAttemptId: "pending:8",
+    });
+    vault.bind.mockResolvedValue({
+      epoch: 8,
+      pendingAttemptId: nextHost.attemptId,
+    });
+    const sequence = managerFor(() =>
+      json({ lifecycle: "expired", authStatus: "disconnected" }),
+    );
+    sequence.manager.read.mockResolvedValue(previousHost);
+    sequence.manager.captureOwnerHosts.mockResolvedValue([
+      {
+        ownerId: identity.ownerId,
+        sessionId: identity.sessionId,
+        attemptId: previousHost.attemptId,
+        sandboxName: previousHost.sandboxName,
+      },
+    ]);
+    sequence.manager.ensure.mockResolvedValue(nextHost);
+    sequence.manager.request
+      .mockResolvedValueOnce(
+        json({ lifecycle: "expired", authStatus: "disconnected" }),
+      )
+      .mockResolvedValueOnce(
+        json({ lifecycle: "idle", authStatus: "disconnected" }),
+      );
+
+    const service = createChatGPTDurableService({ manager: sequence.manager });
+    await expect(service.start(identity)).resolves.toMatchObject({
+      host: { attemptId: nextHost.attemptId },
+      intent: { epoch: 8, pendingAttemptId: "pending:8" },
+    });
+    expect(vault.restartIntent).toHaveBeenCalledWith(
+      identity,
+      { epoch: 7, pendingAttemptId: previousHost.attemptId },
+      "terminal-host",
+      { signal: undefined },
+    );
+    expect(sequence.manager.disconnect).toHaveBeenCalledWith(identity);
+    expect(sequence.manager.ensure).toHaveBeenCalledTimes(1);
+    expect(vault.bind).toHaveBeenCalledWith(identity, 8, nextHost.attemptId, {
+      signal: undefined,
+    });
+  });
+
+  it("keeps a live pending challenge single-owner and exposes a typed conflict", async () => {
+    setup();
+    const previousHost = {
+      ...host,
+      attemptId: "old-attempt",
+      sandboxName: "orbsie-chatgpt-old-attempt",
+    };
+    vault.begin.mockRejectedValueOnce(
+      new vault.VaultError("active-connection", "active intent"),
+    );
+    vault.readIntent.mockResolvedValue({
+      epoch: 7,
+      pendingAttemptId: previousHost.attemptId,
+    });
+    const sequence = managerFor(async () =>
+      json({ lifecycle: "pending", authStatus: "unknown" }),
+    );
+    sequence.manager.read.mockResolvedValue(previousHost);
+    sequence.manager.captureOwnerHosts.mockResolvedValue([
+      {
+        ownerId: identity.ownerId,
+        sessionId: identity.sessionId,
+        attemptId: previousHost.attemptId,
+        sandboxName: previousHost.sandboxName,
+      },
+    ]);
+    sequence.manager.request.mockResolvedValue(
+      json({ lifecycle: "pending", authStatus: "unknown" }),
+    );
+    const service = createChatGPTDurableService({ manager: sequence.manager });
+
+    await expect(service.start(identity)).rejects.toMatchObject({
+      code: "login-pending",
+    });
+    expect(vault.restartIntent).not.toHaveBeenCalled();
+    expect(sequence.manager.disconnect).not.toHaveBeenCalled();
     expect(sequence.manager.ensure).not.toHaveBeenCalled();
   });
 

@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "syntheticApiOnly": true,
+  "providerRequests": 0,
+  "startCount": 1,
+  "checks": {
+    "expiredChallengeShowsSafeRestart": true,
+    "restartDisplaysFreshCode": true
+  },
+  "errors": [],
+  "unexpected": [],
+  "requests": [
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/auth/get-session",
+      "method": "GET"
+    },
+    {
+      "path": "/api/auth/get-session",
+      "method": "GET"
+    },
+    {
+      "path": "/api/models",
+      "method": "GET"
+    },
+    {
+      "path": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "path": "/api/projects",
+      "method": "GET"
+    },
+    {
+      "path": "/api/chatgpt/status",
+      "method": "GET"
+    },
+    {
+      "path": "/api/chatgpt/start",
+      "method": "POST"
+    }
+  ]
+}

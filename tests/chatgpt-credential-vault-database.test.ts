@@ -20,6 +20,8 @@ import {
   saveChatGPTCredentialCache,
   withChatGPTCredentialLeaseAdmission,
 } from "../src/lib/server/chatgpt-credential-vault";
+import { createChatGPTDurableService } from "../src/lib/server/chatgpt-durable-service";
+import { readChatGPTHost } from "../src/lib/server/chatgpt-host-registry";
 
 const runDatabaseTest =
   process.env.RUN_CHATGPT_CREDENTIAL_VAULT_DATABASE === "1";
@@ -63,6 +65,233 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
+
+async function insertWithRequiredSchemaValues(
+  pool: Pool,
+  table: "user" | "session",
+  values: Record<string, unknown>,
+) {
+  const columns = await pool.query<{
+    column_name: string;
+    is_nullable: string;
+    column_default: string | null;
+  }>(
+    `SELECT column_name,is_nullable,column_default
+     FROM information_schema.columns
+     WHERE table_schema=current_schema() AND table_name=$1
+     ORDER BY ordinal_position`,
+    [table],
+  );
+  const required = columns.rows.filter(
+    (column) => column.is_nullable === "NO" && !column.column_default,
+  );
+  if (required.some((column) => !(column.column_name in values)))
+    throw Error(
+      "The synthetic ChatGPT fixture does not cover the required schema.",
+    );
+  const names = required.map((column) => {
+    if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(column.column_name))
+      throw Error(
+        "The synthetic ChatGPT fixture found an invalid column name.",
+      );
+    return `"${column.column_name}"`;
+  });
+  await pool.query(
+    `INSERT INTO "${table}"(${names.join(",")}) VALUES (${required
+      .map((_, index) => `$${index + 1}`)
+      .join(",")})`,
+    required.map((column) => values[column.column_name]),
+  );
+}
+
+it.runIf(runDatabaseTest)(
+  "restarts an expired host intent at the database/service boundary and fences late saves",
+  async () => {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw Error("DATABASE_URL is required for this test.");
+    const setup = new Pool({ connectionString: databaseUrl, max: 4 });
+    const realPool = new Pool({ connectionString: databaseUrl, max: 4 });
+    state.database.mockReturnValue(realPool);
+    const ownerId = `expired-intent-${randomUUID()}`;
+    const sessionId = `expired-session-${randomUUID()}`;
+    const actor = { ownerId, sessionId };
+    const previousAttemptId = randomUUID();
+    const nextAttemptId = randomUUID();
+    const nextHost = {
+      attemptId: nextAttemptId,
+      sandboxName: `orbsie-chatgpt-${nextAttemptId}`,
+      capability: "synthetic-capability",
+      artifactDigest: "a".repeat(64),
+      expiresAt: new Date(Date.now() + 600_000),
+    };
+    let currentAttemptId = previousAttemptId;
+    let statusCalls = 0;
+    const manager = {
+      ensure: vi.fn(async () => {
+        currentAttemptId = nextAttemptId;
+        return nextHost;
+      }),
+      request: vi.fn(async () => {
+        statusCalls++;
+        return Response.json(
+          statusCalls === 1
+            ? { lifecycle: "idle", authStatus: "disconnected" }
+            : { lifecycle: "pending", authStatus: "unknown" },
+        );
+      }),
+      privateOperation: vi.fn(async () => Response.json({})),
+      disconnect: vi.fn(async (target: { sessionId: string }) => {
+        if (target.sessionId === sessionId)
+          await setup.query(
+            `DELETE FROM chatgpt_hosts WHERE session_id=$1 AND owner_id=$2 AND attempt_id=$3`,
+            [sessionId, ownerId, previousAttemptId],
+          );
+        return true;
+      }),
+      captureOwnerHosts: vi.fn(async () => [
+        {
+          ownerId,
+          sessionId,
+          attemptId: currentAttemptId,
+          sandboxName: `orbsie-chatgpt-${currentAttemptId}`,
+        },
+      ]),
+      read: vi.fn(async () =>
+        currentAttemptId === nextAttemptId ? nextHost : null,
+      ),
+    };
+    try {
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "user" (id text PRIMARY KEY)`,
+      );
+      await setup.query(
+        `CREATE TABLE IF NOT EXISTS "session" (
+           id text PRIMARY KEY,
+           "userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+           "expiresAt" timestamptz NOT NULL
+         )`,
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-credential-schema.sql", "utf8"),
+      );
+      await setup.query(
+        await readFile("scripts/chatgpt-host-schema.sql", "utf8"),
+      );
+      const fixtureNow = new Date();
+      await insertWithRequiredSchemaValues(setup, "user", {
+        id: ownerId,
+        name: "Expired challenge fixture",
+        email: `${ownerId}@example.test`,
+        emailVerified: false,
+        updatedAt: fixtureNow,
+      });
+      await insertWithRequiredSchemaValues(setup, "session", {
+        id: sessionId,
+        userId: ownerId,
+        expiresAt: new Date(fixtureNow.getTime() + 60 * 60 * 1000),
+        token: randomUUID(),
+        updatedAt: fixtureNow,
+      });
+      await setup.query(
+        `INSERT INTO chatgpt_credential_intents(owner_id,epoch,pending_attempt_id)
+         VALUES ($1,7,$2)`,
+        [ownerId, previousAttemptId],
+      );
+      await setup.query(
+        `INSERT INTO chatgpt_hosts
+           (session_id,owner_id,attempt_id,state,sandbox_name,capability_ciphertext,artifact_digest,expires_at)
+         VALUES ($1,$2,$3,'ready',$4,'synthetic-capability',$5,clock_timestamp()-interval '1 second')`,
+        [
+          sessionId,
+          ownerId,
+          previousAttemptId,
+          `orbsie-chatgpt-${previousAttemptId}`,
+          "a".repeat(64),
+        ],
+      );
+
+      const service = createChatGPTDurableService({ manager });
+      expect(await readChatGPTHost(actor)).toBeNull();
+      await expect(service.status(actor)).resolves.toBeNull();
+      await expect(service.start(actor)).resolves.toMatchObject({
+        host: { attemptId: nextAttemptId },
+        intent: { epoch: 8, pendingAttemptId: "pending:8" },
+      });
+      expect(manager.ensure).toHaveBeenCalledTimes(1);
+      expect(manager.disconnect).toHaveBeenCalledWith(actor);
+      const intent = await setup.query(
+        `SELECT epoch,pending_attempt_id FROM chatgpt_credential_intents WHERE owner_id=$1`,
+        [ownerId],
+      );
+      expect(intent.rows).toEqual([
+        { epoch: 8, pending_attempt_id: nextAttemptId },
+      ]);
+      await expect(service.start(actor)).rejects.toMatchObject({
+        code: "login-pending",
+      });
+      expect(manager.ensure).toHaveBeenCalledTimes(1);
+      expect(manager.disconnect).toHaveBeenCalledTimes(1);
+      await expect(
+        rememberChatGPTCredentialCache(
+          actor,
+          new TextEncoder().encode("late"),
+          {
+            expectedIntentEpoch: 7,
+            expectedHostAttemptId: previousAttemptId,
+          },
+        ),
+      ).rejects.toMatchObject({ code: "unauthorized" });
+
+      await service.disconnect(actor);
+      await expect(
+        rememberChatGPTCredentialCache(
+          actor,
+          new TextEncoder().encode("late"),
+          {
+            expectedIntentEpoch: 8,
+            expectedHostAttemptId: nextAttemptId,
+          },
+        ),
+      ).rejects.toMatchObject({ code: "unauthorized" });
+      const disconnected = await setup.query(
+        `SELECT epoch,pending_attempt_id,revoked_at FROM chatgpt_credential_intents WHERE owner_id=$1`,
+        [ownerId],
+      );
+      expect(disconnected.rows[0]).toMatchObject({
+        epoch: 9,
+        pending_attempt_id: null,
+      });
+      expect(disconnected.rows[0]?.revoked_at).not.toBeNull();
+
+      const previousConnection = await rememberChatGPTCredentialCache(
+        actor,
+        new TextEncoder().encode("remembered-before-restart"),
+      );
+      currentAttemptId = previousAttemptId;
+      await setup.query(
+        `UPDATE chatgpt_credential_intents
+         SET epoch=10,pending_attempt_id=$2,revoked_at=NULL WHERE owner_id=$1`,
+        [ownerId, previousAttemptId],
+      );
+      await expect(service.start(actor)).rejects.toMatchObject({
+        code: "active-connection",
+      });
+      expect(manager.ensure).toHaveBeenCalledTimes(1);
+      expect(manager.disconnect).toHaveBeenCalledTimes(1);
+      await expect(readChatGPTCredentialCache(actor)).resolves.toMatchObject({
+        connectionId: previousConnection.connectionId,
+        connectionVersion: 1,
+      });
+    } finally {
+      await setup
+        .query(`DELETE FROM "user" WHERE id=$1`, [ownerId])
+        .catch(() => undefined);
+      await setup.end();
+      await realPool.end();
+    }
+  },
+  30_000,
+);
 
 it.runIf(runDatabaseTest)(
   "serializes real refresh leases and fences revoke, expiry, and session races",

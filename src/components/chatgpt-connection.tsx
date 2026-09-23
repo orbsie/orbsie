@@ -171,11 +171,19 @@ type View =
   | { phase: "idle"; message?: string }
   | { phase: "pending"; challenge: ChatGPTChallenge; message?: string }
   | { phase: "connected"; message?: string }
-  | { phase: "error"; message: string; stale?: boolean };
+  | {
+      phase: "error";
+      message: string;
+      stale?: boolean;
+      loginPending?: boolean;
+    };
 
 const initialView: View = { phase: "checking" };
 const genericError = "ChatGPT connection could not be completed. Try again.";
 export const CHATGPT_STALE_CONNECTION_ACTION = "Reconnect ChatGPT";
+export const CHATGPT_LOGIN_PENDING_ACTION = "Check sign-in status";
+const chatGPTLoginPendingMessage =
+  "A ChatGPT sign-in is still active. Check its status or finish it in the tab that started it.";
 type ChatGPTSelection = {
   model: string;
   effort: string;
@@ -199,6 +207,7 @@ const safeErrors = new Set([
   "ChatGPT sign-out could not be completed.",
   "Unauthorized.",
   CHATGPT_STALE_CONNECTION_MESSAGE,
+  chatGPTLoginPendingMessage,
 ]);
 
 export function isChatGPTStaleConnectionError(
@@ -209,6 +218,17 @@ export function isChatGPTStaleConnectionError(
     typeof value === "object" &&
     (value as { code?: unknown }).code === CHATGPT_STALE_CONNECTION_CODE &&
     (value as { error?: unknown }).error === CHATGPT_STALE_CONNECTION_MESSAGE
+  );
+}
+
+export function isChatGPTLoginPendingError(
+  value: unknown,
+): value is { code: "CHATGPT_LOGIN_PENDING"; error: string } {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    (value as { code?: unknown }).code === "CHATGPT_LOGIN_PENDING" &&
+    (value as { error?: unknown }).error === chatGPTLoginPendingMessage
   );
 }
 
@@ -496,17 +516,24 @@ export default function ChatGPTConnection({
         )
           return;
         const stale = isChatGPTStaleConnectionError(error);
+        const loginPending = isChatGPTLoginPendingError(error);
         setView(
-          stale
+          loginPending
             ? {
                 phase: "error",
-                message: CHATGPT_STALE_CONNECTION_MESSAGE,
-                stale: true,
+                message: chatGPTLoginPendingMessage,
+                loginPending: true,
               }
-            : {
-                phase: signedIn ? "idle" : "error",
-                message: errorMessage(error),
-              },
+            : stale
+              ? {
+                  phase: "error",
+                  message: CHATGPT_STALE_CONNECTION_MESSAGE,
+                  stale: true,
+                }
+              : {
+                  phase: signedIn ? "idle" : "error",
+                  message: errorMessage(error),
+                },
         );
       })
       .finally(() => {
@@ -998,7 +1025,11 @@ export default function ChatGPTConnection({
       ) : view.phase === "error" ? (
         <div className="setup-note" role="alert">
           {view.message}
-          {view.stale ? (
+          {view.loginPending ? (
+            <button className="primary full" onClick={refresh}>
+              {CHATGPT_LOGIN_PENDING_ACTION}
+            </button>
+          ) : view.stale ? (
             <button className="primary full" onClick={reconnect}>
               {CHATGPT_STALE_CONNECTION_ACTION}
             </button>

@@ -81,6 +81,9 @@ export type ChatGPTCredentialIntent = {
   pendingAttemptId: string | null;
 };
 
+export type ChatGPTCredentialIntentRecoverySource =
+  "host-missing" | "terminal-host";
+
 export type ChatGPTCredentialRememberOptions = {
   expectedIntentEpoch?: number;
   expectedHostAttemptId?: string;
@@ -652,6 +655,124 @@ export async function beginChatGPTCredentialIntent(
       [actor.ownerId, epoch, reservation],
     );
     return { epoch, pendingAttemptId: reservation };
+  }, options.signal);
+}
+
+/** Read the current bound login intent without changing owner authority. */
+export async function readPendingChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  options: { signal?: AbortSignal } = {},
+): Promise<ChatGPTCredentialIntent | null> {
+  const actor = actorValue(actorInput);
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const intent = await client.query<{
+      epoch: number;
+      pending_attempt_id: string | null;
+      revoked_at: Date | string | null;
+    }>(
+      `SELECT epoch,pending_attempt_id,revoked_at
+       FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const row = intent.rows[0];
+    if (!row || row.revoked_at || !row.pending_attempt_id) return null;
+    return {
+      epoch: row.epoch,
+      pendingAttemptId: row.pending_attempt_id,
+    };
+  }, options.signal);
+}
+
+/**
+ * Atomically retire a proven-unrecoverable login and reserve its replacement.
+ * The epoch and attempt comparison makes Disconnect, another Start, and late
+ * completion callbacks serialize against this transition.
+ */
+export async function restartExpiredChatGPTCredentialIntent(
+  actorInput: ChatGPTCredentialVaultActor,
+  expected: { epoch: number; pendingAttemptId: string },
+  source: ChatGPTCredentialIntentRecoverySource,
+  options: { signal?: AbortSignal } = {},
+): Promise<ChatGPTCredentialIntent | null> {
+  const actor = actorValue(actorInput);
+  const epoch = intentEpochValue(expected.epoch);
+  const pendingAttemptId = attemptIdValue(expected.pendingAttemptId);
+  if (
+    !pendingAttemptId ||
+    pendingAttemptId === `pending:${epoch}` ||
+    (source !== "host-missing" && source !== "terminal-host")
+  )
+    throw invalid();
+  return transaction(async (client) => {
+    const sessionExpiresAt = await requireActiveSession(client, actor);
+    await lockOwner(client, actor);
+    const result = await client.query<{
+      epoch: number;
+      pending_attempt_id: string | null;
+      revoked_at: Date | string | null;
+    }>(
+      `SELECT epoch,pending_attempt_id,revoked_at
+       FROM chatgpt_credential_intents WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const now = await currentClock(client);
+    assertSessionCurrent(sessionExpiresAt, now);
+    const row = result.rows[0];
+    if (
+      !row ||
+      row.epoch !== epoch ||
+      row.pending_attempt_id !== pendingAttemptId ||
+      row.revoked_at
+    )
+      return null;
+
+    const connections = await client.query<{ id: string }>(
+      `SELECT id FROM chatgpt_credential_connections
+       WHERE owner_id=$1 AND revoked_at IS NULL AND expires_at>$2
+       FOR UPDATE`,
+      [actor.ownerId, now],
+    );
+    if (connections.rows.length) throw activeConnection();
+
+    const hosts = await client.query<{
+      attempt_id: string;
+      expires_at: Date | string;
+    }>(
+      `SELECT attempt_id,expires_at FROM chatgpt_hosts
+       WHERE owner_id=$1 FOR UPDATE`,
+      [actor.ownerId],
+    );
+    const currentHosts = hosts.rows.filter((host) => {
+      const expiresAt = dateValue(host.expires_at);
+      return !expiresAt || expiresAt.getTime() > now.getTime();
+    });
+    const matchingHosts = currentHosts.filter(
+      (host) => host.attempt_id === pendingAttemptId,
+    );
+    if (
+      currentHosts.some((host) => host.attempt_id !== pendingAttemptId) ||
+      (source === "host-missing" && matchingHosts.length > 0) ||
+      (source === "terminal-host" && matchingHosts.length > 1)
+    )
+      return null;
+
+    const nextEpoch = epoch + 1;
+    if (!Number.isSafeInteger(nextEpoch)) throw invalid();
+    const reservation = `pending:${nextEpoch}`;
+    const updated = await client.query(
+      `UPDATE chatgpt_credential_intents
+       SET epoch=$4,pending_attempt_id=$5,updated_at=clock_timestamp()
+       WHERE owner_id=$1 AND epoch=$2 AND pending_attempt_id=$3
+         AND revoked_at IS NULL
+       RETURNING epoch`,
+      [actor.ownerId, epoch, pendingAttemptId, nextEpoch, reservation],
+    );
+    if (!updated.rows.length) return null;
+    return { epoch: nextEpoch, pendingAttemptId: reservation };
   }, options.signal);
 }
 

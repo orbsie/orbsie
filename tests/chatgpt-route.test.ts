@@ -29,6 +29,13 @@ const mocks = vi.hoisted(() => ({
       this.status = status;
     }
   },
+  DurableServiceError: class DurableServiceError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+    }
+  },
 }));
 
 vi.mock(
@@ -49,7 +56,7 @@ vi.mock("@/lib/server/chatgpt-host-manager", () => ({
 }));
 vi.mock("@/lib/server/chatgpt-durable-service", () => ({
   createChatGPTDurableService: mocks.createDurable,
-  ChatGPTDurableServiceError: class extends Error {},
+  ChatGPTDurableServiceError: mocks.DurableServiceError,
 }));
 
 import { GET, POST } from "../src/app/api/chatgpt/[action]/route";
@@ -278,6 +285,25 @@ describe("authenticated ChatGPT routes", () => {
       expect.any(AbortSignal),
     );
     expect(mocks.request).toHaveBeenCalledWith(host, "start");
+  });
+
+  it("returns a bounded actionable conflict for a genuinely live login", async () => {
+    mocks.durableStart.mockRejectedValueOnce(
+      new mocks.DurableServiceError(
+        "login-pending",
+        "A ChatGPT sign-in is still active. Check its status or finish it in the tab that started it.",
+      ),
+    );
+    const response = await POST(
+      request("start", { method: "POST" }),
+      context("start"),
+    );
+    expect(response.status).toBe(409);
+    expect(await body(response)).toEqual({
+      code: "CHATGPT_LOGIN_PENDING",
+      error:
+        "A ChatGPT sign-in is still active. Check its status or finish it in the tab that started it.",
+    });
   });
 
   it("sanitizes status fields and strips host metadata and provider errors", async () => {

@@ -64,13 +64,19 @@ function publicError(error: unknown): Response {
         ? 409
         : error.code === "revoked"
           ? 409
-          : error.code === "busy"
+          : error.code === "login-pending"
             ? 409
-            : error.code === "expired" || error.code === "insufficient-headroom"
-              ? 503
-              : 502;
+            : error.code === "busy"
+              ? 409
+              : error.code === "expired" ||
+                  error.code === "insufficient-headroom"
+                ? 503
+                : 502;
     return json(
       {
+        ...(error.code === "login-pending"
+          ? { code: "CHATGPT_LOGIN_PENDING" }
+          : {}),
         ...(error.code === "missing" || error.code === "revoked"
           ? { code: "CHATGPT_CONNECTION_REQUIRED" }
           : {}),
