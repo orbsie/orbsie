@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 WebGL render-origin integration accepted locally (`c15f0ca`): settled
+world content, player and terrain share a parent shifted by a stable quantized
+origin, and the camera uses the matching local pose. Planet and transition
+remain at zero until settled. Astra review fixed a light-coordinate mismatch:
+the key light and target remain in the local visible frame rather than moving
+another million units. Projection tests simulate Float32 positions at the
+origin, 10km and both coordinate limits, including rebase continuity. Full
+suite: 195 passed/6 skipped files, 1,651 passed/26 skipped tests; Next
+production build/TypeScript passed and standalone player was regenerated
+(`9870bcb`). Actual GPU shadow precision, browser visuals, Android frame
+times and memory are unmeasured. Gameplay draw culling and distant formation
+resource eviction remain open before release.
+
 Sep 23 render-origin core accepted locally (`9374254`): a 1,024-unit
 quantized origin with a 768-unit rebase threshold keeps camera-relative
 positions small and avoids oscillation at cell midpoints. World/local and
