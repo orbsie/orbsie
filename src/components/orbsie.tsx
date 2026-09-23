@@ -52,7 +52,11 @@ import {
   type ProjectValue,
   type Publication,
 } from "@/lib/project-state";
-import { useOrb } from "@/lib/store";
+import {
+  assertCloudJournalBaseline,
+  authoringReviewEligibleForConnection,
+  useOrb,
+} from "@/lib/store";
 import {
   beginPlayerPointerInput,
   endPlayerPointerInput,
@@ -534,6 +538,7 @@ export default function Orbsie() {
     chatgptGeneration: false,
     authoringReview: false,
   });
+  const [authoringReviewOptOut, setAuthoringReviewOptOut] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -1306,6 +1311,14 @@ export default function Orbsie() {
       : connection.provider === "openrouter"
         ? "OpenRouter"
         : "AI Gateway";
+  const reviewAllowanceAvailable = trial.enabled && trial.remaining > 0;
+  const authoringReviewEligible = authoringReviewEligibleForConnection(
+    capabilities.authoringReview,
+    connection,
+    reviewAllowanceAvailable,
+  );
+  const authoringReviewEnabled =
+    authoringReviewEligible && !authoringReviewOptOut;
   const selectQuality = (
     option: ReturnType<typeof modelQualityOptions>[number],
   ) => {
@@ -1341,6 +1354,18 @@ export default function Orbsie() {
     lastUserMessageIndex >= 0
       ? s.project.messages.slice(lastUserMessageIndex + 1)
       : [];
+  const nonterminalActivity = s.authoringActivity.filter(
+    (activity) =>
+      activity.kind !== "completed" &&
+      activity.kind !== "cancelled" &&
+      activity.kind !== "failed",
+  );
+  const terminalActivity = s.authoringActivity.filter(
+    (activity) =>
+      activity.kind === "completed" ||
+      activity.kind === "cancelled" ||
+      activity.kind === "failed",
+  );
   const renderProjectMessage = (
     m: (typeof s.project.messages)[number],
     index: number,
@@ -1356,6 +1381,28 @@ export default function Orbsie() {
           </span>
         )}
         <p>{m.text}</p>
+      </div>
+    </div>
+  );
+  const renderAuthoringActivity = (
+    activity: (typeof s.authoringActivity)[number],
+    latest: boolean,
+  ) => (
+    <div
+      key={activity.id}
+      className={`message assistant authoring-activity-message${latest ? " authoring-activity-latest" : ""} is-${activity.kind}`}
+      role={latest ? "status" : undefined}
+      aria-live={latest ? "polite" : undefined}
+      aria-atomic={latest ? "true" : undefined}
+      aria-label={latest ? "Latest creation update" : undefined}
+      data-project-id={activity.projectId}
+      data-run-id={activity.runId}
+    >
+      <span className="assistant-icon" aria-hidden="true">
+        {latest && s.building ? <span className="pulse-orb" /> : "✧"}
+      </span>
+      <div>
+        <p>{activity.message}</p>
       </div>
     </div>
   );
@@ -1641,7 +1688,17 @@ export default function Orbsie() {
     const selectedConnectionVersion = connectionVersion.current;
     try {
       if (rendererAvailabilityRef.current !== "ready") return;
-      let selectedConnection = { ...connection, renderer: rendererMode };
+      let selectedConnection: Connection & { authoringReview?: boolean } = {
+        ...connection,
+        renderer: rendererMode,
+      };
+      let reviewOptIn =
+        !authoringReviewOptOut &&
+        authoringReviewEligibleForConnection(
+          capabilities.authoringReview,
+          connection,
+          reviewAllowanceAvailable,
+        );
       if (!isGenerationReady(connection)) {
         if (connection.provider === "chatgpt-hosted") {
           setModal("settings");
@@ -1678,8 +1735,19 @@ export default function Orbsie() {
           key: "",
           renderer: rendererMode,
         };
+        reviewOptIn =
+          !authoringReviewOptOut &&
+          authoringReviewEligibleForConnection(
+            capabilities.authoringReview,
+            selectedConnection,
+            allowance.enabled && allowance.remaining > 0,
+          );
       }
       if (rendererAvailabilityRef.current !== "ready") return;
+      selectedConnection = {
+        ...selectedConnection,
+        authoringReview: reviewOptIn,
+      };
       submittedPrompt.current = instruction;
       setPrompt("");
       const accountVersion = accountGeneration.current;
@@ -1697,6 +1765,9 @@ export default function Orbsie() {
         )
           ? selectedCandidate
           : undefined;
+      let lastJournalRunId: string | undefined;
+      let lastJournalAcknowledgement:
+        { revision: number; snapshotToken: string } | undefined;
       const journal = user
         ? {
             isCurrent: () => accountGeneration.current === accountVersion,
@@ -1708,7 +1779,8 @@ export default function Orbsie() {
             ) => {
               const current = () =>
                 accountGeneration.current === accountVersion &&
-                useOrb.getState().project.id === project.id;
+                useOrb.getState().project.id === project.id &&
+                useOrb.getState().project.revision === project.revision;
               if (
                 !current() ||
                 !(await uploadCloudGeneratedModels(project, current))
@@ -1716,17 +1788,50 @@ export default function Orbsie() {
                 throw Error(
                   "Generation account changed before cloud recovery could start.",
                 );
+              let baseRevision =
+                project.id === originProjectId ? cloudRevision : null;
+              let baseSnapshotToken =
+                project.id === originProjectId
+                  ? (cloudVersion?.snapshotToken ?? null)
+                  : null;
+              if (lastJournalRunId && lastJournalRunId !== runId) {
+                const latestResponse = await fetch(
+                  `/api/projects?id=${encodeURIComponent(project.id)}`,
+                  { cache: "no-store" },
+                );
+                const latest = await latestResponse.json().catch(() => ({}));
+                if (!current())
+                  throw Error(
+                    "Generation account changed before cloud recovery could start.",
+                  );
+                if (!latestResponse.ok || !latest.project)
+                  throw Error(
+                    latest.error ??
+                      "Cloud recovery could not read the reviewed world.",
+                  );
+                if (!lastJournalAcknowledgement)
+                  throw Error(
+                    "Cloud recovery could not verify the reviewed world.",
+                  );
+                try {
+                  assertCloudJournalBaseline(lastJournalAcknowledgement, {
+                    revision: latest.project.revision,
+                    snapshotToken: latest.project.snapshotToken,
+                  });
+                } catch (error) {
+                  setConflict(latest.project);
+                  throw error;
+                }
+                baseRevision = lastJournalAcknowledgement.revision;
+                baseSnapshotToken = lastJournalAcknowledgement.snapshotToken;
+              }
               const response = await fetch("/api/projects", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   project,
-                  baseRevision:
-                    project.id === originProjectId ? cloudRevision : null,
-                  baseSnapshotToken:
-                    project.id === originProjectId
-                      ? (cloudVersion?.snapshotToken ?? null)
-                      : null,
+                  baseRevision,
+                  baseSnapshotToken,
                 }),
               });
               const result = await response.json();
@@ -1749,6 +1854,10 @@ export default function Orbsie() {
                   snapshotToken: result.snapshotToken,
                 },
               });
+              lastJournalAcknowledgement = {
+                revision: result.revision,
+                snapshotToken: result.snapshotToken,
+              };
               const run = await startCloudGenerationRun({
                 project,
                 runId,
@@ -1759,6 +1868,7 @@ export default function Orbsie() {
                 throw Error(
                   "Generation account changed before cloud recovery could start.",
                 );
+              lastJournalRunId = runId;
               return run;
             },
           }
@@ -2382,36 +2492,23 @@ export default function Orbsie() {
                 }}
               >
                 {messagesBeforeActivity.map(renderProjectMessage)}
-                {s.authoringActivity.map((activity, index) => {
-                  const latest = index === s.authoringActivity.length - 1;
-                  return (
-                    <div
-                      key={activity.id}
-                      className={`message assistant authoring-activity-message${latest ? " authoring-activity-latest" : ""} is-${activity.kind}`}
-                      role={latest ? "status" : undefined}
-                      aria-live={latest ? "polite" : undefined}
-                      aria-atomic={latest ? "true" : undefined}
-                      aria-label={latest ? "Latest creation update" : undefined}
-                      data-project-id={activity.projectId}
-                      data-run-id={activity.runId}
-                    >
-                      <span className="assistant-icon" aria-hidden="true">
-                        {latest && s.building ? (
-                          <span className="pulse-orb" />
-                        ) : (
-                          "✧"
-                        )}
-                      </span>
-                      <div>
-                        <p>{activity.message}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                {nonterminalActivity.map((activity, index) =>
+                  renderAuthoringActivity(
+                    activity,
+                    terminalActivity.length === 0 &&
+                      index === nonterminalActivity.length - 1,
+                  ),
+                )}
                 {messagesAfterActivity.map((message, index) =>
                   renderProjectMessage(
                     message,
                     messagesBeforeActivity.length + index,
+                  ),
+                )}
+                {terminalActivity.map((activity, index) =>
+                  renderAuthoringActivity(
+                    activity,
+                    index === terminalActivity.length - 1,
                   ),
                 )}
                 {!s.building && s.project.entities.length > 0 && (
@@ -2522,6 +2619,29 @@ export default function Orbsie() {
                   <X size={13} />
                 </button>
               </div>
+            )}
+            {capabilities.authoringReview && (
+              <label
+                className="setup-note authoring-review-choice"
+                data-testid="authoring-review-toggle"
+              >
+                <input
+                  type="checkbox"
+                  checked={authoringReviewEnabled}
+                  disabled={!authoringReviewEligible}
+                  onChange={(event) =>
+                    setAuthoringReviewOptOut(!event.target.checked)
+                  }
+                />
+                <span>
+                  <strong>Review the rendered scene</strong>
+                  <small>
+                    {authoringReviewEligible
+                      ? "Up to three model calls, including this generation."
+                      : "Connect a provider or restore your free allowance to enable review."}
+                  </small>
+                </span>
+              </label>
             )}
             <label className="sr-only" htmlFor="prompt">
               {selected ? "Change this object" : "What experience to build?"}

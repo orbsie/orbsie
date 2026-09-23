@@ -528,6 +528,7 @@ describe("generation observability", () => {
       { model: "gpt-5.6-luna" },
       expect.any(AbortSignal),
       { requestId, clientRunId: runId },
+      undefined,
     );
     const invalid = await handler(
       new Request("https://private-host.test/private/operation/generate", {

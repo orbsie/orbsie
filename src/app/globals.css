@@ -1070,6 +1070,27 @@ kbd {
   color: #7b876a;
   margin-top: 12px;
 }
+.authoring-review-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.authoring-review-choice input {
+  flex: 0 0 auto;
+  margin: 4px 0 0;
+}
+.authoring-review-choice > span {
+  min-width: 0;
+  display: block;
+}
+.authoring-review-choice strong,
+.authoring-review-choice small {
+  display: block;
+}
+.authoring-review-choice small {
+  margin-top: 3px;
+  line-height: 1.4;
+}
 .chatgpt-code-row {
   display: flex;
   align-items: center;
@@ -1525,6 +1546,12 @@ kbd {
     min-height: 35px;
     height: 40px;
     font-size: 11px;
+  }
+  .authoring-review-choice {
+    gap: 7px;
+    padding: 9px;
+    font-size: 10px;
+    line-height: 1.45;
   }
   .composer-bottom {
     margin-top: 4px;

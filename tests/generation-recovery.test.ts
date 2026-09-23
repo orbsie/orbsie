@@ -458,8 +458,9 @@ it("finishes the landing transition after a fast initial generation", async () =
         JSON.stringify({ type: "commit_revision", message: "Ready." }),
       ),
   );
-  await orb.getState().run("Create a tiny world");
+  const generation = orb.getState().run("Create a tiny world");
   expect(orb.getState().phase).toBe("descending");
+  await generation;
   await new Promise((resolve) => setTimeout(resolve, 150));
   expect(orb.getState().phase).toBe("editing");
 });
