@@ -123,3 +123,14 @@ exchange. No registration, callback exchange, or external-token inference was
 attempted in this read-only check. Do not rewrite the localhost redirect or
 present device-code login as satisfying this new requirement. Continue the durable
 managed-cache work for the existing path while this separate gate remains open.
+
+September 23 official-doc recheck: the current
+[plugin OAuth guide](https://developers.openai.com/plugins/build/auth) describes
+ChatGPT as the **OAuth client** connecting to a developer's MCP resource and the
+developer's authorization server. Its `chatgpt.com` callback is for that
+direction of authorization; it does not register Orbsie as an OAuth client of
+OpenAI or grant Orbsie subscription inference. The
+[API quickstart](https://developers.openai.com/api/docs/quickstart) still starts
+application inference with a Platform API key. These are positive descriptions
+of different supported flows, not proof that a browser-only subscription client
+can never be offered. Keep the Orbsie HTTPS redirect/entitlement gate open.
