@@ -204,6 +204,7 @@ describe("hosted ChatGPT generation route", () => {
         requestId: expect.any(String),
         clientRunId,
       }),
+      undefined,
     );
     expect(response.headers.get("x-orbsie-request-id")).toMatch(
       /^[0-9a-f-]{36}$/,
@@ -229,6 +230,7 @@ describe("hosted ChatGPT generation route", () => {
       expect.anything(),
       expect.any(Number),
       expect.objectContaining({ requestId: expect.any(String) }),
+      undefined,
     );
   });
   it("retains project-scoped generation feedback through the hosted route", async () => {
@@ -250,6 +252,7 @@ describe("hosted ChatGPT generation route", () => {
       expect.anything(),
       expect.any(Number),
       expect.objectContaining({ requestId: expect.any(String) }),
+      undefined,
     );
   });
   it("rejects cross-project generation feedback before contacting the host", async () => {
