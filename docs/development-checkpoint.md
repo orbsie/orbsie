@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 22 official OpenAI docs recheck: the documented App Server browser login
+still sends its callback to localhost; the hosted success-page option does not
+document a replacement HTTPS callback. External-token mode assumes the host
+already owns authorization, and plugin OAuth runs in the reverse direction.
+No public source established Orbsie's client registration or subscription
+inference entitlement. Evidence and exact links:
+`docs/chatgpt-subscription-oauth-feasibility-20260922.md`. Direct-return
+subscription OAuth stays open as a provider dependency; the deployed device
+code remains interim. Read-only Gateway credit recheck returned HTTP 200 with
+balance -0.0033684 and no model call; paid Gateway E2E remains unavailable.
+
 Sep 22 follow-up local acceptance: a process can die after reserving
 `pending:<epoch>` and before binding a ChatGPT host. The vault now permits
 explicit restart only after the placeholder is at least 11 minutes old (the
