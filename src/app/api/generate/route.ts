@@ -106,6 +106,7 @@ export async function POST(request: Request) {
   let identity: TrialIdentity | undefined;
   let remaining: number | undefined;
   let admittedModelId: string | undefined;
+  let admittedReviewImageInput = false;
   let authoringAdmission: InitialAuthoringAdmission | undefined;
   let providerObservation:
     ReturnType<typeof createGenerationObservation> | undefined;
@@ -165,6 +166,8 @@ export async function POST(request: Request) {
         request.signal,
       );
       admittedModelId = model.id;
+      admittedReviewImageInput =
+        model.capabilities?.imageInput?.supported === true;
       outputFormat = resolveGenerationOutputFormat({
         provider: "gateway",
         model: FREE_MODEL,
@@ -180,6 +183,8 @@ export async function POST(request: Request) {
         request.signal,
       );
       admittedModelId = model.id;
+      admittedReviewImageInput =
+        model.capabilities?.imageInput?.supported === true;
       outputFormat = resolveGenerationOutputFormat({
         provider: parsed.data.provider as "openrouter" | "gateway",
         model: parsed.data.model!,
@@ -245,7 +250,12 @@ export async function POST(request: Request) {
                 }
               : {}),
             ...(authoringAdmission
-              ? { "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId }
+              ? {
+                  "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId,
+                  "X-Orbsie-Review-Image-Supported": admittedReviewImageInput
+                    ? "1"
+                    : "0",
+                }
               : {}),
           },
         },

@@ -96,8 +96,14 @@ it("keeps the legacy one-call route when review admission is disabled", async ()
   expect(deps.generate).not.toHaveBeenCalled();
 });
 
-it("admits an enabled free run before inference and returns only its opaque id", async () => {
+it("admits an enabled free run before inference and reports reviewed image capability", async () => {
   setup();
+  deps.preflight.mockResolvedValueOnce({
+    id: FREE_MODEL,
+    capabilities: {
+      imageInput: { supported: true, source: "catalog" },
+    },
+  });
   deps.configured.mockReturnValue(true);
   deps.admit.mockResolvedValue({
     runId: "11111111-1111-4111-8111-111111111111",
@@ -113,6 +119,7 @@ it("admits an enabled free run before inference and returns only its opaque id",
     "11111111-1111-4111-8111-111111111111",
   );
   expect(response.headers.get("X-Orbsie-Trial-Remaining")).toBe("1");
+  expect(response.headers.get("X-Orbsie-Review-Image-Supported")).toBe("1");
   expect(deps.claim).not.toHaveBeenCalled();
   expect(deps.admit).toHaveBeenCalledOnce();
   expect(deps.admit.mock.invocationCallOrder[0]).toBeLessThan(
@@ -157,4 +164,5 @@ it("links an enabled API run to the existing session without charging free quota
   expect(response.headers.get("X-Orbsie-Authoring-Run-Id")).toBe(
     "22222222-2222-4222-8222-222222222222",
   );
+  expect(response.headers.get("X-Orbsie-Review-Image-Supported")).toBe("0");
 });
