@@ -38,6 +38,14 @@ instructions for default worlds while allowing explicitly requested bounded
 islands and authored barriers. Preserve old serialized project coordinates and
 IDs through any schema migration.
 
+Physical authored boundaries are a separate runtime gate. Current
+`stepGameplay` contacts platform tops, collectibles and portals; it has no
+typed wall or edge collision. An island mesh or wall-shaped model is visual
+geometry today, not proof that a player cannot pass through it. Add an explicit
+boundary/collider contract and gameplay evidence before claiming that a
+requested bounded island or wall constrains movement. Generation guidance must
+not imply unsupported physical containment.
+
 Use sequential bounded handoffs rather than a single renderer rewrite:
 
 1. World coordinates and gameplay: separate position validation from local
