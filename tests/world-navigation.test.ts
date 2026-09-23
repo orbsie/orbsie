@@ -457,8 +457,8 @@ describe("shared world navigation", () => {
       committedEntityBounds: [],
       ...portraitProjection,
     });
-    expect(emptyFrame.target).toEqual([0, 1.5, 0]);
-    expect(Number.isFinite(emptyFrame.distance)).toBe(true);
+    expect(emptyFrame.target).toEqual([0, 0, 0]);
+    expect(emptyFrame.distance).toBe(24);
 
     const invalidBounds = [
       {

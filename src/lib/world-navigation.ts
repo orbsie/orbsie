@@ -58,10 +58,6 @@ const TWO_PI = Math.PI * 2;
 /** Fixed shared camera elevation used by both renderer adapters. */
 export const WORLD_NAVIGATION_CAMERA_ELEVATION_RADIANS = Math.PI / 6;
 const WORLD_NAVIGATION_MIN_FAR_PLANE = 250;
-const EMPTY_WORKSPACE_BOUNDS: WorldNavigationBounds = {
-  min: [-10, -1, -10],
-  max: [10, 4, 10],
-};
 export const WORLD_NAVIGATION_DEFAULT_DISTANCE = 24;
 const FRAME_MARGIN = 1.1;
 
@@ -250,9 +246,14 @@ function frameContent(
     throw new RangeError(
       "Vertical field of view must be finite and between 0 and π.",
     );
-  const bounds =
-    (Array.isArray(entityBounds) ? unionBounds(entityBounds) : undefined) ??
-    EMPTY_WORKSPACE_BOUNDS;
+  const bounds = Array.isArray(entityBounds)
+    ? unionBounds(entityBounds)
+    : undefined;
+  if (!bounds)
+    return {
+      target: [0, 0, 0],
+      distance: WORLD_NAVIGATION_DEFAULT_DISTANCE,
+    };
   const target: WorldNavigationVec3 = [
     bounds.min[0] + (bounds.max[0] - bounds.min[0]) / 2,
     bounds.min[1] + (bounds.max[1] - bounds.min[1]) / 2,
