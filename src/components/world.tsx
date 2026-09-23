@@ -40,7 +40,7 @@ import {
   registerSceneReviewCaptureSource,
   type SceneReviewSourceState,
 } from "@/lib/scene-review-capture";
-import type { Entity } from "@/lib/protocol";
+import type { Entity, Project } from "@/lib/protocol";
 import { GameSession, GAME_RULES_RESTART_NOTICE } from "@/lib/game-session";
 import {
   PlayerInputTracker,
@@ -69,7 +69,12 @@ import {
   type WorldNavigationCommand,
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
-import { committedWorldNavigationBounds } from "@/lib/world-navigation-bounds";
+import {
+  committedWorldNavigationBounds,
+  worldNavigationBoundsByEntity,
+  type WorldNavigationEntityBounds,
+} from "@/lib/world-navigation-bounds";
+import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
   sampleWorldTerrainChunk,
@@ -363,12 +368,14 @@ function disposeFormationResource(resource: FormationResource): void {
 
 function Formation({
   entity,
+  visible,
   session,
   revision,
   onReviewState,
   consumeNavigationClick,
 }: {
   entity: Entity;
+  visible: boolean;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
@@ -716,16 +723,18 @@ function Formation({
     if (particles.current)
       particles.current.visible =
         !!geometry.userData.particleBridge && progress.current.value < 1;
+    if (!group.current) return;
+    const effective = playing ? session.effectiveEntity(entity) : entity;
+    group.current.visible = effective !== null && visible;
     const visibilityProbe = (
       globalThis as typeof globalThis & {
         __orbsieFormationVisibilityProbe?: Record<string, boolean>;
       }
     ).__orbsieFormationVisibilityProbe;
     if (visibilityProbe)
-      visibilityProbe[entity.id] = mesh.current?.visible === true;
-    if (!group.current) return;
-    const effective = playing ? session.effectiveEntity(entity) : entity;
-    group.current.visible = effective !== null;
+      visibilityProbe[entity.id] =
+        group.current.visible &&
+        (mesh.current?.visible === true || particles.current?.visible === true);
     if (!effective) return;
     const override = playing
       ? session.state?.entityOverrides[entity.id]
@@ -1320,6 +1329,55 @@ function WorldTerrainChunk({
   );
 }
 
+/** Use the same settled navigation pose and projection as the WebGL camera. */
+export function visibleWebGLNavigationEntityIds(
+  project: Project,
+  boundsByEntity: WorldNavigationEntityBounds,
+  navigation: WorldNavigationProjectState["navigation"],
+  viewportWidth: number,
+  viewportHeight: number,
+): ReadonlySet<string> {
+  const allEntityIds = () => new Set(project.entities.map(({ id }) => id));
+  if (
+    !Number.isFinite(viewportWidth) ||
+    viewportWidth <= 0 ||
+    !Number.isFinite(viewportHeight) ||
+    viewportHeight <= 0
+  )
+    return allEntityIds();
+
+  const aspect = viewportWidth / viewportHeight;
+  let far = worldNavigationFarPlane(navigation);
+  try {
+    far = Math.max(
+      far,
+      navigation.distance +
+        worldTerrainGroundViewRadius(
+          navigation.distance,
+          aspect,
+          navigation.target[1],
+        ),
+    );
+  } catch {
+    // Fall back to the shared navigation far plane for unsupported viewports.
+  }
+  const camera = new THREE.PerspectiveCamera(43, aspect, 0.1, far);
+  const pose = worldNavigationCameraPose(navigation);
+  camera.position.set(...pose.position);
+  camera.lookAt(...pose.target);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+  try {
+    return selectVisibleWorldEntityIds(
+      project.entities,
+      boundsByEntity,
+      camera,
+    );
+  } catch {
+    return allEntityIds();
+  }
+}
+
 function Scene({
   onReady,
   onInputLatency,
@@ -1348,11 +1406,12 @@ function Scene({
   getNavigation: () => WorldNavigationProjectState["navigation"];
 }) {
   const session = useMemo(() => new GameSession(), []);
-  const projectId = useOrb((s) => s.project.id);
+  const project = useOrb((s) => s.project);
+  const projectId = project.id;
   const phase = useOrb((s) => s.phase),
-    revision = useOrb((s) => s.project.revision),
-    entities = useOrb((s) => s.project.entities),
-    environment = useOrb((s) => s.project.environment),
+    revision = project.revision,
+    entities = project.entities,
+    environment = project.environment,
     playing = useOrb((s) => s.playing);
   const { camera, size, gl, scene } = useThree();
   const navigationRaycaster = useMemo(() => new THREE.Raycaster(), []);
@@ -1393,6 +1452,29 @@ function Scene({
       throw error;
     }
   }, [navigation, terrainAspect, navigation.distance, navigation.target[1]]);
+  const boundsByEntity = useMemo(
+    () => worldNavigationBoundsByEntity(project),
+    [project],
+  );
+  const visibleEntityIds = useMemo(() => {
+    if (!navigationEnabled || phase !== "editing" || playing) return undefined;
+    return visibleWebGLNavigationEntityIds(
+      project,
+      boundsByEntity,
+      navigation,
+      size.width,
+      size.height,
+    );
+  }, [
+    boundsByEntity,
+    navigation,
+    navigationEnabled,
+    phase,
+    playing,
+    project,
+    size.height,
+    size.width,
+  ]);
   const navigationEnabledRef = useRef(navigationEnabled);
   navigationEnabledRef.current =
     navigationEnabled && phase === "editing" && !playing;
@@ -2024,6 +2106,7 @@ function Scene({
           <Formation
             key={`${projectId}/${e.id}`}
             entity={e}
+            visible={visibleEntityIds?.has(e.id) ?? true}
             session={session}
             revision={revision}
             onReviewState={setFormationReviewState}
