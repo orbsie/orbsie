@@ -42,7 +42,11 @@ test negative coordinates, 10km travel, and the coordinate/zoom limits.
   formation and targeted object selection when visibility changes. Its local
   progress resets when remounted, so culling an offscreen ready object must not
   replay its orb formation on every return; retain an appropriate presentation
-  revision or hydrate completed objects directly.
+  revision or hydrate completed objects directly. Hiding a mounted group only
+  reduces draw calls; it does not release the asset/geometry leases held by
+  every `Formation`. After draw culling, add a bounded resource-eviction slice
+  for sufficiently distant ready objects, without evicting gameplay authority
+  or replaying their formation on return.
 - `src/lib/server/scene-review-observations.ts` accepts structural bounds only
   within ±1000. Broaden the world-space feedback contract for the phase-one
   position range while keeping its byte and object-count budgets.
