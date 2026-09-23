@@ -48,14 +48,8 @@ import {
   type PlayerInputDetail,
   type PlayerInputLatencySnapshot,
 } from "@/lib/player-input";
-import {
-  useAssetGeometry,
-  isAssetGeometryReady,
-} from "@/lib/use-asset-geometry";
-import {
-  useGeneratedGeometry,
-  isGeneratedGeometryReady,
-} from "@/lib/use-generated-geometry";
+import { useAssetGeometry } from "@/lib/use-asset-geometry";
+import { useGeneratedGeometry } from "@/lib/use-generated-geometry";
 import { isAssetId } from "@/lib/asset-catalog";
 import { maximumRenderDpr, RenderBudget } from "@/lib/render-budget";
 import {
@@ -112,6 +106,14 @@ import {
   stepGameplay,
   type PlayerState,
 } from "@/lib/gameplay";
+import {
+  displayedGameplayRecipeMatchesCurrent,
+  displayedGameplayRecipeScopeForProject,
+  gameplayEntityFromDisplayedRecipe,
+  recordDisplayedGameplayRecipe,
+  type DisplayedGameplayRecipeRegistry,
+  type DisplayedGameplayRecipeScope,
+} from "@/lib/gameplay-visual-authority";
 import {
   gameplayObservationRequested,
   publishGameplayObservation,
@@ -396,6 +398,7 @@ function Formation({
   gameplayVisibility,
   completionRecords,
   recipeIdentity,
+  displayedGameplayRecipes,
   session,
   revision,
   onReviewState,
@@ -406,6 +409,7 @@ function Formation({
   gameplayVisibility: GameplayRenderVisibility;
   completionRecords: FormationCompletionRecords;
   recipeIdentity: string;
+  displayedGameplayRecipes: DisplayedGameplayRecipeRegistry;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
@@ -586,7 +590,26 @@ function Formation({
         break;
       }
     }
-  }, [resource]);
+    if (commitsAppearance && resourceMatchesRecipe)
+      recordDisplayedGameplayRecipe(
+        displayedGameplayRecipes,
+        {
+          id: entity.id,
+          geometry: entity.geometry,
+          stage: entity.stage,
+        },
+        recipeIdentity,
+      );
+  }, [
+    commitsAppearance,
+    displayedGameplayRecipes,
+    entity.geometry,
+    entity.id,
+    entity.stage,
+    recipeIdentity,
+    resource,
+    resourceMatchesRecipe,
+  ]);
   useLayoutEffect(() => {
     if (
       !commitsAppearance ||
@@ -1014,18 +1037,21 @@ function Formation({
 function Player({
   session,
   followPositionRef,
+  displayedGameplayRecipes,
+  recipeByEntity,
   onReady,
   onInputLatency,
 }: {
   session: GameSession;
   followPositionRef: { current: WorldNavigationVec3 };
+  displayedGameplayRecipes: DisplayedGameplayRecipeRegistry;
+  recipeByEntity: ReadonlyMap<string, string>;
   onReady?: () => void;
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
 }) {
   const inputsReady = useRef(false);
   const announcedReady = useRef(false);
   const generation = useRef(-1);
-  const usableEntities = useRef(new Map<string, Entity>());
   const ref = useRef<THREE.Group>(null);
   const state = useRef<PlayerState>({
     position: [0, 0.5, 5],
@@ -1051,7 +1077,6 @@ function Player({
   useEffect(() => {
     state.current = { position: [0, 0.5, 5], velocityY: 0 };
     followPositionRef.current = state.current.position;
-    usableEntities.current.clear();
     inputs.current.clear();
   }, [followPositionRef, reset, projectId]);
   useEffect(() => {
@@ -1141,18 +1166,6 @@ function Player({
     };
     resetAvatar();
     followPositionRef.current = state.current.position;
-    const currentIds = new Set(s.project.entities.map((entity) => entity.id));
-    for (const id of usableEntities.current.keys())
-      if (!currentIds.has(id)) usableEntities.current.delete(id);
-    for (const entity of s.project.entities)
-      if (
-        entity.geometry?.kind === "generated"
-          ? !!entity.geometry.model &&
-            isGeneratedGeometryReady(entity.geometry.model.sha256)
-          : entity.geometry?.kind !== "asset" ||
-            isAssetGeometryReady(entity.geometry.assetId)
-      )
-        usableEntities.current.set(entity.id, entity);
     if (!playing) {
       inputs.current.clear();
       return;
@@ -1196,24 +1209,13 @@ function Player({
         jump: input.isHeld("jump") || pressed.includes("jump"),
       },
       s.project.entities
-        .map((entity) => {
-          if (
-            (entity.geometry?.kind === "asset" &&
-              !isAssetGeometryReady(entity.geometry.assetId)) ||
-            (entity.geometry?.kind === "generated" &&
-              (!entity.geometry.model ||
-                !isGeneratedGeometryReady(entity.geometry.model.sha256)))
-          )
-            return usableEntities.current.has(entity.id)
-              ? {
-                  ...entity,
-                  geometry: usableEntities.current.get(entity.id)!.geometry,
-                  stage: usableEntities.current.get(entity.id)!.stage,
-                }
-              : { ...entity, stage: "seed" as const };
-          usableEntities.current.set(entity.id, entity);
-          return entity;
-        })
+        .map((entity) =>
+          gameplayEntityFromDisplayedRecipe(
+            entity,
+            displayedGameplayRecipes,
+            recipeByEntity.get(entity.id) ?? "",
+          ),
+        )
         .map((entity) => session.effectiveEntity(entity))
         .filter((entity): entity is Entity => entity !== null),
       didReset ? [] : useOrb.getState().score,
@@ -1318,9 +1320,16 @@ function Player({
         if (
           hasObjective &&
           !session.error &&
-          objectiveIds.every(
-            (id) => usableEntities.current.get(id)?.stage === "ready",
-          )
+          objectiveIds.every((id) => {
+            const entity = s.project.entities.find(
+              (candidate) => candidate.id === id,
+            );
+            return displayedGameplayRecipeMatchesCurrent(
+              displayedGameplayRecipes.get(id),
+              entity ? formationRecipeIdentity(entity) : undefined,
+              entity?.stage,
+            );
+          })
         )
           markExperience(s.project.id, "objective");
       }
@@ -1711,6 +1720,15 @@ function Scene({
   const formationCompletionRecords = useRef<FormationCompletionRecords>(
     new Map(),
   );
+  const displayedRecipeScopeRef = useRef<DisplayedGameplayRecipeScope>({
+    projectId,
+    registry: new Map(),
+  });
+  displayedRecipeScopeRef.current = displayedGameplayRecipeScopeForProject(
+    displayedRecipeScopeRef.current,
+    projectId,
+  );
+  const displayedGameplayRecipes = displayedRecipeScopeRef.current.registry;
   const recipeByEntity = useMemo(
     () =>
       new Map(
@@ -1728,6 +1746,11 @@ function Scene({
       recipeByEntity,
     );
   }, [projectId, recipeByEntity]);
+  useLayoutEffect(() => {
+    const currentIds = new Set(entities.map((entity) => entity.id));
+    for (const id of displayedGameplayRecipes.keys())
+      if (!currentIds.has(id)) displayedGameplayRecipes.delete(id);
+  }, [displayedGameplayRecipes, entities]);
   const reviewFrameRef = useRef<
     | {
         projectId: string;
@@ -2457,6 +2480,7 @@ function Scene({
               gameplayVisibility={gameplayVisibility}
               completionRecords={formationCompletionRecords.current}
               recipeIdentity={recipeByEntity.get(e.id) ?? ""}
+              displayedGameplayRecipes={displayedGameplayRecipes}
               session={session}
               revision={revision}
               onReviewState={setFormationReviewState}
@@ -2466,6 +2490,8 @@ function Scene({
           <Player
             session={session}
             followPositionRef={playerPositionRef}
+            displayedGameplayRecipes={displayedGameplayRecipes}
+            recipeByEntity={recipeByEntity}
             onReady={onReady}
             onInputLatency={onInputLatency}
           />

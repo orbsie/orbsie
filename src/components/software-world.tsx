@@ -15,6 +15,7 @@ import { useAssetGeometry } from "@/lib/use-asset-geometry";
 import { useGeneratedGeometry } from "@/lib/use-generated-geometry";
 import { isAssetId } from "@/lib/asset-catalog";
 import {
+  gameplayEntityForVisualState,
   isTextEntryTarget,
   movingEntityPosition,
   stepGameplay,
@@ -868,23 +869,18 @@ export function playableEntities(
 ): Entity[] {
   return project.entities.map((entity) => {
     const entry = geometries.get(entity.id);
-    if (
-      (entity.geometry?.kind === "asset" ||
-        entity.geometry?.kind === "generated") &&
-      !entry?.ready
-    )
-      return { ...entity, stage: "seed" as const };
-    if (
-      (entity.geometry?.kind === "asset" ||
-        entity.geometry?.kind === "generated") &&
-      entry?.ready
-    )
-      return {
-        ...entity,
-        geometry: entry.sourceRecipe ?? entity.geometry,
-        stage: entry.sourceStage,
-      };
-    return entity;
+    const displayed = entry?.ready
+      ? {
+          geometry: entry.sourceRecipe ?? entity.geometry,
+          stage: entry.sourceStage,
+        }
+      : undefined;
+    const visualReady = Boolean(
+      entry?.ready &&
+      entry.sourceRecipe === entity.geometry &&
+      entry.sourceStage === entity.stage,
+    );
+    return gameplayEntityForVisualState(entity, visualReady, displayed);
   });
 }
 

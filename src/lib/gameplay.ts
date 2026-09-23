@@ -31,6 +31,56 @@ export type GameplayStep = PlayerState & {
   won: boolean;
 };
 
+function recipeHasCommittedContactBounds(recipe: Entity["geometry"]): boolean {
+  if (!recipe) return false;
+  if (recipe.kind === "asset")
+    return Boolean(requireCatalogAsset(recipe.assetId).bounds);
+  if (recipe.kind === "generated") return Boolean(recipe.model?.bounds);
+  return true;
+}
+
+/**
+ * Keep gameplay authority independent of whether a renderer currently owns a
+ * decoded asset lease. A ready displayed replacement remains authoritative
+ * while a newer recipe is loading; otherwise validated recipe bounds allow a
+ * ready first-load or evicted model to keep its contacts and platform support.
+ */
+export function gameplayEntityForVisualState(
+  entity: Entity,
+  visualReady: boolean,
+  displayed?: Pick<Entity, "geometry" | "stage">,
+): Entity {
+  const recipe = entity.geometry;
+  if (recipe?.kind !== "asset" && recipe?.kind !== "generated") return entity;
+
+  const currentHasBounds = recipeHasCommittedContactBounds(recipe);
+  const displayedReady =
+    displayed?.stage === "ready" &&
+    recipeHasCommittedContactBounds(displayed.geometry);
+  if (displayedReady && (!visualReady || !currentHasBounds))
+    return {
+      ...entity,
+      geometry: displayed.geometry,
+      stage: displayed.stage,
+    };
+
+  if (!currentHasBounds) return { ...entity, stage: "seed" };
+  if (visualReady) {
+    if (
+      displayed?.geometry &&
+      recipeHasCommittedContactBounds(displayed.geometry)
+    )
+      return {
+        ...entity,
+        geometry: displayed.geometry,
+        stage: displayed.stage,
+      };
+    return entity;
+  }
+  if (entity.stage === "ready") return entity;
+  return { ...entity, stage: "seed" };
+}
+
 const GROUND_CENTER_Y = 0.42;
 const PLAYER_HALF_HEIGHT = 0.42;
 const MOVE_SPEED = 4;
