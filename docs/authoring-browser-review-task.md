@@ -73,3 +73,11 @@ structural-only; capture failure; abort at each phase; stale project and
 revision; wrong binding/identity; free budget; replay; original Undo; cloud
 journal; software/WebGL renderer; desktop and phone viewport. Then perform
 bounded Luna live tests only at the integration milestone.
+
+Build the rendered fixture from the existing `scripts/verify-scene-review-capture.mjs`
+and `scripts/verify-visible-authoring.mjs` patterns: they already exercise
+WebGL/software canvas capture, delayed worker geometry, IndexedDB, and the
+real editor with synthetic provider streams. The review fixture should
+intercept both initial and review routes, assert exact run/revision/image
+scope at each request, and inspect the final playable canvas and saved world.
+Keep live provider calls out of that deterministic fixture.
