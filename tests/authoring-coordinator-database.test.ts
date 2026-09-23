@@ -9,9 +9,13 @@ vi.mock("../src/lib/server/auth", async (original) => ({
 import { blankProject } from "../src/lib/protocol";
 import {
   createAuthoringLifecycle,
+  createSceneBinding,
   initialSceneProvenance,
 } from "../src/lib/scene-binding";
-import { admitInitialAuthoringRun } from "../src/lib/server/authoring-run-admission";
+import {
+  admitAuthoringReviewPhase,
+  admitInitialAuthoringRun,
+} from "../src/lib/server/authoring-run-admission";
 import {
   admitAuthoringReview,
   readAuthoringRun,
@@ -131,6 +135,105 @@ it.runIf(process.env.RUN_AUTHORING_LEDGER_DATABASE_TEST === "1")(
     } finally {
       releaseAck();
       await completion?.catch(() => undefined);
+      await pool.query(
+        "DELETE FROM orbsie_authoring_runs WHERE identity_hash=$1",
+        [identityHash],
+      );
+      await pool.query(
+        "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+        [`${prefix}%`, `global:${prefix}`],
+      );
+    }
+  },
+  15000,
+);
+
+it.runIf(process.env.RUN_AUTHORING_LEDGER_DATABASE_TEST === "1")(
+  "reconstructs the shared identity and fingerprint for one real review phase",
+  async () => {
+    if (!pool) throw Error("Synthetic PostgreSQL URL required");
+    state.database.mockReturnValue({
+      query: pool.query.bind(pool),
+      connect: pool.connect.bind(pool),
+    });
+    const prefix = `coordinator-review:${Date.now()}`;
+    const identityHash = "f".repeat(64);
+    const trial = {
+      identityHash,
+      cookie: "synthetic",
+      buckets: [
+        { key: `${prefix}:visitor`, limit: 3 },
+        { key: `${prefix}:network`, limit: 3 },
+        { key: `global:${prefix}`, limit: 9 },
+      ],
+    };
+    const project = blankProject();
+    const request = new Request("https://orbsie.test/api/generate");
+    try {
+      const initial = await admitInitialAuthoringRun({
+        request,
+        project,
+        prompt: "  Make   a garden ",
+        provider: "free",
+        model: "openai/gpt-5.6-luna",
+        localModeling: false,
+        browserModeling: false,
+        signal: new AbortController().signal,
+        trialIdentity: trial,
+      });
+      await initial.complete(
+        await createSceneBinding(project),
+        new AbortController().signal,
+      );
+      const review = await admitAuthoringReviewPhase({
+        request,
+        project,
+        prompt: "Make a garden",
+        provider: "free",
+        model: "openai/gpt-5.6-luna",
+        localModeling: false,
+        browserModeling: false,
+        runId: initial.runId,
+        reviewPhase: "review",
+        signal: new AbortController().signal,
+        trialIdentity: trial,
+      });
+      expect(await readAuthoringRun(initial.runId)).toMatchObject({
+        phase: "reviewing",
+        remainingReviewSlots: 1,
+      });
+      await review.complete(
+        await createSceneBinding(project),
+        true,
+        new AbortController().signal,
+      );
+      expect(await readAuthoringRun(initial.runId)).toMatchObject({
+        phase: "finalized",
+        remainingReviewSlots: 0,
+      });
+      const usage = await pool.query<{ bucket: string; used: number }>(
+        "SELECT bucket, used FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+        [`${prefix}%`, `global:${prefix}`],
+      );
+      expect(usage.rows.map((row) => Number(row.used)).sort()).toEqual([
+        1, 1, 3,
+      ]);
+      await expect(
+        admitAuthoringReviewPhase({
+          request,
+          project,
+          prompt: "Make a garden",
+          provider: "free",
+          model: "openai/gpt-5.6-luna",
+          localModeling: false,
+          browserModeling: false,
+          runId: initial.runId,
+          reviewPhase: "review",
+          signal: new AbortController().signal,
+          trialIdentity: trial,
+        }),
+      ).rejects.toMatchObject({ code: "phase-conflict" });
+    } finally {
       await pool.query(
         "DELETE FROM orbsie_authoring_runs WHERE identity_hash=$1",
         [identityHash],

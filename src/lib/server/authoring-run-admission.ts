@@ -1,16 +1,23 @@
-import { createHmac } from "node:crypto";
 import { createSceneBinding } from "../scene-binding";
 import type { Project } from "../protocol";
 import type { SceneBinding } from "../scene-binding";
 import {
+  admitAuthoringReview,
   completeInitialAuthoringRun,
+  completeAuthoringReview,
   failAuthoringRun,
   issueAuthoringRun,
+  type AuthoringReviewPhase,
   type AuthoringProvider,
   type AuthoringRunBinding,
 } from "./authoring-run-ledger";
-import { getAuth, HttpError } from "./auth";
-import { trialIdentity, type TrialIdentity } from "./trial";
+import { HttpError } from "./auth";
+import {
+  authoringRequestFingerprint,
+  resolveAuthoringRequestIdentity,
+  type AuthoringOwnerSession,
+} from "./authoring-run-identity";
+import type { TrialIdentity } from "./trial";
 import type { AuthoringLifecycleHooks } from "../scene-binding";
 
 const AUTHORING_REVIEW_FLAG = "1";
@@ -28,7 +35,7 @@ export type InitialAuthoringAdmissionInput = {
   signal: AbortSignal;
   trialIdentity?: TrialIdentity;
   /** Server-derived identity for linked providers; never read from JSON. */
-  ownerSession?: { ownerId: string; sessionId: string };
+  ownerSession?: AuthoringOwnerSession;
 };
 
 export type AuthoritativeSceneBinding = Pick<
@@ -48,127 +55,21 @@ export type InitialAuthoringAdmission = {
   fail(error: unknown): Promise<void>;
 };
 
+export type AuthoringReviewAdmission = {
+  runId: string;
+  reviewPhase: AuthoringReviewPhase;
+  remainingReviewSlots: number;
+  trialCookie?: string;
+  complete(
+    binding: AuthoritativeSceneBinding,
+    accepted: boolean,
+    signal: AbortSignal,
+  ): Promise<void>;
+  fail(error: unknown): Promise<void>;
+};
+
 export function authoringReviewConfigured() {
   return process.env.ORBSIE_AUTHORING_REVIEW === AUTHORING_REVIEW_FLAG;
-}
-
-function configuredSecret() {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret || secret.length < 16)
-    throw new HttpError(
-      503,
-      "Authoring review is temporarily unavailable. Connect your provider to continue.",
-    );
-  return secret;
-}
-
-function digest(domain: string, value: string) {
-  return createHmac("sha256", configuredSecret())
-    .update(`${domain}:${value}`)
-    .digest("hex");
-}
-
-function validIdentityPart(value: unknown) {
-  return (
-    typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 256 &&
-    !/[\u0000-\u001f\u007f]/.test(value)
-  );
-}
-
-async function linkedIdentity(
-  request: Request,
-  ownerSession?: { ownerId: string; sessionId: string },
-) {
-  if (ownerSession) {
-    if (
-      !validIdentityPart(ownerSession.ownerId) ||
-      !validIdentityPart(ownerSession.sessionId)
-    )
-      throw new HttpError(
-        503,
-        "Your Orbsie session could not be checked. Retry shortly.",
-      );
-    return {
-      identityHash: digest(
-        "orbsie-authoring-owner-session-v1",
-        JSON.stringify([ownerSession.ownerId, ownerSession.sessionId]),
-      ),
-    };
-  }
-  let auth: ReturnType<typeof getAuth>;
-  try {
-    auth = getAuth();
-  } catch {
-    throw new HttpError(
-      503,
-      "Your Orbsie session could not be checked. Retry shortly.",
-    );
-  }
-  if (!auth) {
-    const visitor = trialIdentity(request);
-    return { identityHash: visitor.identityHash, trialCookie: visitor.cookie };
-  }
-  let session: unknown;
-  try {
-    session = await auth.api.getSession({ headers: request.headers });
-  } catch {
-    throw new HttpError(
-      503,
-      "Your Orbsie session could not be checked. Retry shortly.",
-    );
-  }
-  if (!session) {
-    const visitor = trialIdentity(request);
-    return { identityHash: visitor.identityHash, trialCookie: visitor.cookie };
-  }
-  if (typeof session !== "object")
-    throw new HttpError(
-      503,
-      "Your Orbsie session could not be checked. Retry shortly.",
-    );
-  const value = session as {
-    user?: { id?: unknown };
-    session?: { id?: unknown };
-  };
-  if (
-    !validIdentityPart(value.user?.id) ||
-    !validIdentityPart(value.session?.id)
-  )
-    throw new HttpError(
-      503,
-      "Your Orbsie session could not be checked. Retry shortly.",
-    );
-  const ownerId = value.user!.id as string;
-  const sessionId = value.session!.id as string;
-  return {
-    identityHash: digest(
-      "orbsie-authoring-owner-session-v1",
-      JSON.stringify([ownerId, sessionId]),
-    ),
-  };
-}
-
-function requestFingerprint(input: InitialAuthoringAdmissionInput) {
-  const normalizedPrompt = input.prompt
-    .normalize("NFKC")
-    .trim()
-    .replace(/\s+/gu, " ");
-  return digest(
-    "orbsie-authoring-request-v1",
-    JSON.stringify({
-      prompt: normalizedPrompt,
-      projectId: input.project.id,
-      provider: input.provider,
-      model: input.model,
-      effort: input.effort ?? null,
-      selected: input.selected ?? null,
-      localModeling: input.localModeling,
-      browserModeling: input.browserModeling,
-      authoringReview: true,
-    }),
-  );
 }
 
 function cancellationError(signal: AbortSignal) {
@@ -193,13 +94,12 @@ export async function admitInitialAuthoringRun(
   if (input.signal.aborted) throw cancellationError(input.signal);
 
   const initialBinding = await createSceneBinding(input.project);
-  const linked =
-    input.provider === "free"
-      ? {
-          identityHash: input.trialIdentity?.identityHash,
-          trialCookie: input.trialIdentity?.cookie,
-        }
-      : await linkedIdentity(input.request, input.ownerSession);
+  const linked = await resolveAuthoringRequestIdentity({
+    request: input.request,
+    provider: input.provider,
+    trialIdentity: input.trialIdentity,
+    ownerSession: input.ownerSession,
+  });
   const identityHash = linked.identityHash;
   if (!identityHash)
     throw new HttpError(
@@ -213,7 +113,7 @@ export async function admitInitialAuthoringRun(
     provider: input.provider,
     model: input.model,
     ...(input.effort === undefined ? {} : { effort: input.effort }),
-    requestFingerprint: requestFingerprint(input),
+    requestFingerprint: authoringRequestFingerprint(input),
   };
   let issued: Awaited<ReturnType<typeof issueAuthoringRun>>;
   try {
@@ -292,5 +192,122 @@ export async function admitInitialAuthoringRun(
     lifecycle,
     complete,
     fail: initialFailure,
+  };
+}
+
+/**
+ * Reconstruct the initial server binding and atomically admit exactly one
+ * review slot. The private phase token remains inside these completion hooks.
+ */
+export async function admitAuthoringReviewPhase(input: {
+  request: Request;
+  project: Project;
+  prompt: string;
+  provider: AuthoringProvider;
+  model: string;
+  effort?: string;
+  selected?: string;
+  localModeling: boolean;
+  browserModeling: boolean;
+  runId: string;
+  reviewPhase: AuthoringReviewPhase;
+  signal: AbortSignal;
+  trialIdentity?: TrialIdentity;
+  ownerSession?: AuthoringOwnerSession;
+}): Promise<AuthoringReviewAdmission> {
+  if (!authoringReviewConfigured())
+    throw new HttpError(
+      503,
+      "Authoring review is temporarily unavailable. Retry shortly.",
+    );
+  if (input.signal.aborted) throw cancellationError(input.signal);
+
+  let expectedBinding: AuthoritativeSceneBinding;
+  try {
+    expectedBinding = await createSceneBinding(input.project);
+  } catch {
+    throw new HttpError(400, "The reviewed scene is invalid.");
+  }
+  const linked = await resolveAuthoringRequestIdentity({
+    request: input.request,
+    provider: input.provider,
+    trialIdentity: input.trialIdentity,
+    ownerSession: input.ownerSession,
+  });
+  const binding: AuthoringRunBinding = {
+    identityHash: linked.identityHash,
+    projectId: input.project.id,
+    provider: input.provider,
+    model: input.model,
+    ...(input.effort === undefined ? {} : { effort: input.effort }),
+    requestFingerprint: authoringRequestFingerprint(input),
+  };
+  const admitted = await admitAuthoringReview({
+    ...binding,
+    runId: input.runId,
+    reviewPhase: input.reviewPhase,
+    expectedRevision: expectedBinding.revision,
+    expectedSceneBindingDigest: expectedBinding.digest,
+    signal: input.signal,
+  });
+
+  let terminal: "active" | "completed" | "failed" = "active";
+  let failurePromise: Promise<void> | undefined;
+  const fail = async (_error: unknown) => {
+    if (terminal === "completed" || terminal === "failed")
+      return failurePromise;
+    terminal = "failed";
+    failurePromise = failAuthoringRun({
+      ...binding,
+      runId: admitted.runId,
+      phaseToken: admitted.phaseToken,
+      revision: expectedBinding.revision,
+      sceneBindingDigest: expectedBinding.digest,
+    }).then(
+      () => undefined,
+      () => undefined,
+    );
+    return failurePromise;
+  };
+  const complete = async (
+    completedBinding: AuthoritativeSceneBinding,
+    accepted: boolean,
+    signal: AbortSignal,
+  ) => {
+    if (terminal !== "active" || signal.aborted)
+      throw cancellationError(signal);
+    if (
+      completedBinding.version !== expectedBinding.version ||
+      completedBinding.projectId !== input.project.id ||
+      !Number.isSafeInteger(completedBinding.revision) ||
+      completedBinding.revision < expectedBinding.revision ||
+      !/^[a-f0-9]{64}$/.test(completedBinding.digest)
+    )
+      throw Error("The completed scene binding is invalid.");
+    await completeAuthoringReview({
+      ...binding,
+      runId: admitted.runId,
+      phaseToken: admitted.phaseToken,
+      reviewPhase: input.reviewPhase,
+      revision: completedBinding.revision,
+      sceneBindingDigest: completedBinding.digest,
+      accepted,
+      signal,
+    });
+    if (signal.aborted || terminal !== "active")
+      throw cancellationError(signal);
+    terminal = "completed";
+  };
+  if (input.signal.aborted) {
+    await fail(cancellationError(input.signal));
+    throw cancellationError(input.signal);
+  }
+  return {
+    runId: admitted.runId,
+    reviewPhase: input.reviewPhase,
+    remainingReviewSlots: admitted.remainingReviewSlots,
+    ...(linked.trialCookie ? { trialCookie: linked.trialCookie } : {}),
+    complete,
+    fail,
   };
 }

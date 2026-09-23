@@ -37,8 +37,15 @@ bounded admission/completion, retained exact private token through COMMIT
 acknowledgement, independent cancellation cleanup and stale-token isolation.
 Worker and root confirmed 21/21 ledger tests on real PostgreSQL15 and whole-tree
 typecheck. No model calls. Root committed public/hosted review handoff contracts
-54173bb and 18181a2. Next single Luna task is the public review coordinator and
-route in docs/authoring-public-review-task.md. Root committed the earlier
+54173bb and 18181a2. Public review coordinator/route for free, OpenRouter and
+Gateway is accepted locally: shared signed identity/fingerprint, exact scene
+binding admission, catalog/image preflight, one-call executor, failure cleanup,
+typed review diagnostics and fixed low reasoning for recommended API models.
+Root final 47 focused tests passed on real PostgreSQL, with typecheck and format
+checks. It remains feature-flagged off and is not browser E2E. Next single Luna
+task is the managed hosted private review transport in
+docs/authoring-hosted-review-task.md; browser task follows in
+docs/authoring-browser-review-task.md. Root committed the earlier
 review-route/browser contract ef8e773. Initial/editor
 review still not wired or deployed; current E2E objective remains incomplete.
 Gateway credit read 2026-09-22 HTTP200 still -0.0033684 with zero model calls;
