@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 23 software gesture adapter accepted locally (`723ee55`): both renderers
+now use the World-owned navigation controller/state, so fallback retains the
+target, heading and zoom. Software pointer starts use current projected picks
+to preserve entity selection; recognized drags/pinches suppress selection on
+pointer-up. The software canvas scopes touch action and wheel handling to its
+surface, and cancels gestures on blur/visibility/resize/unmount. Root reviewed
+the diff. Integrated suite: 189 passed/6 skipped files, 1,612 passed/26
+skipped tests; Next production build/TypeScript passed. Standalone player
+artifacts were regenerated (`dcf1563`). Browser-level pointer timing, mobile
+layout/gestures, and WebGL-to-software visual parity remain unverified because
+the available browser control blocks Orbsie. This is still local and not
+deployed. Next: ground/chunking, culling and precision slices, then real
+browser/mobile and provider acceptance.
+
 Sep 23 WebGL gesture adapter accepted locally (`32a0f18`): scene-surface
 background drag pans, secondary drag rotates, wheel and touch pinch zoom;
 entity-hit starts keep object interaction, and recognized navigation suppresses
