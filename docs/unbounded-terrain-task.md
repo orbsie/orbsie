@@ -24,34 +24,29 @@ height flat at the current y=0 until physics and visuals can change together.
 Reject non-finite inputs, avoid 32-bit integer bitwise math on large keys, and
 test negative coordinates, 10km travel, and the coordinate/zoom limits.
 
-## Source boundaries to preserve
+## Current source boundaries to preserve
 
-- `src/components/world.tsx` renders two fixed cylinders, a water disk,
-  pebbles, and contact shadows inside the animated island group. Keep the
-  planet-to-workspace transition, but replace the default workspace surface
-  after arrival; authored island geometry remains an ordinary scene object.
-- `src/components/software-world.tsx` paints a screen-space ellipse and
-  projects every triangle from every entity on every frame. Nearby visible
-  terrain and visibility/picking need explicit bounded work here too. Its
-  entity triangle path currently projects without near-plane clipping; an
+- `src/components/world.tsx` keeps the planet-to-workspace transition, then
+  switches from the fixed island surface to bounded world-aligned terrain.
+  Authored island geometry remains an ordinary scene object. Editing-only
+  frustum filtering hides offscreen formation groups without unmounting them;
+  gameplay and transition formations remain mounted and visible according to
+  their normal rules. This saves draw work but not geometry/asset memory.
+- `src/components/software-world.tsx` paints bounded terrain polygons after
+  the transition and filters offscreen entities during editing. Its entity
+  triangle path still projects without near-plane clipping; an
   AABB touching the camera can still make a huge inverted path even after
   object-level culling. Clip or reject those triangles in a separate bounded
   software-rendering slice before release.
-- WebGL `Formation` currently sets `frustumCulled={false}` for a render mesh;
-  do not solve distant placement by drawing all distant objects. Preserve seed
-  formation and targeted object selection when visibility changes. Its local
-  progress resets when remounted, so culling an offscreen ready object must not
-  replay its orb formation on every return; retain an appropriate presentation
-  revision or hydrate completed objects directly. Hiding a mounted group only
-  reduces draw calls; it does not release the asset/geometry leases held by
-  every `Formation`. After draw culling, add a bounded resource-eviction slice
-  for sufficiently distant ready objects, without evicting gameplay authority
-  or replaying their formation on return.
-- `src/lib/server/scene-review-observations.ts` accepts structural bounds only
-  within ±1000. Broaden the world-space feedback contract for the phase-one
-  position range while keeping its byte and object-count budgets.
-- Both cameras currently use `far: 250`. The visible horizon and object culling
-  must be coherent at the navigation distances the UI permits.
+- WebGL `Formation` retains its local formation progress while hidden.
+  Evicting distant ready objects later must release asset/geometry leases
+  without replaying their orb formation on return or changing gameplay
+  authority. Leave seeds and selected entities available when they enter view.
+- Structural review bounds now accept the phase-one position range while
+  retaining finite-value, byte, and object-count budgets.
+- Both editing cameras extend the far plane to the selected terrain footprint.
+  A player-follow camera must keep terrain selection, culling, and projection
+  coherent as the player moves beyond the editor focus.
 
 ## Runtime contract
 
