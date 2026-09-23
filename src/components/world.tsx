@@ -5,7 +5,7 @@ import {
   useThree,
   type ThreeEvent,
 } from "@react-three/fiber";
-import { ContactShadows, OrbitControls, Stars } from "@react-three/drei";
+import { ContactShadows, Stars } from "@react-three/drei";
 import { Minus, Plus, Scan } from "lucide-react";
 import {
   useEffect,
@@ -65,7 +65,6 @@ import {
   worldNavigationFarPlane,
   worldNavigationLandingLookTarget,
   worldNavigationProjectState,
-  WORLD_NAVIGATION_LIMITS,
   type WorldNavigationProjectState,
   type WorldNavigationCommand,
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
@@ -1415,7 +1414,6 @@ function Scene({
   const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
   const initialized = useRef(false);
-  const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null);
   const frame = useMemo(() => parcelFrame(projectId), [projectId]);
   const alignment = useMemo(
     () =>
@@ -1751,7 +1749,6 @@ function Scene({
       camera.position.copy(cameraStart.lerp(cameraEnd, t));
       const look = worldNavigationLandingLookTarget(t, landingPose.target);
       camera.lookAt(...look);
-      if (controls.current) controls.current.target.set(...look);
       initialized.current = t > 0.99;
     }
     if (
@@ -1773,7 +1770,6 @@ function Scene({
         perspectiveCamera.far = far;
         perspectiveCamera.updateProjectionMatrix();
       }
-      if (controls.current) controls.current.target.set(...pose.target);
     }
     if (target === 1 && snapshot.settled) {
       const current = useOrb.getState();
@@ -1902,16 +1898,6 @@ function Scene({
           frames={1}
         />
       </group>
-      <OrbitControls
-        ref={controls}
-        enabled={false}
-        enablePan={false}
-        minDistance={WORLD_NAVIGATION_LIMITS.minDistance}
-        maxDistance={WORLD_NAVIGATION_LIMITS.maxDistance}
-        minPolarAngle={0.25}
-        maxPolarAngle={Math.PI / 2.3}
-        enableDamping
-      />
     </>
   );
 }
