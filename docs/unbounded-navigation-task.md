@@ -39,6 +39,14 @@ buttons report the same displayed heading and zoom regardless of fallback.
 Zoom-in, zoom-out, compass/north and frame-content buttons need accessible
 names and keyboard activation. Place them outside the chat sheet and player
 controls at phone portrait/landscape sizes with touch targets at least 44px.
+Use one visually quiet, shared map-control cluster in the `World` wrapper so
+the editor, software fallback and standalone player retain identical controls.
+On desktop, keep it below the play toolbar/HUD; on phone portrait, fit it in
+the exposed scene between the top chrome and chat sheet; on short landscape,
+change its layout if a vertical rail collides with the sheet or movement
+buttons. Use the existing cream/green surface language and a visible focus
+ring. The compass must visibly indicate current north and expose a clear
+"Reset north" action; frame-content is a distinct control.
 
 In editing mode, mouse/trackpad pan and wheel zoom work on the scene, and touch
 drag pans while pinch zooms. Object drag/selection has priority when it begins
