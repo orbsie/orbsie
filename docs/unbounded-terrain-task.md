@@ -66,7 +66,10 @@ Gameplay also needs a view that follows the player beyond the old parcel in
 both renderers, retaining the chosen heading and zoom; a player walking away
 must not simply disappear offscreen while simulation continues. Keep camera
 tracking separate from authoritative player/world coordinates and define how a
-manual scene pan resumes or suspends that follow behavior.
+manual scene pan resumes or suspends that follow behavior. The current gesture
+mapping reserves scene navigation for editing and player input for play; keep
+that separation for the first follow implementation and hide or disable any
+map control in play that would silently change an invisible editor target.
 
 The default ground is open in horizontal directions; an explicitly authored
 island, wall, or cliff is a scene object. This slice does not claim physical
