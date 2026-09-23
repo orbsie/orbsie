@@ -11,6 +11,15 @@ format pass. Next single Luna task: `docs/authoring-hosted-web-review-task.md`
 for the web-side lease/ledger route. Feature remains off; no live calls or
 deployment in this seam.
 
+Sep 22 root handoff while that worker runs: `4c0c513` adds
+`assertAppliedAuthoringReviewBinding` for the browser to recompute the authored
+scene digest after correction; its focused test and format check pass. Browser
+task `docs/authoring-browser-review-task.md` now requires this guard, re-derives
+correction asset policy from the reviewed project, and pins the review opt-in
+at submission. Current hosted web route is unaccepted work in progress; root
+whole-tree typecheck passed after worker fixture repair. Do not deploy or claim
+browser E2E until the web route and browser loop are reviewed and integrated.
+
 Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
 acceptance history: checkpoint-history/2026-09-13-before-durable-release.md and
