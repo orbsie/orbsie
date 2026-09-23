@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 integrated render milestone accepted locally: WebGL settled-editing
+formations are now frustum filtered without remounting (`2ebb664`), and the
+software renderer clips entity polygons to the camera frustum before
+projection (`f55f4d5`). Astra reviewed both diffs and focused tests. The
+standalone player was rebuilt (`fed178c`). Full suite: 193 passed/6 skipped
+files, 1,638 passed/26 skipped tests; Next production build and TypeScript
+passed. No browser visual/mobile acceptance or deployment occurred. A bounded
+player-follow contract is recorded in `docs/gameplay-camera-follow-task.md`;
+that is the next slice. Geometry/asset memory eviction, distant-coordinate
+precision, published playback and live provider acceptance remain open.
+
 Sep 23 software visibility adapter accepted locally (`831afbc`): settled
 editing caches world AABBs by project identity/revision and a visible-ID set by
 camera/navigation/viewport, skipping offscreen `drawEntity` work. Gameplay
