@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 23 renderer residency browser fixture accepted locally after Astra review:
+`scripts/verify-formation-residency.mjs` drives an isolated 120-entity scene
+through the actual WebGL World and software Canvas renderer. Chromium
+SwiftShader observed 48 full formations/72 proxies after framing, after a
+distant pan, and on reentry; offscreen selection retained one full formation.
+The software path painted proxy markers at home, distant, and reentry and kept
+its rendered revision settled. Desktop and 390×844 viewport screenshots and
+bounded resource snapshots are in
+`docs/evidence/formation-residency-browser/`. Astra tightened the harness so
+unavailable WebGL, a missing capped state, page/console errors, or stale
+software review state cannot report a pass. The rerun passed with zero model
+calls or external requests, and TypeScript, syntax, and formatting checks pass.
+These are SwiftShader/viewport observations, not native GPU, physical mobile,
+or growing-world frame-time certification.
+
 Sep 23 browser access and ChatGPT acceptance handoff: the owner's Chrome
 extension surface is available again. A local production build is running at
 `http://localhost:3001` with an explicit process-only
@@ -7,15 +22,15 @@ extension surface is available again. A local production build is running at
 otherwise sets the public origin, so private-session POSTs from localhost are
 correctly rejected. The browser created a private Orbsie session and received
 a real ChatGPT device challenge. The existing Chrome profile recognized the
-owner's ChatGPT account. Final device-code authorization is pending the
-browser-control confirmation for a new hosted Codex CLI grant; no ChatGPT
-inference or credential export has occurred. The challenge/code is transient
-and intentionally omitted from this checkpoint. WebGL2 failed to initialize
+owner's ChatGPT account. The challenge expired without submission; final
+authorization awaits browser-control confirmation for a new hosted Codex CLI
+grant, then a fresh code must be issued. No ChatGPT inference or credential
+export has occurred. The challenge/code is intentionally omitted from this
+checkpoint. WebGL2 failed to initialize
 in this Chrome profile, and the software Canvas fallback rendered. Local
 browser integration, real ChatGPT create/edit, and representative GPU/mobile
-acceptance remain open. One Luna worker is preparing a separate deterministic
-browser fixture for the two-renderer residency policy; its diff is not yet
-reviewed or integrated.
+acceptance remain open. The separate deterministic residency fixture was
+completed and reviewed as noted above.
 
 Sep 23 two-renderer formation residency integration accepted locally:
 WebGL (`261f8c4`) and software Canvas (`a0e862a`) now cap completed ready
@@ -684,7 +699,8 @@ remains separate. No full inspect/correct loop yet.
 Owner requires existing signed-in Chrome. The Chrome extension surface became
 available on Sep 23 and the owner profile now presents its existing ChatGPT
 account on the official device page. No raw CDP or cookie copying. The local
-device challenge is pending final authorization as noted above.
+device challenge expired without submission; a fresh one can be issued after
+the authorization decision noted above.
 GitHub operations via computer use; push pending.
 
 Android emulator API35/Chrome124/2cores3GiB/SwiftShader preflight and saved Gateway
