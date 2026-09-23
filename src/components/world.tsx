@@ -72,6 +72,13 @@ import {
 import { committedWorldNavigationBounds } from "@/lib/world-navigation-bounds";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
+  sampleWorldTerrainChunk,
+  selectWorldTerrainChunks,
+  worldTerrainChunkSize,
+  worldTerrainGroundViewRadius,
+  type WorldTerrainChunkKey,
+} from "@/lib/world-terrain";
+import {
   entityGeometry,
   addFormationSource,
   captureFormationSnapshot,
@@ -1230,6 +1237,89 @@ function Pebbles() {
     </instancedMesh>
   );
 }
+
+const WORLD_TERRAIN_GRID_SEGMENTS = 16;
+
+function createWorldTerrainChunkGeometry(
+  chunk: WorldTerrainChunkKey,
+): THREE.BufferGeometry {
+  const size = worldTerrainChunkSize(chunk.lod);
+  const stride = WORLD_TERRAIN_GRID_SEGMENTS + 1;
+  const vertexCount = stride * stride;
+  const positions = new Float32Array(vertexCount * 3);
+  const colors = new Float32Array(vertexCount * 3);
+  const indices: number[] = [];
+  for (let row = 0; row <= WORLD_TERRAIN_GRID_SEGMENTS; row++) {
+    for (let column = 0; column <= WORLD_TERRAIN_GRID_SEGMENTS; column++) {
+      const u = column / WORLD_TERRAIN_GRID_SEGMENTS;
+      const v = row / WORLD_TERRAIN_GRID_SEGMENTS;
+      const sample = sampleWorldTerrainChunk(chunk, u, v);
+      const vertex = row * stride + column;
+      const offset = vertex * 3;
+      positions[offset] = u * size;
+      positions[offset + 1] = 0;
+      positions[offset + 2] = v * size;
+      const tone = 0.89 + sample.appearance * 0.22;
+      colors[offset] = tone;
+      colors[offset + 1] = tone;
+      colors[offset + 2] = tone;
+
+      if (
+        column === WORLD_TERRAIN_GRID_SEGMENTS ||
+        row === WORLD_TERRAIN_GRID_SEGMENTS
+      )
+        continue;
+      const lowerLeft = vertex;
+      const lowerRight = vertex + 1;
+      const upperLeft = vertex + stride;
+      const upperRight = upperLeft + 1;
+      // X/Z coordinates are wound to face up toward world +Y.
+      indices.push(
+        lowerLeft,
+        upperLeft,
+        lowerRight,
+        lowerRight,
+        upperLeft,
+        upperRight,
+      );
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+
+function WorldTerrainChunk({
+  chunk,
+  color,
+}: {
+  chunk: WorldTerrainChunkKey;
+  color: string;
+}) {
+  const size = worldTerrainChunkSize(chunk.lod);
+  // Stable keyed chunks keep overlapping geometry. Geometry passed as a mesh
+  // prop is not an R3F child, so dispose it when an evicted key unmounts.
+  const geometry = useMemo(
+    () => createWorldTerrainChunkGeometry(chunk),
+    [chunk.lod, chunk.x, chunk.z],
+  );
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <mesh
+      geometry={geometry}
+      position={[chunk.x * size, 0, chunk.z * size]}
+      receiveShadow
+    >
+      <meshStandardMaterial color={color} vertexColors roughness={1} />
+    </mesh>
+  );
+}
+
 function Scene({
   onReady,
   onInputLatency,
@@ -1267,6 +1357,42 @@ function Scene({
   const { camera, size, gl, scene } = useThree();
   const navigationRaycaster = useMemo(() => new THREE.Raycaster(), []);
   const navigationNdc = useMemo(() => new THREE.Vector2(), []);
+  const terrainAspect =
+    size.width > 0 && size.height > 0 ? size.width / size.height : 1;
+  const terrainChunks = useMemo(() => {
+    try {
+      return selectWorldTerrainChunks({
+        focus: navigation.target,
+        distance: navigation.distance,
+        aspect: terrainAspect,
+      });
+    } catch (error) {
+      if (error instanceof RangeError) return [];
+      throw error;
+    }
+  }, [
+    navigation.distance,
+    navigation.target[0],
+    navigation.target[1],
+    navigation.target[2],
+    terrainAspect,
+  ]);
+  const terrainFarPlane = useMemo(() => {
+    try {
+      return (
+        navigation.distance +
+        worldTerrainGroundViewRadius(
+          navigation.distance,
+          terrainAspect,
+          navigation.target[1],
+        )
+      );
+    } catch (error) {
+      if (error instanceof RangeError)
+        return worldNavigationFarPlane(navigation);
+      throw error;
+    }
+  }, [navigation, terrainAspect, navigation.distance, navigation.target[1]]);
   const navigationEnabledRef = useRef(navigationEnabled);
   navigationEnabledRef.current =
     navigationEnabled && phase === "editing" && !playing;
@@ -1413,6 +1539,8 @@ function Scene({
   const progress = useRef(0);
   const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
+  const transitionSurface = useRef<THREE.Group>(null);
+  const defaultGround = useRef<THREE.Group>(null);
   const initialized = useRef(false);
   const frame = useMemo(() => parcelFrame(projectId), [projectId]);
   const alignment = useMemo(
@@ -1735,6 +1863,11 @@ function Scene({
     parcelTransitionController.setTarget(target);
     const snapshot = parcelTransitionController.step(dt, reduced());
     const transitionSettled = phase === "editing" && snapshot.settled;
+    const workspaceSettled =
+      phase === "editing" && snapshot.settled && snapshot.progress >= 1;
+    if (transitionSurface.current)
+      transitionSurface.current.visible = !workspaceSettled;
+    if (defaultGround.current) defaultGround.current.visible = workspaceSettled;
     if (transitionSettled !== reviewTransitionSettled.current) {
       reviewTransitionSettled.current = transitionSettled;
       notifySceneReviewCaptureChanged();
@@ -1765,7 +1898,10 @@ function Scene({
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
       const perspectiveCamera = camera as THREE.PerspectiveCamera;
-      const far = worldNavigationFarPlane(navigation);
+      const far = Math.max(
+        worldNavigationFarPlane(navigation),
+        terrainFarPlane,
+      );
       if (perspectiveCamera.far !== far) {
         perspectiveCamera.far = far;
         perspectiveCamera.updateProjectionMatrix();
@@ -1855,24 +1991,35 @@ function Scene({
       />
       <Planet progress={progress} frame={frame} spin={spin} />
       <group ref={island} visible={false}>
-        <mesh position={[0, -0.65, 0]} receiveShadow>
-          <cylinderGeometry args={[8.6, 7.5, 1.2, 80]} />
-          <meshStandardMaterial color="#dfd3a6" roughness={1} />
-        </mesh>
-        <mesh position={[0, -0.07, 0]} receiveShadow>
-          <cylinderGeometry args={[8.55, 8.6, 0.12, 80]} />
-          <meshStandardMaterial color={environment.ground} roughness={1} />
-        </mesh>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.75, 0]}>
-          <circleGeometry args={[40, 80]} />
-          <meshStandardMaterial
-            color={environment.water}
-            roughness={0.6}
-            transparent
-            opacity={0.38}
+        <group ref={transitionSurface}>
+          <mesh position={[0, -0.65, 0]} receiveShadow>
+            <cylinderGeometry args={[8.6, 7.5, 1.2, 80]} />
+            <meshStandardMaterial color="#dfd3a6" roughness={1} />
+          </mesh>
+          <mesh position={[0, -0.07, 0]} receiveShadow>
+            <cylinderGeometry args={[8.55, 8.6, 0.12, 80]} />
+            <meshStandardMaterial color={environment.ground} roughness={1} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.75, 0]}>
+            <circleGeometry args={[40, 80]} />
+            <meshStandardMaterial
+              color={environment.water}
+              roughness={0.6}
+              transparent
+              opacity={0.38}
+            />
+          </mesh>
+          <Pebbles />
+          <ContactShadows
+            position={[0, -0.77, 0]}
+            opacity={0.17}
+            scale={28}
+            blur={2.5}
+            far={10}
+            resolution={256}
+            frames={1}
           />
-        </mesh>
-        <Pebbles />
+        </group>
         {entities.map((e) => (
           <Formation
             key={`${projectId}/${e.id}`}
@@ -1888,15 +2035,15 @@ function Scene({
           onReady={onReady}
           onInputLatency={onInputLatency}
         />
-        <ContactShadows
-          position={[0, -0.77, 0]}
-          opacity={0.17}
-          scale={28}
-          blur={2.5}
-          far={10}
-          resolution={256}
-          frames={1}
-        />
+      </group>
+      <group ref={defaultGround} visible={false}>
+        {terrainChunks.map((chunk) => (
+          <WorldTerrainChunk
+            key={`${chunk.lod}:${chunk.x}:${chunk.z}`}
+            chunk={chunk}
+            color={environment.ground}
+          />
+        ))}
       </group>
     </>
   );
