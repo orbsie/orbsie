@@ -72,6 +72,11 @@ import {
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
 import {
+  selectRenderOrigin,
+  worldCameraPoseToRenderLocal,
+  type RenderOriginVec3,
+} from "@/lib/render-origin";
+import {
   committedWorldNavigationBounds,
   worldNavigationBoundsByEntity,
   type WorldNavigationEntityBounds,
@@ -113,6 +118,8 @@ import {
 } from "@/lib/parcel-transition";
 import SoftwareWorld from "./software-world";
 let motionPreference: MediaQueryList | undefined;
+const ZERO_RENDER_ORIGIN: RenderOriginVec3 = [0, 0, 0];
+export const WEBGL_LOCAL_KEY_LIGHT_POSITION = [-8, 14, 7] as const;
 const reduced = () => {
   if (typeof window === "undefined") return false;
   motionPreference ??= window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -1338,6 +1345,13 @@ function WorldTerrainChunk({
   );
 }
 
+function applyWebGLRenderOrigin(
+  workspaceFrame: THREE.Group | null,
+  origin: RenderOriginVec3,
+) {
+  workspaceFrame?.position.set(-origin[0], -origin[1], -origin[2]);
+}
+
 /** Use the same settled navigation pose and projection as the WebGL camera. */
 export function visibleWebGLNavigationEntityIds(
   project: Project,
@@ -1635,6 +1649,8 @@ function Scene({
   const progress = useRef(0);
   const spin = useRef(0);
   const island = useRef<THREE.Group>(null);
+  const workspaceWorldFrame = useRef<THREE.Group>(null);
+  const renderOrigin = useRef<RenderOriginVec3>(ZERO_RENDER_ORIGIN);
   const transitionSurface = useRef<THREE.Group>(null);
   const defaultGround = useRef<THREE.Group>(null);
   const initialized = useRef(false);
@@ -1695,6 +1711,8 @@ function Scene({
     spin.current = parcelTransitionController.snapshot.spin;
     progress.current = parcelTransitionController.snapshot.progress;
     initialized.current = false;
+    renderOrigin.current = ZERO_RENDER_ORIGIN;
+    applyWebGLRenderOrigin(workspaceWorldFrame.current, renderOrigin.current);
     navigationReadyNotified.current = false;
     notifySceneReviewCaptureChanged();
   }, [phase, projectId]);
@@ -1961,6 +1979,10 @@ function Scene({
     const transitionSettled = phase === "editing" && snapshot.settled;
     const workspaceSettled =
       phase === "editing" && snapshot.settled && snapshot.progress >= 1;
+    if (!workspaceSettled) {
+      renderOrigin.current = ZERO_RENDER_ORIGIN;
+      applyWebGLRenderOrigin(workspaceWorldFrame.current, renderOrigin.current);
+    }
     if (transitionSurface.current)
       transitionSurface.current.visible = !workspaceSettled;
     if (defaultGround.current) defaultGround.current.visible = workspaceSettled;
@@ -2039,7 +2061,18 @@ function Scene({
         navigationReadyNotified.current = true;
         onNavigationReady?.();
       }
-      const pose = worldNavigationCameraPose(activeNavigation);
+      const worldPose = worldNavigationCameraPose(activeNavigation);
+      let nextRenderOrigin = selectRenderOrigin(
+        activeNavigation.target,
+        renderOrigin.current,
+      );
+      let pose = worldCameraPoseToRenderLocal(worldPose, nextRenderOrigin);
+      if (!pose) {
+        nextRenderOrigin = ZERO_RENDER_ORIGIN;
+        pose = worldPose;
+      }
+      renderOrigin.current = nextRenderOrigin;
+      applyWebGLRenderOrigin(workspaceWorldFrame.current, nextRenderOrigin);
       camera.position.set(...pose.position);
       camera.lookAt(...pose.target);
       const perspectiveCamera = camera as THREE.PerspectiveCamera;
@@ -2138,7 +2171,7 @@ function Scene({
         args={["#daeaff", "#142a38", phase === "landing" ? 0.7 : 1.5]}
       />
       <directionalLight
-        position={[-8, 14, 7]}
+        position={WEBGL_LOCAL_KEY_LIGHT_POSITION}
         intensity={phase === "landing" ? 3.5 : 2.5}
         castShadow
         shadow-mapSize={[1024, 1024]}
@@ -2149,62 +2182,65 @@ function Scene({
         shadow-normalBias={0.05}
       />
       <Planet progress={progress} frame={frame} spin={spin} />
-      <group ref={island} visible={false}>
-        <group ref={transitionSurface}>
-          <mesh position={[0, -0.65, 0]} receiveShadow>
-            <cylinderGeometry args={[8.6, 7.5, 1.2, 80]} />
-            <meshStandardMaterial color="#dfd3a6" roughness={1} />
-          </mesh>
-          <mesh position={[0, -0.07, 0]} receiveShadow>
-            <cylinderGeometry args={[8.55, 8.6, 0.12, 80]} />
-            <meshStandardMaterial color={environment.ground} roughness={1} />
-          </mesh>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.75, 0]}>
-            <circleGeometry args={[40, 80]} />
-            <meshStandardMaterial
-              color={environment.water}
-              roughness={0.6}
-              transparent
-              opacity={0.38}
+      {/* One parent translation offsets world-space entities and terrain exactly once. */}
+      <group ref={workspaceWorldFrame}>
+        <group ref={island} visible={false}>
+          <group ref={transitionSurface}>
+            <mesh position={[0, -0.65, 0]} receiveShadow>
+              <cylinderGeometry args={[8.6, 7.5, 1.2, 80]} />
+              <meshStandardMaterial color="#dfd3a6" roughness={1} />
+            </mesh>
+            <mesh position={[0, -0.07, 0]} receiveShadow>
+              <cylinderGeometry args={[8.55, 8.6, 0.12, 80]} />
+              <meshStandardMaterial color={environment.ground} roughness={1} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.75, 0]}>
+              <circleGeometry args={[40, 80]} />
+              <meshStandardMaterial
+                color={environment.water}
+                roughness={0.6}
+                transparent
+                opacity={0.38}
+              />
+            </mesh>
+            <Pebbles />
+            <ContactShadows
+              position={[0, -0.77, 0]}
+              opacity={0.17}
+              scale={28}
+              blur={2.5}
+              far={10}
+              resolution={256}
+              frames={1}
             />
-          </mesh>
-          <Pebbles />
-          <ContactShadows
-            position={[0, -0.77, 0]}
-            opacity={0.17}
-            scale={28}
-            blur={2.5}
-            far={10}
-            resolution={256}
-            frames={1}
+          </group>
+          {entities.map((e) => (
+            <Formation
+              key={`${projectId}/${e.id}`}
+              entity={e}
+              visible={visibleEntityIds?.has(e.id) ?? true}
+              session={session}
+              revision={revision}
+              onReviewState={setFormationReviewState}
+              consumeNavigationClick={consumeNavigationClick}
+            />
+          ))}
+          <Player
+            session={session}
+            followPositionRef={playerPositionRef}
+            onReady={onReady}
+            onInputLatency={onInputLatency}
           />
         </group>
-        {entities.map((e) => (
-          <Formation
-            key={`${projectId}/${e.id}`}
-            entity={e}
-            visible={visibleEntityIds?.has(e.id) ?? true}
-            session={session}
-            revision={revision}
-            onReviewState={setFormationReviewState}
-            consumeNavigationClick={consumeNavigationClick}
-          />
-        ))}
-        <Player
-          session={session}
-          followPositionRef={playerPositionRef}
-          onReady={onReady}
-          onInputLatency={onInputLatency}
-        />
-      </group>
-      <group ref={defaultGround} visible={false}>
-        {(followTerrainChunks ?? terrainChunks).map((chunk) => (
-          <WorldTerrainChunk
-            key={`${chunk.lod}:${chunk.x}:${chunk.z}`}
-            chunk={chunk}
-            color={environment.ground}
-          />
-        ))}
+        <group ref={defaultGround} visible={false}>
+          {(followTerrainChunks ?? terrainChunks).map((chunk) => (
+            <WorldTerrainChunk
+              key={`${chunk.lod}:${chunk.x}:${chunk.z}`}
+              chunk={chunk}
+              color={environment.ground}
+            />
+          ))}
+        </group>
       </group>
     </>
   );
