@@ -79,6 +79,10 @@ for funded test key/credits, no key requested in chat. CUA browser inventory on
 2026-09-22 exposed no browsers/apps; owner signed-in Chrome is not yet selectable
 in this session. Preserve owner request to use existing signed-in browser and
 computer use for GitHub. These external blockers do not stop local integration.
+Sep 23 read-only credit recheck remains HTTP200 -0.0033684, zero model calls
+(`docs/evidence/gateway-credit-check-20260923/report.json`); current CUA
+inventory still has no browser or app surface. Do not run paid Gateway
+inference until credit is positive.
 
 
 Initial API task finished. Root
