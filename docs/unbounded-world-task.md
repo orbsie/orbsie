@@ -1,10 +1,15 @@
 # Unbounded world implementation handoff
 
-Open owner requirement in prompt.md; implement after current connection/resilience
-priorities with one Luna worker at a time. Source audit found explicit radial
-movement clamp at gameplay.ts (radius8.4), WebGL OrbitControls with enablePan=false
-and distance13..34 in world.tsx, and a separate software-world renderer/navigation
-path. Removing a visible disk or adding buttons alone cannot satisfy the requirement.
+Open owner requirement in `prompt.md`; implement after current
+connection/resilience priorities with one Luna worker at a time. Source audit
+found more than a visual limit: `src/lib/gameplay.ts` clamps the player to radius
+8.4; `src/components/world.tsx` renders fixed cylinders at radius 8.6 and sets
+`OrbitControls enablePan={false}` with distance 13..34;
+`src/components/software-world.tsx` has its own fixed camera and draws an island
+ellipse. `src/lib/protocol.ts` uses a shared ±100 `vector` for world position,
+scale, rotation and part-local coordinates. `src/lib/server/generation.ts` still
+instructs every model to stay on an island of radius 8. Removing a visible disk
+or adding buttons alone cannot satisfy the requirement.
 
 Root interface decision: use one renderer-independent navigation state contract
 (world-space target, heading, zoom/scale and north convention) and commands for pan,
@@ -18,7 +23,32 @@ and explicit authored-boundary behavior. Keep the planet entrance transition int
 activate unbounded workspace only after arrival. Terrain allocation, culling and
 coordinate precision require bounded chunk lifecycle with cancellation/reuse. Budget
 limits constrain resources, not the old circular placement domain. Audit model
-schemas and authoring bounds before promising far-away placement.
+schemas and authoring bounds before promising far-away placement. Split the
+protocol's world-position schema from local shape/scale/rotation schemas: simply
+widening the shared `vector` would also loosen mesh and transform budgets. Keep
+the existing typed local geometry limits. Remove the island-only model
+instructions for default worlds while allowing explicitly requested bounded
+islands and authored barriers. Preserve old serialized project coordinates and
+IDs through any schema migration.
+
+Use sequential bounded handoffs rather than a single renderer rewrite:
+
+1. World coordinates and gameplay: separate position validation from local
+   geometry bounds, remove implicit radial movement and generation restrictions,
+   define default ground versus explicit authored boundaries, and prove a
+   far-away object/game path survives operations, undo, save and export.
+2. Shared navigation state and UI: connect pan/zoom/compass/frame-content to
+   both renderers and published playback, with desktop and touch gesture
+   isolation. North reset retains target and zoom. Keep it independent of
+   generation and gameplay input.
+3. Chunked surface and precision: render only nearby terrain in WebGL and
+   software, reuse/dispose chunks, cull entities for draw work without deleting
+   them from authoritative project state, and keep far-away picking/contact
+   correct. Introduce a render-local origin if measurements show precision
+   loss; never recenter saved world coordinates.
+4. Integrated acceptance: long-distance create/edit/nav/gameplay across both
+   renderers, Android gestures, repeated chunk eviction, reload, independent
+   export/publication, and frame-time/memory evidence on a growing scene.
 
 Acceptance must include both renderers: create/edit far beyond original parcel,
 long pan/recenter, preserved heading/north reset, desktop wheel/pan and Android

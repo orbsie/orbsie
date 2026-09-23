@@ -10,6 +10,10 @@ and Gateway credits permit. No stream-resilience completion claim yet.
 `docs/authoring-live-review-acceptance-task.md` defines the subsequent live gate:
 the older provider harness alone does not prove review calls, and the five-call
 Gateway cap requires separate create/edit tests when each may use three calls.
+Unbounded-world audit now identifies the shared ±100 protocol vector and
+island-only model instructions in addition to player/camera/terrain limits;
+`docs/unbounded-world-task.md` separates world coordinates, shared navigation,
+chunked rendering and integrated acceptance into sequential Luna handoffs.
 
 Sep 22 integration seam: `2b601cd` exposes `authoringReview` from server
 configuration and preserves hosted opt-in; `ee97d7a` adds the API model's
