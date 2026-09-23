@@ -38,6 +38,13 @@ provisioned isolated PostgreSQL15 container orbsie-review-ledger-20260922 on
 127.0.0.1:32768 for worker tests; stop it after acceptance. No model calls.
 Root committed the next review-route/browser contract ef8e773. Initial/editor
 review still not wired or deployed; current E2E objective remains incomplete.
+Gateway credit read 2026-09-22 HTTP200 still -0.0033684 with zero model calls;
+evidence docs/evidence/gateway-credit-check-20260922. Owner asked asynchronously
+for funded test key/credits, no key requested in chat. CUA browser inventory on
+2026-09-22 exposed no browsers/apps; owner signed-in Chrome is not yet selectable
+in this session. Preserve owner request to use existing signed-in browser and
+computer use for GitHub. These external blockers do not stop local integration.
+
 
 Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
