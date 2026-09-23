@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 23 WebGL ready-formation residency accepted locally (`261f8c4`): after a
+ready recipe has completed, Scene keeps at most the policy's 48 full visual
+resources near/visible/selected and renders other completed entities as cheap
+selectable world-space proxies. Unknown placement, forming, and new-recipe
+objects stay on the full Formation path. Proxy selection promotes full detail;
+same-recipe reentry uses completion hydration. Astra reviewed the worker diff
+and corrected scene-review readiness for offscreen, collected, and game-hidden
+proxies so they cannot strand a review. The worker's 36 targeted tests and
+root's 23 focused tests, TypeScript, Prettier, and diff checks passed.
+Integrated full suite, standalone player rebuild, browser visuals, memory,
+frame time, and mobile acceptance remain open. Coarse boxes are only a proxy
+approximation. Next slice: software renderer parity
+(`docs/software-formation-residency-task.md`).
+
 Sep 23 visual lease/gameplay authority accepted locally (`57ef4f4`): WebGL
 tracks the recipe actually committed by each Formation rather than global
 asset readiness, and both renderers keep metadata-backed ready collisions and
