@@ -50,6 +50,13 @@ server's resulting binding. Only after that succeeds, capture the changed
 rendered revision and send final verdict-only review. A final `revise` is
 partial, never a fourth correction call.
 
+Use `createSceneBinding` from `src/lib/scene-binding.ts` for the browser-side
+digest comparison; it hashes the same authored projection and validates
+persisted procedural source provenance. Do not compare serialized whole-project
+JSON or a digest supplied by the response itself. Re-derive the correction
+asset policy from the exact reviewed project before the first correction;
+the initial stream's policy was derived before that project existed.
+
 Keep one history entry and one user-facing run for all phases. A stop, new
 request, reset, draft switch, stale reply, geometry failure, journal conflict,
 save failure or dropped connection must preserve the last committed scene and
