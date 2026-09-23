@@ -1,5 +1,13 @@
 # Development checkpoint
 
+Sep 23 next independent handoff: `docs/stream-resilience-acceptance-task.md`
+pins the unchecked stream-resilience requirement to actual provider/route/client
+failure boundaries. The existing clean-EOF toast implies connection loss without
+evidence; synthetic fixtures do not yet prove interrupted-run save/undo recovery
+or the cause of frequent production failures. Implement after browser review
+integration with one Luna worker, then gather live provider evidence when access
+and Gateway credits permit. No stream-resilience completion claim yet.
+
 Sep 22 integration seam: `2b601cd` exposes `authoringReview` from server
 configuration and preserves hosted opt-in; `ee97d7a` adds the API model's
 admitted image-input header. Browser review request/response contracts are
