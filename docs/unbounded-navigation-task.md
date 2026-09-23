@@ -57,6 +57,15 @@ and must not produce accidental player input. Handle pointer cancellation,
 orientation changes and renderer fallback without a stuck gesture. Respect
 reduced motion when easing camera changes.
 
+Current input seams for the gesture slice: WebGL `Formation` selects/activates
+through mesh and particle `onClick`; Canvas `onPointerMissed` clears selection.
+Software mode stores projected pick centers and treats movement over 8 px as
+non-click. A gesture recognizer must suppress those clicks after a pan, pinch
+or rotate, and must decline navigation when the pointer begins on an entity.
+Player key/touch input is owned by `PlayerInputTracker` and the shell controls;
+the navigation recognizer must never synthesize those inputs. Attach wheel
+handling only to the scene surface, not to the chat sheet or overlay buttons.
+
 ## Evidence to return
 
 Tests of state commands and heading convention; a rendered desktop and narrow
