@@ -26,7 +26,7 @@ try {
             json: {
               models: [
                 {
-                  id: "openai/gpt-5.6-luna",
+                  id: "openai/gpt-6-luna",
                   name: "Luna fixture",
                   qualityRank: 1,
                 },
@@ -59,7 +59,7 @@ try {
         .getByLabel("API key", { exact: true })
         .fill("synthetic-provider-key");
       await page.locator("summary").filter({ hasText: "Advanced" }).click();
-      await page.locator('[data-model-id="openai/gpt-5.6-luna"]').click();
+      await page.locator('[data-model-id="openai/gpt-6-luna"]').click();
       await page
         .getByRole("button", { name: "Continue with this connection" })
         .click();

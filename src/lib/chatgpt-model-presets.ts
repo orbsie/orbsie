@@ -25,12 +25,12 @@ export const chatGPTPresetSpecs: readonly PresetSpec[] = [
   },
   {
     label: "Balanced",
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     preferredEfforts: ["medium", "low", "high"],
   },
   {
     label: "Budget",
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     preferredEfforts: ["low", "medium", "high"],
   },
 ] as const;

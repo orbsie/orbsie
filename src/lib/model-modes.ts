@@ -8,7 +8,7 @@ export const modelModes = [
   },
   {
     label: "Balanced",
-    id: "openai/gpt-5.6-luna",
+    id: "openai/gpt-6-luna",
     name: "Luna",
     description: "Everyday creation",
   },
@@ -34,16 +34,19 @@ export function isRecommendedModel(id: string) {
   );
 }
 
-const lunaProviderOrder = Object.freeze([
+const legacyLunaProviderOrder = Object.freeze([
   "OpenAI",
   "Amazon Bedrock",
   "Azure",
 ]);
+const lunaProviderOrder = Object.freeze(["OpenAI", "Amazon Bedrock"]);
 
 export function openrouterProviderRouting(model: string) {
-  return model === "openai/gpt-5.6-luna"
-    ? { order: lunaProviderOrder, allow_fallbacks: false }
-    : undefined;
+  if (model === "openai/gpt-6-luna")
+    return { order: lunaProviderOrder, allow_fallbacks: false };
+  if (model === "openai/gpt-5.6-luna")
+    return { order: legacyLunaProviderOrder, allow_fallbacks: false };
+  return undefined;
 }
 
 export type CatalogModel = {

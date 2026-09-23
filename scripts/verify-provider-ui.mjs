@@ -23,7 +23,7 @@ const models = [
     outputPrice: 6,
   },
   {
-    id: "openai/gpt-5.6-luna",
+    id: "openai/gpt-6-luna",
     name: "Luna fixture",
     qualityRank: 3,
     inputPrice: 0.3,

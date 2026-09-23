@@ -11,7 +11,7 @@ const catalog = [
     defaultReasoningEffort: "low",
   },
   {
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     supportedReasoningEfforts: ["low", "medium"],
     defaultReasoningEffort: "low",
   },
@@ -29,21 +29,21 @@ describe("ChatGPT model presets", () => {
       },
       {
         label: "Balanced",
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "medium",
         preferredEffort: "medium",
         available: true,
       },
       {
         label: "Budget",
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "low",
         preferredEffort: "low",
         available: true,
       },
     ]);
     expect(defaultChatGPTPresetSelection(catalog)).toEqual({
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       effort: "medium",
       preset: "Balanced",
     });
@@ -52,7 +52,7 @@ describe("ChatGPT model presets", () => {
   it("uses a supported effort fallback and disables absent preset models", () => {
     const options = resolveChatGPTPresetOptions([
       {
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         supportedReasoningEfforts: ["xhigh"],
         defaultReasoningEffort: "xhigh",
       },
@@ -72,14 +72,14 @@ describe("ChatGPT model presets", () => {
       },
       {
         label: "Balanced",
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "xhigh",
         preferredEffort: "medium",
         available: true,
       },
       {
         label: "Budget",
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "xhigh",
         preferredEffort: "low",
         available: true,

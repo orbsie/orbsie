@@ -33,7 +33,7 @@ let project = blankProject();
 const report = {
   date: new Date().toISOString(),
   base,
-  model: "openai/gpt-5.6-luna",
+  model: "openai/gpt-6-luna",
   inferenceRequests: 0,
   turns: [],
   passed: false,

@@ -333,7 +333,7 @@ export function reportForRun({
     checkedAt: new Date().toISOString(),
     status,
     provider: "gateway",
-    model: "openai/gpt-5.6-luna",
+    model: "openai/gpt-6-luna",
     reasoning: "low",
     serviceTier: "default",
     maxTokens: 4096,

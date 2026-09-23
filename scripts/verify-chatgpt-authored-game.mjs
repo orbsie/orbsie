@@ -101,7 +101,7 @@ async function writeWrapperReport() {
       {
         status:
           !wrapperFailure && harnessResult?.code === 0 ? "passed" : "failed",
-        model: selectedModel ?? "gpt-5.6-luna",
+        model: selectedModel ?? "gpt-6-luna",
         effort: "low",
         serviceTier: "default",
         actualGenerateCalls,
@@ -194,11 +194,11 @@ try {
   );
 
   client = new LocalChatGPT(workDirectory);
-  const model = await client.connect("gpt-5.6-luna");
+  const model = await client.connect("gpt-6-luna");
   selectedModel = model;
   assert.equal(
     model,
-    "gpt-5.6-luna",
+    "gpt-6-luna",
     "Luna with low reasoning is required for live tests.",
   );
   companion = await startChatGPTCompanion({
@@ -220,7 +220,7 @@ try {
   Object.assign(childEnvironment, {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_TEST_URL: BASE_ORIGIN,
-    ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
+    ORBSIE_EXPECTED_MODEL: "gpt-6-luna",
     ORBSIE_KEY_SCOPE: "local-only",
     ORBSIE_REQUIRE_NEW_ONLY: "1",
     ORBSIE_REQUIRE_INPUT_GAME: "1",

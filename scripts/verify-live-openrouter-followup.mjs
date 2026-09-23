@@ -17,7 +17,7 @@ process.loadEnvFile(".env.openrouter.local");
 const key = process.env.OPENROUTER_API_KEY;
 if (!key) throw Error("Local OpenRouter credential is unavailable.");
 const origin = "http://127.0.0.1:3024";
-const model = "openai/gpt-5.6-luna";
+const model = "openai/gpt-6-luna";
 const directory = await mkdtemp("/tmp/orbsie-openrouter-followup-");
 const report = {
   scope:

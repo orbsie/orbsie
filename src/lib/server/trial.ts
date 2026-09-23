@@ -3,7 +3,7 @@ import { isIP } from "node:net";
 import type { PoolClient } from "pg";
 import { database, HttpError } from "./auth";
 
-export const FREE_MODEL = "openai/gpt-5.6-luna";
+export const FREE_MODEL = "openai/gpt-6-luna";
 export const TRIAL_LIMIT = 3;
 const COOKIE = "orbsie_trial";
 export function trialEnabled() {

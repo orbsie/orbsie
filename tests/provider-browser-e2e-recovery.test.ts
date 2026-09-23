@@ -51,7 +51,7 @@ function setHostedEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
     ORBSIE_TEST_URL: "https://orbsie.example.test",
-    ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
+    ORBSIE_EXPECTED_MODEL: "gpt-6-luna",
     ORBSIE_SERVICE_TIER: "default",
     ORBSIE_ACCOUNT_STORAGE_STATE: "/private/account-storage.json",
     ORBSIE_CHATGPT_TEST_LIMITS: HOSTED_FLAGSHIP_TEST_LIMITS,
@@ -208,7 +208,7 @@ describe("provider browser interrupted recovery contract", () => {
     const report = emptyReport({
       provider: "gateway",
       baseOrigin: "http://127.0.0.1:3018",
-      expectedModel: "openai/gpt-5.6-luna",
+      expectedModel: "openai/gpt-6-luna",
       keyScope: "local-only",
       outputCap: 4096,
       generationBudget: 2,

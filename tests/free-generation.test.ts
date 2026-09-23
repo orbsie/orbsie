@@ -72,7 +72,7 @@ it("forces Gateway Luna and server credential despite client overrides, with bou
     "Bearer private-synthetic-shared-key",
   );
   expect(JSON.parse(options.body as string)).toMatchObject({
-    model: "openai/gpt-5.6-luna",
+    model: "openai/gpt-6-luna",
     max_tokens: 4096,
   });
   expect(
@@ -123,7 +123,7 @@ it("leaves anonymous BYOK outside the shared quota", async () => {
         request({
           provider: "openrouter",
           key: "synthetic-own-key",
-          model: "openai/gpt-5.6-luna",
+          model: "openai/gpt-6-luna",
         }),
       )
     ).status,

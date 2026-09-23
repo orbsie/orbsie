@@ -10,7 +10,7 @@ import { emptyReport } from "../scripts/provider-browser-e2e.mjs";
 const baseConfig = {
   provider: "openrouter",
   baseOrigin: "http://127.0.0.1:3000",
-  expectedModel: "openai/gpt-5.6-luna",
+  expectedModel: "openai/gpt-6-luna",
   keyScope: "local-only",
   outputCap: 512,
   requireGeometryEdit: false,

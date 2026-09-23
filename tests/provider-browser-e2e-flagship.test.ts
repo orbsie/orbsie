@@ -91,7 +91,7 @@ function gatewayStoryEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
     ORBSIE_TEST_URL: "http://127.0.0.1:3018",
-    ORBSIE_EXPECTED_MODEL: "openai/gpt-5.6-luna",
+    ORBSIE_EXPECTED_MODEL: "openai/gpt-6-luna",
     ORBSIE_OUTPUT_CAP_TOKENS: "4096",
     ORBSIE_KEY_SCOPE: "local-only",
     ORBSIE_FLAGSHIP_STORY: "1",
@@ -106,7 +106,7 @@ function openRouterStoryEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
     ORBSIE_TEST_URL: "http://127.0.0.1:3018",
-    ORBSIE_EXPECTED_MODEL: "openai/gpt-5.6-luna",
+    ORBSIE_EXPECTED_MODEL: "openai/gpt-6-luna",
     ORBSIE_OUTPUT_CAP_TOKENS: "4096",
     ORBSIE_OPENROUTER_RAISED_CAP: "1",
     ORBSIE_KEY_SCOPE: "local-only",
@@ -122,7 +122,7 @@ function hostedStoryEnvironment(overrides: Record<string, string> = {}) {
     ORBSIE_LIVE_E2E: "1",
     ORBSIE_APP_SOURCE_COMMIT: "a".repeat(40),
     ORBSIE_TEST_URL: "https://orbsie.example.test",
-    ORBSIE_EXPECTED_MODEL: "gpt-5.6-luna",
+    ORBSIE_EXPECTED_MODEL: "gpt-6-luna",
     ORBSIE_FLAGSHIP_STORY: "1",
     ORBSIE_CHATGPT_TEST_LIMITS: "3-calls-180s-512kib",
     ORBSIE_ACCOUNT_STORAGE_STATE: "/private/orbsie-state.json",
@@ -514,7 +514,7 @@ describe("flagship provider story contract", () => {
     const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
     expect(config).toMatchObject({
       provider: "gateway",
-      expectedModel: "openai/gpt-5.6-luna",
+      expectedModel: "openai/gpt-6-luna",
       outputCap: 4096,
       generationBudget: 3,
       flagshipStory: true,
@@ -528,7 +528,7 @@ describe("flagship provider story contract", () => {
     const config = readConfiguration(["--provider", "openrouter"]);
     expect(config).toMatchObject({
       provider: "openrouter",
-      expectedModel: "openai/gpt-5.6-luna",
+      expectedModel: "openai/gpt-6-luna",
       outputCap: 4096,
       generationBudget: 3,
       flagshipStory: true,
@@ -542,7 +542,7 @@ describe("flagship provider story contract", () => {
     const config = readConfiguration(["--provider", "chatgpt-hosted"]);
     expect(config).toMatchObject({
       provider: "chatgpt-hosted",
-      expectedModel: "gpt-5.6-luna",
+      expectedModel: "gpt-6-luna",
       outputCap: null,
       generationBudget: 3,
       flagshipStory: true,
@@ -562,7 +562,7 @@ describe("flagship provider story contract", () => {
     const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
     expect(config).toMatchObject({
       provider: "gateway",
-      expectedModel: "openai/gpt-5.6-luna",
+      expectedModel: "openai/gpt-6-luna",
       outputCap: 4096,
       generationBudget: 1,
       flagshipStory: false,
@@ -579,7 +579,7 @@ describe("flagship provider story contract", () => {
     const config = readConfiguration(["--provider", "gateway"]) as ResumeConfig;
     expect(config).toMatchObject({
       provider: "gateway",
-      expectedModel: "openai/gpt-5.6-luna",
+      expectedModel: "openai/gpt-6-luna",
       outputCap: 4096,
       generationBudget: 2,
       flagshipStory: false,

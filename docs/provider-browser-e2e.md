@@ -2,7 +2,7 @@
 
 The `chatgpt-hosted` acceptance mode is implemented under [the browser-only contract](hosted-chatgpt-acceptance.md). The `chatgpt-local` branch and companion instructions below are historical and do not satisfy the current product requirement. Do not run them as a substitute for hosted subscription consent or generation. The hosted mode verifies an already-consented owner session before any inference; its existence does not itself establish live acceptance.
 
-Current owner authorization: live tests call Luna only. The harness requires `gpt-5.6-luna` for ChatGPT or `openai/gpt-5.6-luna` for remote providers and rejects other IDs before browser/provider startup. This restriction does not apply to end users. Existing credential-specific caps remain in force. Historical Astra reports below describe past runs.
+Current owner authorization: live tests call Luna only. The harness requires `gpt-6-luna` for ChatGPT or `openai/gpt-6-luna` for remote providers and rejects other IDs before browser/provider startup. This restriction does not apply to end users. Existing credential-specific caps remain in force. Historical Astra reports below describe past runs.
 
 `scripts/provider-browser-e2e.mjs` is the opt-in acceptance harness for a real
 browser session. It is separate from `scripts/verify-provider-ui.mjs` and the
@@ -49,7 +49,7 @@ present, selects its visible catalog row, fills the key in the in-memory
 settings control, and verifies the two generation requests (creation and
 edit) carry the selected provider/model. It does not choose another model when
 the expected one is absent. The supplied local-only OpenRouter exception is
-enforced as `openai/gpt-5.6-luna`, normally capped at 512 output tokens.
+enforced as `openai/gpt-6-luna`, normally capped at 512 output tokens.
 The owner's authorized flagship/procedural runs may explicitly set
 `ORBSIE_OPENROUTER_RAISED_CAP=1` with `ORBSIE_OUTPUT_CAP_TOKENS=4096`;
 the flag does not permit exceeding 4,096 tokens or authorize automatic retries.
@@ -89,7 +89,7 @@ API key or select a client model. It checks `/api/trial` in the browser,
 requires at least two remaining prompts, and asserts both generation requests
 use `provider: "free"` with empty client model and key fields. The server-owned
 route is fixed to Gateway Luna with low reasoning and its 4,096-token ceiling;
-set `ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna` and
+set `ORBSIE_EXPECTED_MODEL=openai/gpt-6-luna` and
 `ORBSIE_OUTPUT_CAP_TOKENS=4096` as the explicit run contract.
 
 Set `ORBSIE_REQUIRE_NEW_ONLY=1` when the creation prompt explicitly requests
@@ -237,6 +237,6 @@ without a Blender service. Never place the private capability in evidence or sou
 
 ## ChatGPT-authored input game
 
-`ORBSIE_LIVE_E2E=1 node scripts/verify-chatgpt-authored-game.mjs` starts a temporary authenticated ChatGPT companion and runs the real browser pairing flow against `http://127.0.0.1:3024`. The current wrapper explicitly requires `gpt-5.6-luna`; generation uses low reasoning and default processing. This developer companion experiment does not prove the browser-only hosted ChatGPT subscription workflow. The wrapper passes its temporary capability only through the child environment, revokes it on exit, and records the actual generation count in a sanitized `wrapper.json`.
+`ORBSIE_LIVE_E2E=1 node scripts/verify-chatgpt-authored-game.mjs` starts a temporary authenticated ChatGPT companion and runs the real browser pairing flow against `http://127.0.0.1:3024`. The current wrapper explicitly requires `gpt-6-luna`; generation uses low reasoning and default processing. This developer companion experiment does not prove the browser-only hosted ChatGPT subscription workflow. The wrapper passes its temporary capability only through the child environment, revokes it on exit, and records the actual generation count in a sanitized `wrapper.json`.
 
 This scenario creates two original procedural/custom objects and three input rules (right adds 7, up wins, left loses), then performs a selected material edit. It checks the unchanged game program through edit, local reload and ZIP export, and plays the downloaded world through score, held-input deduplication, win, restart and loss. It uses no fixture generation transport. `ORBSIE_REQUIRE_INPUT_GAME=1` enables the same scenario in the general harness; default scenarios remain unchanged. This verifies a bounded input game, not Blender construction, cloud recovery or publication.

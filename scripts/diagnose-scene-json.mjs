@@ -43,7 +43,7 @@ function usage() {
     [--prompt "a tree with blue strawberries"] \\
     [--timeout-ms 120000]
 
-The command performs one Gateway generation with openai/gpt-5.6-luna,
+The command performs one Gateway generation with openai/gpt-6-luna,
 low reasoning, default service tier and a 4096-token cap. It never retries,
 stores request headers/body, or includes provider content in the report.
 `;
@@ -217,7 +217,7 @@ async function run(options) {
     const signal = AbortSignal.timeout(options.timeoutMs);
     const stream = await generateCommands({
       provider: "gateway",
-      model: "openai/gpt-5.6-luna",
+      model: "openai/gpt-6-luna",
       key,
       prompt: options.prompt,
       project: blankProject(),

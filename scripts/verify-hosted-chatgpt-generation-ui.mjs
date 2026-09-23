@@ -116,8 +116,8 @@ try {
               defaultReasoningEffort: "low",
             },
             {
-              id: "gpt-5.6-luna",
-              model: "gpt-5.6-luna",
+              id: "gpt-6-luna",
+              model: "gpt-6-luna",
               displayName: "Luna",
               supportedReasoningEfforts: ["low", "medium", "xhigh"],
               defaultReasoningEffort: "low",
@@ -199,7 +199,7 @@ try {
     }
     if (path === "/api/chatgpt/generate") {
       const d = route.request().postDataJSON();
-      assert.equal(d.model, "gpt-5.6-luna");
+      assert.equal(d.model, "gpt-6-luna");
       assert.equal(d.effort, "low");
       report.checks.chatGPTBudgetPayload = true;
       assert.equal(d.localModeling, false);
@@ -301,7 +301,7 @@ try {
   report.checks.chatGPTQualityToBudgetSelection = true;
   await chatGPTSection.locator(".advanced-models > summary").click();
   await expect(page.getByLabel("ChatGPT model", { exact: true })).toHaveValue(
-    "gpt-5.6-luna",
+    "gpt-6-luna",
   );
   await expect(
     page.getByLabel("ChatGPT reasoning", { exact: true }),

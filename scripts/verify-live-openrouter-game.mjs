@@ -10,7 +10,7 @@ if (
 process.loadEnvFile(".env.openrouter.local");
 const key = process.env.OPENROUTER_API_KEY;
 if (!key) throw Error("Missing local OpenRouter credential.");
-const model = "openai/gpt-5.6-luna";
+const model = "openai/gpt-6-luna";
 const base = "http://127.0.0.1:3024";
 let generationRequests = 0;
 let realCommands = [];

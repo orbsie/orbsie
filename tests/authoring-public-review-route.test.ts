@@ -44,7 +44,7 @@ function setup() {
   vi.stubEnv("BETTER_AUTH_SECRET", "synthetic-review-secret");
   vi.stubEnv("AI_GATEWAY_API_KEY_FREE", "synthetic-free-key");
   deps.preflight.mockResolvedValue({
-    id: "openai/gpt-5.6-luna",
+    id: "openai/gpt-6-luna",
     capabilities: {
       text: { supported: true, source: "catalog" },
       streamingText: { supported: true, source: "catalog" },
@@ -290,7 +290,7 @@ it("records final review as the third call with a partial terminal outcome", asy
         {
           phase: "final-review",
           provider: "openrouter",
-          model: "openai/gpt-5.6-luna",
+          model: "openai/gpt-6-luna",
           key: "synthetic-provider-key",
         },
         "44444444-4444-4444-8444-444444444444",
@@ -348,7 +348,7 @@ it("rejects unsupported images before ledger admission", async () => {
 it("binds the paid provider and preserves the final-review verdict-only boundary", async () => {
   setup();
   deps.preflight.mockResolvedValueOnce({
-    id: "openai/gpt-5.6-luna",
+    id: "openai/gpt-6-luna",
     capabilities: {
       text: { supported: true, source: "catalog" },
       streamingText: { supported: true, source: "catalog" },
@@ -387,7 +387,7 @@ it("binds the paid provider and preserves the final-review verdict-only boundary
     request({
       phase: "final-review",
       provider: "openrouter",
-      model: "openai/gpt-5.6-luna",
+      model: "openai/gpt-6-luna",
       key: "synthetic-provider-key",
     }),
   );

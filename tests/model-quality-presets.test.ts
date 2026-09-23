@@ -22,7 +22,7 @@ describe("inline model quality presets", () => {
       "openrouter",
       catalog([
         "openai/gpt-6-astra",
-        "openai/gpt-5.6-luna",
+        "openai/gpt-6-luna",
         "z-ai/glm-5.3-flash",
       ]),
     );
@@ -30,7 +30,7 @@ describe("inline model quality presets", () => {
       "gateway",
       catalog([
         "openai/gpt-6-astra",
-        "openai/gpt-5.6-luna",
+        "openai/gpt-6-luna",
         "zai/glm-5.3-flash",
       ]),
     );
@@ -42,14 +42,14 @@ describe("inline model quality presets", () => {
       ]),
     ).toEqual([
       ["Quality", "openai/gpt-6-astra", true],
-      ["Balanced", "openai/gpt-5.6-luna", true],
+      ["Balanced", "openai/gpt-6-luna", true],
       ["Budget", "z-ai/glm-5.3-flash", true],
     ]);
     expect(
       gateway.map(({ label, model, available }) => [label, model, available]),
     ).toEqual([
       ["Quality", "openai/gpt-6-astra", true],
-      ["Balanced", "openai/gpt-5.6-luna", true],
+      ["Balanced", "openai/gpt-6-luna", true],
       ["Budget", "zai/glm-5.3-flash", true],
     ]);
   });
@@ -65,7 +65,7 @@ describe("inline model quality presets", () => {
           defaultReasoningEffort: "low",
         },
         {
-          model: "gpt-5.6-luna",
+          model: "gpt-6-luna",
           supportedReasoningEfforts: ["low", "medium"],
           defaultReasoningEffort: "low",
         },
@@ -80,21 +80,21 @@ describe("inline model quality presets", () => {
       ]),
     ).toEqual([
       ["Quality", "gpt-6-astra", "high", true],
-      ["Balanced", "gpt-5.6-luna", "medium", true],
-      ["Budget", "gpt-5.6-luna", "low", true],
+      ["Balanced", "gpt-6-luna", "medium", true],
+      ["Budget", "gpt-6-luna", "low", true],
     ]);
     expect(
-      selectedModelQuality("chatgpt-hosted", "gpt-5.6-luna", "low", options),
+      selectedModelQuality("chatgpt-hosted", "gpt-6-luna", "low", options),
     ).toBe("Budget");
     expect(
-      selectedModelQuality("chatgpt-hosted", "gpt-5.6-luna", "high", options),
+      selectedModelQuality("chatgpt-hosted", "gpt-6-luna", "high", options),
     ).toBeNull();
   });
 
   it("keeps unavailable choices disabled and leaves custom selections neutral", () => {
     const options = modelQualityOptions(
       "openrouter",
-      catalog(["openai/gpt-5.6-luna"]),
+      catalog(["openai/gpt-6-luna"]),
     );
     expect(options.map(({ available }) => available)).toEqual([
       false,
@@ -108,16 +108,16 @@ describe("inline model quality presets", () => {
   });
 
   it("rejects malformed or duplicate catalog rows before exposing choices", () => {
-    const valid = catalog(["openai/gpt-5.6-luna"]);
+    const valid = catalog(["openai/gpt-6-luna"]);
     expect(parseCatalogModels(valid)).toEqual(valid);
     expect(
-      parseCatalogModels([{ ...valid[0], id: "~openai/gpt-5.6-luna-latest" }]),
+      parseCatalogModels([{ ...valid[0], id: "~openai/gpt-6-luna-latest" }]),
     ).not.toBeNull();
     expect(parseCatalogModels([{ ...valid[0], id: "__proto__" }])).toBeNull();
     expect(
       parseCatalogModels([
         ...valid,
-        { ...valid[0], id: "openai/gpt-5.6-luna" },
+        { ...valid[0], id: "openai/gpt-6-luna" },
       ]),
     ).toBeNull();
     expect(

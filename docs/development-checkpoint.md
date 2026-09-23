@@ -1,5 +1,32 @@
 # Development checkpoint
 
+Sep 22 browser-access repair: regular Chrome was not running. The installed
+ChatGPT extension in the Default profile connected after Chrome was opened on
+the desktop. Computer use now exposes Chrome, and a fresh ChatGPT tab shows the
+owner's signed-in Pro account. Use that browser for subsequent ChatGPT acceptance;
+no live model calls were made during this check. Recheck the browser surface at
+test time, since process/session availability can change.
+
+Sep 22 browser review loop accepted locally: the editor now carries an explicit
+review opt-in, saves the initial revision, captures revision-bound renderer
+feedback, applies at most one targeted correction under a fresh cloud journal
+segment, and publishes a final verdict. The root reviewed the worker diff and
+the production-build WebGL/software desktop/phone fixture. Signed-in synthetic
+cloud success and a conflicting latest-token refusal both pass, including
+reload/recovery of the completed second segment. Evidence:
+`docs/evidence/authoring-review-loop-20260922/`. Full unit suite: 1,570 pass,
+24 pre-existing skips; production Next build and TypeScript pass. No live model
+calls, deployment, or real provider review acceptance yet. The next bounded
+implementation handoff is stream resilience; live authoring-review acceptance
+still needs OpenRouter, funded Gateway, and the now-visible signed-in ChatGPT
+browser.
+
+Sep 22 default-model migration: Astra remains Quality; GPT-6 Luna replaces
+GPT-5.6 Luna for app Balanced, hosted Balanced/Budget, free prompts, future
+Luna worker configuration, and current live-test harness defaults. Budget for
+API providers remains GLM-5.3-Flash. Provider model pages list the new ID;
+local tests and production build pass, but no GPT-6 inference has run yet.
+
 Sep 23 next independent handoff: `docs/stream-resilience-acceptance-task.md`
 pins the unchecked stream-resilience requirement to actual provider/route/client
 failure boundaries. The existing clean-EOF toast implies connection loss without
@@ -36,9 +63,9 @@ scene digest after correction; its focused test and format check pass. Browser
 task `docs/authoring-browser-review-task.md` now requires this guard, re-derives
 correction asset policy from the reviewed project, and pins the review opt-in
 at submission. It also requires a fresh cloud journal segment for corrections:
-the initial `commit_revision` closes the first journal. Next single Luna task
-is the browser review loop in that document. Feature remains off and undeployed;
-do not claim browser/live-provider E2E until the loop is reviewed and integrated.
+the initial `commit_revision` closes the first journal. The browser review loop
+is now integrated as described above. Feature remains off and undeployed; do
+not claim live-provider E2E until its separate gate is accepted.
 
 Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed

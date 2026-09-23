@@ -29,7 +29,7 @@ try {
   const account = await rpc.request("account/read", { refreshToken: false });
   assert.equal(account.account, null);
   const result = await rpc.request("thread/start", {
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     serviceTier: "default",
     ephemeral: true,
     approvalPolicy: "never",

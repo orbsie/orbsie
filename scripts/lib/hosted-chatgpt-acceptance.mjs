@@ -1,5 +1,5 @@
 export const HOSTED_PROVIDER = "chatgpt-hosted";
-export const HOSTED_MODEL = "gpt-5.6-luna";
+export const HOSTED_MODEL = "gpt-6-luna";
 export const HOSTED_EFFORT = "low";
 export const HOSTED_TEST_LIMITS = "2-calls-180s-512kib";
 // The original hosted milestone remains a bounded two-call journey. The

@@ -22,7 +22,7 @@ const models = [
   },
   {
     id: "catalog-luna",
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     displayName: "Luna",
     supportedReasoningEfforts: ["medium", "low"],
     defaultReasoningEffort: "medium",
@@ -240,7 +240,7 @@ async function installCommonRoutes(
       generationCalls++;
       const body = request.postDataJSON();
       generationBodies.push({ model: body.model, effort: body.effort });
-      if (body.model !== "gpt-5.6-luna" || body.effort !== "low")
+      if (body.model !== "gpt-6-luna" || body.effort !== "low")
         throw Error("startup restore did not submit the saved Budget choice");
       return route.fulfill({
         contentType: "application/x-ndjson",

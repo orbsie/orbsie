@@ -9,6 +9,7 @@ import {
   modelModes,
   modelModesForProvider,
   isRecommendedModel,
+  openrouterProviderRouting,
 } from "../src/lib/model-modes";
 import { GET } from "../src/app/api/models/route";
 
@@ -120,7 +121,7 @@ describe("model catalog estimates", () => {
     ).toEqual(["no-tools", "tools"]);
     expect(modelModes.map((mode) => mode.id)).toEqual([
       "openai/gpt-6-astra",
-      "openai/gpt-5.6-luna",
+      "openai/gpt-6-luna",
       "z-ai/glm-5.3-flash",
     ]);
   });
@@ -129,12 +130,12 @@ describe("model catalog estimates", () => {
     const gateway = modelModesForProvider("gateway");
     expect(router.map(({ label, id }) => [label, id])).toEqual([
       ["Quality", "openai/gpt-6-astra"],
-      ["Balanced", "openai/gpt-5.6-luna"],
+      ["Balanced", "openai/gpt-6-luna"],
       ["Budget", "z-ai/glm-5.3-flash"],
     ]);
     expect(gateway.map(({ id }) => id)).toEqual([
       "openai/gpt-6-astra",
-      "openai/gpt-5.6-luna",
+      "openai/gpt-6-luna",
       "zai/glm-5.3-flash",
     ]);
     for (const provider of ["openrouter", "gateway"] as const) {
@@ -153,6 +154,16 @@ describe("model catalog estimates", () => {
       }
     }
     expect(isRecommendedModel("z-ai/glm-5.3-flash:batch")).toBe(false);
+  });
+  it("routes GPT-6 Luna through its listed OpenRouter providers", () => {
+    expect(openrouterProviderRouting("openai/gpt-6-luna")).toEqual({
+      order: ["OpenAI", "Amazon Bedrock"],
+      allow_fallbacks: false,
+    });
+    expect(openrouterProviderRouting("openai/gpt-5.6-luna")).toEqual({
+      order: ["OpenAI", "Amazon Bedrock", "Azure"],
+      allow_fallbacks: false,
+    });
   });
   it("excludes async batch variants even when they advertise tool support", () => {
     const data = [

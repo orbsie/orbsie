@@ -24,7 +24,7 @@ const models = [
     defaultReasoningEffort: "low",
   },
   {
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     supportedReasoningEfforts: ["medium", "low"],
     defaultReasoningEffort: "medium",
   },
@@ -109,7 +109,7 @@ describe("ChatGPT startup preference", () => {
     expect(result).toMatchObject({
       kind: "restored",
       tier: "Budget",
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       effort: "low",
     });
   });

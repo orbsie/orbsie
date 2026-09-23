@@ -422,8 +422,8 @@ export function readConfiguration(argv) {
   const authorizedTestModel = hosted
     ? HOSTED_MODEL
     : provider === "chatgpt-local"
-      ? "gpt-5.6-luna"
-      : "openai/gpt-5.6-luna";
+      ? "gpt-6-luna"
+      : "openai/gpt-6-luna";
   if (expectedModel !== authorizedTestModel)
     throw new HarnessConfigurationError(
       "Live tests are authorized for Luna only; user model selection is unaffected.",
@@ -467,9 +467,9 @@ export function readConfiguration(argv) {
           "ORBSIE_OUTPUT_CAP_TOKENS",
         );
   if (provider === "openrouter" && keyScope === "local-only") {
-    if (expectedModel !== "openai/gpt-5.6-luna")
+    if (expectedModel !== "openai/gpt-6-luna")
       throw new HarnessConfigurationError(
-        "The supplied local-only OpenRouter credential is restricted to the explicit Luna test model; set ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna.",
+        "The supplied local-only OpenRouter credential is restricted to the explicit Luna test model; set ORBSIE_EXPECTED_MODEL=openai/gpt-6-luna.",
       );
     // Owner authorization on 2026-09-10 permits a bounded cap raise to 4096
     // output tokens for the flagship/procedural live journeys, gated behind
@@ -483,9 +483,9 @@ export function readConfiguration(argv) {
       );
   }
   if (provider === "free") {
-    if (expectedModel !== "openai/gpt-5.6-luna")
+    if (expectedModel !== "openai/gpt-6-luna")
       throw new HarnessConfigurationError(
-        "The server-owned free path is restricted to the explicit Luna model; set ORBSIE_EXPECTED_MODEL=openai/gpt-5.6-luna.",
+        "The server-owned free path is restricted to the explicit Luna model; set ORBSIE_EXPECTED_MODEL=openai/gpt-6-luna.",
       );
     if (outputCap !== 4096)
       throw new HarnessConfigurationError(

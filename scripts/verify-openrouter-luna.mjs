@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { mkdir, writeFile } from "node:fs/promises";
 
-const model = "openai/gpt-5.6-luna";
+const model = "openai/gpt-6-luna";
 const maxTokens = 512;
 const key = process.env.OPENROUTER_API_KEY;
 assert(key, "Load the private local OpenRouter test environment first.");
@@ -99,7 +99,7 @@ await writeFile(
   { mode: 0o600 },
 );
 assert(
-  data.model === model || data.model === "gpt-5.6-luna",
+  data.model === model || data.model === "gpt-6-luna",
   "Unexpected returned model.",
 );
 assert.equal(
