@@ -3,13 +3,13 @@ import * as THREE from "three";
 import {
   bakeSoftwareTextureColors,
   playableEntities,
+  projectSoftwareTerrainChunk,
   requiredGeometryReady,
   type SoftwareGeometryEntry,
 } from "../src/components/software-world";
 import { entitySchema, type Project } from "../src/lib/protocol";
 
-const project = (entities: Project["entities"]) =>
-  ({ entities } as Project);
+const project = (entities: Project["entities"]) => ({ entities }) as Project;
 
 describe("software renderer geometry readiness", () => {
   it("bakes atlas colors into a clone without mutating source geometry or pixels", () => {
@@ -101,5 +101,56 @@ describe("software renderer geometry readiness", () => {
     expect(playableEntities(project([primitive]), new Map())).toEqual([
       primitive,
     ]);
+  });
+});
+
+describe("software ground chunk projection", () => {
+  const cameraFor = (
+    position: [number, number, number],
+    target: [number, number, number],
+  ) => {
+    const camera = new THREE.PerspectiveCamera(43, 390 / 844, 0.1, 250);
+    camera.position.set(...position);
+    camera.lookAt(...target);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+    return camera;
+  };
+
+  it("clips a chunk crossing the near plane to finite viewport coordinates", () => {
+    const camera = cameraFor([0, 0.01, 0], [0, 0.01, -1]);
+    const polygon = projectSoftwareTerrainChunk(
+      { lod: 0, x: -1, z: -1 },
+      camera,
+      390,
+      844,
+    );
+
+    expect(polygon).toBeDefined();
+    expect(polygon!.length).toBeGreaterThanOrEqual(3);
+    expect(
+      polygon!.every(
+        ({ x, y }) =>
+          Number.isFinite(x) &&
+          Number.isFinite(y) &&
+          x >= 0 &&
+          x <= 390 &&
+          y >= 0 &&
+          y <= 844,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects chunks behind or far outside the camera frustum", () => {
+    const camera = cameraFor([0, 2, 5], [0, 0, 0]);
+    expect(
+      projectSoftwareTerrainChunk({ lod: 0, x: 0, z: 1 }, camera, 390, 844),
+    ).toBeUndefined();
+    expect(
+      projectSoftwareTerrainChunk({ lod: 0, x: 100, z: -1 }, camera, 390, 844),
+    ).toBeUndefined();
+    expect(
+      projectSoftwareTerrainChunk({ lod: 0, x: 0, z: -1 }, camera, 0, 844),
+    ).toBeUndefined();
   });
 });

@@ -50,6 +50,12 @@ import {
 import type { WorldNavigationCommand } from "@/lib/world-navigation";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
+  selectWorldTerrainChunks,
+  worldTerrainChunkSize,
+  worldTerrainGroundViewRadius,
+  type WorldTerrainChunkKey,
+} from "@/lib/world-terrain";
+import {
   notifySceneReviewCaptureChanged,
   captureSceneReview,
   captureSceneCanvas,
@@ -281,6 +287,146 @@ type SoftwareFace = {
   depth: number;
 };
 
+export type SoftwareTerrainScreenPoint = Readonly<{ x: number; y: number }>;
+
+function terrainPlaneDistance(
+  point: THREE.Vector3,
+  plane: number,
+  tangentVertical: number,
+  tangentHorizontal: number,
+  near: number,
+  far: number,
+): number {
+  const depth = -point.z;
+  switch (plane) {
+    case 0:
+      return depth - near;
+    case 1:
+      return far - depth;
+    case 2:
+      return point.x + depth * tangentHorizontal;
+    case 3:
+      return depth * tangentHorizontal - point.x;
+    case 4:
+      return point.y + depth * tangentVertical;
+    default:
+      return depth * tangentVertical - point.y;
+  }
+}
+
+/**
+ * Project a world-aligned ground chunk after clipping it against the camera
+ * frustum. This keeps tiles crossing the near plane or viewport edges finite
+ * and prevents perspective division from creating enormous inverted paths.
+ */
+export function projectSoftwareTerrainChunk(
+  key: WorldTerrainChunkKey,
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): readonly SoftwareTerrainScreenPoint[] | undefined {
+  if (
+    !Number.isFinite(width) ||
+    width <= 0 ||
+    !Number.isFinite(height) ||
+    height <= 0 ||
+    !Number.isFinite(camera.fov) ||
+    camera.fov <= 0 ||
+    camera.fov >= 180 ||
+    !Number.isFinite(camera.aspect) ||
+    camera.aspect <= 0 ||
+    !Number.isFinite(camera.near) ||
+    camera.near <= 0 ||
+    !Number.isFinite(camera.far) ||
+    camera.far <= camera.near
+  )
+    return undefined;
+
+  let size: number;
+  try {
+    size = worldTerrainChunkSize(key.lod);
+  } catch {
+    return undefined;
+  }
+  if (!Number.isSafeInteger(key.x) || !Number.isSafeInteger(key.z))
+    return undefined;
+  const originX = key.x * size;
+  const originZ = key.z * size;
+  if (!Number.isFinite(originX) || !Number.isFinite(originZ)) return undefined;
+
+  const corners = [
+    new THREE.Vector3(originX, 0, originZ),
+    new THREE.Vector3(originX + size, 0, originZ),
+    new THREE.Vector3(originX + size, 0, originZ + size),
+    new THREE.Vector3(originX, 0, originZ + size),
+  ];
+  camera.updateMatrixWorld();
+  for (const point of corners) point.applyMatrix4(camera.matrixWorldInverse);
+
+  const tangentVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const tangentHorizontal = tangentVertical * camera.aspect;
+  if (!Number.isFinite(tangentVertical) || !Number.isFinite(tangentHorizontal))
+    return undefined;
+
+  let polygon = corners;
+  for (let plane = 0; plane < 6 && polygon.length > 0; plane++) {
+    const clipped: THREE.Vector3[] = [];
+    let previous = polygon[polygon.length - 1];
+    let previousDistance = terrainPlaneDistance(
+      previous,
+      plane,
+      tangentVertical,
+      tangentHorizontal,
+      camera.near,
+      camera.far,
+    );
+    for (const current of polygon) {
+      const currentDistance = terrainPlaneDistance(
+        current,
+        plane,
+        tangentVertical,
+        tangentHorizontal,
+        camera.near,
+        camera.far,
+      );
+      const previousInside = previousDistance >= 0;
+      const currentInside = currentDistance >= 0;
+      if (previousInside !== currentInside) {
+        const denominator = previousDistance - currentDistance;
+        if (Number.isFinite(denominator) && denominator !== 0) {
+          const amount = previousDistance / denominator;
+          clipped.push(previous.clone().lerp(current, amount));
+        }
+      }
+      if (currentInside) clipped.push(current);
+      previous = current;
+      previousDistance = currentDistance;
+    }
+    polygon = clipped;
+  }
+  if (polygon.length < 3) return undefined;
+
+  const screen: SoftwareTerrainScreenPoint[] = [];
+  for (const point of polygon) {
+    const projected = point.clone().applyMatrix4(camera.projectionMatrix);
+    if (!Number.isFinite(projected.x) || !Number.isFinite(projected.y))
+      return undefined;
+    screen.push({
+      x: THREE.MathUtils.clamp((projected.x * 0.5 + 0.5) * width, 0, width),
+      y: THREE.MathUtils.clamp((-projected.y * 0.5 + 0.5) * height, 0, height),
+    });
+  }
+  let doubledArea = 0;
+  for (let index = 0; index < screen.length; index++) {
+    const current = screen[index];
+    const next = screen[(index + 1) % screen.length];
+    doubledArea += current.x * next.y - next.x * current.y;
+  }
+  if (!Number.isFinite(doubledArea) || Math.abs(doubledArea) < 0.01)
+    return undefined;
+  return screen;
+}
+
 function projectPoint(
   point: THREE.Vector3,
   matrix: THREE.Matrix4,
@@ -469,6 +615,74 @@ export function requiredGeometryReady(
   });
 }
 
+type TerrainChunkSelectionCache = {
+  focusX: number;
+  focusY: number;
+  focusZ: number;
+  distance: number;
+  aspect: number;
+  chunks: readonly WorldTerrainChunkKey[];
+};
+
+function terrainChunksForView(
+  cache: TerrainChunkSelectionCache,
+  navigation: WorldNavigationState,
+  aspect: number,
+): readonly WorldTerrainChunkKey[] {
+  const [focusX, focusY, focusZ] = navigation.target;
+  if (
+    cache.focusX === focusX &&
+    cache.focusY === focusY &&
+    cache.focusZ === focusZ &&
+    cache.distance === navigation.distance &&
+    cache.aspect === aspect
+  )
+    return cache.chunks;
+  cache.focusX = focusX;
+  cache.focusY = focusY;
+  cache.focusZ = focusZ;
+  cache.distance = navigation.distance;
+  cache.aspect = aspect;
+  try {
+    cache.chunks = selectWorldTerrainChunks({
+      focus: navigation.target,
+      distance: navigation.distance,
+      aspect,
+    });
+  } catch {
+    // Keep the renderer alive for a malformed camera intent. The gradient
+    // remains behind the scene until the next valid navigation update.
+    cache.chunks = [];
+  }
+  return cache.chunks;
+}
+
+function drawWorkspaceGround(
+  ctx: CanvasRenderingContext2D,
+  project: Project,
+  navigation: WorldNavigationState,
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+  cache: TerrainChunkSelectionCache,
+) {
+  const chunks = terrainChunksForView(cache, navigation, width / height);
+  if (!chunks.length) return;
+  ctx.fillStyle = project.environment.ground;
+  for (const chunk of chunks) {
+    const polygon = projectSoftwareTerrainChunk(chunk, camera, width, height);
+    if (!polygon) continue;
+    ctx.beginPath();
+    ctx.moveTo(polygon[0].x, polygon[0].y);
+    for (let index = 1; index < polygon.length; index++)
+      ctx.lineTo(polygon[index].x, polygon[index].y);
+    ctx.closePath();
+    // Match the continuous base fill exactly so clipped tile edges cannot
+    // introduce visible seams.
+    ctx.fill();
+  }
+}
+
 function drawScene(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -481,6 +695,9 @@ function drawScene(
   time: number,
   camera: THREE.PerspectiveCamera,
   picks: PickedEntity[],
+  settledWorkspace: boolean,
+  navigation: WorldNavigationState,
+  terrainCache: TerrainChunkSelectionCache,
 ) {
   const width = canvas.clientWidth || 1;
   const height = canvas.clientHeight || 1;
@@ -494,34 +711,50 @@ function drawScene(
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  const gradient = ctx.createRadialGradient(
-    width * 0.48,
-    height * 0.34,
-    10,
-    width * 0.48,
-    height * 0.5,
-    Math.max(width, height),
-  );
-  gradient.addColorStop(0, "#faf8e8");
-  gradient.addColorStop(0.55, "#e7efe3");
-  gradient.addColorStop(1, "#d8eae6");
-  ctx.fillStyle = gradient;
+  const groundVisible = settledWorkspace && camera.position.y > 0;
+  if (groundVisible) ctx.fillStyle = project.environment.ground;
+  else {
+    const gradient = ctx.createRadialGradient(
+      width * 0.48,
+      height * 0.34,
+      10,
+      width * 0.48,
+      height * 0.5,
+      Math.max(width, height),
+    );
+    gradient.addColorStop(0, "#faf8e8");
+    gradient.addColorStop(0.55, "#e7efe3");
+    gradient.addColorStop(1, "#d8eae6");
+    ctx.fillStyle = gradient;
+  }
   ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = "rgba(93, 146, 122, .1)";
-  ctx.beginPath();
-  ctx.ellipse(
-    width / 2,
-    height * 0.72,
-    width * 0.4,
-    height * 0.12,
-    0,
-    0,
-    Math.PI * 2,
-  );
-  ctx.fill();
+  if (!settledWorkspace) {
+    ctx.fillStyle = "rgba(93, 146, 122, .1)";
+    ctx.beginPath();
+    ctx.ellipse(
+      width / 2,
+      height * 0.72,
+      width * 0.4,
+      height * 0.12,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
   camera.aspect = width / Math.max(1, height);
   camera.updateProjectionMatrix();
   camera.updateMatrixWorld();
+  if (groundVisible)
+    drawWorkspaceGround(
+      ctx,
+      project,
+      navigation,
+      camera,
+      width,
+      height,
+      terrainCache,
+    );
   picks.length = 0;
   const faces: SoftwareFace[] = [];
   const markers: SoftwareMarker[] = [];
@@ -661,6 +894,14 @@ export default function SoftwareWorld({
   const announcedReady = useRef(false);
   const rendererReady = useRef(false);
   const picksRef = useRef<PickedEntity[]>([]);
+  const terrainCacheRef = useRef<TerrainChunkSelectionCache>({
+    focusX: Number.NaN,
+    focusY: Number.NaN,
+    focusZ: Number.NaN,
+    distance: Number.NaN,
+    aspect: Number.NaN,
+    chunks: [],
+  });
   const generationRef = useRef(-1);
   const previousReset = useRef(reset);
   const previousProjectId = useRef(project.id);
@@ -1061,7 +1302,25 @@ export default function SoftwareWorld({
           const pose = worldNavigationCameraPose(currentNavigation);
           camera.position.set(...pose.position);
           camera.lookAt(...pose.target);
-          const far = worldNavigationFarPlane(currentNavigation);
+          let groundFar = 0;
+          try {
+            const aspect =
+              (canvas.clientWidth || 1) / Math.max(1, canvas.clientHeight || 1);
+            groundFar =
+              currentNavigation.distance +
+              worldTerrainGroundViewRadius(
+                currentNavigation.distance,
+                aspect,
+                currentNavigation.target[1],
+              );
+          } catch {
+            // Keep the navigation far plane if the viewport cannot be used by
+            // terrain selection; the renderer remains available regardless.
+          }
+          const far = Math.max(
+            worldNavigationFarPlane(currentNavigation),
+            groundFar * 1.01,
+          );
           if (camera.far !== far) {
             camera.far = far;
             camera.updateProjectionMatrix();
@@ -1087,6 +1346,12 @@ export default function SoftwareWorld({
           now / 1000,
           camera,
           picksRef.current,
+          currentPhase === "editing" &&
+            transition.settled &&
+            transition.progress >= 1 &&
+            initializedScene.current,
+          navigationRef.current,
+          terrainCacheRef.current,
         );
         const drawnProject = drawnRevisionRef.current;
         if (
