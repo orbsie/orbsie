@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 terrain chunk-selection core accepted locally (`435a158`): signed
+world-aligned 64m base keys, power-of-two LOD, a bounded 7×7 selection sized
+for the shared 43-degree/30-degree camera footprint including focus height,
+and deterministic world-coordinate appearance at flat y=0. Root reviewed
+negative-boundary, seam, revisit, 10km, coordinate-limit and max-zoom cases;
+8 focused tests, TypeScript, formatting and diff checks passed. This is pure
+selection, not rendered terrain. WebGL ground integration is the current
+bounded task; software ground, visibility, precision and mobile measurements
+follow. The disabled OrbitControls path was removed (`087a275`) after shared
+gesture migration; TypeScript and formatting passed.
+
 Sep 23 software gesture adapter accepted locally (`723ee55`): both renderers
 now use the World-owned navigation controller/state, so fallback retains the
 target, heading and zoom. Software pointer starts use current projected picks
