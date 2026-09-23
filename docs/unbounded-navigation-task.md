@@ -56,6 +56,11 @@ navigation gestures on the scene must have an explicit, non-conflicting mapping
 and must not produce accidental player input. Handle pointer cancellation,
 orientation changes and renderer fallback without a stuck gesture. Respect
 reduced motion when easing camera changes.
+Use primary-button background drag (including a trackpad click-drag) for pan,
+wheel for zoom, secondary-button drag for heading rotation, one-finger
+background touch drag for pan, and two-finger pinch for zoom. A two-finger
+twist may rotate heading if it can be distinguished reliably from pinch.
+Suppress the context menu only for an active scene rotation, not globally.
 
 Current input seams for the gesture slice: WebGL `Formation` selects/activates
 through mesh and particle `onClick`; Canvas `onPointerMissed` clears selection.
