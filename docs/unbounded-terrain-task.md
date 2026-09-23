@@ -32,7 +32,11 @@ test negative coordinates, 10km travel, and the coordinate/zoom limits.
   after arrival; authored island geometry remains an ordinary scene object.
 - `src/components/software-world.tsx` paints a screen-space ellipse and
   projects every triangle from every entity on every frame. Nearby visible
-  terrain and visibility/picking need explicit bounded work here too.
+  terrain and visibility/picking need explicit bounded work here too. Its
+  entity triangle path currently projects without near-plane clipping; an
+  AABB touching the camera can still make a huge inverted path even after
+  object-level culling. Clip or reject those triangles in a separate bounded
+  software-rendering slice before release.
 - WebGL `Formation` currently sets `frustumCulled={false}` for a render mesh;
   do not solve distant placement by drawing all distant objects. Preserve seed
   formation and targeted object selection when visibility changes. Its local
