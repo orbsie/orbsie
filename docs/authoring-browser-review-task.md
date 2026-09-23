@@ -16,6 +16,9 @@ The API initial route also returns `X-Orbsie-Review-Image-Supported: 1|0`,
 derived from its admitted catalog model. Treat absence or any value other than
 `1` as structural-only. Obtain the equivalent admitted capability for hosted
 ChatGPT; a UI preference or browser guess is not authority for image input.
+The UI submits through `src/components/orbsie.tsx` near `selectedConnection`
+and calls `store.run`; carry the server config opt-in across that boundary
+explicitly rather than reading a mutable global after the request starts.
 
 After a clean initial commit and persisted revision, keep `building` and the
 same controller active while awaiting renderer readiness. Use the selected
