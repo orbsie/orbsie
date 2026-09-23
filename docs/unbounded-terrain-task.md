@@ -35,7 +35,10 @@ test negative coordinates, 10km travel, and the coordinate/zoom limits.
   terrain and visibility/picking need explicit bounded work here too.
 - WebGL `Formation` currently sets `frustumCulled={false}` for a render mesh;
   do not solve distant placement by drawing all distant objects. Preserve seed
-  formation and targeted object selection when visibility changes.
+  formation and targeted object selection when visibility changes. Its local
+  progress resets when remounted, so culling an offscreen ready object must not
+  replay its orb formation on every return; retain an appropriate presentation
+  revision or hydrate completed objects directly.
 - `src/lib/server/scene-review-observations.ts` accepts structural bounds only
   within ±1000. Broaden the world-space feedback contract for the phase-one
   position range while keeping its byte and object-count budgets.
