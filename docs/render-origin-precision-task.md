@@ -5,6 +5,8 @@ limit. At that magnitude, a Float32 world position has coarse increments
 relative to the player's small meshes. The authoritative project, simulation,
 saved navigation, procedural recipes, review bounds, and publication remain in
 double-precision world coordinates; only renderer-local coordinates may move.
+For example, local `Math.fround` inspection gives a 0.125-unit change for
+`Math.fround(1_000_000 + 0.1) - Math.fround(1_000_000)`, rather than 0.1.
 
 The terrain geometry already stores tile-local Float32 vertices and positions
 the mesh at its world key. Choose a stable, quantized camera/player origin and
