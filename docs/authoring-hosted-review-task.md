@@ -12,14 +12,19 @@ digest, capability, or completion record as authority. An anonymous guest
 BetterAuth session is sufficient; an Orbsie email/password is not required.
 
 Extend the actual managed host contract with versioned review capability
-negotiation on `/private/operation/status`, then a typed
+negotiation on `/private/operation/status` (a distinct
+`x-orbsie-scene-review: 1` contract), then a typed
 `/private/operation/review` bound to the exact operation ID and epoch. A host
-without the capability must be rejected before inference. The review request
+without the capability must be rejected before ledger admission or inference.
+The review request
 may include a bounded image, so the private body cap must cover the validated
 review payload without relaxing unrelated control-route limits. The host runs
 `executeSceneReview` through its managed `createChatGPTGeneration` runtime and
-returns only the parsed verdict, canonical corrections and resulting binding.
-The web side validates the private result before completing the ledger phase.
+returns only a versioned result with its operation ID/epoch, parsed verdict,
+canonical corrections and resulting binding. The web side checks that private
+identity, replays/validates the corrections against its admitted snapshot and
+recomputes the binding before completing the ledger phase. A private JSON
+object alone is not scene-completion authority.
 
 Keep the existing credential lease, operation deadline, seal/save/clear and
 independent cleanup headroom. A Disconnect, stale epoch, cancel, late reply or
