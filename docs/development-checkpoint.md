@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 Android emulator touch-hold fix: the current OpenRouter standalone ZIP
+loaded in Android 15 Chrome via loopback and displayed its movement controls.
+A 700 ms hold moved the world but opened Chrome's text-selection toolbar on
+the arrow. `src/player/player.css` and editor `src/app/globals.css` now suppress
+selection/callout on touch buttons; the rebuilt player CSS candidate moved
+without the toolbar on the same emulator. The old ZIP remained immutable.
+`scripts/verify-player-touch-layout.mjs` passed portrait/landscape and
+synthetic safe-area checks. Before/after screenshots are in
+`docs/evidence/android-touch-hold-20260923/`. This is an emulator/CSS
+candidate check, not a fresh export/publication or physical-device pass.
+
 Sep 23 current-build OpenRouter live acceptance (`openrouter-post-residency`):
 an isolated local production server with exact origin and 4,096-token ceiling
 ran the standard two-call browser journey on `openai/gpt-6-luna`, low/default.

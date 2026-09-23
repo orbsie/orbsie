@@ -1149,6 +1149,11 @@ kbd {
 .touch-controls {
   display: none;
 }
+.touch-controls button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .webgl-fallback,
 .world-loading {
   position: absolute;
