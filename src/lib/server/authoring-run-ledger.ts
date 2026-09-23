@@ -62,6 +62,7 @@ export type AdmitAuthoringReviewInput = AuthoringRunBinding & {
   reviewPhase: AuthoringReviewPhase;
   expectedRevision: number;
   expectedSceneBindingDigest: string;
+  signal?: AbortSignal;
 };
 
 export type CompleteAuthoringReviewInput = AuthoringRunBinding & {
@@ -71,6 +72,7 @@ export type CompleteAuthoringReviewInput = AuthoringRunBinding & {
   revision: number;
   sceneBindingDigest: string;
   accepted: boolean;
+  signal?: AbortSignal;
 };
 
 type LedgerRow = {
@@ -119,6 +121,11 @@ const PROVIDERS = new Set<AuthoringProvider>([
   "gateway",
   "chatgpt",
 ]);
+const REVIEW_TRANSACTION_OPTIONS = {
+  acquireTimeoutMs: 5000,
+  lockTimeoutMs: 5000,
+  statementTimeoutMs: 10000,
+} as const;
 
 function secret() {
   const value = process.env.BETTER_AUTH_SECRET;
@@ -268,6 +275,29 @@ function assertPhaseToken(row: LedgerRow, token: string) {
     );
 }
 
+function cancellationReason(signal: AbortSignal) {
+  return signal.reason ?? Error("Generation cancelled.");
+}
+
+async function failCancelledReview(
+  input: AuthoringRunBinding,
+  runId: string,
+  phaseToken: string,
+  revision: number,
+  sceneBindingDigest: string,
+) {
+  // The finishing token is intentionally passed to the independent cleanup
+  // transaction. If a later phase has replaced it, this exact-token fence
+  // rejects the stale cleanup and leaves the newer phase untouched.
+  await failAuthoringRun({
+    ...input,
+    runId,
+    phaseToken,
+    revision,
+    sceneBindingDigest,
+  });
+}
+
 export async function issueAuthoringRun(input: IssueAuthoringRunInput) {
   assertBinding(input);
   assertRevision(input.initialRevision, "Initial revision");
@@ -395,10 +425,13 @@ export async function failAuthoringRun(
       assertSameBinding(row, input);
       assertPhaseToken(row, input.phaseToken);
       if (
-        !["active", "reviewing", "final-review"].includes(row.phase) &&
+        !["active", "reviewing", "final-review", "finalized"].includes(
+          row.phase,
+        ) &&
         !(
           row.phase === "completed" &&
-          row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS
+          (row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS ||
+            row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS - 1)
         )
       )
         throw new AuthoringRunLedgerError(
@@ -406,8 +439,13 @@ export async function failAuthoringRun(
           "The authoring phase cannot be failed now.",
         );
       const updated = await client.query(
-        "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp() AND (phase <> 'completed' OR remaining_review_slots=$3)",
-        [input.runId, row.phase, AUTHORING_RUN_REVIEW_SLOTS],
+        "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp() AND (phase <> 'completed' OR remaining_review_slots IN ($3,$4))",
+        [
+          input.runId,
+          row.phase,
+          AUTHORING_RUN_REVIEW_SLOTS,
+          AUTHORING_RUN_REVIEW_SLOTS - 1,
+        ],
       );
       if (updated.rowCount !== 1)
         throw new AuthoringRunLedgerError(
@@ -438,54 +476,98 @@ export async function admitAuthoringReview(input: AdmitAuthoringReviewInput) {
     "Expected scene binding digest",
   );
   const phaseToken = randomUUID();
-  return withDatabaseTransaction(async (client) => {
-    const row = await lockedRun(client, input.runId);
-    assertSameBinding(row, input);
-    if (row.phase !== "completed")
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "The authoring run is already in a review phase or is terminal.",
-      );
-    if (row.completed_revision !== input.expectedRevision)
-      throw new AuthoringRunLedgerError(
-        "revision-mismatch",
-        "Review revision is stale.",
-      );
-    if (row.completed_scene_digest !== input.expectedSceneBindingDigest)
-      throw new AuthoringRunLedgerError(
-        "binding-mismatch",
-        "Review scene binding is stale.",
-      );
-    const expectedSlots = input.reviewPhase === "review" ? 2 : 1;
-    if (row.remaining_review_slots !== expectedSlots)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "This review phase has already been consumed.",
-      );
-    const nextPhase =
-      input.reviewPhase === "review" ? "reviewing" : "final-review";
-    const updated = await client.query(
-      "UPDATE orbsie_authoring_runs SET phase=$2,remaining_review_slots=remaining_review_slots-1,phase_token_hash=$3,phase_token_expires_at=LEAST(expires_at,clock_timestamp()+$5 * interval '1 minute'),updated_at=clock_timestamp() WHERE run_id=$1 AND phase='completed' AND remaining_review_slots=$4 AND expires_at > clock_timestamp()",
-      [
-        input.runId,
-        nextPhase,
-        tokenHash(phaseToken),
-        expectedSlots,
-        AUTHORING_RUN_TTL_MS / 60_000,
-      ],
+  let cancellationCleanupAttempted = false;
+  try {
+    const result = await withDatabaseTransaction(
+      async (client) => {
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        const row = await lockedRun(client, input.runId);
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        assertSameBinding(row, input);
+        if (row.phase !== "completed")
+          throw new AuthoringRunLedgerError(
+            "phase-conflict",
+            "The authoring run is already in a review phase or is terminal.",
+          );
+        if (row.completed_revision !== input.expectedRevision)
+          throw new AuthoringRunLedgerError(
+            "revision-mismatch",
+            "Review revision is stale.",
+          );
+        if (row.completed_scene_digest !== input.expectedSceneBindingDigest)
+          throw new AuthoringRunLedgerError(
+            "binding-mismatch",
+            "Review scene binding is stale.",
+          );
+        const expectedSlots = input.reviewPhase === "review" ? 2 : 1;
+        if (row.remaining_review_slots !== expectedSlots)
+          throw new AuthoringRunLedgerError(
+            "phase-conflict",
+            "This review phase has already been consumed.",
+          );
+        const nextPhase =
+          input.reviewPhase === "review" ? "reviewing" : "final-review";
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        const updated = await client.query(
+          "UPDATE orbsie_authoring_runs SET phase=$2,remaining_review_slots=remaining_review_slots-1,phase_token_hash=$3,phase_token_expires_at=LEAST(expires_at,clock_timestamp()+$5 * interval '1 minute'),updated_at=clock_timestamp() WHERE run_id=$1 AND phase='completed' AND remaining_review_slots=$4 AND expires_at > clock_timestamp()",
+          [
+            input.runId,
+            nextPhase,
+            tokenHash(phaseToken),
+            expectedSlots,
+            AUTHORING_RUN_TTL_MS / 60_000,
+          ],
+        );
+        if (updated.rowCount !== 1)
+          throw new AuthoringRunLedgerError(
+            "phase-conflict",
+            "Review admission changed before commit.",
+          );
+        return {
+          runId: input.runId,
+          reviewPhase: input.reviewPhase,
+          phaseToken,
+          remainingReviewSlots: expectedSlots - 1,
+        };
+      },
+      { ...REVIEW_TRANSACTION_OPTIONS, signal: input.signal },
     );
-    if (updated.rowCount !== 1)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "Review admission changed before commit.",
-      );
-    return {
-      runId: input.runId,
-      reviewPhase: input.reviewPhase,
-      phaseToken,
-      remainingReviewSlots: expectedSlots - 1,
-    };
-  });
+    if (input.signal?.aborted && !cancellationCleanupAttempted) {
+      cancellationCleanupAttempted = true;
+      try {
+        await failCancelledReview(
+          input,
+          input.runId,
+          phaseToken,
+          input.expectedRevision,
+          input.expectedSceneBindingDigest,
+        );
+      } catch {
+        // Preserve cancellation while the exact-token fence prevents stale
+        // cleanup from touching a newer phase.
+      }
+      throw cancellationReason(input.signal);
+    }
+    return result;
+  } catch (error) {
+    if (input.signal?.aborted && !cancellationCleanupAttempted) {
+      cancellationCleanupAttempted = true;
+      try {
+        await failCancelledReview(
+          input,
+          input.runId,
+          phaseToken,
+          input.expectedRevision,
+          input.expectedSceneBindingDigest,
+        );
+      } catch {
+        // The transaction may have rolled back, or a newer phase may already
+        // own the token. Either outcome must preserve the original cancel.
+      }
+      throw cancellationReason(input.signal);
+    }
+    throw error;
+  }
 }
 
 /** Complete one internal review phase before a later final admission. */
@@ -507,64 +589,112 @@ export async function completeAuthoringReview(
     );
   assertRevision(input.revision, "Review revision");
   assertDigest(input.sceneBindingDigest, "Review scene binding digest");
-  return withDatabaseTransaction(async (client) => {
-    const row = await lockedRun(client, input.runId);
-    assertSameBinding(row, input);
-    assertPhaseToken(row, input.phaseToken);
-    const expectedPhase =
-      input.reviewPhase === "review" ? "reviewing" : "final-review";
-    if (row.phase !== expectedPhase)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "Review phase is no longer active.",
-      );
-    if (
-      row.completed_revision !== null &&
-      input.revision < row.completed_revision
-    )
-      throw new AuthoringRunLedgerError(
-        "revision-mismatch",
-        "Review revision moved backwards.",
-      );
-    const sameCompletedScene =
-      input.revision === row.completed_revision &&
-      input.sceneBindingDigest === row.completed_scene_digest;
-    if (input.reviewPhase === "final-review" && !sameCompletedScene)
-      throw new AuthoringRunLedgerError(
-        "revision-mismatch",
-        "The final review cannot mutate the reviewed scene.",
-      );
-    if (input.reviewPhase === "review" && input.accepted && !sameCompletedScene)
-      throw new AuthoringRunLedgerError(
-        "revision-mismatch",
-        "An accepted review cannot mutate the reviewed scene.",
-      );
-    const terminal =
-      input.reviewPhase === "final-review" ||
-      (input.reviewPhase === "review" && input.accepted);
-    const nextPhase = terminal ? "finalized" : "completed";
-    const nextSlots = terminal ? 0 : row.remaining_review_slots;
-    const updated = await client.query(
-      "UPDATE orbsie_authoring_runs SET phase=$2,remaining_review_slots=$3,completed_revision=$4,completed_scene_digest=$5,phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$6 AND expires_at > clock_timestamp()",
-      [
-        input.runId,
-        nextPhase,
-        nextSlots,
-        input.revision,
-        input.sceneBindingDigest,
-        expectedPhase,
-      ],
+  let cancellationCleanupAttempted = false;
+  try {
+    const result = await withDatabaseTransaction(
+      async (client) => {
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        const row = await lockedRun(client, input.runId);
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        assertSameBinding(row, input);
+        assertPhaseToken(row, input.phaseToken);
+        const expectedPhase =
+          input.reviewPhase === "review" ? "reviewing" : "final-review";
+        if (row.phase !== expectedPhase)
+          throw new AuthoringRunLedgerError(
+            "phase-conflict",
+            "Review phase is no longer active.",
+          );
+        if (
+          row.completed_revision !== null &&
+          input.revision < row.completed_revision
+        )
+          throw new AuthoringRunLedgerError(
+            "revision-mismatch",
+            "Review revision moved backwards.",
+          );
+        const sameCompletedScene =
+          input.revision === row.completed_revision &&
+          input.sceneBindingDigest === row.completed_scene_digest;
+        if (input.reviewPhase === "final-review" && !sameCompletedScene)
+          throw new AuthoringRunLedgerError(
+            "revision-mismatch",
+            "The final review cannot mutate the reviewed scene.",
+          );
+        if (
+          input.reviewPhase === "review" &&
+          input.accepted &&
+          !sameCompletedScene
+        )
+          throw new AuthoringRunLedgerError(
+            "revision-mismatch",
+            "An accepted review cannot mutate the reviewed scene.",
+          );
+        const terminal =
+          input.reviewPhase === "final-review" ||
+          (input.reviewPhase === "review" && input.accepted);
+        const nextPhase = terminal ? "finalized" : "completed";
+        const nextSlots = terminal ? 0 : row.remaining_review_slots;
+        if (input.signal?.aborted) throw cancellationReason(input.signal);
+        const updated = await client.query(
+          "UPDATE orbsie_authoring_runs SET phase=$2,remaining_review_slots=$3,completed_revision=$4,completed_scene_digest=$5,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$6 AND expires_at > clock_timestamp()",
+          [
+            input.runId,
+            nextPhase,
+            nextSlots,
+            input.revision,
+            input.sceneBindingDigest,
+            expectedPhase,
+          ],
+        );
+        if (updated.rowCount !== 1)
+          throw new AuthoringRunLedgerError(
+            "phase-conflict",
+            "Review phase changed before completion.",
+          );
+        return {
+          runId: input.runId,
+          phase: nextPhase as "completed" | "finalized",
+        };
+      },
+      { ...REVIEW_TRANSACTION_OPTIONS, signal: input.signal },
     );
-    if (updated.rowCount !== 1)
-      throw new AuthoringRunLedgerError(
-        "phase-conflict",
-        "Review phase changed before completion.",
-      );
-    return {
-      runId: input.runId,
-      phase: nextPhase as "completed" | "finalized",
-    };
-  });
+    if (input.signal?.aborted && !cancellationCleanupAttempted) {
+      cancellationCleanupAttempted = true;
+      try {
+        await failCancelledReview(
+          input,
+          input.runId,
+          input.phaseToken,
+          input.revision,
+          input.sceneBindingDigest,
+        );
+      } catch {
+        // Preserve cancellation while the exact-token fence prevents stale
+        // cleanup from touching a newer phase.
+      }
+      throw cancellationReason(input.signal);
+    }
+    return result;
+  } catch (error) {
+    if (input.signal?.aborted && !cancellationCleanupAttempted) {
+      cancellationCleanupAttempted = true;
+      try {
+        await failCancelledReview(
+          input,
+          input.runId,
+          input.phaseToken,
+          input.revision,
+          input.sceneBindingDigest,
+        );
+      } catch {
+        // The update may have rolled back, or a newer phase may already own
+        // the token. Either outcome must preserve the original cancel.
+      }
+      throw cancellationReason(input.signal);
+    }
+    throw error;
+  }
 }
 
 export async function readAuthoringRun(runId: string) {

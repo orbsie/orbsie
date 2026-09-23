@@ -32,11 +32,14 @@ COMMIT cancellation gaps and diagnostics. Do not repeat finished investigation.
 
 USAGE RESUMED: authoritative quota 31%used/69%remaining on 2026-09-22.
 The owner's below20% stop rule remains active. Goal returned to active after
-prior blocked audit. Single Luna worker /root/review_ledger_fence owns only
-review-phase ledger cancellation/transaction bounds and focused tests. Root
-provisioned isolated PostgreSQL15 container orbsie-review-ledger-20260922 on
-127.0.0.1:32768 for worker tests; stop it after acceptance. No model calls.
-Root committed the next review-route/browser contract ef8e773. Initial/editor
+prior blocked audit. Review-phase ledger fence accepted locally: signal-aware
+bounded admission/completion, retained exact private token through COMMIT
+acknowledgement, independent cancellation cleanup and stale-token isolation.
+Worker and root confirmed 21/21 ledger tests on real PostgreSQL15 and whole-tree
+typecheck. No model calls. Root committed public/hosted review handoff contracts
+54173bb and 18181a2. Next single Luna task is the public review coordinator and
+route in docs/authoring-public-review-task.md. Root committed the earlier
+review-route/browser contract ef8e773. Initial/editor
 review still not wired or deployed; current E2E objective remains incomplete.
 Gateway credit read 2026-09-22 HTTP200 still -0.0033684 with zero model calls;
 evidence docs/evidence/gateway-credit-check-20260922. Owner asked asynchronously

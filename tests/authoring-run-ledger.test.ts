@@ -158,7 +158,6 @@ function fakeDatabase(
       ledger.remaining_review_slots = Number(params[2]);
       ledger.completed_revision = Number(params[3]);
       ledger.completed_scene_digest = String(params[4]);
-      ledger.phase_token_hash = null;
       return { rowCount: 1, rows: [] };
     }
     throw Error(`Unhandled synthetic query: ${text}`);
@@ -279,6 +278,16 @@ describe("internal authoring-run ledger", () => {
       expectedRevision: 3,
       expectedSceneBindingDigest: "e".repeat(64),
     });
+    await expect(
+      failAuthoringRun({
+        ...binding,
+        runId: issued.runId,
+        phaseToken: first.phaseToken,
+        revision: 3,
+        sceneBindingDigest: "e".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "token-mismatch" });
+    expect((await readAuthoringRun(issued.runId)).phase).toBe("final-review");
     await completeAuthoringReview({
       ...binding,
       runId: issued.runId,
@@ -331,6 +340,23 @@ describe("internal authoring-run ledger", () => {
     });
     expect(database.ledger?.phase).toBe("finalized");
     expect(database.ledger?.remaining_review_slots).toBe(0);
+    await failAuthoringRun({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: review.phaseToken,
+      revision: 1,
+      sceneBindingDigest: "d".repeat(64),
+    });
+    expect(database.ledger?.phase).toBe("failed");
+    await expect(
+      failAuthoringRun({
+        ...binding,
+        runId: issued.runId,
+        phaseToken: review.phaseToken,
+        revision: 1,
+        sceneBindingDigest: "d".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "token-mismatch" });
     await expect(
       admitAuthoringReview({
         ...binding,
