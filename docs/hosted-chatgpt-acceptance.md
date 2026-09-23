@@ -12,7 +12,7 @@ ChatGPT cookies. A missing or expired account/runtime stops before inference
 and produces a blocked result. Orbsie login alone does not prove ChatGPT consent.
 
 Inputs are an HTTPS Orbsie target, explicit live-test opt-in, exact model
-`gpt-5.6-luna`, the owner-approved bounds acknowledgement
+`gpt-6-luna`, the owner-approved bounds acknowledgement
 `ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib`, and a private Orbsie
 storage-state file supplied expressly for this test. Validate every gate before
 reading the file. Require permissions 0600 or stricter and admit only cookies
@@ -90,7 +90,7 @@ product, add the exact bounds acknowledgement:
 ```sh
 ORBSIE_LIVE_E2E=1 \
 ORBSIE_TEST_URL=https://orbsie.com \
-ORBSIE_EXPECTED_MODEL=gpt-5.6-luna \
+ORBSIE_EXPECTED_MODEL=gpt-6-luna \
 ORBSIE_SERVICE_TIER=default \
 ORBSIE_CHATGPT_TEST_LIMITS=2-calls-180s-512kib \
 ORBSIE_ACCOUNT_STORAGE_STATE=/absolute/private/orbsie-state.json \

@@ -1,8 +1,10 @@
 # Orbsie model recommendations
 
-Reviewed 2026-09-07 against `prompt.md`, `src/lib/server/generation.ts`, official vendor documentation, and unauthenticated live provider catalogs. This is a documented shortlist, not an Orbsie benchmark. No model inference calls were made for this research. Catalog fetch timestamps (UTC): openrouter 2026-09-07T23:13:49+00:00; gateway 2026-09-07T23:13:49+00:00.
+The current defaults live in `src/lib/model-modes.ts` and `src/lib/chatgpt-model-presets.ts`. As of 2026-09-22 they are Quality: GPT-6 Astra, Balanced: GPT-6 Luna, and Budget: GLM-5.3-Flash for API providers or GPT-6 Luna with low reasoning for ChatGPT. The three labels are the default selector; supported catalog models remain available through advanced selection. Live development tests use Luna only. Prices must come from the selected provider's current catalog rather than this historical research.
 
-## Recommended implementation map
+The remainder records the 2026-09-07 shortlist against `prompt.md`, `src/lib/server/generation.ts`, official vendor documentation, and unauthenticated provider catalogs. It is not the current configuration or an Orbsie benchmark. No model inference calls were made for this research. Catalog fetch timestamps (UTC): openrouter 2026-09-07T23:13:49+00:00; gateway 2026-09-07T23:13:49+00:00.
+
+## Historical candidate map (superseded)
 
 Expose three modes; put every other compatible catalog model under **Advanced**. Default new connections to **Balanced**, preserve explicit saved choices, and never silently substitute another model when a selected recommendation is unavailable.
 
@@ -41,4 +43,4 @@ All three recommendations document streaming and relevant API support upstream. 
 
 Refresh membership/capabilities when selecting models. Catalog presence does not prove a particular account has credits, routing access, or successful NDJSON generation. Keep non-text, batch-only, and incompatible models out of selectable generation options; Advanced should surface incompatibility clearly.
 
-Under the owner's current constraint, live tests must resolve exactly `openai/gpt-6-astra` and explicitly request low reasoning, failing if unavailable. Do not benchmark the alternatives without a changed instruction. Future authorized comparisons should measure valid completion rate, unrelated-object preservation, spatial/playability checks, first valid reservation latency, and total billed cost per accepted revision using identical prompts and scene checkpoints. No latency, visual-quality winner, or account-level availability claim is established by this note.
+The earlier Astra-only live-test constraint has been superseded: development model calls now use Luna only. Future authorized comparisons should measure valid completion rate, unrelated-object preservation, spatial/playability checks, first valid reservation latency, and total billed cost per accepted revision using identical prompts and scene checkpoints. No latency, visual-quality winner, or account-level availability claim is established by this note.
