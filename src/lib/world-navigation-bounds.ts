@@ -69,7 +69,7 @@ export function committedWorldNavigationBounds(
         bounds.push(transformBounds(worldMatrix, local));
       } catch {
         // Ignore corrupt metadata or an unusable entity. The navigation
-        // command will fall back to the initial workspace if none remain.
+        // command will return to the default view if none remain.
       }
     }
     return bounds;
