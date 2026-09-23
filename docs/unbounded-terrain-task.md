@@ -34,10 +34,9 @@ test negative coordinates, 10km travel, and the coordinate/zoom limits.
   their normal rules. This saves draw work but not geometry/asset memory.
 - `src/components/software-world.tsx` paints bounded terrain polygons after
   the transition and filters offscreen entities during editing. Its entity
-  triangle path still projects without near-plane clipping; an
-  AABB touching the camera can still make a huge inverted path even after
-  object-level culling. Clip or reject those triangles in a separate bounded
-  software-rendering slice before release.
+  triangle path now clips polygons to the camera frustum before projection,
+  preventing a near-plane crossing from creating an inverted screen path.
+  Browser performance and visual parity are still unmeasured.
 - WebGL `Formation` retains its local formation progress while hidden.
   Evicting distant ready objects later must release asset/geometry leases
   without replaying their orb formation on return or changing gameplay
