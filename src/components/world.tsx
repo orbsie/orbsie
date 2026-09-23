@@ -24,6 +24,7 @@ import {
   runtimeEntityMatrix,
   usesSceneHierarchy,
 } from "@/lib/scene-runtime";
+import type { ResolvedScene } from "@/lib/scene-transform";
 import {
   markExperience,
   markVisibleSeed,
@@ -63,6 +64,7 @@ import {
   type WorldNavigationProjectState,
   type WorldNavigationCommand,
   type WorldNavigationVec3,
+  type WorldNavigationBounds,
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
 import {
@@ -77,6 +79,13 @@ import {
 } from "@/lib/world-navigation-bounds";
 import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
+import {
+  formationProxyReviewSnapshot,
+  playbackFormationResidencyFocusCell,
+  formationProxyVisualBounds,
+  selectFormationResidencyPresentation,
+  type FormationProxyVisualBounds,
+} from "@/lib/formation-residency-presentation";
 import {
   formationCanHydrateComplete,
   formationRecipeIdentity,
@@ -399,6 +408,7 @@ function Formation({
   completionRecords,
   recipeIdentity,
   displayedGameplayRecipes,
+  onFormationComplete,
   session,
   revision,
   onReviewState,
@@ -410,6 +420,7 @@ function Formation({
   completionRecords: FormationCompletionRecords;
   recipeIdentity: string;
   displayedGameplayRecipes: DisplayedGameplayRecipeRegistry;
+  onFormationComplete: () => void;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
@@ -810,8 +821,10 @@ function Formation({
       resource !== EMPTY_FORMATION_RESOURCE &&
       resourceMatchesRecipe &&
       geometry !== EMPTY_FORMATION_GEOMETRY
-    )
-      markFormationComplete(
+    ) {
+      const wasCompleted =
+        completionRecords.get(projectId)?.get(entity.id) === recipeIdentity;
+      const marked = markFormationComplete(
         completionRecords,
         projectId,
         entity.id,
@@ -822,6 +835,8 @@ function Formation({
         failedAsset,
         progress.current.value,
       );
+      if (marked && !wasCompleted) onFormationComplete();
+    }
     if (complete !== reviewComplete.current) {
       reviewComplete.current = complete;
       notifySceneReviewCaptureChanged();
@@ -1034,6 +1049,213 @@ function Formation({
     </group>
   );
 }
+
+function FormationProxy({
+  entity,
+  recipeIdentity,
+  visualBounds,
+  resolvedScene,
+  hierarchical,
+  projectId,
+  revision,
+  visible,
+  session,
+  onReviewState,
+  consumeNavigationClick,
+}: {
+  entity: Entity;
+  recipeIdentity: string;
+  visualBounds: FormationProxyVisualBounds;
+  resolvedScene: ResolvedScene;
+  hierarchical: boolean;
+  projectId: string;
+  revision: number;
+  visible: boolean;
+  session: GameSession;
+  onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
+  consumeNavigationClick: (pointerId?: number) => boolean;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const material = useRef<THREE.MeshStandardMaterial>(null);
+  const mainCamera = useThree((state) => state.camera);
+  const playing = useOrb((state) => state.playing);
+  const collected = useOrb((state) => state.score.includes(entity.id));
+  const [bloom, setBloom] = useState(false);
+  const drawnRevision = useRef<number | undefined>(undefined);
+  const visibleRef = useRef(visible);
+  const navigationHitData = useMemo(() => ({ orbsieNavigationHit: true }), []);
+  const fallbackColor =
+    entity.geometry?.kind === "asset"
+      ? (entity.geometry.tint ?? entity.color)
+      : entity.color;
+  const baseNode = resolvedScene.entities.get(entity.id);
+
+  useLayoutEffect(() => {
+    if (!baseNode || entity.stage !== "ready") return;
+    const state: FormationReviewState = () =>
+      formationProxyReviewSnapshot(
+        revision,
+        drawnRevision.current,
+        visibleRef.current &&
+          !(collected && entity.behavior?.type === "collect") &&
+          (!playing || session.effectiveEntity(entity) !== null),
+      );
+    onReviewState?.(entity.id, state);
+    notifySceneReviewCaptureChanged();
+    return () => {
+      onReviewState?.(entity.id, undefined);
+      notifySceneReviewCaptureChanged();
+    };
+  }, [
+    baseNode,
+    collected,
+    entity,
+    entity.id,
+    entity.stage,
+    onReviewState,
+    playing,
+    recipeIdentity,
+    revision,
+    session,
+  ]);
+
+  useLayoutEffect(() => {
+    visibleRef.current = visible;
+    notifySceneReviewCaptureChanged();
+  }, [visible]);
+
+  useFrame(({ clock }) => {
+    if (!group.current) return;
+    const effective = playing ? session.effectiveEntity(entity) : entity;
+    if (!effective) {
+      group.current.visible = false;
+      return;
+    }
+    group.current.visible = true;
+    group.current.scale.set(
+      visualBounds.size[0] * (bloom ? 1.35 : 1),
+      visualBounds.size[1] * (bloom ? 1.35 : 1),
+      visualBounds.size[2] * (bloom ? 1.35 : 1),
+    );
+
+    const override = playing
+      ? session.state?.entityOverrides[entity.id]
+      : undefined;
+    const positionOverride = override?.position;
+    const moving = entity.stage === "ready" && entity.behavior?.type === "move";
+    const hoveringCrystal = !playing && entity.geometry?.kind === "crystal";
+    if (positionOverride || moving || hoveringCrystal) {
+      let delta: WorldNavigationVec3 = [0, 0, 0];
+      if (hierarchical) {
+        try {
+          const matrix = runtimeEntityMatrix(
+            resolvedScene,
+            entity,
+            clock.elapsedTime,
+            positionOverride,
+          );
+          if (baseNode) {
+            delta = [
+              matrix.elements[12] - baseNode.worldPosition[0],
+              matrix.elements[13] - baseNode.worldPosition[1],
+              matrix.elements[14] - baseNode.worldPosition[2],
+            ];
+          }
+        } catch {
+          // Keep a conservative proxy at the last resolved world center.
+        }
+      } else {
+        const position = [
+          ...movingEntityPosition(effective, clock.elapsedTime),
+        ] as [number, number, number];
+        if (hoveringCrystal)
+          position[1] +=
+            Math.sin(clock.elapsedTime * 2 + entity.position[0]) * 0.13;
+        delta = [
+          position[0] - entity.position[0],
+          position[1] - entity.position[1],
+          position[2] - entity.position[2],
+        ];
+      }
+      group.current.position.set(
+        visualBounds.center[0] + delta[0],
+        visualBounds.center[1] + delta[1],
+        visualBounds.center[2] + delta[2],
+      );
+    }
+    if (material.current)
+      material.current.color.set(override?.color ?? fallbackColor);
+  });
+
+  if (collected && entity.behavior?.type === "collect") return null;
+
+  const click = (event: ThreeEvent<MouseEvent>) => {
+    if (
+      consumeNavigationClick(pointerIdFromEvent(event.nativeEvent as Event))
+    ) {
+      event.stopPropagation();
+      return;
+    }
+    if (playing && !session.effectiveEntity(entity)) return;
+    event.stopPropagation();
+    if (playing && session.state) {
+      session.queueClick(entity.id);
+      return;
+    }
+    if (playing && entity.behavior?.type === "bloom") {
+      setBloom(!bloom);
+      return;
+    }
+    if (!playing) useOrb.getState().set({ selected: entity.id });
+  };
+
+  if (!baseNode) return null;
+  return (
+    <group
+      ref={group}
+      userData={navigationHitData}
+      position={visualBounds.center}
+      scale={visualBounds.size}
+    >
+      <mesh
+        onAfterRender={(_renderer, _scene, renderCamera) => {
+          if (renderCamera !== mainCamera || entity.stage !== "ready") return;
+          const wasReady = formationProxyReviewSnapshot(
+            revision,
+            drawnRevision.current,
+            visibleRef.current,
+          ).ready;
+          drawnRevision.current = revision;
+          markSceneUpdateDraw(projectId, entity);
+          if (
+            !wasReady &&
+            formationProxyReviewSnapshot(
+              revision,
+              drawnRevision.current,
+              visibleRef.current,
+            ).ready
+          )
+            notifySceneReviewCaptureChanged();
+        }}
+        onClick={click}
+        onPointerOver={() => {
+          document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = "auto";
+        }}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial
+          ref={material}
+          color={fallbackColor}
+          roughness={0.82}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function Player({
   session,
   followPositionRef,
@@ -1645,9 +1867,15 @@ function Scene({
     revision = project.revision,
     entities = project.entities,
     environment = project.environment,
-    playing = useOrb((s) => s.playing);
+    playing = useOrb((s) => s.playing),
+    selectedId = useOrb((s) => s.selected);
   const { camera, size, gl, scene } = useThree();
   const playerPositionRef = useRef<WorldNavigationVec3>([0, 0.5, 5]);
+  const initialPlaybackFocus = playbackFormationResidencyFocusCell([0, 0.5, 5]);
+  const [playbackResidencyFocus, setPlaybackResidencyFocus] = useState(
+    initialPlaybackFocus.focus,
+  );
+  const playbackResidencyFocusKey = useRef(initialPlaybackFocus.key);
   const navigationRaycaster = useMemo(() => new THREE.Raycaster(), []);
   const navigationNdc = useMemo(() => new THREE.Vector2(), []);
   const [followTerrainChunks, setFollowTerrainChunks] = useState<
@@ -1713,22 +1941,9 @@ function Scene({
     size.height,
     size.width,
   ]);
-  const navigationEnabledRef = useRef(navigationEnabled);
-  navigationEnabledRef.current =
-    navigationEnabled && phase === "editing" && !playing;
-  const reviewEntitiesRef = useRef(entities);
   const formationCompletionRecords = useRef<FormationCompletionRecords>(
     new Map(),
   );
-  const displayedRecipeScopeRef = useRef<DisplayedGameplayRecipeScope>({
-    projectId,
-    registry: new Map(),
-  });
-  displayedRecipeScopeRef.current = displayedGameplayRecipeScopeForProject(
-    displayedRecipeScopeRef.current,
-    projectId,
-  );
-  const displayedGameplayRecipes = displayedRecipeScopeRef.current.registry;
   const recipeByEntity = useMemo(
     () =>
       new Map(
@@ -1739,6 +1954,142 @@ function Scene({
       ),
     [entities],
   );
+  const displayedRecipeScopeRef = useRef<DisplayedGameplayRecipeScope>({
+    projectId,
+    registry: new Map(),
+  });
+  displayedRecipeScopeRef.current = displayedGameplayRecipeScopeForProject(
+    displayedRecipeScopeRef.current,
+    projectId,
+  );
+  const displayedGameplayRecipes = displayedRecipeScopeRef.current.registry;
+  const [completionEpoch, setCompletionEpoch] = useState(0);
+  const completionRefreshPending = useRef(false);
+  const notifyFormationComplete = useCallback(() => {
+    if (completionRefreshPending.current) return;
+    completionRefreshPending.current = true;
+    queueMicrotask(() => {
+      completionRefreshPending.current = false;
+      setCompletionEpoch((current) => current + 1);
+    });
+  }, []);
+  const resolvedScene = useMemo(() => {
+    try {
+      return resolveRuntimeScene(project);
+    } catch {
+      return undefined;
+    }
+  }, [project]);
+  const hierarchicalScene = useMemo(
+    () => usesSceneHierarchy(project),
+    [project],
+  );
+  const proxyBoundsByEntity = useMemo(() => {
+    const visualBounds = new Map<
+      string,
+      FormationProxyVisualBounds | undefined
+    >();
+    if (!resolvedScene) {
+      for (const entity of entities) visualBounds.set(entity.id, undefined);
+      return visualBounds;
+    }
+    for (const entity of entities)
+      visualBounds.set(
+        entity.id,
+        formationProxyVisualBounds(
+          boundsByEntity.get(entity.id),
+          resolvedScene.entities.get(entity.id),
+        ),
+      );
+    return visualBounds;
+  }, [boundsByEntity, entities, resolvedScene]);
+  const residencyCandidates = useMemo(() => {
+    const completed = formationCompletionRecords.current.get(projectId);
+    return entities.map((entity) => ({
+      id: entity.id,
+      stage: entity.stage,
+      recipeIdentity: recipeByEntity.get(entity.id) ?? "",
+      completedRecipeIdentity: completed?.get(entity.id),
+      worldCenter: proxyBoundsByEntity.get(entity.id)?.center,
+    }));
+  }, [
+    completionEpoch,
+    entities,
+    projectId,
+    proxyBoundsByEntity,
+    recipeByEntity,
+  ]);
+  const previousResidentScope = useRef<{
+    projectId: string;
+    residentIds: ReadonlySet<string>;
+  }>({
+    projectId,
+    residentIds: new Set<string>(),
+  });
+  const residencyFocus = playing ? playbackResidencyFocus : navigation.target;
+  const residencyNavigation = useMemo(
+    () => worldNavigationFollowState(navigation, residencyFocus),
+    [navigation, residencyFocus],
+  );
+  const allEntityIds = useMemo(
+    () => new Set(entities.map((entity) => entity.id)),
+    [entities],
+  );
+  const residencyVisibleIds = useMemo(() => {
+    if (playing)
+      return visibleWebGLNavigationEntityIds(
+        project,
+        boundsByEntity,
+        residencyNavigation,
+        size.width,
+        size.height,
+      );
+    return visibleEntityIds ?? allEntityIds;
+  }, [
+    boundsByEntity,
+    entities,
+    allEntityIds,
+    playing,
+    project,
+    residencyNavigation,
+    size.height,
+    size.width,
+    visibleEntityIds,
+  ]);
+  const residencyPresentation = useMemo(
+    () =>
+      selectFormationResidencyPresentation({
+        candidates: residencyCandidates,
+        focus: residencyFocus,
+        visibleIds: residencyVisibleIds,
+        selectedId,
+        previousResidentIds:
+          previousResidentScope.current.projectId === projectId
+            ? previousResidentScope.current.residentIds
+            : undefined,
+        enabled: phase === "editing" && (playing || navigationEnabled),
+      }),
+    [
+      navigationEnabled,
+      phase,
+      playing,
+      projectId,
+      residencyCandidates,
+      residencyFocus,
+      residencyVisibleIds,
+      selectedId,
+    ],
+  );
+  useLayoutEffect(() => {
+    previousResidentScope.current = {
+      projectId,
+      residentIds: residencyPresentation.residentIds,
+    };
+  }, [projectId, residencyPresentation.residentIds]);
+  const navigationEnabledRef = useRef(navigationEnabled);
+  navigationEnabledRef.current =
+    navigationEnabled && phase === "editing" && !playing;
+  const reviewEntitiesRef = useRef(entities);
   useLayoutEffect(() => {
     reconcileFormationCompletionRecords(
       formationCompletionRecords.current,
@@ -2225,6 +2576,15 @@ function Scene({
     scene,
   ]);
   useFrame((_, dt) => {
+    if (playing && phase === "editing") {
+      const nextFocusCell = playbackFormationResidencyFocusCell(
+        playerPositionRef.current,
+      );
+      if (nextFocusCell.key !== playbackResidencyFocusKey.current) {
+        playbackResidencyFocusKey.current = nextFocusCell.key;
+        setPlaybackResidencyFocus(nextFocusCell.focus);
+      }
+    }
     gameplayVisibility.ready = false;
     const target = phase === "landing" ? 0 : 1;
     parcelTransitionController.setTarget(target);
@@ -2472,21 +2832,48 @@ function Scene({
               frames={1}
             />
           </group>
-          {entities.map((e) => (
-            <Formation
-              key={`${projectId}/${e.id}`}
-              entity={e}
-              visible={visibleEntityIds?.has(e.id) ?? true}
-              gameplayVisibility={gameplayVisibility}
-              completionRecords={formationCompletionRecords.current}
-              recipeIdentity={recipeByEntity.get(e.id) ?? ""}
-              displayedGameplayRecipes={displayedGameplayRecipes}
-              session={session}
-              revision={revision}
-              onReviewState={setFormationReviewState}
-              consumeNavigationClick={consumeNavigationClick}
-            />
-          ))}
+          {entities.map((e) => {
+            const recipeIdentity = recipeByEntity.get(e.id) ?? "";
+            const visualBounds = proxyBoundsByEntity.get(e.id);
+            if (
+              residencyPresentation.proxyIds.has(e.id) &&
+              visualBounds &&
+              resolvedScene
+            )
+              return (
+                <FormationProxy
+                  key={`${projectId}/${e.id}`}
+                  entity={e}
+                  recipeIdentity={recipeIdentity}
+                  visualBounds={visualBounds}
+                  resolvedScene={resolvedScene}
+                  hierarchical={hierarchicalScene}
+                  projectId={projectId}
+                  revision={revision}
+                  visible={residencyVisibleIds.has(e.id)}
+                  session={session}
+                  onReviewState={setFormationReviewState}
+                  consumeNavigationClick={consumeNavigationClick}
+                />
+              );
+            if (!residencyPresentation.fullFormationIds.has(e.id)) return null;
+            return (
+              <Formation
+                key={`${projectId}/${e.id}`}
+                entity={e}
+                visible={visibleEntityIds?.has(e.id) ?? true}
+                gameplayVisibility={gameplayVisibility}
+                completionRecords={formationCompletionRecords.current}
+                recipeIdentity={recipeIdentity}
+                displayedGameplayRecipes={displayedGameplayRecipes}
+                onFormationComplete={notifyFormationComplete}
+                session={session}
+                revision={revision}
+                onReviewState={setFormationReviewState}
+                consumeNavigationClick={consumeNavigationClick}
+              />
+            );
+          })}
           <Player
             session={session}
             followPositionRef={playerPositionRef}
