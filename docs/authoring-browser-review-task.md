@@ -5,13 +5,17 @@ This task follows accepted public API and hosted review routes. Read
 `src/lib/store.ts` generation journal, single AbortController/client run ID,
 writer ownership, undo baseline and per-operation save path.
 
-Expose a server configuration flag for the complete authoring-review feature
-and show a plain-language budget cue (up to three model calls per request,
-including the first generation) before enabling it. Keep the feature off when
-the server flag is off. `generationRequest` currently rebuilds the hosted
-payload, so it must explicitly forward the opt-in for both hosted and API
-initial routes. Capture the initial response's opaque run ID privately; do
-not persist it into a project, shared world, diagnostic export or game runtime.
+`/api/config` now exposes `authoringReview` only when the server switch and
+durable session storage are configured, and `generationRequest` forwards the
+hosted opt-in. Show a plain-language budget cue (up to three model calls per
+request, including the first generation) before enabling it. Keep the feature
+off when the server flag is off. Send the opt-in to both initial routes. Capture
+the initial response's opaque `X-Orbsie-Authoring-Run-Id` privately; do not
+persist it into a project, shared world, diagnostic export or game runtime.
+The API initial route also returns `X-Orbsie-Review-Image-Supported: 1|0`,
+derived from its admitted catalog model. Treat absence or any value other than
+`1` as structural-only. Obtain the equivalent admitted capability for hosted
+ChatGPT; a UI preference or browser guess is not authority for image input.
 
 After a clean initial commit and persisted revision, keep `building` and the
 same controller active while awaiting renderer readiness. Use the selected

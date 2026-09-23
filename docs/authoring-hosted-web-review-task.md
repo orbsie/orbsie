@@ -2,8 +2,9 @@
 
 This task follows the accepted private `/private/operation/review` transport.
 It owns `chatgpt-durable-service.ts`, an authenticated
-`/api/chatgpt/review` POST route, and focused durable/route tests. It does not
-edit the private host implementation or browser store. Read
+`/api/chatgpt/review` POST route, the initial hosted route's capability response
+header, and focused durable/route tests. It does not edit the private host
+implementation or browser store. Read
 `docs/authoring-hosted-review-task.md` and the installed Next route-handler
 guide before editing a route.
 
@@ -41,3 +42,11 @@ covering preflight rejection, accept, correction, final partial, wrong epoch,
 Disconnect, abort, late reply, seal failure and replay. Assert provider-call
 counts, ledger state, sanitized response and lease cleanup; run focused tests,
 TypeScript, format/diff checks. No live account or credential output.
+
+For the browser's first capture decision, expose the hosted model's admitted
+image-input capability on the initial generation response as
+`X-Orbsie-Review-Image-Supported: 1|0`, matching the API initial route. Derive
+it from the server-side ChatGPT model catalog used by that managed operation;
+unknown is `0`. Do not trust a client flag or advertise vision based on a
+remembered model label. Ensure the private review call enforces the same actual
+catalog capability before inference.
