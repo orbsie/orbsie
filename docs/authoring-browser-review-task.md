@@ -29,7 +29,11 @@ current project, bounded feedback and optional `captureSceneReview` image to
 the provider-specific review route through `authoringReviewRequest` in
 `src/lib/authoring-review-connection.ts`. The builder validates both opaque
 run IDs, keeps the original client correlation, and removes stale API secrets
-from hosted/free requests. On accept, finish after call two. On a
+from hosted/free requests. Parse each JSON reply through
+`parseAuthoringReviewResponse` in `src/lib/authoring-review-response.ts`
+before applying commands; it checks the expected phase, project, revision,
+scope, canonical correction commit and call count. On accept, finish after call
+two. On a
 first revise, apply only the returned validated commands using the existing
 `apply` function so geometry workers, game rules, cloud journal, save and
 formation effects remain in sync. The server derives review asset policy from
