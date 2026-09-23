@@ -11,7 +11,10 @@ suite: 195 passed/6 skipped files, 1,651 passed/26 skipped tests; Next
 production build/TypeScript passed and standalone player was regenerated
 (`9870bcb`). Actual GPU shadow precision, browser visuals, Android frame
 times and memory are unmeasured. Gameplay draw culling and distant formation
-resource eviction remain open before release.
+resource eviction remain open before release. Software gameplay draw culling is
+the current bounded worker slice (`docs/gameplay-draw-culling-task.md`): skip
+only rendering/picking work using effective current transforms; simulation
+and contacts remain authoritative.
 
 Sep 23 render-origin core accepted locally (`9374254`): a 1,024-unit
 quantized origin with a 768-unit rebase threshold keeps camera-relative
