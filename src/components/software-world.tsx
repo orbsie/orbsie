@@ -80,6 +80,11 @@ export type SoftwareGeometryEntry = {
   sourceStage: Entity["stage"];
 };
 
+const localSoftwareBounds = new WeakMap<
+  THREE.BufferGeometry,
+  THREE.Box3 | null
+>();
+
 type SoftwareWorldProps = {
   navigation: WorldNavigationState;
   getNavigation: () => WorldNavigationState;
@@ -631,7 +636,7 @@ function projectPoint(
   };
 }
 
-function entityMatrix(
+export function softwareEntityMatrix(
   project: Project,
   entity: Entity,
   time: number,
@@ -660,6 +665,96 @@ function entityMatrix(
     ),
     new THREE.Vector3(...entity.scale),
   );
+}
+
+function finiteBounds(bounds: THREE.Box3): boolean {
+  return (
+    Number.isFinite(bounds.min.x) &&
+    Number.isFinite(bounds.min.y) &&
+    Number.isFinite(bounds.min.z) &&
+    Number.isFinite(bounds.max.x) &&
+    Number.isFinite(bounds.max.y) &&
+    Number.isFinite(bounds.max.z) &&
+    bounds.min.x <= bounds.max.x &&
+    bounds.min.y <= bounds.max.y &&
+    bounds.min.z <= bounds.max.z
+  );
+}
+
+function softwareGeometryBounds(
+  geometry: THREE.BufferGeometry,
+): THREE.Box3 | undefined {
+  if (localSoftwareBounds.has(geometry))
+    return localSoftwareBounds.get(geometry) ?? undefined;
+  let bounds: THREE.Box3 | null = null;
+  try {
+    const position = geometry.getAttribute("position");
+    if (position && position.count > 0) {
+      geometry.computeBoundingBox();
+      if (geometry.boundingBox && finiteBounds(geometry.boundingBox))
+        bounds = geometry.boundingBox.clone();
+    }
+  } catch {
+    // An unavailable or malformed bound is treated conservatively at draw time.
+  }
+  localSoftwareBounds.set(geometry, bounds);
+  return bounds ?? undefined;
+}
+
+/** Build one world frustum from the software camera's current projection. */
+export function softwareCameraFrustum(
+  camera: THREE.PerspectiveCamera,
+): THREE.Frustum | undefined {
+  try {
+    const viewProjection = new THREE.Matrix4().multiplyMatrices(
+      camera.projectionMatrix,
+      camera.matrixWorldInverse,
+    );
+    if (!viewProjection.elements.every(Number.isFinite)) return undefined;
+    const frustum = new THREE.Frustum().setFromProjectionMatrix(viewProjection);
+    if (
+      !frustum.planes.every(
+        (plane) =>
+          Number.isFinite(plane.constant) &&
+          Number.isFinite(plane.normal.x) &&
+          Number.isFinite(plane.normal.y) &&
+          Number.isFinite(plane.normal.z),
+      )
+    )
+      return undefined;
+    return frustum;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Only a finite current world bound can prove that gameplay geometry is out of view. */
+export function softwareGeometryVisibleInFrustum(
+  entry: SoftwareGeometryEntry,
+  matrix: THREE.Matrix4,
+  frustum: THREE.Frustum,
+  transformedBounds = new THREE.Box3(),
+): boolean {
+  const localBounds = softwareGeometryBounds(entry.geometry);
+  if (
+    !localBounds ||
+    !matrix.elements.every(Number.isFinite) ||
+    !frustum.planes.every(
+      (plane) =>
+        Number.isFinite(plane.constant) &&
+        Number.isFinite(plane.normal.x) &&
+        Number.isFinite(plane.normal.y) &&
+        Number.isFinite(plane.normal.z),
+    )
+  )
+    return true;
+  try {
+    transformedBounds.copy(localBounds).applyMatrix4(matrix);
+    if (!finiteBounds(transformedBounds)) return true;
+    return frustum.intersectsBox(transformedBounds);
+  } catch {
+    return true;
+  }
 }
 
 function drawEntity(
@@ -966,16 +1061,37 @@ function drawScene(
           height,
         )
       : undefined;
+  const gameplayFrustum =
+    playing && settledWorkspace ? softwareCameraFrustum(camera) : undefined;
+  const transformedGameplayBounds = new THREE.Box3();
   for (const entity of project.entities) {
     if (!softwareEntityPassesVisibility(entity.id, visibleEntityIds)) continue;
     const effective = playing ? session.effectiveEntity(entity) : entity;
     if (!effective) continue;
     const entry = geometries.get(entity.id);
     if (!entry) continue;
+    const matrix = softwareEntityMatrix(
+      project,
+      entity,
+      time,
+      session,
+      playing,
+    );
+    if (
+      playing &&
+      gameplayFrustum &&
+      !softwareGeometryVisibleInFrustum(
+        entry,
+        matrix,
+        gameplayFrustum,
+        transformedGameplayBounds,
+      )
+    )
+      continue;
     drawEntity(
       entry,
       effective,
-      entityMatrix(project, entity, time, session, playing),
+      matrix,
       camera,
       width,
       height,

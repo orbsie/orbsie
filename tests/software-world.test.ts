@@ -6,7 +6,10 @@ import {
   projectSoftwareTerrainChunk,
   projectSoftwareTriangle,
   requiredGeometryReady,
+  softwareCameraFrustum,
   softwareEntityPassesVisibility,
+  softwareEntityMatrix,
+  softwareGeometryVisibleInFrustum,
   softwarePickCenterIsVisible,
   terrainChunksForView,
   type TerrainChunkSelectionCache,
@@ -21,6 +24,8 @@ import { worldTerrainChunkKeyAt } from "../src/lib/world-terrain";
 import { entitySchema, type Project } from "../src/lib/protocol";
 import type { WorldNavigationEntityBounds } from "../src/lib/world-navigation-bounds";
 import { selectVisibleWorldEntityIds } from "../src/lib/world-visibility";
+import { GameSession } from "../src/lib/game-session";
+import { stepGameplay } from "../src/lib/gameplay";
 
 const project = (entities: Project["entities"]) => ({ entities }) as Project;
 
@@ -415,5 +420,154 @@ describe("software visibility and picking", () => {
     expect(
       softwarePickCenterIsVisible({ x: Number.NaN, y: 240, z: 0 }, 390, 844),
     ).toBe(false);
+  });
+
+  it("culls distant gameplay geometry but keeps missing or invalid bounds visible", () => {
+    const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
+    camera.position.set(0, 4, 12);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+    const frustum = softwareCameraFrustum(camera)!;
+    const matrix = new THREE.Matrix4().makeTranslation(10_000, 0, 0);
+    const entry = (geometry: THREE.BufferGeometry): SoftwareGeometryEntry => ({
+      geometry,
+      ready: true,
+      sourceRecipe: undefined,
+      sourceStage: "ready",
+    });
+    const distant = entry(new THREE.BoxGeometry(2, 2, 2));
+    const missing = entry(new THREE.BufferGeometry());
+    const invalidGeometry = new THREE.BufferGeometry();
+    invalidGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute([Number.NaN, 0, 0], 3),
+    );
+
+    expect(softwareGeometryVisibleInFrustum(distant, matrix, frustum)).toBe(
+      false,
+    );
+    expect(softwareGeometryVisibleInFrustum(missing, matrix, frustum)).toBe(
+      true,
+    );
+    expect(
+      softwareGeometryVisibleInFrustum(entry(invalidGeometry), matrix, frustum),
+    ).toBe(true);
+
+    distant.geometry.dispose();
+    missing.geometry.dispose();
+    invalidGeometry.dispose();
+  });
+
+  it("uses a teleported current pose to restore drawing without a project revision", () => {
+    const entity = entitySchema.parse({
+      id: "teleported",
+      label: "Teleported object",
+      position: [10_000, 0, 0],
+      stage: "ready",
+    });
+    const snapshot = project([entity]);
+    snapshot.revision = 4;
+    const session = new GameSession();
+    session.sync("test-world", {
+      variables: [],
+      rules: [
+        {
+          id: "teleport-on-start",
+          trigger: { type: "start" },
+          conditions: [],
+          actions: [
+            {
+              type: "set_position",
+              entityId: entity.id,
+              position: [0, 0, 0],
+            },
+          ],
+        },
+      ],
+    });
+    const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
+    camera.position.set(0, 4, 12);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+    const frustum = softwareCameraFrustum(camera)!;
+    const entry: SoftwareGeometryEntry = {
+      geometry: new THREE.BoxGeometry(0.5, 0.5, 0.5),
+      ready: true,
+      sourceRecipe: undefined,
+      sourceStage: "ready",
+    };
+    const beforeTeleport = softwareEntityMatrix(
+      snapshot,
+      entity,
+      0,
+      session,
+      true,
+    );
+
+    expect(
+      softwareGeometryVisibleInFrustum(entry, beforeTeleport, frustum),
+    ).toBe(false);
+    session.advance(0);
+    const afterTeleport = softwareEntityMatrix(
+      snapshot,
+      entity,
+      0,
+      session,
+      true,
+    );
+    expect(
+      softwareGeometryVisibleInFrustum(entry, afterTeleport, frustum),
+    ).toBe(true);
+    expect(snapshot.revision).toBe(4);
+    expect(snapshot.entities[0].position).toEqual([10_000, 0, 0]);
+    entry.geometry.dispose();
+  });
+
+  it("leaves distant gameplay collection authority intact when its mesh is culled", () => {
+    const collectible = entitySchema.parse({
+      id: "far-collectible",
+      label: "Far collectible",
+      position: [10_000, 0.42, 0],
+      stage: "ready",
+      geometry: { kind: "crystal", detail: "coarse" },
+      behavior: { type: "collect" },
+    });
+    const camera = new THREE.PerspectiveCamera(43, 1, 0.1, 250);
+    camera.position.set(0, 4, 12);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(true);
+    const entry: SoftwareGeometryEntry = {
+      geometry: new THREE.BoxGeometry(),
+      ready: true,
+      sourceRecipe: undefined,
+      sourceStage: "ready",
+    };
+
+    expect(
+      softwareGeometryVisibleInFrustum(
+        entry,
+        softwareEntityMatrix(
+          project([collectible]),
+          collectible,
+          0,
+          new GameSession(),
+          true,
+        ),
+        softwareCameraFrustum(camera)!,
+      ),
+    ).toBe(false);
+    const result = stepGameplay(
+      { position: [10_000, 0.42, 0], velocityY: 0 },
+      { x: 0, z: 0, jump: false },
+      [collectible],
+      [],
+      0,
+      0.016,
+    );
+    expect(result.collected).toContain(collectible.id);
+    entry.geometry.dispose();
   });
 });
