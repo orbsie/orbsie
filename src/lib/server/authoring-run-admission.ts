@@ -253,9 +253,12 @@ export async function admitAuthoringReviewPhase(input: {
 
   let terminal: "active" | "completed" | "failed" = "active";
   let failurePromise: Promise<void> | undefined;
+  let failureCompensationAvailable = false;
   const fail = async (_error: unknown) => {
-    if (terminal === "completed" || terminal === "failed")
+    if (terminal === "failed") return failurePromise;
+    if (terminal === "completed" && !failureCompensationAvailable)
       return failurePromise;
+    failureCompensationAvailable = false;
     terminal = "failed";
     failurePromise = failAuthoringRun({
       ...binding,
@@ -297,6 +300,7 @@ export async function admitAuthoringReviewPhase(input: {
     if (signal.aborted || terminal !== "active")
       throw cancellationError(signal);
     terminal = "completed";
+    failureCompensationAvailable = true;
   };
   if (input.signal.aborted) {
     await fail(cancellationError(input.signal));

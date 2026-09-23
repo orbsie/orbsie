@@ -19,6 +19,7 @@ const state = vi.hoisted(() => ({
   withAdmission: vi.fn(),
   createRuntime: vi.fn(),
   authoringAdmission: vi.fn(),
+  authoringConfigured: vi.fn(() => true),
 }));
 
 vi.mock("@/lib/server/auth", () => ({
@@ -74,6 +75,7 @@ vi.mock("../src/lib/server/chatgpt-runtime", () => ({
 }));
 vi.mock("../src/lib/server/authoring-run-admission", () => ({
   admitInitialAuthoringRun: state.authoringAdmission,
+  authoringReviewConfigured: state.authoringConfigured,
 }));
 
 import { startChatGPTHostServer } from "../scripts/chatgpt-host-server";
@@ -807,6 +809,7 @@ it("negotiates hosted scene authority over private HTTP and strips its record", 
       }),
     );
     expect(response.status).toBe(200);
+    expect(response.headers.get("X-Orbsie-Review-Image-Supported")).toBe("0");
     const body = await response.text();
     expect(body).toContain('"type":"reserve_entity"');
     expect(body).toContain('"type":"commit_revision"');
@@ -824,6 +827,10 @@ it("negotiates hosted scene authority over private HTTP and strips its record", 
     expect(fail).not.toHaveBeenCalled();
     expect(manager.privateOperation.mock.calls.map((call) => call[1])).toEqual([
       "initialize",
+      "models",
+      "seal",
+      "clear",
+      "initialize",
       "status",
       "generate",
       "seal",
@@ -840,6 +847,36 @@ it("negotiates hosted scene authority over private HTTP and strips its record", 
     await server.close();
     vi.unstubAllEnvs();
   }
+});
+
+it("does not discover the catalog when hosted authoring review is disabled", async () => {
+  vi.stubEnv("ORBSIE_CHATGPT_HOSTED", "1");
+  vi.stubEnv("ORBSIE_CHATGPT_GENERATION", "1");
+  state.authoringConfigured.mockReturnValue(false);
+  state.authoringAdmission.mockRejectedValueOnce(Error("review disabled"));
+  const manager = {
+    privateOperation: vi.fn(),
+  };
+  state.createManager.mockReturnValue(manager);
+  const response = await GENERATE(
+    request("generate", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-5.6-luna",
+        effort: "low",
+        prompt: "Create an orb",
+        project: blankProject(),
+        browserModeling: true,
+        authoringReview: true,
+      }),
+    }),
+  );
+  expect(response.status).toBe(502);
+  expect(state.authoringConfigured).toHaveBeenCalled();
+  expect(manager.privateOperation).not.toHaveBeenCalled();
+  state.authoringConfigured.mockReturnValue(true);
+  vi.unstubAllEnvs();
 });
 
 it("stops before model generation when an old host omits negotiation", async () => {

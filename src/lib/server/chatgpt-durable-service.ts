@@ -23,10 +23,20 @@ import {
   parsePrivateSceneCompletion,
   type PrivateSceneCompletion,
 } from "./chatgpt-scene-completion";
+import {
+  PRIVATE_SCENE_REVIEW_HEADER,
+  PRIVATE_SCENE_REVIEW_VERSION,
+  parsePrivateSceneReviewRequest,
+  parsePrivateSceneReviewResult,
+  type PrivateSceneReviewResult,
+} from "./chatgpt-scene-review";
 import type {
   AuthoritativeSceneBinding,
+  AuthoringReviewAdmission,
   InitialAuthoringAdmission,
 } from "./authoring-run-admission";
+import { replayChatGPTSceneReview } from "./chatgpt-scene-review-replay";
+import type { ModelCommand } from "../protocol";
 import {
   createGenerationObservation,
   type GenerationObservationCorrelation,
@@ -62,6 +72,7 @@ type DurableManager = {
       | "status"
       | "models"
       | "generate"
+      | "review"
       | "seal"
       | "clear"
       | "loginSeal",
@@ -70,6 +81,7 @@ type DurableManager = {
       signal?: AbortSignal;
       correlation?: GenerationObservationCorrelation;
       sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION;
+      sceneReviewVersion?: typeof PRIVATE_SCENE_REVIEW_VERSION;
     },
   ): Promise<Response>;
   request(
@@ -105,6 +117,28 @@ function responseRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+}
+
+function canonicalValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, item]) => [key, canonicalValue(item)]),
+    );
+  }
+  return value;
+}
+
+function sameCorrectionBatch(
+  left: readonly ModelCommand[],
+  right: readonly ModelCommand[],
+) {
+  return (
+    JSON.stringify(canonicalValue(left)) ===
+    JSON.stringify(canonicalValue(right))
+  );
 }
 
 async function readJSON(response: Response): Promise<unknown> {
@@ -182,6 +216,10 @@ function operationIdentity(value: ReturnType<typeof binding>) {
 
 type HostedAuthoringCompletion = Pick<
   InitialAuthoringAdmission,
+  "complete" | "fail"
+>;
+type HostedReviewCompletion = Pick<
+  AuthoringReviewAdmission,
   "complete" | "fail"
 >;
 
@@ -426,11 +464,19 @@ export function createChatGPTDurableService(options: {
   const now = options.now ?? Date.now;
   const manager = options.manager;
 
-  async function ensureHost(identity: DurableIdentity, signal?: AbortSignal) {
+  async function ensureHost(
+    identity: DurableIdentity,
+    signal?: AbortSignal,
+    options: { rejectStale?: boolean } = {},
+  ) {
     try {
       return await manager.ensure(identity, { signal });
     } catch (error) {
-      if (!(error instanceof ChatGPTHostStaleError) || !manager.teardownSession)
+      if (
+        !(error instanceof ChatGPTHostStaleError) ||
+        options.rejectStale ||
+        !manager.teardownSession
+      )
         throw error;
       // A changed deployment cannot use the old runtime, but its durable
       // provider cache is still valid. Destroy that runtime before rebuilding.
@@ -444,6 +490,7 @@ export function createChatGPTDurableService(options: {
     signal?: AbortSignal,
     routeDeadlineAt?: number,
     sceneCompletionVersion?: typeof PRIVATE_SCENE_COMPLETION_VERSION,
+    sceneReviewVersion?: typeof PRIVATE_SCENE_REVIEW_VERSION,
   ): Promise<{
     lease: ChatGPTCredentialLease;
     host: Host;
@@ -470,7 +517,9 @@ export function createChatGPTDurableService(options: {
       );
     let host: Host | undefined;
     try {
-      host = await ensureHost(identity, signal);
+      host = await ensureHost(identity, signal, {
+        rejectStale: sceneReviewVersion !== undefined,
+      });
       if (manager.acquireForOperation) {
         let renewed: Host | null;
         try {
@@ -484,6 +533,7 @@ export function createChatGPTDurableService(options: {
           // Reconstruct that stale host once from the same fenced cache; this
           // does not retry the model operation.
           signal?.throwIfAborted();
+          if (sceneReviewVersion !== undefined) throw error;
           await destroyAfterFailure(identity, host);
           host = await manager.ensure(identity, { signal });
           renewed = await manager.acquireForOperation(
@@ -524,20 +574,41 @@ export function createChatGPTDurableService(options: {
             { signal },
           );
           const initializedBinding = binding(await readJSON(initialized));
-          if (sceneCompletionVersion !== undefined) {
+          if (
+            sceneCompletionVersion !== undefined ||
+            sceneReviewVersion !== undefined
+          ) {
             const preflight = await manager.privateOperation(
               host!,
               "status",
               operationIdentity(initializedBinding),
-              { signal, sceneCompletionVersion },
+              {
+                signal,
+                ...(sceneCompletionVersion === undefined
+                  ? {}
+                  : { sceneCompletionVersion }),
+                ...(sceneReviewVersion === undefined
+                  ? {}
+                  : { sceneReviewVersion }),
+              },
             );
+            const negotiatedHeader =
+              sceneReviewVersion === undefined
+                ? PRIVATE_SCENE_COMPLETION_HEADER
+                : PRIVATE_SCENE_REVIEW_HEADER;
+            const negotiatedVersion =
+              sceneReviewVersion === undefined
+                ? sceneCompletionVersion
+                : sceneReviewVersion;
             if (
-              preflight.headers.get(PRIVATE_SCENE_COMPLETION_HEADER) !==
-              String(sceneCompletionVersion)
+              preflight.headers.get(negotiatedHeader) !==
+              String(negotiatedVersion)
             )
               throw new ChatGPTDurableServiceError(
                 "unavailable",
-                "ChatGPT host does not support scene completion authority.",
+                sceneReviewVersion === undefined
+                  ? "ChatGPT host does not support scene completion authority."
+                  : "ChatGPT host does not support scene review authority.",
               );
             const status = responseRecord(await readJSON(preflight));
             if (
@@ -549,6 +620,14 @@ export function createChatGPTDurableService(options: {
               throw new ChatGPTDurableServiceError(
                 "invalid-response",
                 "ChatGPT managed operation returned an invalid status.",
+              );
+            if (
+              sceneReviewVersion !== undefined &&
+              status.status !== "connected"
+            )
+              throw new ChatGPTDurableServiceError(
+                "unavailable",
+                "ChatGPT account is not connected.",
               );
           }
           return initializedBinding;
@@ -693,6 +772,105 @@ export function createChatGPTDurableService(options: {
       }
       throw error;
     }
+  }
+
+  /** Seal and clear a review operation while its lease remains available to
+   * the ledger completion fence. Release is performed only after completion. */
+  async function prepareReviewFinalization(
+    identity: DurableIdentity,
+    lease: ChatGPTCredentialLease,
+    host: Host,
+    operationBinding: ReturnType<typeof binding>,
+  ) {
+    const signal = cleanupSignal();
+    try {
+      const value = responseRecord(
+        await readJSON(
+          await manager.privateOperation(
+            host,
+            "seal",
+            operationIdentity(operationBinding),
+            { signal },
+          ),
+        ),
+      );
+      if (
+        !value ||
+        value.operationId !== operationBinding.operationId ||
+        value.epoch !== operationBinding.epoch ||
+        value.deadlineAt !== operationBinding.deadlineAt ||
+        typeof value.expired !== "boolean"
+      )
+        throw new ChatGPTDurableServiceError(
+          "invalid-response",
+          "ChatGPT managed operation returned an invalid seal.",
+        );
+      const sealedCache = cache(value.cache);
+      if (!sealedCache)
+        throw new ChatGPTDurableServiceError(
+          "finalization",
+          "ChatGPT credential rotation could not be captured.",
+        );
+      const saved = await saveChatGPTCredentialCache(
+        identity,
+        lease,
+        sealedCache,
+        { signal },
+      );
+      if (saved.kind !== "saved")
+        throw new ChatGPTDurableServiceError(
+          "finalization",
+          "ChatGPT credential rotation could not be saved.",
+        );
+      const cleared = responseRecord(
+        await readJSON(
+          await manager.privateOperation(
+            host,
+            "clear",
+            operationIdentity(operationBinding),
+            { signal },
+          ),
+        ),
+      );
+      if (cleared?.cleared !== true)
+        throw new ChatGPTDurableServiceError(
+          "invalid-response",
+          "ChatGPT managed operation returned an invalid clear response.",
+        );
+    } catch (error) {
+      const finalizationError =
+        error instanceof ChatGPTDurableServiceError &&
+        error.code === "finalization"
+          ? error
+          : new ChatGPTDurableServiceError(
+              "finalization",
+              "ChatGPT credential finalization could not be completed.",
+            );
+      try {
+        await destroyAfterFailure(identity, host, signal);
+        await releaseChatGPTCredentialLease(identity, lease, { signal });
+      } catch {
+        throw new ChatGPTDurableServiceError(
+          "finalization",
+          "ChatGPT operation cleanup is still pending.",
+        );
+      }
+      throw finalizationError;
+    }
+  }
+
+  async function releaseReviewFinalization(
+    identity: DurableIdentity,
+    lease: ChatGPTCredentialLease,
+  ) {
+    const released = await releaseChatGPTCredentialLease(identity, lease, {
+      signal: cleanupSignal(),
+    });
+    if (released.kind !== "released")
+      throw new ChatGPTDurableServiceError(
+        "finalization",
+        "ChatGPT operation authority could not be released.",
+      );
   }
 
   async function withJSONOperation<T>(
@@ -1049,6 +1227,251 @@ export function createChatGPTDurableService(options: {
     });
   }
 
+  async function review(
+    identity: DurableIdentity,
+    input: unknown,
+    signal: AbortSignal | undefined,
+    routeDeadlineAt: number | undefined,
+    correlation: GenerationObservationCorrelation | undefined,
+    admit: () => Promise<HostedReviewCompletion>,
+  ): Promise<{
+    review: PrivateSceneReviewResult["review"];
+    corrections: readonly ModelCommand[];
+    binding: AuthoritativeSceneBinding;
+  }> {
+    const hostedObservation = correlation
+      ? createGenerationObservation({
+          layer: "hosted",
+          requestId: correlation.requestId,
+          clientRunId: correlation.clientRunId,
+          provider: "chatgpt",
+          serviceTier: "default",
+        })
+      : undefined;
+    let active: Awaited<ReturnType<typeof acquire>>;
+    try {
+      active = await acquire(
+        identity,
+        signal,
+        routeDeadlineAt,
+        undefined,
+        PRIVATE_SCENE_REVIEW_VERSION,
+      );
+    } catch (error) {
+      hostedObservation?.terminal({
+        reason: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client-abort"
+          : "transport-error",
+        abortSource: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client"
+          : undefined,
+        failureCode: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "timeout"
+            : "cancelled"
+          : error instanceof ChatGPTDurableServiceError &&
+              (error.code === "missing" || error.code === "revoked")
+            ? "connection-required"
+            : "host-unavailable",
+      });
+      throw error;
+    }
+
+    let admission: HostedReviewCompletion | undefined;
+    const operationSignal = signal ?? new AbortController().signal;
+    let reviewFinalizationAttempted = false;
+    let reviewPrepared = false;
+    let reviewReleased = false;
+    let ledgerCompleted = false;
+    const finalizeOnce = async () => {
+      await finalize(identity, active.lease, active.host, active.binding);
+    };
+    try {
+      // The callback runs only after lease admission and the negotiated status
+      // response have fenced the host deployment.
+      admission = await admit();
+      hostedObservation?.phase("provider-start");
+      const privateInput = parsePrivateSceneReviewRequest({
+        ...(input && typeof input === "object" ? input : {}),
+        ...operationIdentity(active.binding),
+      });
+      const response = await manager.privateOperation(
+        active.host,
+        "review",
+        privateInput,
+        {
+          signal,
+          correlation,
+          sceneReviewVersion: PRIVATE_SCENE_REVIEW_VERSION,
+        },
+      );
+      if (
+        !response.ok ||
+        !response.body ||
+        response.headers.get("content-type")?.split(";")[0] !==
+          "application/json"
+      ) {
+        await response.body?.cancel().catch(() => undefined);
+        throw new ChatGPTDurableServiceError(
+          "unavailable",
+          "ChatGPT scene review could not start.",
+        );
+      }
+      if (
+        response.headers.get(PRIVATE_SCENE_REVIEW_HEADER) !==
+        String(PRIVATE_SCENE_REVIEW_VERSION)
+      ) {
+        await response.body.cancel().catch(() => undefined);
+        throw new ChatGPTDurableServiceError(
+          "unavailable",
+          "ChatGPT host does not support scene review authority.",
+        );
+      }
+      const parsed = await (async () => {
+        try {
+          return parsePrivateSceneReviewResult(await readJSON(response), {
+            operationId: active.binding.operationId,
+            epoch: active.binding.epoch,
+            projectId: privateInput.project.id,
+            revision: privateInput.project.revision,
+            phase: privateInput.phase,
+            browserModeling: privateInput.browserModeling,
+          });
+        } catch {
+          throw new ChatGPTDurableServiceError(
+            "invalid-response",
+            "ChatGPT scene review returned an invalid response.",
+          );
+        }
+      })();
+      const expectedScope = privateInput.reviewImage
+        ? "visual+structural"
+        : "structural-only";
+      if (parsed.review.scope !== expectedScope)
+        throw new ChatGPTDurableServiceError(
+          "invalid-response",
+          "ChatGPT scene review returned an invalid scope.",
+        );
+      const replayed = await replayChatGPTSceneReview({
+        result: parsed,
+        project: privateInput.project,
+        prompt: privateInput.prompt,
+        ...(privateInput.selected === undefined
+          ? {}
+          : { selected: privateInput.selected }),
+        browserModeling: privateInput.browserModeling,
+        phase: privateInput.phase,
+        scope: expectedScope,
+        signal: operationSignal,
+      });
+      if (!sameCorrectionBatch(parsed.corrections, replayed.corrections))
+        throw new ChatGPTDurableServiceError(
+          "invalid-response",
+          "ChatGPT scene review returned a non-canonical correction batch.",
+        );
+      if (
+        parsed.binding.version !== replayed.binding.version ||
+        parsed.binding.projectId !== replayed.binding.projectId ||
+        parsed.binding.revision !== replayed.binding.revision ||
+        parsed.binding.digest !== replayed.binding.digest
+      )
+        throw new ChatGPTDurableServiceError(
+          "invalid-response",
+          "ChatGPT scene review returned an invalid binding.",
+        );
+      signal?.throwIfAborted();
+      reviewFinalizationAttempted = true;
+      await prepareReviewFinalization(
+        identity,
+        active.lease,
+        active.host,
+        active.binding,
+      );
+      reviewPrepared = true;
+      await admission.complete(
+        replayed.binding,
+        parsed.review.verdict === "accept",
+        operationSignal,
+      );
+      ledgerCompleted = true;
+      await releaseReviewFinalization(identity, active.lease);
+      reviewReleased = true;
+      signal?.throwIfAborted();
+      hostedObservation?.terminal({ reason: "completed" });
+      return {
+        review: parsed.review,
+        corrections: replayed.corrections,
+        binding: replayed.binding,
+      };
+    } catch (error) {
+      if (admission) await admission.fail(error).catch(() => undefined);
+      if (!reviewFinalizationAttempted) {
+        try {
+          await finalizeOnce();
+        } catch (finalizationError) {
+          hostedObservation?.terminal({
+            reason: "credential-finalization-failed",
+            failureCode: "host-unavailable",
+            credentialFinalization: "failed",
+          });
+          throw finalizationError;
+        }
+      } else if (reviewPrepared && !reviewReleased) {
+        try {
+          await releaseReviewFinalization(identity, active.lease);
+        } catch (releaseError) {
+          try {
+            await destroyAfterFailure(identity, active.host, cleanupSignal());
+            await releaseChatGPTCredentialLease(identity, active.lease, {
+              signal: cleanupSignal(),
+            });
+          } catch {
+            hostedObservation?.terminal({
+              reason: "credential-finalization-failed",
+              failureCode: "host-unavailable",
+              credentialFinalization: "failed",
+            });
+            throw new ChatGPTDurableServiceError(
+              "finalization",
+              "ChatGPT operation cleanup is still pending.",
+            );
+          }
+          if (!ledgerCompleted) throw releaseError;
+          hostedObservation?.terminal({
+            reason: "credential-finalization-failed",
+            failureCode: "host-unavailable",
+            credentialFinalization: "failed",
+          });
+          throw releaseError;
+        }
+      }
+      hostedObservation?.terminal({
+        reason:
+          signal?.aborted && signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : signal?.aborted
+              ? "client-abort"
+              : "transport-error",
+        abortSource: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "deadline"
+            : "client"
+          : undefined,
+        failureCode: signal?.aborted
+          ? signal.reason?.name === "TimeoutError"
+            ? "timeout"
+            : "cancelled"
+          : "host-unavailable",
+        credentialFinalization: "saved",
+      });
+      throw error;
+    }
+  }
+
   async function start(identity: DurableIdentity, signal?: AbortSignal) {
     const intent = await beginChatGPTCredentialIntent(identity, { signal });
     let host: Host | undefined;
@@ -1153,6 +1576,7 @@ export function createChatGPTDurableService(options: {
     status,
     models,
     generate,
+    review,
     start,
     completeAdmittedLogin,
     migrateLegacyLogin,

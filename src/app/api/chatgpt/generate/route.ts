@@ -24,6 +24,7 @@ import {
 } from "@/lib/server/generation-observability";
 import {
   admitInitialAuthoringRun,
+  authoringReviewConfigured,
   type InitialAuthoringAdmission,
 } from "@/lib/server/authoring-run-admission";
 export const runtime = "nodejs";
@@ -85,6 +86,22 @@ export async function POST(request: Request) {
       ownerId: session.user.id,
       sessionId: session.session.id,
     };
+    const manager = createChatGPTHostManager({
+      artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
+    });
+    routeSignal.throwIfAborted();
+    const durable = createChatGPTDurableService({ manager });
+    let admittedReviewImageInput = false;
+    if (authoringReview && authoringReviewConfigured()) {
+      const catalog = durable.models
+        ? await durable.models(identity, routeSignal, routeDeadlineAt)
+        : null;
+      const selected = catalog?.find(
+        (candidate) => candidate.model === sceneInput.model,
+      );
+      admittedReviewImageInput =
+        selected?.inputModalities?.includes("image") === true;
+    }
     if (authoringReview) {
       authoringAdmission = await admitInitialAuthoringRun({
         request,
@@ -100,11 +117,6 @@ export async function POST(request: Request) {
         ownerSession: identity,
       });
     }
-    const manager = createChatGPTHostManager({
-      artifactDirectory: resolve(process.cwd(), ".orbsie/chatgpt-host"),
-    });
-    routeSignal.throwIfAborted();
-    const durable = createChatGPTDurableService({ manager });
     const body = await durable.generate(
       identity,
       sceneInput,
@@ -126,7 +138,12 @@ export async function POST(request: Request) {
             "Content-Type": "application/x-ndjson",
             "X-Accel-Buffering": "no",
             ...(authoringAdmission
-              ? { "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId }
+              ? {
+                  "X-Orbsie-Authoring-Run-Id": authoringAdmission.runId,
+                  "X-Orbsie-Review-Image-Supported": admittedReviewImageInput
+                    ? "1"
+                    : "0",
+                }
               : {}),
           },
         },

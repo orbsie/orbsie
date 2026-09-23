@@ -4,6 +4,8 @@ const deps = vi.hoisted(() => ({
   issue: vi.fn(),
   complete: vi.fn(),
   fail: vi.fn(),
+  admitReview: vi.fn(),
+  completeReview: vi.fn(),
 }));
 
 vi.mock("../src/lib/server/auth", async () => ({
@@ -18,11 +20,16 @@ vi.mock("../src/lib/server/authoring-run-ledger", () => ({
   issueAuthoringRun: deps.issue,
   completeInitialAuthoringRun: deps.complete,
   failAuthoringRun: deps.fail,
+  admitAuthoringReview: deps.admitReview,
+  completeAuthoringReview: deps.completeReview,
 }));
 
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
-import { admitInitialAuthoringRun } from "../src/lib/server/authoring-run-admission";
+import {
+  admitAuthoringReviewPhase,
+  admitInitialAuthoringRun,
+} from "../src/lib/server/authoring-run-admission";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -114,4 +121,43 @@ it("charges free review issuance through the ledger transaction once", async () 
     trialIdentity: expect.objectContaining({ identityHash: "a".repeat(64) }),
   });
   expect(admission.trialRemaining).toBe(0);
+});
+
+it("retains one exact-token failure fence after review completion", async () => {
+  deps.admitReview.mockResolvedValue({
+    runId: "11111111-1111-4111-8111-111111111111",
+    reviewPhase: "review",
+    phaseToken: "22222222-2222-4222-8222-222222222222",
+    remainingReviewSlots: 1,
+  });
+  deps.completeReview.mockResolvedValue({ phase: "completed" });
+  deps.fail.mockResolvedValue({ phase: "failed" });
+  const project = blankProject();
+  const admission = await admitAuthoringReviewPhase({
+    ...input(),
+    provider: "chatgpt",
+    runId: "11111111-1111-4111-8111-111111111111",
+    reviewPhase: "review",
+    ownerSession: { ownerId: "owner-1", sessionId: "session-1" },
+    project,
+  });
+  const binding = {
+    version: 1 as const,
+    projectId: project.id,
+    revision: project.revision,
+    digest: "a".repeat(64),
+  };
+  await admission.complete(binding, false, new AbortController().signal);
+  await admission.fail(Error("release failed"));
+  await admission.fail(Error("late duplicate"));
+  expect(deps.completeReview).toHaveBeenCalledOnce();
+  expect(deps.fail).toHaveBeenCalledOnce();
+  expect(deps.fail).toHaveBeenCalledWith(
+    expect.objectContaining({
+      runId: "11111111-1111-4111-8111-111111111111",
+      phaseToken: "22222222-2222-4222-8222-222222222222",
+      revision: project.revision,
+      sceneBindingDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
+    }),
+  );
 });
