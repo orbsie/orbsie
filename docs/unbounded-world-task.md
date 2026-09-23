@@ -11,6 +11,13 @@ scale, rotation and part-local coordinates. `src/lib/server/generation.ts` still
 instructs every model to stay on an island of radius 8. Removing a visible disk
 or adding buttons alone cannot satisfy the requirement.
 
+Additional review-boundary audit (Sep 22):
+`src/lib/server/scene-review-observations.ts` caps reported world-space bounds
+at ±1000. Farther geometry can therefore fail revision-bound visual feedback
+even after the project protocol accepts it. Keep local modeling coordinates in
+`src/lib/browser-modeling.ts` and `src/lib/modeling.ts` bounded separately; do
+not widen their shape budgets merely to allow distant object placement.
+
 Root interface decision: use one renderer-independent navigation state contract
 (world-space target, heading, zoom/scale and north convention) and commands for pan,
 zoom, north-reset and frame-content. Preserve target/zoom on north-reset. Translate
