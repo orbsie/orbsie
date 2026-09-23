@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 23 software open-ground slice accepted locally (`75bcec2`): after the
+settled transition, the Canvas 2D renderer fills the view with the project's
+ground color and clips its bounded world-aligned tile projections against the
+camera frustum, preserving the landing gradient/ellipse. Root review removed
+tile-by-tile tint seams and an unnecessary gradient allocation during editing;
+software far clipping now follows the WebGL ground footprint. Focused tests
+cover near-plane and offscreen tile projection. An unrelated but required
+integration fix accepts finite distant structural review bounds near the new
+world coordinates (`29806af`). Full suite: 190 passed/6 skipped files,
+1,624 passed/26 skipped tests; production build/TypeScript pass and standalone
+player was regenerated (`7d86397`). The fallback ground is intentionally a
+flat solid color; its appearance variation and visual/mobile measurement are
+still open. Entity culling, picking precision and gameplay camera follow are
+next. This remains local, not deployed.
+
 Sep 23 WebGL open-ground slice accepted locally (`b63b674`): the planet
 descent keeps its small circular patch, then hides cylinder, water, pebbles
 and contact shadows as a bounded 7×7 world-aligned tile neighborhood becomes
