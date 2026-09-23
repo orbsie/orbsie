@@ -84,6 +84,14 @@ import {
 import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
 import { WorldNavigationGestureController } from "@/lib/world-navigation-gestures";
 import {
+  formationCanHydrateComplete,
+  formationRecipeIdentity,
+  formationResourceMatchesRecipe,
+  markFormationComplete,
+  reconcileFormationCompletionRecords,
+  type FormationCompletionRecords,
+} from "@/lib/formation-completion";
+import {
   sampleWorldTerrainChunk,
   selectWorldTerrainChunks,
   worldTerrainChunkKeyAt,
@@ -354,12 +362,14 @@ function disposeFormationAppearance(
 interface FormationResource {
   readonly appearance: FormationAppearance;
   readonly particleGeometry: THREE.BufferGeometry;
+  readonly recipeIdentity: string | undefined;
   disposed: boolean;
 }
 
 const EMPTY_FORMATION_RESOURCE: FormationResource = {
   appearance: { geometry: EMPTY_FORMATION_GEOMETRY },
   particleGeometry: EMPTY_FORMATION_PARTICLES,
+  recipeIdentity: undefined,
   disposed: false,
 };
 
@@ -384,6 +394,8 @@ function Formation({
   entity,
   visible,
   gameplayVisibility,
+  completionRecords,
+  recipeIdentity,
   session,
   revision,
   onReviewState,
@@ -392,6 +404,8 @@ function Formation({
   entity: Entity;
   visible: boolean;
   gameplayVisibility: GameplayRenderVisibility;
+  completionRecords: FormationCompletionRecords;
+  recipeIdentity: string;
   session: GameSession;
   revision: number;
   onReviewState?: (id: string, state: FormationReviewState | undefined) => void;
@@ -438,12 +452,28 @@ function Formation({
   const retainAssetAppearance =
     assetRecipe?.kind === "asset" ? catalog?.retain : undefined;
   const pendingAsset = !!assetRecipe && !asset?.geometry;
+  const failedAsset =
+    typeof asset?.error === "string" && asset.error.length > 0;
   useEffect(() => {
     if (asset?.error)
       useOrb.getState().set({ error: `${entity.label}: ${asset.error}` });
   }, [asset?.error, entity.label]);
   const [resource, setResource] = useState<FormationResource>(
     () => EMPTY_FORMATION_RESOURCE,
+  );
+  const resourceMatchesRecipe = formationResourceMatchesRecipe(
+    resource.recipeIdentity,
+    recipeIdentity,
+  );
+  const hydrateComplete = formationCanHydrateComplete(
+    completionRecords,
+    projectId,
+    entity.id,
+    recipeIdentity,
+    resource.recipeIdentity,
+    entity.stage,
+    pendingAsset,
+    failedAsset,
   );
   const activeResource = useRef(resource);
   const mountedResource = useRef(false);
@@ -519,6 +549,7 @@ function Formation({
     const nextResource: FormationResource = {
       appearance: nextAppearance,
       particleGeometry: nextParticles,
+      recipeIdentity,
       disposed: false,
     };
     const allocation = {
@@ -536,6 +567,7 @@ function Formation({
   }, [
     entity.geometry,
     entity.color,
+    recipeIdentity,
     assetRecipe,
     asset?.geometry,
     assetTexture,
@@ -556,7 +588,12 @@ function Formation({
     }
   }, [resource]);
   useLayoutEffect(() => {
-    if (!commitsAppearance || geometry === EMPTY_FORMATION_GEOMETRY) return;
+    if (
+      !commitsAppearance ||
+      !resourceMatchesRecipe ||
+      geometry === EMPTY_FORMATION_GEOMETRY
+    )
+      return;
     const retained: FormationAppearance = {
       geometry: geometry.clone(),
       texture: texture ? cloneFormationTexture(texture) : undefined,
@@ -565,12 +602,23 @@ function Formation({
     const prior = previousAppearance.current;
     previousAppearance.current = retained;
     disposeFormationAppearance(prior);
-  }, [commitsAppearance, geometry, texture, retainAssetAppearance]);
+  }, [
+    commitsAppearance,
+    geometry,
+    resourceMatchesRecipe,
+    texture,
+    retainAssetAppearance,
+  ]);
   useLayoutEffect(() => {
-    if (resource === EMPTY_FORMATION_RESOURCE || !commitsAppearance) return;
+    if (
+      resource === EMPTY_FORMATION_RESOURCE ||
+      !commitsAppearance ||
+      !resourceMatchesRecipe
+    )
+      return;
     renderedRevision.current = revision;
     notifySceneReviewCaptureChanged();
-  }, [commitsAppearance, resource, revision]);
+  }, [commitsAppearance, resource, resourceMatchesRecipe, revision]);
   useLayoutEffect(() => {
     const state: FormationReviewState = () => {
       const failed = typeof asset?.error === "string" && asset.error.length > 0;
@@ -578,6 +626,7 @@ function Formation({
         !failed &&
         (resource === EMPTY_FORMATION_RESOURCE ||
           !commitsAppearance ||
+          !resourceMatchesRecipe ||
           renderedRevision.current !== revision ||
           progress.current.value < 1);
       return {
@@ -601,6 +650,8 @@ function Formation({
     entity.geometry,
     onReviewState,
     resource,
+    resourceMatchesRecipe,
+    recipeIdentity,
     revision,
   ]);
   useLayoutEffect(() => {
@@ -627,13 +678,14 @@ function Formation({
           Array.from(prior.index.array).every(
             (value, index) => value === geometry.index!.array[index],
           )));
-    geometry.userData.particleBridge =
-      !prior ||
-      (prior.userData.particleBridge && progress.current.value < 1) ||
-      displayedTexture.current !== texture ||
-      !sameIndex ||
-      prior.getAttribute("position").count !==
-        geometry.getAttribute("position").count;
+    geometry.userData.particleBridge = hydrateComplete
+      ? false
+      : !prior ||
+        (prior.userData.particleBridge && progress.current.value < 1) ||
+        displayedTexture.current !== texture ||
+        !sameIndex ||
+        prior.getAttribute("position").count !==
+          geometry.getAttribute("position").count;
     particleGeometry.userData.particleBridge = geometry.userData.particleBridge;
     const visible = previous.current
       ? captureFormationSnapshot(previous.current, progress.current.value)
@@ -641,11 +693,11 @@ function Formation({
     addFormationSource(geometry, visible);
     previous.current = geometry;
     displayedTexture.current = texture;
-    progress.current.value = 0;
+    progress.current.value = hydrateComplete ? 1 : 0;
     if (mesh.current) mesh.current.visible = !geometry.userData.particleBridge;
     if (particles.current)
       particles.current.visible = geometry.userData.particleBridge;
-  }, [geometry, particleGeometry]);
+  }, [geometry, hydrateComplete, particleGeometry]);
   useEffect(() => {
     mountedResource.current = true;
     return () => {
@@ -729,6 +781,24 @@ function Formation({
       progress.current.value + dt / (reduced() ? 0.02 : 0.9),
     );
     const complete = progress.current.value >= 1;
+    if (
+      complete &&
+      commitsAppearance &&
+      resource !== EMPTY_FORMATION_RESOURCE &&
+      resourceMatchesRecipe &&
+      geometry !== EMPTY_FORMATION_GEOMETRY
+    )
+      markFormationComplete(
+        completionRecords,
+        projectId,
+        entity.id,
+        recipeIdentity,
+        resource.recipeIdentity,
+        entity.stage,
+        pendingAsset,
+        failedAsset,
+        progress.current.value,
+      );
     if (complete !== reviewComplete.current) {
       reviewComplete.current = complete;
       notifySceneReviewCaptureChanged();
@@ -1638,6 +1708,26 @@ function Scene({
   navigationEnabledRef.current =
     navigationEnabled && phase === "editing" && !playing;
   const reviewEntitiesRef = useRef(entities);
+  const formationCompletionRecords = useRef<FormationCompletionRecords>(
+    new Map(),
+  );
+  const recipeByEntity = useMemo(
+    () =>
+      new Map(
+        entities.map((entity): [string, string] => [
+          entity.id,
+          formationRecipeIdentity(entity),
+        ]),
+      ),
+    [entities],
+  );
+  useLayoutEffect(() => {
+    reconcileFormationCompletionRecords(
+      formationCompletionRecords.current,
+      projectId,
+      recipeByEntity,
+    );
+  }, [projectId, recipeByEntity]);
   const reviewFrameRef = useRef<
     | {
         projectId: string;
@@ -2365,6 +2455,8 @@ function Scene({
               entity={e}
               visible={visibleEntityIds?.has(e.id) ?? true}
               gameplayVisibility={gameplayVisibility}
+              completionRecords={formationCompletionRecords.current}
+              recipeIdentity={recipeByEntity.get(e.id) ?? ""}
               session={session}
               revision={revision}
               onReviewState={setFormationReviewState}
