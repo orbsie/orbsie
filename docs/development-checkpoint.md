@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 23 software gameplay draw culling accepted locally (`2ae0145`): the
+fallback renderer uses cached geometry-local bounds transformed by the
+current runtime/game matrix and the player-follow camera frustum to skip
+offscreen drawing and visual picks. Unknown or invalid bounds stay visible;
+full simulation/contacts remain untouched. A game-program teleport becomes
+visible without a project revision. Astra reviewed the diff; worker reported
+14 focused tests, TypeScript, formatting and diff checks. Integrated build,
+browser performance and visual behavior have not yet been checked for this
+slice. WebGL gameplay draw culling is the current bounded worker task.
+
 Sep 23 WebGL render-origin integration accepted locally (`c15f0ca`): settled
 world content, player and terrain share a parent shifted by a stable quantized
 origin, and the camera uses the matching local pose. Planet and transition
