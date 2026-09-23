@@ -13,6 +13,10 @@ far outside the budget may release renderer-owned meshes/textures/leases, but
 must remain in the project and simulation. Hysteresis should prevent
 rapid allocate/dispose cycles near the boundary. Bound resident resources by
 distance or a fixed count rather than total entity count.
+If a ready object remains inside the camera view but falls outside the full
+resource budget, draw a cheap, recognizable proxy at its true world position;
+do not make it disappear or present it as a newly forming object. Selecting or
+approaching that proxy should promote it to full detail.
 
 Reappearance must show a completed object directly: unmounting `Formation`
 resets `progress.current` and currently replays an orb. Persist presentation
