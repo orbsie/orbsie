@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 render-origin core accepted locally (`9374254`): a 1,024-unit
+quantized origin with a 768-unit rebase threshold keeps camera-relative
+positions small and avoids oscillation at cell midpoints. World/local and
+camera-pose conversions reject invalid input without mutating authoritative
+coordinates. Astra review found and corrected a midpoint thrash in the first
+threshold. Five focused tests, TypeScript, formatting and diff checks passed.
+`Math.fround` inspection showed a 0.1-unit offset at 1,000,000 world units
+becoming 0.125, motivating the repair; this is not a GPU measurement.
+WebGL scene integration is the current bounded worker task. Software Canvas
+uses CPU double-precision projection and is not changed by this helper.
+
 Sep 23 player-follow parity accepted locally: WebGL (`a74fef3`) and software
 (`8f9ff03`) cameras now derive a temporary play view from the authoritative
 player position while retaining saved editor heading/zoom. Both terrain
