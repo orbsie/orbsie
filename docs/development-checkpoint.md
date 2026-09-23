@@ -1,5 +1,12 @@
 # Development checkpoint
 
+Sep 23 empty-world frame-content correction: framing with no committed bounds
+returns the default 24m camera distance at the origin, including on narrow
+screens, instead of an arbitrary 20m workspace that pushed the camera far
+away. The 15 focused navigation tests and formatting check pass (`9c801e9`).
+Shared drag, pinch and wheel gestures remain in progress; no visual acceptance
+or deployment is claimed.
+
 Sep 23 shared navigation buttons accepted locally: one World-wrapper control
 cluster serves WebGL, software fallback, editor and independent player. It
 offers zoom in/out, a heading compass/north reset preserving target and zoom,

@@ -30,7 +30,7 @@ screen from north; heading zero therefore places the camera on the +Z side of
 its target looking toward -Z. Normalize heading into [0, 2π). North reset sets
 heading to zero and preserves target and zoom. Frame content is a separate
 action that derives a bounded view from current committed entity bounds (or
-the initial workspace when empty); it may change target and zoom. Navigating
+the default camera view when empty); it may change target and zoom. Navigating
 must never mutate saved entity coordinates, IDs, revision or Undo history.
 
 Provide a single command API for pan, zoom, rotate-to-heading, north reset and
