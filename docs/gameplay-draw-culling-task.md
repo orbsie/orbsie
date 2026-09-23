@@ -16,6 +16,15 @@ invisible objects but retain gameplay update and scripted interactions.
 Do not let an offscreen portal or collectible be clicked through an invalid
 screen projection.
 
+WebGL `Formation` currently updates `group.current.visible` before applying
+the effective transform in its frame callback. A gameplay cull must run after
+that transform, using the renderer-local group matrix and renderer-local
+camera; do not compare a local camera against authoritative world bounds after
+render-origin rebasing. Keep forming, pending-asset, selected, and unknown-bound
+objects conservative. The same mounted `Formation` should become visible when
+a game rule teleports it into view without a React/project revision. Avoid a
+new frustum allocation for every entity on every frame.
+
 Focused acceptance: a moving/teleported object enters view without a project
 revision; a hidden object stays hidden; a distant objective still triggers
 contacts when the player reaches it; camera follow makes it visible again;
