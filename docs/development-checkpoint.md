@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 23 pure navigation gestures accepted locally (`2c9c1c3`): a renderer-neutral
+controller emits pan, rotate, pinch and wheel commands from normalized pointer
+inputs, tracks click suppression by pointer, defers object-hit starts, and
+cleans up cancellation/blur/reset. Nine focused tests, TypeScript, formatting
+and diff check passed. Astra reviewed the emitted coordinates against the
+shared 30-degree camera elevation and heading contract. The WebGL adapter is
+the current bounded worker task; software input integration and browser/mobile
+acceptance follow. The contract assumes adapters supply CSS-pixel positions,
+normalize wheel deltas, and exclude overlays/game controls.
+
 Sep 23 empty-world frame-content correction: framing with no committed bounds
 returns the default 24m camera distance at the origin, including on narrow
 screens, instead of an arbitrary 20m workspace that pushed the camera far
