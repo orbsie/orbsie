@@ -121,8 +121,10 @@ export function worldTerrainGroundViewRadius(
   const sinElevation = Math.sin(elevation);
   const cosElevation = Math.cos(elevation);
   const cameraHeight = focusHeight + distance * sinElevation;
-  if (!(cameraHeight > 0))
-    throw new RangeError("Terrain camera must be above the ground plane.");
+  // When framing an authored object below the ground, the downward-looking
+  // camera cannot see the y=0 plane. Keep chunk selection bounded instead of
+  // letting the renderer fail for an otherwise valid world-space target.
+  if (!(cameraHeight > 0)) return 0;
   const cameraForward = distance * cosElevation;
   const horizontalTangent = VERTICAL_TANGENT * aspect;
   let maxRadius = 0;

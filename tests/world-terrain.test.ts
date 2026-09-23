@@ -146,6 +146,17 @@ describe("world terrain chunk selection", () => {
     );
   });
 
+  it("keeps navigation below the ground plane from failing terrain selection", () => {
+    expect(worldTerrainGroundViewRadius(24, 1, -20)).toBe(0);
+    const chunks = selectWorldTerrainChunks({
+      focus: [0, -20, 0],
+      distance: 24,
+      aspect: 1,
+    });
+    expect(chunks).toHaveLength(WORLD_TERRAIN_MAX_ACTIVE_CHUNKS);
+    expect(chunks[0].lod).toBe(0);
+  });
+
   it("selects deterministic keys after 10km travel and at the supported coordinate edge", () => {
     const view = {
       focus: [10_000, 0, -10_000] as const,
