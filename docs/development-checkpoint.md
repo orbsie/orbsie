@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 WebGL gesture adapter accepted locally (`32a0f18`): scene-surface
+background drag pans, secondary drag rotates, wheel and touch pinch zoom;
+entity-hit starts keep object interaction, and recognized navigation suppresses
+selection clicks. Raycast picks the nearest visible relevant surface, touch
+action is scoped to the scene canvas, and cancellation/resize/fallback reset
+gesture state. Root review fixed a stale pointer-less click fallback and rapid
+rotation reading an old React prop by using the live navigation state. Worker
+reported 30 targeted tests, TypeScript, Prettier and diff checks pass. Pointer
+timing remains untested in a browser. Software gesture input is the next task;
+this is not deployable yet.
+
 Sep 23 pure navigation gestures accepted locally (`2c9c1c3`): a renderer-neutral
 controller emits pan, rotate, pinch and wheel commands from normalized pointer
 inputs, tracks click suppression by pointer, defers object-hit starts, and
