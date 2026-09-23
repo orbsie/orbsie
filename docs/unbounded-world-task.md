@@ -1,5 +1,15 @@
 # Unbounded world implementation handoff
 
+Sep 23 status: the source audit below describes the original starting point,
+not the current implementation. World-coordinate validation, default radial
+gameplay removal, shared navigation and controls, chunked ground in both
+renderers, render-local WebGL origin, player-follow views, and draw culling are
+implemented locally; see the newest entries in `docs/development-checkpoint.md`
+for commits and checks. Ready-formation resource residency, browser/mobile
+performance measurements, far-distance live creation/editing, and independent
+publication acceptance remain open. Do not reintroduce the original limits
+while completing those checks.
+
 Open owner requirement in `prompt.md`; implement after current
 connection/resilience priorities with one Luna worker at a time. Source audit
 found more than a visual limit: `src/lib/gameplay.ts` clamps the player to radius
