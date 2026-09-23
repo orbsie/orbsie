@@ -61,7 +61,8 @@ Use sequential bounded handoffs rather than a single renderer rewrite:
    software, reuse/dispose chunks, cull entities for draw work without deleting
    them from authoritative project state, and keep far-away picking/contact
    correct. Introduce a render-local origin if measurements show precision
-   loss; never recenter saved world coordinates.
+   loss; never recenter saved world coordinates. The bounded implementation
+   contract is `docs/unbounded-terrain-task.md`.
 4. Integrated acceptance: long-distance create/edit/nav/gameplay across both
    renderers, Android gestures, repeated chunk eviction, reload, independent
    export/publication, and frame-time/memory evidence on a growing scene.
