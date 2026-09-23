@@ -20,8 +20,11 @@ ChatGPT; a UI preference or browser guess is not authority for image input.
 After a clean initial commit and persisted revision, keep `building` and the
 same controller active while awaiting renderer readiness. Use the selected
 model's server-admitted image capability to decide whether to capture the
-canvas; structural-only requests must be labeled as such. If capture fails,
-leave the committed world playable and report review incomplete. Check active
+canvas; derive bounded renderer facts with
+`sceneReviewObservationsFromCapture` and omit the image on structural-only
+requests. Raw renderer errors and the PNG must not enter structural feedback.
+If capture fails, leave the committed world playable and report review
+incomplete. Check active
 controller, writer, journal, project ID and exact revision after every await.
 
 Send the original prompt/selected ID, original provider/model/effort/flags,
