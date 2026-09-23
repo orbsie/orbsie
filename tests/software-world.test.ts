@@ -4,6 +4,7 @@ import {
   bakeSoftwareTextureColors,
   playableEntities,
   projectSoftwareTerrainChunk,
+  projectSoftwareTriangle,
   requiredGeometryReady,
   softwareEntityPassesVisibility,
   softwarePickCenterIsVisible,
@@ -155,6 +156,87 @@ describe("software ground chunk projection", () => {
     ).toBeUndefined();
     expect(
       projectSoftwareTerrainChunk({ lod: 0, x: 0, z: -1 }, camera, 0, 844),
+    ).toBeUndefined();
+  });
+});
+
+describe("software entity triangle clipping", () => {
+  const camera = () => {
+    const value = new THREE.PerspectiveCamera(90, 1, 1, 10);
+    value.lookAt(0, 0, -1);
+    value.updateProjectionMatrix();
+    value.updateMatrixWorld();
+    return value;
+  };
+
+  it("clips a triangle crossing the near plane into a bounded screen polygon", () => {
+    const face = projectSoftwareTriangle(
+      [
+        new THREE.Vector3(-0.5, -0.5, -2),
+        new THREE.Vector3(0.5, -0.5, -0.5),
+        new THREE.Vector3(0, 0.6, -2),
+      ],
+      camera(),
+      400,
+      400,
+    );
+
+    expect(face).toBeDefined();
+    expect(face!.points.length).toBeGreaterThanOrEqual(3);
+    expect(
+      Number.isFinite(face!.depth) &&
+        face!.depth >= -10 &&
+        face!.depth <= -1 &&
+        face!.points.every(
+          ({ x, y, z }) =>
+            Number.isFinite(x) &&
+            Number.isFinite(y) &&
+            Number.isFinite(z) &&
+            x >= 0 &&
+            x <= 400 &&
+            y >= 0 &&
+            y <= 400,
+        ),
+    ).toBe(true);
+  });
+
+  it("rejects triangles entirely before the near plane, behind the camera, or degenerate", () => {
+    const view = camera();
+    expect(
+      projectSoftwareTriangle(
+        [
+          new THREE.Vector3(-0.5, -0.5, -0.5),
+          new THREE.Vector3(0.5, -0.5, -0.5),
+          new THREE.Vector3(0, 0.5, -0.5),
+        ],
+        view,
+        400,
+        400,
+      ),
+    ).toBeUndefined();
+    expect(
+      projectSoftwareTriangle(
+        [
+          new THREE.Vector3(-0.5, -0.5, 1),
+          new THREE.Vector3(0.5, -0.5, 1),
+          new THREE.Vector3(0, 0.5, 1),
+        ],
+        view,
+        400,
+        400,
+      ),
+    ).toBeUndefined();
+    expect(
+      projectSoftwareTriangle(
+        [
+          new THREE.Vector3(-0.5, 0, -2),
+          new THREE.Vector3(0, 0, -2),
+          new THREE.Vector3(0.5, 0, -2),
+        ],
+        view,
+        400,
+        400,
+      ),
     ).toBeUndefined();
   });
 });

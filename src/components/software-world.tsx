@@ -287,7 +287,7 @@ type ProjectedPoint = { x: number; y: number; z: number };
 type PickedEntity = { id: string; x: number; y: number; radius: number };
 type SoftwareMarker = { entity: Entity; point: ProjectedPoint };
 type SoftwareFace = {
-  points: [ProjectedPoint, ProjectedPoint, ProjectedPoint];
+  points: readonly ProjectedPoint[];
   color: string;
   depth: number;
 };
@@ -402,6 +402,11 @@ function visibleEntitiesForSettledWorkspace(
 }
 
 export type SoftwareTerrainScreenPoint = Readonly<{ x: number; y: number }>;
+export type SoftwareProjectedFace = Readonly<{
+  /** Frustum clipping can turn one source triangle into a convex polygon. */
+  points: readonly Readonly<{ x: number; y: number; z: number }>[];
+  depth: number;
+}>;
 
 function terrainPlaneDistance(
   point: THREE.Vector3,
@@ -428,22 +433,12 @@ function terrainPlaneDistance(
   }
 }
 
-/**
- * Project a world-aligned ground chunk after clipping it against the camera
- * frustum. This keeps tiles crossing the near plane or viewport edges finite
- * and prevents perspective division from creating enormous inverted paths.
- */
-export function projectSoftwareTerrainChunk(
-  key: WorldTerrainChunkKey,
+function clipCameraPolygonToFrustum(
+  worldPoints: readonly THREE.Vector3[],
   camera: THREE.PerspectiveCamera,
-  width: number,
-  height: number,
-): readonly SoftwareTerrainScreenPoint[] | undefined {
+): THREE.Vector3[] | undefined {
   if (
-    !Number.isFinite(width) ||
-    width <= 0 ||
-    !Number.isFinite(height) ||
-    height <= 0 ||
+    worldPoints.length < 3 ||
     !Number.isFinite(camera.fov) ||
     camera.fov <= 0 ||
     camera.fov >= 180 ||
@@ -455,6 +450,144 @@ export function projectSoftwareTerrainChunk(
     camera.far <= camera.near
   )
     return undefined;
+
+  const tangentVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const tangentHorizontal = tangentVertical * camera.aspect;
+  if (!Number.isFinite(tangentVertical) || !Number.isFinite(tangentHorizontal))
+    return undefined;
+  let polygon = worldPoints.map((point) =>
+    point.clone().applyMatrix4(camera.matrixWorldInverse),
+  );
+  if (
+    polygon.some(
+      (point) =>
+        !Number.isFinite(point.x) ||
+        !Number.isFinite(point.y) ||
+        !Number.isFinite(point.z),
+    )
+  )
+    return undefined;
+
+  for (let plane = 0; plane < 6 && polygon.length > 0; plane++) {
+    const clipped: THREE.Vector3[] = [];
+    let previous = polygon[polygon.length - 1];
+    let previousDistance = terrainPlaneDistance(
+      previous,
+      plane,
+      tangentVertical,
+      tangentHorizontal,
+      camera.near,
+      camera.far,
+    );
+    if (!Number.isFinite(previousDistance)) return undefined;
+    for (const current of polygon) {
+      const currentDistance = terrainPlaneDistance(
+        current,
+        plane,
+        tangentVertical,
+        tangentHorizontal,
+        camera.near,
+        camera.far,
+      );
+      if (!Number.isFinite(currentDistance)) return undefined;
+      const previousInside = previousDistance >= 0;
+      const currentInside = currentDistance >= 0;
+      if (previousInside !== currentInside) {
+        const denominator = previousDistance - currentDistance;
+        if (!Number.isFinite(denominator) || denominator === 0)
+          return undefined;
+        const amount = THREE.MathUtils.clamp(
+          previousDistance / denominator,
+          0,
+          1,
+        );
+        const intersection = previous.clone().lerp(current, amount);
+        if (
+          !Number.isFinite(intersection.x) ||
+          !Number.isFinite(intersection.y) ||
+          !Number.isFinite(intersection.z)
+        )
+          return undefined;
+        clipped.push(intersection);
+      }
+      if (currentInside) clipped.push(current);
+      previous = current;
+      previousDistance = currentDistance;
+    }
+    polygon = clipped;
+  }
+  return polygon.length >= 3 ? polygon : undefined;
+}
+
+function projectCameraPolygonToScreen(
+  cameraPoints: readonly THREE.Vector3[],
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): ProjectedPoint[] | undefined {
+  if (
+    !Number.isFinite(width) ||
+    width <= 0 ||
+    !Number.isFinite(height) ||
+    height <= 0
+  )
+    return undefined;
+  const screen: ProjectedPoint[] = [];
+  for (const point of cameraPoints) {
+    const projected = point.clone().applyMatrix4(camera.projectionMatrix);
+    if (
+      !Number.isFinite(projected.x) ||
+      !Number.isFinite(projected.y) ||
+      !Number.isFinite(projected.z)
+    )
+      return undefined;
+    screen.push({
+      x: THREE.MathUtils.clamp((projected.x * 0.5 + 0.5) * width, 0, width),
+      y: THREE.MathUtils.clamp((-projected.y * 0.5 + 0.5) * height, 0, height),
+      z: projected.z,
+    });
+  }
+  let doubledArea = 0;
+  for (let index = 0; index < screen.length; index++) {
+    const current = screen[index];
+    const next = screen[(index + 1) % screen.length];
+    doubledArea += current.x * next.y - next.x * current.y;
+  }
+  if (!Number.isFinite(doubledArea) || Math.abs(doubledArea) < 0.01)
+    return undefined;
+  return screen;
+}
+
+/** Clip one world-space triangle into its visible screen-space polygon. */
+export function projectSoftwareTriangle(
+  worldPoints: readonly [THREE.Vector3, THREE.Vector3, THREE.Vector3],
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): SoftwareProjectedFace | undefined {
+  const clipped = clipCameraPolygonToFrustum(worldPoints, camera);
+  if (!clipped) return undefined;
+  const screen = projectCameraPolygonToScreen(clipped, camera, width, height);
+  if (!screen) return undefined;
+  const depth =
+    clipped.reduce((sum, point) => sum + point.z, 0) / clipped.length;
+  if (!Number.isFinite(depth)) return undefined;
+  return { points: screen, depth };
+}
+
+/**
+ * Project a world-aligned ground chunk after clipping it against the camera
+ * frustum. This keeps tiles crossing the near plane or viewport edges finite
+ * and prevents perspective division from creating enormous inverted paths.
+ */
+export function projectSoftwareTerrainChunk(
+  key: WorldTerrainChunkKey,
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): readonly SoftwareTerrainScreenPoint[] | undefined {
+  if (!Number.isFinite(width) || width <= 0) return undefined;
+  if (!Number.isFinite(height) || height <= 0) return undefined;
 
   let size: number;
   try {
@@ -475,70 +608,10 @@ export function projectSoftwareTerrainChunk(
     new THREE.Vector3(originX, 0, originZ + size),
   ];
   camera.updateMatrixWorld();
-  for (const point of corners) point.applyMatrix4(camera.matrixWorldInverse);
-
-  const tangentVertical = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const tangentHorizontal = tangentVertical * camera.aspect;
-  if (!Number.isFinite(tangentVertical) || !Number.isFinite(tangentHorizontal))
-    return undefined;
-
-  let polygon = corners;
-  for (let plane = 0; plane < 6 && polygon.length > 0; plane++) {
-    const clipped: THREE.Vector3[] = [];
-    let previous = polygon[polygon.length - 1];
-    let previousDistance = terrainPlaneDistance(
-      previous,
-      plane,
-      tangentVertical,
-      tangentHorizontal,
-      camera.near,
-      camera.far,
-    );
-    for (const current of polygon) {
-      const currentDistance = terrainPlaneDistance(
-        current,
-        plane,
-        tangentVertical,
-        tangentHorizontal,
-        camera.near,
-        camera.far,
-      );
-      const previousInside = previousDistance >= 0;
-      const currentInside = currentDistance >= 0;
-      if (previousInside !== currentInside) {
-        const denominator = previousDistance - currentDistance;
-        if (Number.isFinite(denominator) && denominator !== 0) {
-          const amount = previousDistance / denominator;
-          clipped.push(previous.clone().lerp(current, amount));
-        }
-      }
-      if (currentInside) clipped.push(current);
-      previous = current;
-      previousDistance = currentDistance;
-    }
-    polygon = clipped;
-  }
-  if (polygon.length < 3) return undefined;
-
-  const screen: SoftwareTerrainScreenPoint[] = [];
-  for (const point of polygon) {
-    const projected = point.clone().applyMatrix4(camera.projectionMatrix);
-    if (!Number.isFinite(projected.x) || !Number.isFinite(projected.y))
-      return undefined;
-    screen.push({
-      x: THREE.MathUtils.clamp((projected.x * 0.5 + 0.5) * width, 0, width),
-      y: THREE.MathUtils.clamp((-projected.y * 0.5 + 0.5) * height, 0, height),
-    });
-  }
-  let doubledArea = 0;
-  for (let index = 0; index < screen.length; index++) {
-    const current = screen[index];
-    const next = screen[(index + 1) % screen.length];
-    doubledArea += current.x * next.y - next.x * current.y;
-  }
-  if (!Number.isFinite(doubledArea) || Math.abs(doubledArea) < 0.01)
-    return undefined;
-  return screen;
+  const clipped = clipCameraPolygonToFrustum(corners, camera);
+  return clipped
+    ? projectCameraPolygonToScreen(clipped, camera, width, height)
+    : undefined;
 }
 
 function projectPoint(
@@ -611,7 +684,6 @@ function drawEntity(
   const a = new THREE.Vector3();
   const b = new THREE.Vector3();
   const c = new THREE.Vector3();
-  const view = camera.matrixWorldInverse;
   for (let triangle = 0; triangle < triangles; triangle++) {
     const ia = index?.getX(triangle * 3) ?? triangle * 3;
     const ib = index?.getX(triangle * 3 + 1) ?? triangle * 3 + 1;
@@ -619,9 +691,6 @@ function drawEntity(
     a.set(position.getX(ia), position.getY(ia), position.getZ(ia));
     b.set(position.getX(ib), position.getY(ib), position.getZ(ib));
     c.set(position.getX(ic), position.getY(ic), position.getZ(ic));
-    const pa = projectPoint(a, matrix, camera, width, height);
-    const pb = projectPoint(b, matrix, camera, width, height);
-    const pc = projectPoint(c, matrix, camera, width, height);
     const ca = readColor(colors, ia);
     const cb = readColor(colors, ib);
     const cc = readColor(colors, ic);
@@ -637,16 +706,22 @@ function drawEntity(
       const tint = new THREE.Color(entry.tint);
       rgb = [tint.r, tint.g, tint.b];
     }
-    const depth =
-      (a.clone().applyMatrix4(matrix).applyMatrix4(view).z +
-        b.clone().applyMatrix4(matrix).applyMatrix4(view).z +
-        c.clone().applyMatrix4(matrix).applyMatrix4(view).z) /
-      3;
-    faces.push({
-      points: [pa, pb, pc],
-      color: cssColor(rgb),
-      depth,
-    });
+    const clipped = projectSoftwareTriangle(
+      [
+        a.clone().applyMatrix4(matrix),
+        b.clone().applyMatrix4(matrix),
+        c.clone().applyMatrix4(matrix),
+      ],
+      camera,
+      width,
+      height,
+    );
+    if (clipped)
+      faces.push({
+        points: clipped.points,
+        color: cssColor(rgb),
+        depth: clipped.depth,
+      });
   }
   const center = projectPoint(
     new THREE.Vector3(0, 0.65, 0),
@@ -912,8 +987,8 @@ function drawScene(
   for (const face of faces) {
     ctx.beginPath();
     ctx.moveTo(face.points[0].x, face.points[0].y);
-    ctx.lineTo(face.points[1].x, face.points[1].y);
-    ctx.lineTo(face.points[2].x, face.points[2].y);
+    for (let index = 1; index < face.points.length; index++)
+      ctx.lineTo(face.points[index].x, face.points[index].y);
     ctx.closePath();
     ctx.fillStyle = face.color;
     ctx.fill();
