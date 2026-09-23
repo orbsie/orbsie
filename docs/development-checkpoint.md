@@ -7,6 +7,9 @@ evidence; synthetic fixtures do not yet prove interrupted-run save/undo recovery
 or the cause of frequent production failures. Implement after browser review
 integration with one Luna worker, then gather live provider evidence when access
 and Gateway credits permit. No stream-resilience completion claim yet.
+`docs/authoring-live-review-acceptance-task.md` defines the subsequent live gate:
+the older provider harness alone does not prove review calls, and the five-call
+Gateway cap requires separate create/edit tests when each may use three calls.
 
 Sep 22 integration seam: `2b601cd` exposes `authoringReview` from server
 configuration and preserves hosted opt-in; `ee97d7a` adds the API model's
