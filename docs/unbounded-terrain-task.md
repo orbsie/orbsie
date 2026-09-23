@@ -8,8 +8,8 @@ changing the authoritative scene coordinates.
 
 Execute as bounded slices with one worker at a time: (1) a deterministic,
 budgeted chunk-selection and level-of-detail contract with seam tests; (2)
-WebGL ground; (3) visible-object culling; (4) matching software ground,
-visibility and picking; (5) measured precision repair and gameplay camera
+WebGL ground; (3) matching software ground; (4) visible-object culling and
+software picking; (5) measured precision repair and gameplay camera
 tracking; (6) browser/mobile performance and published-player acceptance.
 Retain a working renderer at each handoff and review each slice before the
 next. A single large render rewrite would make regressions hard to isolate.
