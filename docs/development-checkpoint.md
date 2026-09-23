@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 WebGL gameplay-follow slice accepted locally (`a74fef3`): a pure
+temporary play navigation follows the authoritative player position while
+retaining the saved editor heading/zoom. The WebGL camera uses the Player's
+frame-priority -1 position without per-frame project writes, terrain refreshes
+on world-aligned cell/height bucket changes, the far plane follows the active
+view, and editor map controls are hidden during play. Astra reviewed the diff
+and hid the disabled control cluster entirely; worker reported 29 targeted
+tests, TypeScript, formatting and diff checks. This slice has not yet had the
+integrated build or browser visual check. Software play-view parity is the
+current bounded worker task; precision and resource eviction contracts are
+recorded in `docs/render-origin-precision-task.md` and
+`docs/distant-formation-resource-task.md`.
+
 Sep 23 integrated render milestone accepted locally: WebGL settled-editing
 formations are now frustum filtered without remounting (`2ebb664`), and the
 software renderer clips entity polygons to the camera frustum before
