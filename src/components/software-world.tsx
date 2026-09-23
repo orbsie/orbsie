@@ -36,6 +36,7 @@ import {
   runtimeEntityMatrix,
   usesSceneHierarchy,
 } from "@/lib/scene-runtime";
+import type { ResolvedScene } from "@/lib/scene-transform";
 import {
   sampleTexture,
   type FormationTextureSample,
@@ -45,6 +46,22 @@ import {
   worldNavigationBoundsByEntity,
   type WorldNavigationEntityBounds,
 } from "@/lib/world-navigation-bounds";
+import {
+  formationProxyVisualBounds,
+  playbackFormationResidencyFocusCell,
+  type FormationProxyVisualBounds,
+} from "@/lib/formation-residency-presentation";
+import { formationRecipeIdentity } from "@/lib/formation-completion";
+import {
+  releaseOwnedSoftwareGeometry,
+  softwareActiveProxyIds,
+  selectSoftwareFormationResidency,
+  softwareProxyDrawnForRevision,
+  softwareEntityVisualReviewReady,
+  softwareGeometryMatchesEntity,
+  type SoftwareFormationCompletionRecord,
+  type SoftwareProxyDrawRecord,
+} from "@/lib/software-formation-residency";
 import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
 import { parcelTransitionController } from "@/lib/parcel-transition";
 import {
@@ -79,6 +96,7 @@ export type SoftwareGeometryEntry = {
    * replacement asset is still loading so collision uses the displayed mesh. */
   sourceRecipe: Entity["geometry"];
   sourceStage: Entity["stage"];
+  sourceColor?: string;
 };
 
 const localSoftwareBounds = new WeakMap<
@@ -215,6 +233,7 @@ function makeEntityGeometry(entity: Entity): SoftwareGeometryEntry {
       entity.geometry?.kind !== "generated",
     sourceRecipe: entity.geometry,
     sourceStage: entity.stage,
+    sourceColor: entity.color,
   };
 }
 
@@ -231,6 +250,7 @@ function SoftwareEntity({
   ) => boolean;
   onAssetError: (id: string, error: string | undefined) => void;
 }) {
+  const ownedGeometry = useRef<THREE.BufferGeometry | undefined>(undefined);
   const recipe =
     entity.geometry?.kind === "asset" || entity.geometry?.kind === "generated"
       ? entity.geometry
@@ -262,16 +282,21 @@ function SoftwareEntity({
           ready: true,
           sourceRecipe: entity.geometry,
           sourceStage: entity.stage,
+          sourceColor: entity.color,
         }
       : makeEntityGeometry(entity);
     const accepted = onChange(entity.id, entry);
+    if (accepted) ownedGeometry.current = entry.geometry;
     return () => {
       // Removal is owned by the component-unmount effect below. On a recipe
       // change this entry must remain available until the replacement effect
       // commits; otherwise a pending replacement would blank the last-good
       // mesh and collision shape.
-      if (!entry.ready && accepted)
+      if (!entry.ready && accepted) {
         onChange(entity.id, undefined, entry.geometry);
+        if (ownedGeometry.current === entry.geometry)
+          ownedGeometry.current = undefined;
+      }
     };
   }, [
     entity.id,
@@ -285,7 +310,9 @@ function SoftwareEntity({
   ]);
   useEffect(() => {
     return () => {
-      onChange(entity.id, undefined);
+      const geometry = ownedGeometry.current;
+      if (geometry) onChange(entity.id, undefined, geometry);
+      ownedGeometry.current = undefined;
     };
   }, [entity.id, onChange]);
   return null;
@@ -293,8 +320,13 @@ function SoftwareEntity({
 
 type ProjectedPoint = { x: number; y: number; z: number };
 type PickedEntity = { id: string; x: number; y: number; radius: number };
-type SoftwareMarker = { entity: Entity; point: ProjectedPoint };
+type SoftwareMarker = {
+  entity: Entity;
+  point: ProjectedPoint;
+  proxyRadius?: number;
+};
 type SoftwareFace = {
+  entityId: string;
   points: readonly ProjectedPoint[];
   color: string;
   depth: number;
@@ -313,6 +345,44 @@ type SoftwareVisibilityCache = {
   cameraWorld: number[];
   projection: number[];
 };
+
+function sameEntityIdSet(
+  left: ReadonlySet<string> | undefined,
+  right: ReadonlySet<string> | undefined,
+): boolean {
+  if (left === right) return true;
+  if (!left || !right || left.size !== right.size) return false;
+  for (const id of left) if (!right.has(id)) return false;
+  return true;
+}
+
+/** Committed world AABBs become stable proxy placement bounds. */
+export function softwareProxyBoundsByEntity(
+  project: Project,
+): ReadonlyMap<string, FormationProxyVisualBounds | undefined> {
+  const worldBounds = worldNavigationBoundsByEntity(project);
+  let scene: ResolvedScene | undefined;
+  try {
+    scene = resolveRuntimeScene(project);
+  } catch {
+    scene = undefined;
+  }
+  return new Map(
+    project.entities.map((entity) => {
+      const node = scene?.entities.get(entity.id);
+      const resolvedNode = node
+        ? {
+            worldMatrix: node.worldMatrix,
+            worldPosition: node.worldPosition,
+          }
+        : undefined;
+      return [
+        entity.id,
+        formationProxyVisualBounds(worldBounds.get(entity.id), resolvedNode),
+      ];
+    }),
+  );
+}
 
 /** Whether a projected object center can be reached by a canvas pick. */
 export function softwarePickCenterIsVisible(
@@ -637,6 +707,98 @@ function projectPoint(
   };
 }
 
+export type SoftwareProxyProjection = Readonly<{
+  point: ProjectedPoint;
+  radius: number;
+}>;
+
+/** Project a lightweight proxy from committed bounds and the current runtime transform. */
+export function projectSoftwareResidencyProxy(
+  bounds: FormationProxyVisualBounds,
+  resolvedNode: Readonly<{
+    worldPosition: readonly [number, number, number];
+  }>,
+  runtimeMatrix: THREE.Matrix4,
+  camera: THREE.PerspectiveCamera,
+  width: number,
+  height: number,
+): SoftwareProxyProjection | undefined {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    !runtimeMatrix.elements.every(Number.isFinite) ||
+    ![...resolvedNode.worldPosition, ...bounds.center, ...bounds.size].every(
+      Number.isFinite,
+    ) ||
+    bounds.size.some((component) => component <= 0)
+  )
+    return undefined;
+  const center = new THREE.Vector3(...bounds.center);
+  center.x += runtimeMatrix.elements[12] - resolvedNode.worldPosition[0];
+  center.y += runtimeMatrix.elements[13] - resolvedNode.worldPosition[1];
+  center.z += runtimeMatrix.elements[14] - resolvedNode.worldPosition[2];
+  if (![center.x, center.y, center.z].every(Number.isFinite)) return undefined;
+  camera.updateMatrixWorld();
+  const half = bounds.size.map((component) => component / 2);
+  const corners = Array.from(
+    { length: 8 },
+    (_, index) =>
+      new THREE.Vector3(
+        center.x + (index & 1 ? half[0] : -half[0]),
+        center.y + (index & 2 ? half[1] : -half[1]),
+        center.z + (index & 4 ? half[2] : -half[2]),
+      ),
+  );
+  const faces = [
+    [0, 2, 3, 1],
+    [4, 5, 7, 6],
+    [0, 1, 5, 4],
+    [2, 6, 7, 3],
+    [0, 4, 6, 2],
+    [1, 3, 7, 5],
+  ] as const;
+  const projected: ProjectedPoint[] = [];
+  for (const face of faces) {
+    const clipped = clipCameraPolygonToFrustum(
+      face.map((corner) => corners[corner]),
+      camera,
+    );
+    if (!clipped) continue;
+    for (const cameraPoint of clipped) {
+      const point = cameraPoint.clone().applyMatrix4(camera.projectionMatrix);
+      if (
+        !Number.isFinite(point.x) ||
+        !Number.isFinite(point.y) ||
+        !Number.isFinite(point.z)
+      )
+        continue;
+      projected.push({
+        x: THREE.MathUtils.clamp((point.x * 0.5 + 0.5) * width, 0, width),
+        y: THREE.MathUtils.clamp((-point.y * 0.5 + 0.5) * height, 0, height),
+        z: point.z,
+      });
+    }
+  }
+  if (!projected.length) return undefined;
+  const minX = Math.min(...projected.map(({ x }) => x));
+  const maxX = Math.max(...projected.map(({ x }) => x));
+  const minY = Math.min(...projected.map(({ y }) => y));
+  const maxY = Math.max(...projected.map(({ y }) => y));
+  if (![minX, maxX, minY, maxY].every(Number.isFinite)) return undefined;
+  const point: ProjectedPoint = {
+    x: (minX + maxX) / 2,
+    y: (minY + maxY) / 2,
+    z: Math.min(...projected.map(({ z }) => z)),
+  };
+  const radius = Math.max(
+    6,
+    Math.min(22, Math.hypot(maxX - minX, maxY - minY) / 2),
+  );
+  return Number.isFinite(radius) ? { point, radius } : undefined;
+}
+
 export function softwareEntityMatrix(
   project: Project,
   entity: Entity,
@@ -816,6 +978,7 @@ function drawEntity(
     );
     if (clipped)
       faces.push({
+        entityId: entity.id,
         points: clipped.points,
         color: cssColor(rgb),
         depth: clipped.depth,
@@ -875,11 +1038,7 @@ export function playableEntities(
           stage: entry.sourceStage,
         }
       : undefined;
-    const visualReady = Boolean(
-      entry?.ready &&
-      entry.sourceRecipe === entity.geometry &&
-      entry.sourceStage === entity.stage,
-    );
+    const visualReady = softwareGeometryMatchesEntity(entity, entry);
     return gameplayEntityForVisualState(entity, visualReady, displayed);
   });
 }
@@ -887,6 +1046,15 @@ export function playableEntities(
 export function requiredGeometryReady(
   project: Project,
   geometries: Map<string, SoftwareGeometryEntry>,
+  completionRecords: ReadonlyMap<
+    string,
+    SoftwareFormationCompletionRecord
+  > = new Map(),
+  visibleProxyIds?: ReadonlySet<string>,
+  proxyIds: ReadonlySet<string> = new Set(),
+  visibleEntityIds?: ReadonlySet<string>,
+  nonDrawableIds: ReadonlySet<string> = new Set(),
+  drawnProxyByEntity: ReadonlyMap<string, SoftwareProxyDrawRecord> = new Map(),
 ): boolean {
   return project.entities.every((entity) => {
     if (
@@ -894,8 +1062,29 @@ export function requiredGeometryReady(
       entity.geometry?.kind !== "generated"
     )
       return true;
-    const entry = geometries.get(entity.id);
-    return entry?.ready === true && entry.sourceRecipe === entity.geometry;
+    const visibleInViewport =
+      !nonDrawableIds.has(entity.id) &&
+      (visibleEntityIds === undefined || visibleEntityIds.has(entity.id));
+    const visibleProxy =
+      proxyIds.has(entity.id) &&
+      visibleInViewport &&
+      (visibleProxyIds?.has(entity.id) === true ||
+        visibleEntityIds?.has(entity.id) === true);
+    return softwareEntityVisualReviewReady(
+      entity,
+      geometries.get(entity.id),
+      completionRecords.get(entity.id),
+      project.revision,
+      visibleInViewport,
+      proxyIds.has(entity.id),
+      visibleProxy,
+      softwareProxyDrawnForRevision(
+        entity,
+        project.id,
+        project.revision,
+        drawnProxyByEntity.get(entity.id),
+      ),
+    );
   });
 }
 
@@ -969,11 +1158,26 @@ function drawWorkspaceGround(
   }
 }
 
+type SoftwareSceneDrawResult = Readonly<{
+  completedFullDraw: boolean;
+  visibleEntityIds?: ReadonlySet<string>;
+  reviewVisibleEntityIds: ReadonlySet<string>;
+  visibleProxyIds: ReadonlySet<string>;
+}>;
+
 function drawScene(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   project: Project,
   geometries: Map<string, SoftwareGeometryEntry>,
+  proxyIds: ReadonlySet<string>,
+  proxyBoundsByEntity: ReadonlyMap<
+    string,
+    FormationProxyVisualBounds | undefined
+  >,
+  completionRecords: Map<string, SoftwareFormationCompletionRecord>,
+  drawnProxyByEntity: Map<string, SoftwareProxyDrawRecord>,
+  recipeIdentityByEntity: ReadonlyMap<string, string>,
   session: GameSession,
   player: PlayerState,
   selected: string | undefined,
@@ -985,7 +1189,7 @@ function drawScene(
   navigation: WorldNavigationState,
   terrainCache: TerrainChunkSelectionCache,
   visibilityCache: SoftwareVisibilityCache,
-) {
+): SoftwareSceneDrawResult {
   const width = canvas.clientWidth || 1;
   const height = canvas.clientHeight || 1;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1057,15 +1261,42 @@ function drawScene(
           height,
         )
       : undefined;
+  const reviewVisibleEntityIds = new Set(visibleEntityIds ?? []);
+  const visibleProxyIds = new Set<string>();
   const gameplayFrustum =
     playing && settledWorkspace ? softwareCameraFrustum(camera) : undefined;
   const transformedGameplayBounds = new THREE.Box3();
+  const resolvedScene = (() => {
+    try {
+      return resolveRuntimeScene(project);
+    } catch {
+      return undefined;
+    }
+  })();
+  let completedFullDraw = false;
+  let proxyDrawChanged = false;
+  const fullReadyEntityIds = new Set<string>();
   for (const entity of project.entities) {
-    if (!softwareEntityPassesVisibility(entity.id, visibleEntityIds)) continue;
+    const visibleByBounds = softwareEntityPassesVisibility(
+      entity.id,
+      visibleEntityIds,
+    );
     const effective = playing ? session.effectiveEntity(entity) : entity;
     if (!effective) continue;
+    if (
+      playing &&
+      score.includes(entity.id) &&
+      entity.behavior?.type === "collect"
+    )
+      continue;
     const entry = geometries.get(entity.id);
-    if (!entry) continue;
+    const bounds = proxyIds.has(entity.id)
+      ? proxyBoundsByEntity.get(entity.id)
+      : undefined;
+    const canDrawFull = softwareGeometryMatchesEntity(entity, entry);
+    if (canDrawFull) fullReadyEntityIds.add(entity.id);
+    const proxyOnly = proxyIds.has(entity.id) && (!entry || !canDrawFull);
+    if (!entry && !bounds) continue;
     const matrix = softwareEntityMatrix(
       project,
       entity,
@@ -1073,31 +1304,71 @@ function drawScene(
       session,
       playing,
     );
-    if (
-      playing &&
-      gameplayFrustum &&
-      !softwareGeometryVisibleInFrustum(
-        entry,
+    const completion = completionRecords.get(entity.id);
+    const passesGameplayFrustum =
+      proxyOnly ||
+      !(
+        playing &&
+        gameplayFrustum &&
+        entry &&
+        !softwareGeometryVisibleInFrustum(
+          entry,
+          matrix,
+          gameplayFrustum,
+          transformedGameplayBounds,
+        )
+      );
+    if (!visibleByBounds) continue;
+    if (!passesGameplayFrustum) continue;
+
+    if (proxyOnly && bounds) {
+      if (score.includes(entity.id) && entity.behavior?.type === "collect")
+        continue;
+      const resolvedNode = resolvedScene?.entities.get(entity.id);
+      if (!resolvedNode) continue;
+      const projected = projectSoftwareResidencyProxy(
+        bounds,
+        resolvedNode,
         matrix,
-        gameplayFrustum,
-        transformedGameplayBounds,
-      )
-    )
+        camera,
+        width,
+        height,
+      );
+      if (!projected) continue;
+      reviewVisibleEntityIds.add(entity.id);
+      picks.push({
+        id: entity.id,
+        x: projected.point.x,
+        y: projected.point.y,
+        radius: Math.max(24, projected.radius + 8),
+      });
+      markers.push({
+        entity: effective,
+        point: projected.point,
+        proxyRadius: projected.radius,
+      });
       continue;
-    drawEntity(
-      entry,
-      effective,
-      matrix,
-      camera,
-      width,
-      height,
-      selected === entity.id,
-      playing && score.includes(entity.id),
-      picks,
-      faces,
-      markers,
-      playing ? session.state?.entityOverrides[entity.id]?.color : undefined,
-    );
+    }
+    if (entry) {
+      if (playing) reviewVisibleEntityIds.add(entity.id);
+      const collectColor = playing
+        ? session.state?.entityOverrides[entity.id]?.color
+        : undefined;
+      drawEntity(
+        entry,
+        effective,
+        matrix,
+        camera,
+        width,
+        height,
+        selected === entity.id,
+        playing && score.includes(entity.id),
+        picks,
+        faces,
+        markers,
+        collectColor,
+      );
+    }
   }
   faces.sort((left, right) => left.depth - right.depth);
   for (const face of faces) {
@@ -1108,8 +1379,52 @@ function drawScene(
     ctx.closePath();
     ctx.fillStyle = face.color;
     ctx.fill();
+    const completion = completionRecords.get(face.entityId);
+    if (
+      fullReadyEntityIds.has(face.entityId) &&
+      completion &&
+      completion.recipeIdentity === recipeIdentityByEntity.get(face.entityId) &&
+      completion.fullDrawnRevision !== project.revision
+    ) {
+      completion.fullDrawnRevision = project.revision;
+      completedFullDraw = true;
+    }
   }
   for (const marker of markers) {
+    if (marker.proxyRadius !== undefined) {
+      ctx.beginPath();
+      ctx.arc(
+        marker.point.x,
+        marker.point.y,
+        marker.proxyRadius,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fillStyle =
+        marker.entity.geometry?.kind === "asset" ||
+        marker.entity.geometry?.kind === "generated"
+          ? (marker.entity.geometry.tint ?? marker.entity.color)
+          : marker.entity.color;
+      ctx.fill();
+      visibleProxyIds.add(marker.entity.id);
+      ctx.strokeStyle = "rgba(255, 255, 245, .9)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      const previous = drawnProxyByEntity.get(marker.entity.id);
+      if (
+        !previous ||
+        previous.projectId !== project.id ||
+        previous.revision !== project.revision ||
+        previous.recipeIdentity !== recipeIdentityByEntity.get(marker.entity.id)
+      ) {
+        drawnProxyByEntity.set(marker.entity.id, {
+          projectId: project.id,
+          revision: project.revision,
+          recipeIdentity: recipeIdentityByEntity.get(marker.entity.id) ?? "",
+        });
+        proxyDrawChanged = true;
+      }
+    }
     if (marker.entity.id === selected) {
       ctx.beginPath();
       ctx.arc(marker.point.x, marker.point.y, 27, 0, Math.PI * 2);
@@ -1124,8 +1439,32 @@ function drawScene(
       ctx.lineWidth = 3;
       ctx.stroke();
     }
+    if (
+      marker.proxyRadius === undefined &&
+      (marker.entity.id === selected ||
+        marker.entity.behavior?.type === "portal")
+    ) {
+      const completion = completionRecords.get(marker.entity.id);
+      if (
+        fullReadyEntityIds.has(marker.entity.id) &&
+        completion &&
+        completion.recipeIdentity ===
+          recipeIdentityByEntity.get(marker.entity.id) &&
+        completion.fullDrawnRevision !== project.revision
+      ) {
+        completion.fullDrawnRevision = project.revision;
+        completedFullDraw = true;
+      }
+    }
   }
   if (playing) drawPlayer(ctx, player, camera, width, height);
+  if (completedFullDraw || proxyDrawChanged) notifySceneReviewCaptureChanged();
+  return {
+    completedFullDraw,
+    visibleEntityIds,
+    reviewVisibleEntityIds,
+    visibleProxyIds,
+  };
 }
 
 export default function SoftwareWorld({
@@ -1151,7 +1490,88 @@ export default function SoftwareWorld({
   const geometryGenerationRef = useRef(0);
   const disposedGeometriesRef = useRef(new WeakSet<THREE.BufferGeometry>());
   const assetErrorsRef = useRef(new Map<string, string>());
-  const [, setGeometryVersion] = useState(0);
+  const drawnProxyByEntityRef = useRef(
+    new Map<string, SoftwareProxyDrawRecord>(),
+  );
+  const project = useOrb((state) => state.project);
+  const recipeIdentityByEntity = useMemo(
+    () =>
+      new Map(
+        project.entities.map((entity) => [
+          entity.id,
+          formationRecipeIdentity(entity),
+        ]),
+      ),
+    [project],
+  );
+  const recipeIdentityByEntityRef = useRef({
+    project,
+    identities: recipeIdentityByEntity,
+  });
+  recipeIdentityByEntityRef.current = {
+    project,
+    identities: recipeIdentityByEntity,
+  };
+  const projectRef = useRef(project);
+  projectRef.current = project;
+  const completionRecordsRef = useRef(
+    new Map<string, SoftwareFormationCompletionRecord>(),
+  );
+  const completionProjectIdRef = useRef(project.id);
+  if (completionProjectIdRef.current !== project.id) {
+    completionProjectIdRef.current = project.id;
+    completionRecordsRef.current.clear();
+    drawnProxyByEntityRef.current.clear();
+    for (const entity of project.entities) {
+      const entry = geometriesRef.current.get(entity.id);
+      if (
+        entity.stage === "ready" &&
+        softwareGeometryMatchesEntity(entity, entry) &&
+        !assetErrorsRef.current.has(entity.id)
+      )
+        completionRecordsRef.current.set(entity.id, {
+          recipeIdentity: formationRecipeIdentity(entity),
+          loadedRevision: project.revision,
+        });
+    }
+  }
+  useLayoutEffect(() => {
+    const identities = new Map(
+      project.entities.map((entity) => [
+        entity.id,
+        formationRecipeIdentity(entity),
+      ]),
+    );
+    for (const [id, completion] of completionRecordsRef.current)
+      if (identities.get(id) !== completion.recipeIdentity)
+        completionRecordsRef.current.delete(id);
+    for (const [id, record] of drawnProxyByEntityRef.current)
+      if (
+        record.projectId !== project.id ||
+        record.revision !== project.revision ||
+        identities.get(id) !== record.recipeIdentity
+      )
+        drawnProxyByEntityRef.current.delete(id);
+  }, [project]);
+  const [geometryVersion, setGeometryVersion] = useState(0);
+  const completedRecipeByEntity = useMemo(
+    () =>
+      new Map(
+        [...completionRecordsRef.current].map(([id, record]) => [
+          id,
+          record.recipeIdentity,
+        ]),
+      ),
+    [geometryVersion, project],
+  );
+  const completedRecipeByEntityRef = useRef({
+    project,
+    recipes: completedRecipeByEntity,
+  });
+  completedRecipeByEntityRef.current = {
+    project,
+    recipes: completedRecipeByEntity,
+  };
   const geometryChange = useMemo(
     () =>
       (
@@ -1172,19 +1592,44 @@ export default function SoftwareWorld({
           notifySceneReviewCaptureChanged();
           return false;
         }
-        if (disposed && current?.geometry === disposed) {
-          geometriesRef.current.delete(id);
-          geometryGenerationRef.current += 1;
-          disposeOnce(disposed);
-        } else if (disposed && current?.geometry !== disposed) {
-          // A stale cleanup may arrive after a replacement has committed.
-          disposeOnce(disposed);
+        if (disposed) {
+          const removed = releaseOwnedSoftwareGeometry(
+            geometriesRef.current,
+            id,
+            disposed,
+            disposeOnce,
+          );
+          if (removed) {
+            geometryGenerationRef.current += 1;
+            const completion = completionRecordsRef.current.get(id);
+            if (completion) delete completion.fullDrawnRevision;
+          }
         }
         if (entry && (!current || current.geometry !== entry.geometry)) {
           if (current && current.geometry !== entry.geometry)
             disposeOnce(current.geometry);
+          const completion = completionRecordsRef.current.get(id);
+          if (completion) delete completion.fullDrawnRevision;
           geometriesRef.current.set(id, entry);
           geometryGenerationRef.current += 1;
+          const currentProject = projectRef.current;
+          const currentEntity = currentProject.entities.find(
+            (entity) => entity.id === id,
+          );
+          if (
+            currentEntity?.stage === "ready" &&
+            entry.sourceStage === "ready" &&
+            softwareGeometryMatchesEntity(currentEntity, entry) &&
+            !assetErrorsRef.current.has(id)
+          ) {
+            const identity = formationRecipeIdentity(currentEntity);
+            const completion = completionRecordsRef.current.get(id);
+            if (completion?.recipeIdentity !== identity)
+              completionRecordsRef.current.set(id, {
+                recipeIdentity: identity,
+                loadedRevision: currentProject.revision,
+              });
+          }
           setGeometryVersion((version) => version + 1);
           notifySceneReviewCaptureChanged();
           return true;
@@ -1202,7 +1647,6 @@ export default function SoftwareWorld({
       },
     [],
   );
-  const project = useOrb((state) => state.project);
   const phase = useOrb((state) => state.phase);
   const playing = useOrb((state) => state.playing);
   const selected = useOrb((state) => state.selected);
@@ -1210,6 +1654,80 @@ export default function SoftwareWorld({
   const reset = useOrb((state) => state.reset);
   const session = useMemo(() => new GameSession(), []);
   const playerRef = useRef<PlayerState>(copyPlayerState(playerStart));
+  const initialPlaybackFocus = playbackFormationResidencyFocusCell(
+    playerRef.current.position,
+  );
+  const playbackResidencyCellRef = useRef(initialPlaybackFocus.key);
+  const [, setPlaybackResidencyCell] = useState(initialPlaybackFocus.key);
+  const [residencyVisibleIds, setResidencyVisibleIds] = useState<
+    ReadonlySet<string> | undefined
+  >(undefined);
+  const residencyVisibleIdsRef = useRef(residencyVisibleIds);
+  residencyVisibleIdsRef.current = residencyVisibleIds;
+  const [residencyWorkspaceSettled, setResidencyWorkspaceSettled] =
+    useState(false);
+  const residencyWorkspaceSettledRef = useRef(false);
+  const previousResidentIdsRef = useRef<ReadonlySet<string>>(new Set());
+  const residencyProjectIdRef = useRef(project.id);
+  useLayoutEffect(() => {
+    if (residencyProjectIdRef.current !== project.id || phase !== "editing") {
+      residencyWorkspaceSettledRef.current = false;
+      setResidencyWorkspaceSettled(false);
+      setResidencyVisibleIds(undefined);
+      previousResidentIdsRef.current = new Set();
+    }
+    residencyProjectIdRef.current = project.id;
+  }, [phase, project.id]);
+  const currentPlaybackFocus = playbackFormationResidencyFocusCell(
+    playerRef.current.position,
+  );
+  const proxyBoundsByEntity = useMemo(
+    () => softwareProxyBoundsByEntity(project),
+    [project],
+  );
+  const proxyBoundsByEntityRef = useRef({
+    project,
+    bounds: proxyBoundsByEntity,
+  });
+  proxyBoundsByEntityRef.current = { project, bounds: proxyBoundsByEntity };
+  const residencyPresentation = useMemo(
+    () =>
+      selectSoftwareFormationResidency({
+        entities: project.entities,
+        completedRecipeByEntity,
+        proxyBoundsByEntity,
+        focus: playing ? currentPlaybackFocus.focus : navigation.target,
+        visibleIds: playing ? undefined : residencyVisibleIds,
+        selectedId: selected,
+        previousResidentIds: previousResidentIdsRef.current,
+        enabled: residencyWorkspaceSettled && phase === "editing",
+      }),
+    [
+      currentPlaybackFocus.key,
+      geometryVersion,
+      completedRecipeByEntity,
+      navigation.target,
+      phase,
+      playing,
+      project,
+      proxyBoundsByEntity,
+      residencyVisibleIds,
+      residencyWorkspaceSettled,
+      selected,
+    ],
+  );
+  useLayoutEffect(() => {
+    previousResidentIdsRef.current = residencyPresentation.residentIds;
+  }, [residencyPresentation]);
+  const residencyPresentationRef = useRef({
+    project,
+    value: residencyPresentation,
+  });
+  residencyPresentationRef.current = { project, value: residencyPresentation };
+  const reviewVisibleEntityIdsRef = useRef<ReadonlySet<string> | undefined>(
+    undefined,
+  );
+  const reviewVisibleProxyIdsRef = useRef<ReadonlySet<string>>(new Set());
   const inputRef = useRef(new PlayerInputTracker());
   const announcedReady = useRef(false);
   const rendererReady = useRef(false);
@@ -1280,28 +1798,78 @@ export default function SoftwareWorld({
         const currentProject = reviewProjectRef.current;
         const currentRevision = currentProject.revision;
         const expected = currentProject.entities;
+        const currentState = useOrb.getState();
+        const presentation =
+          residencyPresentationRef.current.project === currentProject
+            ? residencyPresentationRef.current.value
+            : undefined;
+        const completedRecipes =
+          completedRecipeByEntityRef.current.project === currentProject
+            ? completedRecipeByEntityRef.current.recipes
+            : new Map<string, string>();
+        const proxyIds = softwareActiveProxyIds({
+          entities: expected,
+          presentation: presentation ?? {
+            proxyIds: new Set(),
+            residentIds: new Set(),
+          },
+          completedRecipeByEntity: completedRecipes,
+          displayedByEntity: geometriesRef.current,
+        });
+        const visibleEntities = reviewVisibleEntityIdsRef.current;
+        const visibleProxies = reviewVisibleProxyIdsRef.current;
+        const nonDrawableIds = new Set(
+          currentProject.entities
+            .filter(
+              (entity) =>
+                currentState.playing &&
+                (!session.effectiveEntity(entity) ||
+                  (currentState.score.includes(entity.id) &&
+                    entity.behavior?.type === "collect")),
+            )
+            .map((entity) => entity.id),
+        );
+        const visuallyReady = (entity: Entity) => {
+          const drawable = !nonDrawableIds.has(entity.id);
+          const visibleInViewport =
+            drawable &&
+            (visibleEntities === undefined || visibleEntities.has(entity.id));
+          return softwareEntityVisualReviewReady(
+            entity,
+            geometriesRef.current.get(entity.id),
+            completionRecordsRef.current.get(entity.id),
+            currentRevision,
+            visibleInViewport,
+            proxyIds.has(entity.id),
+            proxyIds.has(entity.id) &&
+              visibleInViewport &&
+              (visibleProxies.has(entity.id) ||
+                visibleEntities?.has(entity.id) === true),
+            softwareProxyDrawnForRevision(
+              entity,
+              currentProject.id,
+              currentRevision,
+              drawnProxyByEntityRef.current.get(entity.id),
+            ),
+          );
+        };
         const pendingAssetIds = expected
-          .filter((entity) => {
-            const entry = geometriesRef.current.get(entity.id);
-            return (
-              !entry ||
-              !entry.ready ||
-              entry.sourceRecipe !== entity.geometry ||
-              entry.sourceStage !== entity.stage
-            );
-          })
+          .filter(
+            (entity) =>
+              (entity.geometry?.kind === "asset" ||
+                entity.geometry?.kind === "generated") &&
+              (assetErrorsRef.current.has(entity.id) || !visuallyReady(entity)),
+          )
           .map((entity) => entity.id);
         const failedAssetIds = expected
           .filter((entity) => assetErrorsRef.current.has(entity.id))
           .map((entity) => entity.id);
         const readyAssetIds = expected
           .filter((entity) => {
-            const entry = geometriesRef.current.get(entity.id);
             return (
-              !!entry &&
-              entry.ready &&
-              entry.sourceRecipe === entity.geometry &&
-              entry.sourceStage === entity.stage &&
+              (entity.geometry?.kind === "asset" ||
+                entity.geometry?.kind === "generated") &&
+              visuallyReady(entity) &&
               !assetErrorsRef.current.has(entity.id)
             );
           })
@@ -1595,6 +2163,15 @@ export default function SoftwareWorld({
             });
           }
         } else inputRef.current.clear();
+        if (current.playing) {
+          const focusCell = playbackFormationResidencyFocusCell(
+            playerRef.current.position,
+          );
+          if (focusCell.key !== playbackResidencyCellRef.current) {
+            playbackResidencyCellRef.current = focusCell.key;
+            setPlaybackResidencyCell(focusCell.key);
+          }
+        }
         const savedNavigation = navigationRef.current;
         const activeNavigation = current.playing
           ? worldNavigationFollowState(
@@ -1627,6 +2204,10 @@ export default function SoftwareWorld({
           transition.progress >= 1 &&
           initializedScene.current
         ) {
+          if (!residencyWorkspaceSettledRef.current) {
+            residencyWorkspaceSettledRef.current = true;
+            setResidencyWorkspaceSettled(true);
+          }
           if (!navigationReadyNotified.current) {
             navigationReadyNotified.current = true;
             onNavigationReadyRef.current?.();
@@ -1666,11 +2247,36 @@ export default function SoftwareWorld({
           )
             latest.set({ phase: "editing" });
         }
-        drawScene(
+        const framePresentation =
+          residencyPresentationRef.current.project === projectNow
+            ? residencyPresentationRef.current.value
+            : undefined;
+        const frameProxyIds = softwareActiveProxyIds({
+          entities: projectNow.entities,
+          presentation: framePresentation ?? {
+            proxyIds: new Set(),
+            residentIds: new Set(),
+          },
+          completedRecipeByEntity:
+            completedRecipeByEntityRef.current.project === projectNow
+              ? completedRecipeByEntityRef.current.recipes
+              : new Map(),
+          displayedByEntity: geometriesRef.current,
+        });
+        const drawResult = drawScene(
           context,
           canvas,
           projectNow,
           geometriesRef.current,
+          frameProxyIds,
+          proxyBoundsByEntityRef.current.project === projectNow
+            ? proxyBoundsByEntityRef.current.bounds
+            : new Map(),
+          completionRecordsRef.current,
+          drawnProxyByEntityRef.current,
+          recipeIdentityByEntityRef.current.project === projectNow
+            ? recipeIdentityByEntityRef.current.identities
+            : new Map(),
           session,
           playerRef.current,
           current.selected,
@@ -1686,6 +2292,18 @@ export default function SoftwareWorld({
           terrainCacheRef.current,
           visibilityCacheRef.current,
         );
+        reviewVisibleEntityIdsRef.current = drawResult.reviewVisibleEntityIds;
+        reviewVisibleProxyIdsRef.current = drawResult.visibleProxyIds;
+        if (
+          !current.playing &&
+          !sameEntityIdSet(
+            residencyVisibleIdsRef.current,
+            drawResult.visibleEntityIds,
+          )
+        ) {
+          residencyVisibleIdsRef.current = drawResult.visibleEntityIds;
+          setResidencyVisibleIds(drawResult.visibleEntityIds);
+        }
         const drawnProject = drawnRevisionRef.current;
         if (
           drawnProject?.projectId !== projectNow.id ||
@@ -1706,7 +2324,25 @@ export default function SoftwareWorld({
         if (
           current.playing &&
           !announcedReady.current &&
-          requiredGeometryReady(projectNow, geometriesRef.current)
+          requiredGeometryReady(
+            projectNow,
+            geometriesRef.current,
+            completionRecordsRef.current,
+            drawResult.visibleProxyIds,
+            frameProxyIds,
+            drawResult.reviewVisibleEntityIds,
+            new Set(
+              projectNow.entities
+                .filter(
+                  (entity) =>
+                    !session.effectiveEntity(entity) ||
+                    (useOrb.getState().score.includes(entity.id) &&
+                      entity.behavior?.type === "collect"),
+                )
+                .map((entity) => entity.id),
+            ),
+            drawnProxyByEntityRef.current,
+          )
         ) {
           announcedReady.current = true;
           onReadyRef.current?.();
@@ -2042,14 +2678,18 @@ export default function SoftwareWorld({
   return (
     <div className="software-world" aria-label="Software world renderer">
       <canvas ref={canvasRef} />
-      {project.entities.map((entity) => (
-        <SoftwareEntity
-          key={entity.id}
-          entity={entity}
-          onChange={geometryChange}
-          onAssetError={onAssetError}
-        />
-      ))}
+      {project.entities
+        .filter((entity) =>
+          residencyPresentation.fullFormationIds.has(entity.id),
+        )
+        .map((entity) => (
+          <SoftwareEntity
+            key={entity.id}
+            entity={entity}
+            onChange={geometryChange}
+            onAssetError={onAssetError}
+          />
+        ))}
       <p className="software-world-status" aria-live="polite">
         {softwareFallbackWarning}
       </p>

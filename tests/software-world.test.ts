@@ -3,9 +3,11 @@ import * as THREE from "three";
 import {
   bakeSoftwareTextureColors,
   playableEntities,
+  projectSoftwareResidencyProxy,
   projectSoftwareTerrainChunk,
   projectSoftwareTriangle,
   requiredGeometryReady,
+  softwareProxyBoundsByEntity,
   softwareCameraFrustum,
   softwareEntityPassesVisibility,
   softwareEntityMatrix,
@@ -21,13 +23,56 @@ import {
   type WorldNavigationState,
 } from "../src/lib/world-navigation";
 import { worldTerrainChunkKeyAt } from "../src/lib/world-terrain";
-import { entitySchema, type Project } from "../src/lib/protocol";
+import { entitySchema, groupSchema, type Project } from "../src/lib/protocol";
 import type { WorldNavigationEntityBounds } from "../src/lib/world-navigation-bounds";
 import { selectVisibleWorldEntityIds } from "../src/lib/world-visibility";
 import { GameSession } from "../src/lib/game-session";
 import { stepGameplay } from "../src/lib/gameplay";
+import { formationRecipeIdentity } from "../src/lib/formation-completion";
+import {
+  releaseOwnedSoftwareGeometry,
+  softwareActiveProxyIds,
+  selectSoftwareFormationResidency,
+  softwareEntityVisualReviewReady,
+  softwareProxyDrawnForRevision,
+  type SoftwareFormationCompletionRecord,
+} from "../src/lib/software-formation-residency";
 
 const project = (entities: Project["entities"]) => ({ entities }) as Project;
+
+function completeProject(
+  entities: Project["entities"],
+  groups: Project["groups"] = [],
+): Project {
+  return {
+    version: 1,
+    id: "software-residency-fixture",
+    title: "Software residency fixture",
+    seed: 1,
+    revision: 1,
+    entities,
+    groups,
+    environment: { sky: "#ffffff", ground: "#ffffff", water: "#ffffff" },
+    messages: [],
+  };
+}
+
+function readyAsset(
+  id: string,
+  position: [number, number, number] = [0, 0, 0],
+) {
+  return entitySchema.parse({
+    id,
+    label: id,
+    position,
+    stage: "ready",
+    geometry: {
+      kind: "asset",
+      assetId: "kenney.nature.tree-default",
+      detail: "refined",
+    },
+  });
+}
 
 describe("software renderer geometry readiness", () => {
   it("bakes atlas colors into a clone without mutating source geometry or pixels", () => {
@@ -119,6 +164,353 @@ describe("software renderer geometry readiness", () => {
     expect(playableEntities(project([primitive]), new Map())).toEqual([
       primitive,
     ]);
+  });
+
+  it("keeps only 48 completed external recipes resident and follows travel", () => {
+    const entities = Array.from({ length: 160 }, (_, index) =>
+      readyAsset(`entity-${String(index).padStart(3, "0")}`, [index, 0, 0]),
+    );
+    const completed = new Map(
+      entities.map((entity) => [entity.id, formationRecipeIdentity(entity)]),
+    );
+    const bounds = new Map(
+      entities.map((entity, index) => [
+        entity.id,
+        { center: [index, 0, 0] as const, size: [1, 2, 1] as const },
+      ]),
+    );
+    const presentation = selectSoftwareFormationResidency({
+      entities,
+      completedRecipeByEntity: completed,
+      proxyBoundsByEntity: bounds,
+      focus: [0, 0, 0],
+      enabled: true,
+    });
+
+    expect(presentation.residentIds.size).toBe(48);
+    expect(presentation.fullFormationIds.size).toBe(48);
+    expect(presentation.proxyIds.size).toBe(112);
+
+    const travelEntities = [
+      readyAsset("west", [-1000, 0, 0]),
+      readyAsset("east", [1000, 0, 0]),
+    ];
+    const travelCompleted = new Map(
+      travelEntities.map((entity) => [
+        entity.id,
+        formationRecipeIdentity(entity),
+      ]),
+    );
+    const travelBounds = new Map(
+      travelEntities.map((entity) => [
+        entity.id,
+        {
+          center: entity.position as readonly [number, number, number],
+          size: [2, 2, 2] as const,
+        },
+      ]),
+    );
+    const west = selectSoftwareFormationResidency({
+      entities: travelEntities,
+      completedRecipeByEntity: travelCompleted,
+      proxyBoundsByEntity: travelBounds,
+      focus: [-1000, 0, 0],
+      enabled: true,
+    });
+    const east = selectSoftwareFormationResidency({
+      entities: travelEntities,
+      completedRecipeByEntity: travelCompleted,
+      proxyBoundsByEntity: travelBounds,
+      focus: [1000, 0, 0],
+      enabled: true,
+      previousResidentIds: west.residentIds,
+    });
+    const revisit = selectSoftwareFormationResidency({
+      entities: travelEntities,
+      completedRecipeByEntity: travelCompleted,
+      proxyBoundsByEntity: travelBounds,
+      focus: [-1000, 0, 0],
+      enabled: true,
+      previousResidentIds: east.residentIds,
+    });
+    expect([...west.residentIds]).toEqual(["west"]);
+    expect([...east.residentIds]).toEqual(["east"]);
+    expect([...revisit.residentIds]).toEqual(["west"]);
+  });
+
+  it("prioritizes visible and selected entities while retaining unknown bounds", () => {
+    const entities = Array.from({ length: 50 }, (_, index) =>
+      readyAsset(`entity-${String(index).padStart(2, "0")}`),
+    );
+    const completed = new Map(
+      entities.map((entity) => [entity.id, formationRecipeIdentity(entity)]),
+    );
+    const bounds = new Map<
+      string,
+      | {
+          center: readonly [number, number, number];
+          size: readonly [number, number, number];
+        }
+      | undefined
+    >(
+      entities.map((entity) => [
+        entity.id,
+        { center: [0, 0, 0] as const, size: [1, 1, 1] as const },
+      ]),
+    );
+    bounds.set("entity-49", undefined);
+    const presentation = selectSoftwareFormationResidency({
+      entities,
+      completedRecipeByEntity: completed,
+      proxyBoundsByEntity: bounds,
+      focus: [0, 0, 0],
+      enabled: true,
+      visibleIds: new Set(["entity-48"]),
+      selectedId: "entity-47",
+    });
+
+    expect(presentation.residentIds.has("entity-47")).toBe(true);
+    expect(presentation.residentIds.has("entity-48")).toBe(true);
+    expect(presentation.fullFormationIds.has("entity-49")).toBe(true);
+    expect(presentation.proxyIds.has("entity-49")).toBe(false);
+  });
+
+  it("keeps a completed proxy visible while a resident lease is rehydrating", () => {
+    const entity = readyAsset("reentry");
+    const identity = formationRecipeIdentity(entity);
+    const bounds = new Map([
+      [entity.id, { center: [0, 0, 0] as const, size: [1, 1, 1] as const }],
+    ]);
+    const completed = new Map([[entity.id, identity]]);
+    const presentation = selectSoftwareFormationResidency({
+      entities: [entity],
+      completedRecipeByEntity: completed,
+      proxyBoundsByEntity: bounds,
+      focus: [0, 0, 0],
+      selectedId: entity.id,
+      enabled: true,
+    });
+    const noDisplayedLease = softwareActiveProxyIds({
+      entities: [entity],
+      presentation,
+      completedRecipeByEntity: completed,
+      displayedByEntity: new Map(),
+    });
+    const loadedLease = softwareActiveProxyIds({
+      entities: [entity],
+      presentation,
+      completedRecipeByEntity: completed,
+      displayedByEntity: new Map([
+        [
+          entity.id,
+          {
+            ready: true,
+            sourceRecipe: entity.geometry,
+            sourceStage: entity.stage,
+            sourceColor: entity.color,
+          },
+        ],
+      ]),
+    });
+
+    expect(presentation.residentIds.has(entity.id)).toBe(true);
+    expect(noDisplayedLease.has(entity.id)).toBe(true);
+    expect(loadedLease.has(entity.id)).toBe(false);
+  });
+
+  it("gates current visible draws and permits completed offscreen proxy review", () => {
+    const entity = readyAsset("tree");
+    const recipeIdentity = formationRecipeIdentity(entity);
+    const completion: SoftwareFormationCompletionRecord = {
+      recipeIdentity,
+      loadedRevision: 2,
+    };
+    const projectNow = { ...project([entity]), id: "review", revision: 3 };
+    const offscreenProxyReady = requiredGeometryReady(
+      projectNow,
+      new Map(),
+      new Map([[entity.id, completion]]),
+      new Set(),
+      new Set([entity.id]),
+      new Set(),
+    );
+    expect(offscreenProxyReady).toBe(true);
+    expect(
+      softwareEntityVisualReviewReady(
+        entity,
+        undefined,
+        completion,
+        3,
+        true,
+        true,
+        true,
+        false,
+      ),
+    ).toBe(false);
+    const proxyDraw = {
+      projectId: projectNow.id,
+      revision: projectNow.revision,
+      recipeIdentity,
+    };
+    expect(
+      softwareProxyDrawnForRevision(
+        entity,
+        projectNow.id,
+        projectNow.revision,
+        proxyDraw,
+      ),
+    ).toBe(true);
+    expect(
+      requiredGeometryReady(
+        projectNow,
+        new Map(),
+        new Map([[entity.id, completion]]),
+        new Set([entity.id]),
+        new Set([entity.id]),
+        new Set([entity.id]),
+        new Set(),
+        new Map([[entity.id, proxyDraw]]),
+      ),
+    ).toBe(true);
+
+    const changedRecipe = entitySchema.parse({
+      ...entity,
+      color: "#ff0000",
+    });
+    expect(
+      softwareEntityVisualReviewReady(
+        changedRecipe,
+        undefined,
+        completion,
+        3,
+        false,
+        true,
+      ),
+    ).toBe(false);
+    const fullEntry: SoftwareGeometryEntry = {
+      geometry: new THREE.BoxGeometry(),
+      ready: true,
+      sourceRecipe: entity.geometry,
+      sourceStage: entity.stage,
+      sourceColor: entity.color,
+    };
+    expect(
+      softwareEntityVisualReviewReady(entity, fullEntry, completion, 3, true),
+    ).toBe(false);
+    completion.fullDrawnRevision = 3;
+    expect(
+      softwareEntityVisualReviewReady(entity, fullEntry, completion, 3, true),
+    ).toBe(true);
+    fullEntry.geometry.dispose();
+  });
+
+  it("does not let stale lease cleanup remove a newer clone", () => {
+    const stale = new THREE.BoxGeometry();
+    const current = new THREE.SphereGeometry();
+    const entries = new Map<string, { geometry: THREE.BufferGeometry }>([
+      ["tree", { geometry: current }],
+    ]);
+    const disposed = new WeakSet<THREE.BufferGeometry>();
+    const disposedEvents = new Map<THREE.BufferGeometry, number>();
+    const disposeOnce = (geometry: THREE.BufferGeometry) => {
+      if (disposed.has(geometry)) return;
+      disposed.add(geometry);
+      disposedEvents.set(geometry, (disposedEvents.get(geometry) ?? 0) + 1);
+      geometry.dispose();
+    };
+
+    expect(
+      releaseOwnedSoftwareGeometry<
+        THREE.BufferGeometry,
+        { geometry: THREE.BufferGeometry }
+      >(entries, "tree", stale, disposeOnce),
+    ).toBe(false);
+    expect(entries.get("tree")?.geometry).toBe(current);
+    expect(
+      releaseOwnedSoftwareGeometry<
+        THREE.BufferGeometry,
+        { geometry: THREE.BufferGeometry }
+      >(entries, "tree", current, disposeOnce),
+    ).toBe(true);
+    expect(entries.has("tree")).toBe(false);
+    expect(disposedEvents.get(stale)).toBe(1);
+    expect(disposedEvents.get(current)).toBe(1);
+    disposeOnce(stale);
+    expect(disposedEvents.get(stale)).toBe(1);
+  });
+
+  it("derives proxy centers from grouped and rotated world bounds", () => {
+    const entity = entitySchema.parse({
+      ...readyAsset("grouped-leaf", [2, 0, 0]),
+      parentId: "far-group",
+    });
+    const group = groupSchema.parse({
+      id: "far-group",
+      label: "Far group",
+      position: [25_000, 0, 0],
+      rotation: [0, Math.PI / 2, 0],
+    });
+    const bounds = softwareProxyBoundsByEntity(
+      completeProject([entity], [group]),
+    ).get(entity.id);
+
+    expect(bounds).toBeDefined();
+    expect(bounds!.center[0]).toBeGreaterThan(24_900);
+    expect(Math.abs(bounds!.center[2])).toBeLessThan(20);
+    expect(bounds!.center[0]).not.toBe(entity.position[0]);
+  });
+
+  it("keeps edge-straddling proxy geometry visible when its center is outside", () => {
+    const camera = new THREE.PerspectiveCamera(43, 390 / 844, 0.1, 250);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+    const bounds = {
+      center: [1.3, 0, 0] as const,
+      size: [2, 2, 1] as const,
+    };
+    const node = { worldPosition: bounds.center };
+    const runtime = new THREE.Matrix4().makeTranslation(...bounds.center);
+    const projection = projectSoftwareResidencyProxy(
+      bounds,
+      node,
+      runtime,
+      camera,
+      390,
+      844,
+    );
+
+    expect(projection).toBeDefined();
+    expect(projection!.point.x).toBeGreaterThanOrEqual(0);
+    expect(projection!.point.x).toBeLessThanOrEqual(390);
+    expect(projection!.radius).toBeGreaterThan(0);
+
+    const outside = projectSoftwareResidencyProxy(
+      { center: [20, 0, 0], size: [1, 1, 1] },
+      { worldPosition: [20, 0, 0] },
+      new THREE.Matrix4().makeTranslation(20, 0, 0),
+      camera,
+      390,
+      844,
+    );
+    expect(outside).toBeUndefined();
+
+    const farCamera = new THREE.PerspectiveCamera(43, 390 / 844, 0.1, 20_000);
+    farCamera.position.set(0, 0, 5);
+    farCamera.lookAt(0, 0, 0);
+    farCamera.updateProjectionMatrix();
+    farCamera.updateMatrixWorld();
+    const tinyFarProxy = projectSoftwareResidencyProxy(
+      { center: [0, 0, -10_000], size: [0.12, 0.12, 0.12] },
+      { worldPosition: [0, 0, -10_000] },
+      new THREE.Matrix4().makeTranslation(0, 0, -10_000),
+      farCamera,
+      390,
+      844,
+    );
+    expect(tinyFarProxy).toBeDefined();
+    expect(tinyFarProxy!.radius).toBe(6);
   });
 });
 
