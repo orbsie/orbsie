@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 23 software visibility adapter accepted locally (`831afbc`): settled
+editing caches world AABBs by project identity/revision and a visible-ID set by
+camera/navigation/viewport, skipping offscreen `drawEntity` work. Gameplay
+and transition paths remain uncullled because dynamic overrides must not
+disappear. Picks and selected/portal markers now require finite centers inside
+the viewport and camera depth range. Worker reported 14 targeted tests,
+TypeScript, formatting and diff checks; Astra reviewed the cache and selection
+gates. Software entity triangles still need near-plane clipping, and browser
+visual behavior is unverified. WebGL draw culling is the current slice.
+
 Sep 23 shared visibility core accepted locally (`9208cfd`): reusable keyed
 world AABBs now include ready, coarse and seed entities through nested group
 transforms, expand legacy moving entities by their root-space amplitude, and
