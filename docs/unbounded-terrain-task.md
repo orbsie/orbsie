@@ -41,6 +41,11 @@ for objects genuinely outside the current view. Picking must never select an
 offscreen projected marker in software mode. Renderer-local recentering may be
 used when measurements show float32 precision loss, but every raycast, camera,
 pick, visual-feedback bound, and physics query must convert consistently.
+Gameplay also needs a view that follows the player beyond the old parcel in
+both renderers, retaining the chosen heading and zoom; a player walking away
+must not simply disappear offscreen while simulation continues. Keep camera
+tracking separate from authoritative player/world coordinates and define how a
+manual scene pan resumes or suspends that follow behavior.
 
 The default ground is open in horizontal directions; an explicitly authored
 island, wall, or cliff is a scene object. This slice does not claim physical
