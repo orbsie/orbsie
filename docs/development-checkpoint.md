@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 pure ready-formation residency policy accepted locally (`85e7016`):
+deterministic selection defaults to at most 48 full ready resources within a
+256-unit focus radius plus 64-unit retention hysteresis, prioritizes selected
+and visible IDs, and reports placeholders/reasons for other ready entities.
+Non-ready formations remain outside the heavy-ready budget. Six focused tests,
+TypeScript, formatting and diff checks passed; the selector is not wired to
+renderers yet. The current bounded worker task preserves completed formation
+presentation across an intentional same-recipe remount. Placeholder rendering,
+asset lease release, collision readiness and scene-review integration remain
+separate. Browser/mobile memory measurements remain open.
+
 Sep 23 gameplay draw-culling parity accepted locally: software (`2ae0145`)
 and WebGL (`9f45a28`) now skip offscreen rendering/picking using current
 effective transforms and the player-follow camera while keeping complete
