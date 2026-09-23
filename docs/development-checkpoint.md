@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 22 shared-navigation core accepted locally: immutable commands now cover
+world-space pan, zoom, clockwise heading from north (-Z), north reset retaining
+target/distance, and frame-content from committed world-space bounds. Frame
+distance accounts for portrait versus landscape aspect and vertical FOV. Root
+reviewed the Luna diff and requested the viewport correction; 8 focused tests,
+TypeScript and formatting pass. No renderer/UI adapter or gesture acceptance is
+claimed. The next bounded slice is to wire this state into the shared `World`
+wrapper and both renderers without crossing gameplay or object picking.
+
 Sep 22 unbounded-world phase 1 accepted locally: entity/group position and
 transform commands now allow finite ±1,000,000m coordinates, while local
 geometry/scale/rotation limits remain bounded; gameplay no longer clamps the
