@@ -1,6 +1,6 @@
 # Development checkpoint
 
-Updated 2026-09-14. Full goal remains **all prompt.md, E2E validated with
+Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
 acceptance history: checkpoint-history/2026-09-13-before-durable-release.md and
 checkpoint-history/2026-09-13-before-client-diagnostics-release.md.
@@ -30,13 +30,14 @@ Next is public review admission + managed hosted review operation + browser loop
 under docs/agentic-review-loop-task.md, including its recorded review-ledger late
 COMMIT cancellation gaps and diagnostics. Do not repeat finished investigation.
 
-USAGE STOP: authoritative quota now81%used/19%remaining (2026-09-14). Worker
-/root/host_session_renewal was already completed and explicitly interrupted; no
-active worker or live-call/test process remains. Stop implementation/workers/live
-calls per owner's below20% rule until allowance recovers or owner changes the rule.
-This is the first goal turn encountering this usage blocker; goal is NOT complete
-and not yet marked blocked under the three-consecutive-turn audit requirement.
-Only acceptance/checkpoint saving occurred after observing the threshold.
+USAGE RESUMED: authoritative quota 31%used/69%remaining on 2026-09-22.
+The owner's below20% stop rule remains active. Goal returned to active after
+prior blocked audit. Single Luna worker /root/review_ledger_fence owns only
+review-phase ledger cancellation/transaction bounds and focused tests. Root
+provisioned isolated PostgreSQL15 container orbsie-review-ledger-20260922 on
+127.0.0.1:32768 for worker tests; stop it after acceptance. No model calls.
+Root committed the next review-route/browser contract ef8e773. Initial/editor
+review still not wired or deployed; current E2E objective remains incomplete.
 
 Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused
@@ -94,7 +95,7 @@ remain incomplete. Evidence flagship-journey-gate-20260913. Actual seven/undo/
 standalone/publication traversal producers remain required. Whole-tree
 typecheck passed with the first binding handoff; its behavioral review failed.
 
-Quota last81%used/19%remaining: usage stop is active. Read
+Quota last31%used/69%remaining: stop workers/live calls below20%. Read
 /home/marcos/.cache/orbsie/read-codex-quota.py; stop workers/livecalls below20%.
 Goal token accounting is not subscription quota. Live model tests Luna only;
 end-user model choice unrestricted. API4096 output/call, Gatewaymax5/test,
