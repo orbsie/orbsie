@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 22 integration seam: `2b601cd` exposes `authoringReview` from server
+configuration (requires switch, database and session secret) and preserves the
+hosted opt-in in `generationRequest`; 16 focused tests passed. `ee97d7a`
+adds `X-Orbsie-Review-Image-Supported: 1|0` to admitted API initial responses
+from the catalog capability; 4 route tests passed. `53e9bb7` specifies the
+equivalent hosted header and browser use. The single Luna private hosted-review
+transport worker is still active; its WIP is uncommitted and whole-tree
+typecheck is pending its finished diff. Feature remains off; no live calls or
+deployment in this seam.
+
 Updated 2026-09-22. Full goal remains **all prompt.md, E2E validated with
 OpenRouter, Vercel AI Gateway and ChatGPT**. Not complete. Previous detailed
 acceptance history: checkpoint-history/2026-09-13-before-durable-release.md and
