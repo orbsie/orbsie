@@ -2,7 +2,7 @@
 
 - Provider connection must not require a separate Orbsie email/password login. ChatGPT authorization, OpenRouter OAuth, and Vercel AI Gateway key connection must be reachable directly from a signed-out browser while preserving the draft. Establish any required secure browser session transparently; do not equate that session with verified provider identity. Orbsie email/password signup is optional. Verify fresh-browser connection, cancellation/failure, session isolation, refresh, and optional later account linking without credential exposure or data loss.
 
-- Owner capacity rule: stop all subagents and running tests if a reliable Codex usage-limit signal shows less than 20% of the Codex allowance remaining, or the owner reports that threshold. Read quota through local Codex App Server account/rateLimits/read (helper: /tmp/orbsie-read-codex-quota.py); use 100 minus usedPercent for the codex bucket. Last observed 72% weekly remaining. An unbounded goal token budget is not quota evidence.
+- Owner capacity rule: stop all subagents and running tests if a reliable Codex usage-limit signal shows less than 20% of the Codex allowance remaining, or the owner reports that threshold. Read quota through local Codex App Server account/rateLimits/read (local helper: `/home/marcos/.cache/orbsie/read-codex-quota.py`); use 100 minus usedPercent for the codex bucket. Recheck the live value instead of relying on a recorded percentage. An unbounded goal token budget is not quota evidence.
 
 ## Owner updates — 2026-09-07
 
