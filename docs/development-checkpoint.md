@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 23 two-renderer formation residency integration accepted locally:
+WebGL (`261f8c4`) and software Canvas (`a0e862a`) now cap completed ready
+full visual resources through the shared policy while keeping cheap,
+selectable proxies at resolved world bounds. Non-ready, pending replacements,
+unknown-placement entities and current authoritative gameplay remain intact;
+Canvas releases only owned clones and retains a proxy during lease reentry.
+The worker's 44 focused Canvas tests, TypeScript, formatting and diff checks
+passed; Astra reviewed the completed diff and fixed review/culling/per-face
+issues during handoff. Integrated suite: 199 passed/6 skipped files, 1,693
+passed/26 skipped tests. Next production build/TypeScript passed, standalone
+player regenerated. These are deterministic checks: no browser memory/frame
+times, Android/iOS physical-device checks, live provider create/edit, or fresh
+signed-out publication acceptance has been established. Coarse proxy visuals
+need design and mobile evaluation before release.
+
 Sep 23 WebGL ready-formation residency accepted locally (`261f8c4`): after a
 ready recipe has completed, Scene keeps at most the policy's 48 full visual
 resources near/visible/selected and renders other completed entities as cheap
