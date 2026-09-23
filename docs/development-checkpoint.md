@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 23 browser access and ChatGPT acceptance handoff: the owner's Chrome
+extension surface is available again. A local production build is running at
+`http://localhost:3001` with an explicit process-only
+`BETTER_AUTH_URL=http://localhost:3001` override; `.env.production.local`
+otherwise sets the public origin, so private-session POSTs from localhost are
+correctly rejected. The browser created a private Orbsie session and received
+a real ChatGPT device challenge. The existing Chrome profile recognized the
+owner's ChatGPT account. Final device-code authorization is pending the
+browser-control confirmation for a new hosted Codex CLI grant; no ChatGPT
+inference or credential export has occurred. The challenge/code is transient
+and intentionally omitted from this checkpoint. WebGL2 failed to initialize
+in this Chrome profile, and the software Canvas fallback rendered. Local
+browser integration, real ChatGPT create/edit, and representative GPU/mobile
+acceptance remain open. One Luna worker is preparing a separate deterministic
+browser fixture for the two-renderer residency policy; its diff is not yet
+reviewed or integrated.
+
 Sep 23 two-renderer formation residency integration accepted locally:
 WebGL (`261f8c4`) and software Canvas (`a0e862a`) now cap completed ready
 full visual resources through the shared policy while keeping cheap,
@@ -664,10 +681,10 @@ remains separate. No full inspect/correct loop yet.
 
 ## Access and resources
 
-Owner requires existing signed-in Chrome. CUA rechecked after ledger acceptance: CUA_REPL_ENABLED_SURFACES
-required. DevTools reachable profile signed out of ChatGPT/OpenRouter; not owner
-browser. No more login tabs, rawCDP or cookie copying. Do not repeat unchanged
-access checks. Browser access alone does not block available implementation.
+Owner requires existing signed-in Chrome. The Chrome extension surface became
+available on Sep 23 and the owner profile now presents its existing ChatGPT
+account on the official device page. No raw CDP or cookie copying. The local
+device challenge is pending final authorization as noted above.
 GitHub operations via computer use; push pending.
 
 Android emulator API35/Chrome124/2cores3GiB/SwiftShader preflight and saved Gateway
