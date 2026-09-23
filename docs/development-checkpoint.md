@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 shared visibility core accepted locally (`9208cfd`): reusable keyed
+world AABBs now include ready, coarse and seed entities through nested group
+transforms, expand legacy moving entities by their root-space amplitude, and
+retain unknown bounds as visible. A Three perspective-frustum selector keeps
+invalid-bound entities rather than dropping authored content. Ready-only
+frame-content behavior remains unchanged. Worker reported 22 targeted tests,
+TypeScript, formatting and diff checks pass; Astra reviewed the far-coordinate
+and motion semantics. The software editing-only draw/pick adapter is the
+current slice; gameplay paths remain uncullable until dynamic overrides can
+be included. WebGL adapter, precision and player follow remain open.
+
 Sep 23 software open-ground slice accepted locally (`75bcec2`): after the
 settled transition, the Canvas 2D renderer fills the view with the project's
 ground color and clips its bounded world-aligned tile projections against the
