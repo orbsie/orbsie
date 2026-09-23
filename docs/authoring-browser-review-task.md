@@ -67,6 +67,15 @@ activity coalescer. Do not display private chain of thought or claim visual
 inspection when no image was sent. Mark completion only after the final
 admitted phase and save succeed; keep gameplay input/physics running throughout.
 
+Cloud generation journals mark the first `commit_revision` as `complete`
+(`src/lib/server/generation-runs.ts`), so review corrections cannot append to
+that same durable journal. If signed in, begin a second journal segment from
+the exact committed reviewed project before applying the server-approved
+correction batch. Give it its own cloud run ID and sequence while retaining one
+user-facing run, controller, history entry and authoring ledger run. Verify
+the cloud baseline/save acknowledgement before applying corrections, and test
+recovery across both segments; never append to a completed journal.
+
 Fixture acceptance must include actual canvas capture, targeted correction,
 changed rendered revision, final verdict; first accept; final partial;
 structural-only; capture failure; abort at each phase; stale project and
