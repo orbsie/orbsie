@@ -12,10 +12,15 @@ zero extra calls, and Undo hid the stale action. The control is visible without
 horizontal overflow; the fixture lantern is not quality evidence. Eighteen
 focused tests, TypeScript, syntax/diff checks and optimized build pass. Evidence:
 `docs/evidence/authoring-review/interrupted-review-20260924/`. No live model
-call ran. This is an explicit new generation continuation, not replay or resume
-of the terminal review ledger phase. Backend review-only continuation and live
-provider recovery remain open. Build refreshed the checked-in standalone player
-artifacts.
+call ran. Source `6dad43f` deployed Ready as
+`dpl_J2YEefFxk4TiqCRFs3mZD8LM9Gd3` at `https://orbsie.com/` (immutable
+`https://orbsie-omzjp668p-grappeggias-projects.vercel.app`). Root and config
+returned HTTP 200; deployed player runtime and source exactly match local
+artifacts. Config keeps `authoringReview:false` and `chatgptHosted:true`, so
+the live public path does not yet exercise this review UI. This is an explicit
+new generation continuation, not replay or resume of the terminal review
+ledger phase. Backend review-only continuation and live provider recovery remain
+open. Build refreshed the checked-in standalone player artifacts.
 
 Sep 24 ChatGPT owner-code attempt: a fresh production guest session issued a
 device challenge through `/api/provider-session` and `/api/chatgpt/start`,
