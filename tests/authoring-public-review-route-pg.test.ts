@@ -21,7 +21,7 @@ const databaseUrl = process.env.ORBSIE_LEDGER_TEST_DATABASE_URL;
 const pool = databaseUrl
   ? new Pool({ connectionString: databaseUrl, max: 5 })
   : null;
-const model = "openai/gpt-5.6-luna";
+const model = "openai/gpt-6-luna";
 const nonRecommendedModel = "provider/non-recommended";
 
 async function seedCompletedRun(
