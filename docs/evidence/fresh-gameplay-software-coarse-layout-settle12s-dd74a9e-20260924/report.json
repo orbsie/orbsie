@@ -1,0 +1,92 @@
+{
+  "passed": true,
+  "fixtureConfiguration": {
+    "pointerMode": "coarse",
+    "layoutOnly": true
+  },
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3177",
+  "renderers": {
+    "software": {
+      "status": "passed",
+      "renderer": "software",
+      "pointerMode": "coarse",
+      "layout": {
+        "phoneLandscapeMobileSheet": {
+          "status": "checked",
+          "closed": {
+            "viewport": {
+              "width": 844,
+              "height": 390
+            },
+            "interaction": {
+              "pointerCoarse": true,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "composer": {
+              "left": 220,
+              "top": 338,
+              "right": 744,
+              "bottom": 518,
+              "width": 524,
+              "height": 180
+            },
+            "sheetHandle": {
+              "left": 221,
+              "top": 339,
+              "right": 743,
+              "bottom": 359,
+              "width": 522,
+              "height": 20
+            },
+            "documentScrollHeight": 390,
+            "horizontalOverflow": false,
+            "verticalOverflow": false,
+            "editHitTest": false
+          },
+          "open": {
+            "viewport": {
+              "width": 844,
+              "height": 390
+            },
+            "interaction": {
+              "pointerCoarse": true,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "composer": {
+              "left": 220,
+              "top": 200,
+              "right": 744,
+              "bottom": 380,
+              "width": 524,
+              "height": 180
+            },
+            "sheetHandle": {
+              "left": 221,
+              "top": 201,
+              "right": 743,
+              "bottom": 221,
+              "width": 522,
+              "height": 20
+            },
+            "documentScrollHeight": 390,
+            "horizontalOverflow": false,
+            "verticalOverflow": false,
+            "editHitTest": true
+          },
+          "editHitTest": true
+        }
+      },
+      "generationRequests": 1,
+      "projectId": "84ab5d7b-dc5b-4b73-b33a-f84283ba616c",
+      "revision": 22,
+      "generationMovement": null,
+      "gameplayPhases": {},
+      "partialTraversal": null,
+      "componentBoundary": null,
+      "failure": null
+    }
+  }
+}

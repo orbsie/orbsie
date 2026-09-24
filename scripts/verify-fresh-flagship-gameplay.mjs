@@ -577,7 +577,7 @@ async function waitForStableBoundingBox(
 async function measureSoftwareViewport(
   page,
   label,
-  { allowClosedComposer = false } = {},
+  { allowClosedComposer = false, stabilityWaitMs = 5000 } = {},
 ) {
   const viewport = page.viewportSize();
   assert(viewport, "Fixture page did not expose a viewport.");
@@ -598,6 +598,7 @@ async function measureSoftwareViewport(
   const composer = page.locator(composerSelector);
   await expect(composer).toBeVisible();
   await waitForStableBoundingBox(page, composerSelector, {
+    maxWaitMs: stabilityWaitMs,
     requireInViewport: !allowClosedComposer,
   });
   const metrics = await page.evaluate((activeComposerSelector) => {
@@ -949,7 +950,12 @@ async function verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout) {
   await expect(page.locator("main")).toHaveClass(/is-landing/);
   await expect(page.locator(".landing-composer")).toBeVisible();
   await page.waitForTimeout(1100);
-  layout.landing = await measureSoftwareViewport(page, "phone-landing");
+  // Landing/reopen transitions advance at most 0.1s per frame; headless
+  // SwiftShader can delay RAF by over 2s, so allow this composer up to 12s to
+  // settle while retaining the two-frame stability and in-viewport checks.
+  layout.landing = await measureSoftwareViewport(page, "phone-landing", {
+    stabilityWaitMs: 12000,
+  });
   await page.screenshot({
     path: resolve(evidenceDir, "software-phone-landing.png"),
     fullPage: true,
@@ -974,7 +980,9 @@ async function verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout) {
   await expect(page.locator(".software-world canvas")).toBeVisible();
   await expect(page.locator(".chat-panel")).toBeVisible();
   await page.waitForTimeout(1100);
-  layout.reopened = await measureSoftwareViewport(page, "phone-reopened");
+  layout.reopened = await measureSoftwareViewport(page, "phone-reopened", {
+    stabilityWaitMs: 12000,
+  });
   await page.screenshot({
     path: resolve(evidenceDir, "software-phone-reopened.png"),
     fullPage: true,

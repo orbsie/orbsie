@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 Canvas2D diagnostic completion: a clean `dd74a9e` production-build
+coarse-pointer full fixture passed generation movement; five, seven, and Undo
+back to five collectibles; win/reset for each; and landscape closed/open
+bounds. It then timed out on the fixture's 5-second stable-frame gate for the
+landing composer. The page stayed visible with a running renderer and no
+runtime error, but headless SwiftShader had a 2.15-second RAF gap; the failure
+screenshot showed the composer in bounds. Only the landing/reopened fixture
+checks now allow 12 seconds for two stable RAF frames, with the same strict
+viewport/overflow assertions. A production-build coarse-pointer layout-only
+replay passed landing, reload, and reopened layout. Evidence:
+`docs/evidence/fresh-gameplay-software-coarse-diagnostic-dd74a9e-20260924/`
+and `fresh-gameplay-software-coarse-layout-settle12s-dd74a9e-20260924/`.
+These runs are deterministic and headless; no live provider or physical-device
+acceptance is implied. A single combined all-green report remains open.
+
 Sep 24 combined Canvas2D/touch fixture follow-up: a production-build run
 passed movement and all three gameplay phases, then failed only at the final
 saved-world reopen check. The screenshot showed the composer in bounds; the
