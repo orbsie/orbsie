@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 current ChatGPT owner-code handoff: a new isolated anonymous Orbsie
+production session was started after the owner offered to use a shown device
+URL/code. Its private storage state is at
+`/home/marcos/.cache/orbsie/provider-tests/chatgpt-owner-current.storage.json`
+(mode 0600), and the challenge expires at `2026-09-24T18:40:32.925Z`. The
+URL/code were given only in chat, never in repo evidence. On the next turn,
+check `/api/chatgpt/status` with that private state before doing anything
+else; if connected, run only the allowed read-only connection checks because
+the hosted runtime does not yet expose an enforceable 4,096-output-token cap.
+If expired/disconnected, cancel the challenge and delete the private state.
+
 Sep 24 free-prompt refund release: source `95f074a` built and deployed Ready
 as `dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw`, aliased to `https://orbsie.com/`
 (immutable URL
