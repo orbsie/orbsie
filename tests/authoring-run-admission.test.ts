@@ -4,6 +4,8 @@ const deps = vi.hoisted(() => ({
   issue: vi.fn(),
   issueReviewOnly: vi.fn(),
   readRun: vi.fn(),
+  readRecoveredRun: vi.fn(),
+  trialRemaining: vi.fn(),
   complete: vi.fn(),
   fail: vi.fn(),
   admitReview: vi.fn(),
@@ -17,12 +19,14 @@ vi.mock("../src/lib/server/auth", async () => ({
 vi.mock("../src/lib/server/trial", async () => ({
   ...(await vi.importActual("../src/lib/server/trial")),
   trialIdentity: deps.trialIdentity,
+  trialRemaining: deps.trialRemaining,
 }));
 vi.mock("../src/lib/server/authoring-run-ledger", async () => ({
   ...(await vi.importActual("../src/lib/server/authoring-run-ledger")),
   issueAuthoringRun: deps.issue,
   issueReviewOnlyAuthoringRun: deps.issueReviewOnly,
   readAuthoringRun: deps.readRun,
+  readReviewOnlyAuthoringRunForParent: deps.readRecoveredRun,
   completeInitialAuthoringRun: deps.complete,
   failAuthoringRun: deps.fail,
   admitAuthoringReview: deps.admitReview,
@@ -119,6 +123,17 @@ async function matchingPrior(value: RecoveryInput) {
     remainingReviewSlots: 1,
     completedRevision: scene.revision,
     completedSceneBindingDigest: scene.digest,
+    live: true,
+  };
+}
+
+async function matchingRecoveredRun(value: RecoveryInput) {
+  const prior = await matchingPrior(value);
+  return {
+    ...prior,
+    runId: "55555555-5555-4555-8555-555555555555",
+    phase: "completed",
+    remainingReviewSlots: 3,
     live: true,
   };
 }
@@ -344,6 +359,129 @@ it("maps a duplicate recovery conflict to a safe HTTP 409", async () => {
     status: 409,
     message: "This failed review can no longer be recovered.",
   });
+});
+
+it("returns the existing unexpired review run after a duplicate conflict", async () => {
+  const value = recoveryInput();
+  deps.readRun.mockResolvedValue(await matchingPrior(value));
+  deps.issueReviewOnly.mockRejectedValue(
+    new AuthoringRunLedgerError("phase-conflict", "Duplicate recovery."),
+  );
+  deps.readRecoveredRun.mockResolvedValue(await matchingRecoveredRun(value));
+
+  await expect(admitReviewOnlyAuthoringRun(value)).resolves.toEqual({
+    runId: "55555555-5555-4555-8555-555555555555",
+    trialRemaining: null,
+  });
+  expect(deps.issueReviewOnly).toHaveBeenCalledOnce();
+  expect(deps.readRecoveredRun).toHaveBeenCalledWith(value.priorRunId);
+});
+
+it.each([
+  ["identity", { identityHash: "c".repeat(64) }],
+  ["project", { projectId: "another-project" }],
+  ["provider", { provider: "chatgpt" }],
+  ["model", { model: "another/model" }],
+  ["effort", { effort: "minimal" }],
+  ["fingerprint", { requestFingerprint: "d".repeat(64) }],
+  ["initial revision", { initialRevision: 4 }],
+  ["initial digest", { initialSceneDigest: "e".repeat(64) }],
+  ["completed revision", { completedRevision: 4 }],
+  ["completed digest", { completedSceneBindingDigest: "e".repeat(64) }],
+] as const)(
+  "rejects a duplicate recovery with a different %s",
+  async (_label, mismatch) => {
+    const value = recoveryInput();
+    deps.readRun.mockResolvedValue(await matchingPrior(value));
+    deps.issueReviewOnly.mockRejectedValue(
+      new AuthoringRunLedgerError("phase-conflict", "Duplicate recovery."),
+    );
+    deps.readRecoveredRun.mockResolvedValue({
+      ...(await matchingRecoveredRun(value)),
+      ...mismatch,
+    });
+
+    await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+      status: 409,
+      message: "This failed review can no longer be recovered.",
+    });
+    expect(deps.trialRemaining).not.toHaveBeenCalled();
+  },
+);
+
+it.each([
+  ["expired", { live: false }],
+  ["consumed", { remainingReviewSlots: 2 }],
+  ["reviewing", { phase: "reviewing" }],
+  ["finalized", { phase: "finalized" }],
+  ["failed", { phase: "failed" }],
+] as const)(
+  "does not reuse an %s duplicate recovery",
+  async (_label, invalidState) => {
+    const value = recoveryInput();
+    deps.readRun.mockResolvedValue(await matchingPrior(value));
+    deps.issueReviewOnly.mockRejectedValue(
+      new AuthoringRunLedgerError("phase-conflict", "Duplicate recovery."),
+    );
+    deps.readRecoveredRun.mockResolvedValue({
+      ...(await matchingRecoveredRun(value)),
+      ...invalidState,
+    });
+
+    await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+      status: 409,
+      message: "This failed review can no longer be recovered.",
+    });
+  },
+);
+
+it("returns a zero free balance on retry without making another claim", async () => {
+  const value = recoveryInput("free");
+  deps.readRun.mockResolvedValue(await matchingPrior(value));
+  deps.issueReviewOnly.mockRejectedValue(new TrialExhausted());
+  deps.readRecoveredRun.mockResolvedValue(await matchingRecoveredRun(value));
+  deps.trialRemaining.mockResolvedValue(0);
+
+  await expect(admitReviewOnlyAuthoringRun(value)).resolves.toEqual({
+    runId: "55555555-5555-4555-8555-555555555555",
+    trialRemaining: 0,
+    trialCookie: "orbsie_trial=synthetic",
+  });
+  expect(deps.issueReviewOnly).toHaveBeenCalledOnce();
+  expect(deps.trialRemaining).toHaveBeenCalledOnce();
+  expect(deps.trialRemaining).toHaveBeenCalledWith(value.trialIdentity);
+});
+
+it("returns the same child from concurrent admission retries", async () => {
+  const value = recoveryInput("free");
+  const prior = await matchingPrior(value);
+  const recovered = await matchingRecoveredRun(value);
+  deps.readRun.mockResolvedValue(prior);
+  deps.readRecoveredRun.mockResolvedValue(recovered);
+  let attempts = 0;
+  deps.issueReviewOnly.mockImplementation(async () => {
+    attempts += 1;
+    if (attempts === 1)
+      return {
+        runId: recovered.runId,
+        trialRemaining: 2,
+        expiresAt: new Date(),
+      };
+    throw new AuthoringRunLedgerError("phase-conflict", "Duplicate recovery.");
+  });
+  deps.trialRemaining.mockResolvedValue(2);
+
+  const results = await Promise.all([
+    admitReviewOnlyAuthoringRun(value),
+    admitReviewOnlyAuthoringRun(value),
+  ]);
+
+  expect(results.map((result) => result.runId)).toEqual([
+    recovered.runId,
+    recovered.runId,
+  ]);
+  expect(deps.issueReviewOnly).toHaveBeenCalledTimes(2);
+  expect(deps.trialRemaining).toHaveBeenCalledOnce();
 });
 
 it("does not read or issue a prior run after cancellation", async () => {

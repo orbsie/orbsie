@@ -18,6 +18,7 @@ import {
   issueAuthoringRun,
   issueReviewOnlyAuthoringRun,
   readAuthoringRun,
+  readReviewOnlyAuthoringRunForParent,
 } from "../src/lib/server/authoring-run-ledger";
 import { TrialExhausted, trialRemaining } from "../src/lib/server/trial";
 
@@ -985,6 +986,22 @@ describe("authoring run ledger PostgreSQL contention", () => {
           remainingReviewSlots: 3,
         });
         await expect(
+          readReviewOnlyAuthoringRunForParent(firstRecovery.priorRunId),
+        ).resolves.toMatchObject({
+          runId: first.runId,
+          identityHash: savedBinding.identityHash,
+          projectId: savedBinding.projectId,
+          provider: savedBinding.provider,
+          model: savedBinding.model,
+          effort: savedBinding.effort,
+          requestFingerprint: savedBinding.requestFingerprint,
+          phase: "completed",
+          remainingReviewSlots: 3,
+          completedRevision: 7,
+          completedSceneBindingDigest: "d".repeat(64),
+          live: true,
+        });
+        await expect(
           issueReviewOnlyAuthoringRun(firstRecovery),
         ).rejects.toMatchObject({ code: "phase-conflict" });
         const afterDuplicate = await pool!.query(
@@ -1122,6 +1139,13 @@ describe("authoring run ledger PostgreSQL contention", () => {
           phase: "completed",
           remainingReviewSlots: 3,
         });
+        await pool!.query(
+          "UPDATE orbsie_authoring_runs SET expires_at=clock_timestamp()-interval '1 second' WHERE run_id=$1",
+          [fresh.runId],
+        );
+        await expect(
+          readReviewOnlyAuthoringRunForParent(freshPriorRunId),
+        ).resolves.toMatchObject({ runId: fresh.runId, live: false });
       } finally {
         await pool!.query(
           "DELETE FROM orbsie_authoring_runs WHERE run_id = ANY($1::uuid[]) OR recovered_from_run_id = ANY($2::uuid[])",
@@ -1173,6 +1197,14 @@ describe("authoring run ledger PostgreSQL contention", () => {
           [priorRunId],
         );
         expect(persisted.rows[0].count).toBe(1);
+        await expect(
+          readReviewOnlyAuthoringRunForParent(priorRunId),
+        ).resolves.toMatchObject({
+          runId: admitted[0].value.runId,
+          phase: "completed",
+          remainingReviewSlots: 3,
+          live: true,
+        });
         const buckets = await pool!.query(
           "SELECT bucket,used FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2 ORDER BY bucket",
           [`${prefix}%`, `global:${prefix}`],

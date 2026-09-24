@@ -3,12 +3,14 @@ import type { Project } from "../protocol";
 import type { SceneBinding } from "../scene-binding";
 import {
   admitAuthoringReview,
+  AUTHORING_RUN_REVIEW_SLOTS,
   completeInitialAuthoringRun,
   completeAuthoringReview,
   failAuthoringRun,
   issueAuthoringRun,
   issueReviewOnlyAuthoringRun,
   readAuthoringRun,
+  readReviewOnlyAuthoringRunForParent,
   AuthoringRunLedgerError,
   type AuthoringReviewPhase,
   type AuthoringProvider,
@@ -20,7 +22,11 @@ import {
   resolveAuthoringRequestIdentity,
   type AuthoringOwnerSession,
 } from "./authoring-run-identity";
-import type { TrialIdentity } from "./trial";
+import {
+  TrialExhausted,
+  trialRemaining as readTrialRemaining,
+  type TrialIdentity,
+} from "./trial";
 import type { AuthoringLifecycleHooks } from "../scene-binding";
 
 const AUTHORING_REVIEW_FLAG = "1";
@@ -184,13 +190,72 @@ export async function admitReviewOnlyAuthoringRun(input: {
         : {}),
     });
   } catch (error) {
-    // TrialExhausted extends HttpError and must reach the route as a 429.
-    if (error instanceof HttpError) throw error;
-    if (
+    // A true new claim exhaustion remains a 429. A concurrent duplicate may
+    // exhaust after its winner has already created the reusable child.
+    const freeTrialExhausted =
+      input.provider === "free" && error instanceof TrialExhausted;
+    const duplicateConflict =
       error instanceof AuthoringRunLedgerError &&
-      error.code === "phase-conflict"
-    )
-      throw invalidRecoveryError();
+      error.code === "phase-conflict";
+    if (error instanceof HttpError && !freeTrialExhausted) throw error;
+    if (duplicateConflict || freeTrialExhausted) {
+      if (input.signal.aborted) throw cancellationError(input.signal);
+      let recovered: Awaited<
+        ReturnType<typeof readReviewOnlyAuthoringRunForParent>
+      >;
+      try {
+        recovered = await readReviewOnlyAuthoringRunForParent(input.priorRunId);
+      } catch {
+        throw new HttpError(
+          503,
+          "Authoring review is temporarily unavailable. Retry shortly.",
+        );
+      }
+      if (input.signal.aborted) throw cancellationError(input.signal);
+      if (!recovered && freeTrialExhausted) throw error;
+      if (
+        !recovered ||
+        !recovered.live ||
+        recovered.phase !== "completed" ||
+        recovered.remainingReviewSlots !== AUTHORING_RUN_REVIEW_SLOTS ||
+        recovered.identityHash !== binding.identityHash ||
+        recovered.projectId !== binding.projectId ||
+        recovered.provider !== binding.provider ||
+        recovered.model !== binding.model ||
+        recovered.effort !== (binding.effort ?? null) ||
+        recovered.requestFingerprint !== binding.requestFingerprint ||
+        recovered.initialRevision !== expectedBinding.revision ||
+        recovered.initialSceneDigest !== expectedBinding.digest ||
+        recovered.completedRevision !== expectedBinding.revision ||
+        recovered.completedSceneBindingDigest !== expectedBinding.digest
+      )
+        throw invalidRecoveryError();
+
+      let remaining: number | null = null;
+      if (input.provider === "free") {
+        if (
+          !linked.trialIdentity ||
+          linked.trialIdentity.identityHash !== binding.identityHash
+        )
+          throw invalidRecoveryError();
+        try {
+          // The original claim already succeeded. Report the current balance,
+          // including zero, without attempting another claim.
+          remaining = await readTrialRemaining(linked.trialIdentity);
+        } catch {
+          throw new HttpError(
+            503,
+            "Authoring review is temporarily unavailable. Retry shortly.",
+          );
+        }
+      }
+      return {
+        runId: recovered.runId,
+        trialRemaining: remaining,
+        ...(linked.trialCookie ? { trialCookie: linked.trialCookie } : {}),
+      };
+    }
+    if (error instanceof HttpError) throw error;
     if (
       error instanceof AuthoringRunLedgerError &&
       error.code === "invalid-input"

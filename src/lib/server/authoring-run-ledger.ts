@@ -823,6 +823,46 @@ export async function readAuthoringRun(runId: string) {
   };
 }
 
+/** Read the unique review-only child issued for a failed parent, if any. */
+export async function readReviewOnlyAuthoringRunForParent(priorRunId: string) {
+  assertRunId(priorRunId);
+  const result = await databaseQuery<RawLedgerRow>(
+    "SELECT run_id,identity_hash,project_id,provider,model,effort,request_fingerprint,initial_revision,initial_scene_digest,phase,remaining_review_slots,completed_revision,completed_scene_digest,expires_at,expires_at > clock_timestamp() AS live FROM orbsie_authoring_runs WHERE recovered_from_run_id=$1",
+    [priorRunId],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  const initialRevision = Number(row.initial_revision);
+  const remainingReviewSlots = Number(row.remaining_review_slots);
+  const completedRevision =
+    row.completed_revision === null ? null : Number(row.completed_revision);
+  if (
+    !Number.isSafeInteger(initialRevision) ||
+    !Number.isSafeInteger(remainingReviewSlots) ||
+    (completedRevision !== null && !Number.isSafeInteger(completedRevision))
+  )
+    throw new AuthoringRunLedgerError(
+      "invalid-input",
+      "Authoring run revision is outside the supported range.",
+    );
+  return {
+    runId: row.run_id,
+    identityHash: row.identity_hash,
+    projectId: row.project_id,
+    provider: row.provider,
+    model: row.model,
+    effort: row.effort,
+    requestFingerprint: row.request_fingerprint,
+    initialRevision,
+    initialSceneDigest: row.initial_scene_digest,
+    phase: row.phase,
+    remainingReviewSlots,
+    completedRevision,
+    completedSceneBindingDigest: row.completed_scene_digest,
+    live: row.live,
+  };
+}
+
 async function databaseQuery<T extends QueryResultRow>(
   text: string,
   values: unknown[],
