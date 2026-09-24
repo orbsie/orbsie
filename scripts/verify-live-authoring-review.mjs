@@ -28,6 +28,16 @@ const OUTPUT_CAP = 4096;
 const LIVE_BUDGET = 3;
 const MAX_SCENE_ENTITIES = 160;
 const MAX_PROCEDURAL_PARTS_PER_ENTITY = 32;
+const PART_SHAPES = ["box", "sphere", "cylinder", "cone", "torus", "lathe"];
+const PART_SHAPE_CATEGORIES = [...PART_SHAPES, "absent", "unknown"];
+const PART_SCALE_FACTOR_BINS = [
+  "belowHalf",
+  "halfToOne",
+  "oneToTwo",
+  "twoToFour",
+  "fourPlus",
+  "unknown",
+];
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 const GENERATION_PATHS = new Set(["/api/generate", "/api/generate/review"]);
 const UUID =
@@ -214,6 +224,54 @@ function emptyColorFamilyCounts() {
   return Object.fromEntries(COLOR_FAMILIES.map((family) => [family, 0]));
 }
 
+function emptyPartShapeCounts() {
+  return Object.fromEntries(PART_SHAPE_CATEGORIES.map((shape) => [shape, 0]));
+}
+
+function emptyPartScaleFactorBinsByShape() {
+  return Object.fromEntries(
+    PART_SHAPE_CATEGORIES.map((shape) => [
+      shape,
+      Object.fromEntries(PART_SCALE_FACTOR_BINS.map((bin) => [bin, 0])),
+    ]),
+  );
+}
+
+function partShapeCategory(value) {
+  if (value === null || value === undefined || value === "absent")
+    return "absent";
+  return PART_SHAPES.includes(value) ? value : "unknown";
+}
+
+function boundedScaleVector(value) {
+  return (
+    Array.isArray(value) &&
+    value.length === 3 &&
+    value.every(
+      (component) =>
+        typeof component === "number" &&
+        Number.isFinite(component) &&
+        Math.abs(component) <= 100,
+    )
+  );
+}
+
+function partScaleFactorBin(entityScale, partScale) {
+  if (!boundedScaleVector(entityScale) || !boundedScaleVector(partScale))
+    return "unknown";
+
+  // This upper-bounds the declared entity and part scale transforms. It is
+  // not a physical dimension; primitive bounds and private lathe profiles vary.
+  const scaleFactorUpperBound =
+    Math.max(...entityScale.map(Math.abs)) *
+    Math.max(...partScale.map(Math.abs));
+  if (scaleFactorUpperBound < 0.5) return "belowHalf";
+  if (scaleFactorUpperBound < 1) return "halfToOne";
+  if (scaleFactorUpperBound < 2) return "oneToTwo";
+  if (scaleFactorUpperBound < 4) return "twoToFour";
+  return "fourPlus";
+}
+
 function colorFamily(value) {
   if (value === null || value === undefined || value === "") return "absent";
   if (typeof value !== "string" || !/^#[\da-f]{6}$/i.test(value))
@@ -260,6 +318,9 @@ export function summarizeProjectStructure(entityFacts) {
     ["absent", 0],
     ["other", 0],
   ]);
+  const customPartShapeCounts = emptyPartShapeCounts();
+  const customPartScaleFactorUpperBoundBinsByShape =
+    emptyPartScaleFactorBinsByShape();
   const entityColorFamilyCounts = emptyColorFamilyCounts();
   const partColorFamilyCounts = emptyColorFamilyCounts();
   let customProceduralPartCount = 0;
@@ -285,8 +346,29 @@ export function summarizeProjectStructure(entityFacts) {
       : [];
     for (const partColor of partColors)
       partColorFamilyCounts[colorFamily(partColor)] += 1;
-    if (PROCEDURAL_GEOMETRY_KINDS.has(geometryKind))
+    if (PROCEDURAL_GEOMETRY_KINDS.has(geometryKind)) {
       customProceduralPartCount += partColors.length;
+      const partFacts = Array.isArray(entity.partFacts)
+        ? entity.partFacts.slice(0, MAX_PROCEDURAL_PARTS_PER_ENTITY)
+        : [];
+      const partCount = Math.min(
+        MAX_PROCEDURAL_PARTS_PER_ENTITY,
+        Math.max(partFacts.length, partColors.length),
+      );
+      for (let index = 0; index < partCount; index += 1) {
+        const part =
+          partFacts[index] && typeof partFacts[index] === "object"
+            ? partFacts[index]
+            : {};
+        const shape = partShapeCategory(part.shape);
+        const scaleFactorBin = partScaleFactorBin(
+          entity.entityScale,
+          part.scale,
+        );
+        customPartShapeCounts[shape] += 1;
+        customPartScaleFactorUpperBoundBinsByShape[shape][scaleFactorBin] += 1;
+      }
+    }
   }
 
   return {
@@ -294,6 +376,8 @@ export function summarizeProjectStructure(entityFacts) {
     stageCounts,
     geometryKindCounts,
     customProceduralPartCount,
+    customPartShapeCounts,
+    customPartScaleFactorUpperBoundBinsByShape,
     entityColorFamilyCounts,
     partColorFamilyCounts,
   };
@@ -456,6 +540,17 @@ async function readProjectSummary(page, includeStructure = false) {
                       entity?.geometry && typeof entity.geometry === "object"
                         ? entity.geometry
                         : null;
+                    const safeScale = (value) =>
+                      Array.isArray(value) &&
+                      value.length === 3 &&
+                      value.every(
+                        (component) =>
+                          typeof component === "number" &&
+                          Number.isFinite(component) &&
+                          Math.abs(component) <= 100,
+                      )
+                        ? value
+                        : null;
                     return {
                       stage:
                         entity?.stage === "seed" ||
@@ -472,6 +567,7 @@ async function readProjectSummary(page, includeStructure = false) {
                         /^#[\da-f]{6}$/i.test(entity.color)
                           ? entity.color
                           : null,
+                      entityScale: safeScale(entity?.scale),
                       partColors: Array.isArray(geometry?.parts)
                         ? geometry.parts
                             .slice(0, 32)
@@ -481,6 +577,23 @@ async function readProjectSummary(page, includeStructure = false) {
                                 ? part.color
                                 : null,
                             )
+                        : [],
+                      partFacts: Array.isArray(geometry?.parts)
+                        ? geometry.parts.slice(0, 32).map((part) => ({
+                            shape:
+                              part?.shape === "box" ||
+                              part?.shape === "sphere" ||
+                              part?.shape === "cylinder" ||
+                              part?.shape === "cone" ||
+                              part?.shape === "torus" ||
+                              part?.shape === "lathe"
+                                ? part.shape
+                                : part?.shape === null ||
+                                    part?.shape === undefined
+                                  ? "absent"
+                                  : "unknown",
+                            scale: safeScale(part?.scale),
+                          }))
                         : [],
                     };
                   })
