@@ -21,6 +21,12 @@ the planet and the composer remained available, with zero generation requests.
 The [Android screenshot](landing-android15-software.png) and `android15Emulator`
 entry in the report record this separate check.
 
+A separate signed-out mobile browser opened Connections without an Orbsie
+password. The panel displayed the ChatGPT connection action, OpenRouter and
+Vercel AI Gateway choices, and the three Quality/Balanced/Budget presets.
+The [connection screenshot](connections-mobile.png) and report record that UI
+check. No provider consent or model call was attempted.
+
 This release check does not cover a live provider request, ChatGPT consent,
 physical mobile hardware, new game export/publication, or the disabled
 production authoring-review flag.

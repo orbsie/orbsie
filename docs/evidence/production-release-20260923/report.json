@@ -50,5 +50,20 @@
       "THREE.WebGLRenderer: Error creating WebGL context."
     ],
     "screenshot": "landing-android15-software.png"
+  },
+  "signedOutConnections": {
+    "chatgptActionVisible": true,
+    "providerOptions": [
+      "OpenRouter",
+      "Vercel AI Gateway"
+    ],
+    "presets": [
+      "Quality",
+      "Balanced",
+      "Budget"
+    ],
+    "generationRequests": 0,
+    "screenshot": "connections-mobile.png",
+    "providerConsentAttempted": false
   }
 }

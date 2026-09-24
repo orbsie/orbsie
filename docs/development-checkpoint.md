@@ -11,6 +11,9 @@ initialization error. Evidence: `docs/evidence/production-release-20260923/`.
 The same signed-out fallback also loaded in actual Android 15 emulator Chrome at
 412-by-786 CSS pixels with a painted planet, prompt composer, and zero
 generation requests; it remains emulator evidence, not physical-device proof.
+A signed-out production mobile Connections check showed ChatGPT, OpenRouter,
+Vercel AI Gateway and the three Quality/Balanced/Budget presets without an
+Orbsie password. It did not start provider consent or inference.
 This does not establish live provider create/edit, physical-device performance,
 or publication acceptance. Production `/api/config` still reports
 `authoringReview:false`; the three-call visual inspect/correct loop is not yet
