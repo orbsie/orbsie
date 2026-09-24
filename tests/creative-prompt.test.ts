@@ -16,6 +16,8 @@ const formats = [
 const coreGuidance = [
   "Use recentConversation only as context",
   "recognizable silhouette",
+  "prioritize each subject's defining silhouette, proportions, and attached forms before surface decoration",
+  "preserve requested colors on those defining features",
   "reachable objective",
   "Reserve only NEW entities FIRST",
   "Finish referenced entities to ready before set_game",
