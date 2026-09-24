@@ -1488,7 +1488,12 @@ function drawScene(
 ): SoftwareSceneDrawResult {
   const width = canvas.clientWidth || 1;
   const height = canvas.clientHeight || 1;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const isPhoneSizedCanvas =
+    Math.min(width, height) <= 540 && Math.max(width, height) < 1100;
+  const dpr = Math.min(
+    isPhoneSizedCanvas ? 1 : 2,
+    window.devicePixelRatio || 1,
+  );
   if (
     canvas.width !== Math.round(width * dpr) ||
     canvas.height !== Math.round(height * dpr)

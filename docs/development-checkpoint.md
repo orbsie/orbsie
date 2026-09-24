@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 23 Android software-renderer resolution: phone-sized portrait and
+landscape canvases now cap their 2D backing DPR at 1; larger canvases retain
+the prior cap of 2. A local Android 15 emulator production-build check
+observed a six-second settled median frame interval drop from ~50 ms to
+~33.4 ms in both orientations with the planet still visible. The 95th
+percentile remained ~83 ms in portrait and fell from ~100 ms to ~83 ms in
+landscape, so frame pacing is still uneven. Evidence and both screenshots:
+`docs/evidence/android-software-landing-20260923/`. The 866-by-308 landscape
+capture exposed a separate overlap between graphics guidance and the composer;
+that layout issue remains open. These measurements do not prove physical-phone
+performance or automatic recovery from the emulator compositor fault.
+
 Sep 23 graphics failure acceptance: repaired the deterministic production-
 browser script for the current parent-thread authoring activity messages and
 added a direct software-canvas planet pixel check. The local production run
