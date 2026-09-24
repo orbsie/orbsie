@@ -485,6 +485,18 @@ async function runRenderer(
       );
       const continuation = page.getByTestId("interrupted-review-continuation");
       await expect(continuation).toBeVisible();
+      await page.screenshot({
+        path: `${output}/${evidenceName}-desktop.png`,
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(continuation).toBeVisible();
+      const continuationBounds = await continuation.boundingBox();
+      assert(continuationBounds);
+      assert(continuationBounds.x >= 0);
+      assert(continuationBounds.x + continuationBounds.width <= 390);
+      await page.screenshot({
+        path: `${output}/${evidenceName}-phone.png`,
+      });
       await continuation.click();
       await expect(
         page.getByRole("textbox", { name: "What experience to build?" }),

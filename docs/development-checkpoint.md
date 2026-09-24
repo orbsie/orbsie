@@ -1,5 +1,32 @@
 # Development checkpoint
 
+Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
+actual failed review request from earlier capture/preflight failures. When the
+current committed revision remains saved and writable, the parent chat offers
+**Continue improving**, which drafts a follow-up grounded in the original
+request without sending it. Stop, stale project/revision, failed save, and
+non-review failures do not offer the action. Astra reviewed the diff and
+synthetic HTTP 502 browser fixture at desktop and 390×844: revision 3 and
+entity IDs survived, only create and review requests occurred, drafting made
+zero extra calls, and Undo hid the stale action. The control is visible without
+horizontal overflow; the fixture lantern is not quality evidence. Eighteen
+focused tests, TypeScript, syntax/diff checks and optimized build pass. Evidence:
+`docs/evidence/authoring-review/interrupted-review-20260924/`. No live model
+call ran. This is an explicit new generation continuation, not replay or resume
+of the terminal review ledger phase. Backend review-only continuation and live
+provider recovery remain open. Build refreshed the checked-in standalone player
+artifacts.
+
+Sep 24 ChatGPT owner-code attempt: a fresh production guest session issued a
+device challenge through `/api/provider-session` and `/api/chatgpt/start`,
+without Orbsie email signup. The URL and code were shown to the owner, but the
+challenge expired without authorization. Read-only status returned idle and
+disconnected; cancellation returned HTTP 200 and the mode-0600 private test
+session file was removed. No ChatGPT inference ran. The user's own browser
+session was not changed. The read-only Gateway test-key balance remained
+`-0.00456495`, so no paid Gateway inference ran. Computer use still reports
+zero browser surfaces, and no physical Android device is attached.
+
 Sep 24 review failure diagnosis: source `bd70b48` adds an allowlisted
 `X-Orbsie-Review-Failure-Kind` response header only after a review was admitted
 and failed or cancelled. The bounded OpenRouter acceptance harness records only

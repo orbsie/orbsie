@@ -536,7 +536,9 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   repeat an upstream call whose outcome may be unknown. Show the saved scene and
   the specific safe failure category while retaining a way to continue review.
   The response and live acceptance harness now carry an allowlisted failure kind,
-  but a post-change live failure has not yet verified that diagnostic path.
+  but a post-change live failure has not yet verified that diagnostic path. The
+  editor now drafts an explicit new-generation continuation after a saved
+  review failure; a review-only ledger continuation remains to be implemented.
 - [x] Display progress/activity chat updates no more often than once every two
   seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
   Keep final results/errors and controls timely; do not throttle actual scene updates,

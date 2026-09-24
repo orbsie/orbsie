@@ -52,6 +52,10 @@ older rows below are a historical inventory, not a completion claim.
   Thirty focused tests and TypeScript pass; no later live 502 has exercised it.
   The ledger terminalizes a failed review run, so saved-scene continuation needs
   a new, explicitly budgeted review admission rather than automatic replay.
+- A deterministic HTTP 502 browser fixture now proves that a saved scene offers
+  **Continue improving** in the parent chat, drafting from the original request
+  with zero automatic model calls; Undo hides the stale action. It does not
+  resume the terminal review ledger phase or prove live-provider recovery.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

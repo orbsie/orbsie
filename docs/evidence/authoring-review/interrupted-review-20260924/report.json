@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scope": "deterministic browser authoring review loop with real canvas capture",
+  "liveModelCalls": 0,
+  "renderers": {},
+  "secondCorrection": {},
+  "partialReview": {},
+  "failedReview": {
+    "renderer": "software",
+    "savedRevision": 3,
+    "requestKinds": [
+      "initial",
+      "review"
+    ],
+    "draftedPrompt": "Continue improving the saved scene based on the original request: Build a lantern",
+    "extraRequestsAfterDraft": 0,
+    "continuationHiddenAfterRevisionChange": true
+  },
+  "signedInJournal": {}
+}
