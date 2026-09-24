@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 review-feedback continuity: source `3150a08` sends no feedback for the
+initial scene review, then carries up to three sanitized findings from the
+immediately preceding review into each next correction/final review. The
+server treats that field as untrusted evidence, verifies it against the
+current revision-bound scene/image, and distinguishes an initial from a
+follow-up correction pass. Astra review removed two remaining static
+"first review" instructions and corrected the touch-verifier test's
+implicit-any type in `56fcbfc`. The combined 57 focused tests, full
+TypeScript check, Prettier, diff check and optimized production build pass.
+This is a local protocol/context improvement, not live-provider visual
+acceptance; authoring review remains disabled in production pending a bounded
+quality run that converges on a recognizable result.
+
 Sep 24 flagship touch frame observer: source `b513820` adds a bounded
 2,048-frame browser telemetry ring for the read-only published-platform
 verifier. It correlates player and three moving-platform poses within each

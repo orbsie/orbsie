@@ -37,7 +37,10 @@ older rows below are a historical inventory, not a completion claim.
   check confirms that the rounded blue fruit and oversized green caps still
   miss the requested strawberry silhouette and only three of four fruit remain
   distinct. This newer run reports the defect honestly; the preceding run
-  falsely accepted a comparable tree. Production authoring-review remains off.
+  falsely accepted a comparable tree. Follow-up reviews now receive the prior
+  sanitized finding and current-image verification instructions; local tests
+  and production build pass, but that change has no new live quality result.
+  Production authoring-review remains off.
   Gateway credit is negative, so further paid Gateway inference has not run.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
