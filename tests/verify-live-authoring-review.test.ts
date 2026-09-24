@@ -156,6 +156,12 @@ describe("live authoring structural summary", () => {
             scale: [0.3, 0.3, 0.3],
             profile: [[8.1264, 4.5673]],
           },
+          {
+            shape: "segment",
+            scale: [1, 0.5, 0.5],
+            from: [0, 0, 0],
+            to: [0.8, 1.2, 0.4],
+          },
         ],
         label: "private entity label",
         prompt: "private prompt",
@@ -190,12 +196,14 @@ describe("live authoring structural summary", () => {
       customPartShapeCounts: {
         sphere: 1,
         lathe: 1,
+        segment: 1,
         absent: 1,
         unknown: 1,
       },
       customPartScaleFactorUpperBoundBinsByShape: {
         sphere: { fourPlus: 1 },
         lathe: { halfToOne: 1 },
+        segment: { twoToFour: 1 },
         absent: { belowHalf: 1 },
         unknown: { unknown: 1 },
       },

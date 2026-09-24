@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 focused-capture-plus-segment live OpenRouter acceptance: the isolated
+production build and disposable PostgreSQL migration passed; the malformed
+JSON origin preflight returned HTTP 400 with no inference. One authorized
+four-call `openai/gpt-6-luna` default-tier run at 4,096 output tokens/call,
+without retries, returned HTTP 200 for all calls. Create saved revision 9;
+reviews revised 9→13 and 13→17; final review bound to revision 17 returned
+`accept`. Every review had camera-view observations and an exact captured PNG.
+Reload recovered revision 17 without browser key storage. Sanitized evidence:
+`docs/evidence/authoring-review/openrouter-focused-segment-20260924/`.
+The harness passed, but Astra inspected all exact review PNGs, bounded
+findings and the final scene before removing private evidence and rejected
+visual quality: only three oversized blue berries surround a cyan canopy,
+with stems not visibly connected to its branches. The model's `accept` is a
+false positive. The structural report counted zero segment parts, so this
+run does not prove live adoption of the new primitive. One own-origin
+`net::ERR_ABORTED` request was observed, without page/console errors or
+blocked external origins. The isolated server, database, build worktree and
+temporary credentials were removed. Keep production authoring-review off.
+Next: improve actual subject/support construction and review calibration;
+do not repeat a paid run merely to chase an `accept` verdict.
+
 Sep 24 procedural support segments: `geometry.parts` accepts a bounded
 `segment` with local `from`/`to`, radius and color, so models can join visible
 stems, branches and other supports by endpoint instead of Euler rotation.

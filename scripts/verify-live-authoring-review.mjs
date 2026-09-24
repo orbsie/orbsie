@@ -36,7 +36,15 @@ const MAX_REVIEW_FINDINGS = 4;
 const MAX_REVIEW_ISSUES = 8;
 const MAX_REVIEW_ISSUE_SUMMARY_LENGTH = 300;
 const MAX_REQUEST_FAILURE_DETAILS = 16;
-const PART_SHAPES = ["box", "sphere", "cylinder", "cone", "torus", "lathe"];
+const PART_SHAPES = [
+  "box",
+  "sphere",
+  "cylinder",
+  "cone",
+  "torus",
+  "lathe",
+  "segment",
+];
 const PART_SHAPE_CATEGORIES = [...PART_SHAPES, "absent", "unknown"];
 const PART_SCALE_FACTOR_BINS = [
   "belowHalf",
