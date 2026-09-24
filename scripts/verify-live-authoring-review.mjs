@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Bounded live OpenRouter CREATE acceptance. The browser talks to the real
-// local app and server routes; route handling only observes, continues the
-// first two authorized calls, and aborts any later generation/review call.
+// local app and server routes; route handling only observes, continues up to
+// three authorized calls, and aborts any later generation/review call.
 import { createHash } from "node:crypto";
 import {
   chmod,
@@ -25,7 +25,7 @@ import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const MODEL = "openai/gpt-6-luna";
 const OUTPUT_CAP = 4096;
-const LIVE_BUDGET = 2;
+const LIVE_BUDGET = 3;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 const GENERATION_PATHS = new Set(["/api/generate", "/api/generate/review"]);
 const UUID =
@@ -117,6 +117,39 @@ function validId(value) {
 
 function safeRevision(value) {
   return Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+function reviewCallSucceeded(call) {
+  return Boolean(
+    call &&
+    !call.blocked &&
+    Number.isInteger(call.status) &&
+    call.status >= 200 &&
+    call.status < 300,
+  );
+}
+
+function safeReviewResponse(body) {
+  const review = body?.review;
+  const binding = body?.binding;
+  return {
+    verdict:
+      review?.verdict === "accept" || review?.verdict === "revise"
+        ? review.verdict
+        : null,
+    scope:
+      body?.scope === "visual+structural" || body?.scope === "structural-only"
+        ? body.scope
+        : null,
+    reviewProjectId: validId(review?.projectId),
+    reviewedRevision: safeRevision(review?.reviewedRevision),
+    bindingRevision: safeRevision(binding?.revision),
+    bindingDigest:
+      typeof binding?.digest === "string" &&
+      /^[a-f0-9]{64}$/.test(binding.digest)
+        ? binding.digest
+        : null,
+  };
 }
 
 function writeSafeReport(path, report) {
@@ -290,7 +323,9 @@ async function screenshotEvidence(page, label, privateDirectory) {
     privatePngWritten = true;
   } else if (
     privateDirectory &&
-    (label === "review-complete" || label === "revise-bounded-incomplete")
+    (label === "review-complete" ||
+      label === "revise-bounded-incomplete" ||
+      label === "final-review-bounded-incomplete")
   ) {
     // Save only the rendered canvas, excluding prompts and chat responses.
     privatePng = await page.locator("canvas").screenshot();
@@ -324,12 +359,19 @@ async function installActivityHistory(page) {
       ["Scene verified. Changes are applied.", "completed"],
       ["Applying a targeted correction to the scene…", "applyingCorrection"],
       ["Checking the corrected scene…", "checkingCorrection"],
+      ["Scene saved, but review could not finish.", "reviewIncomplete"],
+      [
+        "Scene correction applied, but final review found a remaining issue.",
+        "reviewPartial",
+      ],
     ]);
     const state = {
       reviewStarted: false,
       completed: false,
       applyingCorrection: false,
       checkingCorrection: false,
+      reviewIncomplete: false,
+      reviewPartial: false,
       otherActivityPresent: false,
     };
     window.__orbsieLiveReviewActivity = state;
@@ -361,6 +403,10 @@ async function readActivityHistory(page) {
     checkingCorrection: Boolean(
       window.__orbsieLiveReviewActivity?.checkingCorrection,
     ),
+    reviewIncomplete: Boolean(
+      window.__orbsieLiveReviewActivity?.reviewIncomplete,
+    ),
+    reviewPartial: Boolean(window.__orbsieLiveReviewActivity?.reviewPartial),
     otherActivityPresent: Boolean(
       window.__orbsieLiveReviewActivity?.otherActivityPresent,
     ),
@@ -398,9 +444,11 @@ async function main() {
     blockedCalls: 0,
     phaseOrder: [],
     calls: [],
+    review: null,
+    finalReview: null,
     evidence: [],
     storage: {},
-    requestIds: { initial: null, review: null },
+    requestIds: { initial: null, review: null, finalReview: null },
     privateEvidence: {
       enabled: Boolean(privateEvidenceDirectory),
       directoryMode: privateEvidenceDirectory ? "0700" : null,
@@ -418,6 +466,7 @@ async function main() {
   let clientRunId = null;
   let authoringRunId = null;
   let reviewResponse = null;
+  let finalReviewResponse = null;
   let generationResponseStatus = null;
   const requestRecords = new WeakMap();
   const inFlight = new Set();
@@ -488,7 +537,7 @@ async function main() {
         status: null,
         requestId: null,
         clientRunId: validId(request.headers()["x-orbsie-client-run-id"]),
-        authoringRunId: null,
+        authoringRunId: validId(payload?.runId),
         requestedAuthoringRunId: validId(payload?.runId),
         projectId: validId(payload?.project?.id),
         projectRevision: safeRevision(payload?.project?.revision),
@@ -549,11 +598,47 @@ async function main() {
         call.modelMatched &&
         call.clientRunId === clientRunId &&
         call.projectId === report.calls[0]?.projectId &&
-        call.requestedAuthoringRunId === authoringRunId;
+        call.requestedAuthoringRunId === authoringRunId &&
+        call.reviewScope === "visual+structural" &&
+        call.reviewImageProjectId === call.projectId &&
+        call.reviewImageRevision === call.projectRevision &&
+        call.structuralObservationProjectId === call.projectId &&
+        call.structuralObservationRevision === call.projectRevision;
+      const firstReviewCall = report.calls.find(
+        (existing) => existing.phase === "review",
+      );
+      // The third slot is only for final review of the revision bound by a
+      // successful first review that requested corrections.
+      if (call.ordinal === 3 && phase === "final-review") {
+        const responseDeadline = Date.now() + 5000;
+        while (!reviewResponse && Date.now() < responseDeadline)
+          await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      const isExpectedThird =
+        call.ordinal === 3 &&
+        phase === "final-review" &&
+        reviewCallSucceeded(firstReviewCall) &&
+        reviewResponse?.verdict === "revise" &&
+        call.providerMatched &&
+        call.modelMatched &&
+        call.clientRunId === clientRunId &&
+        call.projectId === report.calls[0]?.projectId &&
+        call.requestedAuthoringRunId === authoringRunId &&
+        call.authoringRunId === authoringRunId &&
+        call.projectRevision === reviewResponse.bindingRevision &&
+        call.reviewScope === "visual+structural" &&
+        call.reviewImageProjectId === call.projectId &&
+        call.reviewImageRevision === call.projectRevision &&
+        call.structuralObservationProjectId === call.projectId &&
+        call.structuralObservationRevision === call.projectRevision;
       // Do not keep request payloads. `payload` is discarded after this hook.
       if (
         !isBudgeted ||
-        (call.ordinal === 1 ? !isExpectedFirst : !isExpectedSecond)
+        (call.ordinal === 1
+          ? !isExpectedFirst
+          : call.ordinal === 2
+            ? !isExpectedSecond
+            : !isExpectedThird)
       ) {
         call.blocked = true;
         report.blockedCalls += 1;
@@ -620,39 +705,23 @@ async function main() {
           authoringRunId = validId(headers["x-orbsie-authoring-run-id"]);
           call.authoringRunId = authoringRunId;
           report.phaseOrder.push(`initial-generation-response-${call.status}`);
-        } else if (call.phase === "review") {
+        } else if (call.phase === "review" || call.phase === "final-review") {
           call.requestId = validId(headers["x-orbsie-request-id"]);
-          report.requestIds.review = call.requestId;
-          report.phaseOrder.push(`review-response-${call.status}`);
+          if (call.phase === "review")
+            report.requestIds.review = call.requestId;
+          else report.requestIds.finalReview = call.requestId;
+          report.phaseOrder.push(`${call.phase}-response-${call.status}`);
           if (call.status >= 200 && call.status < 300) {
             try {
-              const body = await response.json();
-              const review = body?.review;
-              const binding = body?.binding;
-              reviewResponse = {
-                verdict:
-                  review?.verdict === "accept" || review?.verdict === "revise"
-                    ? review.verdict
-                    : null,
-                scope:
-                  body?.scope === "visual+structural" ||
-                  body?.scope === "structural-only"
-                    ? body.scope
-                    : null,
-                reviewProjectId: validId(review?.projectId),
-                reviewedRevision: safeRevision(review?.reviewedRevision),
-                bindingRevision: safeRevision(binding?.revision),
-                bindingDigest:
-                  typeof binding?.digest === "string" &&
-                  /^[a-f0-9]{64}$/.test(binding.digest)
-                    ? binding.digest
-                    : null,
-              };
-              call.verdict = reviewResponse.verdict;
-              call.responseBindingRevision = reviewResponse.bindingRevision;
-              call.responseBindingDigest = reviewResponse.bindingDigest;
+              const parsed = safeReviewResponse(await response.json());
+              if (call.phase === "review") reviewResponse = parsed;
+              else finalReviewResponse = parsed;
+              call.verdict = parsed.verdict;
+              call.responseBindingRevision = parsed.bindingRevision;
+              call.responseBindingDigest = parsed.bindingDigest;
             } catch {
-              reviewResponse = null;
+              if (call.phase === "review") reviewResponse = null;
+              else finalReviewResponse = null;
             }
           }
         }
@@ -924,18 +993,213 @@ async function main() {
     };
     report.phaseOrder.push(`review-verdict-${reviewResponse.verdict}`);
 
-    if (reviewResponse.verdict === "accept") {
-      if (reviewResponse.bindingRevision !== reviewResponse.reviewedRevision)
+    let acceptedCall = reviewCall;
+    let acceptedResponse = reviewResponse;
+    let acceptedPhase = "review";
+    let expectedLiveCalls = 2;
+    if (reviewResponse.verdict === "revise") {
+      stage = "final-review";
+      await expect
+        .poll(
+          () => report.calls.some((call) => call.phase === "final-review"),
+          { timeout: 180000 },
+        )
+        .toBe(true);
+      const finalReviewCall = report.calls.find(
+        (call) => call.phase === "final-review",
+      );
+      if (!finalReviewCall)
+        throw new AcceptanceError(stage, "final-review-request-not-observed");
+      if (finalReviewCall.blocked)
+        throw new AcceptanceError(
+          stage,
+          "final-review-request-blocked-by-live-safety-guard",
+        );
+      const finalReviewDeadline = Date.now() + 180000;
+      while (
+        finalReviewCall.status === null &&
+        Date.now() < finalReviewDeadline
+      )
+        await page.waitForTimeout(200);
+      await Promise.allSettled([...inFlight]);
+      if (finalReviewCall.status === null)
+        throw new AcceptanceError(stage, "final-review-response-timeout");
+      if (finalReviewCall.status < 200 || finalReviewCall.status >= 300)
+        throw new AcceptanceError(
+          stage,
+          "final-review-http-failure",
+          finalReviewCall.status,
+        );
+      if (!finalReviewCall.requestId)
+        throw new AcceptanceError(
+          stage,
+          "final-review-request-id-invalid-or-missing",
+        );
+      if (
+        finalReviewCall.requestId === initialCall.requestId ||
+        finalReviewCall.requestId === reviewCall.requestId
+      )
+        throw new AcceptanceError(stage, "request-ids-not-distinct");
+      if (
+        finalReviewCall.clientRunId !== clientRunId ||
+        finalReviewCall.authoringRunId !== authoringRunId ||
+        finalReviewCall.requestedAuthoringRunId !== authoringRunId ||
+        finalReviewCall.projectId !== generated.projectId ||
+        finalReviewCall.projectRevision !== reviewResponse.bindingRevision ||
+        finalReviewCall.projectRevision <= reviewCall.projectRevision
+      )
+        throw new AcceptanceError(stage, "final-review-run-binding-mismatch");
+      if (
+        !finalReviewResponse?.verdict ||
+        !finalReviewResponse.scope ||
+        finalReviewResponse.bindingRevision === null ||
+        !finalReviewResponse.bindingDigest
+      )
+        throw new AcceptanceError(
+          stage,
+          "final-review-response-binding-invalid",
+        );
+      if (
+        finalReviewCall.projectId !== generated.projectId ||
+        finalReviewResponse.reviewProjectId !== generated.projectId ||
+        finalReviewResponse.reviewedRevision !==
+          finalReviewCall.projectRevision ||
+        finalReviewResponse.bindingRevision !== finalReviewCall.projectRevision
+      )
+        throw new AcceptanceError(
+          stage,
+          "final-review-project-binding-mismatch",
+        );
+      if (
+        finalReviewCall.reviewScope !== "visual+structural" ||
+        finalReviewCall.reviewImageProjectId !== finalReviewCall.projectId ||
+        finalReviewCall.reviewImageRevision !==
+          finalReviewCall.projectRevision ||
+        finalReviewCall.structuralObservationProjectId !==
+          finalReviewCall.projectId ||
+        finalReviewCall.structuralObservationRevision !==
+          finalReviewCall.projectRevision ||
+        finalReviewResponse.scope !== "visual+structural"
+      )
+        throw new AcceptanceError(
+          stage,
+          "final-review-evidence-binding-mismatch",
+        );
+
+      report.finalReview = {
+        phase: "final-review",
+        scope: finalReviewResponse.scope,
+        requestScope: finalReviewCall.reviewScope,
+        imagePresent: finalReviewCall.reviewScope === "visual+structural",
+        projectId: finalReviewCall.projectId,
+        reviewedRevision: finalReviewResponse.reviewedRevision,
+        reviewImageRevision: finalReviewCall.reviewImageRevision,
+        structuralObservationRevision:
+          finalReviewCall.structuralObservationRevision,
+        bindingRevision: finalReviewResponse.bindingRevision,
+        bindingDigest: finalReviewResponse.bindingDigest,
+        verdict: finalReviewResponse.verdict,
+      };
+      report.phaseOrder.push(
+        `final-review-verdict-${finalReviewResponse.verdict}`,
+      );
+
+      if (finalReviewResponse.verdict === "revise") {
+        await expect(page.locator(".authoring-activity-latest p")).toHaveText(
+          "Scene correction applied, but final review found a remaining issue.",
+          { timeout: 30000 },
+        );
+        report.phaseOrder.push("final-review-revise-bounded-incomplete");
+        const activity = await readActivityHistory(page);
+        report.browserActivity.authoring = activity;
+        const reviseEvidence = await screenshotEvidence(
+          page,
+          "final-review-bounded-incomplete",
+          privateEvidenceDirectory,
+        );
+        report.evidence.push(reviseEvidence);
+        if (reviseEvidence.privatePngWritten)
+          report.privateEvidence.screenshotsWritten += 1;
+        const afterFinalReview = await waitForSavedRevision(
+          page,
+          finalReviewCall.projectRevision,
+          30000,
+        );
+        if (
+          !afterFinalReview ||
+          afterFinalReview.projectId !== generated.projectId ||
+          afterFinalReview.revision !== finalReviewCall.projectRevision
+        )
+          throw new AcceptanceError(stage, "final-review-scene-not-saved");
+        report.storage.afterFinalReview = {
+          projectId: validId(afterFinalReview.projectId),
+          revision: safeRevision(afterFinalReview.revision),
+        };
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
+        const recovered = await waitForSavedRevision(
+          page,
+          afterFinalReview.revision,
+          30000,
+        );
+        if (
+          !recovered ||
+          recovered.projectId !== afterFinalReview.projectId ||
+          recovered.revision !== afterFinalReview.revision
+        )
+          throw new AcceptanceError(
+            "reload-recovery",
+            "final-review-scene-changed-after-reload",
+          );
+        const reloadStorage = await storageSnapshot(page, keyDigest);
+        if (reloadStorage.sensitive)
+          throw new AcceptanceError(
+            "reload-recovery",
+            "provider-key-found-in-browser-storage",
+          );
+        report.storage.afterReload = {
+          projectId: validId(recovered.projectId),
+          revision: safeRevision(recovered.revision),
+          keyPersisted: false,
+          recovered: true,
+        };
+        report.outcome = "bounded-incomplete";
+      } else {
+        acceptedCall = finalReviewCall;
+        acceptedResponse = finalReviewResponse;
+        acceptedPhase = "final-review";
+        expectedLiveCalls = 3;
+      }
+    }
+
+    if (report.outcome !== "bounded-incomplete") {
+      if (
+        acceptedResponse.bindingRevision !== acceptedResponse.reviewedRevision
+      )
         throw new AcceptanceError(
           stage,
           "accepted-review-binding-revision-mismatch",
         );
+      if (acceptedPhase === "final-review") {
+        if (
+          acceptedResponse.bindingRevision !== reviewResponse.bindingRevision ||
+          acceptedCall.projectRevision !== reviewResponse.bindingRevision
+        )
+          throw new AcceptanceError(
+            "final-review",
+            "accepted-final-review-corrected-revision-mismatch",
+          );
+      }
       const completed = await waitForSavedRevision(
         page,
-        reviewResponse.bindingRevision,
+        acceptedResponse.bindingRevision,
         30000,
       );
-      if (!completed || completed.projectId !== generated.projectId)
+      if (
+        !completed ||
+        completed.projectId !== generated.projectId ||
+        completed.revision !== acceptedResponse.bindingRevision
+      )
         throw new AcceptanceError(stage, "accepted-scene-not-saved");
       await expect(page.locator(".authoring-activity-latest p")).toHaveText(
         "Scene verified. Changes are applied.",
@@ -944,9 +1208,17 @@ async function main() {
       report.storage.afterReview = {
         projectId: validId(completed.projectId),
         revision: safeRevision(completed.revision),
+        phase: acceptedPhase,
       };
+      if (acceptedPhase === "final-review")
+        report.storage.afterFinalReview = {
+          projectId: validId(completed.projectId),
+          revision: safeRevision(completed.revision),
+        };
       const activity = await readActivityHistory(page);
       report.browserActivity.authoring = activity;
+      if (!activity.completed)
+        throw new AcceptanceError(stage, "browser-completion-activity-missing");
       const reviewedEvidence = await screenshotEvidence(
         page,
         "review-complete",
@@ -983,67 +1255,15 @@ async function main() {
         keyPersisted: false,
         recovered: true,
       };
-      if (report.actualLiveCalls !== LIVE_BUDGET || report.blockedCalls !== 0)
-        throw new AcceptanceError("acceptance", "unexpected-live-call-count");
-      report.outcome = "passed";
-    } else {
-      // A revise result needs a final review to claim acceptance. The route
-      // guard aborts that third request before it reaches the local server.
-      await expect
-        .poll(() => report.blockedCalls, { timeout: 30000 })
-        .toBeGreaterThan(0);
-      const blockedFinalReview = report.calls.some(
-        (call) =>
-          call.ordinal === 3 && call.phase === "final-review" && call.blocked,
-      );
-      if (!blockedFinalReview)
-        throw new AcceptanceError(
-          stage,
-          "revise-did-not-reach-blocked-final-review",
-        );
       await page.waitForTimeout(500);
-      report.phaseOrder.push("revise-journey-bounded-incomplete");
-      const activity = await readActivityHistory(page);
-      report.browserActivity.authoring = activity;
-      const reviseEvidence = await screenshotEvidence(
-        page,
-        "revise-bounded-incomplete",
-        privateEvidenceDirectory,
-      );
-      report.evidence.push(reviseEvidence);
-      if (reviseEvidence.privatePngWritten)
-        report.privateEvidence.screenshotsWritten += 1;
-      const afterBlockedReview = await readProjectSummary(page);
-      report.storage.afterBlockedFinalReview = afterBlockedReview
-        ? {
-            projectId: validId(afterBlockedReview.projectId),
-            revision: safeRevision(afterBlockedReview.revision),
-          }
-        : null;
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
-      const recovered = await readProjectSummary(page);
-      const recoverySame = Boolean(
-        afterBlockedReview &&
-        recovered &&
-        recovered.projectId === afterBlockedReview.projectId &&
-        recovered.revision === afterBlockedReview.revision,
-      );
-      const reloadStorage = await storageSnapshot(page, keyDigest);
-      if (reloadStorage.sensitive)
-        throw new AcceptanceError(
-          "reload-recovery",
-          "provider-key-found-in-browser-storage",
-        );
-      report.storage.afterReload = recovered
-        ? {
-            projectId: validId(recovered.projectId),
-            revision: safeRevision(recovered.revision),
-            keyPersisted: false,
-            recovered: recoverySame,
-          }
-        : { recovered: false, keyPersisted: false };
-      report.outcome = "bounded-incomplete";
+      if (
+        report.actualLiveCalls !== expectedLiveCalls ||
+        report.blockedCalls !== 0
+      )
+        throw new AcceptanceError("acceptance", "unexpected-live-call-count");
+      if (report.blockedExternalRequests !== 0)
+        throw new AcceptanceError("acceptance", "external-request-was-blocked");
+      report.outcome = "passed";
     }
 
     if (report.blockedCalls > 0 && report.outcome === "passed")
