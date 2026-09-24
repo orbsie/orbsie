@@ -1,0 +1,493 @@
+{
+  "mode": "fixture-generation-retry-feedback-real-editor",
+  "fixture": {
+    "transport": "window.fetch interception with /api/generate ReadableStreams",
+    "liveInference": false,
+    "serverFundedCalls": false,
+    "databaseMutations": false,
+    "viewports": {
+      "desktop": {
+        "width": 1280,
+        "height": 900
+      },
+      "android": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    "cases": [
+      "initial clean EOF after provisional scene operations",
+      "edit body read rejection after a provisional operation",
+      "invalid final commit after a provisional operation",
+      "split UTF-8 code point in an explicit retry",
+      "provider-error NDJSON terminal after a provisional operation",
+      "output-limit NDJSON terminal after a provisional operation",
+      "mid-record EOF after a provisional operation",
+      "late old command and commit after Stop and a newer saved edit"
+    ],
+    "structuredFailure": {
+      "code": "INVALID_SCENE_UPDATE",
+      "finishReason": "stop",
+      "issueCode": "invalid_type",
+      "issuePath": [
+        "geometry",
+        "job",
+        "recipe",
+        "nodes",
+        2
+      ],
+      "reason": "unreachable_recipe_node"
+    },
+    "treeId": "tree-0",
+    "unrelatedId": "rock-0",
+    "pendingId": "pending-0"
+  },
+  "requests": [
+    {
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 0,
+      "entityIds": []
+    },
+    {
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+        "code": "INVALID_SCENE_UPDATE",
+        "finishReason": "stop",
+        "issues": [
+          {
+            "code": "invalid_type",
+            "path": [
+              "geometry",
+              "job",
+              "recipe",
+              "nodes",
+              2
+            ],
+            "reason": "unreachable_recipe_node"
+          }
+        ]
+      }
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 7,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+        "code": "INVALID_SCENE_UPDATE",
+        "finishReason": "stop",
+        "issues": [
+          {
+            "code": "invalid_type",
+            "path": [
+              "geometry",
+              "job",
+              "recipe",
+              "nodes",
+              2
+            ],
+            "reason": "unreachable_recipe_node"
+          }
+        ]
+      }
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 9,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 9,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+        "code": "PROVIDER_STREAM_ERROR",
+        "finishReason": "error",
+        "issues": []
+      }
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 11,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 11,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ],
+      "generationFeedback": {
+        "version": 1,
+        "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+        "code": "TRUNCATED_SCENE_STREAM",
+        "finishReason": "length",
+        "issues": []
+      }
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 13,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 13,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 15,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    {
+      "selected": "tree-0",
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "projectRevision": 15,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    }
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    },
+    {
+      "method": "GET",
+      "path": "/api/trial"
+    }
+  ],
+  "blocked": [],
+  "unexpectedApi": [],
+  "pageErrors": [],
+  "checks": {
+    "initialFailureRestored": {
+      "terminal": "clean-eof-without-commit",
+      "provisionalReservationDiscarded": true,
+      "noAutomaticRetry": true
+    },
+    "created": {
+      "projectId": "c58f49c6-8828-40eb-b92c-4f04cffb9d3c",
+      "revision": 5,
+      "entityIds": [
+        "tree-0",
+        "rock-0"
+      ]
+    },
+    "unselectedRetryPreserved": {
+      "failedRequestSelected": null,
+      "retryRequestSelected": null,
+      "promptRestoredExactly": true,
+      "unrelatedPreserved": true,
+      "projectScopedFeedbackForwarded": true
+    },
+    "dismissal": {
+      "requestCountAfterDismiss": 5,
+      "ordinaryPromptDidNotReuseFeedback": true
+    },
+    "lastWorkingPreservedLatestIncrement": {
+      "treeColor": "#8ac6dd",
+      "unrelatedPreserved": true,
+      "requestCountAfterRestore": 6
+    },
+    "selectedRetryPreserved": {
+      "failedRequestSelected": "tree-0",
+      "retryRequestSelected": "tree-0",
+      "changedSelectionBeforeRetry": "rock-0",
+      "noAutomaticExtraRequest": true,
+      "projectScopedFeedbackForwarded": true
+    },
+    "providerErrorRecovery": {
+      "terminalClass": {
+        "reason": "provider-error",
+        "failureCode": "provider-rejected",
+        "finishReason": "error"
+      },
+      "failureCopy": "Your AI provider could not complete this request. Check its connection or try again.",
+      "savedBaselineUnchanged": true,
+      "tryAgainAvailable": true,
+      "useLastWorkingAvailable": true,
+      "noAutomaticRetry": true,
+      "explicitRetryRequest": 10,
+      "promptRestoredInMemory": true,
+      "stableEntityIds": true,
+      "unrelatedEntityPreserved": true
+    },
+    "outputLimitRecovery": {
+      "terminalClass": {
+        "reason": "output-limit",
+        "failureCode": "output-limit",
+        "finishReason": "length"
+      },
+      "failureCopy": "The model reached its output limit before finishing. Your last working scene is safe.",
+      "savedBaselineUnchanged": true,
+      "tryAgainAvailable": true,
+      "useLastWorkingAvailable": true,
+      "noAutomaticRetry": true,
+      "explicitRetryRequest": 12,
+      "promptRestoredInMemory": true,
+      "stableEntityIds": true,
+      "unrelatedEntityPreserved": true,
+      "mobileViewport": {
+        "width": 390,
+        "height": 844,
+        "horizontalOverflow": false,
+        "recoveryButtonsVisibleAndReachable": true,
+        "screenshot": "android-output-limit-recovery.png"
+      }
+    },
+    "midRecordEOFRecovery": {
+      "terminalClass": {
+        "reason": "parser-failure",
+        "failureCode": "parser"
+      },
+      "failureCopy": "The model returned a scene change that could not be applied. Your last working scene is safe.",
+      "savedBaselineUnchanged": true,
+      "tryAgainAvailable": true,
+      "useLastWorkingAvailable": true,
+      "noAutomaticRetry": true,
+      "explicitRetryRequest": 14,
+      "promptRestoredInMemory": true,
+      "stableEntityIds": true,
+      "unrelatedEntityPreserved": true
+    },
+    "lateAbandonedStream": {
+      "stoppedTerminal": {
+        "reason": "client-abort",
+        "failureCode": "cancelled",
+        "abortSource": "client"
+      },
+      "newerCommittedRevision": 17,
+      "savedProjectUnchangedAfterLateBytes": true,
+      "undoBaselineUnchangedAfterLateBytes": true,
+      "selectedIdPreserved": "tree-0",
+      "unrelatedEntityPreserved": true,
+      "noAutomaticExtraGenerationRequest": true,
+      "noProviderCalls": true
+    },
+    "interceptedGenerationRequests": {
+      "fixtureRequests": 16,
+      "liveInferenceCalls": 0
+    }
+  },
+  "status": "passed"
+}

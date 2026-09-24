@@ -128,6 +128,7 @@ const report = {
       "provider-error NDJSON terminal after a provisional operation",
       "output-limit NDJSON terminal after a provisional operation",
       "mid-record EOF after a provisional operation",
+      "late old command and commit after Stop and a newer saved edit",
     ],
     structuredFailure: {
       code: safeGenerationFailure.code,
@@ -191,6 +192,53 @@ async function latestGenerationTerminal(page) {
     } catch {
       return undefined;
     }
+  });
+}
+async function generationDiagnostics(page) {
+  return page.evaluate(() => {
+    try {
+      const saved = localStorage.getItem("orbsie-generation-diagnostics-v1");
+      const entries = JSON.parse(saved ?? "{}").entries;
+      return Array.isArray(entries)
+        ? entries.filter((entry) => entry.kind === "generation")
+        : [];
+    } catch {
+      return [];
+    }
+  });
+}
+async function savedProjectAndHistory(page) {
+  return page.evaluate(async () => {
+    const database = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("keyval-store");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    const read = (key) =>
+      new Promise((resolve, reject) => {
+        const transaction = database.transaction("keyval", "readonly");
+        const request = transaction.objectStore("keyval").get(key);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+    const [library, histories, draft] = await Promise.all([
+      read("orbsie-library"),
+      read("orbsie-history"),
+      read("orbsie-draft"),
+    ]);
+    database.close();
+    const projectId = draft?.project?.id;
+    return {
+      project: library?.[projectId] ?? draft?.project,
+      history: histories?.[projectId],
+      draft: draft
+        ? {
+            project: draft.project,
+            history: draft.history,
+            future: draft.future,
+          }
+        : undefined,
+    };
   });
 }
 async function selectObject(page, label) {
@@ -470,6 +518,28 @@ try {
             { headers: { "Content-Type": "application/x-ndjson" } },
           );
         } else if (number === 14) commands = fixture.successMidRecordRecovery;
+        else if (number === 15) {
+          const encoder = new TextEncoder();
+          const first = encoder.encode(
+            JSON.stringify({
+              type: "set_material",
+              id: fixture.treeId,
+              color: "#b450ce",
+            }) + "\n",
+          );
+          return new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(first);
+                window.__orbsieLateStreamController = controller;
+              },
+              cancel() {
+                window.__orbsieLateStreamCancelled = true;
+              },
+            }),
+            { headers: { "Content-Type": "application/x-ndjson" } },
+          );
+        } else if (number === 16) commands = fixture.successLateStreamRecovery;
         else
           throw new Error(
             "Unexpected generation request in the deterministic fixture.",
@@ -524,6 +594,10 @@ try {
       successMidRecordRecovery: successCommands(
         "#e08b55",
         "The interrupted-stream retry succeeded.",
+      ),
+      successLateStreamRecovery: successCommands(
+        "#449fc1",
+        "The newer edit succeeded after stopping the earlier edit.",
       ),
     },
   );
@@ -845,6 +919,123 @@ try {
     },
     successColor: "#e08b55",
   });
+  await selectObject(page, "Friendly tree");
+  const beforeLateStream = await getProject(page);
+  const beforeLateUnrelated = structuredClone(
+    beforeLateStream.entities.find((entity) => entity.id === unrelatedId),
+  );
+  await submitEdit(page, "Start an edit that I will stop");
+  await expect.poll(() => report.requests.length).toBe(15);
+  assert.equal(report.requests[14].selected, treeId);
+  await expect
+    .poll(async () => {
+      const entries = await generationDiagnostics(page);
+      return entries.at(-1)?.commandCounts?.set_material ?? 0;
+    })
+    .toBe(1);
+  const stoppedRun = (await generationDiagnostics(page)).at(-1);
+  assert.ok(stoppedRun?.runId);
+  assert.equal(stoppedRun.terminal, undefined);
+  await expect(
+    page.getByRole("button", { name: "Stop", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Stop", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Change this", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".toast").last()).toContainText(
+    "Stopped. Finished objects are safe.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Try again", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Use last working", exact: true }),
+  ).toHaveCount(0);
+  const stoppedDiagnostics = await generationDiagnostics(page);
+  const stoppedEntry = stoppedDiagnostics.find(
+    (entry) => entry.runId === stoppedRun.runId,
+  );
+  assert.deepEqual(stoppedEntry?.terminal, {
+    reason: "client-abort",
+    failureCode: "cancelled",
+    abortSource: "client",
+  });
+
+  await submitEdit(page, "Make the selected tree blue-green");
+  const newerProject = await waitForProject(
+    page,
+    (project) =>
+      project.entities.find((entity) => entity.id === treeId)?.color ===
+      "#449fc1",
+  );
+  assert.equal(report.requests.length, 16);
+  assert.equal(report.requests[15].selected, treeId);
+  assert.ok(newerProject.revision > beforeLateStream.revision);
+  await expect(page.locator(".toast.error")).toHaveCount(0);
+  await expect(page.locator(".saved")).toContainText("Saved on this device");
+  await expect(page.locator(".selection-chip")).toContainText("Friendly tree");
+  const beforeLateBytes = await getProject(page);
+  const beforeLatePersistence = await savedProjectAndHistory(page);
+  assert.equal(beforeLateBytes.revision, newerProject.revision);
+  assert.deepEqual(
+    beforeLateBytes.entities.find((entity) => entity.id === unrelatedId),
+    beforeLateUnrelated,
+  );
+  assert.deepEqual(
+    beforeLatePersistence.history?.history?.at(-1),
+    beforeLateStream,
+  );
+  assert.deepEqual(beforeLatePersistence.history?.future, []);
+
+  await page.evaluate(() => {
+    const controller = window.__orbsieLateStreamController;
+    if (!controller) throw new Error("The stopped stream was not held open.");
+    const encoder = new TextEncoder();
+    controller.enqueue(
+      encoder.encode(
+        JSON.stringify({
+          type: "set_material",
+          id: "tree-0",
+          color: "#f04a69",
+        }) +
+          "\n" +
+          JSON.stringify({
+            type: "commit_revision",
+            message: "Late old commit",
+          }) +
+          "\n",
+      ),
+    );
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.__orbsieLateStreamCancelled === true),
+    )
+    .toBe(true);
+  await page.waitForTimeout(350);
+  assert.equal(report.requests.length, 16);
+  assert.deepEqual(await getProject(page), beforeLateBytes);
+  assert.deepEqual(await savedProjectAndHistory(page), beforeLatePersistence);
+  await expect(page.locator(".selection-chip")).toContainText("Friendly tree");
+  const afterLateDiagnostics = await generationDiagnostics(page);
+  const lateRunAfterBytes = afterLateDiagnostics.find(
+    (entry) => entry.runId === stoppedRun.runId,
+  );
+  assert.deepEqual(lateRunAfterBytes, stoppedEntry);
+  assert.equal(afterLateDiagnostics.at(-1)?.terminal?.reason, "completed");
+  assert.deepEqual(report.unexpectedApi, []);
+  assert.deepEqual(report.blocked, []);
+  report.checks.lateAbandonedStream = {
+    stoppedTerminal: stoppedEntry.terminal,
+    newerCommittedRevision: beforeLateBytes.revision,
+    savedProjectUnchangedAfterLateBytes: true,
+    undoBaselineUnchangedAfterLateBytes: true,
+    selectedIdPreserved: treeId,
+    unrelatedEntityPreserved: true,
+    noAutomaticExtraGenerationRequest: true,
+    noProviderCalls: true,
+  };
   report.checks.interceptedGenerationRequests = {
     fixtureRequests: report.requests.length,
     liveInferenceCalls: 0,

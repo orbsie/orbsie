@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 late-stream fence rendered acceptance: the real-editor intercepted
+stream fixture now holds a provisional old edit open, uses the visible Stop
+control, commits a newer explicit edit, then releases the old material change
+and `commit_revision`. The newer saved project remained revision 17 with the
+same selected tree, unrelated entity, IndexedDB draft/library and undo history;
+the stopped run retained `client-abort`, the newer run retained `completed`,
+and no automatic third request occurred. The existing active-run fence passed
+without a product-code change. The combined fixture passed 16 intercepted
+requests with zero model calls, blocked origins, unexpected API calls or page
+errors. Targeted journal tests (10), Node syntax, Prettier and diff checks
+passed. Sanitized evidence: `docs/evidence/stream-resilience-late-run-20260924/`.
+This is a local rendered race check, not live-provider or cloud-journal
+interruption acceptance.
+
 Sep 24 post-segment Android current-artifact acceptance: the Android 15
 `droidlm_api35_midrange` emulator Chrome replayed an existing signed-out
 published ZIP with the four current checked-in player files replacing the

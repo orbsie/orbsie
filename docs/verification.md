@@ -34,6 +34,10 @@ The real-editor stream-recovery fixture passed 14 intercepted requests covering
 clean EOF, malformed/partial output, body-read rejection, provider error and
 output limit, with explicit retry and preserved saved scenes. It made zero live
 calls; see [recovery evidence](evidence/stream-resilience-recovery-cases-20260924/).
+An extension to that fixture passed 16 intercepted requests, including Stop,
+a newer saved edit, and late old command/commit bytes; the saved scene and undo
+baseline stayed unchanged. See
+[late-stream evidence](evidence/stream-resilience-late-run-20260924/).
 Live cross-provider interruption and recovery acceptance remains open.
 
 ## Historical verification — 2026-09-08
