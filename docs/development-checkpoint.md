@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 24 second owner-visible ChatGPT device challenge: after the owner said the
+code and URL could be shown here, a new official device code and URL were
+posted in chat. Read-only Orbsie status remained pending/disconnected until
+its ten-minute expiry, then idle/disconnected. The challenge was cancelled
+(HTTP 200) and its mode-0600 local test-session file removed. No ChatGPT
+inference ran. Wait for a fresh owner `ready` message before issuing another
+time-limited challenge. Computer use again reported no available browser
+surface.
+
 Sep 24 review-start response recovery: source `7343d1f` makes an explicit
 retry of a lost `/review/start` response reuse the previously issued,
 untouched review-only child when its identity, provider/model/effort, request
