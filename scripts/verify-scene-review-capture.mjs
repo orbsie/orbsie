@@ -269,6 +269,15 @@ async function runRenderer(renderer) {
       }, renderer);
     const initial = await captureReview();
     assert.equal(initial.renderer, renderer);
+    const assertCameraView = (capture) => {
+      const view = capture.cameraView;
+      assert.ok(view, `Missing ${renderer} camera evidence.`);
+      assert.ok(view.position.every(Number.isFinite));
+      assert.ok(view.forward.every(Number.isFinite));
+      assert.ok(Math.abs(Math.hypot(...view.forward) - 1) < 0.01);
+      assert.ok(view.position[2] > 0 && view.forward[2] < 0);
+    };
+    assertCameraView(initial);
     assert.ok(initial.width > 0 && initial.height > 0);
     assert.ok(Math.max(initial.width, initial.height) <= 768);
     assert.ok(initial.byteLength > 0 && initial.byteLength <= 128 * 1024);
@@ -356,6 +365,7 @@ async function runRenderer(renderer) {
       .toBeGreaterThanOrEqual(duringReplacement.revision);
     const replacement = await captureReview();
     assert.equal(replacement.renderer, renderer);
+    assertCameraView(replacement);
     assert.ok(
       replacement.byteLength > 0 && replacement.byteLength <= 128 * 1024,
     );
@@ -388,6 +398,7 @@ async function runRenderer(renderer) {
       initialRevision: initial.revision,
       replacementRevision: replacement.revision,
       renderer: replacement.renderer,
+      cameraViewPresent: true,
       initial: {
         dimensions: { width: initial.width, height: initial.height },
         byteLength: initial.byteLength,

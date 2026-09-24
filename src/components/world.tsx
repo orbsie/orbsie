@@ -38,6 +38,7 @@ import {
   notifySceneReviewCaptureChanged,
   captureSceneReview,
   captureSceneCanvas,
+  sceneReviewCameraViewFromMatrixWorld,
   registerSceneReviewCaptureSource,
   type SceneReviewSourceState,
 } from "@/lib/scene-review-capture";
@@ -2220,6 +2221,11 @@ function Scene({
         gl.render(scene, camera);
         return captureSceneCanvas(gl.domElement);
       },
+      getCameraView: () =>
+        sceneReviewCameraViewFromMatrixWorld(
+          camera.matrixWorld.elements,
+          renderOrigin.current,
+        ),
     } as const;
     const unregister = registerSceneReviewCaptureSource(source);
     const fixtureProbe = (

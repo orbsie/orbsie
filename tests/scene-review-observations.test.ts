@@ -17,6 +17,10 @@ describe("review structural observations", () => {
       projectId: project.id,
       revision: project.revision,
       renderer: "software" as const,
+      cameraView: {
+        position: [3, 4, 8] as [number, number, number],
+        forward: [0, -0.2, -0.98] as [number, number, number],
+      },
       renderedRevision: project.revision,
     };
     expect(() =>
@@ -79,5 +83,52 @@ describe("review structural observations", () => {
         ],
       }),
     ).toThrow();
+  });
+
+  it("strictly bounds optional camera position and normalized forward direction", () => {
+    const project = blankProject();
+    const cameraView = {
+      position: [0, 2, 8] as [number, number, number],
+      forward: [0, -0.2, -0.98] as [number, number, number],
+    };
+    const observations = {
+      projectId: project.id,
+      revision: project.revision,
+      cameraView,
+    };
+    expect(sceneReviewStructuralObservationsSchema.parse(observations)).toEqual(
+      observations,
+    );
+    expect(() =>
+      sceneReviewStructuralObservationsSchema.parse({
+        ...observations,
+        cameraView: { ...observations.cameraView, extra: true },
+      }),
+    ).toThrow();
+    expect(() =>
+      sceneReviewStructuralObservationsSchema.parse({
+        ...observations,
+        cameraView: {
+          position: [0, 2, Number.POSITIVE_INFINITY],
+          forward: [0, 0, -1],
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      sceneReviewStructuralObservationsSchema.parse({
+        ...observations,
+        cameraView: {
+          position: [0, 2, 8],
+          forward: [0, 0, -0.5],
+        },
+      }),
+    ).toThrow("normalized");
+    expect(() =>
+      validateSceneReviewStructuralObservations(project, {
+        projectId: project.id,
+        revision: project.revision + 1,
+        cameraView: observations.cameraView,
+      }),
+    ).toThrow("another scene revision");
   });
 });

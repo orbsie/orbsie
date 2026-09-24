@@ -22,11 +22,20 @@ export type SceneReviewSourceState = {
   errors: readonly string[];
 };
 
+export type SceneReviewCameraView = {
+  /** World-space position in the Y-up scene. */
+  position: readonly [x: number, y: number, z: number];
+  /** Unit world-space direction the renderer camera faces. */
+  forward: readonly [x: number, y: number, z: number];
+};
+
 export type SceneReviewCaptureSource = {
   renderer: SceneReviewRenderer;
   getState: () => SceneReviewSourceState;
   /** Returns a PNG data URL containing the game canvas only. */
   capture: () => string;
+  /** Snapshot the camera used for the synchronous capture, when available. */
+  getCameraView?: () => SceneReviewCameraView | undefined;
 };
 
 export type SceneReviewCaptureRequest = {
@@ -45,6 +54,7 @@ export type SceneReviewCaptureResult = {
   renderer: SceneReviewRenderer;
   projectId: string;
   revision: number;
+  cameraView?: SceneReviewCameraView;
   readiness: {
     renderedRevision: number;
     transitionSettled: boolean;
@@ -54,6 +64,46 @@ export type SceneReviewCaptureResult = {
   };
   errors: string[];
 };
+
+/** Read a Three.js camera world matrix without updating or mutating the camera. */
+export function sceneReviewCameraViewFromMatrixWorld(
+  elements: ArrayLike<number>,
+  renderOrigin: readonly [number, number, number] = [0, 0, 0],
+): SceneReviewCameraView | undefined {
+  if (
+    elements.length < 16 ||
+    Array.from({ length: 16 }, (_, index) => elements[index]).some(
+      (component) => !Number.isFinite(component),
+    ) ||
+    renderOrigin.some((component) => !Number.isFinite(component))
+  )
+    return undefined;
+  const position: [number, number, number] = [
+    elements[12] + renderOrigin[0],
+    elements[13] + renderOrigin[1],
+    elements[14] + renderOrigin[2],
+  ];
+  const rawForward: [number, number, number] = [
+    -elements[8],
+    -elements[9],
+    -elements[10],
+  ];
+  const length = Math.hypot(...rawForward);
+  if (
+    !position.every(Number.isFinite) ||
+    !Number.isFinite(length) ||
+    length <= Number.EPSILON
+  )
+    return undefined;
+  const forward = rawForward.map((component) => component / length) as [
+    number,
+    number,
+    number,
+  ];
+  for (let axis = 0; axis < forward.length; axis++)
+    if (Object.is(forward[axis], -0)) forward[axis] = 0;
+  return { position, forward };
+}
 
 export type SceneReviewCaptureErrorCode =
   | "aborted"
@@ -297,8 +347,16 @@ export class SceneReviewCaptureBridge {
       }
       assertNotAborted(request.signal);
       let image: string;
+      let cameraView: SceneReviewCameraView | undefined;
       try {
         image = source.capture();
+        const observedCamera = source.getCameraView?.();
+        cameraView = observedCamera
+          ? {
+              position: [...observedCamera.position],
+              forward: [...observedCamera.forward],
+            }
+          : undefined;
       } catch (error) {
         throw captureError(
           "invalid-image",
@@ -334,6 +392,7 @@ export class SceneReviewCaptureBridge {
         renderer: after.renderer,
         projectId: after.projectId,
         revision: after.revision,
+        ...(cameraView ? { cameraView } : {}),
         readiness: {
           renderedRevision: after.renderedRevision,
           transitionSettled: after.transitionSettled,

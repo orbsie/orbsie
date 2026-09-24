@@ -89,6 +89,7 @@ import {
   notifySceneReviewCaptureChanged,
   captureSceneReview,
   captureSceneCanvas,
+  sceneReviewCameraViewFromMatrixWorld,
   registerSceneReviewCaptureSource,
   type SceneReviewSourceState,
 } from "@/lib/scene-review-capture";
@@ -2248,6 +2249,12 @@ export default function SoftwareWorld({
         const canvas = canvasRef.current;
         if (!canvas) throw new Error("Software canvas is not ready.");
         return captureSceneCanvas(canvas);
+      },
+      getCameraView: () => {
+        const camera = navigationCameraRef.current;
+        return camera
+          ? sceneReviewCameraViewFromMatrixWorld(camera.matrixWorld.elements)
+          : undefined;
       },
     } as const;
     const unregister = registerSceneReviewCaptureSource(source);

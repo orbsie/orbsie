@@ -24,7 +24,27 @@ const coordinate = z
   .min(-MAX_OBSERVED_COORDINATE)
   .max(MAX_OBSERVED_COORDINATE);
 const vector3 = z.tuple([coordinate, coordinate, coordinate]);
+const directionCoordinate = z.number().finite().min(-1).max(1);
+const direction3 = z.tuple([
+  directionCoordinate,
+  directionCoordinate,
+  directionCoordinate,
+]);
 const assetIds = z.array(z.string().min(1).max(160)).max(160);
+
+const cameraView = z
+  .object({
+    position: vector3,
+    forward: direction3,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (Math.abs(Math.hypot(...value.forward) - 1) > 0.01)
+      context.addIssue({
+        code: "custom",
+        message: "Camera forward direction must be normalized.",
+      });
+  });
 
 const bounds = z
   .object({
@@ -67,6 +87,7 @@ export const sceneReviewStructuralObservationsSchema = z
     projectId,
     revision,
     renderer: z.enum(["webgl", "software"]).optional(),
+    cameraView: cameraView.optional(),
     renderedRevision: revision.optional(),
     transitionSettled: z.boolean().optional(),
     readyAssetIds: assetIds.optional(),
@@ -82,6 +103,7 @@ export const sceneReviewStructuralObservationsSchema = z
   .superRefine((value, context) => {
     if (
       value.renderer === undefined &&
+      value.cameraView === undefined &&
       value.renderedRevision === undefined &&
       value.transitionSettled === undefined &&
       value.readyAssetIds === undefined &&

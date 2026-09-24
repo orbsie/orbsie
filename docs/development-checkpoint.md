@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 camera-aware scene review: the renderer capture now optionally records
+the camera's world-space position and forward direction with the exact rendered
+revision. WebGL adds the render-local origin; Canvas2D uses its world camera.
+The client forwards only this bounded numeric view, and the server validates
+finite position, normalized direction and the existing project/revision
+binding. Reviewer guidance now moves hidden or tiny details toward the actual
+camera-facing support surface, keeps attachment contact, and avoids enlarging
+the support as a shortcut. Legacy captures still work. Astra reviewed the
+Luna diff and tightened surface-contact wording; 43 focused tests, typecheck,
+formatting, syntax, and diff checks pass. The deterministic renderer browser
+fixture and live quality recheck remain pending.
+
 Sep 24 higher-detail OpenRouter quality run: an isolated production build,
 database migration, and exact-origin malformed-JSON HTTP 400 preflight passed.
 The single bounded run made four `openai/gpt-6-luna` default-tier calls at

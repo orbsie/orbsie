@@ -189,8 +189,28 @@ describe("executeSceneReview", () => {
 
       expect(prompt).toContain("defining silhouette and relative scale");
       expect(prompt).toContain("attached forms have visible connected support");
-      expect(prompt).toContain("requested color but the wrong characteristic shape");
-      expect(prompt).toContain("A lathe part uses [radius,height] profile points");
+      expect(prompt).toContain(
+        "use its world-space Y-up position and forward direction to identify the camera-facing side",
+      );
+      expect(prompt).toContain(
+        "toward-camera is opposite forward, so do not assume a fixed axis",
+      );
+      expect(prompt).toContain(
+        "move or scale those details toward the visible camera-facing side instead of enlarging their support",
+      );
+      expect(prompt).toContain(
+        "move along the support surface toward the camera and adjust height only to keep the detail visibly connected",
+      );
+      expect(prompt).toContain("Keep the canopy or main subject in frame");
+      expect(prompt).toContain(
+        "require visible contact between each detail and its support",
+      );
+      expect(prompt).toContain(
+        "requested color but the wrong characteristic shape",
+      );
+      expect(prompt).toContain(
+        "A lathe part uses [radius,height] profile points",
+      );
       expect(prompt).toContain(
         "keep its base kind and existing parts while adding or repositioning visible details through geometry.parts",
       );

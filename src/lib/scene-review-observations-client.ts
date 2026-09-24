@@ -9,6 +9,14 @@ export function sceneReviewObservationsFromCapture(
     projectId: capture.projectId,
     revision: capture.revision,
     renderer: capture.renderer,
+    ...(capture.cameraView
+      ? {
+          cameraView: {
+            position: [...capture.cameraView.position],
+            forward: [...capture.cameraView.forward],
+          },
+        }
+      : {}),
     renderedRevision: capture.readiness.renderedRevision,
     transitionSettled: capture.readiness.transitionSettled,
     readyAssetIds: [...capture.readiness.readyAssetIds],

@@ -3,6 +3,7 @@ import {
   captureSceneCanvas,
   SceneReviewCaptureBridge,
   SceneReviewCaptureError,
+  sceneReviewCameraViewFromMatrixWorld,
   type SceneReviewCaptureSource,
   type SceneReviewSourceState,
 } from "../src/lib/scene-review-capture";
@@ -68,6 +69,7 @@ function source(
   renderer: "webgl" | "software",
   state: Partial<SceneReviewSourceState> = {},
   capture = () => image,
+  getCameraView?: SceneReviewCaptureSource["getCameraView"],
 ): SceneReviewCaptureSource {
   return {
     renderer,
@@ -85,6 +87,7 @@ function source(
       ...state,
     }),
     capture,
+    ...(getCameraView ? { getCameraView } : {}),
   };
 }
 
@@ -96,6 +99,89 @@ async function expectCaptureError(
 }
 
 describe("scene review capture bridge", () => {
+  it("converts a rendered camera matrix to world position and forward", () => {
+    const matrixWorld = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 7, 8, 9, 1];
+    expect(
+      sceneReviewCameraViewFromMatrixWorld(matrixWorld, [1024, 0, -1024]),
+    ).toEqual({
+      position: [1031, 8, -1015],
+      forward: [0, 0, -1],
+    });
+    expect(sceneReviewCameraViewFromMatrixWorld(matrixWorld)).toEqual({
+      position: [7, 8, 9],
+      forward: [0, 0, -1],
+    });
+    expect(
+      sceneReviewCameraViewFromMatrixWorld([
+        Number.NaN,
+        ...matrixWorld.slice(1),
+      ]),
+    ).toBeUndefined();
+  });
+
+  it("returns an optional camera view from the same capture window", async () => {
+    const bridge = new SceneReviewCaptureBridge();
+    const captureImage = vi.fn(() => image);
+    const readCamera = vi.fn(() => ({
+      position: [4, 3, 8] as const,
+      forward: [0, -0.2, -0.98] as const,
+    }));
+    const unregister = bridge.register(
+      source("webgl", {}, captureImage, readCamera),
+    );
+    const result = await bridge.capture({
+      projectId: "project",
+      revision: 2,
+      renderer: "webgl",
+      timeoutMs: 100,
+    });
+    expect(captureImage).toHaveBeenCalledTimes(1);
+    expect(readCamera).toHaveBeenCalledTimes(1);
+    expect(result.cameraView).toEqual({
+      position: [4, 3, 8],
+      forward: [0, -0.2, -0.98],
+    });
+    unregister();
+  });
+
+  it("does not return a camera snapshot after the captured revision goes stale", async () => {
+    const bridge = new SceneReviewCaptureBridge();
+    let revision = 2;
+    const unregister = bridge.register({
+      renderer: "software",
+      getState: () => ({
+        renderer: "software",
+        projectId: "project",
+        revision,
+        renderedRevision: revision,
+        transitionSettled: true,
+        mounted: true,
+        readyAssetIds: [],
+        pendingAssetIds: [],
+        failedAssetIds: [],
+        errors: [],
+      }),
+      capture: () => {
+        revision = 3;
+        return image;
+      },
+      getCameraView: () => ({
+        position: [1, 2, 3],
+        forward: [0, 0, -1],
+      }),
+    });
+    await expectCaptureError(
+      bridge.capture({
+        projectId: "project",
+        revision: 2,
+        renderer: "software",
+        timeoutMs: 100,
+      }),
+      "superseded-revision",
+    );
+    unregister();
+  });
+
   it("captures the requested revision after a replacement commits", async () => {
     const bridge = new SceneReviewCaptureBridge();
     let replacementReady = false;
