@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 fresh provider-artifact publication acceptance prepared: the saved
+Gateway-generated revision-9 ZIP is pinned by canonical digest and its two
+generated GLB hashes. `scripts/verify-provider-artifact-publication.mjs`
+passes offline preflight and gates production execution behind
+`ORBSIE_LIVE_E2E=1`, an exact `https://orbsie.com` origin, and an explicit
+evidence directory. A live run will create one private test account, upload
+the saved models, cloud-save the copied game under a fresh project ID,
+publish it, and verify exact snapshot/runtime/model/manifest bytes plus
+signed-out desktop and touch gameplay. `scripts/verify-android-gateway-publication.mjs`
+is ready to check the resulting URL in Android 15 emulator Chrome with the
+software renderer. The old published runtime failed this emulator preflight;
+that result is not a test of the current runtime. No live publication has yet
+run: account creation and public publication approval is pending. Browser
+computer-use still exposes no Chrome surfaces, Gateway credit remains below
+zero, and OpenRouter's two-call review run remains bounded-incomplete.
+
 Sep 23 production promotion: Vercel production deployment
 `dpl_7rrUPQyL4DE8RLTZw2WKWaQaxY5n` built Ready from the camera-framing
 release and was promoted to `https://orbsie.com/`. Domain inspection resolves
