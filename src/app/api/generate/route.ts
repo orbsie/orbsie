@@ -18,6 +18,7 @@ import {
   trialEnabled,
   trialIdentity,
   claimTrial,
+  refundTrial,
   TrialExhausted,
   FREE_MODEL,
   type TrialIdentity,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
   };
   let identity: TrialIdentity | undefined;
   let remaining: number | undefined;
+  let legacyTrialClaimed = false;
   let admittedModelId: string | undefined;
   let admittedReviewImageInput = false;
   let authoringAdmission: InitialAuthoringAdmission | undefined;
@@ -175,7 +177,10 @@ export async function POST(request: Request) {
         overrides: formatOverrides,
       });
       identity = trialIdentity(request);
-      if (!parsed.data.authoringReview) remaining = await claimTrial(identity);
+      if (!parsed.data.authoringReview) {
+        remaining = await claimTrial(identity);
+        legacyTrialClaimed = true;
+      }
     } else {
       const model = await requireGenerationModel(
         parsed.data.provider as "openrouter" | "gateway",
@@ -262,6 +267,22 @@ export async function POST(request: Request) {
       ),
     );
   } catch (e) {
+    if (
+      identity &&
+      legacyTrialClaimed &&
+      e instanceof GenerationProviderError &&
+      e.providerStatus === 402
+    ) {
+      // This catch only runs before the NDJSON response is returned, so no
+      // partial stream can earn a refund. Keep the provider's 402 response if
+      // reconciliation fails, and omit a stale remaining-count header.
+      legacyTrialClaimed = false;
+      try {
+        remaining = await refundTrial(identity);
+      } catch {
+        remaining = undefined;
+      }
+    }
     if (authoringAdmission) await authoringAdmission.fail(e);
     if (providerObservation) {
       const providerAborted = generationSignal.aborted;

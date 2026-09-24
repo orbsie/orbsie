@@ -278,6 +278,46 @@ export async function claimTrial(identity: TrialIdentity) {
     claimTrialInTransaction(client, identity, 1),
   );
 }
+/** Refund exactly one claimed legacy prompt across its visitor, network, and daily buckets. */
+export async function refundTrial(identity: TrialIdentity) {
+  return withDatabaseTransaction(
+    async (client) => {
+      const buckets = [...identity.buckets].sort((a, b) =>
+        a.key.localeCompare(b.key),
+      );
+      const keys = buckets.map((bucket) => bucket.key);
+      const locked = await client.query<{ bucket: string; used: number }>(
+        "SELECT bucket, used FROM orbsie_trial_usage WHERE bucket = ANY($1::text[]) ORDER BY bucket FOR UPDATE",
+        [keys],
+      );
+      const counts = new Map(locked.rows.map((row) => [row.bucket, row.used]));
+
+      // A claim creates all three rows and charges one unit to each. If an
+      // administrative reset removed any row, or this unit is already gone,
+      // leave the counters untouched instead of partially refunding a claim.
+      if (
+        locked.rows.length !== buckets.length ||
+        locked.rows.some((row) => row.used < 1)
+      )
+        return remaining(identity, counts, 1);
+
+      const refunded = await client.query<{ bucket: string; used: number }>(
+        "UPDATE orbsie_trial_usage SET used=GREATEST(used-1,0), updated_at=now() WHERE bucket = ANY($1::text[]) RETURNING bucket, used",
+        [keys],
+      );
+      return remaining(
+        identity,
+        new Map(refunded.rows.map((row) => [row.bucket, row.used])),
+        1,
+      );
+    },
+    {
+      lockTimeoutMs: 5_000,
+      statementTimeoutMs: 10_000,
+      acquireTimeoutMs: 10_000,
+    },
+  );
+}
 /** Clear visitor/network usage rows last claimed within the fixed 5-minute window. */
 export async function resetRecentTrialUsage() {
   return withDatabaseTransaction(async (client) => {

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { database } from "../src/lib/server/auth";
 import {
   claimTrial,
+  refundTrial,
   trialIdentity,
   trialRemaining,
   TrialExhausted,
@@ -65,6 +66,24 @@ it.runIf(process.env.RUN_TRIAL_DATABASE_TEST === "1")(
         [identity.buckets.map((b) => b.key)],
       );
       expect(rows.rows.map((r) => r.used)).toEqual([3, 3, 3]);
+
+      const rejected = {
+        cookie: "synthetic",
+        buckets: [
+          { key: `${prefix}:refund-visitor`, limit: 3 },
+          { key: `${prefix}:refund-network`, limit: 3 },
+          { key: `${prefix}:refund-global`, limit: 100 },
+        ],
+      };
+      expect(await claimTrial(rejected)).toBe(2);
+      expect(await refundTrial(rejected)).toBe(3);
+      expect(await trialRemaining(rejected)).toBe(3);
+      expect(await refundTrial(rejected)).toBe(3);
+      const refundedRows = await database().query<{ used: number }>(
+        "SELECT used FROM orbsie_trial_usage WHERE bucket=ANY($1::text[])",
+        [rejected.buckets.map((b) => b.key)],
+      );
+      expect(refundedRows.rows.map((row) => row.used)).toEqual([0, 0, 0]);
     } finally {
       await database().query(
         "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1",

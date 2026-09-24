@@ -9,7 +9,10 @@ import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 const quota = vi.hoisted(() => ({
   claim: vi.fn(async () => 2),
+  refund: vi.fn(async () => 3),
   identity: vi.fn(() => ({ cookie: "synthetic-cookie", buckets: [] })),
+  authoringConfigured: vi.fn(() => false),
+  admitAuthoring: vi.fn(),
 }));
 vi.mock("@/lib/protocol", async () => import("../src/lib/protocol"));
 vi.mock("@/lib/server/auth", async () => import("../src/lib/server/auth"));
@@ -21,6 +24,12 @@ vi.mock("@/lib/server/trial", async () => ({
   ...(await import("../src/lib/server/trial")),
   trialIdentity: quota.identity,
   claimTrial: quota.claim,
+  refundTrial: quota.refund,
+}));
+vi.mock("@/lib/server/authoring-run-admission", async () => ({
+  ...(await vi.importActual("@/lib/server/authoring-run-admission")),
+  authoringReviewConfigured: quota.authoringConfigured,
+  admitInitialAuthoringRun: quota.admitAuthoring,
 }));
 import { POST } from "../src/app/api/generate/route";
 import { TrialExhausted } from "../src/lib/server/trial";
@@ -29,6 +38,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
   quota.claim.mockResolvedValue(2);
+  quota.refund.mockResolvedValue(3);
+  quota.authoringConfigured.mockReturnValue(false);
 });
 function request(extra = {}) {
   vi.stubEnv("AI_GATEWAY_API_KEY_FREE", "private-synthetic-shared-key");
@@ -163,4 +174,54 @@ it("does not consume a free prompt when model preflight rejects it", async () =>
   expect(response.status).toBe(400);
   expect(quota.claim).not.toHaveBeenCalled();
   expect(upstream).not.toHaveBeenCalled();
+});
+
+it("refunds a claimed legacy prompt when the provider rejects with 402 before streaming", async () => {
+  quota.claim.mockResolvedValueOnce(1);
+  quota.refund.mockResolvedValueOnce(2);
+  const upstream = vi.fn(async () => new Response(null, { status: 402 }));
+  vi.stubGlobal("fetch", upstream);
+
+  const response = await POST(request());
+
+  expect(response.status).toBe(402);
+  expect(await response.json()).toMatchObject({
+    error:
+      "Free generation is temporarily unavailable. Connect your provider to continue.",
+  });
+  expect(quota.claim).toHaveBeenCalledOnce();
+  expect(quota.refund).toHaveBeenCalledOnce();
+  expect(response.headers.get("X-Orbsie-Trial-Remaining")).toBe("2");
+});
+
+it("does not refund legacy prompts for other upstream failures", async () => {
+  const upstream = vi.fn(async () => new Response(null, { status: 429 }));
+  vi.stubGlobal("fetch", upstream);
+
+  const response = await POST(request());
+
+  expect(response.status).toBe(429);
+  expect(quota.claim).toHaveBeenCalledOnce();
+  expect(quota.refund).not.toHaveBeenCalled();
+});
+
+it("keeps authoring-review admission outside the legacy refund path", async () => {
+  quota.authoringConfigured.mockReturnValue(true);
+  quota.admitAuthoring.mockResolvedValueOnce({
+    runId: "synthetic-run",
+    trialRemaining: 1,
+    trialCookie: "synthetic-review-cookie",
+    lifecycle: {},
+    complete: async () => {},
+    fail: async () => {},
+  });
+  const upstream = vi.fn(async () => new Response(null, { status: 402 }));
+  vi.stubGlobal("fetch", upstream);
+
+  const response = await POST(request({ authoringReview: true }));
+
+  expect(response.status).toBe(402);
+  expect(quota.claim).not.toHaveBeenCalled();
+  expect(quota.refund).not.toHaveBeenCalled();
+  expect(quota.admitAuthoring).toHaveBeenCalledOnce();
 });
