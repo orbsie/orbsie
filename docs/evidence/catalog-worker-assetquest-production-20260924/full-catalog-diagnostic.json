@@ -1,0 +1,62 @@
+{
+  "assetIds": [
+    "kenney.nature.tree-default",
+    "kenney.nature.tree-pine-tall-a",
+    "kenney.nature.mushroom-red",
+    "kenney.nature.bush-detailed",
+    "kenney.nature.rock-large-a",
+    "kenney.nature.bridge-wood",
+    "kenney.nature.platform-grass",
+    "kenney.nature.fence-gate",
+    "kenney.nature.campfire-stones",
+    "kenney.nature.canoe",
+    "assetquest.mushroom.fly-agaric-basic"
+  ],
+  "results": [
+    {
+      "error": null,
+      "vertices": 342
+    },
+    {
+      "error": null,
+      "vertices": 666
+    },
+    {
+      "error": null,
+      "vertices": 660
+    },
+    {
+      "error": null,
+      "vertices": 240
+    },
+    {
+      "error": null,
+      "vertices": 234
+    },
+    {
+      "error": null,
+      "vertices": 312
+    },
+    {
+      "error": null,
+      "vertices": 600
+    },
+    {
+      "error": null,
+      "vertices": 792
+    },
+    {
+      "error": null,
+      "vertices": 558
+    },
+    {
+      "error": null,
+      "vertices": 144
+    },
+    {
+      "error": null,
+      "vertices": 1572
+    }
+  ],
+  "modelLoadErrors": []
+}

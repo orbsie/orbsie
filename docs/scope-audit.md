@@ -7,7 +7,7 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_3vBBmF2VwTtfaKYCryCp73Agj9gY` at this reconciliation. Read-only
+  `dpl_5o8L1QdSiftYKbNduMPLTgFBuCPL` at this reconciliation. Read-only
   root, robots, sitemap and config checks passed; the prior release's trial
   check passed. The previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
@@ -22,11 +22,14 @@ older rows below are a historical inventory, not a completion claim.
   browser check loaded a saved catalog tree and changed the camera from the
   default view to 600% without model calls or page errors. This improves
   legibility on reopening; it does not certify generated-model quality.
-- A new textured CC0 mushroom is admitted in local source and passed a
-  single-asset mixed create/export/standalone browser check with exact GLB and
-  license hashes. The full 11-asset cold scene exposed a cache lease race;
-  the integration fix and production release are pending. The small exported
-  fixture remains visually distant in the standalone play camera.
+- A new textured CC0 mushroom is admitted and deployed, with exact source,
+  derivative GLB, and license hashes. The full 11-asset cold-scene cache race
+  was fixed, and local and exact-production browser fixtures passed all 11
+  model loads, mixed create/export/standalone playback, and new-only rejection
+  with zero real model calls or page errors. The public mushroom GLB hash matches
+  the checked-in manifest. The small exported fixture remains visually distant
+  in the standalone play camera; live-provider and physical-device quality
+  remain unverified.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
   disconnected stems. Production authoring-review remains off. Gateway credit

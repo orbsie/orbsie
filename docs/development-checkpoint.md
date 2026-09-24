@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 24 eleven-asset catalog release: source `b5cfd63` fixes the cold-scene
+cache race by keeping prepared geometry protected until every pending consumer
+has acquired or abandoned its lease. Astra reviewed the worker diff, tightened
+the concurrent-consumer hold, and verified 11 targeted tests, Prettier,
+typecheck/optimized build, and the complete browser fixture. The pre-fix
+diagnostic and post-fix local artifacts are in
+`docs/evidence/catalog-worker-assetquest-20260924/`: all 11 worker decodes and
+loads pass, the mixed scene renders and exports, direct/rebuilt standalone
+playback works, and new-only asset reuse is rejected with zero model calls,
+external requests, or page errors. Source `b5cfd63` deployed Ready as
+`dpl_5o8L1QdSiftYKbNduMPLTgFBuCPL`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-12kmnbr4f-grappeggias-projects.vercel.app`).
+Production root, robots, sitemap, config, mushroom GLB, player runtime and
+source all returned HTTP 200; the public mushroom GLB SHA-256 matches the
+checked-in manifest. The exact production frontend passed the same synthetic
+browser fixture, including all 11 models and standalone playback, with zero
+real model calls or page errors; evidence:
+`docs/evidence/catalog-worker-assetquest-production-20260924/`. This is not
+live-provider or physical-device acceptance. The small exported two-object
+fixture remains visually distant in the play camera; that legibility gap and
+the broader prompt.md scope remain open.
+
 Sep 24 textured catalog admission in integration: source `8beb1a0` admits a
 reviewed Asset Quest Fly Agaric Basic self-contained GLB and exact bundled CC0
 license as the 11th catalog asset. The official author page lists CC0; source
@@ -9,10 +31,10 @@ and two sources; 11 focused tests, typecheck and local optimized build passed.
 A synthetic mixed create/export/standalone run loaded this exact mushroom and
 exported exact GLB/license bytes with zero model or external requests:
 `docs/evidence/catalog-assetquest-admission/`. This is not live-provider proof.
-The full 11-asset cold scene exposed a cache lease race: all worker decodes
-succeeded, but the final entry displayed a load error after cache trimming.
-The bounded Luna fix and full-catalog recheck are in progress; do not deploy the
-catalog admission until they pass. The standalone snapshot also renders this
+The first full 11-asset cold scene exposed a cache lease race: all worker
+decodes succeeded, but the final entry displayed a load error after cache
+trimming. The release note above records the subsequent fix and acceptance.
+The standalone snapshot also renders this
 small two-object world at a distant play-camera scale, a separate visual
 legibility gap. Avoid treating functional playback as finished visual quality.
 
