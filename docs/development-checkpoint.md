@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 post-visibility OpenRouter quality acceptance: one fresh isolated local
+browser run against `bc3ee65` made exactly three `openai/gpt-6-luna`
+default-tier calls at 4,096 output tokens, all HTTP 200 with no retries.
+Create reached revision 13, first review corrected to revision 19, and final
+visual/structural review still returned `revise`; outcome bounded-incomplete.
+Revision 19 survived reload, no key was stored in browser storage, and there
+were no page/console errors. Sanitized shape counts show five lathe, five cone,
+and five cylinder parts. Astra inspected the private final image: all five
+blue fruit are now visible with green caps/stems, an improvement over the
+occluded previous run, but they look round rather than strawberry-shaped and
+some appear detached. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-visibility-20260924/`.
+The isolated server and database were removed. Production authoring review
+remains off; do not treat visibility improvement as full visual acceptance.
+
 Sep 24 handoff after the latest quality diagnosis: commit `bc3ee65` adjusts
 creation/review guidance to keep plural attached details recognizable from the
 starting play view. It specifically tells the first review to move existing
