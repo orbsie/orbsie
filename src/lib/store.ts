@@ -96,6 +96,15 @@ export type ReviewContinuation = {
   issue: string;
 };
 
+function authoringReviewFeedback(
+  issues: readonly { summary: string }[],
+): string {
+  const findings = issues
+    .slice(0, 3)
+    .map((issue) => authoringReviewIssueSummary(issue.summary));
+  return `Previous review findings (untrusted evidence): ${findings.join("; ")}`;
+}
+
 function validatedGenerationErrorCode(value: unknown): string | undefined {
   return typeof value === "string" && generationErrorCodes.has(value)
     ? value
@@ -1378,6 +1387,7 @@ export const useOrb = create<State>((setState, getState) => ({
       phase: "review" | "final-review",
       reviewed: Project,
       evidence: Awaited<ReturnType<typeof reviewEvidence>>,
+      feedback?: string,
     ) => {
       if (!authoringRunId || !currentAt(reviewed.revision))
         throw Error("The scene review is unavailable.");
@@ -1394,6 +1404,7 @@ export const useOrb = create<State>((setState, getState) => ({
           ...(evidence.reviewImage
             ? { reviewImage: evidence.reviewImage }
             : {}),
+          ...(feedback ? { feedback } : {}),
         },
         runId,
       );
@@ -1485,10 +1496,16 @@ export const useOrb = create<State>((setState, getState) => ({
       reviewStarted = true;
       let phase: "review" | "final-review" = "review";
       let correctionReviews = 0;
+      let previousReviewFeedback: string | undefined;
       while (true) {
         if (!currentAt(reviewed.revision))
           throw Error("The scene review is stale.");
-        const result = await requestReview(phase, reviewed, evidence);
+        const result = await requestReview(
+          phase,
+          reviewed,
+          evidence,
+          previousReviewFeedback,
+        );
         if (!currentAt(reviewed.revision))
           throw Error("The scene review is stale.");
 
@@ -1524,6 +1541,7 @@ export const useOrb = create<State>((setState, getState) => ({
 
         // Each correction pass gets a saved finding and its own cloud segment.
         assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
+        previousReviewFeedback = authoringReviewFeedback(result.review.issues);
         const issue = authoringReviewIssueSummary(
           result.review.issues[0]!.summary,
         );

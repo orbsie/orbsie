@@ -102,6 +102,7 @@ async function reviewReply(
     correction?: Command;
     remainingCalls?: number;
     final?: boolean;
+    issueSummary?: string;
   } = {},
 ) {
   const binding = await createSceneBinding(project);
@@ -129,7 +130,12 @@ async function reviewReply(
       issues:
         verdict === "accept"
           ? []
-          : [{ summary: "Sky mismatch.", entityIds: [] }],
+          : [
+              {
+                summary: options.issueSummary ?? "Sky mismatch.",
+                entityIds: [],
+              },
+            ],
       corrections:
         verdict === "accept" || options.final
           ? []
@@ -197,6 +203,7 @@ function partialReviewFetcher(
     firstRemainingCalls?: number;
     secondRemainingCalls?: number;
     secondVerdict?: "accept" | "revise";
+    issueSummaries?: string[];
   } = {},
 ) {
   let reviewCall = 0;
@@ -209,7 +216,7 @@ function partialReviewFetcher(
         body.project,
         "revise",
         "visual+structural",
-        { final: true },
+        { final: true, issueSummary: options.issueSummaries?.[reviewCall] },
       );
       return Response.json(response);
     }
@@ -229,6 +236,7 @@ function partialReviewFetcher(
         correction: secondPass
           ? { type: "set_environment", sky: "#ccddaa" }
           : correction,
+        issueSummary: options.issueSummaries?.[ordinal],
         remainingCalls:
           verdict === "accept"
             ? 0
@@ -477,6 +485,33 @@ describe("store browser authoring review loop", () => {
 
     useOrb.getState().undo();
     expect(useOrb.getState().reviewContinuation).toBeUndefined();
+  });
+
+  it("passes only the immediately preceding sanitized review findings forward", async () => {
+    const fetcher = partialReviewFetcher({
+      issueSummaries: [
+        "Sky\n\u202e mismatch.",
+        "Blue fruit remains round and obscured.",
+        "A separate final issue.",
+      ],
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection, journal());
+
+    const reviewBodies = fetcher.mock.calls
+      .slice(1)
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(reviewBodies).toHaveLength(3);
+    expect(reviewBodies[0]).not.toHaveProperty("feedback");
+    expect(reviewBodies[1].feedback).toBe(
+      "Previous review findings (untrusted evidence): Sky mismatch.",
+    );
+    expect(reviewBodies[2].feedback).toBe(
+      "Previous review findings (untrusted evidence): Blue fruit remains round and obscured.",
+    );
+    expect(reviewBodies[2].feedback).not.toContain("Sky mismatch.");
+    expect(reviewBodies[1].feedback).not.toMatch(/[\u202a-\u202e]/);
   });
 
   it("uses an old one-slot run's remaining call for final review", async () => {
