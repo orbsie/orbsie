@@ -5,7 +5,9 @@ writes each permitted review request's validated PNG into fixed-name mode-0600
 files in its mode-0700 private directory, never in the repository. Its public
 report retains only dimensions, decoded byte count, SHA-256 and write status;
 unavailable/invalid inputs add no image text. The call cap and retry gate are
-unchanged. Astra reviewed the Luna diff; 19 focused tests, typecheck, syntax,
+unchanged. Review-call summaries also record whether camera-view observations
+were present, so the next live run can confirm that the new feedback reached
+the route. Astra reviewed the Luna diff; 19 focused tests, typecheck, syntax,
 formatting and diff checks pass. A direct Node 22 invocation wrote and removed
 a private 1×1 PNG successfully. No provider call ran for this change. This
 will allow the next live reviewer verdict to be compared against the exact

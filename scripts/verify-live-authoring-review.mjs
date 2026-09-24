@@ -1385,6 +1385,7 @@ async function main() {
         reviewImageRevision: null,
         structuralObservationProjectId: null,
         structuralObservationRevision: null,
+        cameraViewPresent: null,
         responseBindingRevision: null,
         responseBindingDigest: null,
         verdict: null,
@@ -1412,6 +1413,8 @@ async function main() {
         call.structuralObservationRevision = safeRevision(
           payload?.structuralObservations?.revision,
         );
+        call.cameraViewPresent =
+          payload?.structuralObservations?.cameraView !== undefined;
       }
 
       if (call.ordinal === 2) {
