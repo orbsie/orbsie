@@ -14,6 +14,7 @@ import {
   MAX_GENERATED_MODEL_BYTES,
 } from "../lib/generated-models";
 import { playerControlsHelp } from "../lib/player-controls";
+import { WORLD_NAVIGATION_PLAY_MIN_DISTANCE } from "../lib/world-navigation";
 import { GraphicsGuidance } from "../components/graphics-guidance";
 configureGeneratedGeometryResolver(async (hash, signal) => {
   const response = await fetch(`./${generatedModelPath(hash)}`, {
@@ -122,6 +123,7 @@ function PlayerApp() {
         {loaded && (
           <World
             key={rendererRetryToken}
+            initialNavigationDistance={WORLD_NAVIGATION_PLAY_MIN_DISTANCE}
             rendererRetryToken={rendererRetryToken}
             onReady={() => setSceneReady(true)}
             onRendererReady={(renderer) => {

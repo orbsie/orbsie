@@ -3125,6 +3125,19 @@ function WorldNavigationControls({
   );
 }
 
+function worldNavigationProjectStateWithInitialDistance(
+  projectId: string,
+  previous: WorldNavigationProjectState | undefined,
+  initialDistance: number | undefined,
+): WorldNavigationProjectState {
+  const next = worldNavigationProjectState(projectId, previous);
+  if (next === previous || initialDistance === undefined) return next;
+  return {
+    ...next,
+    navigation: createWorldNavigationState({ distance: initialDistance }),
+  };
+}
+
 export default function World({
   onReady,
   onRendererReady,
@@ -3132,6 +3145,7 @@ export default function World({
   onInputLatency,
   onRendererFallback,
   rendererRetryToken = 0,
+  initialNavigationDistance,
 }: {
   onReady?: () => void;
   onRendererReady?: (renderer?: "webgl" | "software") => void;
@@ -3139,6 +3153,7 @@ export default function World({
   onInputLatency?: (snapshot: PlayerInputLatencySnapshot) => void;
   onRendererFallback?: (message: string) => void;
   rendererRetryToken?: number;
+  initialNavigationDistance?: number;
 } = {}) {
   const project = useOrb((state) => state.project);
   const projectId = project.id;
@@ -3187,20 +3202,24 @@ export default function World({
     [navigationGestureController],
   );
   const [navigationProject, setNavigationProject] = useState(() =>
-    worldNavigationProjectState(projectId),
+    worldNavigationProjectStateWithInitialDistance(
+      projectId,
+      undefined,
+      initialNavigationDistance,
+    ),
   );
   const navigationProjectRef = useRef(navigationProject);
   navigationProjectRef.current = navigationProject;
   const navigation =
     navigationProject.projectId === projectId
       ? navigationProject.navigation
-      : createWorldNavigationState();
+      : createWorldNavigationState({ distance: initialNavigationDistance });
   const getNavigation = useCallback(
     () =>
       navigationProjectRef.current.projectId === projectId
         ? navigationProjectRef.current.navigation
-        : createWorldNavigationState(),
-    [projectId],
+        : createWorldNavigationState({ distance: initialNavigationDistance }),
+    [initialNavigationDistance, projectId],
   );
   const [navigationNotice, setNavigationNotice] = useState("");
   const [navigationReady, setNavigationReady] = useState(false);
@@ -3220,20 +3239,32 @@ export default function World({
       setNavigationNotice("");
     }
     setNavigationProject((previous) => {
-      const next = worldNavigationProjectState(projectId, previous);
+      const next = worldNavigationProjectStateWithInitialDistance(
+        projectId,
+        previous,
+        initialNavigationDistance,
+      );
       navigationProjectRef.current = next;
       return next;
     });
-  }, [clearNavigationGestures, phase, playing, projectId, rendererRetryToken]);
+  }, [
+    clearNavigationGestures,
+    initialNavigationDistance,
+    phase,
+    playing,
+    projectId,
+    rendererRetryToken,
+  ]);
   useEffect(() => () => clearNavigationGestures(), [clearNavigationGestures]);
   const dispatchNavigation = useCallback(
     (command: WorldNavigationCommand, userInitiated = true) => {
       const pendingInitialFrame = pendingInitialFrameRef.current;
       if (userInitiated && pendingInitialFrame?.projectId === projectId)
         pendingInitialFrame.userNavigated = true;
-      const current = worldNavigationProjectState(
+      const current = worldNavigationProjectStateWithInitialDistance(
         projectId,
         navigationProjectRef.current,
+        initialNavigationDistance,
       );
       try {
         const next = {
@@ -3251,7 +3282,7 @@ export default function World({
         );
       }
     },
-    [projectId],
+    [initialNavigationDistance, projectId],
   );
   const frameNavigation = useCallback(() => {
     const currentProject = useOrb.getState().project;
