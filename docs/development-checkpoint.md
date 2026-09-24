@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 production promotion: the accumulated branch through `e039b21` passed
+the full Vitest suite (1,715 passed, 26 skipped) and an isolated production
+build. Vercel production deployment at
+`https://orbsie-n30t1nvrg-grappeggias-projects.vercel.app` completed and was
+aliased to `https://orbsie.com/`. A signed-out, read-only production browser
+smoke passed: landing canvas/composer visible, root 200, protected
+generation-runs endpoint 401, no page errors, writes, or external requests.
+The deployed player runtime and all geometry worker bytes match the current
+local build; the landing screenshot was inspected. `/api/config` reports
+accounts/publishing and hosted ChatGPT enabled, with `authoringReview:false`.
+Evidence: `docs/evidence/production-release-20260924-review-off/`. This is
+release health, not live ChatGPT/Gateway or new-publication acceptance. The
+local build refreshed tracked player runtime/source snapshots because the
+software renderer diagnostics changed; those generated files are committed
+with this checkpoint and match the deployed runtime bytes.
+
 Sep 24 OpenRouter live review after exact-origin preflight: isolated production
 build and migrated DB passed; zero-inference malformed-JSON preflight returned
 HTTP 400. One fresh `openai/gpt-6-luna` default-tier run used exactly three
