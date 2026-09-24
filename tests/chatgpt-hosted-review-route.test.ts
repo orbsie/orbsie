@@ -60,7 +60,7 @@ function request(body: Record<string, unknown>, clientRunId?: string) {
     body: JSON.stringify({
       runId,
       phase: "review",
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       effort: "low",
       prompt: "Build a garden",
       project: blankProject(),
@@ -129,6 +129,55 @@ afterEach(() => {
 });
 
 describe("hosted ChatGPT review route", () => {
+  it("returns the admitted remaining budget for both correction reviews", async () => {
+    state.review.mockImplementation(
+      async (
+        _identity: unknown,
+        input: { project: { id: string; revision: number } },
+        _signal: AbortSignal,
+        _deadline: number,
+        _correlation: unknown,
+        admit: () => Promise<unknown>,
+      ) => {
+        await admit();
+        return {
+          review: {
+            version: 1,
+            projectId: input.project.id,
+            reviewedRevision: input.project.revision,
+            scope: "structural-only",
+            verdict: "revise",
+            summary: "The scene needs a color correction.",
+            issues: [{ summary: "Wrong sky color.", entityIds: [] }],
+            corrections: [{ type: "set_environment", sky: "#aabbff" }],
+          },
+          corrections: [
+            { type: "set_environment", sky: "#aabbff" },
+            { type: "commit_revision", message: "Corrected the sky." },
+          ],
+          binding: {
+            version: 1,
+            projectId: input.project.id,
+            revision: input.project.revision + 2,
+            digest: "a".repeat(64),
+          },
+        };
+      },
+    );
+    for (const remainingReviewSlots of [2, 1]) {
+      state.admit.mockResolvedValueOnce({
+        runId,
+        reviewPhase: "review",
+        remainingReviewSlots,
+        complete: vi.fn(),
+        fail: vi.fn(),
+      });
+      const response = await POST(request({}));
+      expect(response.status).toBe(200);
+      expect((await response.json()).remainingCalls).toBe(remainingReviewSlots);
+    }
+  });
+
   it("authenticates a guest-capable session and returns the typed review shape", async () => {
     const clientRunId = "22222222-2222-4222-8222-222222222222";
     const response = await POST(request({}, clientRunId));
