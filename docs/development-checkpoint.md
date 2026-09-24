@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 blue-strawberry quality follow-up: generation and review guidance now
+prioritizes defining silhouette, relative scale, visible attachment/support,
+and unobscured requested features. When a catalog piece cannot express a
+defining feature, the model should add custom/procedural geometry while
+retaining suitable catalog pieces. The first review prioritizes root geometry
+and visibility corrections; final review requires remaining core defects to
+be reported rather than accepted. Astra reviewed the bounded diff; 45 focused
+tests, typecheck, formatting, and diff checks passed. This is prompt guidance,
+not a demonstrated quality fix. Next: one fresh bounded OpenRouter
+create/review/final-review run, at most three Luna calls with 4,096 output
+tokens each and no retry; inspect scene quality and revision persistence.
+
 Sep 24 fresh OpenRouter blue-strawberry review: an isolated production app and
 migrated database ran exactly three live `openai/gpt-6-luna` calls at default
 service tier and 4,096 output tokens each. Initial creation saved revision 13;

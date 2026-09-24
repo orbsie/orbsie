@@ -16,12 +16,16 @@ const formats = [
 const coreGuidance = [
   "Use recentConversation only as context",
   "recognizable silhouette",
-  "prioritize each subject's defining silhouette, proportions, and attached forms before surface decoration",
-  "preserve requested colors on those defining features",
+  "defining silhouette and relative scale",
+  "requested attached forms visibly connected and unobscured before surface decoration",
+  "preserve requested colors on defining features",
+  "When a catalog asset cannot express a requested defining feature",
+  "keeping suitable catalog pieces",
+  "Do not mandate a fixed style, prop arrangement, or template catalogue",
+  "Explicit new-only policy prohibits catalog reuse for that scope",
   "reachable objective",
   "Reserve only NEW entities FIRST",
   "Finish referenced entities to ready before set_game",
-  "Explicit new-only policy prohibits catalog reuse",
   "Each command must match the provided command schema",
 ];
 
@@ -112,7 +116,7 @@ describe("creative and playable authoring prompt", () => {
       {
         prompt: "Build a small playable garden",
         project: blankProject(),
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "low",
         browserModeling: true,
       },

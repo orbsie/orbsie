@@ -176,6 +176,31 @@ describe("executeSceneReview", () => {
     expect(result.review.scope).toBe("visual+structural");
   });
 
+  it.each(["review", "final-review"] as const)(
+    "prioritizes core shape and attachment guidance during %s",
+    async (phase) => {
+      const project = blankProject();
+      const fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(providerResponse(reviewFor(project)));
+      await executeSceneReview(inputFor(project, { phase }));
+      const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+      const prompt = body.messages[0].content as string;
+
+      expect(prompt).toContain("defining silhouette and relative scale");
+      expect(prompt).toContain("attached forms have visible connected support");
+      expect(prompt).toContain(
+        "repair these root geometry and visibility defects before superficial accents",
+      );
+      if (phase === "review") {
+        expect(prompt).toContain("targeted policy-valid corrections");
+      } else {
+        expect(prompt).toContain("accept only when no core defect remains");
+        expect(prompt).toContain("no corrections");
+      }
+    },
+  );
+
   it("forwards a trusted API token cap and omits absent API reasoning", async () => {
     const project = blankProject();
     const fetchMock = vi
