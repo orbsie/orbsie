@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 post-lathe OpenRouter quality acceptance: one fresh isolated local run
+used exactly three Luna default-tier calls at 4,096 output tokens, with no
+retries. Create, review, and final review all returned HTTP 200. Review bound
+revision 11 to 17; final review of revision 17 still said revise, so outcome
+is bounded-incomplete. Five ready entities had 20 custom parts, including four
+blue. Reload recovered revision 17. Astra inspected the private scene capture:
+two oversized smooth blue forms hang below a tree-like green form, without a
+clear strawberry silhouette or small details. The shape histogram was not
+captured, so actual lathe use is unknown. This is a model composition/scale
+quality failure despite the working geometry capability. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-lathe-20260924/`.
+
 Sep 24 bounded lathe geometry integrated: custom parts can now carry a
 finite, bounded [radius,height] profile revolved around Y. Existing part
 shapes remain supported, and the schema rejects profiles on them. Generation
