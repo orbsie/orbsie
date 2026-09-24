@@ -10,6 +10,7 @@ const output = resolve(
 );
 const reviewFailure =
   "Scene saved, but review could not finish. Your world is safe.";
+const reviewTreeColor = "#d43f6f";
 const fixture = `
 import { createRoot } from "react-dom/client";
 import World from "./src/components/world";
@@ -55,6 +56,11 @@ createRoot(document.getElementById("root")!).render(<World />);
       revision: state.project.revision,
       entityCount: state.project.entities.length,
       entityStages: state.project.entities.map((entity) => entity.stage),
+      entityGeometryKinds: state.project.entities.map(
+        (entity) => entity.geometry?.kind ?? null,
+      ),
+      entityScales: state.project.entities.map((entity) => entity.scale),
+      entityColors: state.project.entities.map((entity) => entity.color),
       phase: state.phase,
       building: state.building,
       playing: state.playing,
@@ -105,19 +111,19 @@ createRoot(document.getElementById("root")!).render(<World />);
     });
     return { previousProjectId: previous.id, ...this.state() };
   },
-  commitSmallObjectForReview() {
+  commitProceduralTreeForReview() {
     const current = useOrb.getState().project;
     const project = {
       ...current,
       revision: 1,
       entities: [{
-        id: "tiny-subject",
-        label: "Tiny subject",
+        id: "review-tree",
+        label: "Review fixture tree",
         position: [0, 0, 0] as [number, number, number],
-        scale: [0.1, 0.1, 0.1] as [number, number, number],
-        color: "#f0ac52",
+        scale: [0.65, 0.65, 0.65] as [number, number, number],
+        color: ${JSON.stringify(reviewTreeColor)},
         stage: "ready" as const,
-        geometry: { kind: "rock" as const, detail: "coarse" as const },
+        geometry: { kind: "tree" as const, detail: "refined" as const },
       }],
     };
     useOrb.setState({ project });
@@ -274,6 +280,9 @@ try {
   assert.ok(savedBefore.position && savedAfter.position);
   assert.equal(savedState.phase, "editing");
   assert.equal(savedState.entityCount, 1);
+  assert.deepEqual(savedState.entityGeometryKinds, ["rock"]);
+  assert.deepEqual(savedState.entityScales, [[0.1, 0.1, 0.1]]);
+  assert.deepEqual(savedState.entityColors, ["#f0ac52"]);
 
   const landing = await page.evaluate(() =>
     window.initialProjectFrameFixture.enterLanding(),
@@ -295,11 +304,14 @@ try {
   await page.screenshot({ path: resolve(output, "lifecycle-building.png") });
 
   const committed = await page.evaluate(() =>
-    window.initialProjectFrameFixture.commitSmallObjectForReview(),
+    window.initialProjectFrameFixture.commitProceduralTreeForReview(),
   );
   assert.equal(committed.projectId, build.projectId);
   assert.equal(committed.revision, 1);
   assert.deepEqual(committed.entityStages, ["ready"]);
+  assert.deepEqual(committed.entityGeometryKinds, ["tree"]);
+  assert.deepEqual(committed.entityScales, [[0.65, 0.65, 0.65]]);
+  assert.deepEqual(committed.entityColors, [reviewTreeColor]);
   assert.equal(committed.phase, "descending");
   assert.equal(committed.building, true);
   await page.waitForTimeout(250);
@@ -317,6 +329,9 @@ try {
   assert.equal(reviewFailureState.error, reviewFailure);
   assert.equal(reviewFailureState.generationRecoveryProjectId, null);
   assert.deepEqual(reviewFailureState.entityStages, ["ready"]);
+  assert.deepEqual(reviewFailureState.entityGeometryKinds, ["tree"]);
+  assert.deepEqual(reviewFailureState.entityScales, [[0.65, 0.65, 0.65]]);
+  assert.deepEqual(reviewFailureState.entityColors, [reviewTreeColor]);
   await expect
     .poll(() =>
       page
@@ -371,12 +386,20 @@ try {
         status: "passed",
         sourceCommit: "0fa9b2c",
         scope:
-          "World renderer saved-project baseline and deterministic initial-build lifecycle through a committed small object and settled review failure",
+          "World renderer keeps the saved tiny-rock framing baseline and exercises a deterministic initial-build lifecycle through a committed roughly 2 m procedural tree and settled review failure",
         fixture: {
           kind: "deterministic lifecycle state fixture",
           liveProviderResponse: false,
           simulatedHttp502: false,
           reviewFailureUiState: reviewFailure,
+        },
+        visualEvidence: {
+          object: "procedural tree",
+          approximateHeightMeters: 2,
+          scale: [0.65, 0.65, 0.65],
+          color: reviewTreeColor,
+          claim:
+            "The settled screenshot shows this fixture tree clearly after the saved-but-review-failed state. This result does not establish legibility for arbitrary generated scenes.",
         },
         providerCalls: 0,
         apiRequests,
@@ -388,6 +411,9 @@ try {
           savedProjectOpen: {
             phase: savedState.phase,
             entityCount: savedState.entityCount,
+            entityGeometryKinds: savedState.entityGeometryKinds,
+            entityScales: savedState.entityScales,
+            entityColors: savedState.entityColors,
             zoomChanged: savedAfter.zoomLabel !== savedBefore.zoomLabel,
             before: savedBefore,
             after: savedAfter,
@@ -408,6 +434,9 @@ try {
               sameProjectId: committed.projectId === build.projectId,
               revision: committed.revision,
               entityStages: committed.entityStages,
+              entityGeometryKinds: committed.entityGeometryKinds,
+              entityScales: committed.entityScales,
+              entityColors: committed.entityColors,
               phase: committed.phase,
               building: committed.building,
             },
@@ -420,6 +449,9 @@ try {
               generationRecoveryPresent:
                 reviewFailureState.generationRecoveryProjectId !== null,
               entityStages: reviewFailureState.entityStages,
+              entityGeometryKinds: reviewFailureState.entityGeometryKinds,
+              entityScales: reviewFailureState.entityScales,
+              entityColors: reviewFailureState.entityColors,
               transition: reviewFailureTransition,
               camera: reviewFailureCamera,
               movedFromDefaultCamera:
@@ -448,7 +480,7 @@ try {
       2,
     )}\n`,
   );
-  console.log("Saved small-project camera framing fixture passed.");
+  console.log("Initial-build review-failure camera framing fixture passed.");
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));

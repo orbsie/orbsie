@@ -1,12 +1,23 @@
 {
   "status": "passed",
   "sourceCommit": "0fa9b2c",
-  "scope": "World renderer saved-project baseline and deterministic initial-build lifecycle through a committed small object and settled review failure",
+  "scope": "World renderer keeps the saved tiny-rock framing baseline and exercises a deterministic initial-build lifecycle through a committed roughly 2 m procedural tree and settled review failure",
   "fixture": {
     "kind": "deterministic lifecycle state fixture",
     "liveProviderResponse": false,
     "simulatedHttp502": false,
     "reviewFailureUiState": "Scene saved, but review could not finish. Your world is safe."
+  },
+  "visualEvidence": {
+    "object": "procedural tree",
+    "approximateHeightMeters": 2,
+    "scale": [
+      0.65,
+      0.65,
+      0.65
+    ],
+    "color": "#d43f6f",
+    "claim": "The settled screenshot shows this fixture tree clearly after the saved-but-review-failed state. This result does not establish legibility for arbitrary generated scenes."
   },
   "providerCalls": 0,
   "apiRequests": [],
@@ -18,6 +29,19 @@
     "savedProjectOpen": {
       "phase": "editing",
       "entityCount": 1,
+      "entityGeometryKinds": [
+        "rock"
+      ],
+      "entityScales": [
+        [
+          0.1,
+          0.1,
+          0.1
+        ]
+      ],
+      "entityColors": [
+        "#f0ac52"
+      ],
       "zoomChanged": true,
       "before": {
         "zoomLabel": "Zoom in, currently 100%",
@@ -54,6 +78,19 @@
         "entityStages": [
           "ready"
         ],
+        "entityGeometryKinds": [
+          "tree"
+        ],
+        "entityScales": [
+          [
+            0.65,
+            0.65,
+            0.65
+          ]
+        ],
+        "entityColors": [
+          "#d43f6f"
+        ],
         "phase": "descending",
         "building": true
       },
@@ -67,17 +104,30 @@
         "entityStages": [
           "ready"
         ],
+        "entityGeometryKinds": [
+          "tree"
+        ],
+        "entityScales": [
+          [
+            0.65,
+            0.65,
+            0.65
+          ]
+        ],
+        "entityColors": [
+          "#d43f6f"
+        ],
         "transition": {
           "progress": 1,
           "settled": true,
           "target": 1
         },
         "camera": {
-          "zoomLabel": "Zoom in, currently 600%",
+          "zoomLabel": "Zoom in, currently 589%",
           "position": [
-            0.009999999403953547,
-            2.034999998658895,
-            3.464101615137755
+            -0.01624998450279236,
+            3.0282955348125276,
+            3.528266390468566
           ]
         },
         "movedFromDefaultCamera": true,
