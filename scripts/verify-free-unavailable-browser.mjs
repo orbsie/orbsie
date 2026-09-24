@@ -6,10 +6,14 @@ import { resolve } from "node:path";
 import { chromium, expect } from "@playwright/test";
 
 const base = new URL(process.env.ORBSIE_TEST_URL ?? "http://127.0.0.1:3108/");
-assert(
+const local =
   base.protocol === "http:" &&
-    ["127.0.0.1", "localhost"].includes(base.hostname),
-  "Run this intercepted check against an isolated local app.",
+  ["127.0.0.1", "localhost"].includes(base.hostname);
+assert(
+  (local || base.href === "https://orbsie.com/") &&
+    !base.username &&
+    !base.password,
+  "Run this intercepted check against an isolated local app or exact Orbsie production origin.",
 );
 const output = resolve(
   process.env.ORBSIE_EVIDENCE_DIR ??
@@ -22,7 +26,7 @@ const cases = [
 const report = {
   startedAt: new Date().toISOString(),
   base: base.origin,
-  source: "intercepted local production build; no provider call",
+  source: `intercepted ${local ? "local production build" : "Orbsie production"}; no provider call`,
   cases: [],
   status: "running",
 };
