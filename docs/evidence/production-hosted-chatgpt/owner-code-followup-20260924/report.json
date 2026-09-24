@@ -1,0 +1,15 @@
+{
+  "checkedAtUtc": "2026-09-24T17:54:45Z",
+  "origin": "https://orbsie.com",
+  "session": "isolated anonymous acceptance session",
+  "startHttpStatus": 200,
+  "challengeUrl": "https://auth.openai.com/codex/device",
+  "terminal": "expired-without-grant",
+  "lastStatusHttp": 200,
+  "lastLifecycle": "idle",
+  "lastAuthStatus": "disconnected",
+  "cancelHttpStatus": 200,
+  "modelCalls": 0,
+  "challengeCode": "omitted",
+  "privateSessionState": "removed"
+}

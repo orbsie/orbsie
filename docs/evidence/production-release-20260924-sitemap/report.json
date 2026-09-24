@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "checkedAtUtc": "2026-09-24T17:56:00Z",
+  "sourceCommit": "a85004c",
+  "deployment": {
+    "id": "dpl_5UUfXcttXjS4eqSC6evg2ku2riZC",
+    "state": "READY",
+    "immutableUrl": "https://orbsie-c9brzis86-grappeggias-projects.vercel.app",
+    "productionAlias": "https://orbsie.com"
+  },
+  "checks": {
+    "rootHttpStatus": 200,
+    "rootComposerVisibleInHtml": true,
+    "robotsHttpStatus": 200,
+    "robotsAdvertisesSitemap": true,
+    "sitemapHttpStatus": 200,
+    "sitemapUrlCount": 11,
+    "sitemapIncludesHomepage": true,
+    "samplePromotedShareHttpStatus": 200,
+    "samplePromotedShareIndexable": true,
+    "samplePromotedShareCanonical": true,
+    "googlebotMetadataInHead": true,
+    "configHttpStatus": 200,
+    "chatgptHostedEnabled": true,
+    "authoringReviewEnabled": false
+  },
+  "modelCalls": 0,
+  "note": "Read-only crawler smoke. It does not prove search engine indexing or a new provider E2E run."
+}

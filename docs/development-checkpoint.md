@@ -1,11 +1,34 @@
 # Development checkpoint
 
+Sep 24 sitemap release: source `a85004c` built on Vercel as Ready deployment
+`dpl_5UUfXcttXjS4eqSC6evg2ku2riZC` and was aliased to
+`https://orbsie.com/` (immutable deployment
+`https://orbsie-c9brzis86-grappeggias-projects.vercel.app`). Read-only live
+checks returned root/robots/sitemap HTTP 200; the sitemap includes home and
+ten promoted public Orbs. A sample public share page returned HTTP 200 with
+indexable robots, canonical URL and title in the Googlebot HTML head. Public
+config still reports hosted ChatGPT enabled and authoring review disabled.
+Zero model calls ran. Evidence:
+`docs/evidence/production-release-20260924-sitemap/`. This verifies crawler
+markup and discovery surfaces, not actual search-engine indexing or provider
+generation quality. GitHub browser control still exposed no surface, so local
+commits have not been pushed through the owner's required Chrome workflow.
+
+Sep 24 hosted ChatGPT owner-code follow-up: an isolated anonymous production
+session received a fresh OpenAI device challenge and the URL/code were shown
+to the owner. Status remained disconnected and the challenge ended idle without
+a grant; the session was cancelled and its local private state removed. No
+ChatGPT model call ran. Sanitized evidence omits the code:
+`docs/evidence/production-hosted-chatgpt/owner-code-followup-20260924/`.
+Do not start another timed challenge until the owner is available to complete
+it. The requested direct-return subscription OAuth remains unverified.
+
 Sep 24 published-Orb crawlability and Android renderer distinction: promoted
 public `/o/{id}` pages now permit indexing, and the dynamic sitemap lists
 only rows with both a public URL and a promoted revision, never private drafts
 or pending releases. Eight targeted SEO/share-page tests, typecheck and the
 Next optimized build pass; `/sitemap.xml` is dynamic. Source commit `8f1abf9`.
-This change is local until a new production release is promoted. The current
+The current
 Android 15 emulator replay with WebGL requests allowed passed real touch score
 7/restart/win/loss at 412×786, but the only WebGL2 context was the capability
 probe backed by Android Emulator SwiftShader. Orbsie's existing policy selected
