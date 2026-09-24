@@ -7,7 +7,7 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_4RfSmSTpLqtQxSP19obg49pJ1d3B` at this reconciliation. Read-only
+  `dpl_EC7n2ccYjDZTCbFb8toPskR2cKKJ` at this reconciliation. Read-only
   root, robots, sitemap, config and exact player runtime/source hash checks
   passed; the prior release's trial
   check passed. The previous crawler
@@ -22,7 +22,9 @@ older rows below are a historical inventory, not a completion claim.
 - Opening a saved world now frames its committed content once. The production
   browser check loaded a saved catalog tree and changed the camera from the
   default view to 600% without model calls or page errors. This improves
-  legibility on reopening; it does not certify generated-model quality.
+  legibility on reopening. A deterministic first-build review-error fixture
+  now also frames a preserved ready tree at 589% after the error, with no model
+  calls. Neither result certifies generated-model quality.
 - A new textured CC0 mushroom is admitted and deployed, with exact source,
   derivative GLB, and license hashes. The full 11-asset cold-scene cache race
   was fixed, and local and exact-production browser fixtures passed all 11

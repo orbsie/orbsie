@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 failed-review framing release: source `0fa9b2c` retains the first
+automatic content-frame attempt after a new world settles with a recoverable
+generation/review error or recovery notice, provided ready committed bounds
+exist and the user has not navigated or entered Play. Empty failures,
+later same-project edits and project switches keep their existing guards.
+Astra reviewed the diff and the deterministic real-World browser fixture:
+landing → new empty build → ready approximately 2 m procedural tree → settled
+review-error state moves the camera from 100% to 589% and shows the fixture
+tree clearly. The tiny saved-project baseline remains. Six focused tests,
+TypeScript, optimized build, browser fixture, syntax/format/diff checks pass;
+fixture has zero provider/API/external requests or browser errors. Evidence:
+`docs/evidence/initial-project-framing-failure-20260924/`. This fixture
+does not simulate a provider HTTP 502 or prove legibility for arbitrary
+generated geometry. Built player artifacts are committed at `5659a1f`.
+Source `d5e09b2` deployed Ready as `dpl_EC7n2ccYjDZTCbFb8toPskR2cKKJ`,
+aliased to `https://orbsie.com/` (immutable
+`https://orbsie-1zedh0xsz-grappeggias-projects.vercel.app`). Production root,
+config, player runtime and source returned HTTP 200; runtime/source SHA-256
+match checked-in artifacts. `/api/config` keeps `authoringReview:false` and
+`chatgptHosted:true`. No live model call occurred for this release.
+
 Sep 24 OpenRouter feedback-continuity live attempt: one isolated production
 build with a disposable PostgreSQL database ran three of four allowed
 `openai/gpt-6-luna` calls, all default tier, server-capped at 4,096 output
