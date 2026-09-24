@@ -20,14 +20,26 @@ const PLAYER_FILES = [
   "generated-geometry-worker.js",
   "asset-geometry-worker.js",
 ];
-const DEFAULT_EVIDENCE_DIRECTORY = "docs/evidence/android-current-artifact";
+const RENDERER_MODE = process.env.ORBSIE_ANDROID_RENDERER ?? "canvas2d";
+assert(
+  ["canvas2d", "webgl"].includes(RENDERER_MODE),
+  "Android renderer mode must be canvas2d or webgl.",
+);
+const DEFAULT_EVIDENCE_DIRECTORY =
+  RENDERER_MODE === "webgl"
+    ? "docs/evidence/android-webgl-current-artifact-20260924"
+    : "docs/evidence/android-current-artifact";
 const evidenceDirectoryOverride = process.env.ORBSIE_ANDROID_EVIDENCE_DIRECTORY;
 const EVIDENCE_DIRECTORY = resolve(
   evidenceDirectoryOverride ?? DEFAULT_EVIDENCE_DIRECTORY,
 );
 assert(
   !evidenceDirectoryOverride ||
-    EVIDENCE_DIRECTORY !== resolve(DEFAULT_EVIDENCE_DIRECTORY),
+    (EVIDENCE_DIRECTORY !== resolve("docs/evidence/android-current-artifact") &&
+      EVIDENCE_DIRECTORY !==
+        resolve(
+          "docs/evidence/android-current-artifact-20260924-post-segment",
+        )),
   "Android current-artifact evidence override must preserve the historical report.",
 );
 const DEVICE = process.env.ORBSIE_ANDROID_DEVICE ?? "emulator-5554";
@@ -246,7 +258,10 @@ const report = {
   source: {},
   currentPlayerFiles: {},
   device: {},
-  renderer: "Canvas2D forced by rejecting WebGL context requests",
+  rendererMode: RENDERER_MODE,
+  renderer: "pending runtime detection",
+  rendererDetails: {},
+  webglAcceptance: "not evaluated",
   providerCalls: 0,
   generationRequests: [],
   externalRequests: [],
@@ -304,17 +319,44 @@ try {
   const context = browser.contexts()[0];
   assert(context, "Android Chrome did not expose a browser context.");
   page = await context.newPage();
-  await page.addInitScript(() => {
+  await page.addInitScript((rendererMode) => {
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    window.__orbsieAndroidCurrentTest = { blockedWebglRequests: 0 };
+    window.__orbsieAndroidCurrentTest = {
+      blockedWebglRequests: 0,
+      webglContextAttempts: 0,
+      webglContextsCreated: 0,
+      webglContexts: [],
+    };
     HTMLCanvasElement.prototype.getContext = function (kind, options) {
       if (["webgl", "webgl2", "experimental-webgl"].includes(kind)) {
-        window.__orbsieAndroidCurrentTest.blockedWebglRequests += 1;
-        return null;
+        if (rendererMode === "canvas2d") {
+          window.__orbsieAndroidCurrentTest.blockedWebglRequests += 1;
+          return null;
+        }
+        window.__orbsieAndroidCurrentTest.webglContextAttempts += 1;
+        const context = originalGetContext.call(this, kind, options);
+        if (context) {
+          const state = window.__orbsieAndroidCurrentTest;
+          state.webglContextsCreated += 1;
+          const debug = context.getExtension("WEBGL_debug_renderer_info");
+          state.webglContexts.push({
+            requestedType: kind,
+            version: context.getParameter(context.VERSION),
+            vendor: context.getParameter(context.VENDOR),
+            renderer: context.getParameter(context.RENDERER),
+            unmaskedVendor: debug
+              ? context.getParameter(debug.UNMASKED_VENDOR_WEBGL)
+              : null,
+            unmaskedRenderer: debug
+              ? context.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+              : null,
+          });
+        }
+        return context;
       }
       return originalGetContext.call(this, kind, options);
     };
-  });
+  }, RENDERER_MODE);
   await page.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -355,6 +397,15 @@ try {
     }
     report.pageErrors.push(error.message.slice(0, 300));
   });
+  page.on("console", (message) => {
+    if (
+      RENDERER_MODE === "webgl" &&
+      message.type() === "error" &&
+      /Error creating WebGL context/i.test(message.text())
+    ) {
+      report.expectedWebglInitializationErrors += 1;
+    }
+  });
 
   report.cookiesBefore = (await context.cookies(artifactOrigin)).length;
   assert.equal(
@@ -374,9 +425,33 @@ try {
   await expect(page.locator('main[data-ready="true"]')).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.locator(".software-world")).toBeVisible({
-    timeout: 30_000,
-  });
+  if (RENDERER_MODE === "canvas2d") {
+    await expect(page.locator(".software-world")).toBeVisible({
+      timeout: 30_000,
+    });
+    report.renderer = "Canvas2D forced by rejecting WebGL context requests";
+    report.webglAcceptance = "not evaluated in forced-fallback mode";
+  } else {
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+    const softwareFallback =
+      (await page.locator(".software-world").count()) > 0;
+    report.rendererDetails = await page.evaluate(
+      () => window.__orbsieAndroidCurrentTest,
+    );
+    if (softwareFallback) {
+      report.renderer = "Canvas2D fallback after WebGL was allowed";
+      report.webglAcceptance =
+        "not accepted: Android Chrome used Canvas2D fallback";
+    } else if (report.rendererDetails.webglContextsCreated > 0) {
+      report.renderer = "WebGL context created by Android Chrome";
+      report.webglAcceptance =
+        "accepted: player used WebGL without Canvas2D fallback";
+    } else {
+      report.renderer =
+        "unknown: no WebGL context and no Canvas2D fallback detected";
+      report.webglAcceptance = "not accepted: renderer could not be verified";
+    }
+  }
   await expect(page.locator("canvas")).toBeVisible();
   await expect(page.locator(".score")).toHaveText("Score: 0");
   report.viewport = await page.evaluate(() => {
@@ -424,14 +499,33 @@ try {
   report.blockedWebglRequests = await page.evaluate(
     () => window.__orbsieAndroidCurrentTest.blockedWebglRequests,
   );
+  if (RENDERER_MODE === "webgl") {
+    report.rendererDetails = await page.evaluate(
+      () => window.__orbsieAndroidCurrentTest,
+    );
+  }
   assert.equal(report.cookiesAfter, 0, "The temporary artifact set a cookie.");
   assert.deepEqual(report.generationRequests, []);
   assert.deepEqual(report.externalRequests, []);
   assert.deepEqual(report.unexpectedLocalRequests, []);
   assert.deepEqual(report.failedResponses, []);
   assert.deepEqual(report.pageErrors, []);
-  assert(report.blockedWebglRequests > 0, "WebGL was not forced unavailable.");
-  report.status = "passed";
+  if (RENDERER_MODE === "canvas2d") {
+    assert(
+      report.blockedWebglRequests > 0,
+      "WebGL was not forced unavailable.",
+    );
+    report.status = "passed";
+  } else {
+    assert.equal(
+      report.blockedWebglRequests,
+      0,
+      "WebGL must remain enabled in this run.",
+    );
+    report.status = report.webglAcceptance.startsWith("accepted:")
+      ? "passed"
+      : "interactions-passed-webgl-not-accepted";
+  }
 } catch (error) {
   report.status = "failed";
   report.error =

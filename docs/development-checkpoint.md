@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 published-Orb crawlability and Android renderer distinction: promoted
+public `/o/{id}` pages now permit indexing, and the dynamic sitemap lists
+only rows with both a public URL and a promoted revision, never private drafts
+or pending releases. Eight targeted SEO/share-page tests, typecheck and the
+Next optimized build pass; `/sitemap.xml` is dynamic. Source commit `8f1abf9`.
+This change is local until a new production release is promoted. The current
+Android 15 emulator replay with WebGL requests allowed passed real touch score
+7/restart/win/loss at 412×786, but the only WebGL2 context was the capability
+probe backed by Android Emulator SwiftShader. Orbsie's existing policy selected
+Canvas2D, so Android WebGL and native GPU performance are **not** accepted.
+The player hashes match the current checked-in artifacts; there were zero model
+calls, unexpected network requests or page errors. Astra inspected the winning
+screenshot and the worker diff. Evidence:
+`docs/evidence/android-webgl-current-artifact-20260924/`.
+
 Sep 24 late-stream fence rendered acceptance: the real-editor intercepted
 stream fixture now holds a provisional old edit open, uses the visible Stop
 control, commits a newer explicit edit, then releases the old material change
