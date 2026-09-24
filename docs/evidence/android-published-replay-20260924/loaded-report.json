@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "state": {
+    "title": "A tiny island to share — Revision 1 | Orbsie",
+    "body": "A tiny island to share\nBy Orbsie Publication Acceptance\nPublished revision 1\nMake your own",
+    "iframe": true,
+    "overflow": false
+  },
+  "frames": [
+    {
+      "url": "https://orbsie.com",
+      "body": null
+    },
+    {
+      "url": "https://orb-7358ab08c5000df5a5cf-2oyrbpgf0-grappeggias-projects.vercel.app",
+      "body": null
+    }
+  ],
+  "errors": [],
+  "blocked": [],
+  "visualStatus": "failed",
+  "visualFinding": "The older immutable published artifact displays controls but its world canvas is blank on Android Emulator SwiftShader."
+}

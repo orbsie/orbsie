@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 existing-publication mobile check: an older signed-out published Orb
+loads its controls but has a blank world on Android Emulator SwiftShader; its
+immutable artifact predates the fix. The same public project/index data served
+locally with the current committed player runtime rendered the island and
+controls through compatibility graphics, ready with no page errors/blocked
+requests/overflow. Astra inspected both screenshots. Evidence:
+`docs/evidence/android-published-replay-20260924/`. Fresh publication of the
+fixed runtime remains unverified pending the publication approval; old
+artifacts would need a separately authorized republish/migration to improve.
+The current standalone player also passed the Android 15 touch/gameplay
+fixture with software rendering enforced: score reached 7, restart, win and
+loss paths passed, no cookies or external/model requests, and test resources
+were removed. Evidence: `docs/evidence/android-current-artifact/` (rerun at
+2026-09-24T09:36Z). This is emulator evidence, not a physical-device gate.
+
 Sep 24 Android fallback production promotion: local and Vercel optimized
 builds passed, and deployment
 `https://orbsie-r62i23137-grappeggias-projects.vercel.app` was aliased to

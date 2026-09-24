@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "state": {
+    "ready": "true",
+    "software": true,
+    "canvasCount": 1,
+    "controls": [
+      "Forward",
+      "Left",
+      "Back",
+      "Right",
+      "Jump"
+    ],
+    "body": "◉ orbsie\nA tiny island to share\n↻ Restart\nUsing compatibility graphics · Options\n×\n◆ 0 / 1\nUse the controls below to move and jump\n↑\n←\n↓\n→\n↗",
+    "overflow": false
+  },
+  "errors": [],
+  "blocked": [],
+  "visualStatus": "passed",
+  "visualFinding": "The same public project data rendered visibly with the current standalone runtime through compatibility graphics."
+}

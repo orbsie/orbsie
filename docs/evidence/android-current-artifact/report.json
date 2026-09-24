@@ -1,7 +1,7 @@
 {
   "status": "passed",
-  "startedAt": "2026-09-24T05:12:35.897Z",
-  "sourceCommit": "2ffb2144fb42bd3f2c72007f6f74cf9d5f9ef516",
+  "startedAt": "2026-09-24T09:36:24.592Z",
+  "sourceCommit": "31808250c0bf926e8f8f2502d09a13eda1cc680d",
   "source": {
     "fixtureZipSha256": "6bde327ef0c63ca558ed35d5a74e26e55098077006f3b065c5effa7261da084b",
     "canonicalDigest": "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618",
@@ -15,8 +15,8 @@
   },
   "currentPlayerFiles": {
     "runtime.js": {
-      "bytes": 1915788,
-      "sha256": "381f1060da3c58c9ec76fd371bd7870e13f05503ee43f48707e4a002aaccb11a"
+      "bytes": 1918644,
+      "sha256": "0b65d6ddd28837528e49a3d04a9ed6769127f777642a0b9842b4ac22708b66f1"
     },
     "runtime.css": {
       "bytes": 6107,
@@ -66,12 +66,12 @@
     "verticalOverflow": false
   },
   "cookiesAfter": 0,
-  "blockedWebglRequests": 2,
+  "blockedWebglRequests": 3,
   "cleanup": {
     "newTabClosed": true,
     "adbReverseRemoved": true,
     "localServerClosed": true,
     "temporaryArtifactRemoved": true
   },
-  "finishedAt": "2026-09-24T05:12:43.220Z"
+  "finishedAt": "2026-09-24T09:36:31.908Z"
 }
