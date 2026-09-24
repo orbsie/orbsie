@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 owner code follow-up: a fresh production ChatGPT device challenge was
+shown to the owner with the official URL. Its status remained pending until
+expiry and then returned idle/disconnected; cancellation returned HTTP 200 and
+the mode-0600 private browser state was removed. No ChatGPT inference ran.
+Sanitized evidence omits the code:
+`docs/evidence/production-hosted-chatgpt/owner-code-followup-20260924-5/`.
+The next code should only be issued when the owner is ready to enter it within
+the ten-minute window. The required live model output-token cap is still
+unenforceable through the installed App Server protocol.
+
+Sep 24 free-prompt copy: `89dacdc` changes the three positive-allowance labels
+to use singular “free prompt” when one remains, preserving the same allowance
+and connection behavior. Astra reviewed the bounded Luna diff; TypeScript,
+Prettier and diff whitespace checks passed. Production release pending.
+
 Sep 24 saved-world framing release: source `78ddac4` deployed Ready as
 `dpl_6eAVyVuC5pQ16dcgRNnu5EY9UKvi`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-ospjd3n0r-grappeggias-projects.vercel.app`).
