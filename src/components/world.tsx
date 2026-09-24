@@ -111,6 +111,7 @@ import {
 import {
   isTextEntryTarget,
   movingEntityPosition,
+  playerSpawnForProject,
   registerContactBounds,
   stepGameplay,
   type PlayerState,
@@ -1275,10 +1276,11 @@ function Player({
   const announcedReady = useRef(false);
   const generation = useRef(-1);
   const ref = useRef<THREE.Group>(null);
-  const state = useRef<PlayerState>({
-    position: [0, 0.5, 5],
+  const [initialPlayerState] = useState<PlayerState>(() => ({
+    position: playerSpawnForProject(useOrb.getState().project),
     velocityY: 0,
-  });
+  }));
+  const state = useRef<PlayerState>(initialPlayerState);
   const inputs = useRef(
     new PlayerInputTracker(
       onInputLatency ? { latencyTelemetry: true } : undefined,
@@ -1291,13 +1293,31 @@ function Player({
   const playing = useOrb((s) => s.playing);
   const reset = useOrb((s) => s.reset);
   const projectId = useOrb((s) => s.project.id);
+  const hasEnteredPlay = useRef(playing);
+  const enteredPlayProjectId = useRef(projectId);
   useEffect(() => {
     if (!playing) {
       inputs.current.clear();
+      return;
     }
-  }, [playing]);
+    if (hasEnteredPlay.current) return;
+    hasEnteredPlay.current = true;
+    state.current = {
+      position: playerSpawnForProject(useOrb.getState().project),
+      velocityY: 0,
+    };
+    followPositionRef.current = state.current.position;
+    inputs.current.clear();
+  }, [followPositionRef, playing]);
   useEffect(() => {
-    state.current = { position: [0, 0.5, 5], velocityY: 0 };
+    if (enteredPlayProjectId.current !== projectId) {
+      enteredPlayProjectId.current = projectId;
+      hasEnteredPlay.current = false;
+    }
+    state.current = {
+      position: playerSpawnForProject(useOrb.getState().project),
+      velocityY: 0,
+    };
     followPositionRef.current = state.current.position;
     inputs.current.clear();
   }, [followPositionRef, reset, projectId]);
@@ -1381,7 +1401,10 @@ function Player({
     const resetAvatar = () => {
       if (generation.current === session.resetGeneration) return false;
       generation.current = session.resetGeneration;
-      state.current = { position: [0, 0.5, 5], velocityY: 0 };
+      state.current = {
+        position: playerSpawnForProject(s.project),
+        velocityY: 0,
+      };
       followPositionRef.current = state.current.position;
       s.set({ score: [], gameScore: 0, won: false, lost: false });
       return true;
@@ -1870,8 +1893,13 @@ function Scene({
     playing = useOrb((s) => s.playing),
     selectedId = useOrb((s) => s.selected);
   const { camera, size, gl, scene } = useThree();
-  const playerPositionRef = useRef<WorldNavigationVec3>([0, 0.5, 5]);
-  const initialPlaybackFocus = playbackFormationResidencyFocusCell([0, 0.5, 5]);
+  const [initialPlayerPosition] = useState(() =>
+    playerSpawnForProject(project),
+  );
+  const playerPositionRef = useRef<WorldNavigationVec3>(initialPlayerPosition);
+  const initialPlaybackFocus = playbackFormationResidencyFocusCell(
+    initialPlayerPosition,
+  );
   const [playbackResidencyFocus, setPlaybackResidencyFocus] = useState(
     initialPlaybackFocus.focus,
   );

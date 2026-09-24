@@ -1,8 +1,13 @@
 import { Matrix4 } from "three";
-import { transformBounds } from "./scene-transform";
+import { GAME_PROGRAM_LIMITS } from "./game-program";
+import {
+  resolveSceneTransforms,
+  transformBounds,
+  type WorldBounds,
+} from "./scene-transform";
 import { carrySupportContact, supportSurfaceHeight } from "./scene-support";
 import { entityGeometry } from "./geometry";
-import type { Entity } from "./protocol";
+import type { Entity, Project } from "./protocol";
 import { requireCatalogAsset } from "./asset-catalog";
 
 export type Vec3 = [number, number, number];
@@ -86,6 +91,9 @@ const PLAYER_HALF_HEIGHT = 0.42;
 const MOVE_SPEED = 4;
 const JUMP_SPEED = 6;
 const GRAVITY = 15;
+const DEFAULT_PLAYER_START: Vec3 = [0, 0.5, 5];
+const FAR_CONTENT_START_THRESHOLD = 32;
+const FAR_CONTENT_START_OFFSET = 5;
 // Gameplay contact treats the avatar as a small capsule: 0.22 units of
 // horizontal reach and its 0.42-unit half-height. Pickups and portals use
 // this same geometry-aware tolerance, so an object must touch the avatar in
@@ -213,6 +221,97 @@ function normalizeContactBounds(bounds: ContactBoundsInput): ContactBounds {
     min: min as [number, number, number],
     max: max as [number, number, number],
   };
+}
+
+/**
+ * Shared start/reset location for both renderers. Explicit game spawns are
+ * player-center positions in world space. Legacy authored games keep their
+ * historical start; distant projects without a game program get a start just
+ * beyond the positive-Z edge of their ready content.
+ */
+export function playerSpawnForProject(
+  project: Pick<Project, "entities" | "groups" | "game">,
+): Vec3 {
+  if (project.game)
+    return project.game.spawn
+      ? [...project.game.spawn]
+      : [...DEFAULT_PLAYER_START];
+
+  const readyEntities = project.entities.filter(
+    (entity) => entity.stage === "ready",
+  );
+  if (readyEntities.length === 0) return [...DEFAULT_PLAYER_START];
+
+  const scene = resolveSceneTransforms({
+    groups: project.groups,
+    entities: project.entities,
+  });
+  let nearestBounds: WorldBounds | undefined;
+  let nearestEntityId: string | undefined;
+  let nearestDistanceSquared = Infinity;
+  for (const entity of readyEntities) {
+    const recipe = entity.geometry;
+    let localBounds: ContactBoundsInput | undefined;
+    if (recipe?.kind === "asset") {
+      localBounds = requireCatalogAsset(recipe.assetId).bounds;
+    } else if (recipe?.kind === "generated") {
+      localBounds = recipe.model?.bounds;
+    } else {
+      const geometry = entityGeometry(entity);
+      try {
+        geometry.computeBoundingBox();
+        const box = geometry.boundingBox;
+        if (box)
+          localBounds = {
+            min: box.min.toArray(),
+            max: box.max.toArray(),
+          };
+      } finally {
+        geometry.dispose();
+      }
+    }
+    if (!localBounds) return [...DEFAULT_PLAYER_START];
+
+    const resolved = scene.entities.get(entity.id);
+    if (!resolved) return [...DEFAULT_PLAYER_START];
+    const bounds = transformBounds(
+      resolved.worldMatrix,
+      normalizeContactBounds(localBounds),
+    );
+    const dx = Math.max(
+      bounds.min[0] - DEFAULT_PLAYER_START[0],
+      0,
+      DEFAULT_PLAYER_START[0] - bounds.max[0],
+    );
+    const dz = Math.max(
+      bounds.min[2] - DEFAULT_PLAYER_START[2],
+      0,
+      DEFAULT_PLAYER_START[2] - bounds.max[2],
+    );
+    const distanceSquared = dx * dx + dz * dz;
+    if (distanceSquared <= FAR_CONTENT_START_THRESHOLD ** 2)
+      return [...DEFAULT_PLAYER_START];
+
+    if (
+      distanceSquared < nearestDistanceSquared ||
+      (distanceSquared === nearestDistanceSquared &&
+        (!nearestEntityId || entity.id < nearestEntityId))
+    ) {
+      nearestBounds = bounds;
+      nearestEntityId = entity.id;
+      nearestDistanceSquared = distanceSquared;
+    }
+  }
+
+  if (!nearestBounds) return [...DEFAULT_PLAYER_START];
+  return [
+    (nearestBounds.min[0] + nearestBounds.max[0]) / 2,
+    DEFAULT_PLAYER_START[1],
+    Math.min(
+      GAME_PROGRAM_LIMITS.maxNumericValue,
+      nearestBounds.max[2] + FAR_CONTENT_START_OFFSET,
+    ),
+  ];
 }
 
 /** Bind renderer-prepared bounds to one immutable geometry recipe identity. */

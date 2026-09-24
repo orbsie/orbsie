@@ -43,7 +43,7 @@ const editedGeometry = { kind: "platform", detail: "refined" };
 const report = {
   status: "failed",
   scope:
-    "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and opens that ZIP in an isolated standalone player.",
+    "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and verifies distant content is visible in the isolated standalone player.",
   sourceCommit,
   appUrl,
   stableIds: ids,
@@ -59,7 +59,7 @@ const report = {
   ],
   limitations: [
     "WebGL runs under Chromium SwiftShader; this is not native GPU evidence.",
-    "The standalone runtime is verified to load and respond to its restart control, and its ZIP project retains the 12 km group. The player starts at the origin, so this does not demonstrate gameplay traversal to 12 km.",
+    "The standalone runtime loads near the 12 km content and responds to its restart control. This does not demonstrate sustained gameplay traversal over a long distance.",
     "No physical mobile, growing-world performance, memory, or live provider acceptance is claimed.",
   ],
   renderers: {},
@@ -181,7 +181,7 @@ async function inspectCanvasCenter(image, bounds, minimumMarkerPixels = 500) {
   }
   assert(
     markerPixels >= minimumMarkerPixels,
-    `Expected the teal far marker to be visible in the centered canvas after Frame; observed ${markerPixels} matching pixels.`,
+    `Expected the teal far marker to be visible in the centered canvas; observed ${markerPixels} matching pixels.`,
   );
   return {
     region: "center 30% x 60% of the rendered canvas",
@@ -231,6 +231,37 @@ function assertCanvasChanged(before, after, bounds) {
       minimumChangedPixels: 5000,
     };
   });
+}
+
+async function inspectStandaloneFarPlatform(image, bounds) {
+  assert(bounds, "Standalone canvas has a browser bounding box");
+  const crop = {
+    left: Math.floor(bounds.x + bounds.width * 0.4),
+    top: Math.floor(bounds.y + bounds.height * 0.2),
+    width: Math.floor(bounds.width * 0.2),
+    height: Math.floor(bounds.height * 0.25),
+  };
+  const { data } = await sharp(image)
+    .extract(crop)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let platformPixels = 0;
+  for (let offset = 0; offset < data.length; offset += 3) {
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    if (
+      (red > 230 && green > 230 && blue > 220) ||
+      (green > 210 && blue > 210 && blue > red + 5)
+    )
+      platformPixels += 1;
+  }
+  assert(
+    platformPixels >= 100,
+    `Expected the pale platform ahead of the player; observed ${platformPixels} matching pixels.`,
+  );
+  return { region: crop, platformPixels, minimumPlatformPixels: 100 };
 }
 
 function contentTypeFor(path) {
@@ -464,6 +495,19 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
       animations: "disabled",
     });
 
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page.waitForTimeout(300);
+    const playImage = await page.screenshot({
+      path: `${outputPath}/${rendererName}-play-12km.png`,
+      animations: "disabled",
+    });
+    lane.editorPlayVisibility = await inspectStandaloneFarPlatform(
+      playImage,
+      await page.locator(".scene canvas").first().boundingBox(),
+    );
+    lane.checks.editorPlayDistantContentVisible = true;
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(
       page.getByRole("button", { name: "Continue your saved world" }),
@@ -588,20 +632,29 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     await expect(player.locator(".score")).toBeVisible();
     await player.getByRole("button", { name: "Restart" }).click();
     await expect(player.locator('main[data-ready="true"]')).toBeVisible();
-    await player.screenshot({
+    await player.waitForTimeout(300);
+    const standaloneImage = await player.screenshot({
       path: `${outputPath}/${rendererName}-standalone.png`,
       animations: "disabled",
     });
+    const standaloneCanvas = player.locator("canvas").first();
+    await expect(standaloneCanvas).toBeVisible();
+    const standaloneVisibility = await inspectStandaloneFarPlatform(
+      standaloneImage,
+      await standaloneCanvas.boundingBox(),
+    );
     assert.deepEqual(standaloneErrors, []);
     assert.deepEqual(standaloneExternal, []);
     assert.deepEqual(standaloneApiRequests, []);
     assert(served.has("runtime.js") && served.has("project.json"));
     lane.checks.independentStandaloneReadyAndInteractive = true;
+    lane.checks.standaloneDistantContentVisible = true;
     lane.checks.standaloneHasNoEditorApiOrExternalRequests = true;
     lane.standalone = {
       renderer: forceSoftware
         ? "software canvas fallback"
         : "WebGL / Chromium SwiftShader",
+      visibility: standaloneVisibility,
       projectServed: served.has("project.json"),
       runtimeServed: served.has("runtime.js"),
       editorApiRequests: standaloneApiRequests,
@@ -661,10 +714,10 @@ try {
     `Status: **${report.status}**\n\n` +
     `${report.scope}\n\n` +
     `Source commit: \`${sourceCommit}\`. Provider calls: ${report.providerCalls}. External requests: ${report.externalRequests.length}.\n\n` +
-    `The browser creates and edits a grouped object at [12,000, 0, 0] meters, frames it in the editor, reloads local state, downloads the project ZIP, and opens that ZIP in a fresh local server and browser context. Both Chromium SwiftShader WebGL and forced Canvas2D fallback lanes are included.\n\n` +
+    `The browser creates and edits a grouped object at [12,000, 0, 0] meters, frames it in the editor, checks that entering Play shows the object, reloads local state, downloads the project ZIP, and checks that the object is visible in a fresh standalone player context. Both Chromium SwiftShader WebGL and forced Canvas2D fallback lanes are included.\n\n` +
     `After Frame, the harness checks the centered canvas pixels for the fixture marker's tolerant teal color signature and requires at least 500 matching pixels and a 500-pixel increase over the pre-frame view. It also requires at least 5,000 central pixels to change from the pre-frame view.\n\n` +
     `Limitations: ${report.limitations.join(" ")}\n\n` +
-    `See [report.json](./report.json) for assertions and request audits. Screenshots show the created, framed, edited, reloaded, and standalone states for each lane.\n`;
+    `See [report.json](./report.json) for assertions and request audits. Screenshots show the created, framed, edited, editor Play, reloaded, and standalone states for each lane.\n`;
   await writeFile(`${outputPath}/README.md`, markdown);
   if (failure) throw failure;
   console.log(

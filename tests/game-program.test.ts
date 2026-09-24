@@ -13,6 +13,22 @@ import {
 const emptyProgram: GameProgram = { variables: [], rules: [] };
 
 describe("game program schema and references", () => {
+  it("accepts an optional bounded world-space spawn", () => {
+    expect(
+      gameProgramSchema.parse({
+        ...emptyProgram,
+        spawn: [12_000, 0.5, 6],
+      }).spawn,
+    ).toEqual([12_000, 0.5, 6]);
+    expect(
+      gameProgramSchema.safeParse({
+        ...emptyProgram,
+        spawn: [GAME_PROGRAM_LIMITS.maxNumericValue + 1, 0.5, 6],
+      }).success,
+    ).toBe(false);
+    expect(gameProgramSchema.parse(emptyProgram).spawn).toBeUndefined();
+  });
+
   it("rejects dangerous or unknown variables and duplicate rule IDs", () => {
     expect(
       gameProgramSchema.safeParse({

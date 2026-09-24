@@ -18,6 +18,7 @@ import {
   gameplayEntityForVisualState,
   isTextEntryTarget,
   movingEntityPosition,
+  playerSpawnForProject,
   stepGameplay,
   type PlayerState,
 } from "@/lib/gameplay";
@@ -124,7 +125,9 @@ const softwareRendererError =
   "This browser could not start its 2D graphics fallback. Your world needs a browser with canvas support.";
 const softwareFallbackWarning =
   "WebGL2 could not initialize, so Orbsie is using its software canvas renderer.";
-const playerStart: PlayerState = { position: [0, 0.5, 5], velocityY: 0 };
+function playerStartForProject(project: Project): PlayerState {
+  return { position: playerSpawnForProject(project), velocityY: 0 };
+}
 let motionPreference: MediaQueryList | undefined;
 const reduced = () => {
   if (typeof window === "undefined") return false;
@@ -1653,7 +1656,9 @@ export default function SoftwareWorld({
   const score = useOrb((state) => state.score);
   const reset = useOrb((state) => state.reset);
   const session = useMemo(() => new GameSession(), []);
-  const playerRef = useRef<PlayerState>(copyPlayerState(playerStart));
+  const hasEnteredPlay = useRef(playing);
+  const [initialPlayerState] = useState(() => playerStartForProject(project));
+  const playerRef = useRef<PlayerState>(copyPlayerState(initialPlayerState));
   const initialPlaybackFocus = playbackFormationResidencyFocusCell(
     playerRef.current.position,
   );
@@ -2021,10 +2026,17 @@ export default function SoftwareWorld({
           previousReset.current !== current.reset ||
           previousProjectId.current !== projectNow.id
         ) {
-          playerRef.current = copyPlayerState(playerStart);
+          playerRef.current = playerStartForProject(projectNow);
+          if (previousProjectId.current !== projectNow.id)
+            hasEnteredPlay.current = false;
           inputRef.current.clear();
           previousReset.current = current.reset;
           previousProjectId.current = projectNow.id;
+        }
+        if (current.playing && !hasEnteredPlay.current) {
+          playerRef.current = playerStartForProject(projectNow);
+          inputRef.current.clear();
+          hasEnteredPlay.current = true;
         }
         const rulesChanged = session.sync(
           projectNow.id,
@@ -2039,7 +2051,7 @@ export default function SoftwareWorld({
         const resetAvatar = () => {
           if (generationRef.current === session.resetGeneration) return false;
           generationRef.current = session.resetGeneration;
-          playerRef.current = copyPlayerState(playerStart);
+          playerRef.current = playerStartForProject(useOrb.getState().project);
           useOrb.getState().set({
             score: [],
             gameScore: 0,

@@ -59,6 +59,7 @@ const TWO_PI = Math.PI * 2;
 export const WORLD_NAVIGATION_CAMERA_ELEVATION_RADIANS = Math.PI / 6;
 const WORLD_NAVIGATION_MIN_FAR_PLANE = 250;
 export const WORLD_NAVIGATION_DEFAULT_DISTANCE = 24;
+export const WORLD_NAVIGATION_PLAY_MIN_DISTANCE = 12;
 const FRAME_MARGIN = 1.1;
 
 function clamp(value: number, low: number, high: number) {
@@ -155,8 +156,9 @@ export function worldNavigationCameraPose(
 
 /**
  * Derive a temporary play camera target from the authoritative player world
- * position while retaining the editor's heading and zoom. The saved state is
- * never changed, so ending play restores the authored view automatically.
+ * position while retaining the editor's heading and any zoom wider than the
+ * comfortable play minimum. The saved state is never changed, so ending play
+ * restores the authored view automatically.
  */
 export function worldNavigationFollowState(
   savedNavigation: WorldNavigationState,
@@ -170,6 +172,7 @@ export function worldNavigationFollowState(
   return {
     ...saved,
     target: positionIsFinite ? boundedTarget(playerPosition) : saved.target,
+    distance: Math.max(saved.distance, WORLD_NAVIGATION_PLAY_MIN_DISTANCE),
   };
 }
 

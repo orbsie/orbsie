@@ -14,6 +14,7 @@ import {
   worldNavigationLandingLookTarget,
   worldNavigationProjectState,
   WORLD_NAVIGATION_LIMITS,
+  WORLD_NAVIGATION_PLAY_MIN_DISTANCE,
   type WorldNavigationBounds,
   type WorldNavigationVec3,
 } from "../src/lib/world-navigation";
@@ -136,6 +137,33 @@ describe("shared world navigation", () => {
     expect(worldNavigationCameraPose(savedNavigation).target).toEqual(
       savedNavigation.target,
     );
+    expect(JSON.stringify(savedNavigation)).toBe(savedSnapshot);
+  });
+
+  it("widens close editor zoom only in the temporary play view", () => {
+    const savedNavigation = createWorldNavigationState({
+      target: [12_000, 4, -8_000],
+      heading: 2.25,
+      distance: WORLD_NAVIGATION_LIMITS.minDistance,
+    });
+    const savedSnapshot = JSON.stringify(savedNavigation);
+    const farPlayer: WorldNavigationVec3 = [12_000, 0.5, 5.5];
+    const playView = worldNavigationFollowState(savedNavigation, farPlayer);
+
+    expect(playView.target).toEqual(farPlayer);
+    expect(playView.heading).toBe(savedNavigation.heading);
+    expect(playView.distance).toBe(WORLD_NAVIGATION_PLAY_MIN_DISTANCE);
+    expect(worldNavigationCameraPose(playView).target).toEqual(farPlayer);
+    const terrain = selectWorldTerrainChunks({
+      focus: playView.target,
+      distance: playView.distance,
+      aspect: portraitProjection.viewportAspect,
+    });
+    expect(terrain).toHaveLength(49);
+    expect(terrain[24]).toEqual(
+      worldTerrainChunkKeyAt(farPlayer[0], farPlayer[2], terrain[24].lod),
+    );
+    expect(savedNavigation.distance).toBe(WORLD_NAVIGATION_LIMITS.minDistance);
     expect(JSON.stringify(savedNavigation)).toBe(savedSnapshot);
   });
 

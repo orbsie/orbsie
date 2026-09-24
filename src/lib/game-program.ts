@@ -138,6 +138,7 @@ export const gameProgramRuleSchema = z.object({
 
 export const gameProgramSchema = z
   .object({
+    spawn: position.optional(),
     variables: z
       .array(gameProgramVariableSchema)
       .max(GAME_PROGRAM_LIMITS.maxVariables)

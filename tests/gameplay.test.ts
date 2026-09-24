@@ -9,6 +9,7 @@ import {
 } from "../src/lib/game-program";
 import {
   movingEntityPosition,
+  playerSpawnForProject,
   stepGameplay,
   type PlayerState,
 } from "../src/lib/gameplay";
@@ -20,6 +21,126 @@ const player = (position: [number, number, number]): PlayerState => ({
 });
 
 describe("gameplay runtime", () => {
+  it("keeps the legacy start and authored games without a spawn", () => {
+    expect(playerSpawnForProject({ entities: [] })).toEqual([0, 0.5, 5]);
+
+    const distantAuthoredGame = {
+      entities: [
+        {
+          id: "far-platform",
+          label: "Far platform",
+          position: [12_000, 0, 0] as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+          color: "#6ead60",
+          stage: "ready" as const,
+          geometry: { kind: "platform" as const, detail: "refined" as const },
+        },
+      ],
+      game: {
+        variables: [],
+        rules: [
+          {
+            id: "start",
+            trigger: { type: "start" as const },
+            conditions: [],
+            actions: [],
+          },
+        ],
+      },
+    };
+    expect(playerSpawnForProject(distantAuthoredGame)).toEqual([0, 0.5, 5]);
+    expect(
+      playerSpawnForProject({
+        entities: distantAuthoredGame.entities,
+        game: { variables: [], rules: [] },
+      }),
+    ).toEqual([0, 0.5, 5]);
+  });
+
+  it("derives a stable ground-level start beyond distant ready content", () => {
+    expect(playerSpawnForProject({ entities: [] })).toEqual([0, 0.5, 5]);
+    const distantProject = {
+      groups: [
+        {
+          id: "far-group",
+          label: "Far group",
+          position: [12_000, 0, 0] as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+        },
+      ],
+      entities: [
+        {
+          id: "far-rock",
+          label: "Far rock",
+          parentId: "far-group",
+          position: [0, 0, 0] as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+          color: "#6ead60",
+          stage: "ready" as const,
+          geometry: { kind: "rock" as const, detail: "refined" as const },
+        },
+      ],
+    };
+    const start = playerSpawnForProject(distantProject);
+
+    expect(start).toEqual(playerSpawnForProject(distantProject));
+    expect(start[0]).toBeCloseTo(12_000, 0);
+    expect(start[1]).toBe(0.5);
+    expect(start[2]).toBeGreaterThan(5);
+    expect(Math.hypot(start[0] - 12_000, start[2])).toBeLessThan(8);
+  });
+
+  it("chooses the nearest far cluster with a stable ID tie-break", () => {
+    const platform = (id: string, x: number): Entity => ({
+      id,
+      label: id,
+      position: [x, 0, 0],
+      scale: [1, 1, 1],
+      color: "#6ead60",
+      stage: "ready",
+      geometry: { kind: "platform", detail: "refined" },
+    });
+    const clusters = {
+      entities: [platform("cluster-z", -12_000), platform("cluster-a", 12_000)],
+    };
+    const start = playerSpawnForProject(clusters);
+
+    expect(start).toEqual(
+      playerSpawnForProject({ entities: [...clusters.entities].reverse() }),
+    );
+    expect(start[0]).toBeCloseTo(12_000, 0);
+    expect(start[1]).toBe(0.5);
+    expect(start[2]).toBeGreaterThan(5);
+    expect(Math.hypot(start[0] - 12_000, start[2])).toBeLessThan(8);
+  });
+
+  it("uses an explicit spawn for far games and does not relocate near content", () => {
+    const readyNearEntity = {
+      id: "near-rock",
+      label: "Near rock",
+      position: [0, 0, 0] as [number, number, number],
+      scale: [1, 1, 1] as [number, number, number],
+      color: "#6ead60",
+      stage: "ready" as const,
+      geometry: { kind: "rock" as const, detail: "refined" as const },
+    };
+    expect(
+      playerSpawnForProject({
+        entities: [readyNearEntity],
+        game: {
+          spawn: [120_000, 1, -300] as [number, number, number],
+          variables: [],
+          rules: [],
+        },
+      }),
+    ).toEqual([120_000, 1, -300]);
+    expect(
+      playerSpawnForProject({
+        entities: [readyNearEntity],
+      }),
+    ).toEqual([0, 0.5, 5]);
+  });
+
   it("allows walking past the former circular parcel edge", () => {
     const result = stepGameplay(
       player([8.4, 0.42, 0]),
