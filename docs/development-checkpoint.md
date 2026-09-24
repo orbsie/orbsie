@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 owner-visible ChatGPT device challenge: production created an isolated
+anonymous Orbsie acceptance session and returned a real OpenAI device URL/code.
+The code was shown to the owner, but the challenge expired without a grant;
+the final authenticated status was HTTP 200, idle/disconnected. The temporary
+session state was removed, no code or credential was retained in evidence,
+and no ChatGPT model call ran. Evidence:
+`docs/evidence/production-hosted-chatgpt/owner-code-20260924/report.json`.
+Wait until the owner is ready before starting another ten-minute challenge.
+A same-day Gateway credits GET still returned HTTP 200 with balance
+`-0.0033684`; paid Gateway inference remains on hold.
+
 Sep 24 production release after focused capture and segment integration:
 the full Vitest suite passed (1,783 passed, 27 skipped) and the optimized
 Next.js build passed at source `d11058b`. Vercel deployment
