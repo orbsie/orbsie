@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 stream-recovery case expansion: the real-editor intercepted-response
+fixture now covers provider-error, provider `length`/output-limit, and
+mid-record EOF after a provisional operation, in addition to its prior clean
+EOF, rejected body read, invalid commit and split UTF-8 cases. The new cases
+assert exact bounded terminal class and toast, unchanged saved baseline,
+visible Try again/Use last working, no automatic retry, and an explicit retry
+preserving stable IDs and the unrelated entity. The output-limit record now
+matches the server's `TRUNCATED_SCENE_STREAM` diagnostic; its retry forwards
+that safe code. One Android-sized 390×844 toast check passed with both controls
+within the viewport and no horizontal overflow. Prompt text is omitted from
+the report and masked in four restored full-page desktop/phone screenshots.
+Astra reviewed the Luna diff, the output-limit toast crop and Android edit
+image. The fixture passed 14 intercepted requests, zero live calls, zero
+blocked external requests, zero unexpected API calls and zero page errors;
+Node syntax, Prettier, diff, privacy and type checks passed. Evidence:
+`docs/evidence/stream-resilience-recovery-cases-20260924/`. This is
+deterministic client recovery evidence, not actual cross-provider interruption
+or proof that production stream failures have decreased. Current production
+logs sampled during this turn contained no relevant generation request and
+could not establish a failure cause.
+
 Sep 24 combined fresh-gameplay fixture isolation: after a WebGL-pass and
 Canvas2D Undo movement failure, diagnostics showed a roughly 3.8-second gap
 in both RAF and the page heartbeat while Canvas2D drawing stayed below 26 ms.

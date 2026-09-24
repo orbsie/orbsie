@@ -8,6 +8,17 @@ import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const url = process.env.TEST_URL ?? "http://127.0.0.1:3022";
 const origin = new URL(url).origin;
+const promptMaskStyle = `
+  #prompt,
+  .workspace-heading h2,
+  .chat-messages .message.user,
+  .chat-messages .message.assistant:not(.authoring-activity-message) {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    caret-color: transparent !important;
+  }
+`;
 const output =
   process.argv[2] ??
   process.env.ORBSIE_FAILURE_RECOVERY_EVIDENCE_DIR ??
@@ -81,6 +92,23 @@ const safeGenerationFailure = {
     ],
   },
 };
+const providerErrorFailure = {
+  failure: "provider-error",
+  error: "The provider could not complete this generation.",
+  code: "PROVIDER_STREAM_ERROR",
+  diagnostic: {
+    operation: 1,
+    finishReason: "error",
+    issues: [],
+    providerStatus: null,
+  },
+};
+const outputLimitFailure = {
+  failure: "output-limit",
+  error: "The model reached its output limit before finishing.",
+  code: "TRUNCATED_SCENE_STREAM",
+  diagnostic: { operation: 1, finishReason: "length", issues: [] },
+};
 const report = {
   mode: "fixture-generation-retry-feedback-real-editor",
   fixture: {
@@ -97,6 +125,9 @@ const report = {
       "edit body read rejection after a provisional operation",
       "invalid final commit after a provisional operation",
       "split UTF-8 code point in an explicit retry",
+      "provider-error NDJSON terminal after a provisional operation",
+      "output-limit NDJSON terminal after a provisional operation",
+      "mid-record EOF after a provisional operation",
     ],
     structuredFailure: {
       code: safeGenerationFailure.code,
@@ -118,7 +149,6 @@ const report = {
 };
 
 const summarizeRequest = (body) => ({
-  prompt: body.prompt,
   selected: body.selected,
   projectId: body.project?.id,
   projectRevision: body.project?.revision,
@@ -133,6 +163,7 @@ const summarizeRequest = (body) => ({
       }
     : undefined,
 });
+const requestPrompts = [];
 const getProject = (page) =>
   storageSnapshot(page).then((value) => value.project);
 async function waitForProject(page, predicate) {
@@ -148,6 +179,20 @@ async function waitForProject(page, predicate) {
     .toBe(true);
   return project;
 }
+async function latestGenerationTerminal(page) {
+  return page.evaluate(() => {
+    try {
+      const saved = localStorage.getItem("orbsie-generation-diagnostics-v1");
+      const entries = JSON.parse(saved ?? "{}").entries;
+      return Array.isArray(entries)
+        ? [...entries].reverse().find((entry) => entry.kind === "generation")
+            ?.terminal
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  });
+}
 async function selectObject(page, label) {
   await page.getByRole("button", { name: "Show objects", exact: true }).click();
   await page.locator(".object-list button").filter({ hasText: label }).click();
@@ -155,6 +200,149 @@ async function selectObject(page, label) {
 async function submitEdit(page, text) {
   await page.locator("#prompt").fill(text);
   await page.getByRole("button", { name: "Change this", exact: true }).click();
+}
+
+async function exerciseTerminalRecovery({
+  name,
+  prompt,
+  failureRequest,
+  successRequest,
+  failureCopy,
+  terminalClass,
+  retryFeedback,
+  successColor,
+}) {
+  let mobileViewportEvidence;
+  await selectObject(page, "Friendly tree");
+  const before = await getProject(page);
+  const beforeIds = before.entities.map((entity) => entity.id);
+  const unrelatedBefore = structuredClone(
+    before.entities.find((entity) => entity.id === unrelatedId),
+  );
+
+  await submitEdit(page, prompt);
+  await expect(page.locator(".toast.error")).toContainText(failureCopy);
+  await expect(
+    page.getByRole("button", { name: "Try again", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Try again", exact: true }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Use last working", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Use last working", exact: true }),
+  ).toBeEnabled();
+
+  const failed = await getProject(page);
+  assert.deepEqual(failed, before);
+  const terminal = await latestGenerationTerminal(page);
+  assert.equal(terminal?.reason, terminalClass.reason);
+  assert.equal(terminal?.failureCode, terminalClass.failureCode);
+  assert.equal(terminal?.finishReason, terminalClass.finishReason);
+  assert.equal(report.requests.length, failureRequest);
+  assert.equal(requestPrompts[failureRequest - 1], prompt);
+  assert.equal(report.requests[failureRequest - 1].selected, treeId);
+
+  if (name === "outputLimitRecovery") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator(".toast.error")).toBeVisible();
+    const buttons = [
+      page.getByRole("button", { name: "Try again", exact: true }),
+      page.getByRole("button", { name: "Use last working", exact: true }),
+    ];
+    const boxes = [];
+    for (const button of buttons) {
+      await expect(button).toBeVisible();
+      await expect(button).toBeEnabled();
+      boxes.push(await button.boundingBox());
+    }
+    const dimensions = await page.evaluate(() => ({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      documentWidth: document.documentElement.scrollWidth,
+      bodyWidth: document.body.scrollWidth,
+    }));
+    assert.ok(
+      Math.max(dimensions.documentWidth, dimensions.bodyWidth) <=
+        dimensions.width,
+      "output-limit recovery view must not overflow horizontally",
+    );
+    assert.ok(
+      boxes.every(
+        (box) =>
+          box &&
+          box.x >= 0 &&
+          box.y >= 0 &&
+          box.x + box.width <= dimensions.width &&
+          box.y + box.height <= dimensions.height,
+      ),
+      "output-limit recovery buttons must stay inside the mobile viewport",
+    );
+    await page.locator(".toast.error").screenshot({
+      path: `${output}/android-output-limit-recovery.png`,
+    });
+    mobileViewportEvidence = {
+      width: dimensions.width,
+      height: dimensions.height,
+      horizontalOverflow: false,
+      recoveryButtonsVisibleAndReachable: true,
+      screenshot: "android-output-limit-recovery.png",
+    };
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(buttons[0]).toBeVisible();
+  }
+
+  await page.waitForTimeout(350);
+  assert.equal(report.requests.length, failureRequest);
+
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  const retried = await waitForProject(
+    page,
+    (project) =>
+      project.entities.find((entity) => entity.id === treeId)?.color ===
+        successColor && project.entities.length === beforeIds.length,
+  );
+  assert.equal(report.requests.length, successRequest);
+  assert.equal(requestPrompts[successRequest - 1], prompt);
+  assert.equal(report.requests[successRequest - 1].selected, treeId);
+  if (retryFeedback) {
+    assert.equal(
+      report.requests[successRequest - 1].generationFeedback?.code,
+      retryFeedback.code,
+    );
+    assert.equal(
+      report.requests[successRequest - 1].generationFeedback?.finishReason,
+      retryFeedback.finishReason,
+    );
+  }
+  assert.deepEqual(
+    retried.entities.map((entity) => entity.id),
+    beforeIds,
+  );
+  assert.deepEqual(
+    retried.entities.find((entity) => entity.id === unrelatedId),
+    unrelatedBefore,
+  );
+  await page.waitForTimeout(350);
+  assert.equal(report.requests.length, successRequest);
+
+  report.checks[name] = {
+    terminalClass: terminal,
+    failureCopy,
+    savedBaselineUnchanged: true,
+    tryAgainAvailable: true,
+    useLastWorkingAvailable: true,
+    noAutomaticRetry: true,
+    explicitRetryRequest: successRequest,
+    promptRestoredInMemory: true,
+    stableEntityIds: true,
+    unrelatedEntityPreserved: true,
+    ...(mobileViewportEvidence
+      ? { mobileViewport: mobileViewportEvidence }
+      : {}),
+  };
 }
 
 const browser = await chromium.launch({
@@ -174,6 +362,7 @@ try {
   await context.exposeBinding(
     "__orbsieRecordGenerationRequest",
     (_source, body) => {
+      requestPrompts.push(body.prompt);
       report.requests.push(summarizeRequest(body));
       return report.requests.length;
     },
@@ -248,6 +437,39 @@ try {
           ];
         else if (number === 7) commands = failedEdit("#dd8a78", false);
         else if (number === 8) commands = fixture.successSelected;
+        else if (number === 9)
+          commands = [
+            { type: "set_material", id: fixture.treeId, color: "#d84f5f" },
+            fixture.providerErrorFailure,
+          ];
+        else if (number === 10) commands = fixture.successProviderErrorRecovery;
+        else if (number === 11)
+          commands = [
+            { type: "set_material", id: fixture.treeId, color: "#d6aa42" },
+            fixture.outputLimitFailure,
+          ];
+        else if (number === 12) commands = fixture.successOutputLimitRecovery;
+        else if (number === 13) {
+          const encoder = new TextEncoder();
+          const bytes = encoder.encode(
+            JSON.stringify({
+              type: "set_material",
+              id: fixture.treeId,
+              color: "#7745bd",
+            }) +
+              "\n" +
+              '{"type":"set_material","id":"tree-0","color":"#',
+          );
+          return new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(bytes);
+                controller.close();
+              },
+            }),
+            { headers: { "Content-Type": "application/x-ndjson" } },
+          );
+        } else if (number === 14) commands = fixture.successMidRecordRecovery;
         else
           throw new Error(
             "Unexpected generation request in the deterministic fixture.",
@@ -279,6 +501,8 @@ try {
     {
       createCommands,
       safeGenerationFailure,
+      providerErrorFailure,
+      outputLimitFailure,
       pendingEntity: { ...pending, geometry: undefined },
       treeId,
       successUnselected: successCommands(
@@ -288,6 +512,18 @@ try {
       successSelected: successCommands(
         "#a2d07f",
         "The selected retry succeeded.",
+      ),
+      successProviderErrorRecovery: successCommands(
+        "#c57bd7",
+        "The provider-error retry succeeded.",
+      ),
+      successOutputLimitRecovery: successCommands(
+        "#71bfd1",
+        "The output-limit retry succeeded.",
+      ),
+      successMidRecordRecovery: successCommands(
+        "#e08b55",
+        "The interrupted-stream retry succeeded.",
       ),
     },
   );
@@ -344,9 +580,12 @@ try {
     });
   });
   page = await context.newPage();
-  page.on("pageerror", (error) => report.pageErrors.push(error.message));
+  page.on("pageerror", (error) => report.pageErrors.push(error.name));
   page.setDefaultTimeout(30_000);
   await page.goto(url, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("[data-renderer-availability=ready]")).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(page.locator("canvas")).toBeVisible();
 
   await page
@@ -354,15 +593,22 @@ try {
     .fill("Build the recovery fixture");
   await page.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.locator(".toast.error")).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
   assert.equal(report.requests.length, 1);
   assert.equal(report.requests[0].selected, undefined);
   assert.equal(report.requests[0].generationFeedback, undefined);
   await expect(page.locator(".toast.error")).toContainText(
     "Your last working scene is safe.",
   );
-  await page.screenshot({ path: `${output}/desktop-initial-recovery.png` });
+  await page.screenshot({
+    path: `${output}/desktop-initial-recovery.png`,
+    style: promptMaskStyle,
+  });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: `${output}/android-initial-recovery.png` });
+  await page.screenshot({
+    path: `${output}/android-initial-recovery.png`,
+    style: promptMaskStyle,
+  });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole("button", { name: "Show objects", exact: true }).click();
   await expect(page.locator(".object-list button")).toHaveCount(0);
@@ -389,7 +635,7 @@ try {
     revision: first.revision,
     entityIds: first.entities.map((entity) => entity.id),
   };
-  assert.equal(report.requests[1].prompt, report.requests[0].prompt);
+  assert.equal(requestPrompts[1], requestPrompts[0]);
 
   // No object was selected for this failed edit. Selecting another object
   // before retry must not change the original unselected request scope.
@@ -407,9 +653,15 @@ try {
     firstFailed.entities.find((entity) => entity.id === unrelatedId),
     originalUnrelated,
   );
-  await page.screenshot({ path: `${output}/desktop-edit-recovery.png` });
+  await page.screenshot({
+    path: `${output}/desktop-edit-recovery.png`,
+    style: promptMaskStyle,
+  });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: `${output}/android-edit-recovery.png` });
+  await page.screenshot({
+    path: `${output}/android-edit-recovery.png`,
+    style: promptMaskStyle,
+  });
   await page.setViewportSize({ width: 1280, height: 900 });
   await selectObject(page, "Unrelated rock");
   await page.getByRole("button", { name: "Try again", exact: true }).click();
@@ -420,7 +672,7 @@ try {
         "#8ac6dd" && project.entities.length === 2,
   );
   assert.equal(report.requests[3].selected, undefined);
-  assert.equal(report.requests[3].prompt, report.requests[2].prompt);
+  assert.equal(requestPrompts[3], requestPrompts[2]);
   assert.deepEqual(report.requests[3].generationFeedback, {
     version: 1,
     projectId: report.requests[2].projectId,
@@ -517,7 +769,7 @@ try {
         "#a2d07f" && project.entities.length === 2,
   );
   assert.equal(report.requests[7].selected, treeId);
-  assert.equal(report.requests[7].prompt, report.requests[6].prompt);
+  assert.equal(requestPrompts[7], requestPrompts[6]);
   assert.deepEqual(report.requests[7].generationFeedback, {
     version: 1,
     projectId: report.requests[6].projectId,
@@ -550,6 +802,49 @@ try {
     noAutomaticExtraRequest: true,
     projectScopedFeedbackForwarded: true,
   };
+  await exerciseTerminalRecovery({
+    name: "providerErrorRecovery",
+    prompt: "Polish the selected tree",
+    failureRequest: 9,
+    successRequest: 10,
+    failureCopy:
+      "Your AI provider could not complete this request. Check its connection or try again.",
+    terminalClass: {
+      reason: "provider-error",
+      failureCode: "provider-rejected",
+      finishReason: "error",
+    },
+    retryFeedback: { code: "PROVIDER_STREAM_ERROR", finishReason: "error" },
+    successColor: "#c57bd7",
+  });
+  await exerciseTerminalRecovery({
+    name: "outputLimitRecovery",
+    prompt: "Give the selected tree a brighter finish",
+    failureRequest: 11,
+    successRequest: 12,
+    failureCopy:
+      "The model reached its output limit before finishing. Your last working scene is safe.",
+    terminalClass: {
+      reason: "output-limit",
+      failureCode: "output-limit",
+      finishReason: "length",
+    },
+    retryFeedback: { code: "TRUNCATED_SCENE_STREAM", finishReason: "length" },
+    successColor: "#71bfd1",
+  });
+  await exerciseTerminalRecovery({
+    name: "midRecordEOFRecovery",
+    prompt: "Make the selected tree warm colored",
+    failureRequest: 13,
+    successRequest: 14,
+    failureCopy:
+      "The model returned a scene change that could not be applied. Your last working scene is safe.",
+    terminalClass: {
+      reason: "parser-failure",
+      failureCode: "parser",
+    },
+    successColor: "#e08b55",
+  });
   report.checks.interceptedGenerationRequests = {
     fixtureRequests: report.requests.length,
     liveInferenceCalls: 0,
@@ -557,18 +852,14 @@ try {
   report.status = "passed";
 } catch (error) {
   report.status = "failed";
-  report.error = String(error);
+  report.error =
+    error instanceof Error
+      ? `${error.name}: fixture assertion failed`
+      : "Fixture assertion failed";
   if (page) {
     report.transientErrors = await page
       .evaluate(() => window.__orbsieFixtureErrors ?? [])
       .catch(() => []);
-    report.visibleText = await page
-      .locator("body")
-      .innerText()
-      .catch(() => "unavailable");
-    await page
-      .screenshot({ path: `${output}/failure.png` })
-      .catch(() => undefined);
   }
   throw error;
 } finally {
