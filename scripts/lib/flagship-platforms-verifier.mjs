@@ -430,6 +430,61 @@ export function validateFrameTelemetryDrain(
 }
 
 /**
+ * Mark takeoff only when adjacent correlated render frames show the player
+ * rising from the ground band above its threshold. Input dispatch by itself
+ * does not establish takeoff.
+ */
+export function observedUpwardTakeoff(
+  previousFrame,
+  currentFrame,
+  groundCenterYThreshold = 0.5,
+) {
+  const playerCenterY = (sample) =>
+    sample?.player?.runtimeCenter?.[1] ?? sample?.player?.center?.[1];
+  const previousY = playerCenterY(previousFrame);
+  const currentY = playerCenterY(currentFrame);
+  if (
+    !Number.isSafeInteger(previousFrame?.frameId) ||
+    !Number.isSafeInteger(currentFrame?.frameId) ||
+    currentFrame.frameId !== previousFrame.frameId + 1 ||
+    previousFrame.player?.frameId !== previousFrame.frameId ||
+    currentFrame.player?.frameId !== currentFrame.frameId ||
+    !Number.isFinite(previousY) ||
+    !Number.isFinite(currentY) ||
+    previousY > groundCenterYThreshold ||
+    currentY <= groundCenterYThreshold ||
+    currentY <= previousY
+  )
+    return null;
+  return {
+    frameId: currentFrame.frameId,
+    previousFrameId: previousFrame.frameId,
+    previousCenterY: previousY,
+    centerY: currentY,
+    rise: currentY - previousY,
+  };
+}
+
+/** Return correlated player ground samples strictly after observed takeoff. */
+export function postTakeoffGroundContactFrames(
+  frameSamples,
+  takeoffFrameId,
+  groundCenterYThreshold = 0.5,
+) {
+  return frameSamples.filter((sample) => {
+    const centerY =
+      sample?.player?.runtimeCenter?.[1] ?? sample?.player?.center?.[1];
+    return (
+      Number.isSafeInteger(sample?.frameId) &&
+      sample.frameId > takeoffFrameId &&
+      sample.player?.frameId === sample.frameId &&
+      Number.isFinite(centerY) &&
+      centerY <= groundCenterYThreshold
+    );
+  });
+}
+
+/**
  * Apply the unchanged source-contact landing gate to adjacent, correlated
  * render frames. A frame gap is never bridged, and the returned landing is the
  * exact frame whose runtime pose satisfied sourceLandingEvidence.

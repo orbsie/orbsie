@@ -33,6 +33,8 @@ import {
   movingTargetMotionBound,
   renderedDimensionsMatchSource,
   findFrameLandingEvidence,
+  observedUpwardTakeoff,
+  postTakeoffGroundContactFrames,
   sourcePlatformContact,
   sourceLandingEvidence,
   selectCatalogManifest,
@@ -1095,6 +1097,8 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
   };
   const release = async (phase) => setKeys([], phase);
   const frameCapacity = 2048;
+  const groundCenterYThreshold = 0.5;
+  let takeoffPreviousFrame = null;
   const frameStart = await page.evaluate(
     ({ mapping, capacity }) =>
       window.__orbStartFrameTelemetry(mapping, capacity),
@@ -1132,11 +1136,39 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     const frameSamples = checked.samples;
     for (const frame of frameSamples) {
       frame.phase = phase;
-      if (run.firstTakeoff && frame.frameId > run.firstTakeoff.frameId) {
-        run.frameSamples.push(frame);
-        run.frameTelemetry.postTakeoffFrameCount++;
-        if (groundContact(frame)) run.groundContactSamples.push(frame);
+      if (!run.firstTakeoff && takeoffPreviousFrame) {
+        const upwardTakeoff = observedUpwardTakeoff(
+          takeoffPreviousFrame,
+          frame,
+          groundCenterYThreshold,
+        );
+        if (upwardTakeoff) {
+          run.firstTakeoff = {
+            ...upwardTakeoff,
+            atPerformanceMs: frame.atPerformanceMs,
+            frameTimestampMs: frame.frameTimestampMs,
+            from: "initial-ground",
+          };
+          run.takeoffDetection.status = "observed-upward-launch";
+          takeoffPreviousFrame = null;
+        }
       }
+      if (!run.firstTakeoff && run.takeoffDetection?.status === "waiting")
+        takeoffPreviousFrame = frame;
+    }
+    if (run.firstTakeoff) {
+      const postTakeoffFrames = frameSamples.filter(
+        (frame) => frame.frameId > run.firstTakeoff.frameId,
+      );
+      run.frameSamples.push(...postTakeoffFrames);
+      run.frameTelemetry.postTakeoffFrameCount += postTakeoffFrames.length;
+      run.groundContactSamples.push(
+        ...postTakeoffGroundContactFrames(
+          frameSamples,
+          run.firstTakeoff.frameId,
+          groundCenterYThreshold,
+        ),
+      );
     }
     const compact = compactTelemetry(observation.world, mapping);
     compact.phase = phase;
@@ -1145,7 +1177,8 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
   const groundContact = (sample) =>
     Boolean(
       sample.player &&
-      (sample.player.runtimeCenter ?? sample.player.center)[1] <= 0.5,
+      (sample.player.runtimeCenter ?? sample.player.center)[1] <=
+        groundCenterYThreshold,
     );
   const sourceCarried = (sample, entity, asset) => {
     const rendered = sample.platforms[entity.id];
@@ -1182,9 +1215,9 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       method:
         "correlated player samples captured on each requestAnimationFrame",
       sampleSource: "bounded browser ring drained through CDP by the driver",
-      groundCenterYThreshold: 0.5,
+      groundCenterYThreshold,
       limitation:
-        "The ring preserves every rendered frame after takeoff unless an overflow or object loss occurs; it cannot observe gameplay steps that do not render.",
+        "Every correlated rendered frame strictly after observed upward takeoff is checked unless ring overflow or object loss occurs; gameplay steps that do not render remain unobservable.",
     };
     run.sourceContactModel = ordered.map((entity) => ({
       id: entity.id,
@@ -1340,12 +1373,26 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       stage.beforeJump = beforeJumpObservation.snapshot;
       stage.frameSamples.push(...beforeJumpObservation.frames);
       const previousBeforeJump = stage.beforeJump;
-      if (index === 0)
-        run.firstTakeoff = {
-          atPerformanceMs: await page.evaluate(() => performance.now()),
-          frameId: run.frameTelemetry.lastFrameId,
-          from: entity.id,
+      if (index === 0) {
+        takeoffPreviousFrame = beforeJumpObservation.frames.at(-1) ?? null;
+        const baselineY =
+          takeoffPreviousFrame?.player?.runtimeCenter?.[1] ??
+          takeoffPreviousFrame?.player?.center?.[1];
+        if (
+          !takeoffPreviousFrame ||
+          !Number.isFinite(baselineY) ||
+          baselineY > groundCenterYThreshold
+        )
+          throw Error(
+            "Could not establish a correlated player frame in the initial ground band before takeoff.",
+          );
+        run.takeoffDetection = {
+          status: "waiting",
+          groundCenterYThreshold,
+          baselineFrameId: takeoffPreviousFrame.frameId,
+          baselineCenterY: baselineY,
         };
+      }
       const launchDirection =
         touchInput &&
         previousBeforeJump.player &&
@@ -1432,6 +1479,10 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
         }
         await page.waitForTimeout(45);
       }
+      if (index === 0 && !run.firstTakeoff)
+        throw Error(
+          "No upward takeoff was observed from the initial ground frame.",
+        );
       stage.landedAt = landedAt ?? null;
       stage.landingProof = landingProof ?? null;
       if (!landingProof)

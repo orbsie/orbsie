@@ -932,5 +932,12 @@
         "top": 1.0081249987706542
       }
     }
+  },
+  "reviewAnnotation": {
+    "classification": "pre-fix verifier source evidence",
+    "recordedVerifierSha256": "3bce92a616cf20e135b159c7f82f80c9e6e644a7ad8c002a4cfad2b6d9dcc9c2",
+    "correctedVerifierSha256": "08c6f3761b2d3a6b6c9e472c13a99863d9196a7404a47e91e8bd1cf650aee34d",
+    "limitation": "This run set the ground-contact boundary before Jump input and is not evidence for the corrected observed-takeoff boundary.",
+    "currentVerifierLiveValidated": false
   }
 }

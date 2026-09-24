@@ -7,6 +7,8 @@ import {
   jumpReachModel,
   movingTargetMotionBound,
   findFrameLandingEvidence,
+  observedUpwardTakeoff,
+  postTakeoffGroundContactFrames,
   renderedDimensionsMatchSource,
   sourcePlatformContact,
   sourceLandingEvidence,
@@ -235,6 +237,29 @@ it("validates drained render-frame continuity and same-frame object correlation"
     valid: false,
     reason: "platform-frame-id-mismatch-platform-1",
   });
+});
+
+it("excludes pre-jump ground frames and captures ground contact after observed takeoff", () => {
+  const initialGround = frameSample(30, 0.42);
+  const preJumpGround = frameSample(31, 0.42);
+  const upwardLaunch = frameSample(32, 0.55);
+  const laterGround = frameSample(33, 0.42);
+
+  expect(observedUpwardTakeoff(initialGround, preJumpGround, 0.5)).toBeNull();
+  const takeoff = observedUpwardTakeoff(preJumpGround, upwardLaunch, 0.5);
+  expect(takeoff).toMatchObject({
+    frameId: 32,
+    previousFrameId: 31,
+    previousCenterY: 0.42,
+    centerY: 0.55,
+  });
+  expect(
+    postTakeoffGroundContactFrames(
+      [initialGround, preJumpGround, upwardLaunch, laterGround],
+      takeoff!.frameId,
+      0.5,
+    ).map((frame) => frame.frameId),
+  ).toEqual([33]);
 });
 
 it("accepts only strict source contact across adjacent render frames", () => {
