@@ -1,0 +1,936 @@
+{
+  "status": "failed",
+  "mode": "published-flagship-mobile-touch-platform-sequential-landing-carry",
+  "provider": "openrouter",
+  "liveProvider": false,
+  "startedAt": "2026-09-24T21:05:33.809Z",
+  "finishedAt": "2026-09-24T21:05:36.282Z",
+  "repoHead": "7478408043d3145355973862dd960ac1f66d829c",
+  "verifier": {
+    "path": "scripts/verify-flagship-platforms.mjs",
+    "sha256": "3bce92a616cf20e135b159c7f82f80c9e6e644a7ad8c002a4cfad2b6d9dcc9c2",
+    "dirty": true,
+    "helperPath": "scripts/lib/flagship-platforms-verifier.mjs",
+    "helperSha256": "8d3551c26b06dfaca44a83a740351306ef93915792df8b91ee5001db64665d62"
+  },
+  "catalogManifest": {
+    "source": "saved ZIP assets/catalog/manifest.json",
+    "sha256": "584e992217fc0f617e89f37b09f180b5fb88eabf7be4230861beab43bbd57726"
+  },
+  "zip": {
+    "path": "docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+    "sha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
+    "bytes": 957813,
+    "projectSha256": "fdaabbd42a80478b3395e9220d5385706d646f457e523e2a7010ece3d47837a0",
+    "runtimeSha256": "3d2fa966dc49a46eee64bd453e4db5861f57b565d71ec953f26b05c8ae4c7742",
+    "runtimeCssSha256": "0174f4a45f76e1adaa103d5f1275bdbe1ae1c5e4fe710849428b16940b152e76",
+    "projectId": "7ae95eba-aeca-4474-87d4-342d0dc33aa6",
+    "projectRevision": 30,
+    "title": "A pocketful of sunshine"
+  },
+  "runtime": {
+    "runtimeSha256": "3d2fa966dc49a46eee64bd453e4db5861f57b565d71ec953f26b05c8ae4c7742",
+    "runtimeBytes": 1770481,
+    "runtimeCssSha256": "0174f4a45f76e1adaa103d5f1275bdbe1ae1c5e4fe710849428b16940b152e76",
+    "runtimeCssBytes": 1487
+  },
+  "platforms": [
+    {
+      "id": "platform-1",
+      "label": "Moving Platform 1",
+      "position": [
+        -1,
+        1,
+        5.5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 1,
+        "amplitude": 2,
+        "axis": "x"
+      },
+      "collisionSource": {
+        "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+        "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+        "playerHalfHeight": 0.42,
+        "catalogAssetId": "kenney.nature.platform-grass",
+        "catalogBounds": {
+          "min": [
+            -0.445000023,
+            0,
+            -0.3539196
+          ],
+          "max": [
+            0.4481971,
+            0.0824999958,
+            0.369999975
+          ],
+          "size": [
+            0.893197123,
+            0.0824999958,
+            0.723919575
+          ],
+          "origin": "base"
+        }
+      }
+    },
+    {
+      "id": "platform-2",
+      "label": "Moving Platform 2",
+      "position": [
+        2,
+        1,
+        5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 1.2,
+        "amplitude": 1.5,
+        "axis": "z"
+      },
+      "collisionSource": {
+        "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+        "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+        "playerHalfHeight": 0.42,
+        "catalogAssetId": "kenney.nature.platform-grass",
+        "catalogBounds": {
+          "min": [
+            -0.445000023,
+            0,
+            -0.3539196
+          ],
+          "max": [
+            0.4481971,
+            0.0824999958,
+            0.369999975
+          ],
+          "size": [
+            0.893197123,
+            0.0824999958,
+            0.723919575
+          ],
+          "origin": "base"
+        }
+      }
+    },
+    {
+      "id": "platform-3",
+      "label": "Moving Platform 3",
+      "position": [
+        4.5,
+        1,
+        4.5
+      ],
+      "scale": [
+        1.4,
+        0.25,
+        0.8
+      ],
+      "geometry": {
+        "kind": "asset",
+        "assetId": "kenney.nature.platform-grass",
+        "detail": "refined"
+      },
+      "behavior": {
+        "type": "move",
+        "speed": 0.8,
+        "amplitude": 1.2,
+        "axis": "x"
+      },
+      "collisionSource": {
+        "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+        "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+        "playerHalfHeight": 0.42,
+        "catalogAssetId": "kenney.nature.platform-grass",
+        "catalogBounds": {
+          "min": [
+            -0.445000023,
+            0,
+            -0.3539196
+          ],
+          "max": [
+            0.4481971,
+            0.0824999958,
+            0.369999975
+          ],
+          "size": [
+            0.893197123,
+            0.0824999958,
+            0.723919575
+          ],
+          "origin": "base"
+        }
+      }
+    }
+  ],
+  "selectedPlatformIds": [
+    "platform-1",
+    "platform-2",
+    "platform-3"
+  ],
+  "sequential": true,
+  "inputMode": "mobile-touch",
+  "driverExperiments": 1,
+  "maxDriverExperiments": 1,
+  "inferenceCalls": 0,
+  "externalRequests": [],
+  "mutatingRequests": [],
+  "blockedRequests": [],
+  "pageErrors": [],
+  "publicRequests": [
+    {
+      "method": "GET",
+      "pathname": "/"
+    },
+    {
+      "method": "GET",
+      "pathname": "/runtime.css"
+    },
+    {
+      "method": "GET",
+      "pathname": "/runtime.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/project.json"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/generated/fa442027b21c5b62796ecc8b12b6a3c2c98d6adcbc595f155ce6ebbb71b50666.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/generated/5e644323088e8bcd47fe227e0acd3beafada787bd61cc2d7bcb13d36ec8ac210.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/generated/34af330e88a7239b618bba915d1186b8df53765be5afe14a850997656f9ed944.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/generated/af2c7c3b269af48cdc2692e29e1b12b22f0a42d777325089acb2ed461f921f02.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/generated/e6bfbfc97910b5bc562ac0bfead31f6d6063156d55dbedcee1d24deb82fb89bc.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/kenney/nature-kit/platform_grass.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/kenney/nature-kit/tree_default.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/models/kenney/nature-kit/tree_pineTallA.glb"
+    },
+    {
+      "method": "GET",
+      "pathname": "/asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/asset-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/generated-geometry-worker.js"
+    },
+    {
+      "method": "GET",
+      "pathname": "/generated-geometry-worker.js"
+    }
+  ],
+  "serverRequests": [],
+  "runs": [
+    {
+      "id": "sequential-platform-route",
+      "label": "Moving platforms 1 → 2 → 3",
+      "platformIds": [
+        "platform-1",
+        "platform-2",
+        "platform-3"
+      ],
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "inputMethod": "mobile CDP multitouch buttons",
+      "mappingUuid": {
+        "platform-1": "787a2c30-1165-440d-8d98-8ba300d3953c",
+        "platform-2": "98f05ffb-d2f8-4c30-b251-b387fff671de",
+        "platform-3": "d2679285-1a46-48c6-a7f2-8b223b726629"
+      },
+      "status": "failed",
+      "frameSamples": [],
+      "frameTelemetry": {
+        "method": "passive requestAnimationFrame samples of discovered rendered objects",
+        "capacity": 2048,
+        "platformIds": [
+          "platform-1",
+          "platform-2",
+          "platform-3"
+        ],
+        "lastFrameId": -1,
+        "postTakeoffFrameCount": 0,
+        "overflowCount": 0,
+        "issue": "uncorrelated-or-missing-frame-objects"
+      },
+      "inputLog": [
+        {
+          "atPerformanceMs": 992.4000000059605,
+          "phase": "approach-platform-1",
+          "keys": [
+            "a",
+            "s"
+          ]
+        }
+      ],
+      "approachSamples": [
+        {
+          "atPerformanceMs": 898.7000000029802,
+          "player": {
+            "center": [
+              0,
+              0.41999999999999993,
+              5
+            ],
+            "bounds": {
+              "min": [
+                -0.2199999988079071,
+                0.019999994039535507,
+                4.790767565369606
+              ],
+              "max": [
+                0.2199999988079071,
+                0.8200000059604644,
+                5.209232434630394
+              ]
+            },
+            "runtimeCenter": [
+              0,
+              0.41999999999999993,
+              5
+            ],
+            "runtimeBounds": {
+              "min": [
+                -0.2199999988079071,
+                0.019999994039535507,
+                4.790767565369606
+              ],
+              "max": [
+                0.2199999988079071,
+                0.8200000059604644,
+                5.209232434630394
+              ]
+            }
+          },
+          "platforms": {
+            "platform-1": {
+              "atPerformanceMs": 898.7000000029802,
+              "runtimeMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                -0.22724654769362407,
+                1,
+                5.5,
+                1
+              ],
+              "worldMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                -0.22724654769362407,
+                1,
+                5.5,
+                1
+              ],
+              "center": [
+                -0.2250085959381004,
+                0.9978124992921948,
+                5.506432151794433
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  -0.8502465794032951,
+                  0.9874999998137355,
+                  5.2168643236160275
+                ],
+                "max": [
+                  0.40022938752709425,
+                  1.0081249987706542,
+                  5.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-2": {
+              "atPerformanceMs": 898.7000000029802,
+              "runtimeMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                2,
+                1,
+                5.687394596152095,
+                1
+              ],
+              "worldMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                2,
+                1,
+                5.687394596152095,
+                1
+              ],
+              "center": [
+                2.0022379517555233,
+                0.9978124992921948,
+                5.693826747946528
+              ],
+              "size": [
+                1.2504759669303893,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  1.376999968290329,
+                  0.9874999998137355,
+                  5.404258919768123
+                ],
+                "max": [
+                  2.627475935220718,
+                  1.0081249987706542,
+                  5.983394576124934
+                ]
+              },
+              "top": 1.0081249987706542
+            },
+            "platform-3": {
+              "atPerformanceMs": 898.7000000029802,
+              "runtimeMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                4.874471382976024,
+                1,
+                4.5,
+                1
+              ],
+              "worldMatrix": [
+                1.4,
+                0,
+                0,
+                0,
+                0,
+                0.25,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+                4.874471382976024,
+                1,
+                4.5,
+                1
+              ],
+              "center": [
+                4.876709334731547,
+                0.9978124992921948,
+                4.506432151794433
+              ],
+              "size": [
+                1.2504759669303889,
+                0.020624998956918716,
+                0.5791356563568115
+              ],
+              "bounds": {
+                "min": [
+                  4.251471351266353,
+                  0.9874999998137355,
+                  4.2168643236160275
+                ],
+                "max": [
+                  5.501947318196742,
+                  1.0081249987706542,
+                  4.795999979972839
+                ]
+              },
+              "top": 1.0081249987706542
+            }
+          },
+          "phase": "approach-platform-1"
+        }
+      ],
+      "stages": [],
+      "groundContactSamples": [],
+      "groundContactSampling": {
+        "method": "correlated player samples captured on each requestAnimationFrame",
+        "sampleSource": "bounded browser ring drained through CDP by the driver",
+        "groundCenterYThreshold": 0.5,
+        "limitation": "The ring preserves every rendered frame after takeoff unless an overflow or object loss occurs; it cannot observe gameplay steps that do not render."
+      },
+      "sourceContactModel": [
+        {
+          "id": "platform-1",
+          "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+          "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+          "assetId": "kenney.nature.platform-grass",
+          "catalogBounds": {
+            "min": [
+              -0.445000023,
+              0,
+              -0.3539196
+            ],
+            "max": [
+              0.4481971,
+              0.0824999958,
+              0.369999975
+            ],
+            "size": [
+              0.893197123,
+              0.0824999958,
+              0.723919575
+            ],
+            "origin": "base"
+          },
+          "entityPosition": [
+            -1,
+            1,
+            5.5
+          ],
+          "entityScale": [
+            1.4,
+            0.25,
+            0.8
+          ],
+          "playerHalfHeight": 0.42
+        },
+        {
+          "id": "platform-2",
+          "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+          "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+          "assetId": "kenney.nature.platform-grass",
+          "catalogBounds": {
+            "min": [
+              -0.445000023,
+              0,
+              -0.3539196
+            ],
+            "max": [
+              0.4481971,
+              0.0824999958,
+              0.369999975
+            ],
+            "size": [
+              0.893197123,
+              0.0824999958,
+              0.723919575
+            ],
+            "origin": "base"
+          },
+          "entityPosition": [
+            2,
+            1,
+            5
+          ],
+          "entityScale": [
+            1.4,
+            0.25,
+            0.8
+          ],
+          "playerHalfHeight": 0.42
+        },
+        {
+          "id": "platform-3",
+          "gameplay": "src/lib/gameplay.ts platformTop/isInsidePlatform",
+          "runtimePose": "Formation group local matrix; player group local center; matrix/query supportSurfaceHeight branch",
+          "assetId": "kenney.nature.platform-grass",
+          "catalogBounds": {
+            "min": [
+              -0.445000023,
+              0,
+              -0.3539196
+            ],
+            "max": [
+              0.4481971,
+              0.0824999958,
+              0.369999975
+            ],
+            "size": [
+              0.893197123,
+              0.0824999958,
+              0.723919575
+            ],
+            "origin": "base"
+          },
+          "entityPosition": [
+            4.5,
+            1,
+            4.5
+          ],
+          "entityScale": [
+            1.4,
+            0.25,
+            0.8
+          ],
+          "playerHalfHeight": 0.42
+        }
+      ],
+      "failure": "Error: Frame telemetry failed safely: uncorrelated-or-missing-frame-objects."
+    }
+  ],
+  "published": {
+    "url": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
+    "projectId": "pub-free-30102c5c-f34a-421e-ac0f-654246d79bc6",
+    "projectRevision": 1,
+    "snapshotComparison": {
+      "passed": true,
+      "ignoredFields": [
+        "id",
+        "revision",
+        "messages"
+      ]
+    },
+    "servedRuntime": {
+      "projectJson": {
+        "status": 200,
+        "sha256": "d7a32237c5d942a3b2bc4dfc6108aba92bbd29237041a06b2a1da6b3fcb058f5"
+      },
+      "runtimeJs": {
+        "status": 200,
+        "sha256": "825e0fea3acca57a52af9c06eb3489128788494575196b9ca68b68035c782917",
+        "bytes": 1787031
+      },
+      "runtimeCss": {
+        "status": 200,
+        "sha256": "3d3800a8f3cab26abb0fcf4dac4f0f34dc12d45c135050327698099130010182",
+        "bytes": 2436
+      }
+    }
+  },
+  "renderedPlatformMapping": {
+    "platform-1": "787a2c30-1165-440d-8d98-8ba300d3953c",
+    "platform-2": "98f05ffb-d2f8-4c30-b251-b387fff671de",
+    "platform-3": "d2679285-1a46-48c6-a7f2-8b223b726629"
+  },
+  "initialRenderedTelemetry": {
+    "atPerformanceMs": 863.5999999940395,
+    "player": {
+      "center": [
+        0,
+        0.41999999999999993,
+        5
+      ],
+      "bounds": {
+        "min": [
+          -0.2199999988079071,
+          0.019999994039535507,
+          4.790767565369606
+        ],
+        "max": [
+          0.2199999988079071,
+          0.8200000059604644,
+          5.209232434630394
+        ]
+      },
+      "runtimeCenter": [
+        0,
+        0.41999999999999993,
+        5
+      ],
+      "runtimeBounds": {
+        "min": [
+          -0.2199999988079071,
+          0.019999994039535507,
+          4.790767565369606
+        ],
+        "max": [
+          0.2199999988079071,
+          0.8200000059604644,
+          5.209232434630394
+        ]
+      }
+    },
+    "platforms": {
+      "platform-1": {
+        "atPerformanceMs": 863.5999999940395,
+        "runtimeMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          -0.28909151961322666,
+          1,
+          5.5,
+          1
+        ],
+        "worldMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          -0.28909151961322666,
+          1,
+          5.5,
+          1
+        ],
+        "center": [
+          -0.286853567857703,
+          0.9978124992921948,
+          5.506432151794433
+        ],
+        "size": [
+          1.2504759669303893,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            -0.9120915513228977,
+            0.9874999998137355,
+            5.2168643236160275
+          ],
+          "max": [
+            0.33838441560749166,
+            1.0081249987706542,
+            5.795999979972839
+          ]
+        },
+        "top": 1.0081249987706542
+      },
+      "platform-2": {
+        "atPerformanceMs": 863.5999999940395,
+        "runtimeMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          2,
+          1,
+          5.633584362568528,
+          1
+        ],
+        "worldMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          2,
+          1,
+          5.633584362568528,
+          1
+        ],
+        "center": [
+          2.0022379517555233,
+          0.9978124992921948,
+          5.640016514362961
+        ],
+        "size": [
+          1.2504759669303893,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            1.376999968290329,
+            0.9874999998137355,
+            5.3504486861845555
+          ],
+          "max": [
+            2.627475935220718,
+            1.0081249987706542,
+            5.929584342541367
+          ]
+        },
+        "top": 1.0081249987706542
+      },
+      "platform-3": {
+        "atPerformanceMs": 863.5999999940395,
+        "runtimeMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          4.843970503811914,
+          1,
+          4.5,
+          1
+        ],
+        "worldMatrix": [
+          1.4,
+          0,
+          0,
+          0,
+          0,
+          0.25,
+          0,
+          0,
+          0,
+          0,
+          0.8,
+          0,
+          4.843970503811914,
+          1,
+          4.5,
+          1
+        ],
+        "center": [
+          4.846208455567437,
+          0.9978124992921948,
+          4.506432151794433
+        ],
+        "size": [
+          1.2504759669303889,
+          0.020624998956918716,
+          0.5791356563568115
+        ],
+        "bounds": {
+          "min": [
+            4.220970472102243,
+            0.9874999998137355,
+            4.2168643236160275
+          ],
+          "max": [
+            5.471446439032632,
+            1.0081249987706542,
+            4.795999979972839
+          ]
+        },
+        "top": 1.0081249987706542
+      }
+    }
+  }
+}

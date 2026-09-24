@@ -6,6 +6,7 @@ import {
   horizontalGapToPlatform,
   jumpReachModel,
   movingTargetMotionBound,
+  findFrameLandingEvidence,
   renderedDimensionsMatchSource,
   sourcePlatformContact,
   sourceLandingEvidence,
@@ -13,6 +14,7 @@ import {
   touchControlLabel,
   touchLaunchKeys,
   transformedAssetDimensions,
+  validateFrameTelemetryDrain,
 } from "../scripts/lib/flagship-platforms-verifier.mjs";
 
 const zip = unzipSync(
@@ -74,6 +76,40 @@ function firstSourceContact(id: string) {
     if (evidence.accepted) return { sample: samples[index], evidence, index };
   }
   return null;
+}
+
+function frameSample(
+  frameId: number,
+  playerY: number,
+  rendered = firstSourceContact("platform-1")?.sample.platforms["platform-1"],
+) {
+  if (!rendered) throw new Error("retained platform-1 frame is missing");
+  const center = rendered.center as number[];
+  const playerCenter = [center[0], playerY, center[2]];
+  const playerBounds = {
+    min: [playerCenter[0] - 0.25, playerY - 0.42, playerCenter[2] - 0.25],
+    max: [playerCenter[0] + 0.25, playerY + 0.42, playerCenter[2] + 0.25],
+  };
+  return {
+    frameId,
+    frameTimestampMs: (frameId * 1000) / 60,
+    atPerformanceMs: (frameId * 1000) / 60,
+    player: {
+      frameId,
+      visible: true,
+      center: playerCenter,
+      runtimeCenter: playerCenter,
+      bounds: playerBounds,
+      runtimeBounds: playerBounds,
+    },
+    platforms: {
+      "platform-1": {
+        ...rendered,
+        frameId,
+        visible: true,
+      },
+    },
+  };
 }
 
 it("rejects platform2's retained airborne release while accepting source contact on platforms1 and 3", () => {
@@ -146,6 +182,81 @@ it("rejects the touch run's late below-platform sample as a false landing", () =
   );
   expect(nearMissEvidence.atContactHeight).toBe(false);
   expect(nearMissEvidence.accepted).toBe(false);
+});
+
+it("validates drained render-frame continuity and same-frame object correlation", () => {
+  const contact = firstSourceContact("platform-1");
+  if (!contact) throw new Error("retained platform-1 contact is missing");
+  const first = frameSample(0, contact.evidence.source!.contactY + 0.05);
+  const second = frameSample(1, contact.evidence.source!.contactY);
+  const valid = validateFrameTelemetryDrain(
+    {
+      samples: [first, second],
+      droppedSinceLastDrain: 0,
+      issue: null,
+    },
+    -1,
+    ["platform-1"],
+  );
+  expect(valid).toMatchObject({ valid: true, lastFrameId: 1 });
+
+  expect(
+    validateFrameTelemetryDrain(
+      { samples: [second], droppedSinceLastDrain: 0, issue: null },
+      -1,
+      ["platform-1"],
+    ),
+  ).toMatchObject({ valid: false, reason: "nonconsecutive-frame-id" });
+  expect(
+    validateFrameTelemetryDrain(
+      { samples: [second], droppedSinceLastDrain: 1, issue: null },
+      0,
+      ["platform-1"],
+    ),
+  ).toMatchObject({ valid: false, reason: "frame-ring-overflow" });
+  expect(
+    validateFrameTelemetryDrain(
+      {
+        samples: [
+          {
+            ...second,
+            platforms: {
+              "platform-1": { ...second.platforms["platform-1"], frameId: 0 },
+            },
+          },
+        ],
+        droppedSinceLastDrain: 0,
+        issue: null,
+      },
+      0,
+      ["platform-1"],
+    ),
+  ).toMatchObject({
+    valid: false,
+    reason: "platform-frame-id-mismatch-platform-1",
+  });
+});
+
+it("accepts only strict source contact across adjacent render frames", () => {
+  const entity = entityFor("platform-1");
+  const contact = firstSourceContact(entity.id);
+  if (!contact) throw new Error("retained platform-1 contact is missing");
+  const contactY = contact.evidence.source!.contactY;
+  const before = frameSample(10, contactY + 0.05);
+  const exact = frameSample(11, contactY);
+  const accepted = findFrameLandingEvidence(before, [exact], entity, asset);
+  expect(accepted.landing?.frameId).toBe(11);
+  expect(accepted.evidence?.accepted).toBe(true);
+  expect(accepted.evidence?.atContactHeight).toBe(true);
+
+  const lateBelow = frameSample(11, contactY - 0.01);
+  expect(
+    findFrameLandingEvidence(before, [lateBelow], entity, asset).landing,
+  ).toBeNull();
+  const gap = frameSample(12, contactY);
+  expect(
+    findFrameLandingEvidence(before, [gap], entity, asset).landing,
+  ).toBeNull();
 });
 
 it("uses saved catalog bounds to measure a published touch run from its snapshot", () => {

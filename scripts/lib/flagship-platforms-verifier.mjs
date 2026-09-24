@@ -362,3 +362,111 @@ export function sourceLandingEvidence(
     source,
   };
 }
+
+/**
+ * Validate one drained batch from the browser's bounded render-frame ring.
+ * A frame is useful only when player and every mapped platform were captured
+ * atomically by the same requestAnimationFrame callback. Missing frame IDs or
+ * ring overflow invalidate evidence rather than allowing a gap to look like a
+ * landing or a clean ground-contact interval.
+ */
+export function validateFrameTelemetryDrain(
+  drain,
+  previousFrameId = -1,
+  platformIds = [],
+) {
+  const failure = (reason) => ({
+    valid: false,
+    reason,
+    samples: [],
+    lastFrameId: previousFrameId,
+  });
+  if (!Number.isSafeInteger(previousFrameId) || previousFrameId < -1)
+    return failure("invalid-previous-frame-id");
+  if (!drain || !Array.isArray(drain.samples)) return failure("invalid-drain");
+  if (drain.issue) return failure(`browser-telemetry-${drain.issue}`);
+  if (
+    !Number.isSafeInteger(drain.droppedSinceLastDrain) ||
+    drain.droppedSinceLastDrain < 0
+  )
+    return failure("invalid-dropped-frame-count");
+  if (drain.droppedSinceLastDrain > 0) return failure("frame-ring-overflow");
+
+  let expectedFrameId = previousFrameId + 1;
+  let lastFrameId = previousFrameId;
+  for (const sample of drain.samples) {
+    if (
+      !Number.isSafeInteger(sample?.frameId) ||
+      sample.frameId !== expectedFrameId
+    )
+      return failure("nonconsecutive-frame-id");
+    if (
+      !Number.isFinite(sample.frameTimestampMs) ||
+      !Number.isFinite(sample.atPerformanceMs)
+    )
+      return failure("invalid-frame-timestamp");
+    if (!sample.player) return failure("missing-player-sample");
+    if (sample.player.frameId !== sample.frameId)
+      return failure("player-frame-id-mismatch");
+    if (sample.player.visible !== true) return failure("player-not-visible");
+    if (!sample.platforms) return failure("missing-platform-samples");
+    for (const id of platformIds) {
+      const platform = sample.platforms[id];
+      if (!platform) return failure(`missing-platform-sample-${id}`);
+      if (platform.frameId !== sample.frameId)
+        return failure(`platform-frame-id-mismatch-${id}`);
+      if (platform.visible !== true)
+        return failure(`platform-not-visible-${id}`);
+    }
+    expectedFrameId++;
+    lastFrameId = sample.frameId;
+  }
+  return {
+    valid: true,
+    reason: null,
+    samples: drain.samples,
+    lastFrameId,
+  };
+}
+
+/**
+ * Apply the unchanged source-contact landing gate to adjacent, correlated
+ * render frames. A frame gap is never bridged, and the returned landing is the
+ * exact frame whose runtime pose satisfied sourceLandingEvidence.
+ */
+export function findFrameLandingEvidence(
+  previousFrameSample,
+  frameSamples,
+  entity,
+  asset,
+) {
+  let previous = previousFrameSample;
+  for (const current of frameSamples) {
+    const frameAligned = (sample) =>
+      Number.isSafeInteger(sample?.frameId) &&
+      sample.player?.frameId === sample.frameId &&
+      sample.platforms?.[entity.id]?.frameId === sample.frameId;
+    if (
+      previous &&
+      frameAligned(previous) &&
+      frameAligned(current) &&
+      current.frameId === previous.frameId + 1
+    ) {
+      const evidence = sourceLandingEvidence(previous, current, entity, asset);
+      if (evidence.accepted)
+        return {
+          landing: current,
+          previous,
+          evidence,
+          nextPreviousFrameSample: current,
+        };
+    }
+    previous = current;
+  }
+  return {
+    landing: null,
+    previous: null,
+    evidence: null,
+    nextPreviousFrameSample: previous,
+  };
+}

@@ -32,11 +32,13 @@ import {
   jumpReachModel,
   movingTargetMotionBound,
   renderedDimensionsMatchSource,
+  findFrameLandingEvidence,
   sourcePlatformContact,
   sourceLandingEvidence,
   selectCatalogManifest,
   touchControlLabel,
   touchLaunchKeys,
+  validateFrameTelemetryDrain,
 } from "./lib/flagship-platforms-verifier.mjs";
 
 const defaultZipPath =
@@ -527,6 +529,158 @@ function makeInitScript() {
         groups: [...groups.values()],
       };
     };
+
+    window.__orbStartFrameTelemetry = (mapping, capacity = 2048) => {
+      if (!Number.isSafeInteger(capacity) || capacity < 2)
+        throw new Error("Invalid frame telemetry capacity.");
+      const ids = Object.entries(mapping ?? {});
+      if (ids.length !== 3 || new Set(ids.map(([, uuid]) => uuid)).size !== 3)
+        throw new Error(
+          "Frame telemetry needs the three discovered platforms.",
+        );
+
+      let playerMesh;
+      const platformMeshes = new Map();
+      const wanted = new Set(ids.map(([, uuid]) => uuid));
+      for (const scene of observed)
+        scene.traverse((object) => {
+          if (object.geometry?.type === "CapsuleGeometry") playerMesh = object;
+          if (
+            object.isMesh &&
+            object.parent &&
+            object.geometry &&
+            wanted.has(object.parent.uuid) &&
+            !platformMeshes.has(object.parent.uuid) &&
+            localBounds(object.geometry)
+          )
+            platformMeshes.set(object.parent.uuid, object);
+        });
+      if (!playerMesh?.parent || !localBounds(playerMesh.geometry))
+        throw new Error("Frame telemetry could not bind the observed player.");
+      for (const [, uuid] of ids)
+        if (!platformMeshes.has(uuid))
+          throw new Error(`Frame telemetry could not bind platform ${uuid}.`);
+
+      const platformRefs = Object.fromEntries(
+        ids.map(([id, uuid]) => {
+          const mesh = platformMeshes.get(uuid);
+          return [id, { mesh, parent: mesh.parent }];
+        }),
+      );
+      const playerParent = playerMesh.parent;
+      const ring = new Array(capacity);
+      let ringStart = 0;
+      let ringCount = 0;
+      let nextFrameId = 0;
+      let lastDrainedFrameId = -1;
+      let issue = null;
+      let running = true;
+
+      const isInObservedScene = (object) => {
+        let current = object;
+        while (current?.parent) current = current.parent;
+        return Boolean(current?.isScene && observed.includes(current));
+      };
+      const captureObject = (object, expectedParent, frameId, player) => {
+        if (
+          !object ||
+          object.parent !== expectedParent ||
+          !object.geometry ||
+          !isInObservedScene(object)
+        )
+          return null;
+        const local = localBounds(object.geometry);
+        if (!local) return null;
+        const world = worldBounds(expectedParent.matrixWorld.elements, local);
+        const runtime = worldBounds(expectedParent.matrix.elements, local);
+        const visible = Boolean(expectedParent.visible && object.visible);
+        const record = {
+          frameId,
+          visible,
+          bounds: world,
+          center: center(world),
+        };
+        if (player) {
+          record.runtimeBounds = runtime;
+          record.runtimeCenter = center(runtime);
+        } else {
+          record.uuid = expectedParent.uuid;
+          record.runtimeMatrix = Array.from(expectedParent.matrix.elements);
+          record.size = world.max.map((value, axis) => value - world.min[axis]);
+          record.top = world.max[1];
+        }
+        return record;
+      };
+      const append = (sample) => {
+        if (ringCount < capacity) {
+          ring[(ringStart + ringCount) % capacity] = sample;
+          ringCount++;
+        } else {
+          ring[ringStart] = sample;
+          ringStart = (ringStart + 1) % capacity;
+        }
+      };
+      const tick = (frameTimestampMs) => {
+        if (!running) return;
+        const frameId = nextFrameId++;
+        const player = captureObject(playerMesh, playerParent, frameId, true);
+        const platformSamples = {};
+        for (const [id, ref] of Object.entries(platformRefs)) {
+          platformSamples[id] = captureObject(
+            ref.mesh,
+            ref.parent,
+            frameId,
+            false,
+          );
+          if (!platformSamples[id]) {
+            issue = `missing-platform-${id}`;
+            running = false;
+            return;
+          }
+        }
+        if (!player) {
+          issue = "missing-player";
+          running = false;
+          return;
+        }
+        append({
+          frameId,
+          frameTimestampMs,
+          atPerformanceMs: performance.now(),
+          player,
+          platforms: platformSamples,
+        });
+        requestAnimationFrame(tick);
+      };
+      window.__orbDrainFrameTelemetry = () => {
+        const samples = [];
+        let droppedSinceLastDrain = 0;
+        if (ringCount > 0) {
+          const oldestFrameId = ring[ringStart].frameId;
+          droppedSinceLastDrain = Math.max(
+            0,
+            oldestFrameId - (lastDrainedFrameId + 1),
+          );
+          for (let index = 0; index < ringCount; index++) {
+            const sample = ring[(ringStart + index) % capacity];
+            if (sample.frameId > lastDrainedFrameId) samples.push(sample);
+          }
+          if (samples.length) lastDrainedFrameId = samples.at(-1).frameId;
+        }
+        return {
+          samples,
+          droppedSinceLastDrain,
+          issue,
+          capacity,
+          latestFrameId: nextFrameId - 1,
+        };
+      };
+      window.__orbStopFrameTelemetry = () => {
+        running = false;
+      };
+      requestAnimationFrame(tick);
+      return { capacity, platformIds: ids.map(([id]) => id) };
+    };
   };
 }
 
@@ -940,11 +1094,53 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     });
   };
   const release = async (phase) => setKeys([], phase);
-  const read = () => page.evaluate(() => window.__orbReadWorld());
+  const frameCapacity = 2048;
+  const frameStart = await page.evaluate(
+    ({ mapping, capacity }) =>
+      window.__orbStartFrameTelemetry(mapping, capacity),
+    { mapping, capacity: frameCapacity },
+  );
+  run.frameSamples = [];
+  run.frameTelemetry = {
+    method:
+      "passive requestAnimationFrame samples of discovered rendered objects",
+    capacity: frameStart.capacity,
+    platformIds: frameStart.platformIds,
+    lastFrameId: -1,
+    postTakeoffFrameCount: 0,
+    overflowCount: 0,
+    issue: null,
+  };
   const sample = async (phase) => {
-    const compact = compactTelemetry(await read(), mapping);
+    const observation = await page.evaluate(() => ({
+      world: window.__orbReadWorld(),
+      frames: window.__orbDrainFrameTelemetry(),
+    }));
+    const checked = validateFrameTelemetryDrain(
+      observation.frames,
+      run.frameTelemetry.lastFrameId,
+      run.frameTelemetry.platformIds,
+    );
+    if (!checked.valid) {
+      run.frameTelemetry.issue = checked.reason;
+      if (observation.frames?.droppedSinceLastDrain > 0)
+        run.frameTelemetry.overflowCount +=
+          observation.frames.droppedSinceLastDrain;
+      throw Error(`Frame telemetry failed safely: ${checked.reason}.`);
+    }
+    run.frameTelemetry.lastFrameId = checked.lastFrameId;
+    const frameSamples = checked.samples;
+    for (const frame of frameSamples) {
+      frame.phase = phase;
+      if (run.firstTakeoff && frame.frameId > run.firstTakeoff.frameId) {
+        run.frameSamples.push(frame);
+        run.frameTelemetry.postTakeoffFrameCount++;
+        if (groundContact(frame)) run.groundContactSamples.push(frame);
+      }
+    }
+    const compact = compactTelemetry(observation.world, mapping);
     compact.phase = phase;
-    return compact;
+    return { snapshot: compact, frames: frameSamples };
   };
   const groundContact = (sample) =>
     Boolean(
@@ -967,10 +1163,6 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
         source.halfZ + CONTACT_HORIZONTAL_TOLERANCE
     );
   };
-  const recordSample = (samples, value) => {
-    samples.push(value);
-    if (groundContact(value)) run.groundContactSamples.push(value);
-  };
   const releaseHeld = async () => {
     if (touchInput) {
       for (const point of touchHeld.values())
@@ -987,12 +1179,12 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     run.stages = [];
     run.groundContactSamples = [];
     run.groundContactSampling = {
-      method: "rendered player telemetry sampled during jump and carry steps",
-      jumpStepWaitMs: 45,
-      carryStepWaitMs: 70,
+      method:
+        "correlated player samples captured on each requestAnimationFrame",
+      sampleSource: "bounded browser ring drained through CDP by the driver",
       groundCenterYThreshold: 0.5,
       limitation:
-        "No sampled telemetry can prove absence of ground contact between frames.",
+        "The ring preserves every rendered frame after takeoff unless an overflow or object loss occurs; it cannot observe gameplay steps that do not render.",
     };
     run.sourceContactModel = ordered.map((entity) => ({
       id: entity.id,
@@ -1012,7 +1204,8 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
 
     const first = ordered[0];
     for (let step = 0; step < 180; step++) {
-      const current = await sample("approach-platform-1");
+      const observation = await sample("approach-platform-1");
+      const current = observation.snapshot;
       run.approachSamples.push(current);
       const view = current.platforms[first.id];
       if (!current.player || !view)
@@ -1069,7 +1262,8 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       const deadline = Date.now() + maxWaitMs;
       let last;
       while (Date.now() <= deadline) {
-        const current = await sample("favorable-gap-wait");
+        const observation = await sample("favorable-gap-wait");
+        const current = observation.snapshot;
         const gap = horizontalGapToPlatform(
           current.player?.runtimeCenter ?? current.player?.center,
           current.platforms[target.id],
@@ -1081,7 +1275,7 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
           },
         );
         const carried = sourceCarried(current, carrier, carrierAsset);
-        const onGround = groundContact(current);
+        const onGround = observation.frames.some(groundContact);
         last = {
           atPerformanceMs: current.atPerformanceMs,
           playerCenter: current.player?.center ?? null,
@@ -1095,7 +1289,6 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
         };
         wait.samples.push(last);
         if (onGround) {
-          run.groundContactSamples.push(current);
           wait.status = "failed-ground-contact";
           wait.final = last;
           throw Error(
@@ -1137,16 +1330,20 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
         behavior: entity.behavior,
         beforeJump: null,
         landingSamples: [],
+        frameSamples: [],
         carrySamples: [],
       };
       run.stages.push(stage);
       if (index > 0)
         await waitForFavorableGap(ordered[index - 1], entity, stage);
-      stage.beforeJump = await sample(`before-jump-${index + 1}`);
+      const beforeJumpObservation = await sample(`before-jump-${index + 1}`);
+      stage.beforeJump = beforeJumpObservation.snapshot;
+      stage.frameSamples.push(...beforeJumpObservation.frames);
       const previousBeforeJump = stage.beforeJump;
       if (index === 0)
         run.firstTakeoff = {
           atPerformanceMs: await page.evaluate(() => performance.now()),
+          frameId: run.frameTelemetry.lastFrameId,
           from: entity.id,
         };
       const launchDirection =
@@ -1168,35 +1365,58 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
         await setKeys(launchDirection, `jump-release-platform-${index + 1}`);
       else await release(`jump-release-platform-${index + 1}`);
       let previousSample = previousBeforeJump;
+      let previousFrameSample = beforeJumpObservation.frames.at(-1) ?? null;
       let landedAt;
       let landingProof;
       for (let step = 0; step < 42; step++) {
-        const current = await sample(`jump-platform-${index + 1}`);
-        recordSample(stage.landingSamples, current);
-        const evidence = sourceLandingEvidence(
+        const observation = await sample(`jump-platform-${index + 1}`);
+        const current = observation.snapshot;
+        stage.landingSamples.push(current);
+        stage.frameSamples.push(...observation.frames);
+        const frameEvidence = findFrameLandingEvidence(
+          previousFrameSample,
+          observation.frames,
+          entity,
+          asset,
+        );
+        previousFrameSample = frameEvidence.nextPreviousFrameSample;
+        const diagnosticEvidence = sourceLandingEvidence(
           previousSample,
           current,
           entity,
           asset,
         );
-        current.sourceContact = evidence.source
+        current.sourceContactDiagnostic = diagnosticEvidence.source
           ? {
-              contactY: evidence.source.contactY,
-              descending: evidence.descending,
-              previousY: evidence.previousY,
-              currentY: evidence.currentY,
-              crossedContactHeight: evidence.crossedContactHeight,
-              atContactHeight: evidence.atContactHeight,
-              sourceOverlap: evidence.sourceOverlap,
-              accepted: evidence.accepted,
+              basis: "CDP snapshot diagnostic only",
+              contactY: diagnosticEvidence.source.contactY,
+              descending: diagnosticEvidence.descending,
+              previousY: diagnosticEvidence.previousY,
+              currentY: diagnosticEvidence.currentY,
+              crossedContactHeight: diagnosticEvidence.crossedContactHeight,
+              atContactHeight: diagnosticEvidence.atContactHeight,
+              sourceOverlap: diagnosticEvidence.sourceOverlap,
+              candidateAccepted: diagnosticEvidence.accepted,
             }
           : null;
-        if (evidence.accepted) {
-          landedAt = current;
+        const evidence = frameEvidence.evidence;
+        if (frameEvidence.landing && evidence?.accepted) {
+          landedAt = frameEvidence.landing;
           landingProof = {
-            ...current.sourceContact,
+            contactY: evidence.source.contactY,
+            descending: evidence.descending,
+            previousY: evidence.previousY,
+            currentY: evidence.currentY,
+            crossedContactHeight: evidence.crossedContactHeight,
+            atContactHeight: evidence.atContactHeight,
+            sourceOverlap: evidence.sourceOverlap,
+            accepted: evidence.accepted,
             source: evidence.source,
+            frameId: landedAt.frameId,
+            frameTimestampMs: landedAt.frameTimestampMs,
+            atPerformanceMs: landedAt.atPerformanceMs,
           };
+          current.landingFrameId = landedAt.frameId;
           await release(`landing-release-platform-${index + 1}`);
           break;
         }
@@ -1216,15 +1436,14 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
       stage.landingProof = landingProof ?? null;
       if (!landingProof)
         throw Error(
-          `Sequential route did not land on ${entity.id} from the prior platform.`,
+          `Sequential route did not observe strict source contact on ${entity.id} in correlated render frames.`,
         );
 
       await release(`carry-release-platform-${index + 1}`);
       for (let sampleIndex = 0; sampleIndex < 8; sampleIndex++) {
-        recordSample(
-          stage.carrySamples,
-          await sample(`carry-platform-${index + 1}`),
-        );
+        const observation = await sample(`carry-platform-${index + 1}`);
+        stage.carrySamples.push(observation.snapshot);
+        stage.frameSamples.push(...observation.frames);
         await page.waitForTimeout(70);
       }
       stage.inputReleasedBeforeCarrySampling = true;
@@ -1242,10 +1461,16 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     for (let index = 0; index < ordered.length; index++)
       await landAndCarry(ordered[index], index);
     run.finalLanding = run.stages.at(-1).landingProof;
-    run.noGroundContactObserved = run.groundContactSamples.length === 0;
+    run.noGroundContactObserved =
+      run.frameTelemetry.postTakeoffFrameCount > 0 &&
+      run.groundContactSamples.length === 0;
+    if (run.frameTelemetry.postTakeoffFrameCount === 0)
+      throw Error(
+        "No correlated render-frame samples were captured after takeoff.",
+      );
     if (!run.noGroundContactObserved)
       throw Error(
-        `Sequential route observed ground contact in ${run.groundContactSamples.length} sampled frame(s) after the first takeoff.`,
+        `Sequential route observed ground contact in ${run.groundContactSamples.length} render frame(s) after the first takeoff.`,
       );
     run.screenshot = "sequential-platform-route.png";
     await page.screenshot({ path: join(output, run.screenshot) });
@@ -1254,6 +1479,9 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
     await execute();
   } finally {
     await releaseHeld();
+    await page
+      .evaluate(() => window.__orbStopFrameTelemetry?.())
+      .catch(() => {});
   }
 }
 
