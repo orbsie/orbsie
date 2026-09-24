@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 24 flagship touch frame observer: source `b513820` adds a bounded
+2,048-frame browser telemetry ring for the read-only published-platform
+verifier. It correlates player and three moving-platform poses within each
+rendered frame, rejects gaps/object loss, and applies the existing strict
+saved-ZIP source-contact gate to adjacent frames. Astra review found that its
+initial takeoff marker preceded Jump dispatch; source `ec0f840` now begins
+post-takeoff ground proof only after adjacent frames show upward launch from
+the initial ground band. Thirteen focused tests, syntax, formatting and diff
+checks pass; Astra reran the 13 tests. One immutable-publication CDP-touch
+probe made zero model, external or mutating requests, but stopped before Jump
+with `uncorrelated-or-missing-frame-objects`. Its recorded verifier hash is
+pre-fix, so it neither diagnoses gameplay nor live-validates the corrected
+observer. Evidence: `docs/evidence/publication-flagship-openrouter/platforms-sequential-touch-frame-sampling/`.
+The mobile touch three-platform route remains open; a future diagnostic run
+must first establish a complete correlated frame and retain the no-ground
+proof without relaxing contact tolerance.
+
 Sep 24 OpenRouter visual review after palette guidance: source `dd630de` used
 four capped `openai/gpt-6-luna` calls in an isolated production build: initial
 create and three revision-bound image reviews, all HTTP 200 and no retries.
