@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 24 combined Canvas2D/touch fixture follow-up: a production-build run
+passed movement and all three gameplay phases, then failed only at the final
+saved-world reopen check. The screenshot showed the composer in bounds; the
+fixture was selecting between landing/workspace composers ambiguously. It now
+selects the active main-mode composer and waits for a stable visible box. A
+coarse-pointer layout-only replay passed desktop, portrait, landscape closed
+and open, landing, reload, and reopened workspace. A subsequent combined run
+passed movement, five collectibles, and seven collectibles, but stopped during
+Undo gameplay before layout. The wrapper had discarded the underlying error
+and masked the current phase's traversal with the earlier five-item result.
+The harness now retains a bounded redacted failure summary and prefers the
+failing phase's traversal; this correction has only syntax/format validation
+so far. Evidence is under
+`docs/evidence/fresh-gameplay-software-coarse-combined-20260924/`,
+`fresh-gameplay-software-coarse-layout-reopen-20260924/`, and
+`fresh-gameplay-software-coarse-combined-final-20260924/`. A single full
+combined passing report and the cause of the intermittent Undo stop remain
+open; no live provider calls were made.
+
 Sep 24 fresh-gameplay renderer and mobile-fixture milestone: Astra reviewed
 Luna's bounded freshness fix. A 50 ms JavaScript heartbeat stayed responsive
 while headless SwiftShader delayed requestAnimationFrame by up to 2.7 seconds;

@@ -1,0 +1,264 @@
+{
+  "passed": false,
+  "fixtureConfiguration": {
+    "pointerMode": "coarse",
+    "layoutOnly": false
+  },
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3175",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "pointerMode": "coarse",
+      "layout": null,
+      "generationRequests": 3,
+      "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0000000000000009,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": {
+          "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+          "revision": 22,
+          "renderer": "software",
+          "expectedCollectibleIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "collectedIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "score": 5,
+          "elapsedMs": 40165.39999999851,
+          "movementDistance": 1.133599999999998,
+          "actualInput": {
+            "mode": "keyboard",
+            "traceEntries": 158,
+            "keysUsed": [
+              " ",
+              "a",
+              "d",
+              "s",
+              "w"
+            ]
+          },
+          "platformEvidence": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "groundedFrames": 7,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.42624901321656783
+            },
+            {
+              "id": "fixture-platform-b",
+              "behavior": "move",
+              "groundedFrames": 3,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.6974038899407662
+            },
+            {
+              "id": "fixture-platform-c",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "maximumDisplacement": 0.6945599999999977
+            }
+          ],
+          "win": {
+            "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+            "revision": 22,
+            "score": 5,
+            "status": "won",
+            "portalId": "fixture-portal"
+          },
+          "reset": {
+            "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+            "revision": 22,
+            "scoreIdsCount": 0,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "playerPosition": [
+              0,
+              0.42,
+              5
+            ]
+          }
+        },
+        "goalSeven": {
+          "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+          "revision": 31,
+          "renderer": "software",
+          "expectedCollectibleIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5",
+            "fixture-crystal-6",
+            "fixture-crystal-7"
+          ],
+          "collectedIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5",
+            "fixture-crystal-6",
+            "fixture-crystal-7"
+          ],
+          "score": 7,
+          "elapsedMs": 33167,
+          "movementDistance": 0.4936000000000058,
+          "actualInput": {
+            "mode": "keyboard",
+            "traceEntries": 153,
+            "keysUsed": [
+              " ",
+              "a",
+              "d",
+              "s",
+              "w"
+            ]
+          },
+          "platformEvidence": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "groundedFrames": 6,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.42744062913378345
+            },
+            {
+              "id": "fixture-platform-b",
+              "behavior": "move",
+              "groundedFrames": 2,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.3843061509765188
+            },
+            {
+              "id": "fixture-platform-c",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "maximumDisplacement": 0.6894000000000001
+            }
+          ],
+          "win": {
+            "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+            "revision": 31,
+            "score": 7,
+            "status": "won",
+            "portalId": "fixture-portal"
+          },
+          "reset": {
+            "projectId": "eec7ef96-28b1-4567-90b7-6ec45289da4e",
+            "revision": 31,
+            "scoreIdsCount": 0,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "playerPosition": [
+              0,
+              0.46190659999999356,
+              5
+            ]
+          }
+        },
+        "uiUndoFive": null
+      },
+      "partialTraversal": {
+        "failure": {
+          "stage": "undo-five",
+          "code": "gameplay-acceptance-failed",
+          "target": null
+        },
+        "observationCount": null,
+        "lastObservation": null,
+        "inputTraceTailEntries": 158,
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 7,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.42624901321656783
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 3,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.6974038899407662
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 1,
+            "bounceFrames": 1,
+            "maximumDisplacement": 0.6945599999999977
+          }
+        ]
+      },
+      "componentBoundary": {
+        "classification": "raf-running",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "editing",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 801,
+        "lastFrameAtMs": 80185.3,
+        "lastFrameAgeMs": 283.8000000014872,
+        "lastFrameGapMs": 16.60000000000582,
+        "maxFrameGapMs": 2666.6000000000004,
+        "lastFrameDurationMs": 7.899999998509884,
+        "maxFrameDurationMs": 27.899999998509884,
+        "heartbeatCount": 1585,
+        "lastHeartbeatAtMs": 80433.89999999851,
+        "lastHeartbeatAgeMs": 35.20000000298023,
+        "maxHeartbeatGapMs": 181.70000000298023,
+        "observationCount": 755,
+        "lastObservationAtMs": 80185.70000000298,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 111.60000000149012,
+            "duration": 65
+          },
+          {
+            "startTime": 2076.2000000029802,
+            "duration": 109
+          }
+        ]
+      },
+      "failure": {
+        "stage": "undo-five",
+        "code": "gameplay-acceptance-failed",
+        "target": null
+      }
+    }
+  },
+  "error": "undo-five: gameplay-acceptance-failed"
+}

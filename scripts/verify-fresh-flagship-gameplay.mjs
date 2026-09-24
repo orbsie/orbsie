@@ -367,12 +367,26 @@ function summarizeFixtureFailureDetail(message) {
   const stabilityTimeout = String(message).match(
     /([.#a-zA-Z0-9_-]+) did not settle within (\d+)ms while measuring the fixture layout\./,
   );
-  return stabilityTimeout
-    ? {
-        label: "layout-stability",
-        summary: `${stabilityTimeout[1]} exceeded ${stabilityTimeout[2]}ms while measuring layout stability.`,
-      }
-    : null;
+  if (stabilityTimeout) {
+    return {
+      label: "layout-stability",
+      summary: `${stabilityTimeout[1]} exceeded ${stabilityTimeout[2]}ms while measuring layout stability.`,
+    };
+  }
+  const firstLine = String(message)
+    .split(/\r?\n/, 1)[0]
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+    .replace(
+      /\b(api[_-]?key|access[_-]?token|refresh[_-]?token|token|secret|password|authorization)\b\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^,\s;]+)/gi,
+      "$1=[redacted]",
+    )
+    .replace(/\b(?:sk|pk|rk)-[A-Za-z0-9_-]{8,}\b/gi, "[redacted]")
+    .replace(/https?:\/\/[^\s"']+/gi, "[url]")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email]")
+    .slice(0, 240);
+  return firstLine ? { label: "fixture-error", summary: firstLine } : null;
 }
 
 function summarizeSoftwareLayout(layout) {
@@ -567,7 +581,26 @@ async function measureSoftwareViewport(
 ) {
   const viewport = page.viewportSize();
   assert(viewport, "Fixture page did not expose a viewport.");
-  const metrics = await page.evaluate(() => {
+  const pageMode = await page
+    .locator("main")
+    .evaluate((main) =>
+      main.classList.contains("is-landing")
+        ? "landing"
+        : main.classList.contains("is-workspace")
+          ? "workspace"
+          : null,
+    );
+  assert(pageMode, `${label} did not expose a landing or workspace mode.`);
+  const composerSelector =
+    pageMode === "landing"
+      ? "main.is-landing .landing-composer"
+      : "main.is-workspace .chat-panel";
+  const composer = page.locator(composerSelector);
+  await expect(composer).toBeVisible();
+  await waitForStableBoundingBox(page, composerSelector, {
+    requireInViewport: !allowClosedComposer,
+  });
+  const metrics = await page.evaluate((activeComposerSelector) => {
     const box = (selector) => {
       const element = document.querySelector(selector);
       const rect = element?.getBoundingClientRect();
@@ -586,7 +619,7 @@ async function measureSoftwareViewport(
       viewport: { width: window.innerWidth, height: window.innerHeight },
       scene: box(".scene"),
       canvas: box(".software-world canvas"),
-      composer: box(".chat-panel, .landing-composer"),
+      composer: box(activeComposerSelector),
       sheetHandle: box(".sheet-handle"),
       hud: box(".game-hud"),
       advisory: box(".graphics-error.is-advisory"),
@@ -608,7 +641,7 @@ async function measureSoftwareViewport(
         document.documentElement.scrollHeight > window.innerHeight + 1 ||
         document.body.scrollHeight > window.innerHeight + 1,
     };
-  });
+  }, composerSelector);
   assert.equal(
     metrics.viewport.width,
     viewport.width,
@@ -1874,6 +1907,10 @@ async function runRenderer(browser, renderer) {
   } catch (error) {
     if (renderer === "software")
       componentBoundary = await readSoftwareWorldDiagnostics(page);
+    const errorTraversal =
+      error && typeof error === "object"
+        ? (error.freshGameplayEvidence ?? null)
+        : null;
     const partialEvidence = {
       renderer,
       stage,
@@ -1884,11 +1921,7 @@ async function runRenderer(browser, renderer) {
         (error && typeof error === "object"
           ? (error.generationMovementEvidence ?? null)
           : null),
-      traversal:
-        result ??
-        (error && typeof error === "object"
-          ? (error.freshGameplayEvidence ?? null)
-          : null),
+      traversal: errorTraversal ?? result ?? null,
       gameplayPhases: {
         creationFive: result,
         goalSeven: goal7Gameplay ?? null,
@@ -1918,13 +1951,12 @@ async function runRenderer(browser, renderer) {
       message.match(
         /(?:approaching|contact platform|reach) ([A-Za-z0-9_-]+)/,
       )?.[1] ?? null;
+    const detail = summarizeFixtureFailureDetail(message);
     partialEvidence.failure = {
       stage,
       code,
       target,
-      ...(summarizeFixtureFailureDetail(message)
-        ? { detail: summarizeFixtureFailureDetail(message) }
-        : {}),
+      ...(detail ? { detail } : {}),
     };
     const wrappedError = new Error(
       `${stage}: ${code}${target ? ` (${target})` : ""}`,

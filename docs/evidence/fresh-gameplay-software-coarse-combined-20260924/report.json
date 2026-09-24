@@ -1,0 +1,405 @@
+{
+  "passed": false,
+  "fixtureConfiguration": {
+    "pointerMode": "coarse",
+    "layoutOnly": false
+  },
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3175",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "pointerMode": "coarse",
+      "layout": {
+        "phoneLandscapeMobileSheet": {
+          "status": "checked",
+          "closed": {
+            "viewport": {
+              "width": 844,
+              "height": 390
+            },
+            "interaction": {
+              "pointerCoarse": true,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "composer": {
+              "left": 220,
+              "top": 338,
+              "right": 744,
+              "bottom": 518,
+              "width": 524,
+              "height": 180
+            },
+            "sheetHandle": {
+              "left": 221,
+              "top": 339,
+              "right": 743,
+              "bottom": 359,
+              "width": 522,
+              "height": 20
+            },
+            "documentScrollHeight": 390,
+            "horizontalOverflow": false,
+            "verticalOverflow": false,
+            "editHitTest": false
+          },
+          "open": {
+            "viewport": {
+              "width": 844,
+              "height": 390
+            },
+            "interaction": {
+              "pointerCoarse": true,
+              "anyPointerCoarse": true,
+              "maxTouchPoints": 1
+            },
+            "composer": {
+              "left": 220,
+              "top": 200,
+              "right": 744,
+              "bottom": 380,
+              "width": 524,
+              "height": 180
+            },
+            "sheetHandle": {
+              "left": 221,
+              "top": 201,
+              "right": 743,
+              "bottom": 221,
+              "width": 522,
+              "height": 20
+            },
+            "documentScrollHeight": 390,
+            "horizontalOverflow": false,
+            "verticalOverflow": false,
+            "editHitTest": true
+          },
+          "editHitTest": true
+        }
+      },
+      "generationRequests": 3,
+      "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0667999999999993,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": {
+          "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+          "revision": 22,
+          "renderer": "software",
+          "expectedCollectibleIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "collectedIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "score": 5,
+          "elapsedMs": 36964.89999999851,
+          "movementDistance": 1.1335999999999997,
+          "actualInput": {
+            "mode": "keyboard",
+            "traceEntries": 135,
+            "keysUsed": [
+              " ",
+              "a",
+              "d",
+              "s",
+              "w"
+            ]
+          },
+          "platformEvidence": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "groundedFrames": 7,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.42016475313684104
+            },
+            {
+              "id": "fixture-platform-b",
+              "behavior": "move",
+              "groundedFrames": 2,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.6946678565495144
+            },
+            {
+              "id": "fixture-platform-c",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "maximumDisplacement": 0.6905200000000087
+            }
+          ],
+          "win": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 22,
+            "score": 5,
+            "status": "won",
+            "portalId": "fixture-portal"
+          },
+          "reset": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 22,
+            "scoreIdsCount": 0,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "playerPosition": [
+              0,
+              0.42,
+              5
+            ]
+          }
+        },
+        "goalSeven": {
+          "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+          "revision": 31,
+          "renderer": "software",
+          "expectedCollectibleIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5",
+            "fixture-crystal-6",
+            "fixture-crystal-7"
+          ],
+          "collectedIds": [
+            "fixture-crystal-3",
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-4",
+            "fixture-crystal-5",
+            "fixture-crystal-6",
+            "fixture-crystal-7"
+          ],
+          "score": 7,
+          "elapsedMs": 30266.10000000149,
+          "movementDistance": 0.42679999999998836,
+          "actualInput": {
+            "mode": "keyboard",
+            "traceEntries": 141,
+            "keysUsed": [
+              " ",
+              "a",
+              "d",
+              "s",
+              "w"
+            ]
+          },
+          "platformEvidence": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "groundedFrames": 12,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.43959060181515863
+            },
+            {
+              "id": "fixture-platform-b",
+              "behavior": "move",
+              "groundedFrames": 2,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.5594136571421409
+            },
+            {
+              "id": "fixture-platform-c",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "maximumDisplacement": 0.7760000000000036
+            }
+          ],
+          "win": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 31,
+            "score": 7,
+            "status": "won",
+            "portalId": "fixture-portal"
+          },
+          "reset": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 31,
+            "scoreIdsCount": 0,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "playerPosition": [
+              0,
+              0.46179664999998715,
+              5
+            ]
+          }
+        },
+        "uiUndoFive": {
+          "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+          "revision": 32,
+          "renderer": "software",
+          "expectedCollectibleIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "collectedIds": [
+            "fixture-crystal-1",
+            "fixture-crystal-2",
+            "fixture-crystal-3",
+            "fixture-crystal-4",
+            "fixture-crystal-5"
+          ],
+          "score": 5,
+          "elapsedMs": 31968.70000000298,
+          "movementDistance": 0.22640000000002347,
+          "actualInput": {
+            "mode": "keyboard",
+            "traceEntries": 147,
+            "keysUsed": [
+              " ",
+              "a",
+              "d",
+              "s",
+              "w"
+            ]
+          },
+          "platformEvidence": [
+            {
+              "id": "fixture-platform-a",
+              "behavior": "move",
+              "groundedFrames": 9,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.3920479090239293
+            },
+            {
+              "id": "fixture-platform-b",
+              "behavior": "move",
+              "groundedFrames": 2,
+              "bounceFrames": 0,
+              "maximumDisplacement": 0.6733102708627039
+            },
+            {
+              "id": "fixture-platform-c",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "maximumDisplacement": 0.7438399999999732
+            }
+          ],
+          "win": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 32,
+            "score": 5,
+            "status": "won",
+            "portalId": "fixture-portal"
+          },
+          "reset": {
+            "projectId": "4cffee96-65ec-47b6-afbe-11dfc7c038d6",
+            "revision": 32,
+            "scoreIdsCount": 0,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "playerPosition": [
+              0,
+              0.42,
+              5
+            ]
+          }
+        }
+      },
+      "partialTraversal": {
+        "failure": {
+          "stage": "complete",
+          "code": "gameplay-acceptance-failed",
+          "target": null,
+          "detail": {
+            "label": "phone-reopened",
+            "summary": "phone-reopened composer starts outside the viewport."
+          }
+        },
+        "observationCount": null,
+        "lastObservation": null,
+        "inputTraceTailEntries": 135,
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 7,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.42016475313684104
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 2,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.6946678565495144
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 1,
+            "bounceFrames": 1,
+            "maximumDisplacement": 0.6905200000000087
+          }
+        ]
+      },
+      "componentBoundary": {
+        "classification": "raf-running",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": false,
+        "phase": "editing",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 39,
+        "lastFrameAtMs": 8073.1,
+        "lastFrameAgeMs": 7.800000005960101,
+        "lastFrameGapMs": 7049.700000000001,
+        "maxFrameGapMs": 7049.700000000001,
+        "lastFrameDurationMs": 4.600000001490116,
+        "maxFrameDurationMs": 23.5,
+        "heartbeatCount": 12,
+        "lastHeartbeatAtMs": 8072.10000000149,
+        "lastHeartbeatAgeMs": 8.800000004470348,
+        "maxHeartbeatGapMs": 7070.89999999851,
+        "observationCount": 0,
+        "lastObservationAtMs": null,
+        "runtimeError": null,
+        "longTasks": []
+      },
+      "failure": {
+        "stage": "complete",
+        "code": "gameplay-acceptance-failed",
+        "target": null,
+        "detail": {
+          "label": "phone-reopened",
+          "summary": "phone-reopened composer starts outside the viewport."
+        }
+      }
+    }
+  },
+  "error": "complete: gameplay-acceptance-failed"
+}
