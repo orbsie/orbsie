@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "outcome": "failed",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 1,
+  "blockedCalls": 0,
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-403"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 403,
+      "requestId": "f94ba4b6-067a-4165-8aeb-9349cf10802d",
+      "clientRunId": "6be18149-cb17-464b-8f3c-8e402073a923",
+      "authoringRunId": null,
+      "requestedAuthoringRunId": null,
+      "projectId": "3e9b63bb-e99e-4c40-b3e5-7986e6cbf3b9",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    }
+  ],
+  "review": null,
+  "finalReview": null,
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "0bcaa1eb279aa588bb3b757eb4fcf3ddc6b59976abfd4373a150978bda1b56c8",
+      "bytes": 216437,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "0bcaa1eb279aa588bb3b757eb4fcf3ddc6b59976abfd4373a150978bda1b56c8",
+      "privateBytes": 216437
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null
+  },
+  "requestIds": {
+    "initial": "f94ba4b6-067a-4165-8aeb-9349cf10802d",
+    "review": null,
+    "finalReview": null
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 1
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 0
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": {
+    "stage": "initial-generation",
+    "code": "initial-generation-http-failure",
+    "status": 403,
+    "errorType": "AcceptanceError"
+  },
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

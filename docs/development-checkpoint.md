@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 OpenRouter quality rerun after guidance change: isolated production
+build/migration and model catalog preflight passed, but the browser's first
+create request returned HTTP 403 before any scene revision. The harness
+observed one create-route request and no review/final-review calls or retry;
+upstream inference/billing is unverified. The sanitized diagnostic said
+`transport-error`/unknown, not a classified provider rejection. A separate
+read-only OpenRouter `/api/v1/key` request returned 200 for the local key. In
+source, the route's `checkOrigin` throws an HTTP 403 before provider setup when
+`Origin` differs from `BETTER_AUTH_URL`, while an upstream provider 403 becomes
+a `GenerationProviderError`; therefore a loopback origin mismatch is the
+leading **inference**, not yet proven. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-rerun-20260924/`.
+Next: add a zero-inference origin preflight to the harness, verify the local
+app origin is configured consistently, and only then schedule a new bounded
+live quality test. The prompt change has no fresh visual acceptance evidence.
+
 Sep 24 blue-strawberry quality follow-up: generation and review guidance now
 prioritizes defining silhouette, relative scale, visible attachment/support,
 and unobscured requested features. When a catalog piece cannot express a
