@@ -2766,7 +2766,7 @@ export default function Orbsie() {
                   {connection.provider === "chatgpt-hosted"
                     ? "Choose ChatGPT model"
                     : trial.enabled && trial.remaining > 0
-                      ? `${trial.remaining} free prompts`
+                      ? `${trial.remaining} free prompt${trial.remaining === 1 ? "" : "s"}`
                       : "Connect provider"}
                   <ChevronDown size={12} />
                 </button>
@@ -2833,7 +2833,7 @@ export default function Orbsie() {
                 : connection.provider === "chatgpt-hosted"
                   ? "Choose ChatGPT model"
                   : trial.enabled && trial.remaining > 0
-                    ? `${trial.remaining} free prompts left`
+                    ? `${trial.remaining} free prompt${trial.remaining === 1 ? "" : "s"} left`
                     : "Connect to keep creating"}
             </div>
           )}
@@ -3049,7 +3049,8 @@ export default function Orbsie() {
                       setModal(null);
                     }}
                   >
-                    Use {trial.remaining} free prompts
+                    Use {trial.remaining} free prompt
+                    {trial.remaining === 1 ? "" : "s"}
                   </button>
                 )}
               {capabilities.isAdmin && (
