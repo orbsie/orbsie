@@ -61,8 +61,10 @@ older rows below are a historical inventory, not a completion claim.
   the prior failed run's exact identity, request and last committed scene;
   a unique recovery-parent index prevents duplicate charging (`ed6d908`,
   `467588e`, `1c3b0b2`; 13/13 PostgreSQL and 13/13 admission tests). The API
-  route and explicit editor action are still required before this is a
-  user-facing recovery path. No provider call has exercised the new primitive.
+  public free/OpenRouter/Gateway start route now validates a failed-run recovery
+  and returns a run ID without inference (`ec03302`, 12 route tests); hosted
+  ChatGPT start and the explicit editor action remain required before this is
+  a user-facing recovery path. No provider call has exercised the new primitive.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

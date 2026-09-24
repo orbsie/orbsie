@@ -15,6 +15,13 @@ and editor action remain open, and no provider call or browser E2E was made.
 The additive schema was applied to the production database, and a read-only
 check confirmed the column and unique index exist. Production review remains
 disabled.
+Source `ec03302` adds the public free/OpenRouter/Gateway review-only start
+endpoint. It checks origin, feature flag, bounded request, model catalog and
+the failed-run admission before returning a new run ID and image capability;
+it does not call a model. Astra reviewed the route diff; 12 focused route tests,
+TypeScript and Prettier pass. The route test mocks admission, while the real
+ledger/admission suites above cover the underlying database path. Hosted
+ChatGPT start, client action and browser E2E are still open.
 
 Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
 actual failed review request from earlier capture/preflight failures. When the
