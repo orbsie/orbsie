@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 procedural-parts production promotion: after the shared geometry fix,
+full Vitest passed 1,717 tests (26 skipped) and the local/Vercel production
+builds passed. Commit `8651a9c` refreshed the standalone player bundle. The
+Vercel deployment at
+`https://orbsie-80yqr4yev-grappeggias-projects.vercel.app` was aliased to
+`https://orbsie.com/`. Signed-out read-only smoke passed: landing canvas and
+composer visible, root200, protected endpoint401, no browser errors/writes or
+external requests; deployed player and geometry worker hashes matched the
+local build. The screenshot was visually inspected. `/api/config` still says
+`authoringReview:false`, with hosted ChatGPT and generation enabled. Evidence:
+`docs/evidence/production-release-20260924-procedural-parts/`. The live domain
+serves the renderer fix, but no new provider-backed scene or public game was
+created by this smoke.
+
 Sep 24 rendered procedural-part acceptance: the zero-provider revision-bound
 scene-capture fixture now builds a procedural `tree` with three blue fruit
 parts and checks actual PNG pixels in both WebGL and forced Canvas2D before
