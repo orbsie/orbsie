@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-09-24T09:08:58.725Z",
+  "origin": "https://orbsie.com",
+  "device": "emulator-5554",
+  "android": "15",
+  "pageErrors": [],
+  "blockedRequests": [],
+  "failedResponses": [],
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "scrollWidth": 412
+  },
+  "canvasVisible": true,
+  "horizontalOverflow": false,
+  "visualStatus": "failed",
+  "visualFinding": "Planet absent in Android Chrome WebGL capture and device screen despite ready status and draw calls; forced Canvas2D fallback visibly renders the planet.",
+  "renderer": "Android Emulator Google SwiftShader",
+  "status": "failed"
+}

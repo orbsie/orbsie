@@ -1,0 +1,50 @@
+{
+  "observations": [
+    {
+      "elapsed": 3735,
+      "canvases": [
+        {
+          "width": 618,
+          "height": 1179,
+          "clientWidth": 412,
+          "clientHeight": 786,
+          "visible": "visible",
+          "display": "block"
+        }
+      ],
+      "graphicsAdvice": false,
+      "bodyText": "Create a world\nWhat experience to build?\n3 free prompts\nCreate"
+    },
+    {
+      "elapsed": 8833,
+      "canvases": [
+        {
+          "width": 618,
+          "height": 1179,
+          "clientWidth": 412,
+          "clientHeight": 786,
+          "visible": "visible",
+          "display": "block"
+        }
+      ],
+      "graphicsAdvice": false,
+      "bodyText": "Create a world\nWhat experience to build?\n3 free prompts\nCreate"
+    },
+    {
+      "elapsed": 14831,
+      "canvases": [
+        {
+          "width": 412,
+          "height": 786,
+          "clientWidth": 412,
+          "clientHeight": 786,
+          "visible": "visible",
+          "display": "block"
+        }
+      ],
+      "graphicsAdvice": false,
+      "bodyText": "Create a world\nWhat experience to build?\n3 free prompts\nCreate"
+    }
+  ],
+  "errors": []
+}
