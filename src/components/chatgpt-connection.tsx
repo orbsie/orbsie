@@ -579,6 +579,15 @@ export default function ChatGPTConnection({
       });
   }, [beginRequest, ensureProviderSession, signedIn]);
 
+  const openDevicePage = useCallback(() => {
+    window.open(CHATGPT_DEVICE_URL, "_blank", "noopener,noreferrer");
+  }, []);
+
+  const startFromUserClick = useCallback(() => {
+    openDevicePage();
+    start();
+  }, [openDevicePage, start]);
+
   useEffect(() => {
     if (startRequest <= consumedStartRequest.current) return;
     consumedStartRequest.current = startRequest;
@@ -623,6 +632,11 @@ export default function ChatGPTConnection({
         );
       });
   }, [beginRequest, onDisconnect, signedIn, start]);
+
+  const reconnectFromUserClick = useCallback(() => {
+    openDevicePage();
+    reconnect();
+  }, [openDevicePage, reconnect]);
 
   const cancel = useCallback(() => {
     if (!signedIn) return;
@@ -862,7 +876,7 @@ export default function ChatGPTConnection({
             </p>
           )}
           {view.phase !== "checking" && (
-            <button className="primary full" onClick={start}>
+            <button className="primary full" onClick={startFromUserClick}>
               <img
                 className="provider-logo"
                 src="/providers/openai.svg"
@@ -1068,11 +1082,11 @@ export default function ChatGPTConnection({
               {CHATGPT_LOGIN_PENDING_ACTION}
             </button>
           ) : view.stale ? (
-            <button className="primary full" onClick={reconnect}>
+            <button className="primary full" onClick={reconnectFromUserClick}>
               {CHATGPT_STALE_CONNECTION_ACTION}
             </button>
           ) : view.retryLogin ? (
-            <button className="primary full" onClick={start}>
+            <button className="primary full" onClick={startFromUserClick}>
               Try again
             </button>
           ) : (
@@ -1084,7 +1098,7 @@ export default function ChatGPTConnection({
       ) : (
         <div className="setup-note">
           {view.message ?? "ChatGPT is not connected."}
-          <button className="primary full" onClick={start}>
+          <button className="primary full" onClick={startFromUserClick}>
             <img
               className="provider-logo"
               src="/providers/openai.svg"

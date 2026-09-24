@@ -10,6 +10,7 @@ await mkdir(out, { recursive: true });
 const scenarios = [
   "disabled",
   "signed-out",
+  "programmatic-start",
   "cancel",
   "connected",
   "expired",
@@ -49,10 +50,28 @@ try {
       cancels = 0,
       logouts = 0,
       polls = 0,
-      providerSessions = 0;
+      providerSessions = 0,
+      blockedAuthNavigations = 0;
     const controlEvents = [];
     const unexpected = [],
       errors = [];
+    const page = await context.newPage();
+    const popupPages = [];
+    context.on("page", (opened) => {
+      if (opened !== page) popupPages.push(opened);
+    });
+    await context.addInitScript(() => {
+      const originalOpen = window.open;
+      window.__chatGPTPopupCalls = [];
+      window.open = function (url, target, features) {
+        window.__chatGPTPopupCalls.push({
+          url: String(url),
+          target,
+          features,
+        });
+        return originalOpen.call(this, url, target, features);
+      };
+    });
     const expiresAt = Date.now() + (scenario === "expired" ? 4000 : 60000);
     const challenge = () => ({
       userCode: "SYNTH-CODE",
@@ -62,7 +81,9 @@ try {
     await context.route("**/*", async (route) => {
       const url = new URL(route.request().url());
       if (url.origin !== origin) {
-        unexpected.push(url.origin);
+        if (url.href === "https://auth.openai.com/codex/device")
+          blockedAuthNavigations++;
+        else unexpected.push(url.origin);
         return route.abort();
       }
       if (!url.pathname.startsWith("/api/")) return route.continue();
@@ -79,17 +100,16 @@ try {
         });
       if (p === "/api/auth/get-session")
         return route.fulfill({
-          json:
-            scenario === "signed-out"
-              ? null
-              : {
-                  user: {
-                    id: "fixture-user",
-                    name: "Fixture",
-                    isAnonymous: false,
-                  },
-                  session: { id: "fixture-session" },
+          json: ["signed-out", "programmatic-start"].includes(scenario)
+            ? null
+            : {
+                user: {
+                  id: "fixture-user",
+                  name: "Fixture",
+                  isAnonymous: false,
                 },
+                session: { id: "fixture-session" },
+              },
         });
       if (p === "/api/provider-session") {
         providerSessions++;
@@ -197,18 +217,45 @@ try {
       unexpected.push(p);
       return route.abort();
     });
-    const page = await context.newPage();
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base);
-    await page
-      .getByRole("button", { name: "Connections", exact: true })
-      .click();
+    const assertPopupCount = async (expected) => {
+      await expect
+        .poll(() => page.evaluate(() => window.__chatGPTPopupCalls.length))
+        .toBe(expected);
+      await expect.poll(() => popupPages.length).toBe(expected);
+      await expect.poll(() => blockedAuthNavigations).toBe(expected);
+      assert.deepEqual(
+        await page.evaluate(() => window.__chatGPTPopupCalls),
+        Array.from({ length: expected }, () => ({
+          url: "https://auth.openai.com/codex/device",
+          target: "_blank",
+          features: "noopener,noreferrer",
+        })),
+      );
+    };
+    if (scenario === "programmatic-start") {
+      await page.getByRole("button", { name: "Your worlds" }).click();
+      await page
+        .getByRole("button", { name: /Connect ChatGPT/ })
+        .first()
+        .click();
+    } else {
+      await page
+        .getByRole("button", { name: "Connections", exact: true })
+        .click();
+    }
     const section = page.getByRole("region", { name: "ChatGPT subscription" });
     if (scenario !== "disabled")
       await expect(section).toHaveCount(1, { timeout: 10000 });
     if (scenario === "disabled") {
       await expect(section).toHaveCount(0);
       assert.equal(starts, 0);
+    } else if (scenario === "programmatic-start") {
+      await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+      assert.equal(providerSessions, 1);
+      assert.equal(starts, 1);
+      await assertPopupCount(0);
     } else if (scenario === "signed-out") {
       await expect(
         section.getByRole("button", { name: "Connect ChatGPT" }),
@@ -219,6 +266,7 @@ try {
       await expect(section.locator("code")).toHaveText("SYNTH-CODE");
       assert.equal(providerSessions, 1);
       assert.equal(starts, 1);
+      await assertPopupCount(1);
     } else {
       const staleScenario = [
         "stale-status",
@@ -253,6 +301,7 @@ try {
           await expect(section.locator("code")).toHaveText("SYNTH-CODE");
           assert.deepEqual(controlEvents, ["logout", "start"]);
         }
+        await assertPopupCount(1);
         await page.screenshot({ path: `${out}/${scenario}-after-click.png` });
       } else {
         await expect(
@@ -262,6 +311,7 @@ try {
         await section
           .getByRole("button", { name: "Connect ChatGPT", exact: true })
           .click();
+        await assertPopupCount(1);
         if (scenario === "malformed") {
           await expect(
             section.getByText(/could not be completed/),
@@ -351,6 +401,7 @@ try {
               .getByRole("button", { name: "Try again", exact: true })
               .click();
             await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+            await assertPopupCount(2);
             await expect.poll(() => starts).toBe(2);
             assert.deepEqual(controlEvents, ["start", "start"]);
             await page.screenshot({
@@ -388,6 +439,7 @@ try {
       polls,
       providerSessions,
       externalRequests: 0,
+      blockedAuthNavigations,
     });
     await context.close();
   }

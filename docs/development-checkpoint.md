@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 ChatGPT sign-in follow-up: the owner offered to use a code and URL, so
+production issued one fresh OpenAI device challenge and displayed it in chat.
+Authenticated status stayed pending/disconnected through expiry, then became
+idle/disconnected. The challenge was cancelled and the mode-0600 private
+browser state removed; zero ChatGPT model calls ran. Sanitized evidence:
+`docs/evidence/production-hosted-chatgpt/owner-code-followup-20260924-4/`.
+The installed Codex app-server `TurnStartParams` schema has no per-turn output
+token ceiling, so the owner-mandated 4,096-token live-test cap still prevents
+ChatGPT inference acceptance. A bounded Luna UI change now opens the official
+device sign-in page on direct Connect/Retry/Reconnect clicks while preserving
+the visible code and fallback link; programmatic starts do not open a tab.
+Astra reviewed the diff and the worker's fixture result: 18 connection tests,
+five hosted-UI fixture scenarios, typecheck, formatting and syntax passed.
+The optimized production build also passed. Deployment remains pending.
+
 Sep 24 free-provider recovery release: source `afb2fd3` deployed Ready as
 `dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-9nawgxeph-grappeggias-projects.vercel.app`).
