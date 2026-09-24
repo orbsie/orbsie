@@ -695,7 +695,9 @@ async function runSignedInJournalScenario(conflict) {
   };
   const initialToken = "a".repeat(64);
   const correctedToken = "b".repeat(64);
+  const secondCorrectedToken = "d".repeat(64);
   const conflictToken = "c".repeat(64);
+  let recovery;
   let clientCorrelation;
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("console", (message) => {
@@ -803,13 +805,14 @@ async function runSignedInJournalScenario(conflict) {
     assert.equal(request.method(), "PUT");
     const body = request.postDataJSON();
     state.putCount += 1;
-    cloudEvents.push({
+    const putEvent = {
       kind: "put",
       count: state.putCount,
       revision: body.project.revision,
       baseRevision: body.baseRevision,
       baseSnapshotToken: body.baseSnapshotToken,
-    });
+    };
+    cloudEvents.push(putEvent);
     if (!state.cloudProject) {
       assert.equal(body.baseRevision, null);
       assert.equal(body.baseSnapshotToken, null);
@@ -822,8 +825,14 @@ async function runSignedInJournalScenario(conflict) {
       assert.equal(body.baseRevision, state.cloudProject.revision);
       assert.equal(body.baseSnapshotToken, state.cloudToken);
       state.cloudProject = body.project;
-      state.cloudToken = correctedToken;
+      state.cloudToken =
+        state.putCount === 2
+          ? correctedToken
+          : state.putCount === 3
+            ? secondCorrectedToken
+            : assert.fail("A fourth signed-in cloud snapshot was unexpected.");
     }
+    putEvent.snapshotToken = state.cloudToken;
     await route.fulfill({
       json: {
         revision: body.project.revision,
@@ -931,13 +940,24 @@ async function runSignedInJournalScenario(conflict) {
       clientCorrelation,
     );
     assert.equal(body.runId, authoringRunId);
+    const reviewOrdinal = requests.filter(
+      (request) => request.kind === "review",
+    ).length;
     await route.fulfill({
       status: 200,
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
       },
-      body: JSON.stringify(reviewReply(body.project, body.phase)),
+      body: JSON.stringify(
+        reviewReply(
+          body.project,
+          body.phase,
+          "accept",
+          reviewOrdinal,
+          !conflict,
+        ),
+      ),
     });
   });
 
@@ -964,10 +984,10 @@ async function runSignedInJournalScenario(conflict) {
     );
     const starts = generationEvents.filter((event) => event.kind === "start");
     const appends = generationEvents.filter((event) => event.kind === "append");
-    assert.equal(puts.length, conflict ? 1 : 2);
-    assert.equal(latestReads.length, 1);
-    assert.equal(starts.length, conflict ? 1 : 2);
-    assert.equal(appends.length, conflict ? 3 : 6);
+    assert.equal(puts.length, conflict ? 1 : 3);
+    assert.equal(latestReads.length, conflict ? 1 : 2);
+    assert.equal(starts.length, conflict ? 1 : 3);
+    assert.equal(appends.length, conflict ? 3 : 8);
     assert.equal(puts[0].baseRevision, null);
     if (conflict) {
       assert.equal(puts[0].baseSnapshotToken, null);
@@ -980,11 +1000,46 @@ async function runSignedInJournalScenario(conflict) {
     } else {
       assert.equal(puts[1].baseRevision, puts[0].revision);
       assert.equal(puts[1].baseSnapshotToken, initialToken);
+      assert.equal(puts[2].baseRevision, puts[1].revision);
+      assert.equal(puts[2].baseSnapshotToken, correctedToken);
+      assert.deepEqual(
+        puts.map((put) => put.snapshotToken),
+        [initialToken, correctedToken, secondCorrectedToken],
+      );
       assert.equal(starts[0].projectRevision, puts[0].revision);
       assert.equal(starts[1].projectRevision, puts[1].revision);
-      assert.notEqual(starts[0].runId, starts[1].runId);
-      assert.equal(requests.length, 3);
-      assert.equal(requests[2].kind, "final-review");
+      assert.equal(starts[2].projectRevision, puts[2].revision);
+      assert.equal(new Set(starts.map((start) => start.runId)).size, 3);
+      assert.deepEqual(
+        requests.map((request) => request.kind),
+        ["initial", "review", "review", "final-review"],
+      );
+      assert.deepEqual(
+        requests.slice(1).map((request) => request.body.project.revision),
+        [3, 6, 8],
+      );
+      assert.deepEqual(
+        latestReads.map((read) => read.snapshotToken),
+        [initialToken, correctedToken],
+      );
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[0].runId)
+          .map((event) => event.sequence),
+        [1, 2, 3],
+      );
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[1].runId)
+          .map((event) => event.sequence),
+        [1, 2, 3],
+      );
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[2].runId)
+          .map((event) => event.sequence),
+        [1, 2],
+      );
 
       await page.reload();
       await expect(page.locator("canvas")).toBeVisible();
@@ -1010,8 +1065,8 @@ async function runSignedInJournalScenario(conflict) {
         ),
       ).toBeVisible({ timeout: 15_000 });
       const recovered = await storageSnapshot(page);
-      assert.equal(recovered.project.revision, 6);
-      assert.equal(recovered.project.environment.sky, "#aabbff");
+      assert.equal(recovered.project.revision, 8);
+      assert.equal(recovered.project.environment.sky, "#88ccff");
       assert.equal(recovered.project.entities[0].color, "#ff4b9e");
       const readsAfterReload = generationEvents.filter(
         (event) => event.kind === "read",
@@ -1022,10 +1077,17 @@ async function runSignedInJournalScenario(conflict) {
       );
       assert.equal(
         cloudEvents.filter((event) => event.kind === "get-latest").length,
-        2,
+        3,
       );
-      assert.equal(puts.length, 2);
-      assert.equal(state.runs.get(starts[1].runId).state, "complete");
+      assert.equal(puts.length, 3);
+      assert.equal(state.runs.get(starts[2].runId).state, "complete");
+      recovery = {
+        projectRevision: recovered.project.revision,
+        sky: recovered.project.environment.sky,
+        lanternColor: recovered.project.entities[0].color,
+        generationRunId: starts[2].runId,
+        generationRunState: state.runs.get(starts[2].runId).state,
+      };
     }
     assert.deepEqual(unexpectedRequests, []);
     assert.deepEqual(
@@ -1051,9 +1113,20 @@ async function runSignedInJournalScenario(conflict) {
     return {
       conflict,
       requests: requests.map((request) => request.kind),
+      reviewedRevisions: requests
+        .slice(1)
+        .map((request) => request.body.project.revision),
       cloudPuts: puts,
       cloudReads: cloudEvents.filter((event) => event.kind === "get-latest"),
+      ...(recovery ? { recoveredFinalScene: recovery } : {}),
       generationStarts: starts,
+      journalSegments: starts.map((start) => ({
+        runId: start.runId,
+        projectRevision: start.projectRevision,
+        sequences: appends
+          .filter((event) => event.runId === start.runId)
+          .map((event) => event.sequence),
+      })),
       generationAppends: appends.map((event) => ({
         runId: event.runId,
         sequence: event.sequence,

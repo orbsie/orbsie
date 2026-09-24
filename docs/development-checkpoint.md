@@ -1,5 +1,13 @@
 # Development checkpoint
 
+Sep 24 signed-in recovery milestone: production-build deterministic browser
+fixture passed a four-request authoring review with three independent cloud
+journal segments, chained snapshot tokens, and reload/recovery of final revision 8. The conflict path still stopped before a correction segment. Astra reviewed
+the script diff and phone screenshot. Evidence:
+`docs/evidence/authoring-review/signed-in-three-segment-20260924/`. Zero live
+model calls; provider quality acceptance and production feature enablement
+remain open.
+
 Sep 24 external acceptance check: Vercel AI Gateway credit remained
 `-0.0033684` on a single read-only authenticated request (HTTP 200; zero model
 calls). Evidence: `docs/evidence/gateway-credit-check-20260924/report.json`.
