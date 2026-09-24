@@ -13,8 +13,11 @@ catalog's actual image support, falling back to structural scope when needed.
 The focused store/connection suites pass (35 tests before the follow-up;
 30 store tests after), TypeScript and Prettier pass. The editor has no action
 to call this method yet. Lost start/review responses still have unknown
-admission outcome; no hidden retry occurs. Hosted review failure headers are
-pending, and no browser E2E or provider call has exercised this path.
+admission outcome; no hidden retry occurs. Source `1f0936c` adds the same
+allowlisted admitted-failure marker to hosted ChatGPT review responses as the
+public route, without exposing raw provider errors or credentials. Six hosted
+route tests, TypeScript and Prettier pass. No browser E2E or provider call has
+exercised this path.
 
 Sep 24 owner-visible ChatGPT device challenge: a fresh guest Orbsie session
 issued the official OpenAI device URL and one-time code, which were shown to

@@ -67,8 +67,9 @@ older rows below are a historical inventory, not a completion claim.
   (`d871b67`, six route tests). The store now has an explicit review-only
   transport and shared verdict sequence (`51bf796`, `45e3dff`; focused tests
   pass); it captures the saved scene before admission and skips initial
-  generation. The editor action and hosted admitted-failure marker remain
-  required before this is user-facing. No provider call has exercised the path.
+  generation. The hosted admitted-failure marker is now present (`1f0936c`,
+  six route tests). The editor action remains required before this is
+  user-facing. No provider call has exercised the path.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in
