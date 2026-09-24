@@ -12,6 +12,9 @@ requests roll back the second free-trial claim and return a safe conflict.
 PostgreSQL ledger tests pass 13/13, admission tests 13/13, TypeScript and
 Prettier pass; the SQL migration is idempotent in its local test. The route
 and editor action remain open, and no provider call or browser E2E was made.
+The additive schema was applied to the production database, and a read-only
+check confirmed the column and unique index exist. Production review remains
+disabled.
 
 Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
 actual failed review request from earlier capture/preflight failures. When the
