@@ -6,8 +6,14 @@ and failed or cancelled. The bounded OpenRouter acceptance harness records only
 recognized values on failed review responses; it does not retain provider bodies,
 raw errors, or credentials. Astra reviewed the route/harness diff and reran the
 two focused suites (30 tests), TypeScript, and diff whitespace checks; all pass.
-No live call or deployment was part of this change, so the previous HTTP 502
-still has an unknown underlying cause. The authoring ledger marks an admitted
+The optimized production build passed, and source `df6adc6` deployed Ready as
+`dpl_7pz9TTmfsT41UXBBfKymL8sE9wtg` at `https://orbsie.com/` (immutable
+`https://orbsie-db4g4ck5e-grappeggias-projects.vercel.app`). Read-only root,
+robots, sitemap, config, player runtime and source returned HTTP 200; both
+player files exactly match the checked-in bytes. Config still reports
+`authoringReview:false` and `chatgptHosted:true`. No live model call exercised
+the new header, so the previous HTTP 502 still has an unknown underlying cause.
+The authoring ledger marks an admitted
 failed review run terminal, clearing its phase token. Recovery therefore needs
 an explicit, budgeted continuation bound to the saved revision; automatic replay
 would risk duplicate paid inference. The previously saved revision 21 survived.
