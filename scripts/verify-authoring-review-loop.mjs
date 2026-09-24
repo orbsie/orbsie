@@ -18,6 +18,7 @@ await mkdir(output, { recursive: false });
 
 const clientRunId = "11111111-1111-4111-8111-111111111111";
 const authoringRunId = "22222222-2222-4222-8222-222222222222";
+const resumedAuthoringRunId = "33333333-3333-4333-8333-333333333333";
 
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -145,9 +146,10 @@ function reviewReply(
   finalVerdict = "accept",
   reviewOrdinal = 1,
   twoCorrections = false,
+  acceptReview = false,
 ) {
   const scope = "visual+structural";
-  if (phase === "review") {
+  if (phase === "review" && !acceptReview) {
     const corrected = correctionProject(project, reviewOrdinal);
     const digest = sceneDigest(corrected);
     const second = reviewOrdinal === 2;
@@ -309,12 +311,13 @@ async function runRenderer(
   renderer,
   finalVerdict = "accept",
   twoCorrections = false,
-  reviewFailure = false,
+  interruptedReviewMode,
 ) {
+  const reviewFailure = interruptedReviewMode !== undefined;
   const evidenceName = twoCorrections
     ? `${renderer}-two-corrections`
     : reviewFailure
-      ? `${renderer}-interrupted-review`
+      ? `${renderer}-interrupted-review-${interruptedReviewMode}`
       : finalVerdict === "accept"
         ? renderer
         : `${renderer}-partial`;
@@ -349,6 +352,7 @@ async function runRenderer(
   const page = await context.newPage();
   const requests = [];
   let clientCorrelation;
+  let resumedClientCorrelation;
   const pageErrors = [];
   const consoleErrors = [];
   const requestFailures = [];
@@ -410,15 +414,48 @@ async function runRenderer(
       body: streamBody(),
     });
   });
+  await context.route("**/api/generate/review/start", async (route) => {
+    const body = route.request().postDataJSON();
+    requests.push({ kind: "review-start", body });
+    assert.equal(body.priorRunId, authoringRunId);
+    assert.equal(body.prompt, "Build a lantern");
+    assert.equal(body.project.id, requests[0].body.project.id);
+    assert.equal(body.project.revision, requests[1].body.project.revision);
+    assert.equal(body.provider, "free");
+    resumedClientCorrelation = route.request().headers()[
+      "x-orbsie-client-run-id"
+    ];
+    assert.match(resumedClientCorrelation, /^[0-9a-f-]{36}$/);
+    const startOrdinal = requests.filter(
+      (request) => request.kind === "review-start",
+    ).length;
+    if (interruptedReviewMode === "resume-start-retry" && startOrdinal === 1) {
+      await route.abort();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+      json: {
+        runId: resumedAuthoringRunId,
+        reviewImageSupported: true,
+      },
+    });
+  });
   await context.route("**/api/generate/review", async (route) => {
     const body = route.request().postDataJSON();
     const phase = body.phase;
     requests.push({ kind: phase, body });
     assert.equal(
       route.request().headers()["x-orbsie-client-run-id"],
-      clientCorrelation,
+      body.runId === authoringRunId
+        ? clientCorrelation
+        : resumedClientCorrelation,
     );
-    assert.equal(body.runId, authoringRunId);
+    assert.equal(
+      body.runId,
+      body.runId === authoringRunId ? authoringRunId : resumedAuthoringRunId,
+    );
     assert.equal(body.project.id, requests[0].body.project.id);
     assert.equal(body.reviewImage.projectId, body.project.id);
     assert.equal(body.reviewImage.revision, body.project.revision);
@@ -427,7 +464,7 @@ async function runRenderer(
     const reviewOrdinal = requests.filter(
       (request) => request.kind === "review",
     ).length;
-    if (reviewFailure) {
+    if (reviewFailure && reviewOrdinal === 1) {
       assert.equal(phase, "review");
       await route.fulfill({
         status: 502,
@@ -452,6 +489,7 @@ async function runRenderer(
           finalVerdict,
           reviewOrdinal,
           twoCorrections,
+          body.runId === resumedAuthoringRunId,
         ),
       ),
     });
@@ -484,40 +522,187 @@ async function runRenderer(
         requests[1].body.project.entities.map((entity) => entity.id),
       );
       const continuation = page.getByTestId("interrupted-review-continuation");
+      const resume = page.getByTestId("interrupted-review-resume");
       await expect(continuation).toBeVisible();
+      await expect(resume).toBeVisible();
+      await expect(page.locator(".review-continuation-cost")).toContainText(
+        "Free uses one free prompt. Linked providers may make up to three model calls.",
+      );
       await page.screenshot({
         path: `${output}/${evidenceName}-desktop.png`,
       });
       await page.setViewportSize({ width: 390, height: 844 });
       await expect(continuation).toBeVisible();
-      const continuationBounds = await continuation.boundingBox();
-      assert(continuationBounds);
-      assert(continuationBounds.x >= 0);
-      assert(continuationBounds.x + continuationBounds.width <= 390);
+      await expect(resume).toBeVisible();
+      for (const control of [resume, continuation]) {
+        const bounds = await control.boundingBox();
+        assert(bounds);
+        assert(bounds.x >= 0);
+        assert(bounds.x + bounds.width <= 390);
+      }
       await page.screenshot({
         path: `${output}/${evidenceName}-phone.png`,
       });
-      await continuation.click();
-      await expect(
-        page.getByRole("textbox", { name: "What experience to build?" }),
-      ).toHaveValue(
-        "Continue improving the saved scene based on the original request: Build a lantern",
+      if (interruptedReviewMode === "draft") {
+        await continuation.click();
+        await expect(
+          page.getByRole("textbox", { name: "What experience to build?" }),
+        ).toHaveValue(
+          "Continue improving the saved scene based on the original request: Build a lantern",
+        );
+        assert.equal(
+          requests.length,
+          2,
+          "drafting a continuation must not call the model",
+        );
+        await page.getByRole("button", { name: "Undo last change" }).click();
+        await expect(continuation).toHaveCount(0);
+        assert.equal(requests.length, 2);
+        return {
+          renderer,
+          savedRevision: saved.project.revision,
+          requestKinds: requests.map((request) => request.kind),
+          draftedPrompt: `Continue improving the saved scene based on the original request: ${requests[0].body.prompt}`,
+          extraRequestsAfterDraft: 0,
+          continuationHiddenAfterRevisionChange: true,
+        };
+      }
+
+      const originalEntityIds = saved.project.entities.map(
+        (entity) => entity.id,
+      );
+      const originalRevision = saved.project.revision;
+      const originalProjectId = saved.project.id;
+      const originalPrompt = requests[0].body.prompt;
+      assert.equal(originalPrompt, "Build a lantern");
+      assert.deepEqual(
+        saved.project.messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.text),
+        [originalPrompt],
+        "the failed create should have one copy of the user prompt",
       );
       assert.equal(
-        requests.length,
-        2,
-        "drafting a continuation must not call the model",
+        requests.filter((request) => request.kind === "initial").length,
+        1,
       );
-      await page.getByRole("button", { name: "Undo last change" }).click();
+      await page.getByRole("button", { name: "Play", exact: true }).click();
+      await expect(
+        page.getByRole("button", { name: "Play", exact: true }),
+      ).toHaveClass(/active/);
+      await resume.click();
+      if (interruptedReviewMode === "resume-start-retry") {
+        await expect(page.locator(".toast.error")).toContainText(
+          "review start response was lost",
+          { timeout: 15_000 },
+        );
+        assert.equal(
+          requests.filter((request) => request.kind === "initial").length,
+          1,
+        );
+        assert.equal(
+          requests.filter((request) => request.kind === "review-start").length,
+          1,
+        );
+        await resume.click();
+      }
+      await expect(page.locator(".authoring-activity-latest p")).toHaveText(
+        "Scene verified. Changes are applied.",
+        { timeout: 15_000 },
+      );
+      const completed = await storageSnapshot(page);
+      assert.equal(completed.project.id, originalProjectId);
+      assert.equal(completed.project.revision, originalRevision);
+      assert.deepEqual(
+        completed.project.entities.map((entity) => entity.id),
+        originalEntityIds,
+      );
+      assert.deepEqual(
+        completed.project.messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.text),
+        [originalPrompt],
+      );
+      assert.equal(
+        requests.filter((request) => request.kind === "initial").length,
+        1,
+        "resuming must not send another creation request",
+      );
+      assert.equal(
+        requests.filter((request) => request.kind === "review-start").length,
+        interruptedReviewMode === "resume-start-retry" ? 2 : 1,
+      );
+      assert.deepEqual(
+        requests
+          .filter((request) => request.kind === "review-start")
+          .map((request) => request.body.prompt),
+        Array.from(
+          {
+            length: interruptedReviewMode === "resume-start-retry" ? 2 : 1,
+          },
+          () => originalPrompt,
+        ),
+      );
+      assert.equal(
+        requests.filter((request) => request.kind === "review").length,
+        2,
+      );
+      await expect(
+        page.getByRole("button", { name: "Play", exact: true }),
+      ).toHaveClass(/active/);
+      await expect(resume).toHaveCount(0);
       await expect(continuation).toHaveCount(0);
-      assert.equal(requests.length, 2);
+      assert.deepEqual(unexpectedRequests, []);
+      const expectedPageErrors =
+        renderer === "software"
+          ? ["THREE.WebGLRenderer: Error creating WebGL context."]
+          : [];
+      const expectedConsoleErrors =
+        renderer === "software"
+          ? [
+              "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+            ]
+          : [];
+      if (reviewFailure)
+        expectedConsoleErrors.push(
+          "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        );
+      if (interruptedReviewMode === "resume-start-retry")
+        expectedConsoleErrors.push("Failed to load resource: net::ERR_FAILED");
+      assert.deepEqual(pageErrors, expectedPageErrors);
+      assert.deepEqual(consoleErrors, expectedConsoleErrors);
+      const lostStartFailures = requestFailures.filter(
+        (failure) =>
+          new URL(failure.url).pathname === "/api/generate/review/start",
+      );
+      assert.equal(
+        lostStartFailures.length,
+        interruptedReviewMode === "resume-start-retry" ? 1 : 0,
+      );
+      assert(
+        requestFailures.every((failure) =>
+          new URL(failure.url).pathname === "/api/generate/review/start"
+            ? ["net::ERR_ABORTED", "net::ERR_FAILED"].includes(failure.failure)
+            : failure.failure === "net::ERR_ABORTED",
+        ),
+      );
       return {
         renderer,
-        savedRevision: saved.project.revision,
+        mode: interruptedReviewMode,
+        projectId: completed.project.id,
+        revision: completed.project.revision,
+        entityIds: originalEntityIds,
         requestKinds: requests.map((request) => request.kind),
-        draftedPrompt: `Continue improving the saved scene based on the original request: ${requests[0].body.prompt}`,
-        extraRequestsAfterDraft: 0,
-        continuationHiddenAfterRevisionChange: true,
+        creationRequests: requests.filter(
+          (request) => request.kind === "initial",
+        ).length,
+        resumedStarts: requests.filter(
+          (request) => request.kind === "review-start",
+        ).length,
+        userPromptCount: completed.project.messages.filter(
+          (message) => message.role === "user",
+        ).length,
+        playPreserved: true,
       };
     }
     const terminalMessage =
@@ -1217,8 +1402,47 @@ const report = {
   signedInJournal: {},
 };
 try {
-  if (process.env.AUTHORING_REVIEW_FAILURE_ONLY === "1") {
-    report.failedReview = await runRenderer("software", "accept", false, true);
+  const failureOnly = process.env.AUTHORING_REVIEW_FAILURE_ONLY;
+  if (failureOnly === "1" || failureOnly === "draft") {
+    report.failedReview.draft = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "draft",
+    );
+  } else if (failureOnly === "resume") {
+    report.failedReview.resume = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume",
+    );
+  } else if (failureOnly === "resume-start-retry") {
+    report.failedReview.resumeStartRetry = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume-start-retry",
+    );
+  } else if (failureOnly === "all") {
+    report.failedReview.draft = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "draft",
+    );
+    report.failedReview.resume = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume",
+    );
+    report.failedReview.resumeStartRetry = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume-start-retry",
+    );
   } else {
     report.renderers.webgl = await runRenderer("webgl");
     report.renderers.software = await runRenderer("software");
@@ -1228,11 +1452,23 @@ try {
       true,
     );
     report.partialReview.software = await runRenderer("software", "revise");
-    report.failedReview.software = await runRenderer(
+    report.failedReview.draft = await runRenderer(
       "software",
       "accept",
       false,
-      true,
+      "draft",
+    );
+    report.failedReview.resume = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume",
+    );
+    report.failedReview.resumeStartRetry = await runRenderer(
+      "software",
+      "accept",
+      false,
+      "resume-start-retry",
     );
     report.signedInJournal.success = await runSignedInJournalScenario(false);
     report.signedInJournal.conflict = await runSignedInJournalScenario(true);

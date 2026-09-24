@@ -1682,6 +1682,119 @@ export default function Orbsie() {
     dictation.cancel();
   }, [modal, s.phase, s.selected, s.playing, dictation.cancel]);
   const submission = useRef({ checking: false, sequence: 0 });
+  const createGenerationJournal = (
+    originProjectId: string,
+    accountVersion: number,
+  ) => {
+    let lastJournalRunId: string | undefined;
+    let lastJournalAcknowledgement:
+      { revision: number; snapshotToken: string } | undefined;
+    return user
+      ? {
+          isCurrent: () => accountGeneration.current === accountVersion,
+          begin: async (
+            project: typeof s.project,
+            runId: string,
+            intent: string,
+            selected?: string,
+          ) => {
+            const current = () =>
+              accountGeneration.current === accountVersion &&
+              useOrb.getState().project.id === project.id &&
+              useOrb.getState().project.revision === project.revision;
+            if (
+              !current() ||
+              !(await uploadCloudGeneratedModels(project, current))
+            )
+              throw Error(
+                "Generation account changed before cloud recovery could start.",
+              );
+            let baseRevision =
+              project.id === originProjectId ? cloudRevision : null;
+            let baseSnapshotToken =
+              project.id === originProjectId
+                ? (cloudVersion?.snapshotToken ?? null)
+                : null;
+            if (lastJournalRunId && lastJournalRunId !== runId) {
+              const latestResponse = await fetch(
+                `/api/projects?id=${encodeURIComponent(project.id)}`,
+                { cache: "no-store" },
+              );
+              const latest = await latestResponse.json().catch(() => ({}));
+              if (!current())
+                throw Error(
+                  "Generation account changed before cloud recovery could start.",
+                );
+              if (!latestResponse.ok || !latest.project)
+                throw Error(
+                  latest.error ??
+                    "Cloud recovery could not read the reviewed world.",
+                );
+              if (!lastJournalAcknowledgement)
+                throw Error(
+                  "Cloud recovery could not verify the reviewed world.",
+                );
+              try {
+                assertCloudJournalBaseline(lastJournalAcknowledgement, {
+                  revision: latest.project.revision,
+                  snapshotToken: latest.project.snapshotToken,
+                });
+              } catch (error) {
+                setConflict(latest.project);
+                throw error;
+              }
+              baseRevision = lastJournalAcknowledgement.revision;
+              baseSnapshotToken = lastJournalAcknowledgement.snapshotToken;
+            }
+            const response = await fetch("/api/projects", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                project,
+                baseRevision,
+                baseSnapshotToken,
+              }),
+            });
+            const result = await response.json();
+            if (!current())
+              throw Error(
+                "Generation account changed before cloud recovery could start.",
+              );
+            if (!response.ok) {
+              if (response.status === 409 && result.conflict)
+                setConflict(result.conflict);
+              throw Error(
+                result.error ??
+                  "Cloud recovery could not save the starting world.",
+              );
+            }
+            setCloudBaseline({
+              projectId: project.id,
+              value: {
+                revision: result.revision,
+                snapshotToken: result.snapshotToken,
+              },
+            });
+            lastJournalAcknowledgement = {
+              revision: result.revision,
+              snapshotToken: result.snapshotToken,
+            };
+            const run = await startCloudGenerationRun({
+              project,
+              runId,
+              prompt: intent,
+              selected,
+            });
+            if (!current())
+              throw Error(
+                "Generation account changed before cloud recovery could start.",
+              );
+            lastJournalRunId = runId;
+            return run;
+          },
+        }
+      : undefined;
+  };
   const submit = async (
     e?: FormEvent,
     text = prompt,
@@ -1770,6 +1883,7 @@ export default function Orbsie() {
       setPrompt("");
       const accountVersion = accountGeneration.current;
       const originProjectId = current.project.id;
+      const journal = createGenerationJournal(originProjectId, accountVersion);
       const requestProject = useOrb.getState().project;
       const selectedCandidate =
         selectedOverride !== undefined
@@ -1783,114 +1897,6 @@ export default function Orbsie() {
         )
           ? selectedCandidate
           : undefined;
-      let lastJournalRunId: string | undefined;
-      let lastJournalAcknowledgement:
-        { revision: number; snapshotToken: string } | undefined;
-      const journal = user
-        ? {
-            isCurrent: () => accountGeneration.current === accountVersion,
-            begin: async (
-              project: typeof s.project,
-              runId: string,
-              intent: string,
-              selected?: string,
-            ) => {
-              const current = () =>
-                accountGeneration.current === accountVersion &&
-                useOrb.getState().project.id === project.id &&
-                useOrb.getState().project.revision === project.revision;
-              if (
-                !current() ||
-                !(await uploadCloudGeneratedModels(project, current))
-              )
-                throw Error(
-                  "Generation account changed before cloud recovery could start.",
-                );
-              let baseRevision =
-                project.id === originProjectId ? cloudRevision : null;
-              let baseSnapshotToken =
-                project.id === originProjectId
-                  ? (cloudVersion?.snapshotToken ?? null)
-                  : null;
-              if (lastJournalRunId && lastJournalRunId !== runId) {
-                const latestResponse = await fetch(
-                  `/api/projects?id=${encodeURIComponent(project.id)}`,
-                  { cache: "no-store" },
-                );
-                const latest = await latestResponse.json().catch(() => ({}));
-                if (!current())
-                  throw Error(
-                    "Generation account changed before cloud recovery could start.",
-                  );
-                if (!latestResponse.ok || !latest.project)
-                  throw Error(
-                    latest.error ??
-                      "Cloud recovery could not read the reviewed world.",
-                  );
-                if (!lastJournalAcknowledgement)
-                  throw Error(
-                    "Cloud recovery could not verify the reviewed world.",
-                  );
-                try {
-                  assertCloudJournalBaseline(lastJournalAcknowledgement, {
-                    revision: latest.project.revision,
-                    snapshotToken: latest.project.snapshotToken,
-                  });
-                } catch (error) {
-                  setConflict(latest.project);
-                  throw error;
-                }
-                baseRevision = lastJournalAcknowledgement.revision;
-                baseSnapshotToken = lastJournalAcknowledgement.snapshotToken;
-              }
-              const response = await fetch("/api/projects", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  project,
-                  baseRevision,
-                  baseSnapshotToken,
-                }),
-              });
-              const result = await response.json();
-              if (!current())
-                throw Error(
-                  "Generation account changed before cloud recovery could start.",
-                );
-              if (!response.ok) {
-                if (response.status === 409 && result.conflict)
-                  setConflict(result.conflict);
-                throw Error(
-                  result.error ??
-                    "Cloud recovery could not save the starting world.",
-                );
-              }
-              setCloudBaseline({
-                projectId: project.id,
-                value: {
-                  revision: result.revision,
-                  snapshotToken: result.snapshotToken,
-                },
-              });
-              lastJournalAcknowledgement = {
-                revision: result.revision,
-                snapshotToken: result.snapshotToken,
-              };
-              const run = await startCloudGenerationRun({
-                project,
-                runId,
-                prompt: intent,
-                selected,
-              });
-              if (!current())
-                throw Error(
-                  "Generation account changed before cloud recovery could start.",
-                );
-              lastJournalRunId = runId;
-              return run;
-            },
-          }
-        : undefined;
       useOrb.getState().set({ selected: selectedId });
       const retryFeedback =
         retrying && current.generationRecovery?.projectId === originProjectId
@@ -2077,6 +2083,68 @@ export default function Orbsie() {
       `Continue improving the saved scene based on the original request: ${continuation.prompt}`,
     );
     window.requestAnimationFrame(() => textarea.current?.focus());
+  };
+  const resumeInterruptedReview = async () => {
+    if (submission.current.checking) return;
+    const current = useOrb.getState();
+    const continuation = current.interruptedReviewContinuation;
+    if (
+      !continuation ||
+      current.building ||
+      current.readOnly ||
+      !current.saved ||
+      current.project.id !== continuation.projectId ||
+      current.project.revision !== continuation.revision ||
+      rendererAvailabilityRef.current !== "ready"
+    )
+      return;
+
+    submission.current.checking = true;
+    const sequence = ++submission.current.sequence;
+    try {
+      let resumeConnection: Connection;
+      if (continuation.provider === "free") {
+        resumeConnection = {
+          provider: "free",
+          model: "",
+          key: "",
+          renderer: rendererMode,
+        };
+      } else {
+        const originalConnectionReady =
+          connection.provider === continuation.provider &&
+          connection.model === continuation.model &&
+          connection.effort === continuation.effort &&
+          isGenerationReady(connection) &&
+          (continuation.provider !== "chatgpt-hosted" ||
+            chatGPTRestoreStatus === "idle");
+        if (!originalConnectionReady) {
+          const providerName =
+            continuation.provider === "gateway"
+              ? "AI Gateway"
+              : continuation.provider === "chatgpt-hosted"
+                ? "ChatGPT"
+                : "OpenRouter";
+          current.set({
+            error: `Reconnect ${providerName} with the original model and settings to resume this review.`,
+          });
+          setModal("settings");
+          return;
+        }
+        resumeConnection = { ...connection, renderer: rendererMode };
+      }
+      current.set({ error: "", notice: "" });
+      const accountVersion = accountGeneration.current;
+      const journal = createGenerationJournal(
+        current.project.id,
+        accountVersion,
+      );
+      await current.resumeInterruptedReview(resumeConnection, journal);
+    } finally {
+      if (continuation.provider === "free") await refreshTrial();
+      if (submission.current.sequence === sequence)
+        submission.current.checking = false;
+    }
   };
   const reset = () => {
     s.set({
@@ -2591,6 +2659,25 @@ export default function Orbsie() {
                 )}
                 {interruptedReviewContinuation && (
                   <div className="review-continuation">
+                    <button
+                      type="button"
+                      aria-label="Resume the saved scene review"
+                      data-testid="interrupted-review-resume"
+                      disabled={
+                        s.building ||
+                        submission.current.checking ||
+                        s.readOnly ||
+                        !s.saved ||
+                        rendererAvailability !== "ready"
+                      }
+                      onClick={() => void resumeInterruptedReview()}
+                    >
+                      Resume review <ArrowUpRight size={12} />
+                    </button>
+                    <p className="review-continuation-cost">
+                      Free uses one free prompt. Linked providers may make up to
+                      three model calls.
+                    </p>
                     <button
                       type="button"
                       aria-label="Draft a prompt to continue improving the saved scene"

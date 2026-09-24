@@ -695,6 +695,12 @@ p {
   font-size: 11px;
   text-align: left;
 }
+.review-continuation .review-continuation-cost {
+  margin: 5px 2px 8px;
+  color: #74816d;
+  font-size: 10px;
+  line-height: 1.35;
+}
 .chat-panel .prompt-form {
   border-top: 1px solid var(--border);
   margin: 0 10px;
