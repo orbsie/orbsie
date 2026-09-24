@@ -28,6 +28,23 @@ const report = {
   requestFailures: {},
 };
 
+const blueBerry = (position) => ({
+  shape: "lathe",
+  position,
+  scale: [1, 1, 1],
+  color: "#167de8",
+  // Broad at the stem and pointed at the lower tip, unlike a round fruit.
+  profile: [
+    [0, -0.42],
+    [0.13, -0.28],
+    [0.25, -0.1],
+    [0.3, 0.08],
+    [0.28, 0.24],
+    [0.16, 0.32],
+    [0, 0.34],
+  ],
+});
+
 const streamServer = createServer(async (request, response) => {
   if (request.method !== "POST" || request.url !== "/api/generate") {
     response.writeHead(404).end();
@@ -89,24 +106,9 @@ const streamServer = createServer(async (request, response) => {
             kind: "tree",
             detail: "refined",
             parts: [
-              {
-                shape: "sphere",
-                position: [-0.42, 2.32, 0.82],
-                scale: [0.24, 0.24, 0.24],
-                color: "#167de8",
-              },
-              {
-                shape: "sphere",
-                position: [0.08, 2.48, 0.84],
-                scale: [0.24, 0.24, 0.24],
-                color: "#167de8",
-              },
-              {
-                shape: "sphere",
-                position: [0.48, 2.24, 0.79],
-                scale: [0.24, 0.24, 0.24],
-                color: "#167de8",
-              },
+              blueBerry([-0.42, 2.32, 1.16]),
+              blueBerry([0.08, 2.48, 1.18]),
+              blueBerry([0.48, 2.24, 1.13]),
             ],
           },
         },

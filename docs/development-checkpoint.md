@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 bounded lathe geometry integrated: custom parts can now carry a
+finite, bounded [radius,height] profile revolved around Y. Existing part
+shapes remain supported, and the schema rejects profiles on them. Generation
+and first/final review guidance now emphasizes distinctive silhouettes over
+color alone, and describes when to use a colored lathe part. Astra reviewed the
+Luna diff; 74 focused tests, typecheck, formatting, and optimized production
+build passed. The synthetic revision-bound capture passed in WebGL and forced
+software rendering with tapered blue fruit still visible after an unrelated
+catalog replacement; Astra inspected both renderers. No live model calls.
+Evidence: `docs/evidence/scene-review-capture-lathe-20260924/`. The capture
+shows stylized pointed blue fruit, but live model selection and detailed
+strawberry quality remain to be validated with a new bounded provider run.
+
 Sep 24 OpenRouter blue-strawberry structure acceptance: one isolated local
 authoring-review run used exactly three Luna default-tier calls at 4,096 output
 tokens each, all HTTP 200 with no retries. The initial saved revision 9 had
