@@ -1,11 +1,13 @@
 # Verification — current status 2026-09-24
 
 The full `prompt.md` acceptance remains open. The latest production release is
-`https://orbsie.com/`, Vercel deployment `dpl_Gtz4xyNC4LN2m9XjXSH6XswFoUVA`.
-Its signed-out read-only browser smoke passed root and crawler routes, visible
-landing canvas/composer, protected generation-run access, and exact shipped
-player/geometry-worker hashes without generation calls or page errors. See
-[production release evidence](evidence/production-release-20260924-focused-segment/)
+`https://orbsie.com/`, Vercel deployment `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC`.
+Its read-only crawler smoke passed root, robots and dynamic sitemap HTTP 200;
+the sitemap lists ten promoted public Orbs, and a sample public share page has
+indexable, canonical metadata in the Googlebot HTML head. This release changed
+SEO metadata, not the previously hash-verified player files. See
+[sitemap release evidence](evidence/production-release-20260924-sitemap/),
+[earlier player-artifact smoke](evidence/production-release-20260924-focused-segment/)
 and [the development checkpoint](development-checkpoint.md) for the current
 source-specific record.
 
@@ -17,18 +19,23 @@ files then passed Android 15 emulator Canvas2D touch scoring, restart, win and
 loss without viewport overflow or unexpected network requests. See
 [fresh-gameplay evidence](development-checkpoint.md) and
 [Android current-artifact evidence](evidence/android-current-artifact-20260924-post-segment/).
-These checks do not certify physical devices or native-GPU performance.
+The optimized build also passed for the sitemap release. A subsequent
+WebGL-allowed Android replay again passed touch gameplay, but the emulator's
+SwiftShader capability probe intentionally led the app to Canvas2D. See
+[Android renderer evidence](evidence/android-webgl-current-artifact-20260924/).
+These checks do not certify physical devices, Android WebGL gameplay or
+native-GPU performance.
 
 One bounded live OpenRouter `openai/gpt-6-luna` authoring-review run completed
 four calls under a 4,096-output-token cap, but Astra rejected its final visual
 quality despite the model's `accept` verdict: oversized blue berries lacked
 visible stem connection. Production authoring-review remains disabled. The
 Gateway test key's last checked balance was negative, so no further paid
-Gateway inference ran. A fresh production ChatGPT device challenge expired
+Gateway inference ran. A second production ChatGPT device challenge expired
 without a grant; no ChatGPT model call ran. Direct-return ChatGPT subscription
 OAuth and current E2E provider parity remain unverified. See
 [OpenRouter review evidence](evidence/authoring-review/openrouter-focused-segment-20260924/)
-and [ChatGPT consent evidence](evidence/production-hosted-chatgpt/owner-code-20260924/).
+and [ChatGPT consent evidence](evidence/production-hosted-chatgpt/owner-code-followup-20260924/).
 
 The real-editor stream-recovery fixture passed 14 intercepted requests covering
 clean EOF, malformed/partial output, body-read rejection, provider error and

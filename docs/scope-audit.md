@@ -6,16 +6,18 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
-- `https://orbsie.com/` is serving the focused-segment production release.
-  Read-only signed-out smoke passed with matching player/worker artifact hashes,
-  visible landing canvas/composer, and crawler routes. This does not prove
-  model-authored visual quality or the full provider E2E matrix.
+- `https://orbsie.com/` is serving deployment
+  `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC`. Live crawler smoke passed the dynamic
+  sitemap with ten promoted public Orbs and one indexable public share page.
+  Earlier signed-out smoke verified matching player/worker hashes and the
+  landing composer. This does not prove model-authored visual quality or the
+  full provider E2E matrix.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
   disconnected stems. Production authoring-review remains off. Gateway credit
   is negative, so further paid Gateway inference has not run.
-- A real hosted ChatGPT device challenge was shown to the owner on Sep 24 and
-  expired without a grant. No ChatGPT inference ran. The requested direct
+- Two real hosted ChatGPT device challenges were shown to the owner on Sep 24
+  and expired without a grant. No ChatGPT inference ran. The requested direct
   ChatGPT subscription OAuth return to Orbsie remains unverified. Computer use
   currently reports no Chrome or other browser surface; do not claim access to
   the owner's signed-in session.
@@ -26,7 +28,9 @@ older rows below are a historical inventory, not a completion claim.
 - The current post-segment standalone player passed signed-out touch scoring,
   restart, win and loss on an Android 15 emulator with Canvas2D forced and no
   unexpected network requests. Its four runtime/worker hashes match current
-  source artifacts. Physical Android and Android WebGL remain unverified.
+  source artifacts. A WebGL-allowed replay also passed touch gameplay, but the
+  emulator's SwiftShader probe intentionally selected Canvas2D. Physical
+  Android and Android WebGL remain unverified.
 
 ## Historical reconciliation — 2026-09-13
 
