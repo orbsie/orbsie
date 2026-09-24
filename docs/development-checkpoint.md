@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 provider-readiness recheck at 20:49 UTC: the local OpenRouter key's
+read-only status request returned HTTP 200, so a bounded Luna quality run is
+underway after the catalog-palette guidance change. The Gateway test key's
+read-only credit endpoint still returned HTTP 200 with balance `-0.00456495`;
+no Gateway inference ran. Hosted ChatGPT's pinned App Server 0.153.4 and the
+installed 0.156.1 both generate `TurnStartParams` without a per-turn token cap;
+the official turn-start and configuration references likewise expose no hard
+4,096-output-token field. Existing 180-second/512-KiB application bounds are
+not token or billing bounds. Read-only schema evidence:
+`docs/evidence/chatgpt-output-cap-audit-20260924/`. The owner has been asked
+which bound governs a future hosted Luna test; no ChatGPT inference ran. A new
+device code still awaits the owner's ready signal after five prior expirations.
+
 Sep 24 published-player initial camera release: source `f8ff99d` starts the
 standalone player at the existing 12-unit comfortable play minimum instead of
 the editor's 24-unit default. The explicit prop is used only by the published
