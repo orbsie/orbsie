@@ -47,6 +47,7 @@ import {
 } from "../../../../lib/server/scene-review-observations";
 import {
   emitAuthoringReviewDiagnostic,
+  type AuthoringReviewDiagnosticFailureKind,
   type AuthoringReviewDiagnosticScope,
 } from "../../../../lib/server/authoring-review-observability";
 import { isRecommendedModel } from "../../../../lib/model-modes";
@@ -76,6 +77,21 @@ const reviewRequestSchema = z
   .strict();
 
 type ReviewRequest = z.infer<typeof reviewRequestSchema>;
+
+function reviewFailureKind(
+  error: unknown,
+  signal: AbortSignal,
+): AuthoringReviewDiagnosticFailureKind {
+  if (signal.aborted) return "route-aborted";
+  if (error instanceof SceneReviewExecutionError) return error.code;
+  if (error instanceof AuthoringRunLedgerError) return "authoring-ledger";
+  if (error instanceof ReviewImageValidationError)
+    return "review-image-validation";
+  if (error instanceof GenerationFormatConfigError)
+    return "generation-format-config";
+  if (error instanceof HttpError) return "http-error";
+  return "unknown";
+}
 
 function publicError(error: unknown, signal: AbortSignal): HttpError {
   if (signal.aborted)
@@ -293,6 +309,7 @@ export async function POST(request: Request) {
         scope: reviewScope,
         state: "terminal",
         outcome: signal.aborted ? "cancelled" : "failed",
+        failureKind: reviewFailureKind(error, signal),
       });
     const safe = publicError(error, signal);
     observation.terminal({

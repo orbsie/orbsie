@@ -27,6 +27,7 @@ vi.mock("../src/lib/server/trial", async () => ({
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
 import { FREE_MODEL } from "../src/lib/server/trial";
+import { SceneReviewExecutionError } from "../src/lib/server/scene-review-execution";
 import { POST } from "../src/app/api/generate/review/route";
 
 const png =
@@ -251,12 +252,56 @@ it("emits a sanitized failed terminal diagnostic after admission", async () => {
       callIndex: 2,
       scope: "structural-only",
       outcome: "failed",
+      failureKind: "unknown",
     });
     const diagnostics = JSON.stringify(events);
     expect(diagnostics).not.toContain("raw-provider-diagnostic");
     expect(diagnostics).not.toContain("synthetic-free-key");
     expect(diagnostics).not.toContain("Make a garden");
     expect(diagnostics).not.toContain("new-world");
+  } finally {
+    info.mockRestore();
+  }
+});
+
+it("records the allowlisted scene review execution code without raw errors", async () => {
+  setup();
+  const rawMessage =
+    "OpenRouter 502 private response body synthetic-provider-key";
+  deps.execute.mockRejectedValueOnce(
+    new SceneReviewExecutionError("provider-response", rawMessage),
+  );
+  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  try {
+    const response = await POST(
+      request(
+        {
+          provider: "openrouter",
+          model: "openai/gpt-6-luna",
+          key: "synthetic-provider-key",
+        },
+        "55555555-5555-4555-8555-555555555555",
+      ),
+    );
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: rawMessage });
+
+    const events = info.mock.calls
+      .map(([line]) => {
+        try {
+          return JSON.parse(String(line)) as Record<string, unknown>;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((event) => event?.event === "authoring-review");
+    const terminal = events.find((event) => event?.state === "terminal");
+    expect(terminal).toMatchObject({
+      outcome: "failed",
+      failureKind: "provider-response",
+    });
+    expect(JSON.stringify(events)).not.toContain(rawMessage);
+    expect(JSON.stringify(events)).not.toContain("synthetic-provider-key");
   } finally {
     info.mockRestore();
   }

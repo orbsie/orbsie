@@ -37,6 +37,23 @@ export const authoringReviewDiagnosticOutcomes = [
 export type AuthoringReviewDiagnosticOutcome =
   (typeof authoringReviewDiagnosticOutcomes)[number];
 
+export const authoringReviewDiagnosticFailureKinds = [
+  "invalid-input",
+  "unsupported-image",
+  "provider-rejected",
+  "provider-response",
+  "semantic-validation",
+  "aborted",
+  "route-aborted",
+  "http-error",
+  "authoring-ledger",
+  "review-image-validation",
+  "generation-format-config",
+  "unknown",
+] as const;
+export type AuthoringReviewDiagnosticFailureKind =
+  (typeof authoringReviewDiagnosticFailureKinds)[number];
+
 export type AuthoringReviewDiagnostic = {
   schemaVersion: typeof AUTHORING_REVIEW_DIAGNOSTIC_VERSION;
   event: "authoring-review";
@@ -47,6 +64,7 @@ export type AuthoringReviewDiagnostic = {
   callIndex: 2 | 3;
   scope: AuthoringReviewDiagnosticScope;
   outcome: AuthoringReviewDiagnosticOutcome;
+  failureKind?: AuthoringReviewDiagnosticFailureKind;
   timestamp: string;
 };
 
@@ -78,6 +96,16 @@ function safeOutcome(
     : undefined;
 }
 
+function safeFailureKind(
+  value: unknown,
+): AuthoringReviewDiagnosticFailureKind | undefined {
+  return (authoringReviewDiagnosticFailureKinds as readonly unknown[]).includes(
+    value,
+  )
+    ? (value as AuthoringReviewDiagnosticFailureKind)
+    : undefined;
+}
+
 export function createAuthoringReviewDiagnostic(input: {
   requestId: string;
   clientRunId?: string;
@@ -85,6 +113,7 @@ export function createAuthoringReviewDiagnostic(input: {
   scope: AuthoringReviewDiagnosticScope;
   state: AuthoringReviewDiagnosticState;
   outcome: AuthoringReviewDiagnosticOutcome;
+  failureKind?: unknown;
   timestamp?: string;
 }): AuthoringReviewDiagnostic | undefined {
   const requestId = validatedGenerationRequestId(input.requestId);
@@ -93,6 +122,10 @@ export function createAuthoringReviewDiagnostic(input: {
   const state = safeState(input.state);
   const outcome = safeOutcome(input.outcome);
   if (!requestId || !phase || !scope || !state || !outcome) return undefined;
+  const failureKind =
+    state === "terminal" && (outcome === "failed" || outcome === "cancelled")
+      ? safeFailureKind(input.failureKind)
+      : undefined;
   return {
     schemaVersion: AUTHORING_REVIEW_DIAGNOSTIC_VERSION,
     event: "authoring-review",
@@ -105,6 +138,7 @@ export function createAuthoringReviewDiagnostic(input: {
     callIndex: phase === "review" ? 2 : 3,
     scope,
     outcome,
+    ...(failureKind ? { failureKind } : {}),
     timestamp:
       typeof input.timestamp === "string" && input.timestamp.length <= 64
         ? input.timestamp
