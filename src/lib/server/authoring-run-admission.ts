@@ -7,6 +7,9 @@ import {
   completeAuthoringReview,
   failAuthoringRun,
   issueAuthoringRun,
+  issueReviewOnlyAuthoringRun,
+  readAuthoringRun,
+  AuthoringRunLedgerError,
   type AuthoringReviewPhase,
   type AuthoringProvider,
   type AuthoringRunBinding,
@@ -68,6 +71,12 @@ export type AuthoringReviewAdmission = {
   fail(error: unknown): Promise<void>;
 };
 
+export type ReviewOnlyAuthoringAdmission = {
+  runId: string;
+  trialRemaining: number | null;
+  trialCookie?: string;
+};
+
 export function authoringReviewConfigured() {
   return process.env.ORBSIE_AUTHORING_REVIEW === AUTHORING_REVIEW_FLAG;
 }
@@ -76,6 +85,122 @@ function cancellationError(signal: AbortSignal) {
   return signal.reason instanceof Error
     ? signal.reason
     : Error("Generation cancelled.");
+}
+
+function invalidRecoveryError() {
+  return new HttpError(409, "This failed review can no longer be recovered.");
+}
+
+/** Admit a fresh review run only when its failed predecessor matches the
+ * exact saved scene and request that the caller is trying to recover. */
+export async function admitReviewOnlyAuthoringRun(input: {
+  request: Request;
+  project: Project;
+  prompt: string;
+  provider: AuthoringProvider;
+  model: string;
+  effort?: string;
+  selected?: string;
+  localModeling: boolean;
+  browserModeling: boolean;
+  priorRunId: string;
+  signal: AbortSignal;
+  trialIdentity?: TrialIdentity;
+  ownerSession?: AuthoringOwnerSession;
+}): Promise<ReviewOnlyAuthoringAdmission> {
+  if (!authoringReviewConfigured())
+    throw new HttpError(
+      503,
+      "Authoring review is temporarily unavailable. Retry shortly.",
+    );
+  if (input.signal.aborted) throw cancellationError(input.signal);
+
+  let expectedBinding: AuthoritativeSceneBinding;
+  try {
+    expectedBinding = await createSceneBinding(input.project);
+  } catch {
+    throw new HttpError(400, "The reviewed scene is invalid.");
+  }
+  if (input.signal.aborted) throw cancellationError(input.signal);
+
+  const linked = await resolveAuthoringRequestIdentity({
+    request: input.request,
+    provider: input.provider,
+    trialIdentity: input.trialIdentity,
+    ownerSession: input.ownerSession,
+  });
+  if (input.signal.aborted) throw cancellationError(input.signal);
+  const binding: AuthoringRunBinding = {
+    identityHash: linked.identityHash,
+    projectId: input.project.id,
+    provider: input.provider,
+    model: input.model,
+    ...(input.effort === undefined ? {} : { effort: input.effort }),
+    requestFingerprint: authoringRequestFingerprint(input),
+  };
+
+  let prior: Awaited<ReturnType<typeof readAuthoringRun>>;
+  try {
+    prior = await readAuthoringRun(input.priorRunId);
+  } catch (error) {
+    if (
+      error instanceof AuthoringRunLedgerError &&
+      (error.code === "not-found" || error.code === "invalid-input")
+    )
+      throw invalidRecoveryError();
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(
+      503,
+      "Authoring review is temporarily unavailable. Retry shortly.",
+    );
+  }
+  if (input.signal.aborted) throw cancellationError(input.signal);
+
+  if (
+    prior.phase !== "failed" ||
+    prior.completedRevision === null ||
+    prior.completedSceneBindingDigest === null ||
+    prior.identityHash !== binding.identityHash ||
+    prior.projectId !== binding.projectId ||
+    prior.provider !== binding.provider ||
+    prior.model !== binding.model ||
+    prior.effort !== (binding.effort ?? null) ||
+    prior.requestFingerprint !== binding.requestFingerprint ||
+    prior.completedRevision !== expectedBinding.revision ||
+    prior.completedSceneBindingDigest !== expectedBinding.digest
+  )
+    throw invalidRecoveryError();
+  if (input.signal.aborted) throw cancellationError(input.signal);
+
+  let issued: Awaited<ReturnType<typeof issueReviewOnlyAuthoringRun>>;
+  try {
+    issued = await issueReviewOnlyAuthoringRun({
+      ...binding,
+      initialRevision: expectedBinding.revision,
+      initialSceneDigest: expectedBinding.digest,
+      ...(input.provider === "free"
+        ? { trialIdentity: input.trialIdentity }
+        : {}),
+    });
+  } catch (error) {
+    // TrialExhausted extends HttpError and must reach the route as a 429.
+    if (error instanceof HttpError) throw error;
+    if (
+      error instanceof AuthoringRunLedgerError &&
+      error.code === "invalid-input"
+    )
+      throw new HttpError(400, "The review request is invalid.");
+    throw new HttpError(
+      503,
+      "Authoring review is temporarily unavailable. Retry shortly.",
+    );
+  }
+
+  return {
+    runId: issued.runId,
+    trialRemaining: issued.trialRemaining,
+    ...(linked.trialCookie ? { trialCookie: linked.trialCookie } : {}),
+  };
 }
 
 /**

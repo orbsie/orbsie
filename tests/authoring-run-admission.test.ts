@@ -2,6 +2,8 @@ const deps = vi.hoisted(() => ({
   getAuth: vi.fn(),
   trialIdentity: vi.fn(),
   issue: vi.fn(),
+  issueReviewOnly: vi.fn(),
+  readRun: vi.fn(),
   complete: vi.fn(),
   fail: vi.fn(),
   admitReview: vi.fn(),
@@ -18,6 +20,8 @@ vi.mock("../src/lib/server/trial", async () => ({
 }));
 vi.mock("../src/lib/server/authoring-run-ledger", () => ({
   issueAuthoringRun: deps.issue,
+  issueReviewOnlyAuthoringRun: deps.issueReviewOnly,
+  readAuthoringRun: deps.readRun,
   completeInitialAuthoringRun: deps.complete,
   failAuthoringRun: deps.fail,
   admitAuthoringReview: deps.admitReview,
@@ -26,7 +30,14 @@ vi.mock("../src/lib/server/authoring-run-ledger", () => ({
 
 import { afterEach, expect, it, vi } from "vitest";
 import { blankProject } from "../src/lib/protocol";
+import { createSceneBinding } from "../src/lib/scene-binding";
 import {
+  authoringRequestFingerprint,
+  resolveAuthoringRequestIdentity,
+} from "../src/lib/server/authoring-run-identity";
+import { TrialExhausted } from "../src/lib/server/trial";
+import {
+  admitReviewOnlyAuthoringRun,
   admitAuthoringReviewPhase,
   admitInitialAuthoringRun,
 } from "../src/lib/server/authoring-run-admission";
@@ -68,6 +79,46 @@ function setupIssue() {
     trialRemaining: null,
     expiresAt: new Date(),
   });
+}
+
+type RecoveryInput = Parameters<typeof admitReviewOnlyAuthoringRun>[0];
+
+function recoveryInput(
+  provider: "gateway" | "free" = "gateway",
+): RecoveryInput {
+  return {
+    ...input(provider),
+    priorRunId: "33333333-3333-4333-8333-333333333333",
+    ...(provider === "gateway"
+      ? { ownerSession: { ownerId: "owner-1", sessionId: "session-1" } }
+      : {}),
+  };
+}
+
+async function matchingPrior(value: RecoveryInput) {
+  const scene = await createSceneBinding(value.project);
+  const identity = await resolveAuthoringRequestIdentity({
+    request: value.request,
+    provider: value.provider,
+    trialIdentity: value.trialIdentity,
+    ownerSession: value.ownerSession,
+  });
+  return {
+    runId: value.priorRunId,
+    identityHash: identity.identityHash,
+    projectId: value.project.id,
+    provider: value.provider,
+    model: value.model,
+    effort: value.effort ?? null,
+    requestFingerprint: authoringRequestFingerprint(value),
+    initialRevision: scene.revision,
+    initialSceneDigest: scene.digest,
+    phase: "failed",
+    remainingReviewSlots: 1,
+    completedRevision: scene.revision,
+    completedSceneBindingDigest: scene.digest,
+    live: true,
+  };
 }
 
 it("uses the signed visitor identity for anonymous linked API runs without charging free quota", async () => {
@@ -160,4 +211,148 @@ it("retains one exact-token failure fence after review completion", async () => 
       sceneBindingDigest: expect.stringMatching(/^[a-f0-9]{64}$/),
     }),
   );
+});
+
+it("admits a fresh review only for the exact failed scene and request", async () => {
+  const value = recoveryInput();
+  const prior = await matchingPrior(value);
+  deps.readRun.mockResolvedValue(prior);
+  deps.issueReviewOnly.mockResolvedValue({
+    runId: "44444444-4444-4444-8444-444444444444",
+    trialRemaining: null,
+    expiresAt: new Date(),
+  });
+
+  const admitted = await admitReviewOnlyAuthoringRun(value);
+
+  expect(deps.readRun).toHaveBeenCalledWith(value.priorRunId);
+  expect(deps.issueReviewOnly).toHaveBeenCalledWith({
+    identityHash: prior.identityHash,
+    projectId: value.project.id,
+    provider: value.provider,
+    model: value.model,
+    requestFingerprint: prior.requestFingerprint,
+    initialRevision: prior.completedRevision,
+    initialSceneDigest: prior.completedSceneBindingDigest,
+  });
+  expect(admitted).toEqual({
+    runId: "44444444-4444-4444-8444-444444444444",
+    trialRemaining: null,
+  });
+  expect(admitted).not.toHaveProperty("phaseToken");
+});
+
+it("rejects a stale scene without issuing or claiming a review run", async () => {
+  const value = recoveryInput("free");
+  const prior = await matchingPrior(value);
+  deps.readRun.mockResolvedValue({
+    ...prior,
+    completedSceneBindingDigest: "b".repeat(64),
+  });
+
+  await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+    status: 409,
+    message: "This failed review can no longer be recovered.",
+  });
+  expect(deps.issueReviewOnly).not.toHaveBeenCalled();
+});
+
+it("rejects a different identity, provider, or prompt with the same safe error", async () => {
+  for (const mismatch of ["identity", "provider", "prompt"] as const) {
+    const value = recoveryInput();
+    const prior = await matchingPrior(value);
+    deps.readRun.mockResolvedValue({
+      ...prior,
+      ...(mismatch === "identity" ? { identityHash: "c".repeat(64) } : {}),
+      ...(mismatch === "provider" ? { provider: "chatgpt" } : {}),
+    });
+    const current =
+      mismatch === "prompt"
+        ? { ...value, prompt: "A different request" }
+        : value;
+
+    await expect(admitReviewOnlyAuthoringRun(current)).rejects.toMatchObject({
+      status: 409,
+      message: "This failed review can no longer be recovered.",
+    });
+    expect(deps.issueReviewOnly).not.toHaveBeenCalled();
+    deps.readRun.mockReset();
+  }
+});
+
+it.each(["active", "finalized"] as const)(
+  "rejects a %s prior run without issuing a replacement",
+  async (phase) => {
+    const value = recoveryInput();
+    deps.readRun.mockResolvedValue({ ...(await matchingPrior(value)), phase });
+
+    await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+      status: 409,
+    });
+    expect(deps.issueReviewOnly).not.toHaveBeenCalled();
+  },
+);
+
+it("charges one free claim atomically after validating the prior run", async () => {
+  const value = recoveryInput("free");
+  deps.readRun.mockResolvedValue(await matchingPrior(value));
+  deps.issueReviewOnly.mockResolvedValue({
+    runId: "44444444-4444-4444-8444-444444444444",
+    trialRemaining: 2,
+    expiresAt: new Date(),
+  });
+
+  const admitted = await admitReviewOnlyAuthoringRun(value);
+
+  expect(deps.issueReviewOnly).toHaveBeenCalledOnce();
+  expect(deps.issueReviewOnly.mock.calls[0][0]).toMatchObject({
+    provider: "free",
+    trialIdentity: expect.objectContaining({ identityHash: "a".repeat(64) }),
+    initialRevision: value.project.revision,
+  });
+  expect(admitted).toEqual({
+    runId: "44444444-4444-4444-8444-444444444444",
+    trialRemaining: 2,
+    trialCookie: "orbsie_trial=synthetic",
+  });
+});
+
+it("preserves free trial exhaustion as an HTTP 429", async () => {
+  const value = recoveryInput("free");
+  deps.readRun.mockResolvedValue(await matchingPrior(value));
+  deps.issueReviewOnly.mockRejectedValue(new TrialExhausted());
+
+  await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+    status: 429,
+  });
+});
+
+it("does not read or issue a prior run after cancellation", async () => {
+  const value = recoveryInput();
+  const controller = new AbortController();
+  controller.abort();
+
+  await expect(
+    admitReviewOnlyAuthoringRun({ ...value, signal: controller.signal }),
+  ).rejects.toThrow();
+  expect(deps.readRun).not.toHaveBeenCalled();
+  expect(deps.issueReviewOnly).not.toHaveBeenCalled();
+
+  const duringRead = recoveryInput();
+  const readController = new AbortController();
+  const prior = await matchingPrior({
+    ...duringRead,
+    signal: readController.signal,
+  });
+  deps.readRun.mockImplementation(async () => {
+    readController.abort();
+    return prior;
+  });
+  await expect(
+    admitReviewOnlyAuthoringRun({
+      ...duringRead,
+      signal: readController.signal,
+    }),
+  ).rejects.toThrow();
+  expect(deps.issueReviewOnly).not.toHaveBeenCalled();
 });
