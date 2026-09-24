@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 23 compact landscape advice: on short coarse-pointer landing viewports,
+the compatibility-graphics banner now sits below the prompt composer and the
+duplicate software-renderer status is hidden. The Android 15 emulator Chrome
+production build at 866-by-308 CSS pixels showed the banner, composer and
+topbar with no rectangle overlap; the gap below the composer was 4.95px.
+Screenshot: `docs/evidence/android-software-landing-20260923/landing-android15-landscape-guidance-fixed.png`.
+The fix does not address the emulator's WebGL compositor fault or prove a
+physical phone's layout.
+
 Sep 23 Android software-renderer resolution: phone-sized portrait and
 landscape canvases now cap their 2D backing DPR at 1; larger canvases retain
 the prior cap of 2. A local Android 15 emulator production-build check

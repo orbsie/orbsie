@@ -2328,6 +2328,18 @@ kbd {
     /* The compact toolbar/HUD occupy the first 150px in landscape. */
     top: 160px;
   }
+  .is-landing .landing-composer {
+    top: auto;
+    bottom: 52px;
+    transform: translateX(-50%);
+  }
+  .is-landing .graphics-error.is-advisory {
+    top: auto;
+    bottom: 6px;
+  }
+  .is-landing .software-world-status {
+    display: none;
+  }
 }
 
 .world-navigation-controls {

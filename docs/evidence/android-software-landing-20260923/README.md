@@ -22,5 +22,10 @@ backing sizes matched those CSS sizes. A six-second settled `requestAnimationFra
 sample improved from a 50 ms median to 33.4 ms in both orientations. The
 observed 95th percentile was 83.3 ms in portrait before and after, and
 improved from 100 ms to 83.3 ms in landscape. These are emulator observations,
-not repeatable physical-device benchmarks; the landscape screenshot also shows
-the graphics guidance banner overlapping the composer, which remains a UI issue.
+not repeatable physical-device benchmarks. The first landscape screenshot
+exposed a graphics-guidance banner overlapping the composer. A later production
+build moved the collapsed banner below the composer in short coarse-pointer
+landscape viewports and hid its duplicate bottom status text. The
+[rechecked screenshot](landing-android15-landscape-guidance-fixed.png) is from
+the actual Android browser at 866 × 308 CSS pixels; measured DOM rectangles
+showed a 4.95px vertical gap and no overlap with the topbar controls.
