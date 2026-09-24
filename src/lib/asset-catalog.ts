@@ -283,21 +283,25 @@ function promptBounds(asset: CatalogAsset): AssetPromptMetadata["bounds"] {
 }
 
 const promptSummaries: Record<AssetId, string> = {
-  "kenney.nature.tree-default": "A leafy stylized tree with a grounded base.",
+  "kenney.nature.tree-default":
+    "A stylized tree with warm orange-brown bark and a bright teal leafy canopy.",
   "kenney.nature.tree-pine-tall-a":
-    "A tall dark pine for wooded or alpine scenes.",
-  "kenney.nature.mushroom-red": "A small red mushroom prop for organic scenes.",
+    "A tall narrow pine with warm brown bark and teal foliage.",
+  "kenney.nature.mushroom-red": "A small red-capped mushroom with a pale stem.",
   "kenney.nature.bush-detailed":
-    "A low rounded bush that works as ground cover.",
-  "kenney.nature.rock-large-a": "A low rocky outcrop with a grassy top.",
-  "kenney.nature.bridge-wood": "A compact wooden bridge or crossing.",
-  "kenney.nature.platform-grass": "A thin grassy platform suited to traversal.",
+    "A low rounded bush with bright teal foliage for ground cover.",
+  "kenney.nature.rock-large-a":
+    "A low rocky outcrop with warm orange-brown earth and a teal grassy top.",
+  "kenney.nature.bridge-wood":
+    "A compact warm orange-brown wooden bridge with pale blue-gray stone supports.",
+  "kenney.nature.platform-grass":
+    "A thin traversal platform with warm orange-brown earth and teal grass.",
   "kenney.nature.fence-gate":
-    "A wooden fence gate for boundaries and entrances.",
+    "A warm orange-brown wooden fence gate with pale blue-gray stone posts.",
   "kenney.nature.campfire-stones":
-    "A small ring of stones for a campfire landmark.",
+    "A small ring of pale blue-gray stones for a campfire landmark.",
   "kenney.nature.canoe":
-    "A small wooden canoe for a pond, river, or shoreline.",
+    "A small wooden canoe in warm orange-brown with a fall-orange accent.",
 };
 
 export const assetPromptCatalog: readonly AssetPromptMetadata[] = Object.freeze(

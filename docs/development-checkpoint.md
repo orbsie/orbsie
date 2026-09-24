@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 catalog palette guidance: the ten model-facing Kenney summaries now
+describe their actual authored GLB material colors; notably the default tree,
+pine and bush use teal foliage rather than conventional forest green. The
+generation prompt states that entity.color does not recolor catalog materials
+and should select procedural/custom geometry when a catalog palette or form
+conflicts with the request. Review guidance now judges catalog palette and
+contrast as well as silhouette. Astra reviewed the Luna diff against each
+checked-in GLB material factor; 66 focused catalog/generation/review tests,
+typecheck, Prettier and diff checks pass. This is a no-provider prompt/catalog
+change, not a live quality acceptance. Do not rerun paid inference solely for
+this wording; the Sep 24 live false accept remains the quality baseline.
+
 Sep 24 focused-capture-plus-segment live OpenRouter acceptance: the isolated
 production build and disposable PostgreSQL migration passed; the malformed
 JSON origin preflight returned HTTP 400 with no inference. One authorized
