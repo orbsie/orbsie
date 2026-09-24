@@ -1,9 +1,33 @@
 # Orbsie full scope audit
 
-## Current reconciliation — 2026-09-13
+## Current reconciliation — 2026-09-24
 
-This summary supersedes conflicting historical rows below. The full scope is
-still incomplete; resume detailed work from `development-checkpoint.md`.
+The full `prompt.md` objective remains open. Use
+`docs/development-checkpoint.md` for the latest source and acceptance evidence;
+older rows below are a historical inventory, not a completion claim.
+
+- `https://orbsie.com/` is serving the focused-segment production release.
+  Read-only signed-out smoke passed with matching player/worker artifact hashes,
+  visible landing canvas/composer, and crawler routes. This does not prove
+  model-authored visual quality or the full provider E2E matrix.
+- The latest bounded OpenRouter Luna authoring-review run completed four calls
+  but falsely accepted a blue-strawberry tree with three oversized berries and
+  disconnected stems. Production authoring-review remains off. Gateway credit
+  is negative, so further paid Gateway inference has not run.
+- A real hosted ChatGPT device challenge was shown to the owner on Sep 24 and
+  expired without a grant. No ChatGPT inference ran. The requested direct
+  ChatGPT subscription OAuth return to Orbsie remains unverified. Computer use
+  currently reports no Chrome or other browser surface; do not claim access to
+  the owner's signed-in session.
+- An isolated combined WebGL/Canvas2D local fixture passed the five→seven→Undo
+  five gameplay journey with real input and no model calls after giving each
+  renderer its own Chromium process. This is not physical-device or
+  model-authored published-game acceptance.
+
+## Historical reconciliation — 2026-09-13
+
+This section records the state observed on Sep 13; the Sep 24 reconciliation
+and checkpoint supersede it where they differ.
 
 - Real hosted ChatGPT device authorization and provider catalog succeeded in the
   owner's Chrome browser. The first Luna create failed with empty objects; no
@@ -413,10 +437,10 @@ The typed modeling protocol, isolated Linux executor, authenticated local connec
 
 The rows above are historical inventory, not a current completion checklist. Latest owner requirements and source-specific evidence take precedence.
 
-1. **Browser ChatGPT subscription.** Real consent, model discovery after consent and subscription inference remain unverified. Regular Chrome control now exposes the owner's signed-in ChatGPT account; Orbsie's separate device-code authorization has not been completed. The requested direct OAuth redirect remains unproven. Historical local-companion and synthetic fixtures do not close this requirement.
+1. **Browser ChatGPT subscription.** Real consent, model discovery after consent and subscription inference remain unverified. Computer use currently exposes no browser surfaces; the Sep 24 owner-visible Orbsie device-code challenge expired without a grant. The requested direct OAuth redirect remains unproven. Historical local-companion and synthetic fixtures do not close this requirement.
 2. **Live game story breadth.** OpenRouter and Gateway each passed bounded Luna input-game create/edit/reload/export/standalone journeys (see the current reconciliation above). Do not repeat those runs merely to refresh evidence. Full flagship behavior, play during construction, targeted revisions, undo and signed-out gameplay on the same model-authored published revision still need end-to-end evidence.
 3. **Cross-provider recovery and publication.** Application journals, ordered replay and completed-checkpoint recovery are implemented and tested; provider-stream resumption is not required. Same-project later-revision deployment is verified separately. Gateway now has a bounded live reload/cancelled-checkpoint/explicit-continuation cloud recovery pass at `c586d74`, including fresh cookie-only reopening (`docs/evidence/provider-e2e/gateway-reload-recovery`). The same Gateway project revision9 was subsequently published and passed signed-out scoring/win/loss/restart with no external requests (`docs/evidence/provider-e2e/gateway-reload-recovery-publication`). The free strawberry mixed catalog/generated export now has exact public snapshot, asset/license/provenance byte and signed-out loading evidence (`docs/evidence/publication-free-strawberry`). OpenRouter flagship independent mixed-asset publication and signed-out desktop/CDP-touch five-crystal/portal/reset traversal now passed (`docs/evidence/publication-flagship-openrouter/traversal-current`); separate public keyboard platform1→2→3 traversal now passed with bounded waits for reachable gaps and no sampled ground contact (`docs/evidence/publication-flagship-openrouter/platforms-sequential-phase-aware`). Touch platform crossing remains open. OpenRouter recovery, browser ChatGPT recovery/publication, broader mixed-scene gameplay, and preservation of the prior release during failed publication still need matching evidence. Pending-release continuity now passed in a bounded deterministic production run (`docs/evidence/publication-continuity-live`): previous browser/snapshot checks were followed by BUILDING/servedRevision 1, then READY/revision 2 in the same project.
-4. **Mobile usability and lifecycle.** Owner-required full editor and published gameplay journeys must work in portrait and landscape, with touch, keyboard, safe areas and interruption recovery. Browser touch emulation covers a bounded input slice; direct capture-loss observation remains partial. Toast/control layout corrections are deployed and passed bounded portrait/landscape fixtures; full device acceptance remains open. The isolated Android emulator is installed but currently stopped; its terms acceptance was authorized and its earlier replay does not certify the current build. Physical Android and iOS Safari evidence remains absent.
+4. **Mobile usability and lifecycle.** Owner-required full editor and published gameplay journeys must work in portrait and landscape, with touch, keyboard, safe areas and interruption recovery. Browser touch emulation and an Android 15 emulator cover bounded input/rendering slices; direct capture-loss observation remains partial. Toast/control layout corrections are deployed and passed bounded portrait/landscape fixtures; full device acceptance remains open. The emulator is currently stopped. Physical Android and iOS Safari evidence remains absent.
 5. **Representative performance.** Native-GPU/mobile frame-time, input/scene-update latency, memory and all seven milestone timings remain open. SwiftShader and fixture measurements do not close this gate.
 6. **Final reconciliation.** Recheck every original requirement against current artifacts after these gates close. Preserve the historical inventory and distinguish synthetic, live-provider, account/cloud and publication evidence.
 
