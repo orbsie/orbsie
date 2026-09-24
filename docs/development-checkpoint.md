@@ -1,5 +1,31 @@
 # Development checkpoint
 
+Sep 24 four-call local integration: the browser loop now supports two bounded
+correction-bearing reviews, each with a saved finding, independent cloud journal
+segment, fresh canvas evidence, and exact scene binding check, followed by a
+verdict-only final review. It stops on a nondecreasing second-review budget and
+keeps the last committed scene. The 50 focused tests and typecheck pass. The
+deterministic real-editor browser fixture passed WebGL and software paths,
+including the new four-request software path: revisions 3 → 6 → 8, three
+distinct rendered image digests, saved final state, desktop/phone screenshots,
+and zero live model calls. Evidence:
+`docs/evidence/authoring-review/four-call-browser-20260924/`. Astra inspected
+both new screenshots. Production feature flag remains off. Next: production
+build and full integration review, then a separately authorized bounded live
+quality run before enabling the flag; Gateway still needs positive credit and
+ChatGPT still needs a verified account grant.
+
+Sep 24 bounded second-review implementation in progress: parser commit
+`291bd90` accepts a remaining budget of two; ledger/migration commit `8f2cd9b`
+issues three review slots for new runs, permits two correction-bearing reviews,
+then one final verdict, and fences each by run, identity, exact revision/digest,
+token, and expiry. Astra reviewed the diff, reran 15 targeted tests, and tested
+the migration on both fresh and legacy PostgreSQL 16 schemas, including an
+existing completed row, new default, widened constraint, and idempotent rerun.
+The browser loop and four-call deterministic fixture are the current handoff.
+Production feature flag remains off. This does not supersede the live
+OpenRouter three-call authorization; a paid four-call run is not authorized.
+
 Sep 24 post-form OpenRouter quality acceptance: one isolated local browser run
 against `bb6ec50` used exactly three `openai/gpt-6-luna` default-tier calls
 at 4,096 output tokens, all HTTP 200 without retries. Create saved revision
@@ -1325,7 +1351,6 @@ Sep 23 read-only credit recheck remains HTTP200 -0.0033684, zero model calls
 (`docs/evidence/gateway-credit-check-20260923/report.json`); current CUA
 inventory still has no browser or app surface. Do not run paid Gateway
 inference until credit is positive.
-
 
 Initial API task finished. Root
 accepted final API initial issuance/completion/failure wiring after three focused

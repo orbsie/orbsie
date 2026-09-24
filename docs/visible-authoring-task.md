@@ -14,8 +14,7 @@ preserve it. No nested agents, live model calls or deployment.
 
 Current source: store.run starts around619, initializes building near690, consumes
 commands in apply near720, evaluates/builds browser geometry near740–800, then
-marks success at a final commit near980. UI conversation is in orbsie.tsx around
-1500. Use these real lifecycle points rather than timers producing fake stages.
+marks success at a final commit near980. UI conversation is in orbsie.tsx around 1500. Use these real lifecycle points rather than timers producing fake stages.
 
 - Show individual assistant progress messages directly in the parent conversation
   during creation and edits (owner update: no nested activity panel),
@@ -77,8 +76,9 @@ Proposed bounded user-request lifecycle: initial generation → render/readiness
 review with image + structural state + original request → apply any validated
 corrections → render/readiness → final review. A review can return acceptance or
 concrete corrections; it must not merely produce a generic approval phrase.
-Maximum three model calls total (initial plus two reviews), with no transport
-retries. If the final review still requests changes, preserve a partial result
+Maximum four model calls total (initial plus two correction-bearing reviews and
+one final verdict), with no transport retries. Existing in-flight two-slot
+runs may use only three. If the final review still requests changes, preserve a partial result
 and offer an explicit continuation; don't claim success. Keep the same selected
 model/effort unless the user changes it, and disclose unsupported visual review.
 The client must not be the sole enforcer of server-owned free-call budgets:
@@ -94,7 +94,6 @@ with one worker. The exact contract may be refined after runtime probes; do not
 quietly remove visual review, free-path accounting or final-check acceptance to
 make a smaller test pass. Live acceptance must show an observed visual defect,
 model-proposed targeted correction, subsequent changed render and final verdict.
-
 
 Capture readiness implementation notes: WebGL Formation already knows pendingAsset,
 asset.error and progress.current.value (0.9s formation); source refs must match the
