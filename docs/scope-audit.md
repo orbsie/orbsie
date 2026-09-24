@@ -23,6 +23,10 @@ older rows below are a historical inventory, not a completion claim.
   five gameplay journey with real input and no model calls after giving each
   renderer its own Chromium process. This is not physical-device or
   model-authored published-game acceptance.
+- The current post-segment standalone player passed signed-out touch scoring,
+  restart, win and loss on an Android 15 emulator with Canvas2D forced and no
+  unexpected network requests. Its four runtime/worker hashes match current
+  source artifacts. Physical Android and Android WebGL remain unverified.
 
 ## Historical reconciliation — 2026-09-13
 
