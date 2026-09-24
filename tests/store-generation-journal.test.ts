@@ -337,6 +337,121 @@ it.each(["stop", "stream error"])(
   },
 );
 
+it("cancels acknowledged provisional updates after a transport drop and continues only on an explicit run", async () => {
+  const entityId = useOrb.getState().project.entities[0].id;
+  const committedProject = structuredClone(useOrb.getState().project);
+  const committedEntity = structuredClone(committedProject.entities[0]);
+  await useOrb.getState().save();
+
+  let interruptedStream!: ReadableStreamDefaultController<Uint8Array>;
+  const encoder = new TextEncoder();
+  const refined: Command = {
+    type: "set_geometry",
+    id: entityId,
+    geometry: { kind: "mushroom", detail: "refined" },
+  };
+  const coarse: Command = {
+    type: "set_geometry",
+    id: entityId,
+    geometry: { kind: "tree", detail: "coarse" },
+  };
+  const continuationEdit: Command = {
+    type: "set_material",
+    id: entityId,
+    color: "#ff66aa",
+  };
+  const commit: Command = { type: "commit_revision", message: "Done" };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            interruptedStream = controller;
+            controller.enqueue(
+              encoder.encode(
+                [refined, coarse]
+                  .map((command) => JSON.stringify(command))
+                  .join("\n") + "\n",
+              ),
+            );
+          },
+        }),
+      ),
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        [continuationEdit, commit]
+          .map((command) => JSON.stringify(command))
+          .join("\n") + "\n",
+      ),
+    );
+  vi.stubGlobal("fetch", fetcher);
+
+  const interruptedRun = useOrb
+    .getState()
+    .run("Refine this object", connection, journal);
+  await vi.waitFor(() => {
+    expect(useOrb.getState().project.entities[0].stage).toBe("coarse");
+    expect(mocks.append).toHaveBeenCalledTimes(2);
+  });
+  interruptedStream.error(new TypeError("The connection was interrupted."));
+  await interruptedRun;
+
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(
+    mocks.append.mock.calls.map(([envelope]) => envelope.command.type),
+  ).toEqual(["set_geometry", "set_geometry"]);
+  expect(mocks.cancel).toHaveBeenCalledOnce();
+  expect(mocks.cancel).toHaveBeenCalledWith(durable.id);
+  expect(useOrb.getState().building).toBe(false);
+  expect(useOrb.getState().project.entities[0]).toEqual(committedEntity);
+  expect(useOrb.getState().project.entities[0].id).toBe(entityId);
+  expect(useOrb.getState().generationRecovery).toEqual({
+    projectId: committedProject.id,
+    prompt: "Refine this object",
+    checkpoint: committedProject,
+  });
+  expect(Object.keys(useOrb.getState().generationRecovery!)).toEqual([
+    "projectId",
+    "prompt",
+    "checkpoint",
+  ]);
+  expect(useOrb.getState().error).toBe(
+    "The provider response was interrupted. Your last working scene is safe.",
+  );
+  expect(readGenerationDiagnostics()[0]).toMatchObject({
+    kind: "generation",
+    terminal: { reason: "transport-error", failureCode: "transport" },
+  });
+  expect((mocks.db.get("orbsie-draft") as any).project).toEqual(
+    committedProject,
+  );
+
+  await useOrb
+    .getState()
+    .run("Continue by recoloring this object", connection, journal);
+
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(
+    mocks.append.mock.calls.map(([envelope]) => envelope.command.type),
+  ).toEqual([
+    "set_geometry",
+    "set_geometry",
+    "set_material",
+    "commit_revision",
+  ]);
+  expect(mocks.append.mock.calls[2][0].command).toEqual(continuationEdit);
+  expect(mocks.append.mock.calls[3][0].command.type).toBe("commit_revision");
+  expect(mocks.cancel).toHaveBeenCalledOnce();
+  expect(useOrb.getState().project.entities[0].id).toBe(entityId);
+  expect(useOrb.getState().project.entities[0].color).toBe("#ff66aa");
+  expect(useOrb.getState().project.revision).toBe(
+    committedProject.revision + 2,
+  );
+  expect(useOrb.getState().generationRecovery).toBeUndefined();
+});
+
 it("keeps schema internals out of failed model updates and preserves finished entities", async () => {
   const before = structuredClone(useOrb.getState().project.entities);
   vi.stubGlobal(
