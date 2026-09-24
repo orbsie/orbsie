@@ -36,3 +36,13 @@ the two revision-bound review images, the scene screenshot after the failed
 follow-up (last committed revision 21), the connection-selection screenshot,
 and bounded findings from the successful initial review. No final-review image
 or final verdict exists because the follow-up returned HTTP 502.
+
+Astra inspected those images. The initial review correctly called out five
+fruit with the wrong strawberry silhouette, weak leafy-cap connections, and
+only three visible in the camera view. After its correction, four blue fruits
+are visible, but they still read as small rounded ornaments against a pale-cyan
+canopy. The leafy caps and branch support are not convincing. The post-failure
+full-scene capture also frames the subject very small. This is an independent
+visual-quality rejection; the 502 prevented any follow-up verdict or further
+correction, so the feedback-continuity change is functionally observed in the
+request but has not proved improved final quality.

@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 OpenRouter feedback-continuity live attempt: one isolated production
+build with a disposable PostgreSQL database ran three of four allowed
+`openai/gpt-6-luna` calls, all default tier, server-capped at 4,096 output
+tokens, with no retries. Create committed revision 13; the initial visual
+review returned `revise` and bound correction revision 21. The follow-up
+review request carried nonempty prior-findings feedback, proving the new
+client/server path was exercised, but returned HTTP 502 classified as
+`provider-error` / `host-unavailable`; no final review ran. Astra inspected
+private revision-bound screenshots and rejects the current shape: four blue
+fruit are visible after correction but remain rounded ornaments with weak
+caps/branch attachment, and the full view frames the tree very small. The
+saved scene survived the failed review. This run is **failed/incomplete**, not
+visual acceptance; the exact upstream 502 cause is unknown. Sanitized report:
+`docs/evidence/authoring-review/openrouter-feedback-current-20260924/`.
+No additional live retry was made.
+
 Sep 24 review-feedback production release: source `f6d72bd` deployed Ready as
 `dpl_4RfSmSTpLqtQxSP19obg49pJ1d3B`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-alef910en-grappeggias-projects.vercel.app`).

@@ -40,7 +40,9 @@ older rows below are a historical inventory, not a completion claim.
   distinct. This newer run reports the defect honestly; the preceding run
   falsely accepted a comparable tree. Follow-up reviews now receive the prior
   sanitized finding and current-image verification instructions; local tests
-  and production build pass, but that change has no new live quality result.
+  and production build pass. A new single-run live attempt confirmed the
+  follow-up request carried feedback, then stopped at provider HTTP 502 before
+  a verdict; Astra still rejects the corrected round fruit on visual review.
   Production authoring-review remains off.
   Gateway credit is negative, so further paid Gateway inference has not run.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
