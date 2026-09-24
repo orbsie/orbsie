@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-09-24T10:05:41.415Z",
+  "origin": "https://orbsie.com",
+  "state": {
+    "android": true,
+    "landing": true,
+    "rendererAvailability": "ready",
+    "renderer": "software",
+    "canvasVisible": true,
+    "horizontalOverflow": false,
+    "viewport": {
+      "width": 412,
+      "height": 786
+    }
+  },
+  "visiblePlanetPixels": 19693,
+  "pageErrors": [],
+  "blockedRequests": [],
+  "status": "passed"
+}

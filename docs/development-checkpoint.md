@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 lathe release promotion: Vercel deployment
+`https://orbsie-7263rj9n6-grappeggias-projects.vercel.app` built and was
+aliased to `https://orbsie.com/`. Read-only desktop release smoke passed with
+root200, protected route401, no browser errors or writes, and deployed player
+and geometry-worker hashes matching the local build. Astra inspected the
+desktop landing screenshot. Android 15 emulator Chrome visual check also
+passed on production: software renderer ready, 19,693 sampled visible planet
+pixels, no page errors, blocked requests or horizontal overflow. Astra
+inspected that screenshot. Evidence:
+`docs/evidence/production-release-20260924-lathe/` and
+`docs/evidence/android-production-landing-20260924/lathe-release/`. These
+smokes do not establish live model quality, physical-device gameplay or fresh
+publication acceptance.
+
 Sep 24 ChatGPT local grant retry: with a separate ephemeral PostgreSQL
 database, local optimized app and private browser session, anonymous provider
 session creation and `/api/chatgpt/start` returned HTTP 200. A fresh OpenAI
