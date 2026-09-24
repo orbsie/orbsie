@@ -298,7 +298,7 @@ async function failCancelledReview(
   });
 }
 
-export async function issueAuthoringRun(input: IssueAuthoringRunInput) {
+function assertIssueAuthoringRunInput(input: IssueAuthoringRunInput) {
   assertBinding(input);
   assertRevision(input.initialRevision, "Initial revision");
   assertDigest(input.initialSceneDigest, "Initial scene digest");
@@ -317,6 +317,10 @@ export async function issueAuthoringRun(input: IssueAuthoringRunInput) {
       "A trial identity is only valid for a free run.",
     );
   }
+}
+
+export async function issueAuthoringRun(input: IssueAuthoringRunInput) {
+  assertIssueAuthoringRunInput(input);
   const runId = randomUUID();
   const phaseToken = randomUUID();
   const result = await withDatabaseTransaction(async (client) => {
@@ -355,6 +359,47 @@ export async function issueAuthoringRun(input: IssueAuthoringRunInput) {
   return {
     runId,
     phaseToken,
+    trialRemaining: result.trialRemaining,
+    expiresAt: result.expiresAt,
+  };
+}
+
+/** Issue a completed review run for a scene that already exists in storage. */
+export async function issueReviewOnlyAuthoringRun(
+  input: IssueAuthoringRunInput,
+) {
+  assertIssueAuthoringRunInput(input);
+  const runId = randomUUID();
+  const result = await withDatabaseTransaction(async (client) => {
+    const trialRemaining =
+      input.provider === "free"
+        ? await claimTrialInTransaction(client, input.trialIdentity!, 1)
+        : null;
+    const inserted = await client.query<{ expires_at: Date }>(
+      "INSERT INTO orbsie_authoring_runs (run_id,identity_hash,project_id,provider,model,effort,request_fingerprint,initial_revision,initial_scene_digest,phase,remaining_review_slots,completed_revision,completed_scene_digest,expires_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'completed',$10,$8,$9,clock_timestamp()+$11 * interval '1 minute') RETURNING expires_at",
+      [
+        runId,
+        input.identityHash,
+        input.projectId,
+        input.provider,
+        input.model,
+        input.effort ?? null,
+        input.requestFingerprint,
+        input.initialRevision,
+        input.initialSceneDigest,
+        AUTHORING_RUN_REVIEW_SLOTS,
+        AUTHORING_RUN_TTL_MS / 60_000,
+      ],
+    );
+    if (inserted.rowCount !== 1)
+      throw new AuthoringRunLedgerError(
+        "phase-conflict",
+        "Review-only authoring run could not be admitted.",
+      );
+    return { trialRemaining, expiresAt: inserted.rows[0].expires_at };
+  });
+  return {
+    runId,
     trialRemaining: result.trialRemaining,
     expiresAt: result.expiresAt,
   };

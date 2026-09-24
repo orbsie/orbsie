@@ -15,6 +15,7 @@ import {
   completeInitialAuthoringRun,
   failAuthoringRun,
   issueAuthoringRun,
+  issueReviewOnlyAuthoringRun,
   readAuthoringRun,
 } from "../src/lib/server/authoring-run-ledger";
 import { TrialExhausted, trialRemaining } from "../src/lib/server/trial";
@@ -233,6 +234,22 @@ describe("authoring run ledger PostgreSQL contention", () => {
           ...binding(trial),
           runId: firstRun.runId,
           phaseToken: review.phaseToken,
+          reviewPhase: "review",
+          revision: 2,
+          sceneBindingDigest: "e".repeat(64),
+          accepted: false,
+        });
+        const secondReview = await admitAuthoringReview({
+          ...binding(trial),
+          runId: firstRun.runId,
+          reviewPhase: "review",
+          expectedRevision: 2,
+          expectedSceneBindingDigest: "e".repeat(64),
+        });
+        await completeAuthoringReview({
+          ...binding(trial),
+          runId: firstRun.runId,
+          phaseToken: secondReview.phaseToken,
           reviewPhase: "review",
           revision: 2,
           sceneBindingDigest: "e".repeat(64),
@@ -563,7 +580,7 @@ describe("authoring run ledger PostgreSQL contention", () => {
         );
         await expect(readAuthoringRun(issued.runId)).resolves.toMatchObject({
           phase: "completed",
-          remainingReviewSlots: 2,
+          remainingReviewSlots: 3,
         });
         await expect(
           admitAuthoringReview({
@@ -773,6 +790,22 @@ describe("authoring run ledger PostgreSQL contention", () => {
           sceneBindingDigest: "e".repeat(64),
           accepted: false,
         });
+        const second = await admitAuthoringReview({
+          ...binding(trial),
+          runId: finalRun.runId,
+          reviewPhase: "review",
+          expectedRevision: 2,
+          expectedSceneBindingDigest: "e".repeat(64),
+        });
+        await completeAuthoringReview({
+          ...binding(trial),
+          runId: finalRun.runId,
+          phaseToken: second.phaseToken,
+          reviewPhase: "review",
+          revision: 2,
+          sceneBindingDigest: "e".repeat(64),
+          accepted: false,
+        });
         const final = await admitAuthoringReview({
           ...binding(trial),
           runId: finalRun.runId,
@@ -900,6 +933,170 @@ describe("authoring run ledger PostgreSQL contention", () => {
           "DELETE FROM orbsie_authoring_runs WHERE identity_hash=$1",
           [trial.identityHash],
         );
+        await pool!.query(
+          "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+      }
+    },
+    30000,
+  );
+
+  run(
+    "issues review-only runs for an exact saved scene and charges one free trial unit",
+    async () => {
+      const prefix = `ledger:${Date.now()}:review-only`;
+      const trial = identity(prefix, 2);
+      const savedBinding = {
+        ...binding(trial),
+        requestFingerprint: "f".repeat(64),
+        initialRevision: 7,
+        initialSceneDigest: "d".repeat(64),
+      };
+      const runIds: string[] = [];
+      try {
+        const { trialIdentity: _trialIdentity, ...withoutTrial } = savedBinding;
+        await expect(
+          issueReviewOnlyAuthoringRun(withoutTrial),
+        ).rejects.toMatchObject({ code: "binding-mismatch" });
+        const beforeClaim = await pool!.query(
+          "SELECT count(*)::int AS count FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+        expect(beforeClaim.rows[0].count).toBe(0);
+
+        const first = await issueReviewOnlyAuthoringRun(savedBinding);
+        runIds.push(first.runId);
+        expect(first.trialRemaining).toBe(1);
+        await expect(readAuthoringRun(first.runId)).resolves.toMatchObject({
+          phase: "completed",
+          initialRevision: 7,
+          initialSceneDigest: "d".repeat(64),
+          completedRevision: 7,
+          completedSceneBindingDigest: "d".repeat(64),
+          remainingReviewSlots: 3,
+        });
+
+        await expect(
+          admitAuthoringReview({
+            ...savedBinding,
+            runId: first.runId,
+            reviewPhase: "review",
+            expectedRevision: 6,
+            expectedSceneBindingDigest: "d".repeat(64),
+          }),
+        ).rejects.toMatchObject({ code: "revision-mismatch" });
+        await expect(
+          admitAuthoringReview({
+            ...savedBinding,
+            runId: first.runId,
+            reviewPhase: "review",
+            expectedRevision: 7,
+            expectedSceneBindingDigest: "e".repeat(64),
+          }),
+        ).rejects.toMatchObject({ code: "binding-mismatch" });
+        await expect(
+          admitAuthoringReview({
+            ...savedBinding,
+            runId: first.runId,
+            reviewPhase: "final-review",
+            expectedRevision: 7,
+            expectedSceneBindingDigest: "d".repeat(64),
+          }),
+        ).rejects.toMatchObject({ code: "phase-conflict" });
+
+        const firstReview = await admitAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          reviewPhase: "review",
+          expectedRevision: 7,
+          expectedSceneBindingDigest: "d".repeat(64),
+        });
+        await completeAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          phaseToken: firstReview.phaseToken,
+          reviewPhase: "review",
+          revision: 7,
+          sceneBindingDigest: "d".repeat(64),
+          accepted: false,
+        });
+        await expect(
+          admitAuthoringReview({
+            ...savedBinding,
+            runId: first.runId,
+            reviewPhase: "final-review",
+            expectedRevision: 7,
+            expectedSceneBindingDigest: "d".repeat(64),
+          }),
+        ).rejects.toMatchObject({ code: "phase-conflict" });
+
+        const secondReview = await admitAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          reviewPhase: "review",
+          expectedRevision: 7,
+          expectedSceneBindingDigest: "d".repeat(64),
+        });
+        await completeAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          phaseToken: secondReview.phaseToken,
+          reviewPhase: "review",
+          revision: 7,
+          sceneBindingDigest: "d".repeat(64),
+          accepted: false,
+        });
+        const finalReview = await admitAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          reviewPhase: "final-review",
+          expectedRevision: 7,
+          expectedSceneBindingDigest: "d".repeat(64),
+        });
+        await completeAuthoringReview({
+          ...savedBinding,
+          runId: first.runId,
+          phaseToken: finalReview.phaseToken,
+          reviewPhase: "final-review",
+          revision: 7,
+          sceneBindingDigest: "d".repeat(64),
+          accepted: false,
+        });
+
+        const fresh = await issueReviewOnlyAuthoringRun(savedBinding);
+        runIds.push(fresh.runId);
+        expect(fresh.runId).not.toBe(first.runId);
+        expect(fresh.trialRemaining).toBe(0);
+        await expect(readAuthoringRun(fresh.runId)).resolves.toMatchObject({
+          phase: "completed",
+          remainingReviewSlots: 3,
+          completedRevision: 7,
+          completedSceneBindingDigest: "d".repeat(64),
+        });
+
+        await expect(
+          issueReviewOnlyAuthoringRun(savedBinding),
+        ).rejects.toBeInstanceOf(TrialExhausted);
+        const persisted = await pool!.query(
+          "SELECT count(*)::int AS count FROM orbsie_authoring_runs WHERE identity_hash=$1 AND project_id=$2 AND request_fingerprint=$3",
+          [
+            savedBinding.identityHash,
+            savedBinding.projectId,
+            savedBinding.requestFingerprint,
+          ],
+        );
+        expect(persisted.rows[0].count).toBe(2);
+        await expect(readAuthoringRun(fresh.runId)).resolves.toMatchObject({
+          phase: "completed",
+          remainingReviewSlots: 3,
+        });
+      } finally {
+        if (runIds.length)
+          await pool!.query(
+            "DELETE FROM orbsie_authoring_runs WHERE run_id = ANY($1::uuid[])",
+            [runIds],
+          );
         await pool!.query(
           "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
           [`${prefix}%`, `global:${prefix}`],
