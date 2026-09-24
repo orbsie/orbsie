@@ -1,0 +1,24 @@
+{
+  "state": {
+    "viewport": {
+      "width": 866,
+      "height": 308
+    },
+    "orientation": "landscape-primary",
+    "ready": "ready",
+    "software": true,
+    "overflow": false,
+    "composer": {
+      "x": 183.1428680419922,
+      "y": 123.66667175292969,
+      "width": 500,
+      "height": 132.52381896972656,
+      "top": 123.66667175292969,
+      "right": 683.1428680419922,
+      "bottom": 256.19049072265625,
+      "left": 183.1428680419922
+    }
+  },
+  "errors": [],
+  "blocked": []
+}

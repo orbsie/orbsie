@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "outcome": "bounded-incomplete",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 3,
+  "blockedCalls": 0,
+  "originPreflight": {
+    "status": 400,
+    "inferenceCalls": 0
+  },
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-request-observed",
+    "final-review-response-200",
+    "final-review-verdict-revise",
+    "final-review-revise-bounded-incomplete"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 200,
+      "requestId": "9a6ff7ca-0128-4aab-8c5e-9b9da7567fd8",
+      "clientRunId": "559b144b-1a5d-4be4-92e2-f0444aa65ea5",
+      "authoringRunId": "84e13d88-ff1d-4760-a451-36501d270d08",
+      "requestedAuthoringRunId": null,
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "80e38659-d58c-4e5c-b7d7-511d685ed9fb",
+      "clientRunId": "559b144b-1a5d-4be4-92e2-f0444aa65ea5",
+      "authoringRunId": "84e13d88-ff1d-4760-a451-36501d270d08",
+      "requestedAuthoringRunId": "84e13d88-ff1d-4760-a451-36501d270d08",
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "projectRevision": 9,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "reviewRevision": 9,
+      "reviewImageProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "reviewImageRevision": 9,
+      "structuralObservationProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "structuralObservationRevision": 9,
+      "responseBindingRevision": 13,
+      "responseBindingDigest": "65812ce125f2aa09c40bd9678ab9c208cedcb0e019b99146f20c2926d73a3509",
+      "verdict": "revise",
+      "blocked": false
+    },
+    {
+      "ordinal": 3,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "cd4e7589-44e6-408a-a075-a97324f775cd",
+      "clientRunId": "559b144b-1a5d-4be4-92e2-f0444aa65ea5",
+      "authoringRunId": "84e13d88-ff1d-4760-a451-36501d270d08",
+      "requestedAuthoringRunId": "84e13d88-ff1d-4760-a451-36501d270d08",
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "projectRevision": 13,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "reviewRevision": 13,
+      "reviewImageProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "reviewImageRevision": 13,
+      "structuralObservationProjectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "structuralObservationRevision": 13,
+      "responseBindingRevision": 13,
+      "responseBindingDigest": "65812ce125f2aa09c40bd9678ab9c208cedcb0e019b99146f20c2926d73a3509",
+      "verdict": "revise",
+      "blocked": false
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+    "reviewedRevision": 9,
+    "reviewImageRevision": 9,
+    "structuralObservationRevision": 9,
+    "bindingRevision": 13,
+    "bindingDigest": "65812ce125f2aa09c40bd9678ab9c208cedcb0e019b99146f20c2926d73a3509",
+    "verdict": "revise"
+  },
+  "finalReview": {
+    "phase": "final-review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+    "reviewedRevision": 13,
+    "reviewImageRevision": 13,
+    "structuralObservationRevision": 13,
+    "bindingRevision": 13,
+    "bindingDigest": "65812ce125f2aa09c40bd9678ab9c208cedcb0e019b99146f20c2926d73a3509",
+    "verdict": "revise"
+  },
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "d588d4a27cf3ae9bc636b6a9d8d4b65f28f873053dd9e65b543d721c0c4b9488",
+      "bytes": 236122,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "d588d4a27cf3ae9bc636b6a9d8d4b65f28f873053dd9e65b543d721c0c4b9488",
+      "privateBytes": 236122
+    },
+    {
+      "label": "final-review-bounded-incomplete",
+      "sha256": "6d709f84372410605a21cbcc2592e2af86a6190cb73a593a0db89d6ddee46e4d",
+      "bytes": 176937,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "dca9661e08923a52eee4d612bbeb8920274c30004edcb680d488436d849e2f5b",
+      "privateBytes": 92408
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "revision": 9,
+      "structure": {
+        "entityCount": 4,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 4,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 3,
+          "asset": 1,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 12,
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 3,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 6,
+          "cyan": 0,
+          "blue": 6,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterFinalReview": {
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "revision": 13,
+      "structure": {
+        "entityCount": 4,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 4,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 3,
+          "asset": 1,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 21,
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 3,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 9,
+          "cyan": 0,
+          "blue": 12,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterReload": {
+      "projectId": "b82f9071-08e4-4427-bf42-11184e508598",
+      "revision": 13,
+      "keyPersisted": false,
+      "recovered": true
+    }
+  },
+  "requestIds": {
+    "initial": "9a6ff7ca-0128-4aab-8c5e-9b9da7567fd8",
+    "review": "80e38659-d58c-4e5c-b7d7-511d685ed9fb",
+    "finalReview": "cd4e7589-44e6-408a-a075-a97324f775cd"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 2
+  },
+  "browserActivity": {
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "requestFailures": 1,
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": true,
+      "reviewIncomplete": false,
+      "reviewPartial": true,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": null,
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

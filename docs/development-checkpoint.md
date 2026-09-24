@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 24 OpenRouter blue-strawberry structure acceptance: one isolated local
+authoring-review run used exactly three Luna default-tier calls at 4,096 output
+tokens each, all HTTP 200 with no retries. The initial saved revision 9 had
+four ready entities and 12 custom parts (six blue); review revised to revision
+13 with 21 parts (12 blue), recovered after reload. Final visual+structural
+review still said revise; outcome bounded-incomplete. Astra inspected the
+private scene capture: blue fruit is present but spherical, reading as
+blueberries rather than strawberries. A generic colored lathe part is being
+implemented to give the authoring model a useful tapered silhouette. Sanitized
+evidence: `docs/evidence/authoring-review/openrouter-blue-strawberry-structure-20260924/`.
+No key or private screenshot is in the repo.
+
+Sep 24 Android production landscape landing check: on Android 15 emulator
+Chrome at 866x308 landscape, the software renderer reached ready and the
+planet/composer remained visible and within the viewport, without horizontal
+overflow, page errors or blocked requests. Astra inspected the screenshot.
+Evidence: `docs/evidence/android-production-landing-20260924/landscape/`.
+This is landing-only emulator evidence, not full landscape or physical-device
+gameplay acceptance.
+
 Sep 24 existing-publication mobile check: an older signed-out published Orb
 loads its controls but has a blank world on Android Emulator SwiftShader; its
 immutable artifact predates the fix. The same public project/index data served
