@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 second local ChatGPT grant attempt: the owner offered to receive the
+URL/code in chat, and a fresh isolated local production app, in-memory
+PostgreSQL database, private Orbsie browser session, and Vercel-hosted runtime
+issued one real OpenAI challenge. The verification URL/code were sent promptly,
+but the challenge expired without Orbsie observing a grant. The two-call
+Luna-only create/edit harness did not run and there were **zero model calls**.
+The pending host was cancelled (HTTP 200), local app/database stopped, private
+browser state removed, and ports 3159/35432 cleared. No code remains active.
+The owner can request a new code when ready to approve it within ten minutes;
+direct Orbsie HTTPS subscription OAuth remains unproven.
+
 Sep 24 fresh flagship gameplay depth: the browser runner now resolves targets
 from each saved revision and, for fresh worlds, requires real input traversal,
 collection, portal win and reset after the seven-crystal edit and again after
