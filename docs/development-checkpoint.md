@@ -13,7 +13,12 @@ unenforceable through the installed App Server protocol.
 Sep 24 free-prompt copy: `89dacdc` changes the three positive-allowance labels
 to use singular “free prompt” when one remains, preserving the same allowance
 and connection behavior. Astra reviewed the bounded Luna diff; TypeScript,
-Prettier and diff whitespace checks passed. Production release pending.
+Prettier and diff whitespace checks passed. Source `1b4fcbb` deployed Ready as
+`dpl_3vBBmF2VwTtfaKYCryCp73Agj9gY`, aliased to `https://orbsie.com/`.
+At a 390×844 production browser viewport with one prompt remaining, the
+Connections dialog showed “Use 1 free prompt,” with no incorrect plural,
+overflow, browser errors, unexpected requests or model calls. Evidence:
+`docs/evidence/free-prompt-copy-production-20260924/`.
 
 Sep 24 saved-world framing release: source `78ddac4` deployed Ready as
 `dpl_6eAVyVuC5pQ16dcgRNnu5EY9UKvi`, aliased to `https://orbsie.com/`

@@ -1,0 +1,18 @@
+{
+  "origin": "https://orbsie.com",
+  "deploymentId": "dpl_3vBBmF2VwTtfaKYCryCp73Agj9gY",
+  "sourceCommit": "1b4fcbb",
+  "status": "passed",
+  "productionChecks": {
+    "rootHttp": 200,
+    "trialRemaining": 1,
+    "trialLimit": 3,
+    "connectionsDialogShows": "Use 1 free prompt",
+    "incorrectPluralPresent": false,
+    "mobileViewportOverflow": false,
+    "unexpectedRequests": 0,
+    "browserErrors": 0,
+    "modelCalls": 0
+  },
+  "scope": "Exact production frontend at a 390x844 viewport; visible Connections dialog copy only. No generation or allowance mutation."
+}

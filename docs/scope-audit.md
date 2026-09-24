@@ -7,7 +7,7 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_6eAVyVuC5pQ16dcgRNnu5EY9UKvi` at this reconciliation. Read-only
+  `dpl_3vBBmF2VwTtfaKYCryCp73Agj9gY` at this reconciliation. Read-only
   root, robots, sitemap and config checks passed; the prior release's trial
   check passed. The previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
@@ -15,6 +15,9 @@ older rows below are a historical inventory, not a completion claim.
   browser checks at desktop and mobile sizes. This does not prove funded free
   generation, model-authored visual quality or the
   full provider E2E matrix.
+- At one remaining trial prompt, the production Connections dialog now shows
+  “Use 1 free prompt” at a 390×844 viewport. This is presentation validation,
+  not a funded free-generation check.
 - Opening a saved world now frames its committed content once. The production
   browser check loaded a saved catalog tree and changed the camera from the
   default view to 600% without model calls or page errors. This improves
