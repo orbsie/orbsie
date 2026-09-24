@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-24T18:24:43.472Z",
+  "origin": "https://orbsie.com",
+  "deviceChallengeIssued": true,
+  "grantObserved": false,
+  "chatgptModelCalls": 0,
+  "before": {
+    "http": 200,
+    "lifecycle": "idle",
+    "authStatus": "disconnected"
+  },
+  "cancel": {
+    "http": 200,
+    "lifecycle": "idle",
+    "authStatus": "disconnected"
+  },
+  "privateStateRemoved": true
+}

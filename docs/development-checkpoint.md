@@ -1,5 +1,13 @@
 # Development checkpoint
 
+Sep 24 second owner-visible ChatGPT follow-up: after the owner offered to use
+a shown URL/code, a fresh isolated production session received a real OpenAI
+device challenge. The code was displayed in chat, but the final read after its
+expiry was HTTP 200, idle/disconnected. The session was cancelled, its private
+state file removed, and zero ChatGPT model calls ran. Sanitized evidence omits
+the code: `docs/evidence/production-hosted-chatgpt/owner-code-followup-20260924-2/`.
+Wait for the owner to be ready before issuing another timed challenge.
+
 Sep 24 WebKit mobile smoke: Playwright 1.63/WebKit 26.6 touch emulation at
 390×844 and DPR 3 passed signed-out editor landing, WebGL2-ready rendering,
 and the current standalone player ZIP with score 7, restart, win, and loss.
