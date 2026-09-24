@@ -116,6 +116,7 @@ export const catalogAssetIds = [
   "kenney.nature.fence-gate",
   "kenney.nature.campfire-stones",
   "kenney.nature.canoe",
+  "assetquest.mushroom.fly-agaric-basic",
 ] as const;
 
 export type AssetId = (typeof catalogAssetIds)[number];
@@ -302,6 +303,8 @@ const promptSummaries: Record<AssetId, string> = {
     "A small ring of pale blue-gray stones for a campfire landmark.",
   "kenney.nature.canoe":
     "A small wooden canoe in warm orange-brown with a fall-orange accent.",
+  "assetquest.mushroom.fly-agaric-basic":
+    "A textured Fly Agaric mushroom with a red cap, pale stem, and light spots.",
 };
 
 export const assetPromptCatalog: readonly AssetPromptMetadata[] = Object.freeze(

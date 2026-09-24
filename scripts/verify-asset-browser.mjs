@@ -2,6 +2,7 @@
 import { chromium, expect } from "@playwright/test";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { createServer } from "node:http";
 import { unzipSync, strFromU8 } from "fflate";
 const base = process.env.TEST_URL ?? "http://127.0.0.1:3017";
 const directory =
@@ -29,10 +30,12 @@ const browser = await chromium.launch({
     "--enable-unsafe-swiftshader",
   ],
 });
+let standaloneServer;
 try {
   const page = await browser.newPage({ reducedMotion: "reduce" });
   const errors = [];
   const externalRequests = [];
+  const generationRequests = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text().slice(0, 300));
@@ -68,10 +71,15 @@ try {
       return route.fulfill({ json: { enabled: true, remaining: 3 } });
     if (path === "/api/generate") {
       generations++;
+      const submitted = route.request().postDataJSON();
+      generationRequests.push({
+        selected: submitted?.selected ?? null,
+        prompt: submitted?.prompt ?? null,
+      });
       const commands =
         generations === 1
           ? [
-              reserve("subject", "Catalog model", [-2, 0, 0]),
+              reserve("subject", "Catalog model", [0, 0, 0]),
               {
                 type: "set_geometry",
                 id: "subject",
@@ -138,6 +146,79 @@ try {
   );
   expect(usedAssets.assets).toHaveLength(1);
   expect(usedAssets.assets[0].id).toBe(assetId);
+
+  standaloneServer = createServer((request, response) => {
+    const path =
+      new URL(request.url, "http://localhost").pathname.slice(1) ||
+      "index.html";
+    const bytes = files[path];
+    if (!bytes) {
+      response.writeHead(404);
+      response.end();
+      return;
+    }
+    response.setHeader(
+      "Content-Type",
+      {
+        html: "text/html",
+        js: "text/javascript",
+        css: "text/css",
+        json: "application/json",
+        glb: "model/gltf-binary",
+      }[path.split(".").at(-1)] ?? "application/octet-stream",
+    );
+    response.end(bytes);
+  });
+  await new Promise((resolve) =>
+    standaloneServer.listen(0, "127.0.0.1", resolve),
+  );
+  const standaloneOrigin = `http://127.0.0.1:${standaloneServer.address().port}`;
+  const standalone = await browser.newPage({ reducedMotion: "reduce" });
+  const standaloneExternal = [];
+  await standalone.addInitScript(() => {
+    const OriginalWorker = window.Worker;
+    window.__catalogWorkerResults = [];
+    window.Worker = class extends OriginalWorker {
+      constructor(...args) {
+        super(...args);
+        if (String(args[0]).includes("asset-geometry-worker"))
+          this.addEventListener("message", ({ data }) => {
+            window.__catalogWorkerResults.push({
+              error: data.error ?? null,
+              vertices:
+                (data.decoded?.attributes?.position?.array?.length ?? 0) / 3,
+            });
+          });
+      }
+    };
+  });
+  standalone.on("pageerror", (error) => errors.push(error.message));
+  await standalone.route("**/*", (route) => {
+    const url = new URL(route.request().url());
+    if (
+      url.origin === standaloneOrigin ||
+      url.protocol === "data:" ||
+      url.protocol === "blob:"
+    )
+      return route.continue();
+    standaloneExternal.push(url.origin);
+    return route.abort();
+  });
+  await standalone.goto(standaloneOrigin);
+  await expect(standalone.locator("main[data-ready=true]")).toBeVisible();
+  await standalone.waitForFunction(() =>
+    window.__catalogWorkerResults.some(
+      (result) => !result.error && result.vertices > 0,
+    ),
+  );
+  const standaloneWorkerResults = await standalone.evaluate(
+    () => window.__catalogWorkerResults,
+  );
+  expect(standaloneWorkerResults.every((result) => !result.error)).toBe(true);
+  expect(standaloneExternal).toEqual([]);
+  await standalone.waitForTimeout(1800); // allow the standalone formation to settle
+  await standalone.screenshot({ path: directory + "/standalone.png" });
+
   await page.getByRole("button", { name: "Close dialog", exact: true }).click();
   await page.getByRole("button", { name: "Show objects", exact: true }).click();
   await page
@@ -148,10 +229,19 @@ try {
     .locator("#prompt")
     .fill("Build this model from scratch with original geometry");
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect(page.getByText(/scoped to original geometry/)).toBeVisible();
+  await expect(
+    page.getByText(/scene change that could not be applied/),
+  ).toBeVisible();
+  expect(generationRequests.at(-1)).toEqual({
+    selected: "subject",
+    prompt: "Build this model from scratch with original geometry",
+  });
   await expect(page.getByText("Forbidden reuse.", { exact: true })).toHaveCount(
     0,
   );
+  await expect(
+    page.getByRole("button", { name: "Use last working" }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
   expect(externalRequests).toEqual([]);
   const report = {
@@ -164,8 +254,10 @@ try {
     licenseSha256: source.license.textSha256,
     assetHTTPStatus: model.status(),
     mixedExport: true,
+    standalonePlayback: true,
+    standaloneWorkerResults,
     newOnlyReuseRejected: true,
-    externalRequestCount: externalRequests.length,
+    externalRequestCount: externalRequests.length + standaloneExternal.length,
     pageErrors: errors,
   };
   await writeFile(
@@ -175,4 +267,6 @@ try {
   console.log(JSON.stringify(report));
 } finally {
   await browser.close();
+  if (standaloneServer)
+    await new Promise((resolve) => standaloneServer.close(resolve));
 }

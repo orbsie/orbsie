@@ -76,4 +76,23 @@ describe("catalog source bounds", () => {
       expect.closeTo(0.07636, 5),
     ]);
   });
+
+  it("audits embedded-texture bounds without changing source bytes", async () => {
+    const id = "assetquest.mushroom.fly-agaric-basic";
+    const asset = requireCatalogAsset(id);
+    const bytes = await fs.readFile(path.join(root, assetFilePathFor(id)));
+    const originalBytes = Buffer.from(bytes);
+    const source = await transformedCatalogSourceBounds(bytes, asset.path);
+
+    for (const axis of [0, 1, 2]) {
+      expect(source.bounds.min[axis]).toBeCloseTo(asset.bounds.min[axis], 5);
+      expect(source.bounds.max[axis]).toBeCloseTo(asset.bounds.max[axis], 5);
+    }
+    expect(source.meshes).toHaveLength(1);
+    expect(source.meshes[0].triangles).toBe(222);
+    expect(source.meshes[0].material).toEqual([
+      "Mushooms_MAT_embedded_512_png",
+    ]);
+    expect(bytes).toEqual(originalBytes);
+  });
 });

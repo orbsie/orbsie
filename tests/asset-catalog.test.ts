@@ -58,6 +58,48 @@ describe("local 3D asset catalog", () => {
     expect(findCatalogAsset("not-in-the-catalog")).toBeUndefined();
   });
 
+  it("admits the reviewed textured Asset Quest Fly Agaric with local provenance", () => {
+    const mushroom = requireCatalogAsset(
+      "assetquest.mushroom.fly-agaric-basic",
+    );
+    expect(mushroom).toMatchObject({
+      path: "/models/assetquest/fly_agaric_basic_textured.glb",
+      sizeBytes: 271396,
+      sha256:
+        "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+      tags: expect.arrayContaining([
+        "mushroom",
+        "fly-agaric",
+        "amanita-muscaria",
+      ]),
+      gltf: { nodes: 1, textureCount: 1, embeddedTextures: true },
+      bounds: {
+        min: [-0.391526460647583, 0, -0.391526460647583],
+        max: [0.391526460647583, 1, 0.391526460647583],
+      },
+    });
+    expect(assetManifest.policy.explicitNewOverridesCatalog).toBe(true);
+    expect(promptCatalogForPolicy("new-only")).toEqual([]);
+    expect(assetManifest.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: "assetquest-low-poly-mushroom-kit",
+          sourcePageUrl:
+            "https://opengameart.org/content/low-poly-mushroom-kit",
+          archive: expect.objectContaining({
+            fileName: "free_mushroom_pack_assetquest.zip",
+            sha256:
+              "b32c4bf0c9d5471ffcde83747402d0f8355add48c317f9147950c4f44facaffd",
+          }),
+          license: expect.objectContaining({
+            textSha256:
+              "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+          }),
+        }),
+      ]),
+    );
+  });
+
   it.each([
     ["unknown ID", () => requireCatalogAsset("tree.glb")],
     [

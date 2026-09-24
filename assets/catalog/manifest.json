@@ -2,8 +2,8 @@
   "$schema": "https://orbsie.com/schemas/asset-catalog-v1.json",
   "schemaVersion": "orbsie.asset-catalog/v1",
   "catalogId": "orbsie-curated-3d-assets",
-  "catalogVersion": "2026-09-07.1",
-  "generatedAt": "2026-09-07T20:37:48-07:00",
+  "catalogVersion": "2026-09-24.1",
+  "generatedAt": "2026-09-24T12:55:07-07:00",
   "policy": {
     "allowCatalogAssets": true,
     "allowGeneratedAssets": true,
@@ -43,6 +43,35 @@
         "entryRoot": "Models/GLTF format/"
       },
       "notes": "Archive entries were extracted byte-for-byte; no mesh, material, or texture transformations were applied."
+    },
+    {
+      "sourceId": "assetquest-low-poly-mushroom-kit",
+      "title": "Low Poly Mushroom Kit",
+      "publisher": "Asset Quest",
+      "authorAttribution": "Asset Quest / AssetQuest (www.assetquest.dev; attribution is recommended but not required under the bundled CC0 license)",
+      "sourcePageUrl": "https://opengameart.org/content/low-poly-mushroom-kit",
+      "downloadUrl": "https://opengameart.org/sites/default/files/free_mushroom_pack_assetquest.zip",
+      "license": {
+        "spdx": "CC0-1.0",
+        "name": "Creative Commons Zero 1.0 Universal",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "textFile": "assets/catalog/licenses/assetquest-low-poly-mushroom-License.txt",
+        "textSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+        "commercialUse": true,
+        "redistribution": true,
+        "attributionRequired": false,
+        "attributionRecommended": true
+      },
+      "version": "Free Mushroom Pack by Asset Quest; bundled License.txt",
+      "downloadedAt": "2026-09-12",
+      "archive": {
+        "fileName": "free_mushroom_pack_assetquest.zip",
+        "sha256": "b32c4bf0c9d5471ffcde83747402d0f8355add48c317f9147950c4f44facaffd",
+        "sizeBytes": 54791351,
+        "storedInRepository": false,
+        "entryRoot": "archive root"
+      },
+      "notes": "The original archive was first inspected on 2026-09-12; its exact download time was not recorded. The reviewed GLB is an offline derivative of Meshes/Fly_Agaric_Basic.fbx (SHA-256 cbd60bfb8dcc15d856290b320c72fa6402de3f66492468ea059cbc8ec449286b) and Textures/Mushrooms_C.tga (SHA-256 b45f16a2c725d3975040a3e34174c994992d40822e4a57449c79f765ed240680). The original 4096x4096 texture was resized to an embedded 512x512 PNG; the source archive was restored to the durable local cache and its hash verified on 2026-09-13."
     }
   ],
   "assets": [
@@ -195,6 +224,21 @@
       "bounds": {"min": [-0.15, -0.05, -0.575], "max": [0.15, 0.132500005, 0.575], "size": [0.3, 0.182500005, 1.15], "origin": "source node transform; geometry base at y=-0.05"},
       "scale": {"axis": "Y-up", "units": "Kenney scene units", "sourceToRuntime": 1, "normalization": "identity; preserve source origin"},
       "collision": {"recommended": "capsule", "source": "catalog review", "embedded": false}
+    },
+    {
+      "id": "assetquest.mushroom.fly-agaric-basic",
+      "label": "Mushroom / Fly Agaric Basic (textured)",
+      "sourceId": "assetquest-low-poly-mushroom-kit",
+      "format": "glb",
+      "path": "/models/assetquest/fly_agaric_basic_textured.glb",
+      "tags": ["organic", "mushroom", "fly-agaric", "amanita-muscaria", "toadstool", "red-cap", "pale-stem", "white-spots"],
+      "archiveEntry": "derived from Meshes/Fly_Agaric_Basic.fbx and Textures/Mushrooms_C.tga",
+      "sizeBytes": 271396,
+      "sha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+      "gltf": {"version": "2.0", "meshes": 1, "nodes": 1, "primitives": 1, "triangles": 222, "vertices": 666, "materials": ["Mushooms_MAT_embedded_512_png"], "textureCount": 1, "embeddedTextures": true, "animationCount": 0},
+      "bounds": {"min": [-0.391526460647583, 0, -0.391526460647583], "max": [0.391526460647583, 1, 0.391526460647583], "size": [0.783052921295166, 1, 0.783052921295166], "origin": "normalized source matrix; centered X/Z with mesh base at y=0"},
+      "scale": {"axis": "Y-up", "units": "meters", "sourceToRuntime": 1, "normalization": "baked source matrix, centered X/Z, grounded at y=0, normalized to 1 m high (source factor 0.05376031145395281)"},
+      "collision": {"recommended": "convex-hull", "source": "catalog review", "embedded": false}
     }
   ]
 }

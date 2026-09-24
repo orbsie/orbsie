@@ -1,0 +1,21 @@
+{
+  "mode": "mock-generation-real-catalog-render-export",
+  "passed": true,
+  "generations": 2,
+  "realModelCalls": 0,
+  "assetId": "assetquest.mushroom.fly-agaric-basic",
+  "assetSha256": "3bb6e9fcabd6b4f88587305943a7f1012eb570fb47f7f6bdd66299b3ac7640f4",
+  "licenseSha256": "ad0c0abda67dae90291d8d6e2fcb07c841bb210cdedfa9dfdedae605bd8f66c6",
+  "assetHTTPStatus": 200,
+  "mixedExport": true,
+  "standalonePlayback": true,
+  "standaloneWorkerResults": [
+    {
+      "error": null,
+      "vertices": 666
+    }
+  ],
+  "newOnlyReuseRejected": true,
+  "externalRequestCount": 0,
+  "pageErrors": []
+}
