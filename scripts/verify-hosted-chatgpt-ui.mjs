@@ -7,6 +7,24 @@ const out =
   process.env.ORBSIE_CHATGPT_UI_EVIDENCE_DIR ||
   "test-results/hosted-chatgpt-ui";
 await mkdir(out, { recursive: true });
+const scenarios = [
+  "disabled",
+  "signed-out",
+  "cancel",
+  "connected",
+  "expired",
+  "failed-completion",
+  "malformed",
+  "malformed-logout",
+  "stale-status",
+  "stale-models",
+  "stale-logout-failure",
+  "reopen",
+  "mobile",
+];
+const selectedScenario = process.env.ORBSIE_CHATGPT_UI_SCENARIO;
+if (selectedScenario && !scenarios.includes(selectedScenario))
+  throw new Error(`Unknown ChatGPT UI scenario: ${selectedScenario}`);
 const browser = await chromium.launch({
   args: [
     "--no-sandbox",
@@ -16,20 +34,7 @@ const browser = await chromium.launch({
 });
 const report = [];
 try {
-  for (const scenario of [
-    "disabled",
-    "signed-out",
-    "cancel",
-    "connected",
-    "expired",
-    "malformed",
-    "malformed-logout",
-    "stale-status",
-    "stale-models",
-    "stale-logout-failure",
-    "reopen",
-    "mobile",
-  ]) {
+  for (const scenario of selectedScenario ? [selectedScenario] : scenarios) {
     const context = await browser.newContext({
       viewport:
         scenario === "mobile"
@@ -43,7 +48,8 @@ try {
       starts = 0,
       cancels = 0,
       logouts = 0,
-      polls = 0;
+      polls = 0,
+      providerSessions = 0;
     const controlEvents = [];
     const unexpected = [],
       errors = [];
@@ -77,10 +83,26 @@ try {
             scenario === "signed-out"
               ? null
               : {
-                  user: { id: "fixture-user", name: "Fixture" },
+                  user: {
+                    id: "fixture-user",
+                    name: "Fixture",
+                    isAnonymous: false,
+                  },
                   session: { id: "fixture-session" },
                 },
         });
+      if (p === "/api/provider-session") {
+        providerSessions++;
+        return route.fulfill({
+          json: {
+            user: {
+              id: "fixture-provider-user",
+              name: "Fixture",
+              isAnonymous: true,
+            },
+          },
+        });
+      }
       if (p === "/api/trial")
         return route.fulfill({ json: { enabled: false, remaining: 0 } });
       if (p === "/api/projects")
@@ -110,6 +132,18 @@ try {
           return route.fulfill({
             json: { lifecycle: "completed", authStatus: "connected" },
           });
+        if (scenario === "failed-completion" && phase === "pending") {
+          phase = "failed";
+          return route.fulfill({
+            json: {
+              lifecycle: "failed",
+              authStatus: "disconnected",
+              failureCode: "other",
+              error:
+                "access_token=fixture-private-token user_id=fixture-private-user",
+            },
+          });
+        }
         if (
           phase === "pending" &&
           ["connected", "mobile", "malformed-logout"].includes(scenario)
@@ -177,10 +211,14 @@ try {
       assert.equal(starts, 0);
     } else if (scenario === "signed-out") {
       await expect(
-        section.getByRole("button", { name: "Sign in to Orbsie" }),
+        section.getByRole("button", { name: "Connect ChatGPT" }),
       ).toBeVisible();
       assert.equal(starts, 0);
       assert.equal(polls, 0);
+      await section.getByRole("button", { name: "Connect ChatGPT" }).click();
+      await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+      assert.equal(providerSessions, 1);
+      assert.equal(starts, 1);
     } else {
       const staleScenario = [
         "stale-status",
@@ -294,6 +332,30 @@ try {
               timeout: 5000,
             });
             await expect(section.locator("code")).toHaveCount(0);
+          } else if (scenario === "failed-completion") {
+            await expect(
+              section.getByText("ChatGPT sign-in failed. Try again."),
+            ).toBeVisible({ timeout: 10000 });
+            const failureText = await section.innerText();
+            assert(!failureText.includes("fixture-private-token"));
+            assert(!failureText.includes("fixture-private-user"));
+            await expect(
+              section.getByRole("button", { name: "Try again", exact: true }),
+            ).toBeVisible();
+            assert.equal(starts, 1);
+            assert.deepEqual(controlEvents, ["start"]);
+            await page.screenshot({
+              path: `${out}/${scenario}-failed.png`,
+            });
+            await section
+              .getByRole("button", { name: "Try again", exact: true })
+              .click();
+            await expect(section.locator("code")).toHaveText("SYNTH-CODE");
+            await expect.poll(() => starts).toBe(2);
+            assert.deepEqual(controlEvents, ["start", "start"]);
+            await page.screenshot({
+              path: `${out}/${scenario}-retried.png`,
+            });
           } else if (scenario === "reopen") {
             await page.getByRole("button", { name: "Close dialog" }).click();
             const before = polls;
@@ -324,6 +386,7 @@ try {
       cancels,
       logouts,
       polls,
+      providerSessions,
       externalRequests: 0,
     });
     await context.close();

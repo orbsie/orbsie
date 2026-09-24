@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 ChatGPT failure feedback: the failed device-login completion now carries
+only a bounded, allowlisted failure category through the local session and
+public route. The connection dialog shows a visible retry action and specific
+guidance when the host reports disabled device-code sign-in; unrecognized raw
+host errors stay private. Astra reviewed the Luna diff and browser fixture.
+The 61 focused tests and production build passed. All 13 synthetic connection
+scenarios passed in a local production browser run, including signed-out
+anonymous connection, failed completion/retry, stale connection, mobile, and
+logout paths; Astra inspected the failure screenshot. Evidence:
+`docs/evidence/chatgpt-failure-feedback-20260924/`. This verifies failure
+handling only. The prior live device attempt failed before a grant, and the
+actual host failure reason remains unknown; no ChatGPT inference acceptance
+has occurred.
+
 Sep 24 lathe release promotion: Vercel deployment
 `https://orbsie-7263rj9n6-grappeggias-projects.vercel.app` built and was
 aliased to `https://orbsie.com/`. Read-only desktop release smoke passed with

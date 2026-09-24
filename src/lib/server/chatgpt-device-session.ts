@@ -17,6 +17,7 @@ const ACCOUNT_READ_METHOD = "account/read";
 const COMPLETED_METHOD = "account/login/completed";
 const MAX_IDENTIFIER_LENGTH = 512;
 const MAX_USER_CODE_LENGTH = 256;
+const MAX_COMPLETION_ERROR_LENGTH = 256;
 const DEFAULT_RPC_TIMEOUT_MS = 30_000;
 
 export type ChatGPTDeviceRpc = {
@@ -43,15 +44,18 @@ export type ChatGPTAuthStatus = "unknown" | "connected" | "disconnected";
 export type ChatGPTDeviceLifecycle =
   "idle" | "pending" | "completed" | "failed" | "cancelled" | "expired";
 
-export type ChatGPTDeviceCompletion = {
-  status: "completed" | "failed";
-  error?: string;
-};
+export type ChatGPTDeviceFailureCode =
+  "device-code-disabled" | "denied" | "expired" | "other";
+
+export type ChatGPTDeviceCompletion =
+  | { status: "completed" }
+  | { status: "failed"; failureCode: ChatGPTDeviceFailureCode };
 
 export type ChatGPTDeviceSessionSnapshot = {
   lifecycle: ChatGPTDeviceLifecycle;
   authStatus: ChatGPTAuthStatus;
   pending?: ChatGPTDeviceLoginChallenge;
+  failureCode?: ChatGPTDeviceFailureCode;
   error?: string;
 };
 
@@ -160,6 +164,7 @@ function publicError(
 function readCompletion(notification: unknown): {
   loginId?: string;
   success?: boolean;
+  failureCode?: ChatGPTDeviceFailureCode;
 } | null {
   const envelope = record(notification);
   const value =
@@ -171,7 +176,45 @@ function readCompletion(notification: unknown): {
       ? params.loginId
       : undefined,
     success: typeof params.success === "boolean" ? params.success : undefined,
+    ...(params.success === false
+      ? { failureCode: classifyCompletionFailure(params.error) }
+      : {}),
   };
+}
+
+function classifyCompletionFailure(value: unknown): ChatGPTDeviceFailureCode {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > MAX_COMPLETION_ERROR_LENGTH ||
+    value.trim() !== value ||
+    /[\u0000-\u001f\u007f]/.test(value)
+  )
+    return "other";
+
+  const normalized = value
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ");
+  if (
+    /^(?:chatgpt )?device(?:[- ]code)? login (?:is )?(?:disabled|not enabled|unsupported)(?: for this account)?[.!]?$/.test(
+      normalized,
+    )
+  )
+    return "device-code-disabled";
+  if (
+    /^(?:(?:chatgpt )?sign[- ]?in|authorization) (?:was )?(?:denied|declined|rejected)[.!]?$/.test(
+      normalized,
+    )
+  )
+    return "denied";
+  if (
+    /^(?:(?:chatgpt )?device(?:[- ]code)?|sign[- ]?in code|authorization) (?:has )?expired[.!]?$/.test(
+      normalized,
+    )
+  )
+    return "expired";
+  return "other";
 }
 
 function accountIsChatGPT(response: unknown): boolean {
@@ -197,6 +240,7 @@ export class ChatGPTDeviceSession {
   #logoutInFlight = false;
   #lifecycle: ChatGPTDeviceLifecycle = "idle";
   #authStatus: ChatGPTAuthStatus = "unknown";
+  #failureCode?: ChatGPTDeviceFailureCode;
   #lastError?: string;
 
   constructor(options: ChatGPTDeviceSessionOptions) {
@@ -251,6 +295,7 @@ export class ChatGPTDeviceSession {
     this.#attempt = attempt;
     this.#lifecycle = "pending";
     this.#authStatus = "unknown";
+    this.#failureCode = undefined;
     this.#lastError = undefined;
 
     let response: unknown;
@@ -334,9 +379,11 @@ export class ChatGPTDeviceSession {
     this.#statusReadGeneration++;
     const result: ChatGPTDeviceCompletion = completion.success
       ? { status: "completed" }
-      : { status: "failed", error: "ChatGPT sign-in could not be completed." };
+      : { status: "failed", failureCode: completion.failureCode ?? "other" };
     this.#lifecycle = result.status;
-    this.#lastError = result.error;
+    this.#failureCode =
+      result.status === "failed" ? result.failureCode : undefined;
+    this.#lastError = undefined;
     // A successful login notification is not an account/read result. Keep the
     // auth status unknown until the caller explicitly checks connected auth.
     this.#authStatus = "unknown";
@@ -356,6 +403,7 @@ export class ChatGPTDeviceSession {
     if (!attempt) {
       this.#generation++;
       this.#lifecycle = "cancelled";
+      this.#failureCode = undefined;
       this.#lastError = undefined;
       return;
     }
@@ -363,6 +411,7 @@ export class ChatGPTDeviceSession {
     this.#attempt = undefined;
     this.#generation++;
     this.#lifecycle = "cancelled";
+    this.#failureCode = undefined;
     this.#lastError = undefined;
     if (attempt.loginId) this.#cancelRemote(attempt.loginId);
   }
@@ -416,6 +465,7 @@ export class ChatGPTDeviceSession {
     this.#statusReadGeneration++;
     this.#lifecycle = "cancelled";
     this.#authStatus = "unknown";
+    this.#failureCode = undefined;
     this.#lastError = undefined;
     this.#logoutInFlight = true;
     try {
@@ -426,6 +476,7 @@ export class ChatGPTDeviceSession {
       await this.close();
       this.#authStatus = "unknown";
       this.#lifecycle = "failed";
+      this.#failureCode = undefined;
       this.#lastError = publicError("logout-failed").message;
       throw publicError("logout-failed");
     } finally {
@@ -440,6 +491,7 @@ export class ChatGPTDeviceSession {
       lifecycle: this.#lifecycle,
       authStatus: this.#authStatus,
       ...(pending?.challenge ? { pending: { ...pending.challenge } } : {}),
+      ...(this.#failureCode ? { failureCode: this.#failureCode } : {}),
       ...(this.#lastError ? { error: this.#lastError } : {}),
     };
   }
@@ -457,6 +509,7 @@ export class ChatGPTDeviceSession {
       if (attempt.loginId) this.#cancelRemote(attempt.loginId);
     }
     this.#lifecycle = "cancelled";
+    this.#failureCode = undefined;
     this.#lastError = undefined;
     const unsubscribe = this.#unsubscribe;
     this.#unsubscribe = undefined;
@@ -483,6 +536,7 @@ export class ChatGPTDeviceSession {
     this.#attempt = undefined;
     this.#generation++;
     this.#lifecycle = "expired";
+    this.#failureCode = undefined;
     this.#lastError = publicError("expired").message;
     if (attempt.loginId) this.#cancelRemote(attempt.loginId);
   }

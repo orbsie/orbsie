@@ -27,6 +27,9 @@ export {
 
 export const CHATGPT_DEVICE_URL = "https://auth.openai.com/codex/device";
 
+export type ChatGPTFailureCode =
+  "device-code-disabled" | "denied" | "expired" | "other";
+
 export type ChatGPTChallenge = {
   userCode: string;
   verificationUrl: typeof CHATGPT_DEVICE_URL;
@@ -38,6 +41,7 @@ export type ChatGPTSnapshot = {
     "idle" | "pending" | "completed" | "failed" | "cancelled" | "expired";
   authStatus: "unknown" | "connected" | "disconnected";
   pending?: ChatGPTChallenge;
+  failureCode?: ChatGPTFailureCode;
 };
 
 export type ChatGPTModelOption = {
@@ -67,6 +71,12 @@ const authStatusValues = new Set<ChatGPTSnapshot["authStatus"]>([
   "unknown",
   "connected",
   "disconnected",
+]);
+const failureCodeValues = new Set<ChatGPTFailureCode>([
+  "device-code-disabled",
+  "denied",
+  "expired",
+  "other",
 ]);
 
 function boundedText(value: unknown, max: number): value is string {
@@ -120,10 +130,20 @@ export function parseChatGPTSnapshot(value: unknown): ChatGPTSnapshot | null {
       ? undefined
       : parseChatGPTChallenge(source.pending);
   if (source.pending !== undefined && !pending) return null;
+  const lifecycle = source.lifecycle as ChatGPTSnapshot["lifecycle"];
   return {
-    lifecycle: source.lifecycle as ChatGPTSnapshot["lifecycle"],
+    lifecycle,
     authStatus: source.authStatus as ChatGPTSnapshot["authStatus"],
     ...(pending ? { pending } : {}),
+    ...(lifecycle === "failed"
+      ? {
+          failureCode: failureCodeValues.has(
+            source.failureCode as ChatGPTFailureCode,
+          )
+            ? (source.failureCode as ChatGPTFailureCode)
+            : "other",
+        }
+      : {}),
   };
 }
 
@@ -176,6 +196,7 @@ type View =
       message: string;
       stale?: boolean;
       loginPending?: boolean;
+      retryLogin?: boolean;
     };
 
 const initialView: View = { phase: "checking" };
@@ -320,7 +341,10 @@ async function requestModels(signal: AbortSignal): Promise<unknown> {
   }
 }
 
-function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
+export function viewFromSnapshot(
+  snapshot: ChatGPTSnapshot,
+  message?: string,
+): View {
   if (snapshot.lifecycle === "pending" && snapshot.pending)
     return { phase: "pending", challenge: snapshot.pending, message };
   if (snapshot.authStatus === "connected")
@@ -330,6 +354,20 @@ function viewFromSnapshot(snapshot: ChatGPTSnapshot, message?: string): View {
       phase: "idle",
       message: "This sign-in code expired. Start again.",
     };
+  if (snapshot.lifecycle === "failed") {
+    const messages: Record<ChatGPTFailureCode, string> = {
+      "device-code-disabled":
+        "Device-code sign-in is disabled for this ChatGPT account. Enable it in ChatGPT security settings, then try again.",
+      denied: "ChatGPT sign-in was declined. Try again if that was unintended.",
+      expired: "This sign-in code expired. Try again for a new code.",
+      other: "ChatGPT sign-in failed. Try again.",
+    };
+    return {
+      phase: "error",
+      message: messages[snapshot.failureCode ?? "other"],
+      retryLogin: true,
+    };
+  }
   if (snapshot.authStatus === "disconnected") return { phase: "idle", message };
   return {
     phase: "error",
@@ -1032,6 +1070,10 @@ export default function ChatGPTConnection({
           ) : view.stale ? (
             <button className="primary full" onClick={reconnect}>
               {CHATGPT_STALE_CONNECTION_ACTION}
+            </button>
+          ) : view.retryLogin ? (
+            <button className="primary full" onClick={start}>
+              Try again
             </button>
           ) : (
             <button className="text-button" onClick={refresh}>

@@ -9,6 +9,7 @@ import {
   parseChatGPTChallenge,
   parseChatGPTModels,
   parseChatGPTSnapshot,
+  viewFromSnapshot,
 } from "../src/components/chatgpt-connection";
 
 const challenge = {
@@ -113,6 +114,43 @@ describe("ChatGPT connection response guards", () => {
         authStatus: "connected",
       }),
     ).toEqual({ lifecycle: "completed", authStatus: "connected" });
+  });
+
+  it("shows a retryable failed view and only gives device-login advice when classified", () => {
+    const disabled = parseChatGPTSnapshot({
+      lifecycle: "failed",
+      authStatus: "disconnected",
+      failureCode: "device-code-disabled",
+      error: "access_token=private-secret",
+    });
+    expect(disabled).toEqual({
+      lifecycle: "failed",
+      authStatus: "disconnected",
+      failureCode: "device-code-disabled",
+    });
+    expect(viewFromSnapshot(disabled!)).toEqual({
+      phase: "error",
+      message:
+        "Device-code sign-in is disabled for this ChatGPT account. Enable it in ChatGPT security settings, then try again.",
+      retryLogin: true,
+    });
+
+    const unknown = parseChatGPTSnapshot({
+      lifecycle: "failed",
+      authStatus: "disconnected",
+      failureCode: "access_token=untrusted",
+      error: "user_id=private-user",
+    });
+    expect(unknown).toEqual({
+      lifecycle: "failed",
+      authStatus: "disconnected",
+      failureCode: "other",
+    });
+    expect(viewFromSnapshot(unknown!)).toEqual({
+      phase: "error",
+      message: "ChatGPT sign-in failed. Try again.",
+      retryLogin: true,
+    });
   });
 
   it("sanitizes the bounded hosted model catalog", () => {

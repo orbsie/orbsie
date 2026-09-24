@@ -25,6 +25,12 @@ const lifecycleValues = new Set([
   "expired",
 ]);
 const authStatusValues = new Set(["unknown", "connected", "disconnected"]);
+const deviceFailureCodeValues = new Set([
+  "device-code-disabled",
+  "denied",
+  "expired",
+  "other",
+]);
 const actions = new Set(["start", "status", "cancel", "logout", "models"]);
 
 type Identity = { ownerId: string; sessionId: string };
@@ -223,6 +229,12 @@ function snapshot(value: unknown) {
     lifecycle: source.lifecycle,
     authStatus: source.authStatus,
   };
+  if (source.lifecycle === "failed")
+    result.failureCode = deviceFailureCodeValues.has(
+      source.failureCode as string,
+    )
+      ? source.failureCode
+      : "other";
   if (source.pending !== undefined) {
     if (source.lifecycle !== "pending")
       failure(502, "ChatGPT host returned an invalid response.");

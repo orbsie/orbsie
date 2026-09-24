@@ -337,6 +337,35 @@ describe("authenticated ChatGPT routes", () => {
     expect(mocks.request).toHaveBeenCalledWith(host, "status");
   });
 
+  it.each([
+    ["device-code-disabled", "device-code-disabled"],
+    ["access_token=private-secret", "other"],
+  ])(
+    "returns only a bounded failure code in public failed status (%s)",
+    async (hostFailureCode, publicFailureCode) => {
+      mocks.readHost.mockResolvedValue(host);
+      mocks.request.mockResolvedValueOnce(
+        Response.json({
+          lifecycle: "failed",
+          authStatus: "disconnected",
+          failureCode: hostFailureCode,
+          error: "access_token=raw-provider-secret owner=private-user",
+          capability: "must-not-leak",
+          sandboxName: "must-not-leak",
+        }),
+      );
+
+      const response = await GET(request("status"), context("status"));
+
+      expect(response.status).toBe(200);
+      expect(await body(response)).toEqual({
+        lifecycle: "failed",
+        authStatus: "disconnected",
+        failureCode: publicFailureCode,
+      });
+    },
+  );
+
   it("always disconnects after cancel RPC failure without claiming revocation", async () => {
     mocks.readHost.mockResolvedValue(host);
     mocks.request.mockRejectedValueOnce(new Error("provider token leaked"));

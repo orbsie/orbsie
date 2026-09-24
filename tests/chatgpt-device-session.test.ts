@@ -4,6 +4,7 @@ import {
   CHATGPT_DEVICE_VERIFICATION_URL,
   ChatGPTDeviceSession,
   type ChatGPTDeviceRpc,
+  type ChatGPTDeviceSessionOptions,
 } from "../src/lib/server/chatgpt-device-session";
 
 type Deferred<T> = {
@@ -64,7 +65,11 @@ describe("ChatGPT device login session", () => {
 
   function make(
     fixture = rpcFixture(),
-    options: { now?: () => number; ttlMs?: number } = {},
+    options: {
+      now?: () => number;
+      ttlMs?: number;
+      onCompletion?: ChatGPTDeviceSessionOptions["onCompletion"];
+    } = {},
   ) {
     const session = new ChatGPTDeviceSession({
       ownerId: "owner-1",
@@ -147,6 +152,49 @@ describe("ChatGPT device login session", () => {
       authStatus: "unknown",
     });
   });
+
+  it.each([
+    [
+      "Device code login is not enabled for this account.",
+      "device-code-disabled",
+    ],
+    ["Sign-in was denied.", "denied"],
+    ["Device code expired.", "expired"],
+    ["access_token=provider-secret user_id=private-owner", "other"],
+    ["Device code login is disabled access_token=provider-secret", "other"],
+    [`access_token=${"x".repeat(300)}`, "other"],
+  ] as const)(
+    "classifies an early failure without retaining raw provider errors (%s)",
+    async (providerError, failureCode) => {
+      let now = 10_000;
+      const onCompletion = vi.fn();
+      const fixture = make(rpcFixture(), { now: () => now, onCompletion });
+      fixture.request.mockImplementationOnce(async () => response());
+      const challenge = await fixture.session.start();
+      now += 1_000;
+
+      const completion = fixture.session.handleNotification({
+        method: "account/login/completed",
+        params: {
+          loginId: "login-1",
+          success: false,
+          error: providerError,
+        },
+      });
+
+      expect(now).toBeLessThan(challenge.expiresAt);
+      expect(completion).toEqual({ status: "failed", failureCode });
+      expect(onCompletion).toHaveBeenCalledWith(completion);
+      const snapshot = fixture.session.getSnapshot();
+      expect(snapshot).toEqual({
+        lifecycle: "failed",
+        authStatus: "unknown",
+        failureCode,
+      });
+      expect(JSON.stringify(snapshot)).not.toContain("provider-secret");
+      expect(JSON.stringify(snapshot)).not.toContain("private-owner");
+    },
+  );
 
   it("expires pending login codes using the injected clock", async () => {
     let now = 10_000;
