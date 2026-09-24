@@ -190,6 +190,9 @@ describe("executeSceneReview", () => {
       expect(prompt).toContain("defining silhouette and relative scale");
       expect(prompt).toContain("attached forms have visible connected support");
       expect(prompt).toContain(
+        "keep its base kind and existing parts while adding or repositioning visible details through geometry.parts",
+      );
+      expect(prompt).toContain(
         "repair these root geometry and visibility defects before superficial accents",
       );
       if (phase === "review") {
