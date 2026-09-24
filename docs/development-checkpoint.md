@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 23 far-world play start and camera accepted locally: an optional bounded
+`game.spawn` supplies an explicit world-space player start for authored games;
+legacy authored games without it keep the origin start. Rule-free worlds with
+only distant ready content now start near the nearest resolved object, choosing
+stable IDs on ties and preserving the origin when nearby or unresolved content
+exists. WebGL and software Canvas share the same start on first Play entry,
+project switch and reset. A temporary minimum Play camera distance keeps a
+previously framed 600% editor view from clipping the world, without changing
+the saved editor view. The standalone player was rebuilt. Astra reviewed and
+returned empty-program, first-Play and multi-cluster gaps for correction.
+`npm run build`, worker targeted tests/typecheck and the final deterministic
+browser journey passed. Evidence:
+`docs/evidence/far-world-browser/standalone-spawn-20260923-final/` (WebGL and
+software Play/standalone visibility, edit/reload/ZIP, zero provider/external
+requests); `standalone-origin-gap-20260923/` and
+`standalone-spawn-20260923-r3/` retain the two observed pre-fix failures.
+This does not prove live provider generation, authored far-game traversal,
+physical mobile performance or fresh public deployment.
+
 Sep 23 far-world deterministic browser acceptance: `scripts/verify-far-world-persistence.mjs`
 ran against the local production build with fixture-intercepted generation in
 Chromium SwiftShader WebGL and forced software Canvas. Each lane created a group

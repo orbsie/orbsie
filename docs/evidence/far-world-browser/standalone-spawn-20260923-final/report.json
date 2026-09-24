@@ -1,0 +1,241 @@
+{
+  "status": "passed",
+  "scope": "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and verifies distant content is visible in the isolated standalone player.",
+  "sourceCommit": "026a6baa5920c87b0b31228b4b2857c91252c480",
+  "appUrl": "http://localhost:3001",
+  "stableIds": {
+    "group": "far-world-group-12km",
+    "entity": "far-world-marker-12km"
+  },
+  "worldPositionMeters": [
+    12000,
+    0,
+    0
+  ],
+  "providerCalls": 0,
+  "externalRequests": [],
+  "unexpectedLocalApiRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "assumptions": [
+    "The browser harness supplies deterministic NDJSON responses to the editor's /api/generate endpoint; no provider inference is performed.",
+    "The software path forces HTML canvas WebGL context creation to return null so the product selects its Canvas2D fallback."
+  ],
+  "limitations": [
+    "WebGL runs under Chromium SwiftShader; this is not native GPU evidence.",
+    "The standalone runtime loads near the 12 km content and responds to its restart control. This does not demonstrate sustained gameplay traversal over a long distance.",
+    "No physical mobile, growing-world performance, memory, or live provider acceptance is claimed."
+  ],
+  "renderers": {
+    "webgl-swiftshader": {
+      "renderer": "webgl-swiftshader",
+      "forceSoftware": false,
+      "generationRequests": 2,
+      "generationSelections": [
+        null,
+        "far-world-marker-12km"
+      ],
+      "apiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ],
+      "unexpectedLocalApiRequests": [],
+      "blockedExternalRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "checks": {
+        "deterministicFarWorldCreated": true,
+        "navigationFramedFarContent": true,
+        "editedAtFarWorldWithStableIdAndCoordinates": true,
+        "editorPlayDistantContentVisible": true,
+        "localReloadRetainsStableIdAndCoordinates": true,
+        "zipProjectRetainsStableIdAndCoordinates": true,
+        "independentStandaloneReadyAndInteractive": true,
+        "standaloneDistantContentVisible": true,
+        "standaloneHasNoEditorApiOrExternalRequests": true,
+        "noProviderOrExternalRequests": true
+      },
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "navigationVisibility": {
+        "canvasBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "pixelDeltaThreshold": 60,
+        "changedPixels": 25390,
+        "minimumChangedPixels": 5000,
+        "beforeMarkerPixels": 0,
+        "region": "center 30% x 60% of the rendered canvas",
+        "pixelSignature": "G>150, B>150, B-R>30, G-R>30 for fixture tint #a1f0d7",
+        "markerPixels": 2434,
+        "minimumMarkerPixels": 500,
+        "markerBounds": {
+          "minX": 384,
+          "minY": 400,
+          "maxX": 750,
+          "maxY": 601
+        }
+      },
+      "editorPlayVisibility": {
+        "region": {
+          "left": 512,
+          "top": 180,
+          "width": 256,
+          "height": 225
+        },
+        "platformPixels": 3498,
+        "minimumPlatformPixels": 100
+      },
+      "zip": {
+        "bytes": 1102402,
+        "projectId": "6d02880c-9fc3-4141-af96-92f2861c5bd6",
+        "revision": 6,
+        "projectSHA256": "109fdcd67f314caf9ac2b48d44a3edcf8fb781801ecac58d2587d101d245edbb"
+      },
+      "standalone": {
+        "renderer": "WebGL / Chromium SwiftShader",
+        "visibility": {
+          "region": {
+            "left": 512,
+            "top": 180,
+            "width": 256,
+            "height": 225
+          },
+          "platformPixels": 1194,
+          "minimumPlatformPixels": 100
+        },
+        "projectServed": true,
+        "runtimeServed": true,
+        "editorApiRequests": [],
+        "externalRequests": []
+      },
+      "localApiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ]
+    },
+    "software-fallback": {
+      "renderer": "software-fallback",
+      "forceSoftware": true,
+      "generationRequests": 2,
+      "generationSelections": [
+        null,
+        "far-world-marker-12km"
+      ],
+      "apiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ],
+      "unexpectedLocalApiRequests": [],
+      "blockedExternalRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "checks": {
+        "deterministicFarWorldCreated": true,
+        "navigationFramedFarContent": true,
+        "editedAtFarWorldWithStableIdAndCoordinates": true,
+        "editorPlayDistantContentVisible": true,
+        "localReloadRetainsStableIdAndCoordinates": true,
+        "zipProjectRetainsStableIdAndCoordinates": true,
+        "independentStandaloneReadyAndInteractive": true,
+        "standaloneDistantContentVisible": true,
+        "standaloneHasNoEditorApiOrExternalRequests": true,
+        "noProviderOrExternalRequests": true
+      },
+      "actualRenderer": "software canvas fallback",
+      "navigationVisibility": {
+        "canvasBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "pixelDeltaThreshold": 60,
+        "changedPixels": 49174,
+        "minimumChangedPixels": 5000,
+        "beforeMarkerPixels": 0,
+        "region": "center 30% x 60% of the rendered canvas",
+        "pixelSignature": "G>150, B>150, B-R>30, G-R>30 for fixture tint #a1f0d7",
+        "markerPixels": 48849,
+        "minimumMarkerPixels": 500,
+        "markerBounds": {
+          "minX": 384,
+          "minY": 227,
+          "maxX": 759,
+          "maxY": 630
+        }
+      },
+      "editorPlayVisibility": {
+        "region": {
+          "left": 512,
+          "top": 180,
+          "width": 256,
+          "height": 225
+        },
+        "platformPixels": 2322,
+        "minimumPlatformPixels": 100
+      },
+      "zip": {
+        "bytes": 1102403,
+        "projectId": "76baabd4-3e83-4482-bb3e-0ca4a80df7bf",
+        "revision": 6,
+        "projectSHA256": "83cdf7bae773933e92bc5a85702b6300baf9bf7a56bc32124b8ea656e9945874"
+      },
+      "standalone": {
+        "renderer": "software canvas fallback",
+        "visibility": {
+          "region": {
+            "left": 512,
+            "top": 180,
+            "width": 256,
+            "height": 225
+          },
+          "platformPixels": 753,
+          "minimumPlatformPixels": 100
+        },
+        "projectServed": true,
+        "runtimeServed": true,
+        "editorApiRequests": [],
+        "externalRequests": []
+      },
+      "localApiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ]
+    }
+  }
+}

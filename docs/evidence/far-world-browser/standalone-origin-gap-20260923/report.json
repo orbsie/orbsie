@@ -1,0 +1,93 @@
+{
+  "status": "failed",
+  "scope": "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and opens that ZIP in an isolated standalone player.",
+  "sourceCommit": "5f1b125e3912b5041fbec1189b08a477be9009a4",
+  "appUrl": "http://localhost:3001",
+  "stableIds": {
+    "group": "far-world-group-12km",
+    "entity": "far-world-marker-12km"
+  },
+  "worldPositionMeters": [
+    12000,
+    0,
+    0
+  ],
+  "providerCalls": 0,
+  "externalRequests": [],
+  "unexpectedLocalApiRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "assumptions": [
+    "The browser harness supplies deterministic NDJSON responses to the editor's /api/generate endpoint; no provider inference is performed.",
+    "The software path forces HTML canvas WebGL context creation to return null so the product selects its Canvas2D fallback."
+  ],
+  "limitations": [
+    "WebGL runs under Chromium SwiftShader; this is not native GPU evidence.",
+    "The standalone runtime is verified to load and respond to its restart control, and its ZIP project retains the 12 km group. The player starts at the origin, so this does not demonstrate gameplay traversal to 12 km.",
+    "No physical mobile, growing-world performance, memory, or live provider acceptance is claimed."
+  ],
+  "renderers": {
+    "webgl-swiftshader": {
+      "renderer": "webgl-swiftshader",
+      "forceSoftware": false,
+      "generationRequests": 2,
+      "generationSelections": [
+        null,
+        "far-world-marker-12km"
+      ],
+      "apiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ],
+      "unexpectedLocalApiRequests": [],
+      "blockedExternalRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "checks": {
+        "deterministicFarWorldCreated": true,
+        "navigationFramedFarContent": true,
+        "editedAtFarWorldWithStableIdAndCoordinates": true,
+        "localReloadRetainsStableIdAndCoordinates": true,
+        "zipProjectRetainsStableIdAndCoordinates": true
+      },
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "navigationVisibility": {
+        "canvasBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "pixelDeltaThreshold": 60,
+        "changedPixels": 25049,
+        "minimumChangedPixels": 5000,
+        "beforeMarkerPixels": 0,
+        "region": "center 30% x 60% of the rendered canvas",
+        "pixelSignature": "G>150, B>150, B-R>30, G-R>30 for fixture tint #a1f0d7",
+        "markerPixels": 12146,
+        "minimumMarkerPixels": 500,
+        "markerBounds": {
+          "minX": 384,
+          "minY": 193,
+          "maxX": 748,
+          "maxY": 600
+        }
+      },
+      "zip": {
+        "bytes": 1100800,
+        "projectId": "751a7ceb-818a-457d-a815-fa42776a50f0",
+        "revision": 6,
+        "projectSHA256": "cb19961e5c7b140bc7ca1671385d6f6f3c5c03ba87c21984be13b4bd9b00e4de"
+      }
+    }
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Expected the teal far marker to be visible in the centered canvas after Frame; observed 2 matching pixels.\n    at inspectCanvasCenter (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:182:3)\n    at async runEditorJourney (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:598:34)\n    at async file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:650:3"
+}
