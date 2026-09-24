@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 24 live-review origin preflight: before the browser can submit a model
+request, the focused OpenRouter harness now sends malformed JSON from the exact
+configured loopback Origin to `/api/generate` and requires the route's parser
+HTTP 400. It never sends a key or prompt, cannot reach inference, does not
+enter the three-call ledger, and rejects mismatched/rejected origins explicitly.
+The preflight response body is not recorded. Astra reviewed the bounded change;
+three focused tests, syntax, formatting, and diff checks passed. This is a
+harness fix, not a successful rerun. Next: verify loopback `BETTER_AUTH_URL`
+matches `ORBSIE_TEST_URL`, then run a fresh bounded OpenRouter quality test.
+
 Sep 24 OpenRouter quality rerun after guidance change: isolated production
 build/migration and model catalog preflight passed, but the browser's first
 create request returned HTTP 403 before any scene revision. The harness

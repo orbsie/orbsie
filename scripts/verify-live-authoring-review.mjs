@@ -107,6 +107,65 @@ function requireConfiguration(argv) {
   };
 }
 
+export async function preflightGenerationOrigin(baseOrigin, fetchImpl = fetch) {
+  let origin;
+  try {
+    origin = new URL(baseOrigin);
+  } catch {
+    throw new AcceptanceError("server-preflight", "invalid-preflight-origin");
+  }
+  if (
+    origin.protocol !== "http:" ||
+    !LOOPBACK_HOSTS.has(origin.hostname) ||
+    !origin.port ||
+    origin.username ||
+    origin.password ||
+    origin.pathname !== "/" ||
+    origin.search ||
+    origin.hash ||
+    origin.origin !== baseOrigin
+  )
+    throw new AcceptanceError(
+      "server-preflight",
+      "loopback-origin-required-for-preflight",
+    );
+
+  let response;
+  try {
+    response = await fetchImpl(`${origin.origin}/api/generate`, {
+      method: "POST",
+      headers: {
+        Origin: origin.origin,
+        "Content-Type": "application/json",
+      },
+      body: "{",
+      cache: "no-store",
+      credentials: "omit",
+      redirect: "error",
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    throw new AcceptanceError(
+      "server-preflight",
+      "generation-origin-preflight-unavailable",
+    );
+  }
+
+  if (response.status === 403)
+    throw new AcceptanceError(
+      "server-preflight",
+      "generation-origin-preflight-rejected",
+      403,
+    );
+  if (response.status !== 400)
+    throw new AcceptanceError(
+      "server-preflight",
+      "generation-origin-preflight-parser-status-mismatch",
+      response.status,
+    );
+  return response.status;
+}
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -464,6 +523,7 @@ async function main() {
     allowedLiveCalls: LIVE_BUDGET,
     actualLiveCalls: 0,
     blockedCalls: 0,
+    originPreflight: { status: null, inferenceCalls: 0 },
     phaseOrder: [],
     calls: [],
     review: null,
@@ -506,6 +566,9 @@ async function main() {
   }
 
   try {
+    report.originPreflight.status = await preflightGenerationOrigin(
+      config.baseOrigin,
+    );
     browser = await chromium.launch({
       headless: process.env.ORBSIE_HEADLESS !== "0",
       args: [
@@ -1348,13 +1411,18 @@ async function main() {
   else if (report.outcome === "bounded-incomplete") process.exitCode = 2;
 }
 
-try {
-  await main();
-} catch (error) {
-  const code =
-    error instanceof AcceptanceError
-      ? error.code
-      : "acceptance-configuration-error";
-  process.stderr.write(`${code}\n`);
-  process.exitCode = 1;
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  try {
+    await main();
+  } catch (error) {
+    const code =
+      error instanceof AcceptanceError
+        ? error.code
+        : "acceptance-configuration-error";
+    process.stderr.write(`${code}\n`);
+    process.exitCode = 1;
+  }
 }
