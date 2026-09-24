@@ -37,9 +37,12 @@ import {
 } from "@/lib/server/generation-observability";
 import {
   authoringReviewCallIndex,
+  authoringReviewDiagnosticFailureKinds,
   emitAuthoringReviewDiagnostic,
+  type AuthoringReviewDiagnosticFailureKind,
   type AuthoringReviewDiagnosticScope,
 } from "@/lib/server/authoring-review-observability";
+import { AuthoringRunLedgerError } from "@/lib/server/authoring-run-ledger";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -68,6 +71,24 @@ type ReviewRequest = z.infer<typeof reviewRequestSchema>;
 type Identity = { ownerId: string; sessionId: string };
 
 const headers = { "Cache-Control": "no-store" };
+
+function reviewFailureKind(
+  error: unknown,
+  signal: AbortSignal,
+): AuthoringReviewDiagnosticFailureKind {
+  const candidate = signal.aborted
+    ? "route-aborted"
+    : error instanceof AuthoringRunLedgerError
+      ? "authoring-ledger"
+      : error instanceof HttpError
+        ? "http-error"
+        : "unknown";
+  return (authoringReviewDiagnosticFailureKinds as readonly string[]).includes(
+    candidate,
+  )
+    ? (candidate as AuthoringReviewDiagnosticFailureKind)
+    : "unknown";
+}
 
 function publicError(error: unknown, signal: AbortSignal): HttpError {
   if (signal.aborted)
@@ -286,6 +307,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (admission) await admission.fail(error).catch(() => undefined);
+    const failureKind = reviewFailureKind(error, signal);
     if (admission && !terminalDiagnostic && reviewScope)
       emitAuthoringReviewDiagnostic({
         requestId,
@@ -295,6 +317,7 @@ export async function POST(request: Request) {
         scope: reviewScope,
         state: "terminal",
         outcome: signal.aborted ? "cancelled" : "failed",
+        failureKind,
       });
     const safe = publicError(error, signal);
     observation.terminal({
@@ -335,7 +358,13 @@ export async function POST(request: Request) {
     return respond(
       Response.json(body, {
         status: safe.status,
-        headers: { ...headers, ...cookieHeaders(admission) },
+        headers: {
+          ...headers,
+          ...cookieHeaders(admission),
+          ...(admission && !terminalDiagnostic
+            ? { "X-Orbsie-Review-Failure-Kind": failureKind }
+            : {}),
+        },
       }),
     );
   }

@@ -45,11 +45,16 @@ vi.mock("@/lib/server/authoring-run-admission", () => ({
 }));
 
 import { blankProject } from "../src/lib/protocol";
+import { authoringReviewDiagnosticFailureKinds } from "../src/lib/server/authoring-review-observability";
 import { POST } from "../src/app/api/chatgpt/review/route";
 
 const runId = "11111111-1111-4111-8111-111111111111";
 
-function request(body: Record<string, unknown>, clientRunId?: string) {
+function request(
+  body: Record<string, unknown>,
+  clientRunId?: string,
+  signal?: AbortSignal,
+) {
   return new Request("https://orbsie.test/api/chatgpt/review", {
     method: "POST",
     headers: {
@@ -67,6 +72,7 @@ function request(body: Record<string, unknown>, clientRunId?: string) {
       browserModeling: false,
       ...body,
     }),
+    signal,
   });
 }
 
@@ -182,6 +188,7 @@ describe("hosted ChatGPT review route", () => {
     const clientRunId = "22222222-2222-4222-8222-222222222222";
     const response = await POST(request({}, clientRunId));
     expect(response.status).toBe(200);
+    expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBeNull();
     expect(await response.json()).toMatchObject({
       review: { verdict: "accept", scope: "structural-only" },
       corrections: [],
@@ -227,7 +234,7 @@ describe("hosted ChatGPT review route", () => {
     expect(state.admit).not.toHaveBeenCalled();
   });
 
-  it("sanitizes a ledger failure while preserving the HTTP error response", async () => {
+  it("marks admitted provider failures with an allowlisted terminal diagnostic", async () => {
     const fail = vi.fn(async () => {
       throw Error("database secret");
     });
@@ -251,11 +258,103 @@ describe("hosted ChatGPT review route", () => {
         throw Error("provider secret");
       },
     );
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      const response = await POST(request({}));
+      expect(response.status).toBe(502);
+      const responseBody = await response.json();
+      expect(responseBody).toEqual({
+        error: "The ChatGPT scene review could not be completed.",
+      });
+      const failureKind = response.headers.get("X-Orbsie-Review-Failure-Kind");
+      expect(authoringReviewDiagnosticFailureKinds).toContain(failureKind);
+      expect(failureKind).toBe("unknown");
+      const events = info.mock.calls
+        .map(([line]) => {
+          try {
+            return JSON.parse(String(line)) as Record<string, unknown>;
+          } catch {
+            return undefined;
+          }
+        })
+        .filter((event) => event?.event === "authoring-review");
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          state: "terminal",
+          outcome: "failed",
+          failureKind,
+        }),
+      );
+      expect(JSON.stringify(events)).not.toContain("provider secret");
+      expect(JSON.stringify(responseBody)).not.toContain("provider secret");
+      expect(fail).toHaveBeenCalledOnce();
+    } finally {
+      info.mockRestore();
+    }
+  });
+
+  it("does not mark a failure that happens before review admission", async () => {
+    state.configured.mockReturnValueOnce(false);
+
     const response = await POST(request({}));
-    expect(response.status).toBe(502);
-    expect(await response.json()).toEqual({
-      error: "The ChatGPT scene review could not be completed.",
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBeNull();
+    expect(state.admit).not.toHaveBeenCalled();
+  });
+
+  it("marks admitted cancellation safely", async () => {
+    const controller = new AbortController();
+    state.admit.mockResolvedValueOnce({
+      runId,
+      reviewPhase: "review",
+      remainingReviewSlots: 1,
+      complete: vi.fn(),
+      fail: vi.fn(async () => undefined),
     });
-    expect(fail).toHaveBeenCalledOnce();
+    state.review.mockImplementationOnce(
+      async (
+        _identity: unknown,
+        _input: unknown,
+        _signal: AbortSignal,
+        _deadline: number,
+        _correlation: unknown,
+        admit: () => Promise<unknown>,
+      ) => {
+        await admit();
+        controller.abort();
+        throw Error("private provider body");
+      },
+    );
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      const response = await POST(request({}, undefined, controller.signal));
+      expect(response.status).toBe(499);
+      expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBe(
+        "route-aborted",
+      );
+      expect(await response.json()).toEqual({
+        error: "The scene review was canceled.",
+      });
+      const events = info.mock.calls
+        .map(([line]) => {
+          try {
+            return JSON.parse(String(line)) as Record<string, unknown>;
+          } catch {
+            return undefined;
+          }
+        })
+        .filter((event) => event?.event === "authoring-review");
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          state: "terminal",
+          outcome: "cancelled",
+          failureKind: "route-aborted",
+        }),
+      );
+      expect(JSON.stringify(events)).not.toContain("private provider body");
+    } finally {
+      info.mockRestore();
+    }
   });
 });
