@@ -1,4 +1,42 @@
-# Verification — 2026-09-08
+# Verification — current status 2026-09-24
+
+The full `prompt.md` acceptance remains open. The latest production release is
+`https://orbsie.com/`, Vercel deployment `dpl_Gtz4xyNC4LN2m9XjXSH6XswFoUVA`.
+Its signed-out read-only browser smoke passed root and crawler routes, visible
+landing canvas/composer, protected generation-run access, and exact shipped
+player/geometry-worker hashes without generation calls or page errors. See
+[production release evidence](evidence/production-release-20260924-focused-segment/)
+and [the development checkpoint](development-checkpoint.md) for the current
+source-specific record.
+
+The latest full unit suite passed 1,783 tests with 27 skipped, and the optimized
+Next.js build passed at source `d11058b`. A later fixture-only change isolated
+WebGL and Canvas2D browsers; their combined five→seven→Undo-five real-input
+journey passed without provider calls. Current post-segment standalone player
+files then passed Android 15 emulator Canvas2D touch scoring, restart, win and
+loss without viewport overflow or unexpected network requests. See
+[fresh-gameplay evidence](development-checkpoint.md) and
+[Android current-artifact evidence](evidence/android-current-artifact-20260924-post-segment/).
+These checks do not certify physical devices or native-GPU performance.
+
+One bounded live OpenRouter `openai/gpt-6-luna` authoring-review run completed
+four calls under a 4,096-output-token cap, but Astra rejected its final visual
+quality despite the model's `accept` verdict: oversized blue berries lacked
+visible stem connection. Production authoring-review remains disabled. The
+Gateway test key's last checked balance was negative, so no further paid
+Gateway inference ran. A fresh production ChatGPT device challenge expired
+without a grant; no ChatGPT model call ran. Direct-return ChatGPT subscription
+OAuth and current E2E provider parity remain unverified. See
+[OpenRouter review evidence](evidence/authoring-review/openrouter-focused-segment-20260924/)
+and [ChatGPT consent evidence](evidence/production-hosted-chatgpt/owner-code-20260924/).
+
+The real-editor stream-recovery fixture passed 14 intercepted requests covering
+clean EOF, malformed/partial output, body-read rejection, provider error and
+output limit, with explicit retry and preserved saved scenes. It made zero live
+calls; see [recovery evidence](evidence/stream-resilience-recovery-cases-20260924/).
+Live cross-provider interruption and recovery acceptance remains open.
+
+## Historical verification — 2026-09-08
 
 This is an implementation in progress. The local editor/player and live local model path have evidence; hosted accounts and cloud saves are verified; dedicated publication still needs corrected Vercel token permissions.
 
