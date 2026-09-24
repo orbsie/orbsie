@@ -367,6 +367,8 @@ async function screenshotEvidence(page, label, privateDirectory) {
 
 async function installActivityHistory(page) {
   await page.evaluate(() => {
+    const partialReviewPrefix =
+      "The correction was applied; the final review still found: ";
     const known = new Map([
       ["Reviewing the saved scene…", "reviewStarted"],
       ["Scene verified. Changes are applied.", "completed"],
@@ -393,6 +395,13 @@ async function installActivityHistory(page) {
         .querySelector(".authoring-activity-latest p")
         ?.textContent?.trim();
       if (!text) return;
+      if (
+        text.startsWith(partialReviewPrefix) &&
+        text.length > partialReviewPrefix.length
+      ) {
+        state.reviewPartial = true;
+        return;
+      }
       const key = known.get(text);
       if (key) state[key] = true;
       else state.otherActivityPresent = true;
@@ -1119,10 +1128,11 @@ async function main() {
       );
 
       if (finalReviewResponse.verdict === "revise") {
-        await expect(page.locator(".authoring-activity-latest p")).toHaveText(
-          "Scene correction applied, but final review found a remaining issue.",
-          { timeout: 30000 },
-        );
+        await expect
+          .poll(async () => (await readActivityHistory(page)).reviewPartial, {
+            timeout: 30000,
+          })
+          .toBe(true);
         report.phaseOrder.push("final-review-revise-bounded-incomplete");
         const activity = await readActivityHistory(page);
         report.browserActivity.authoring = activity;

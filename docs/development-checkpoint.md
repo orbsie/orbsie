@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 24 fresh OpenRouter blue-strawberry review: an isolated production app and
+migrated database ran exactly three live `openai/gpt-6-luna` calls at default
+service tier and 4,096 output tokens each. Initial creation saved revision 13;
+visual+structural review revised it to revision 20, then final review examined
+revision 20 with the same binding digest and returned `revise`. The quality
+outcome is **bounded-incomplete**. A private scene-only capture showed a simple
+aqua conical tree with blue fruit and green tops, so the recent subject-detail
+prompt guidance has not established delightful output. The harness recorded
+`failed` because an old fixed activity-text assertion rejected the new
+remaining-issue message before reload verification. The browser local snapshot
+contained revision 20, but reload persistence was not checked. Astra corrected
+the harness to recognize the fixed partial-review prefix as a boolean without
+recording the model's issue text; syntax, formatting and diff checks passed.
+Sanitized evidence: `docs/evidence/authoring-review/openrouter-blue-strawberry-20260924/`.
+No retry was made. Next: improve the generator/correction design using this
+quality failure, then run a fresh bounded live review; do not claim acceptance
+from this run.
+
 Sep 24 Canvas2D fresh-gameplay stall diagnosis: two valid isolated software
 fixture runs reproduced `no-fresh-observation` during the creation-phase first
 platform approach. An opt-in component snapshot showed a mounted, visible,
