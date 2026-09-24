@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 production free-prompt check: a fresh isolated visitor made two
+`openai/gpt-6-luna` requests through the server-funded Gateway path. The first
+returned `reserve_entity`, `set_geometry`, and `commit_revision` and applied
+cleanly. The second, a material edit, returned HTTP 402 after 371 ms with
+"Free generation is temporarily unavailable"; no retry or third model call
+ran. The trial counter fell from two remaining to one on that rejected call.
+The earlier Sep 8 passing report remains at `docs/evidence/free-trial.json`;
+the new failed report is at `docs/evidence/free-trial-20260924.json`. This is
+a current production billing/availability blocker for free prompts, not a
+recipe or client-transport failure. The read-only test-key credit check still
+shows a negative balance, but it is a separate credential and does not prove
+the funded free key's exact balance. Do not rerun until funding or configuration
+changes; investigate the consumed prompt on an upstream 402.
+
 Sep 24 sitemap release: source `a85004c` built on Vercel as Ready deployment
 `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC` and was aliased to
 `https://orbsie.com/` (immutable deployment

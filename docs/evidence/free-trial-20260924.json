@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-24T18:15:12.520Z",
+  "base": "https://orbsie.com",
+  "model": "openai/gpt-6-luna",
+  "inferenceRequests": 2,
+  "turns": [
+    {
+      "status": 200,
+      "remaining": 2,
+      "elapsedMs": 5943,
+      "commands": ["reserve_entity", "set_geometry", "commit_revision"]
+    },
+    {
+      "status": 402,
+      "remaining": 1,
+      "elapsedMs": 371,
+      "commands": ["error"],
+      "error": "Free generation is temporarily unavailable. Connect your provider to continue."
+    }
+  ],
+  "passed": false
+}
