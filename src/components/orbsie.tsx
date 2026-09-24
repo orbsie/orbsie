@@ -1945,6 +1945,9 @@ export default function Orbsie() {
       }
       const quotaExceeded =
         useOrb.getState().generationErrorCode === "FREE_LIMIT_REACHED";
+      const providerUnavailable =
+        noticeForGenerationCode(useOrb.getState().generationErrorCode) ===
+        "free-unavailable";
       if (selectedConnection.provider === "free") {
         await refreshTrial();
         if (
@@ -1960,6 +1963,16 @@ export default function Orbsie() {
             }),
           );
           setModal(user || !capabilities.accounts ? "settings" : "account");
+        }
+        if (
+          providerUnavailable &&
+          generationWorld() &&
+          connectionVersion.current === selectedConnectionVersion &&
+          submission.current.sequence === sequence
+        ) {
+          if (!textarea.current?.value) setPrompt(instruction);
+          setModalNotice(connectionNoticeCopy("free-unavailable"));
+          setModal("settings");
         }
       }
     } finally {

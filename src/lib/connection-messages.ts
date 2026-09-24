@@ -15,7 +15,7 @@ const copy = {
       "You've used today's free prompts. Connect a provider to keep creating.",
   },
   "free-unavailable":
-    "Free prompts are temporarily unavailable. Connect a provider to continue.",
+    "The free provider couldn't complete this request. Your prompt is back in the chat; connect a provider to continue.",
   offline:
     "You're offline. Your draft is saved on this device — try again when you reconnect.",
   "provider-key-rejected":
@@ -24,8 +24,7 @@ const copy = {
     "Your provider denied access to this model. Check the key permissions and provider settings.",
   "provider-payment":
     "Your provider could not authorize payment. Check its credits and spending limits.",
-  "provider-rate-limited":
-    "Your provider is busy. Wait a moment and retry.",
+  "provider-rate-limited": "Your provider is busy. Wait a moment and retry.",
 } as const;
 
 export function connectionNoticeCopy(
@@ -43,6 +42,8 @@ export function noticeForGenerationCode(
   switch (code) {
     case "FREE_LIMIT_REACHED":
       return "free-exhausted";
+    case "FREE_PROVIDER_UNAVAILABLE":
+      return "free-unavailable";
     case "PROVIDER_AUTH_REJECTED":
       return "provider-key-rejected";
     case "PROVIDER_ACCESS_DENIED":

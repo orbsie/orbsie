@@ -6,12 +6,12 @@ import {
 
 describe("connection message catalog", () => {
   it("distinguishes signed-out and signed-in free-exhausted copy", () => {
-    expect(
-      connectionNoticeCopy("free-exhausted", { signedIn: false }),
-    ).toMatch(/Sign in or connect a provider/);
-    expect(
-      connectionNoticeCopy("free-exhausted", { signedIn: true }),
-    ).toMatch(/Connect a provider/);
+    expect(connectionNoticeCopy("free-exhausted", { signedIn: false })).toMatch(
+      /Sign in or connect a provider/,
+    );
+    expect(connectionNoticeCopy("free-exhausted", { signedIn: true })).toMatch(
+      /Connect a provider/,
+    );
   });
 
   it("returns stable user-facing copy for every notice", () => {
@@ -27,11 +27,17 @@ describe("connection message catalog", () => {
       expect(text.length).toBeGreaterThan(20);
       expect(text).not.toMatch(/error|failed|invalid/i);
     }
+    expect(connectionNoticeCopy("free-unavailable")).toMatch(
+      /prompt is back in the chat.*connect a provider/i,
+    );
   });
 
   it("maps generation error codes to notices", () => {
     expect(noticeForGenerationCode("FREE_LIMIT_REACHED")).toBe(
       "free-exhausted",
+    );
+    expect(noticeForGenerationCode("FREE_PROVIDER_UNAVAILABLE")).toBe(
+      "free-unavailable",
     );
     expect(noticeForGenerationCode("PROVIDER_AUTH_REJECTED")).toBe(
       "provider-key-rejected",

@@ -331,6 +331,29 @@ export async function POST(request: Request) {
           },
         ),
       );
+    if (
+      identity &&
+      e instanceof GenerationProviderError &&
+      e.providerStatus === 402
+    ) {
+      const headers = new Headers({ "Cache-Control": "no-store" });
+      headers.set(
+        "Set-Cookie",
+        authoringAdmission?.trialCookie ?? identity.cookie,
+      );
+      if (remaining !== undefined)
+        headers.set("X-Orbsie-Trial-Remaining", String(remaining));
+      return respond(
+        Response.json(
+          {
+            error:
+              "Free generation is temporarily unavailable. Connect your provider to continue.",
+            code: "FREE_PROVIDER_UNAVAILABLE",
+          },
+          { status: 402, headers },
+        ),
+      );
+    }
     if (identity) {
       const response = apiError(
         e instanceof GenerationProviderError

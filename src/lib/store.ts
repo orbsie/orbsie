@@ -82,6 +82,7 @@ import { CHATGPT_STALE_CONNECTION_CODE } from "./chatgpt-connection-errors";
 
 const generationErrorCodes = new Set([
   "FREE_LIMIT_REACHED",
+  "FREE_PROVIDER_UNAVAILABLE",
   "PROVIDER_AUTH_REJECTED",
   "PROVIDER_ACCESS_DENIED",
   "CHATGPT_CONNECTION_REQUIRED",

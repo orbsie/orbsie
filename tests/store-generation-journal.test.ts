@@ -485,3 +485,29 @@ it("keeps schema internals out of failed model updates and preserves finished en
   expect(useOrb.getState().project.entities).toEqual(before);
   expect(useOrb.getState().building).toBe(false);
 });
+
+it("retains a free-provider 402 code and recovers the original prompt", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      Response.json(
+        {
+          error:
+            "Free generation is temporarily unavailable. Connect your provider to continue.",
+          code: "FREE_PROVIDER_UNAVAILABLE",
+        },
+        { status: 402 },
+      ),
+    ),
+  );
+
+  await useOrb.getState().run("Add a tiny observatory", connection);
+
+  expect(useOrb.getState().generationErrorCode).toBe(
+    "FREE_PROVIDER_UNAVAILABLE",
+  );
+  expect(useOrb.getState().generationRecovery?.prompt).toBe(
+    "Add a tiny observatory",
+  );
+  expect(useOrb.getState().project.entities).toEqual([fixtureEntities()[0]]);
+});

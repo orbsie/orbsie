@@ -188,10 +188,12 @@ it("refunds a claimed legacy prompt when the provider rejects with 402 before st
   expect(await response.json()).toMatchObject({
     error:
       "Free generation is temporarily unavailable. Connect your provider to continue.",
+    code: "FREE_PROVIDER_UNAVAILABLE",
   });
   expect(quota.claim).toHaveBeenCalledOnce();
   expect(quota.refund).toHaveBeenCalledOnce();
   expect(response.headers.get("X-Orbsie-Trial-Remaining")).toBe("2");
+  expect(response.headers.get("Set-Cookie")).toBe("synthetic-cookie");
 });
 
 it("does not refund legacy prompts for other upstream failures", async () => {
@@ -221,6 +223,11 @@ it("keeps authoring-review admission outside the legacy refund path", async () =
   const response = await POST(request({ authoringReview: true }));
 
   expect(response.status).toBe(402);
+  expect(await response.json()).toMatchObject({
+    code: "FREE_PROVIDER_UNAVAILABLE",
+  });
+  expect(response.headers.get("Set-Cookie")).toBe("synthetic-review-cookie");
+  expect(response.headers.get("X-Orbsie-Trial-Remaining")).toBe("1");
   expect(quota.claim).not.toHaveBeenCalled();
   expect(quota.refund).not.toHaveBeenCalled();
   expect(quota.admitAuthoring).toHaveBeenCalledOnce();
