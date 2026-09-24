@@ -1,5 +1,28 @@
 # Development checkpoint
 
+Sep 24 production ChatGPT connection attempt: an isolated anonymous Orbsie
+session on `https://orbsie.com/` received one real OpenAI device challenge,
+but 183 status polls saw no grant before its ten-minute expiry. The attempt
+was cancelled; a subsequent authenticated status read showed
+idle/disconnected with no pending challenge. The expired private browser state
+was removed. Zero ChatGPT model calls ran. The owner's signed-in Chrome still
+was not exposed through computer use. A new read-only production browser
+verifier checks exact-origin, mode-0600 session state, connection persistence
+and local draft recovery while blocking all inference and writes. Its four
+focused tests, typecheck, syntax and formatting checks pass. A live
+disconnected-session run reached the app cleanly with no blocked API requests,
+external requests or browser errors, then reported
+`connection-not-established` before inference. Evidence:
+`docs/evidence/production-hosted-chatgpt/`. The current Codex App Server
+protocol exposes no provider-enforced 4,096-output-token field, so the
+owner's live-test cap cannot yet be attested for hosted ChatGPT calls; the
+verifier fails closed. This interim device flow also does not fulfill the
+requested direct-return OAuth requirement.
+
+Sep 24 Gateway read-only credit recheck: HTTP 200 still reported a balance of
+`-0.0033684`. No Gateway inference ran. Keep the paid Gateway acceptance on
+hold until this key has positive credit.
+
 Sep 24 live-acceptance harness handoff: the OpenRouter browser harness now
 recognizes the two-correction/final-verdict sequence, preserves the prior
 three-call default, and requires both a four-call limit setting and an

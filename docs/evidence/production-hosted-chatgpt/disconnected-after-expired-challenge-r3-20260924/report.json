@@ -1,0 +1,23 @@
+{
+  "scope": "Read-only production hosted ChatGPT connection and local recovery check.",
+  "origin": "https://orbsie.com",
+  "status": "failed",
+  "stage": "initial-connection-status",
+  "model": "gpt-6-luna",
+  "serviceTier": "default",
+  "providerOutputCeiling": {
+    "requested": 4096,
+    "enforced": false
+  },
+  "inferenceRequests": 0,
+  "blockedInferenceAttempts": 0,
+  "blockedApiRequests": 0,
+  "externalRequestCount": 0,
+  "externalOrigins": [],
+  "browserErrors": 0,
+  "authoringReviewEnabled": false,
+  "failureCode": "connection-not-established",
+  "generationStatus": "not-run",
+  "connectionStatus": "unverified",
+  "reloadConnectionStatus": "unverified"
+}
