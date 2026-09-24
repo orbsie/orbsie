@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 WebKit mobile smoke: Playwright 1.63/WebKit 26.6 touch emulation at
+390×844 and DPR 3 passed signed-out editor landing, WebGL2-ready rendering,
+and the current standalone player ZIP with score 7, restart, win, and loss.
+The observed pages had no viewport overflow, external/model/write requests,
+or page/network errors. Astra reviewed the harness and editor/score/win
+screenshots. The player used hashes of the current checked-in runtime and
+workers. The editor's isolated optimized build came from `2a39aad`; subsequent
+commits before the smoke changed documentation only. An older local server at
+`:3001` served four static assets as HTTP 500; its failed attempt is retained
+separately, and the clean isolated build passed. Evidence and replay harness:
+`docs/evidence/webkit-mobile-smoke-20260924/` and
+`scripts/verify-webkit-mobile-smoke.mjs`. This is browser emulation, not
+physical iOS Safari or a physical-device performance result.
+
 Sep 24 production free-prompt check: a fresh isolated visitor made two
 `openai/gpt-6-luna` requests through the server-funded Gateway path. The first
 returned `reserve_entity`, `set_geometry`, and `commit_revision` and applied
