@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 24 OpenRouter live review after exact-origin preflight: isolated production
+build and migrated DB passed; zero-inference malformed-JSON preflight returned
+HTTP 400. One fresh `openai/gpt-6-luna` default-tier run used exactly three
+calls at a 4,096-output-token cap, all HTTP 200 with no retry. Visual+structural
+review revised initial revision 11 to revision 17; final review inspected
+revision 17 with the same binding digest and returned `revise`. Revision 17
+survived reload, the key was absent from browser storage, and no external
+requests were blocked. The private scene-only capture was inspected and
+removed: a rounded green canopy and brown trunk were visible, but no blue
+strawberries were discernible at play scale. Thus the new prompt guidance has
+**not** achieved subject-feature quality acceptance. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-origin-preflight-20260924/`.
+Next: collect bounded scene-structure/visibility evidence and improve the
+correction loop or modeling recipe, not another prompt-only tweak. Production
+authoring review remains disabled pending acceptance. The run's first build
+caught a test-only TypeScript mock error; Astra corrected it (`0ee1129`), then
+typecheck, focused tests, and the isolated production build passed. No further
+live retry was made.
+
 Sep 24 live-review origin preflight: before the browser can submit a model
 request, the focused OpenRouter harness now sends malformed JSON from the exact
 configured loopback Origin to `/api/generate` and requires the route's parser
