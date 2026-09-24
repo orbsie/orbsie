@@ -10,6 +10,16 @@ on 2026-09-23. The documented App Server browser callback remains localhost;
 the documented device flow remains a URL plus user code. No Orbsie-style HTTPS
 subscription OAuth client registration or inference grant was established.
 
+Rechecked the current official pages on 2026-09-24. The App Server browser
+example still returns a `localhost` callback even with its hosted success page,
+and the device flow still requires a code. The experimental external-token
+interface still assumes a host that already owns the ChatGPT authorization
+lifecycle. The newer [workload identity federation guide](https://developers.openai.com/api/docs/guides/workload-identity-federation)
+is for trusted Codex automation in a managed ChatGPT workspace, requires
+workspace enablement, and does not register a browser OAuth client for an
+Orbsie user's personal subscription. The missing HTTPS callback and
+subscription inference grant remain an external feasibility gate.
+
 ## What is documented
 
 - The Codex App Server `account/login/start` browser flow returns an `authUrl`
