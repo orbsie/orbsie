@@ -1,6 +1,7 @@
 import { Matrix4 } from "three";
 import { GAME_PROGRAM_LIMITS } from "./game-program";
 import {
+  composeTransformMatrix,
   resolveSceneTransforms,
   transformBounds,
   type WorldBounds,
@@ -326,6 +327,35 @@ export function registerContactBounds(
   return normalized;
 }
 
+function committedContactBounds(entity: Entity): ContactBounds | undefined {
+  const recipe = entity.geometry;
+  if (entity.stage !== "ready" || !recipe) return undefined;
+  let bounds = contactBounds.get(recipe);
+  if (bounds) return bounds;
+
+  if (recipe.kind === "asset") {
+    const assetBounds = requireCatalogAsset(recipe.assetId).bounds;
+    if (assetBounds) bounds = registerContactBounds(recipe, assetBounds);
+  } else if (recipe.kind === "generated") {
+    if (recipe.model?.bounds)
+      bounds = registerContactBounds(recipe, recipe.model.bounds);
+  } else {
+    const geometry = entityGeometry(entity);
+    try {
+      geometry.computeBoundingBox();
+      const box = geometry.boundingBox;
+      if (box)
+        bounds = registerContactBounds(recipe, {
+          min: box.min.toArray(),
+          max: box.max.toArray(),
+        });
+    } finally {
+      geometry.dispose();
+    }
+  }
+  return bounds;
+}
+
 /** Broad-phase contact volumes follow rendered geometry, including multipart bounds. */
 export function touchesEntity(
   entity: Entity,
@@ -335,30 +365,8 @@ export function touchesEntity(
 ): boolean {
   const recipe = entity.geometry;
   if (entity.stage !== "ready" || !recipe) return false;
-  let bounds = contactBounds.get(recipe);
-  if (!bounds) {
-    if (recipe.kind === "asset")
-      bounds = registerContactBounds(
-        recipe,
-        requireCatalogAsset(recipe.assetId).bounds,
-      );
-    else if (recipe.kind === "generated") {
-      if (recipe.model?.bounds)
-        bounds = registerContactBounds(recipe, recipe.model.bounds);
-    } else {
-      const geometry = entityGeometry(entity);
-      geometry.computeBoundingBox();
-      const box = geometry.boundingBox;
-      if (box)
-        bounds = registerContactBounds(recipe, {
-          min: box.min.toArray(),
-          max: box.max.toArray(),
-        });
-      geometry.dispose();
-    }
-    if (!bounds) return false;
-    contactBounds.set(recipe, bounds);
-  }
+  const bounds = committedContactBounds(entity);
+  if (!bounds) return false;
   const worldBounds = matrix ? transformBounds(matrix, bounds) : undefined;
   const origin = movingEntityPosition(entity, time);
   return [0, 1, 2].every((axis) => {
@@ -382,6 +390,128 @@ export function touchesEntity(
   });
 }
 
+type SolidCollisionBounds = WorldBounds & { id: string };
+
+function solidCollisionBounds(
+  entity: Entity,
+  matrix?: Matrix4,
+): SolidCollisionBounds | undefined {
+  if (
+    entity.stage !== "ready" ||
+    entity.behavior?.type !== "solid" ||
+    !entity.geometry ||
+    entity.geometry.detail === "coarse"
+  )
+    return undefined;
+  const bounds = committedContactBounds(entity);
+  if (!bounds) return undefined;
+  return {
+    ...transformBounds(matrix ?? composeTransformMatrix(entity), bounds),
+    id: entity.id,
+  };
+}
+
+function resolveSolidHorizontalMovement(
+  startX: number,
+  startZ: number,
+  targetX: number,
+  targetZ: number,
+  bottom: number,
+  top: number,
+  solids: readonly SolidCollisionBounds[],
+): [number, number] {
+  let x = startX;
+  let z = startZ;
+  let desiredX = targetX;
+  let desiredZ = targetZ;
+  const overlapsVertically = (solid: SolidCollisionBounds) =>
+    top > solid.min[1] && bottom < solid.max[1];
+
+  // If a new wall appears around the avatar, move to its nearest clear face
+  // once, then preserve this correction through the user's requested motion.
+  for (let pass = 0; pass <= solids.length; pass++) {
+    let corrected = false;
+    for (const solid of solids) {
+      if (!overlapsVertically(solid)) continue;
+      const minX = solid.min[0] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxX = solid.max[0] + CONTACT_HORIZONTAL_TOLERANCE;
+      const minZ = solid.min[2] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxZ = solid.max[2] + CONTACT_HORIZONTAL_TOLERANCE;
+      if (!(x > minX && x < maxX && z > minZ && z < maxZ)) continue;
+      const exits = [
+        { distance: x - minX, axis: "x" as const, value: minX },
+        { distance: maxX - x, axis: "x" as const, value: maxX },
+        { distance: z - minZ, axis: "z" as const, value: minZ },
+        { distance: maxZ - z, axis: "z" as const, value: maxZ },
+      ].sort((a, b) => a.distance - b.distance);
+      const exit = exits[0];
+      if (exit.axis === "x") {
+        const correction = exit.value - x;
+        x = exit.value;
+        desiredX += correction;
+      } else {
+        const correction = exit.value - z;
+        z = exit.value;
+        desiredZ += correction;
+      }
+      corrected = true;
+      break;
+    }
+    if (!corrected) break;
+  }
+
+  const deltaX = desiredX - x;
+  if (deltaX > 0) {
+    let allowedX = desiredX;
+    for (const solid of solids) {
+      if (!overlapsVertically(solid)) continue;
+      const minX = solid.min[0] - CONTACT_HORIZONTAL_TOLERANCE;
+      const minZ = solid.min[2] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxZ = solid.max[2] + CONTACT_HORIZONTAL_TOLERANCE;
+      if (z > minZ && z < maxZ && x <= minX && desiredX > minX)
+        allowedX = Math.min(allowedX, minX);
+    }
+    x = allowedX;
+  } else if (deltaX < 0) {
+    let allowedX = desiredX;
+    for (const solid of solids) {
+      if (!overlapsVertically(solid)) continue;
+      const maxX = solid.max[0] + CONTACT_HORIZONTAL_TOLERANCE;
+      const minZ = solid.min[2] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxZ = solid.max[2] + CONTACT_HORIZONTAL_TOLERANCE;
+      if (z > minZ && z < maxZ && x >= maxX && desiredX < maxX)
+        allowedX = Math.max(allowedX, maxX);
+    }
+    x = allowedX;
+  }
+
+  const deltaZ = desiredZ - z;
+  if (deltaZ > 0) {
+    let allowedZ = desiredZ;
+    for (const solid of solids) {
+      if (!overlapsVertically(solid)) continue;
+      const minX = solid.min[0] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxX = solid.max[0] + CONTACT_HORIZONTAL_TOLERANCE;
+      const minZ = solid.min[2] - CONTACT_HORIZONTAL_TOLERANCE;
+      if (x > minX && x < maxX && z <= minZ && desiredZ > minZ)
+        allowedZ = Math.min(allowedZ, minZ);
+    }
+    z = allowedZ;
+  } else if (deltaZ < 0) {
+    let allowedZ = desiredZ;
+    for (const solid of solids) {
+      if (!overlapsVertically(solid)) continue;
+      const minX = solid.min[0] - CONTACT_HORIZONTAL_TOLERANCE;
+      const maxX = solid.max[0] + CONTACT_HORIZONTAL_TOLERANCE;
+      const maxZ = solid.max[2] + CONTACT_HORIZONTAL_TOLERANCE;
+      if (x > minX && x < maxX && z >= maxZ && desiredZ < maxZ)
+        allowedZ = Math.max(allowedZ, maxZ);
+    }
+    z = allowedZ;
+  }
+  return [x, z];
+}
+
 export function stepGameplay(
   state: PlayerState,
   input: PlayerInput,
@@ -394,6 +524,8 @@ export function stepGameplay(
 ): GameplayStep {
   const dt = Math.min(Math.max(delta, 0), 0.04);
   const position: Vec3 = [...state.position];
+  const movementStartX = position[0];
+  const movementStartZ = position[2];
   const readyPlatforms = entities.filter(
     (entity) =>
       entity.stage === "ready" &&
@@ -459,6 +591,28 @@ export function stepGameplay(
     position[0] += (input.x / magnitude) * MOVE_SPEED * dt;
     position[2] += (input.z / magnitude) * MOVE_SPEED * dt;
   }
+
+  const jumpForSweep = Boolean(
+    input.jump &&
+    ((support && supportedBeforeDisplacement) ||
+      position[1] <= GROUND_CENTER_Y + 0.04),
+  );
+  let sweepVelocityY = jumpForSweep ? JUMP_SPEED : state.velocityY;
+  sweepVelocityY -= GRAVITY * dt;
+  const sweepEndY = position[1] + sweepVelocityY * dt;
+  const solids = entities.flatMap((entity) => {
+    const bounds = solidCollisionBounds(entity, worldMatrices?.get(entity.id));
+    return bounds ? [bounds] : [];
+  });
+  [position[0], position[2]] = resolveSolidHorizontalMovement(
+    movementStartX,
+    movementStartZ,
+    position[0],
+    position[2],
+    Math.min(position[1], sweepEndY) - PLAYER_HALF_HEIGHT,
+    Math.max(position[1], sweepEndY) + PLAYER_HALF_HEIGHT,
+    solids,
+  );
 
   let velocityY = state.velocityY;
   const supportedAfterDisplacement = Boolean(

@@ -156,7 +156,15 @@ export const assetRequestPolicySchema = z.enum(["catalog-allowed", "new-only"]);
 export const entityAssetPolicy = assetRequestPolicySchema;
 export type EntityAssetPolicy = AssetRequestPolicy;
 export const behaviorSchema = z.object({
-  type: z.enum(["static", "collect", "move", "portal", "bloom", "bounce"]),
+  type: z.enum([
+    "static",
+    "collect",
+    "move",
+    "portal",
+    "bloom",
+    "bounce",
+    "solid",
+  ]),
   speed: z.number().min(0).max(5).optional(),
   amplitude: z.number().min(0).max(8).optional(),
   axis: z.enum(["x", "y", "z"]).optional(),

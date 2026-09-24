@@ -13,11 +13,37 @@ import {
   stepGameplay,
   type PlayerState,
 } from "../src/lib/gameplay";
+import { resolveSceneTransforms } from "../src/lib/scene-transform";
 
 const idle = { x: 0, z: 0, jump: false };
 const player = (position: [number, number, number]): PlayerState => ({
   position,
   velocityY: 0,
+});
+const solidWall = (
+  id = "wall",
+  height = 1.5,
+  stage: Entity["stage"] = "ready",
+): Entity => ({
+  id,
+  label: "Solid wall",
+  position: [0, 0, 0],
+  scale: [1, 1, 1],
+  color: "#ffffff",
+  stage,
+  geometry: {
+    kind: "custom",
+    detail: "refined",
+    parts: [
+      {
+        shape: "box",
+        position: [0, height / 2, 0],
+        scale: [0.08, height, 3],
+        color: "#ffffff",
+      },
+    ],
+  },
+  behavior: { type: "solid" },
 });
 
 describe("gameplay runtime", () => {
@@ -155,6 +181,149 @@ describe("gameplay runtime", () => {
     expect(Math.hypot(result.position[0], result.position[2])).toBeGreaterThan(
       8.4,
     );
+  });
+
+  it("blocks a thin solid wall and reports its collision contact", () => {
+    const wall = solidWall();
+    let state = player([-1, 0.42, 0]);
+    let result;
+    for (let frame = 0; frame < 12; frame++) {
+      result = stepGameplay(
+        state,
+        { x: 1, z: 0, jump: false },
+        [wall],
+        [],
+        frame * 0.04,
+        0.04,
+        new Set([wall.id]),
+      );
+      state = result;
+    }
+
+    expect(state.position[0]).toBeCloseTo(-0.26);
+    expect(result?.contacts).toContain(wall.id);
+  });
+
+  it("keeps ready visual walls traversable unless solid behavior is opted in", () => {
+    const visualWall = {
+      ...solidWall("visual-wall"),
+      behavior: { type: "static" as const },
+    };
+    const result = stepGameplay(
+      player([-0.3, 0.42, 0]),
+      { x: 1, z: 0, jump: false },
+      [visualWall],
+      [],
+      0,
+      0.04,
+    );
+
+    expect(result.position[0]).toBeCloseTo(-0.14);
+  });
+
+  it("slides along solid walls during diagonal movement", () => {
+    const wall = solidWall();
+    let state = player([-0.5, 0.42, 0]);
+    for (let frame = 0; frame < 10; frame++)
+      state = stepGameplay(
+        state,
+        { x: 1, z: 1, jump: false },
+        [wall],
+        [],
+        frame * 0.04,
+        0.04,
+      );
+
+    expect(state.position[0]).toBeCloseTo(-0.26);
+    expect(state.position[2]).toBeGreaterThan(0.5);
+  });
+
+  it("lets the player jump over low walls and pass above separated walls", () => {
+    const wall = solidWall("low-wall", 0.45);
+    let jumping = player([-0.5, 0.42, 0]);
+    for (let frame = 0; frame < 9; frame++)
+      jumping = stepGameplay(
+        jumping,
+        { x: 1, z: 0, jump: true },
+        [wall],
+        [],
+        frame * 0.04,
+        0.04,
+      );
+    expect(jumping.position[0]).toBeGreaterThan(0.3);
+
+    const above = stepGameplay(
+      player([-0.5, 2.5, 0]),
+      { x: 1, z: 0, jump: false },
+      [wall],
+      [],
+      0,
+      0.04,
+    );
+    expect(above.position[0]).toBeCloseTo(-0.34);
+  });
+
+  it("uses transformed world bounds for a far wall inside a rotated group", () => {
+    const wall: Entity = {
+      ...solidWall("far-wall", 0.45),
+      parentId: "far-group",
+      geometry: {
+        kind: "custom",
+        detail: "refined",
+        parts: [
+          {
+            shape: "box",
+            position: [0, 0.225, 0],
+            scale: [2, 0.45, 0.08],
+            color: "#ffffff",
+          },
+        ],
+      },
+    };
+    const scene = resolveSceneTransforms({
+      groups: [
+        {
+          id: "far-group",
+          position: [1_000, 0, 1_000],
+          rotation: [0, Math.PI / 2, 0],
+          scale: [1, 1, 1],
+        },
+      ],
+      entities: [wall],
+    });
+    const matrices = new Map([
+      [wall.id, scene.entities.get(wall.id)!.worldMatrix],
+    ]);
+    let state = player([999, 0.42, 1_000]);
+    for (let frame = 0; frame < 10; frame++)
+      state = stepGameplay(
+        state,
+        { x: 1, z: 0, jump: false },
+        [wall],
+        [],
+        frame * 0.04,
+        0.04,
+        undefined,
+        matrices,
+      );
+
+    expect(state.position[0]).toBeCloseTo(999.74);
+  });
+
+  it("ignores unready and unbounded solid entities", () => {
+    const unready = solidWall("unready-wall", 1.5, "coarse");
+    const unbounded = { ...solidWall("unbounded-wall"), geometry: undefined };
+    for (const wall of [unready, unbounded]) {
+      const result = stepGameplay(
+        player([-0.3, 0.42, 0]),
+        { x: 1, z: 0, jump: false },
+        [wall],
+        [],
+        0,
+        0.04,
+      );
+      expect(result.position[0]).toBeCloseTo(-0.14);
+    }
   });
 
   it("runs a far game path and collects and wins beyond the former edge", () => {

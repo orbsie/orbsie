@@ -5,6 +5,7 @@ import {
   applyOperation,
   assetGeometrySchema,
   generatedGeometrySchema,
+  behaviorSchema,
   commandSchema,
   committed,
   MAX_SCENE_POSITION,
@@ -40,6 +41,12 @@ function setup() {
   return { project, cursor, op };
 }
 describe("scene protocol", () => {
+  it("accepts solid as an authorable entity behavior", () => {
+    expect(behaviorSchema.parse({ type: "solid" })).toEqual({
+      type: "solid",
+    });
+  });
+
   it("generates JSON Schema for the command protocol", () => {
     expect(() => z.toJSONSchema(commandSchema)).not.toThrow();
   });

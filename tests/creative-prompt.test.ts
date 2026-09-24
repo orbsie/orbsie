@@ -28,6 +28,7 @@ const coreGuidance = [
   "Finish referenced entities to ready before set_game",
   "Built-in procedural kinds may carry custom parts in the same object",
   "A lathe custom part uses profile points [radius,height]",
+  "solid (bounded wall collision)",
   "Match distinctive object forms, not just their color",
   "Each command must match the provided command schema",
 ];
@@ -68,8 +69,12 @@ describe("creative and playable authoring prompt", () => {
     expect(prompt).toContain(
       "Create a bounded island, walls, cliffs, or other barriers only when the user or game concept explicitly calls for them",
     );
+    expect(prompt).toContain("Islands and cliffs remain visual geometry.");
     expect(prompt).toContain(
-      "Treat authored islands and barriers as visual geometry unless a supported interaction mechanic provides the requested behavior; do not imply or rely on physical containment from them",
+      'For explicitly requested physical walls, give each ready bounded wall entity behavior.type "solid"',
+    );
+    expect(prompt).toContain(
+      "collision uses a conservative world-space AABB derived from committed geometry bounds",
     );
     expect(prompt).toContain(
       "Entity and group position components may use finite parent-local coordinates from -1,000,000 to 1,000,000 meters",

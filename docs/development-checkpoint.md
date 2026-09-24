@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 bounded solid-wall milestone: Luna added an opt-in `solid` entity
+behavior. Shared gameplay now blocks horizontal traversal using committed
+geometry bounds transformed into world space, slides along walls, allows
+vertical clearance, and emits wall contact IDs for game rules. Seed/coarse,
+unready, and unbounded entities do not block. Astra reviewed the diff and
+generation guidance, which limits physical-wall claims to bounded box-like
+objects while leaving islands/cliffs visual. The focused gameplay, protocol,
+and prompt tests (72 total), typecheck, diff check, and production build pass.
+The prebuild regenerated the tracked standalone-player bundle and source
+snapshot. This is local source-level evidence, not a live generated-world,
+browser-wall, exported-playback, or physical Android acceptance result.
+Gateway credit remains negative; computer-use Chrome remains unavailable, so
+neither paid Gateway nor signed-in ChatGPT acceptance ran. Next: deterministic
+browser wall traversal in both renderers and exported playback, then the
+remaining provider/mobile gates when their prerequisites are available.
+
 Sep 24 Canvas2D diagnostic completion: a clean `dd74a9e` production-build
 coarse-pointer full fixture passed generation movement; five, seven, and Undo
 back to five collectibles; win/reset for each; and landscape closed/open

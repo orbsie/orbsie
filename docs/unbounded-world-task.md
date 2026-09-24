@@ -1,14 +1,16 @@
 # Unbounded world implementation handoff
 
-Sep 23 status: the source audit below describes the original starting point,
+Sep 24 status: the source audit below describes the original starting point,
 not the current implementation. World-coordinate validation, default radial
 gameplay removal, shared navigation and controls, chunked ground in both
-renderers, render-local WebGL origin, player-follow views, and draw culling are
-implemented locally; see the newest entries in `docs/development-checkpoint.md`
-for commits and checks. Ready-formation resource residency, browser/mobile
-performance measurements, far-distance live creation/editing, and independent
-publication acceptance remain open. Do not reintroduce the original limits
-while completing those checks.
+renderers, render-local WebGL origin, player-follow views, draw culling, and
+explicit bounded wall collision are implemented locally; see the newest entries
+in `docs/development-checkpoint.md` for commits and checks. Solid collision is
+opt-in for ready, bounded entities and uses conservative world-space boxes;
+authored island edges and cliffs remain visual. Ready-formation resource
+residency, browser/mobile performance measurements, far-distance live
+creation/editing, and independent publication acceptance remain open. Do not
+reintroduce the original limits while completing those checks.
 
 Open owner requirement in `prompt.md`; implement after current
 connection/resilience priorities with one Luna worker at a time. Source audit
@@ -48,13 +50,15 @@ instructions for default worlds while allowing explicitly requested bounded
 islands and authored barriers. Preserve old serialized project coordinates and
 IDs through any schema migration.
 
-Physical authored boundaries are a separate runtime gate. Current
-`stepGameplay` contacts platform tops, collectibles and portals; it has no
-typed wall or edge collision. An island mesh or wall-shaped model is visual
-geometry today, not proof that a player cannot pass through it. Add an explicit
-boundary/collider contract and gameplay evidence before claiming that a
-requested bounded island or wall constrains movement. Generation guidance must
-not imply unsupported physical containment.
+Physical authored boundaries remain a separate acceptance gate. `stepGameplay`
+now blocks horizontal movement against ready bounded entities with
+`behavior.type: "solid"`, including group transforms, and reports their
+contacts to game rules. Unit tests cover pass-through without opt-in, blocking,
+sliding, jumping, and distant transformed walls. This is not proof of physical
+containment for an island mesh or cliff: those remain visual geometry, and a
+conservative axis-aligned box can overblock irregular or rotated shapes. Verify
+an authored wall in both renderers and exported playback before claiming full
+end-to-end boundary behavior.
 
 Use sequential bounded handoffs rather than a single renderer rewrite:
 
