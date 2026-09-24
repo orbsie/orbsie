@@ -41,7 +41,7 @@ export function parseAuthoringReviewResponse(
       revision: bindingSchema.shape.revision,
       digest: bindingSchema.shape.digest,
       scope: z.enum(["visual+structural", "structural-only"]),
-      remainingCalls: z.number().int().min(0).max(1),
+      remainingCalls: z.number().int().min(0).max(2),
     })
     .strict()
     .parse(raw);
@@ -56,7 +56,7 @@ export function parseAuthoringReviewResponse(
   const corrections = parsed.corrections as unknown as readonly ModelCommand[];
   if (revising) {
     if (
-      parsed.remainingCalls !== 1 ||
+      parsed.remainingCalls < 1 ||
       corrections.length !== review.corrections.length + 1 ||
       corrections.at(-1)?.type !== "commit_revision" ||
       corrections

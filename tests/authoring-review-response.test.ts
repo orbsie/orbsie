@@ -55,6 +55,12 @@ describe("public authoring review response", () => {
     const revised = parseAuthoringReviewResponse(reply("revise"), expected);
     expect(revised.corrections.at(-1)?.type).toBe("commit_revision");
     expect(revised.binding.revision).toBe(expected.revision + 2);
+    expect(
+      parseAuthoringReviewResponse(
+        { ...reply("revise"), remainingCalls: 2 },
+        expected,
+      ).remainingCalls,
+    ).toBe(2);
   });
 
   it("accepts a final partial verdict without another correction call", () => {
@@ -105,6 +111,9 @@ describe("public authoring review response", () => {
     expect(() =>
       parseAuthoringReviewResponse({ ...revised, remainingCalls: 0 }, expected),
     ).toThrow("inconsistent");
+    expect(() =>
+      parseAuthoringReviewResponse({ ...revised, remainingCalls: 3 }, expected),
+    ).toThrow();
     expect(() =>
       parseAuthoringReviewResponse(
         { ...revised, binding: { revision: 99, digest }, revision: 99 },
