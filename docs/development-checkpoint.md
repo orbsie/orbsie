@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 combined Canvas2D/coarse-pointer acceptance: one fresh production-server
+run passed while the generation stream remained open and player movement
+advanced 1.0664 units. The same browser then completed five collectibles,
+portal win/reset at revision 22; seven collectibles, win/reset at revision 31;
+and UI Undo back to five collectibles, win/reset at revision 32. The 844×390
+coarse-pointer landscape checks passed with the chat sheet both closed and
+open, no page overflow, and an accessible Edit hit target when open. Astra
+inspected the report and desktop/phone screenshots. Evidence:
+`docs/evidence/fresh-gameplay-software-coarse-20260924-rerun/`. Zero provider
+calls; the temporary 3041 production server was stopped. The prior Undo stop
+was intermittent and its root cause remains unisolated; this single green run
+does not prove it cannot recur. Physical-device mobile acceptance is separate.
+
 Sep 24 Android exported-wall acceptance: the `droidlm_api35_midrange` Android
 15 emulator's Chrome 124 opened the freshly exported deterministic wall ZIP
 through a read-only local server. With WebGL deliberately unavailable, the
