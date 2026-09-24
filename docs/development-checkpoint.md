@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 solid-wall browser acceptance: the committed opt-in wall behavior now
+passes one deterministic production-build fixture in the real editor. WebGL
+keyboard and forced-software touch each blocked a ready wall, fired its
+collision rule, and slid alongside it; visual-only static walls remained
+traversable. The downloaded ZIP retained the ready solid wall and rule. Its
+standalone player ran without external requests and kept the player at z=6.724
+in front of the wall face at z=6.944 under held input, with wall contact and
+score 11. The fixture made zero provider calls and recorded only the two
+expected WebGL initialization errors from deliberately forcing software mode.
+Astra reviewed the script, report, and WebGL/software/standalone screenshots;
+syntax, formatting, and diff checks pass. Evidence:
+`docs/evidence/solid-wall-browser/`. This is headless Chromium, not physical
+Android or live model-authored wall acceptance.
+
 Sep 24 bounded solid-wall milestone: Luna added an opt-in `solid` entity
 behavior. Shared gameplay now blocks horizontal traversal using committed
 geometry bounds transformed into world space, slides along walls, allows

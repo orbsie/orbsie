@@ -54,11 +54,13 @@ Physical authored boundaries remain a separate acceptance gate. `stepGameplay`
 now blocks horizontal movement against ready bounded entities with
 `behavior.type: "solid"`, including group transforms, and reports their
 contacts to game rules. Unit tests cover pass-through without opt-in, blocking,
-sliding, jumping, and distant transformed walls. This is not proof of physical
-containment for an island mesh or cliff: those remain visual geometry, and a
-conservative axis-aligned box can overblock irregular or rotated shapes. Verify
-an authored wall in both renderers and exported playback before claiming full
-end-to-end boundary behavior.
+sliding, jumping, and distant transformed walls. A deterministic headless
+browser fixture has also verified an authored bounded wall in both renderers,
+touch and keyboard input, and downloaded offline playback; see
+`docs/evidence/solid-wall-browser/`. This is not proof of physical containment
+for an island mesh or cliff: those remain visual geometry, and a conservative
+axis-aligned box can overblock irregular or rotated shapes. Physical Android
+and live model-authored wall acceptance remain open.
 
 Use sequential bounded handoffs rather than a single renderer rewrite:
 

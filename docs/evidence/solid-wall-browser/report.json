@@ -1,0 +1,370 @@
+{
+  "mode": "deterministic-solid-wall-browser-acceptance",
+  "generatedAt": "2026-09-24T14:08:15.160Z",
+  "testUrlOrigin": "http://127.0.0.1:3024",
+  "realProviderCalls": 0,
+  "requestedRenderer": "all",
+  "passed": true,
+  "mockedApiRequests": [
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/generate",
+      "method": "POST"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/generate",
+      "method": "POST"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/generate",
+      "method": "POST"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/config",
+      "method": "GET"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    },
+    {
+      "path": "/api/generate",
+      "method": "POST"
+    },
+    {
+      "path": "/api/trial",
+      "method": "GET"
+    }
+  ],
+  "unexpectedApiRequests": [],
+  "externalRequests": [],
+  "pageErrors": [],
+  "expectedRendererFallbackErrors": [
+    {
+      "renderer": "software",
+      "wallBehavior": "solid",
+      "message": "Error: THREE.WebGLRenderer: Error creating WebGL context."
+    },
+    {
+      "renderer": "software",
+      "wallBehavior": "static",
+      "message": "Error: THREE.WebGLRenderer: Error creating WebGL context."
+    }
+  ],
+  "renderers": {
+    "webgl": {
+      "solid": {
+        "renderer": "webgl",
+        "wallBehavior": "solid",
+        "inputMode": "keyboard",
+        "generationRequests": 1,
+        "screenshots": [
+          "webgl-solid-before.png",
+          "webgl-solid-blocked.png",
+          "webgl-solid-parallel-slide.png"
+        ],
+        "baseline": {
+          "atMs": 1665.6000000089407,
+          "player": [
+            0,
+            0.49073705000579804,
+            5
+          ],
+          "renderer": "webgl",
+          "revision": 6,
+          "wall": {
+            "id": "fixture-solid-wall",
+            "behavior": "solid",
+            "stage": "ready",
+            "position": [
+              1.1985638465105075,
+              1.5,
+              7.193956404725932
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "blocking": {
+          "observationAtMs": 4877.800000011921,
+          "player": [
+            2.3675950798315655,
+            0.42,
+            6.723956404725932
+          ],
+          "travelAlongApproach": 2.648,
+          "wallContact": true,
+          "collisionRuleScore": 11,
+          "behindWallCollected": false
+        },
+        "parallelSlide": {
+          "observationAtMs": 7226.300000011921,
+          "from": [
+            2.3675950798315655,
+            0.42,
+            6.723956404725932
+          ],
+          "to": [
+            1.6254077298808012,
+            0.42,
+            6.723956404725932
+          ],
+          "tangentDistance": 0.742,
+          "wallContact": true,
+          "score": 11
+        },
+        "export": {
+          "path": "world.zip",
+          "bytes": 1114173,
+          "sha256": "93b16bd69d64288ec6385f702d90d6b6549bd96284c6abadbe3ecc068808caa0",
+          "fileCount": 97,
+          "readySolidWall": true,
+          "boxGeometry": true,
+          "collisionRule": true
+        }
+      },
+      "visualOnly": {
+        "renderer": "webgl",
+        "wallBehavior": "static",
+        "inputMode": "keyboard",
+        "generationRequests": 1,
+        "screenshots": [
+          "webgl-static-before.png",
+          "webgl-static-traversed.png"
+        ],
+        "baseline": {
+          "atMs": 982.1000000089407,
+          "player": [
+            0,
+            0.495766400001502,
+            5
+          ],
+          "renderer": "webgl",
+          "revision": 6,
+          "wall": {
+            "id": "fixture-solid-wall",
+            "behavior": "static",
+            "stage": "ready",
+            "position": [
+              1.1985638465105075,
+              1.5,
+              7.193956404725932
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "visualOnlyTraversal": {
+          "observationAtMs": 3197.5,
+          "player": [
+            1.7293838028473663,
+            0.42,
+            8.16561581724049
+          ],
+          "wallContactRuleFired": true,
+          "behindWallCollected": true,
+          "score": 111
+        }
+      }
+    },
+    "software": {
+      "solid": {
+        "renderer": "software",
+        "wallBehavior": "solid",
+        "inputMode": "touch",
+        "generationRequests": 1,
+        "screenshots": [
+          "software-solid-before.png",
+          "software-solid-blocked.png",
+          "software-solid-parallel-slide.png"
+        ],
+        "baseline": {
+          "atMs": 937.7000000029802,
+          "player": [
+            0,
+            0.49576639999999994,
+            5
+          ],
+          "renderer": "software",
+          "revision": 6,
+          "wall": {
+            "id": "fixture-solid-wall",
+            "behavior": "solid",
+            "stage": "ready",
+            "position": [
+              1.1985638465105075,
+              1.5,
+              7.193956404725932
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "blocking": {
+          "observationAtMs": 3935.9000000059605,
+          "player": [
+            2.9083870873885367,
+            0.42,
+            6.723956404725932
+          ],
+          "travelAlongApproach": 2.907,
+          "wallContact": true,
+          "collisionRuleScore": 11,
+          "behindWallCollected": false
+        },
+        "parallelSlide": {
+          "observationAtMs": 4485.800000011921,
+          "from": [
+            2.9083870873885367,
+            0.42,
+            6.723956404725932
+          ],
+          "to": [
+            2.18055696189393,
+            0.42,
+            6.723956404725932
+          ],
+          "tangentDistance": 0.728,
+          "wallContact": true,
+          "score": 11
+        }
+      },
+      "visualOnly": {
+        "renderer": "software",
+        "wallBehavior": "static",
+        "inputMode": "touch",
+        "generationRequests": 1,
+        "screenshots": [
+          "software-static-before.png",
+          "software-static-traversed.png"
+        ],
+        "baseline": {
+          "atMs": 629.4000000059605,
+          "player": [
+            0,
+            0.49581665,
+            5
+          ],
+          "renderer": "software",
+          "revision": 6,
+          "wall": {
+            "id": "fixture-solid-wall",
+            "behavior": "static",
+            "stage": "ready",
+            "position": [
+              1.1985638465105075,
+              1.5,
+              7.193956404725932
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "visualOnlyTraversal": {
+          "observationAtMs": 2294.2999999970198,
+          "player": [
+            1.7259319389751293,
+            0.42,
+            8.159297222805348
+          ],
+          "wallContactRuleFired": true,
+          "behindWallCollected": true,
+          "score": 111
+        }
+      }
+    }
+  },
+  "standalone": {
+    "passed": true,
+    "offline": true,
+    "renderer": "exported-standalone",
+    "inputMode": "keyboard",
+    "score": "Score: 11",
+    "wallCollisionRuleFired": true,
+    "gameplayObservation": {
+      "renderer": "webgl",
+      "baselineAtMs": 677.8,
+      "baselinePlayerPosition": [
+        0,
+        0.42,
+        5
+      ],
+      "blockedAtMs": 2177.5,
+      "blockedPlayerPosition": [
+        1.534,
+        0.42,
+        6.724
+      ],
+      "wallContact": true,
+      "wallNearFaceZ": 6.944,
+      "maximumFrontPlayerZ": 6.844
+    },
+    "behindWallCollectibleReached": false,
+    "externalRequests": [],
+    "pageErrors": [],
+    "screenshot": "standalone-solid-blocked-offline.png"
+  }
+}
