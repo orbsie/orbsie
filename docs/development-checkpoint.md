@@ -1,5 +1,12 @@
 # Development checkpoint
 
+Sep 24 owner-visible ChatGPT device challenge: a fresh guest Orbsie session
+issued the official OpenAI device URL and one-time code, which were shown to
+the owner in chat. The ten-minute challenge expired without a grant; read-only
+status returned idle/disconnected, cancellation returned HTTP 200, and the
+mode-0600 private session file was removed. No ChatGPT inference ran. Wait for
+an owner `ready` message before issuing another time-limited code.
+
 Sep 24 review-only continuation ledger: source `ed6d908` adds a fresh
 `completed` review run bound to an existing scene revision/digest, with three
 review slots and an atomic one-unit claim for free-provider use. The existing
