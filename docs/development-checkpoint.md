@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 explicit review recovery client core: source `51bf796` adds a
+review-only request builder and store action. The saved failure now retains a
+prior run ID and original request/provider/model/effort/selection/browser
+modeling binding without saving an API key. An explicit store call captures the
+saved revision before admission, starts a new review run, and shares the normal
+verdict/correction sequence without replaying initial generation or duplicating
+the user prompt. It preserves the local committed scene and optional cloud
+correction journal. Astra reviewed the diff and corrected a post-admission
+capability-change cost leak in `45e3dff`: the resumed review now uses the
+catalog's actual image support, falling back to structural scope when needed.
+The focused store/connection suites pass (35 tests before the follow-up;
+30 store tests after), TypeScript and Prettier pass. The editor has no action
+to call this method yet. Lost start/review responses still have unknown
+admission outcome; no hidden retry occurs. Hosted review failure headers are
+pending, and no browser E2E or provider call has exercised this path.
+
 Sep 24 owner-visible ChatGPT device challenge: a fresh guest Orbsie session
 issued the official OpenAI device URL and one-time code, which were shown to
 the owner in chat. The ten-minute challenge expired without a grant; read-only
