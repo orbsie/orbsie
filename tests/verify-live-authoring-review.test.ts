@@ -3,14 +3,9 @@ import { preflightGenerationOrigin } from "../scripts/verify-live-authoring-revi
 
 describe("live authoring origin preflight", () => {
   it("posts malformed JSON only to the configured loopback origin and accepts the parser 400", async () => {
-    const responseBody = {
-      text: vi.fn(() => {
-        throw new Error("response body must not be read");
-      }),
-      json: vi.fn(() => {
-        throw new Error("response body must not be read");
-      }),
-    };
+    const response = new Response(null, { status: 400 });
+    const readText = vi.spyOn(response, "text");
+    const readJSON = vi.spyOn(response, "json");
     const fetchImpl = vi.fn(async (url, options) => {
       expect(url).toBe("http://127.0.0.1:3100/api/generate");
       expect(options).toMatchObject({
@@ -25,19 +20,19 @@ describe("live authoring origin preflight", () => {
         redirect: "error",
       });
       expect(options.signal).toBeInstanceOf(AbortSignal);
-      return { status: 400, ...responseBody };
+      return response;
     });
 
     await expect(
       preflightGenerationOrigin("http://127.0.0.1:3100", fetchImpl),
     ).resolves.toBe(400);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(responseBody.text).not.toHaveBeenCalled();
-    expect(responseBody.json).not.toHaveBeenCalled();
+    expect(readText).not.toHaveBeenCalled();
+    expect(readJSON).not.toHaveBeenCalled();
   });
 
   it("reports an origin rejection explicitly without reading the response", async () => {
-    const fetchImpl = vi.fn(async () => ({ status: 403 }));
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 403 }));
 
     await expect(
       preflightGenerationOrigin("http://localhost:3100", fetchImpl),
