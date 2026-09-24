@@ -3034,22 +3034,24 @@ export default function Orbsie() {
                   Gateway use their own billing.
                 </p>
               )}
-              {trial.enabled && trial.remaining > 0 && (
-                <button
-                  className="primary full"
-                  disabled={oauthBusy}
-                  onClick={() => {
-                    setConnection({
-                      provider: "openrouter",
-                      model: "",
-                      key: "",
-                    });
-                    setModal(null);
-                  }}
-                >
-                  Use {trial.remaining} free prompts
-                </button>
-              )}
+              {trial.enabled &&
+                trial.remaining > 0 &&
+                s.generationErrorCode !== "FREE_PROVIDER_UNAVAILABLE" && (
+                  <button
+                    className="primary full"
+                    disabled={oauthBusy}
+                    onClick={() => {
+                      setConnection({
+                        provider: "openrouter",
+                        model: "",
+                        key: "",
+                      });
+                      setModal(null);
+                    }}
+                  >
+                    Use {trial.remaining} free prompts
+                  </button>
+                )}
               {capabilities.isAdmin && (
                 <button
                   className="text-button"

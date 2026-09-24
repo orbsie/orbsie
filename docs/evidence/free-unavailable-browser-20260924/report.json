@@ -1,0 +1,49 @@
+{
+  "startedAt": "2026-09-24T18:40:20.842Z",
+  "base": "http://127.0.0.1:3108",
+  "source": "intercepted local production build; no provider call",
+  "cases": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "interceptedGenerate": 1,
+      "unexpectedApi": [],
+      "external": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "status": "passed",
+      "layout": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "dialogWidth": 460
+      },
+      "promptPreserved": true,
+      "providerSettingsVisible": true
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "interceptedGenerate": 1,
+      "unexpectedApi": [],
+      "external": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "status": "passed",
+      "layout": {
+        "width": 390,
+        "scrollWidth": 390,
+        "dialogWidth": 358
+      },
+      "promptPreserved": true,
+      "providerSettingsVisible": true
+    }
+  ],
+  "status": "passed",
+  "finishedAt": "2026-09-24T18:40:28.224Z"
+}
