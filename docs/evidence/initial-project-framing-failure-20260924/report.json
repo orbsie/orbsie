@@ -1,0 +1,96 @@
+{
+  "status": "passed",
+  "sourceCommit": "0fa9b2c",
+  "scope": "World renderer saved-project baseline and deterministic initial-build lifecycle through a committed small object and settled review failure",
+  "fixture": {
+    "kind": "deterministic lifecycle state fixture",
+    "liveProviderResponse": false,
+    "simulatedHttp502": false,
+    "reviewFailureUiState": "Scene saved, but review could not finish. Your world is safe."
+  },
+  "providerCalls": 0,
+  "apiRequests": [],
+  "externalRequests": [],
+  "networkFailures": [],
+  "httpErrors": [],
+  "errors": [],
+  "scenarios": {
+    "savedProjectOpen": {
+      "phase": "editing",
+      "entityCount": 1,
+      "zoomChanged": true,
+      "before": {
+        "zoomLabel": "Zoom in, currently 100%",
+        "position": [
+          0,
+          11.999999999999998,
+          20.784609690826528
+        ]
+      },
+      "after": {
+        "zoomLabel": "Zoom in, currently 600%",
+        "position": [
+          0.009999999403953547,
+          2.034999998658895,
+          3.464101615137755
+        ]
+      }
+    },
+    "initialBuildReviewFailure": {
+      "landing": {
+        "phase": "landing",
+        "building": false,
+        "entityCount": 0
+      },
+      "build": {
+        "newProjectId": true,
+        "phase": "descending",
+        "building": true,
+        "entityCount": 0
+      },
+      "committedUnderReview": {
+        "sameProjectId": true,
+        "revision": 1,
+        "entityStages": [
+          "ready"
+        ],
+        "phase": "descending",
+        "building": true
+      },
+      "settledReviewFailure": {
+        "sameProjectId": true,
+        "phase": "editing",
+        "building": false,
+        "playing": false,
+        "error": "Scene saved, but review could not finish. Your world is safe.",
+        "generationRecoveryPresent": false,
+        "entityStages": [
+          "ready"
+        ],
+        "transition": {
+          "progress": 1,
+          "settled": true,
+          "target": 1
+        },
+        "camera": {
+          "zoomLabel": "Zoom in, currently 600%",
+          "position": [
+            0.009999999403953547,
+            2.034999998658895,
+            3.464101615137755
+          ]
+        },
+        "movedFromDefaultCamera": true,
+        "zoomedPastDefault": true
+      }
+    }
+  },
+  "screenshots": [
+    "saved-project-before-open.png",
+    "saved-project-after-open.png",
+    "lifecycle-landing.png",
+    "lifecycle-building.png",
+    "lifecycle-committed-under-review.png",
+    "lifecycle-review-error.png"
+  ]
+}
