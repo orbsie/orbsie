@@ -41,8 +41,10 @@ older rows below are a historical inventory, not a completion claim.
   Android and Android WebGL remain unverified.
 - A new read-only public flagship CDP-touch replay corrected a verifier
   snapshot-catalog mismatch, then proved platform-1 landing and carry. The
-  platform-2 jump missed; the full touch route remains open pending a bounded
-  input-order test. This is browser touch emulation, not physical Android.
+  platform-2 jump missed. A bounded Jump-first driver replay activated Jump
+  but missed platform 1 at a different motion phase, so it did not resolve the
+  platform-2 cause. The full touch route remains open. This is browser touch
+  emulation, not physical Android.
 - Playwright WebKit 26.6 touch emulation at 390×844 passed signed-out landing
   and standalone score 7/restart/win/loss with current player files and no
   overflow or unexpected requests. This is not physical iOS Safari evidence.

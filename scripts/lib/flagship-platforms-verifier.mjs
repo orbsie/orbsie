@@ -38,6 +38,10 @@ export function touchControlLabel(key) {
   return { w: "Forward", a: "Left", s: "Back", d: "Right", " ": "Jump" }[key];
 }
 
+export function touchLaunchKeys(directionKeys) {
+  return [" ", ...directionKeys.filter((key) => key !== " ")];
+}
+
 export function movingTargetMotionBound(entity, flightTime) {
   const behavior = entity?.behavior;
   if (

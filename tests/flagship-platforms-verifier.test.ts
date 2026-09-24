@@ -11,6 +11,7 @@ import {
   sourceLandingEvidence,
   selectCatalogManifest,
   touchControlLabel,
+  touchLaunchKeys,
   transformedAssetDimensions,
 } from "../scripts/lib/flagship-platforms-verifier.mjs";
 
@@ -350,4 +351,9 @@ it("maps gameplay keys to the published player's real touch button labels", () =
     "Right",
     "Jump",
   ]);
+});
+
+it("orders touch platform launch input with Jump before directional movement", () => {
+  expect(touchLaunchKeys(["d"])).toEqual([" ", "d"]);
+  expect(touchLaunchKeys(["a", "w"])).toEqual([" ", "a", "w"]);
 });

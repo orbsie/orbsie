@@ -36,6 +36,7 @@ import {
   sourceLandingEvidence,
   selectCatalogManifest,
   touchControlLabel,
+  touchLaunchKeys,
 } from "./lib/flagship-platforms-verifier.mjs";
 
 const defaultZipPath =
@@ -1159,7 +1160,7 @@ async function runSequentialPlatforms(page, ordered, mapping, run) {
                 previousBeforeJump.player.center[2],
             )
           : [];
-      const launchKeys = touchInput ? [...launchDirection, " "] : [" "];
+      const launchKeys = touchInput ? touchLaunchKeys(launchDirection) : [" "];
       stage.launchKeys = launchKeys;
       await setKeys(launchKeys, `jump-platform-${index + 1}`);
       await page.waitForTimeout(80);

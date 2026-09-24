@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 touch-launch ordering probe: the public flagship CDP driver now sends
+Jump before directional touch input when launching from a moving platform, so
+the direction cannot walk the player off a narrow edge before Jump is
+dispatched. A targeted ordering test and the full 10-test verifier suite pass.
+The single authorized read-only replay confirmed Jump activation but missed
+platform 1 at a different moving-platform phase, before it could test the
+platform-2 edge hypothesis. Its trace and video are retained at
+`docs/evidence/publication-flagship-openrouter/platforms-sequential-touch-jump-first/`.
+There were zero model, external or mutating requests. The full touch route and
+the platform-2 cause remain unverified; this is not physical-device evidence.
+
 Sep 24 published OpenRouter flagship touch diagnosis: a bounded read-only CDP
 touch replay found that the platform verifier used today's catalog bounds for
 an older exported/published snapshot. The saved ZIP's embedded manifest is now
@@ -13,9 +24,10 @@ published runtime hash differs from the saved ZIP runtime hash. Evidence:
 `docs/evidence/publication-flagship-openrouter/platforms-sequential-touch-current/`
 and `platforms-sequential-touch-snapshot-metadata/`. Astra review found the
 player only 0.036 m from the platform's moving edge before the second jump,
-while the verifier presses Right before Jump with roughly 95 ms of driver
-latency; at 4 m/s, support can be lost in about 9 ms. This is a testable driver
-hypothesis, not yet a proven gameplay-runtime defect.
+while the prior verifier pressed Right before Jump with roughly 95 ms between
+its pre-jump sample and combined-input log; at 4 m/s, support could be lost in
+about 9 ms. The probe above did not reach that same platform-2 condition, so
+this remains a hypothesis, not a proven gameplay-runtime defect.
 
 Sep 24 ChatGPT sign-in tab release: source `beeeda5` deployed Ready as
 `dpl_DRbtSyAhxcDTqyBYBkqqYYBEJSmC`, aliased to `https://orbsie.com/`
