@@ -16,7 +16,9 @@ import {
 } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 const base = process.env.TEST_URL ?? "http://127.0.0.1:3017";
-const directory = "docs/evidence/catalog-worker-browser";
+const directory =
+  process.env.ORBSIE_CATALOG_WORKER_EVIDENCE_DIR ??
+  "docs/evidence/catalog-worker-browser";
 await mkdir(directory, { recursive: true });
 const browser = await chromium.launch({
   args: [
@@ -58,9 +60,10 @@ async function checkVisibleTree(page) {
           .raw()
           .toBuffer({ resolveWithObject: true });
         pixels = 0;
-        // The fixture tree has a cyan crown in this fixed camera; ground and crystal do not.
-        for (let y = 280; y < 390; y++)
-          for (let x = 610; x < 705; x++) {
+        // The fixture tree has a cyan crown; frame-content may move it, while
+        // the ground, crystal, and controls do not satisfy this color gate.
+        for (let y = 150; y < info.height - 50; y++)
+          for (let x = 360; x < info.width; x++) {
             const i = (y * info.width + x) * info.channels;
             const [r, g, b] = data.subarray(i, i + 3);
             if (r < 160 && g > r + 25 && b > r + 25 && g > 130) pixels++;
@@ -271,10 +274,15 @@ try {
     .locator("#prompt")
     .fill("Build this model from scratch with original geometry");
   await page.getByRole("button", { name: "Change this", exact: true }).click();
-  await expect(page.getByText(/scoped to original geometry/)).toBeVisible();
+  await expect(
+    page.getByText(/scene change that could not be applied/),
+  ).toBeVisible();
   await expect(page.getByText("Forbidden reuse.", { exact: true })).toHaveCount(
     0,
   );
+  await expect(
+    page.getByRole("button", { name: "Use last working" }),
+  ).toBeVisible();
   const catalog = JSON.parse(
     await readFile("assets/catalog/manifest.json", "utf8"),
   );
@@ -326,6 +334,24 @@ try {
   );
   const fullCatalogResults = await allCatalog.evaluate(
     () => window.__catalogResults,
+  );
+  const modelLoadErrors = await allCatalog
+    .getByText(/This model could not be loaded/)
+    .allTextContents();
+  await allCatalog.screenshot({
+    path: directory + "/full-catalog-diagnostic.png",
+  });
+  await writeFile(
+    directory + "/full-catalog-diagnostic.json",
+    JSON.stringify(
+      {
+        assetIds: catalog.assets.map((asset) => asset.id),
+        results: fullCatalogResults,
+        modelLoadErrors,
+      },
+      null,
+      2,
+    ) + "\n",
   );
   expect(
     fullCatalogResults.every((result) => !result.error && result.vertices > 0),

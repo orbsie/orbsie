@@ -1,17 +1,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
   AssetGeometryLoader,
   type AssetBytesFetcher,
+  type AssetGeometryWorkerFactory,
 } from "../src/lib/asset-geometry";
 import {
   assetFilePathFor,
+  catalogAssetIds,
   requireCatalogAsset,
   type AssetId,
 } from "../src/lib/asset-catalog";
+import type { AssetGeometryWorkerLike } from "../src/lib/asset-geometry-queue";
 
 const root = path.resolve(__dirname, "..");
 
@@ -170,6 +173,64 @@ describe("asynchronous catalog geometry loading", () => {
       pending: 0,
       activeLeases: 0,
     });
+  });
+
+  it("keeps a prepared catalog entry alive until its first lease", async () => {
+    vi.stubGlobal("window", {});
+    const workerFactory: AssetGeometryWorkerFactory = () => {
+      let worker: AssetGeometryWorkerLike;
+      worker = {
+        onmessage: null,
+        onerror: null,
+        onmessageerror: null,
+        postMessage: () => {
+          worker.onmessage?.({
+            data: {
+              decoded: {
+                attributes: {
+                  position: {
+                    array: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+                    itemSize: 3,
+                    normalized: false,
+                  },
+                },
+                box: { min: [0, 0, 0], max: [1, 1, 0] },
+                sphere: { center: [0.5, 0.5, 0], radius: 1 },
+              },
+            },
+          } as MessageEvent);
+        },
+        terminate: () => undefined,
+      };
+      return worker;
+    };
+    const loader = new AssetGeometryLoader({
+      maxCacheEntries: 10,
+      verifyManifest: false,
+      fetchBytes: async () => new Uint8Array([1, 2, 3]),
+      workerFactory,
+    });
+    const leases: Awaited<ReturnType<AssetGeometryLoader["load"]>>[] = [];
+    try {
+      for (const id of catalogAssetIds.slice(0, 10))
+        leases.push(await loader.load(id));
+
+      expect(loader.stats).toMatchObject({ entries: 10, activeLeases: 10 });
+      const eleventh = await loader.load(catalogAssetIds[10]);
+      leases.push(eleventh);
+      expect(eleventh.geometry.getAttribute("position").count).toBeGreaterThan(
+        0,
+      );
+      expect(loader.stats.activeLeases).toBe(11);
+
+      for (const lease of leases) lease.release();
+      expect(loader.stats.entries).toBeLessThanOrEqual(10);
+      expect(loader.stats.bytes).toBeLessThanOrEqual(12 * 1024 * 1024);
+    } finally {
+      for (const lease of leases) lease.release();
+      loader.dispose();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("bounds reads, rejects unknown IDs, and propagates cancellation without fallback geometry", async () => {

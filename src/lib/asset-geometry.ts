@@ -77,6 +77,7 @@ interface GeometryEntry {
   readonly baseColorTexture?: AssetBaseColorTextureTransfer;
   readonly byteLength: number;
   cached: boolean;
+  pendingLeaseHold: boolean;
   refs: number;
   released: boolean;
 }
@@ -86,6 +87,7 @@ interface PendingEntry {
   readonly controller: AbortController;
   consumers: number;
   done: boolean;
+  entry?: GeometryEntry;
   promise: Promise<GeometryEntry>;
 }
 
@@ -372,6 +374,8 @@ export class AssetGeometryLoader {
         pending.consumers -= 1;
         if (pending.consumers <= 0 && !pending.done) pending.controller.abort();
       }
+      if (pending.consumers <= 0 && pending.done)
+        this.#settleUnclaimedEntry(pending);
     }
   }
 
@@ -474,9 +478,11 @@ export class AssetGeometryLoader {
               prepared.baseColorTexture,
             ),
             cached: false,
+            pendingLeaseHold: pending.consumers > 0,
             refs: 0,
             released: false,
           };
+          pending.entry = entry;
           if (entry.byteLength <= this.#maxCacheBytes) {
             entry.cached = true;
             this.#cache.set(entry.id, entry);
@@ -494,6 +500,7 @@ export class AssetGeometryLoader {
         throw error;
       } finally {
         pending.done = true;
+        if (pending.consumers <= 0) this.#settleUnclaimedEntry(pending);
         if (this.#pending.get(pending.id) === pending)
           this.#pending.delete(pending.id);
       }
@@ -510,6 +517,7 @@ export class AssetGeometryLoader {
       );
     entry.refs += 1;
     this.#activeLeases += 1;
+    this.#trimCache();
     let released = false;
     const release = () => {
       if (released) return;
@@ -546,7 +554,8 @@ export class AssetGeometryLoader {
       if (
         (this.#cache.size <= this.#maxCacheEntries &&
           this.#cacheBytes <= this.#maxCacheBytes) ||
-        entry.refs > 0
+        entry.refs > 0 ||
+        entry.pendingLeaseHold
       )
         continue;
       this.#cache.delete(id);
@@ -554,6 +563,17 @@ export class AssetGeometryLoader {
       entry.released = true;
       entry.geometry.dispose();
     }
+  }
+
+  #settleUnclaimedEntry(pending: PendingEntry): void {
+    const entry = pending.entry;
+    if (!entry) return;
+    entry.pendingLeaseHold = false;
+    if (!entry.cached && entry.refs === 0 && this.#ephemeral.delete(entry)) {
+      entry.released = true;
+      entry.geometry.dispose();
+    }
+    this.#trimCache();
   }
 }
 
