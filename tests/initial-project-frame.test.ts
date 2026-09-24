@@ -119,14 +119,63 @@ describe("initial project camera framing", () => {
     ).toBe("frame");
   });
 
+  it("frames committed content after a recoverable error or recovery notice", () => {
+    const attempt = { projectId: "new-project", userNavigated: false };
+    expect(
+      initialProjectFrameSettlement(attempt, {
+        ...successfulSettlement,
+        hasError: true,
+      }),
+    ).toBe("frame");
+    expect(
+      initialProjectFrameSettlement(attempt, {
+        ...successfulSettlement,
+        hasRecovery: true,
+      }),
+    ).toBe("frame");
+    expect(
+      initialProjectFrameSettlement(attempt, {
+        ...successfulSettlement,
+        hasError: true,
+        hasRecovery: true,
+      }),
+    ).toBe("frame");
+  });
+
+  it("discards empty failures and keeps manual navigation", () => {
+    const attempt = { projectId: "new-project", userNavigated: false };
+    expect(
+      initialProjectFrameSettlement(attempt, {
+        ...successfulSettlement,
+        hasError: true,
+        hasCommittedBounds: false,
+      }),
+    ).toBe("discard");
+    expect(
+      initialProjectFrameSettlement(attempt, {
+        ...successfulSettlement,
+        hasRecovery: true,
+        hasCommittedBounds: false,
+      }),
+    ).toBe("discard");
+    expect(
+      initialProjectFrameSettlement(
+        { ...attempt, userNavigated: true },
+        {
+          ...successfulSettlement,
+          hasError: true,
+          userNavigated: true,
+        },
+      ),
+    ).toBe("discard");
+  });
+
   it("preserves failed, switched, playing, or manually navigated views", () => {
     const attempt = { projectId: "new-project", userNavigated: false };
     for (const current of [
       { ...successfulSettlement, projectId: "another-project" },
       { ...successfulSettlement, phase: "landing" as const },
       { ...successfulSettlement, playing: true },
-      { ...successfulSettlement, hasError: true },
-      { ...successfulSettlement, hasRecovery: true },
       { ...successfulSettlement, hasCommittedBounds: false },
       { ...successfulSettlement, userNavigated: true },
     ])

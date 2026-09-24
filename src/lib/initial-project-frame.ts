@@ -57,11 +57,11 @@ export function initialProjectFrameSettlement(
     attempt.projectId !== current.projectId ||
     current.phase === "landing" ||
     current.playing ||
-    current.hasError ||
-    current.hasRecovery ||
     current.userNavigated
   )
     return "discard";
   if (current.building) return "wait";
+  if ((current.hasError || current.hasRecovery) && !current.hasCommittedBounds)
+    return "discard";
   return current.hasCommittedBounds ? "frame" : "discard";
 }

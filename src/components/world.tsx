@@ -3320,12 +3320,7 @@ export default function World({
     if (pending) {
       const hasRecovery = generationRecovery?.projectId === projectId;
       const canReadCommittedBounds =
-        !building &&
-        !playing &&
-        !error &&
-        !hasRecovery &&
-        !pending.userNavigated &&
-        phase !== "landing";
+        !building && !playing && !pending.userNavigated && phase !== "landing";
       const committedBounds = canReadCommittedBounds
         ? committedWorldNavigationBounds(project)
         : [];
