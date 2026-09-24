@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 24 visual-quality follow-up: Astra reviewed Luna's small generation-guidance
+change (`84740ff`) to prioritize a subject's defining silhouette, attached
+forms, proportions, and requested colors at play-camera scale. Focused prompt
+tests passed 20/20 and typecheck passed. This was prompted by the live blue
+strawberry-tree scene's simplistic blue spherical crown and pink faceted
+mushroom; it is a prompt-level improvement only and has **not** yet been
+validated with a fresh provider call or shown to resolve the final `revise`
+verdict.
+
 Sep 24 follow-up OpenRouter review: a new three-call isolated browser run
 completed without HTTP error after adding allowlisted review failure kinds
 (`d2ae11c`; targeted tests 10/10, typecheck and production build passed).
