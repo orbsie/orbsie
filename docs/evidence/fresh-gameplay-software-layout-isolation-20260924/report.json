@@ -1,0 +1,72 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3174",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "215755eb-d798-4171-83f0-9d8f4f2283a8",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "215755eb-d798-4171-83f0-9d8f4f2283a8",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0668000000000017,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": null,
+      "componentBoundary": {
+        "classification": "raf-running",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "descending",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 157,
+        "lastFrameAtMs": 14437.9,
+        "lastFrameAgeMs": 14.300000002980596,
+        "lastFrameGapMs": 1283.199999999999,
+        "maxFrameGapMs": 2699.8999999999996,
+        "lastFrameDurationMs": 5.200000002980232,
+        "maxFrameDurationMs": 29.599999994039536,
+        "heartbeatCount": 278,
+        "lastHeartbeatAtMs": 14416.40000000596,
+        "lastHeartbeatAgeMs": 35.79999999701977,
+        "maxHeartbeatGapMs": 119.5,
+        "observationCount": 145,
+        "lastObservationAtMs": 14445,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 102.5,
+            "duration": 67
+          },
+          {
+            "startTime": 2041,
+            "duration": 69
+          }
+        ]
+      },
+      "failure": {
+        "stage": "open-page",
+        "code": "gameplay-acceptance-failed",
+        "target": null
+      }
+    }
+  },
+  "error": "open-page: gameplay-acceptance-failed"
+}

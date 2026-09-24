@@ -1,0 +1,111 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3174",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "93faf17c-6e01-4e66-9c27-e0bb338dd67a",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "93faf17c-6e01-4e66-9c27-e0bb338dd67a",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0668000000000013,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": {
+        "failure": {
+          "stage": "creation-five",
+          "code": "no-fresh-observation",
+          "target": "fixture-platform-b"
+        },
+        "observationCount": 14,
+        "lastObservation": {
+          "projectId": "93faf17c-6e01-4e66-9c27-e0bb338dd67a",
+          "revision": 22,
+          "renderer": "software",
+          "atMs": 3597,
+          "playerPosition": [
+            -0.0018701478670006613,
+            0.9895590271245083,
+            2.985609215220191
+          ],
+          "playerVelocityY": 0
+        },
+        "inputTraceTailEntries": 15,
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 2,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.15807990214884832
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.1453248163799046
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.42263999999999996
+          }
+        ]
+      },
+      "componentBoundary": {
+        "classification": "raf-frame-delayed",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "descending",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 109,
+        "lastFrameAtMs": 3596.1,
+        "lastFrameAgeMs": 2114.00000000149,
+        "observationCount": 98,
+        "lastObservationAtMs": 3597,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 117.5,
+            "duration": 58
+          },
+          {
+            "startTime": 205.19999999552965,
+            "duration": 67
+          },
+          {
+            "startTime": 2031.1000000014901,
+            "duration": 60
+          }
+        ]
+      },
+      "failure": {
+        "stage": "creation-five",
+        "code": "no-fresh-observation",
+        "target": "fixture-platform-b"
+      }
+    }
+  },
+  "error": "creation-five: no-fresh-observation (fixture-platform-b)"
+}

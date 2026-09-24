@@ -1,0 +1,76 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3174",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "7578c491-ecd1-462c-b7bb-ffeb21a8229d",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "7578c491-ecd1-462c-b7bb-ffeb21a8229d",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.066800000000001,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": null,
+      "componentBoundary": {
+        "classification": "raf-running",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "editing",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 830,
+        "lastFrameAtMs": 50079.9,
+        "lastFrameAgeMs": 14.999999998508429,
+        "lastFrameGapMs": 16.700000000004366,
+        "maxFrameGapMs": 2700,
+        "lastFrameDurationMs": 5.100000001490116,
+        "maxFrameDurationMs": 19.399999998509884,
+        "heartbeatCount": 990,
+        "lastHeartbeatAtMs": 50044.5,
+        "lastHeartbeatAgeMs": 50.399999998509884,
+        "maxHeartbeatGapMs": 171,
+        "observationCount": 819,
+        "lastObservationAtMs": 50085.39999999851,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 94.39999999850988,
+            "duration": 70
+          },
+          {
+            "startTime": 1834.3999999985099,
+            "duration": 100
+          }
+        ]
+      },
+      "failure": {
+        "stage": "open-page",
+        "code": "gameplay-acceptance-failed",
+        "target": null,
+        "detail": {
+          "label": "phone-landscape",
+          "summary": "phone-landscape has vertical overflow: {\"viewport\":{\"width\":844,\"height\":390},\"documentScrollHeight\":660,\"composer\":{\"left\":15,\"top\":88,\"right\":325,\"bottom\":638,\"width\":310,\"height\":550}}.  true !== false"
+        }
+      }
+    }
+  },
+  "error": "open-page: gameplay-acceptance-failed"
+}

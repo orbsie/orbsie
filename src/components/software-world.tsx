@@ -119,6 +119,14 @@ type SoftwareWorldFixtureDiagnostics = typeof globalThis & {
     frameCount: number;
     lastFrameAtMs: number | null;
     lastFrameAgeMs: number | null;
+    lastFrameGapMs: number | null;
+    maxFrameGapMs: number;
+    lastFrameDurationMs: number | null;
+    maxFrameDurationMs: number;
+    heartbeatCount: number;
+    lastHeartbeatAtMs: number | null;
+    lastHeartbeatAgeMs: number | null;
+    maxHeartbeatGapMs: number;
     observationCount: number;
     lastObservationAtMs: number | null;
     runtimeError: {
@@ -2342,6 +2350,14 @@ export default function SoftwareWorld({
     let frameScheduled = false;
     let frameCount = 0;
     let lastFrameAtMs: number | null = null;
+    let lastFrameGapMs: number | null = null;
+    let maxFrameGapMs = 0;
+    let lastFrameDurationMs: number | null = null;
+    let maxFrameDurationMs = 0;
+    let frameStartedAtMs: number | null = null;
+    let heartbeatCount = 0;
+    let lastHeartbeatAtMs: number | null = null;
+    let maxHeartbeatGapMs = 0;
     let observationCount = 0;
     let lastObservationAtMs: number | null = null;
     let runtimeError: {
@@ -2353,6 +2369,18 @@ export default function SoftwareWorld({
     const collectFixtureDiagnostics =
       fixtureDiagnostics.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_REQUESTED__ ===
       true;
+    const heartbeatTimer = collectFixtureDiagnostics
+      ? window.setInterval(() => {
+          const now = performance.now();
+          if (lastHeartbeatAtMs !== null)
+            maxHeartbeatGapMs = Math.max(
+              maxHeartbeatGapMs,
+              now - lastHeartbeatAtMs,
+            );
+          lastHeartbeatAtMs = now;
+          heartbeatCount += 1;
+        }, 50)
+      : null;
     if (collectFixtureDiagnostics)
       fixtureDiagnostics.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_READ__ = () => {
         const now = performance.now();
@@ -2370,6 +2398,17 @@ export default function SoftwareWorld({
           lastFrameAtMs,
           lastFrameAgeMs:
             lastFrameAtMs === null ? null : Math.max(0, now - lastFrameAtMs),
+          lastFrameGapMs,
+          maxFrameGapMs,
+          lastFrameDurationMs,
+          maxFrameDurationMs,
+          heartbeatCount,
+          lastHeartbeatAtMs,
+          lastHeartbeatAgeMs:
+            lastHeartbeatAtMs === null
+              ? null
+              : Math.max(0, now - lastHeartbeatAtMs),
+          maxHeartbeatGapMs,
           observationCount,
           lastObservationAtMs,
           runtimeError,
@@ -2379,6 +2418,13 @@ export default function SoftwareWorld({
       if (stopped) return;
       stopped = true;
       if (collectFixtureDiagnostics) {
+        if (frameStartedAtMs !== null) {
+          lastFrameDurationMs = performance.now() - frameStartedAtMs;
+          maxFrameDurationMs = Math.max(
+            maxFrameDurationMs,
+            lastFrameDurationMs,
+          );
+        }
         frameScheduled = false;
         runtimeError = {
           name: error instanceof Error ? error.name : "UnknownError",
@@ -2395,9 +2441,14 @@ export default function SoftwareWorld({
     const animate = (now: number) => {
       if (stopped) return;
       if (collectFixtureDiagnostics) {
+        if (lastFrameAtMs !== null) {
+          lastFrameGapMs = now - lastFrameAtMs;
+          maxFrameGapMs = Math.max(maxFrameGapMs, lastFrameGapMs);
+        }
         frameScheduled = false;
         frameCount += 1;
         lastFrameAtMs = now;
+        frameStartedAtMs = performance.now();
       }
       try {
         const delta = Math.min(0.04, Math.max(0, (now - last) / 1000));
@@ -2756,7 +2807,14 @@ export default function SoftwareWorld({
           onReadyRef.current?.();
         }
         frame = requestAnimationFrame(animate);
-        if (collectFixtureDiagnostics) frameScheduled = true;
+        if (collectFixtureDiagnostics) {
+          lastFrameDurationMs = performance.now() - (frameStartedAtMs ?? now);
+          maxFrameDurationMs = Math.max(
+            maxFrameDurationMs,
+            lastFrameDurationMs,
+          );
+          frameScheduled = true;
+        }
       } catch (error) {
         reportRuntimeError(error);
       }
@@ -2772,6 +2830,7 @@ export default function SoftwareWorld({
       if (collectFixtureDiagnostics) {
         mounted = false;
         frameScheduled = false;
+        if (heartbeatTimer !== null) window.clearInterval(heartbeatTimer);
       }
       cancelAnimationFrame(frame);
       navigationCameraRef.current = null;

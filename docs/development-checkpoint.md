@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 24 fresh-gameplay renderer and mobile-fixture milestone: Astra reviewed
+Luna's bounded freshness fix. A 50 ms JavaScript heartbeat stayed responsive
+while headless SwiftShader delayed requestAnimationFrame by up to 2.7 seconds;
+the deterministic gameplay observer now waits at most three seconds and still
+requires a strictly newer observation. Focused tests cover delivery after one
+second and rejection of stale frames. WebGL and Canvas2D fixture gameplay both
+completed five collectibles, a seven-collectible edit, and Undo back to five,
+each with win/reset. The subsequent Canvas2D workspace check initially failed
+because Undo returned to Edit; it now explicitly enters Play. The landscape
+fixture then confused a fine-pointer desktop viewport with mobile CSS and, in
+coarse-pointer mode, treated the intentionally collapsed chat sheet as an open
+panel. The corrected touch layout fixture checks the reachable closed handle,
+opens the sheet, verifies the composer fits at 844×390 without page overflow,
+and tests Edit. Its production-build layout-only run passed; no product CSS
+change or provider call was needed. Evidence is under
+`docs/evidence/fresh-gameplay-software-*20260924/`, especially the passing
+`fresh-gameplay-software-webgl-regression-20260924` and
+`fresh-gameplay-software-coarse-pointer-layout-20260924` reports. A combined
+full Canvas2D gameplay-plus-touch-layout run and physical Android performance
+remain open. Fine-pointer 844×390 short-window overflow is separately known;
+the fixture now labels its coarse-only landscape check as skipped there.
+
 Sep 24 production ChatGPT connection attempt: an isolated anonymous Orbsie
 session on `https://orbsie.com/` received one real OpenAI device challenge,
 but 183 status polls saw no grant before its ten-minute expiry. The attempt

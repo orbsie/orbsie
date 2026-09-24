@@ -1,0 +1,76 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3174",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "99a0d6f5-ea40-4a3a-97fc-6e4d6ead7291",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "99a0d6f5-ea40-4a3a-97fc-6e4d6ead7291",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.066400000000001,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": null,
+      "componentBoundary": {
+        "classification": "raf-running",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "descending",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 157,
+        "lastFrameAtMs": 13669.3,
+        "lastFrameAgeMs": 6.200000000000728,
+        "lastFrameGapMs": 16.599999999998545,
+        "maxFrameGapMs": 2666.6,
+        "lastFrameDurationMs": 4.600000001490116,
+        "maxFrameDurationMs": 33.899999998509884,
+        "heartbeatCount": 263,
+        "lastHeartbeatAtMs": 13658.89999999851,
+        "lastHeartbeatAgeMs": 16.600000001490116,
+        "maxHeartbeatGapMs": 149.80000000447035,
+        "observationCount": 146,
+        "lastObservationAtMs": 13669.79999999702,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 112.79999999701977,
+            "duration": 71
+          },
+          {
+            "startTime": 1989.1000000014901,
+            "duration": 95
+          }
+        ]
+      },
+      "failure": {
+        "stage": "open-page",
+        "code": "gameplay-acceptance-failed",
+        "target": null,
+        "detail": {
+          "label": "layout-stability",
+          "summary": ".chat-panel exceeded 1200ms while measuring layout stability."
+        }
+      }
+    }
+  },
+  "error": "open-page: gameplay-acceptance-failed"
+}

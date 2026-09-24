@@ -11,7 +11,7 @@ export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   jumpPressMs: 35,
   settleMs: 180,
   maxJumpAttempts: 3,
-  maxObservationWaitMs: 1000,
+  maxObservationWaitMs: 3000,
 });
 
 const GAMEPLAY_SURFACE_FRACTIONS = Object.freeze([
@@ -43,6 +43,18 @@ export function gameplaySurfaceCandidatePoints({ x, y, width, height }) {
 
 export function generationStreamIsOpen({ stopControlVisible }) {
   return stopControlVisible === true;
+}
+
+/** Keep workspace layout checks in active gameplay mode without saving edits. */
+export async function enterFreshGameplayLayoutMode(page) {
+  const play = page.getByRole("button", { name: "Play", exact: true });
+  if (await play.isVisible()) {
+    await play.click();
+    return "started";
+  }
+  const edit = page.getByRole("button", { name: "Edit", exact: true });
+  if (await edit.isVisible()) return "already-playing";
+  throw new Error("Fresh gameplay layout requires a Play or Edit control.");
 }
 
 /** Sample a strictly newer observation without reusing a stale frame. */

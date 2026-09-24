@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  FRESH_GAMEPLAY_LIMITS,
   buildFreshGameplayTargets,
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
   chooseGameplayPlatformAction,
   chooseGameplaySteeringKeys,
+  enterFreshGameplayLayoutMode,
   generationStreamIsOpen,
   gameplayJumpPhase,
   gameplayPlatformSurfaceHeight,
@@ -232,6 +234,37 @@ describe("fresh flagship gameplay driver", () => {
     expect(generationStreamIsOpen({ stopControlVisible: false })).toBe(false);
   });
 
+  it("enters gameplay before layout checks and keeps an active run playing", async () => {
+    const makePage = (initialMode: "editing" | "playing") => {
+      let mode = initialMode;
+      const calls: string[] = [];
+      const page = {
+        getByRole: (_role: string, { name }: { name: string }) => ({
+          isVisible: async () =>
+            (name === "Play" && mode === "editing") ||
+            (name === "Edit" && mode === "playing"),
+          click: async () => {
+            calls.push(name);
+            mode = name === "Play" ? "playing" : "editing";
+          },
+        }),
+      };
+      return { page, calls, mode: () => mode };
+    };
+
+    const afterEdit = makePage("editing");
+    expect(await enterFreshGameplayLayoutMode(afterEdit.page)).toBe("started");
+    expect(afterEdit.calls).toEqual(["Play"]);
+    expect(afterEdit.mode()).toBe("playing");
+
+    const afterGameplay = makePage("playing");
+    expect(await enterFreshGameplayLayoutMode(afterGameplay.page)).toBe(
+      "already-playing",
+    );
+    expect(afterGameplay.calls).toEqual([]);
+    expect(afterGameplay.mode()).toBe("playing");
+  });
+
   it("waits through a stale generation frame and samples a newer frame", async () => {
     const stale = { atMs: 10 };
     const fresh = { atMs: 20 };
@@ -245,32 +278,63 @@ describe("fresh flagship gameplay driver", () => {
     expect(sample.polls).toBe(1);
   });
 
+  it("accepts a fresh gameplay frame delivered after a 1s RAF gap", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const stale = { atMs: 10 };
+      const fresh = { atMs: 20 };
+      let reads = 0;
+      const sample = await waitForFreshGameplayObservation(
+        async () => (reads++ < 25 ? stale : fresh),
+        async (delayMs: number) => {
+          await vi.advanceTimersByTimeAsync(delayMs);
+        },
+        { lastAtMs: stale.atMs },
+      );
+      expect(sample.observation).toBe(fresh);
+      expect(sample.waitedMs).toBe(1250);
+      expect(sample.polls).toBe(25);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("rejects a stream movement claim when no newer frame arrives", async () => {
-    const stale = { atMs: 10 };
-    const sample = await waitForFreshGameplayObservation(
-      async () => stale,
-      async () => {},
-      { lastAtMs: 10, maxWaitMs: 100 },
-    );
-    expect(sample.observation).toBeNull();
-    expect(sample.polls).toBe(2);
-    const validation = validateGenerationMovementObservation(
-      {
-        projectId: "project",
-        revision: 2,
-        renderer: "webgl",
-        atMs: 10,
-        player: { position: [0, 0, 0] },
-      },
-      sample.observation,
-      {
-        projectId: "project",
-        streamOpenBefore: true,
-        streamOpenAfter: true,
-      },
-    );
-    expect(validation.valid).toBe(false);
-    expect(validation.failures).toContain("missing-after-observation");
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(0);
+      const stale = { atMs: 10 };
+      const sample = await waitForFreshGameplayObservation(
+        async () => stale,
+        async (delayMs: number) => {
+          await vi.advanceTimersByTimeAsync(delayMs);
+        },
+        { lastAtMs: 10 },
+      );
+      expect(sample.observation).toBeNull();
+      expect(sample.waitedMs).toBe(FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs);
+      expect(sample.polls).toBe(60);
+      const validation = validateGenerationMovementObservation(
+        {
+          projectId: "project",
+          revision: 2,
+          renderer: "webgl",
+          atMs: 10,
+          player: { position: [0, 0, 0] },
+        },
+        sample.observation,
+        {
+          projectId: "project",
+          streamOpenBefore: true,
+          streamOpenAfter: true,
+        },
+      );
+      expect(validation.valid).toBe(false);
+      expect(validation.failures).toContain("missing-after-observation");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("rejects nonplaying and nonfinite generation movement samples", () => {

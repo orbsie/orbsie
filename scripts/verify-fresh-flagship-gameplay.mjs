@@ -17,7 +17,11 @@ import {
   observeFlagshipMovementDuringGeneration,
   runFreshFlagshipGameplay,
 } from "./provider-browser-e2e.mjs";
-import { waitForFreshGameplayObservation } from "./lib/fresh-flagship-gameplay.mjs";
+import {
+  FRESH_GAMEPLAY_LIMITS,
+  enterFreshGameplayLayoutMode,
+  waitForFreshGameplayObservation,
+} from "./lib/fresh-flagship-gameplay.mjs";
 
 const appUrl = process.env.TEST_URL ?? "http://localhost:3040";
 const appOrigin = new URL(appUrl).origin;
@@ -343,6 +347,71 @@ function summarizePartialTraversal(partial, failure) {
   };
 }
 
+function summarizeFixtureFailureDetail(message) {
+  const layoutLabels = [
+    "desktop-playing",
+    "phone-sheet-open",
+    "phone-sheet-closed",
+    "phone-landscape",
+    "phone-landing",
+    "phone-reopened",
+  ];
+  const lines = String(message)
+    .split("\n")
+    .slice(0, 3)
+    .map((line) => line.slice(0, 240));
+  const label = layoutLabels.find((candidate) =>
+    lines.some((line) => line.includes(candidate)),
+  );
+  if (label) return { label, summary: lines.join(" ").slice(0, 600) };
+  const stabilityTimeout = String(message).match(
+    /([.#a-zA-Z0-9_-]+) did not settle within (\d+)ms while measuring the fixture layout\./,
+  );
+  return stabilityTimeout
+    ? {
+        label: "layout-stability",
+        summary: `${stabilityTimeout[1]} exceeded ${stabilityTimeout[2]}ms while measuring layout stability.`,
+      }
+    : null;
+}
+
+function summarizeSoftwareLayout(layout) {
+  if (!layout) return null;
+  const summarizeViewport = (metrics, editHitTest = false) =>
+    metrics
+      ? {
+          viewport: metrics.viewport,
+          interaction: metrics.interaction,
+          composer: metrics.composer,
+          sheetHandle: metrics.sheetHandle,
+          documentScrollHeight: metrics.documentScrollHeight,
+          horizontalOverflow: metrics.horizontalOverflow,
+          verticalOverflow: metrics.verticalOverflow,
+          editHitTest,
+        }
+      : null;
+  return {
+    phoneLandscapeMobileSheet: {
+      status: coarsePointerFixture ? "checked" : "skipped",
+      ...(coarsePointerFixture
+        ? {
+            closed: summarizeViewport(layout.phoneLandscapeClosed),
+            open: summarizeViewport(
+              layout.phoneLandscapeOpen,
+              layout.phoneLandscapeOpen?.editHitTest ?? false,
+            ),
+          }
+        : {
+            reason:
+              "Landscape mobile sheet rules require (pointer: coarse); this run uses a fine pointer.",
+          }),
+      editHitTest: coarsePointerFixture
+        ? (layout.phoneLandscapeOpen?.editHitTest ?? false)
+        : (layout.phoneLandscapeEditHitTest ?? false),
+    },
+  };
+}
+
 function summarizeRendererEvidence(evidence) {
   const phases = evidence.gameplayPhases ?? {};
   const movement = evidence.generationMovement;
@@ -351,6 +420,8 @@ function summarizeRendererEvidence(evidence) {
   return {
     status: evidence.status ?? (failure ? "failed" : "passed"),
     renderer: evidence.renderer ?? null,
+    pointerMode: coarsePointerFixture ? "coarse" : "fine",
+    layout: summarizeSoftwareLayout(evidence.layout),
     generationRequests: evidence.generationRequests ?? null,
     projectId: evidence.projectId ?? null,
     revision: evidence.revision ?? null,
@@ -455,7 +526,9 @@ async function activateFixtureControl(locator) {
 async function waitForStableBoundingBox(
   page,
   selector,
-  { maxWaitMs = 1200, stableFrames = 2, requireInViewport = false } = {},
+  // Headless SwiftShader has delayed RAF by up to 2.7s while the page's 50ms
+  // heartbeat stayed responsive; leave a bounded margin for settling frames.
+  { maxWaitMs = 5000, stableFrames = 2, requireInViewport = false } = {},
 ) {
   const startedAt = Date.now();
   const viewport = page.viewportSize();
@@ -524,6 +597,10 @@ async function measureSoftwareViewport(
         anyPointerCoarse: matchMedia("(any-pointer: coarse)").matches,
         maxTouchPoints: navigator.maxTouchPoints,
       },
+      documentScrollHeight: Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+      ),
       horizontalOverflow:
         document.documentElement.scrollWidth > window.innerWidth + 1 ||
         document.body.scrollWidth > window.innerWidth + 1,
@@ -541,6 +618,11 @@ async function measureSoftwareViewport(
     metrics.viewport.height,
     viewport.height,
     `${label} viewport height changed unexpectedly.`,
+  );
+  assert.equal(
+    metrics.verticalOverflow,
+    false,
+    `${label} has vertical overflow: ${JSON.stringify({ viewport: metrics.viewport, documentScrollHeight: metrics.documentScrollHeight, composer: metrics.composer })}.`,
   );
   // The scene is a full-bleed visual layer. During the mobile sheet transition
   // its camera framing can intentionally leave part of that layer outside the
@@ -602,11 +684,6 @@ async function measureSoftwareViewport(
     metrics.horizontalOverflow,
     false,
     `${label} has horizontal overflow.`,
-  );
-  assert.equal(
-    metrics.verticalOverflow,
-    false,
-    `${label} has vertical overflow.`,
   );
   return metrics;
 }
@@ -778,18 +855,53 @@ async function verifySoftwareWorkspaceLayoutSteps(page, evidenceDir, layout) {
 
   await page.setViewportSize({ width: 844, height: 390 });
   await page.waitForTimeout(150);
-  layout.phoneLandscape = await measureSoftwareViewport(
-    page,
-    "phone-landscape",
-    { allowClosedComposer: true },
-  );
+  await page.screenshot({
+    path: resolve(evidenceDir, "software-phone-landscape-precheck.png"),
+    fullPage: true,
+  });
+  if (coarsePointerFixture) {
+    // The portrait sheet state persists across rotation. In landscape, assert
+    // that the collapsed handle stays reachable, then open the sheet and measure
+    // the full composer separately.
+    const landscapeHandle = page.locator(".sheet-handle");
+    await expect(landscapeHandle).toBeVisible();
+    await expect(landscapeHandle).toHaveAttribute("aria-expanded", "false");
+    layout.phoneLandscapeClosed = await measureSoftwareViewport(
+      page,
+      "phone-landscape-closed",
+      { allowClosedComposer: true },
+    );
+    await page.screenshot({
+      path: resolve(evidenceDir, "software-phone-landscape-closed.png"),
+      fullPage: true,
+    });
+    await activateFixtureControl(landscapeHandle);
+    await expect(landscapeHandle).toHaveAttribute("aria-expanded", "true");
+    layout.phoneLandscapeOpenSettle = await waitForStableBoundingBox(
+      page,
+      ".chat-panel",
+      { requireInViewport: true },
+    );
+    layout.phoneLandscapeOpen = await measureSoftwareViewport(
+      page,
+      "phone-landscape-open",
+    );
+    await page.screenshot({
+      path: resolve(evidenceDir, "software-phone-landscape-open.png"),
+      fullPage: true,
+    });
+  } else {
+    layout.phoneLandscapeMobileSheetSkipped =
+      "Landscape mobile sheet rules require (pointer: coarse); this run uses a fine pointer.";
+  }
   await expect(
     page.getByRole("button", { name: "Edit", exact: true }),
   ).toBeVisible();
   await activateFixtureControl(
     page.getByRole("button", { name: "Edit", exact: true }),
   );
-  layout.phoneLandscape.editHitTest = true;
+  if (coarsePointerFixture) layout.phoneLandscapeOpen.editHitTest = true;
+  else layout.phoneLandscapeEditHitTest = true;
   await page.screenshot({
     path: resolve(evidenceDir, "software-phone-landscape.png"),
     fullPage: true,
@@ -860,7 +972,10 @@ async function waitForFreshMatchingObservation(
       (delayMs) => page.waitForTimeout(delayMs),
       {
         lastAtMs: cursor,
-        maxWaitMs: Math.min(1000, maxWaitMs - (Date.now() - startedAt)),
+        maxWaitMs: Math.min(
+          FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs,
+          maxWaitMs - (Date.now() - startedAt),
+        ),
       },
     );
     if (!sample.observation) break;
@@ -1713,8 +1828,11 @@ async function runRenderer(browser, renderer) {
     assert.equal(stream.requests, 3);
     stage = "complete";
     assert.deepEqual(blockedExternalRequests, []);
-    if (renderer === "software")
+    if (renderer === "software") {
+      await enterFreshGameplayLayoutMode(page);
+      await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
       layout = await verifySoftwareWorkspaceLayout(page, evidenceDir);
+    }
     // The software fixture deliberately blocks WebGL so the app exercises its
     // Canvas2D fallback. Three.js reports that expected initialization failure
     // as a page error; retain it in the report while failing on every other
@@ -1800,7 +1918,14 @@ async function runRenderer(browser, renderer) {
       message.match(
         /(?:approaching|contact platform|reach) ([A-Za-z0-9_-]+)/,
       )?.[1] ?? null;
-    partialEvidence.failure = { stage, code, target };
+    partialEvidence.failure = {
+      stage,
+      code,
+      target,
+      ...(summarizeFixtureFailureDetail(message)
+        ? { detail: summarizeFixtureFailureDetail(message) }
+        : {}),
+    };
     const wrappedError = new Error(
       `${stage}: ${code}${target ? ` (${target})` : ""}`,
     );
@@ -1821,6 +1946,10 @@ async function runRenderer(browser, renderer) {
 
 const report = {
   passed: false,
+  fixtureConfiguration: {
+    pointerMode: coarsePointerFixture ? "coarse" : "fine",
+    layoutOnly,
+  },
   scope:
     "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
   appUrl,
