@@ -22,6 +22,11 @@ older rows below are a historical inventory, not a completion claim.
   browser check loaded a saved catalog tree and changed the camera from the
   default view to 600% without model calls or page errors. This improves
   legibility on reopening; it does not certify generated-model quality.
+- A new textured CC0 mushroom is admitted in local source and passed a
+  single-asset mixed create/export/standalone browser check with exact GLB and
+  license hashes. The full 11-asset cold scene exposed a cache lease race;
+  the integration fix and production release are pending. The small exported
+  fixture remains visually distant in the standalone play camera.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
   disconnected stems. Production authoring-review remains off. Gateway credit

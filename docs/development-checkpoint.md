@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 textured catalog admission in integration: source `8beb1a0` admits a
+reviewed Asset Quest Fly Agaric Basic self-contained GLB and exact bundled CC0
+license as the 11th catalog asset. The official author page lists CC0; source
+archive, original FBX/TGA, derivative GLB, license, and active-bounds hashes
+are recorded in the manifest. The plain verifier passed 11 assets, 11 bounds
+and two sources; 11 focused tests, typecheck and local optimized build passed.
+A synthetic mixed create/export/standalone run loaded this exact mushroom and
+exported exact GLB/license bytes with zero model or external requests:
+`docs/evidence/catalog-assetquest-admission/`. This is not live-provider proof.
+The full 11-asset cold scene exposed a cache lease race: all worker decodes
+succeeded, but the final entry displayed a load error after cache trimming.
+The bounded Luna fix and full-catalog recheck are in progress; do not deploy the
+catalog admission until they pass. The standalone snapshot also renders this
+small two-object world at a distant play-camera scale, a separate visual
+legibility gap. Avoid treating functional playback as finished visual quality.
+
 Sep 24 owner code follow-up: a fresh production ChatGPT device challenge was
 shown to the owner with the official URL. Its status remained pending until
 expiry and then returned idle/disconnected; cancellation returned HTTP 200 and
