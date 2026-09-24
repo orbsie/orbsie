@@ -15,6 +15,12 @@ and page-error classification; [the screenshot](landing-software-mobile.png)
 shows the result. The single Three.js WebGL-context error was expected during
 fallback.
 
+Android 15 emulator Chrome also opened the promoted `orbsie.com` page at
+412×786 CSS pixels with WebGL forced unavailable. Its software canvas painted
+the planet and the composer remained available, with zero generation requests.
+The [Android screenshot](landing-android15-software.png) and `android15Emulator`
+entry in the report record this separate check.
+
 This release check does not cover a live provider request, ChatGPT consent,
 physical mobile hardware, new game export/publication, or the disabled
 production authoring-review flag.

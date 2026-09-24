@@ -24,5 +24,31 @@
   "generationRequests": 0,
   "pageErrors": [
     "THREE.WebGLRenderer: Error creating WebGL context."
-  ]
+  ],
+  "android15Emulator": {
+    "status": 200,
+    "state": {
+      "viewport": {
+        "width": 412,
+        "height": 786,
+        "dpr": 2.625
+      },
+      "canvas": {
+        "width": 412,
+        "height": 786,
+        "centerPixel": [
+          28,
+          95,
+          124,
+          255
+        ]
+      },
+      "advisoryVisible": true
+    },
+    "generationRequests": 0,
+    "pageErrors": [
+      "THREE.WebGLRenderer: Error creating WebGL context."
+    ],
+    "screenshot": "landing-android15-software.png"
+  }
 }

@@ -8,6 +8,9 @@ matches the local build. A signed-out 390-by-844 production Chromium smoke with
 WebGL deliberately disabled rendered the software planet and prompt composer,
 with HTTP 200, zero generation requests, and only the expected failed-WebGL
 initialization error. Evidence: `docs/evidence/production-release-20260923/`.
+The same signed-out fallback also loaded in actual Android 15 emulator Chrome at
+412-by-786 CSS pixels with a painted planet, prompt composer, and zero
+generation requests; it remains emulator evidence, not physical-device proof.
 This does not establish live provider create/edit, physical-device performance,
 or publication acceptance. Production `/api/config` still reports
 `authoringReview:false`; the three-call visual inspect/correct loop is not yet
