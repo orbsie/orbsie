@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 free-prompt 402 accounting fix: after the live second prompt was
+rejected by Gateway, `POST /api/generate` now transactionally refunds a
+successfully claimed legacy free prompt only when the upstream provider
+returns HTTP 402 before streaming. The response keeps the user-safe error and
+reports the restored remaining count. Other provider failures and the separate
+authoring-review admission path do not use this refund. Astra reviewed the
+Luna diff, ran 22 focused route tests, typecheck, formatting and diff checks,
+and ran both trial-database tests against an isolated PostgreSQL 16 container;
+all passed. The container was removed. Commit `da3b54b`. This source fix is
+not deployed yet; it does not restore funding for free generation.
+
 Sep 24 second owner-visible ChatGPT follow-up: after the owner offered to use
 a shown URL/code, a fresh isolated production session received a real OpenAI
 device challenge. The code was displayed in chat, but the final read after its
