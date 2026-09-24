@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readFile } from "node:fs/promises";
 
 const state = vi.hoisted(() => ({ database: vi.fn() }));
 vi.mock("../src/lib/server/auth", async (importOriginal) => ({
@@ -196,6 +197,7 @@ describe("internal authoring-run ledger", () => {
       initialSceneDigest: "c".repeat(64),
     });
     expect(database.ledger?.phase_token_hash).not.toBe(issued.phaseToken);
+    expect(database.ledger?.remaining_review_slots).toBe(3);
 
     await expect(
       completeInitialAuthoringRun({
@@ -222,6 +224,7 @@ describe("internal authoring-run ledger", () => {
       expectedRevision: 2,
       expectedSceneBindingDigest: "d".repeat(64),
     });
+    expect(database.ledger?.remaining_review_slots).toBe(2);
     await expect(
       completeAuthoringReview({
         ...binding,
@@ -271,20 +274,79 @@ describe("internal authoring-run ledger", () => {
       sceneBindingDigest: "e".repeat(64),
       accepted: false,
     });
+    await expect(
+      admitAuthoringReview({
+        ...binding,
+        runId: issued.runId,
+        reviewPhase: "final-review",
+        expectedRevision: 3,
+        expectedSceneBindingDigest: "e".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "phase-conflict" });
+    await expect(
+      completeAuthoringReview({
+        ...binding,
+        runId: issued.runId,
+        phaseToken: first.phaseToken,
+        reviewPhase: "review",
+        revision: 3,
+        sceneBindingDigest: "e".repeat(64),
+        accepted: false,
+      }),
+    ).rejects.toMatchObject({ code: "phase-conflict" });
+
+    const second = await admitAuthoringReview({
+      ...binding,
+      runId: issued.runId,
+      reviewPhase: "review",
+      expectedRevision: 3,
+      expectedSceneBindingDigest: "e".repeat(64),
+    });
+    expect(database.ledger?.remaining_review_slots).toBe(1);
+    await expect(
+      completeAuthoringReview({
+        ...binding,
+        runId: issued.runId,
+        phaseToken: first.phaseToken,
+        reviewPhase: "review",
+        revision: 3,
+        sceneBindingDigest: "e".repeat(64),
+        accepted: false,
+      }),
+    ).rejects.toMatchObject({ code: "token-mismatch" });
+    await completeAuthoringReview({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: second.phaseToken,
+      reviewPhase: "review",
+      revision: 4,
+      sceneBindingDigest: "f".repeat(64),
+      accepted: false,
+    });
+    await expect(
+      admitAuthoringReview({
+        ...binding,
+        runId: issued.runId,
+        reviewPhase: "review",
+        expectedRevision: 4,
+        expectedSceneBindingDigest: "f".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "phase-conflict" });
     const final = await admitAuthoringReview({
       ...binding,
       runId: issued.runId,
       reviewPhase: "final-review",
-      expectedRevision: 3,
-      expectedSceneBindingDigest: "e".repeat(64),
+      expectedRevision: 4,
+      expectedSceneBindingDigest: "f".repeat(64),
     });
+    expect(database.ledger?.remaining_review_slots).toBe(0);
     await expect(
       failAuthoringRun({
         ...binding,
         runId: issued.runId,
-        phaseToken: first.phaseToken,
-        revision: 3,
-        sceneBindingDigest: "e".repeat(64),
+        phaseToken: second.phaseToken,
+        revision: 4,
+        sceneBindingDigest: "f".repeat(64),
       }),
     ).rejects.toMatchObject({ code: "token-mismatch" });
     expect((await readAuthoringRun(issued.runId)).phase).toBe("final-review");
@@ -293,8 +355,8 @@ describe("internal authoring-run ledger", () => {
       runId: issued.runId,
       phaseToken: final.phaseToken,
       reviewPhase: "final-review",
-      revision: 3,
-      sceneBindingDigest: "e".repeat(64),
+      revision: 4,
+      sceneBindingDigest: "f".repeat(64),
       accepted: true,
     });
     await expect(
@@ -302,8 +364,8 @@ describe("internal authoring-run ledger", () => {
         ...binding,
         runId: issued.runId,
         reviewPhase: "final-review",
-        expectedRevision: 3,
-        expectedSceneBindingDigest: "e".repeat(64),
+        expectedRevision: 4,
+        expectedSceneBindingDigest: "f".repeat(64),
       }),
     ).rejects.toMatchObject({ code: "phase-conflict" });
   });
@@ -369,6 +431,7 @@ describe("internal authoring-run ledger", () => {
   });
 
   it("keeps the final review verdict-only", async () => {
+    const database = fakeDatabase();
     const issued = await issueAuthoringRun({
       ...binding,
       initialRevision: 1,
@@ -397,12 +460,28 @@ describe("internal authoring-run ledger", () => {
       sceneBindingDigest: "e".repeat(64),
       accepted: false,
     });
+    const second = await admitAuthoringReview({
+      ...binding,
+      runId: issued.runId,
+      reviewPhase: "review",
+      expectedRevision: 2,
+      expectedSceneBindingDigest: "e".repeat(64),
+    });
+    await completeAuthoringReview({
+      ...binding,
+      runId: issued.runId,
+      phaseToken: second.phaseToken,
+      reviewPhase: "review",
+      revision: 3,
+      sceneBindingDigest: "f".repeat(64),
+      accepted: false,
+    });
     const final = await admitAuthoringReview({
       ...binding,
       runId: issued.runId,
       reviewPhase: "final-review",
-      expectedRevision: 2,
-      expectedSceneBindingDigest: "e".repeat(64),
+      expectedRevision: 3,
+      expectedSceneBindingDigest: "f".repeat(64),
     });
     await expect(
       completeAuthoringReview({
@@ -410,11 +489,17 @@ describe("internal authoring-run ledger", () => {
         runId: issued.runId,
         phaseToken: final.phaseToken,
         reviewPhase: "final-review",
-        revision: 3,
-        sceneBindingDigest: "f".repeat(64),
+        revision: 4,
+        sceneBindingDigest: "0".repeat(64),
         accepted: false,
       }),
     ).rejects.toMatchObject({ code: "revision-mismatch" });
+    expect(database.ledger).toMatchObject({
+      phase: "final-review",
+      remaining_review_slots: 0,
+      completed_revision: 3,
+      completed_scene_digest: "f".repeat(64),
+    });
   });
 
   it("rejects full binding and backwards-revision substitutions", async () => {
@@ -450,6 +535,15 @@ describe("internal authoring-run ledger", () => {
       revision: 4,
       sceneBindingDigest: "d".repeat(64),
     });
+    await expect(
+      admitAuthoringReview({
+        ...binding,
+        runId: issued.runId,
+        reviewPhase: "review",
+        expectedRevision: 4,
+        expectedSceneBindingDigest: "c".repeat(64),
+      }),
+    ).rejects.toMatchObject({ code: "binding-mismatch" });
     await expect(
       admitAuthoringReview({
         ...binding,
@@ -537,6 +631,110 @@ describe("internal authoring-run ledger", () => {
         expectedSceneBindingDigest: "c".repeat(64),
       }),
     ).rejects.toMatchObject({ code: "phase-conflict" });
+  });
+
+  it.each([3, 2, 1])(
+    "allows exact-token failure cleanup after completion with %i review slots",
+    async (remainingSlots) => {
+      const database = fakeDatabase();
+      const issued = await issueAuthoringRun({
+        ...binding,
+        initialRevision: 0,
+        initialSceneDigest: "c".repeat(64),
+      });
+      await completeInitialAuthoringRun({
+        ...binding,
+        runId: issued.runId,
+        phaseToken: issued.phaseToken,
+        revision: 0,
+        sceneBindingDigest: "d".repeat(64),
+      });
+
+      let phaseToken = issued.phaseToken;
+      let revision = 0;
+      let sceneBindingDigest = "d".repeat(64);
+      if (remainingSlots <= 2) {
+        const firstReview = await admitAuthoringReview({
+          ...binding,
+          runId: issued.runId,
+          reviewPhase: "review",
+          expectedRevision: revision,
+          expectedSceneBindingDigest: sceneBindingDigest,
+        });
+        phaseToken = firstReview.phaseToken;
+        revision = 1;
+        sceneBindingDigest = "e".repeat(64);
+        await completeAuthoringReview({
+          ...binding,
+          runId: issued.runId,
+          phaseToken,
+          reviewPhase: "review",
+          revision,
+          sceneBindingDigest,
+          accepted: false,
+        });
+      }
+      if (remainingSlots <= 1) {
+        const secondReview = await admitAuthoringReview({
+          ...binding,
+          runId: issued.runId,
+          reviewPhase: "review",
+          expectedRevision: revision,
+          expectedSceneBindingDigest: sceneBindingDigest,
+        });
+        phaseToken = secondReview.phaseToken;
+        revision = 2;
+        sceneBindingDigest = "f".repeat(64);
+        await completeAuthoringReview({
+          ...binding,
+          runId: issued.runId,
+          phaseToken,
+          reviewPhase: "review",
+          revision,
+          sceneBindingDigest,
+          accepted: false,
+        });
+      }
+
+      expect(database.ledger?.remaining_review_slots).toBe(remainingSlots);
+      await expect(
+        failAuthoringRun({
+          ...binding,
+          runId: issued.runId,
+          phaseToken,
+          revision,
+          sceneBindingDigest,
+        }),
+      ).resolves.toMatchObject({ phase: "failed" });
+      expect(database.ledger?.phase).toBe("failed");
+      expect(database.ledger?.phase_token_hash).toBeNull();
+    },
+  );
+
+  it("migrates the slot default and range without replacing unrelated checks", async () => {
+    const schema = await readFile(
+      new URL("../scripts/authoring-run-schema.sql", import.meta.url),
+      "utf8",
+    );
+    expect(schema).toContain(
+      "remaining_review_slots smallint NOT NULL DEFAULT 3",
+    );
+    expect(schema).toContain(
+      "ALTER COLUMN remaining_review_slots SET DEFAULT 3",
+    );
+    expect(schema).toContain(
+      "orbsie_authoring_runs_remaining_review_slots_check",
+    );
+    expect(schema).toContain(
+      "checkremaining_review_slots>=0andremaining_review_slots<=2",
+    );
+    expect(schema).toContain("CHECK (remaining_review_slots BETWEEN 0 AND 3)");
+    expect(schema).toContain(
+      "DROP CONSTRAINT orbsie_authoring_runs_remaining_review_slots_check",
+    );
+    expect(schema).toContain(
+      "RAISE EXCEPTION 'Unexpected remaining_review_slots constraint definition'",
+    );
   });
 
   it("retains the initial fence for cancellation after completion and replaces it on review admission", async () => {

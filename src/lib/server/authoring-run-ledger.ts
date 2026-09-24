@@ -8,7 +8,7 @@ import {
 import { database } from "./auth";
 
 export const AUTHORING_RUN_TTL_MS = 15 * 60 * 1000;
-export const AUTHORING_RUN_REVIEW_SLOTS = 2;
+export const AUTHORING_RUN_REVIEW_SLOTS = 3;
 export const FREE_AUTHORING_GLOBAL_UNITS = 3;
 
 export type AuthoringProvider = "free" | "openrouter" | "gateway" | "chatgpt";
@@ -430,8 +430,11 @@ export async function failAuthoringRun(
         ) &&
         !(
           row.phase === "completed" &&
-          (row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS ||
-            row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS - 1)
+          [
+            AUTHORING_RUN_REVIEW_SLOTS,
+            AUTHORING_RUN_REVIEW_SLOTS - 1,
+            AUTHORING_RUN_REVIEW_SLOTS - 2,
+          ].includes(row.remaining_review_slots)
         )
       )
         throw new AuthoringRunLedgerError(
@@ -439,12 +442,13 @@ export async function failAuthoringRun(
           "The authoring phase cannot be failed now.",
         );
       const updated = await client.query(
-        "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp() AND (phase <> 'completed' OR remaining_review_slots IN ($3,$4))",
+        "UPDATE orbsie_authoring_runs SET phase='failed',failed_at=clock_timestamp(),phase_token_hash=NULL,phase_token_expires_at=NULL,updated_at=clock_timestamp() WHERE run_id=$1 AND phase=$2 AND expires_at > clock_timestamp() AND (phase <> 'completed' OR remaining_review_slots IN ($3,$4,$5))",
         [
           input.runId,
           row.phase,
           AUTHORING_RUN_REVIEW_SLOTS,
           AUTHORING_RUN_REVIEW_SLOTS - 1,
+          AUTHORING_RUN_REVIEW_SLOTS - 2,
         ],
       );
       if (updated.rowCount !== 1)
@@ -499,12 +503,19 @@ export async function admitAuthoringReview(input: AdmitAuthoringReviewInput) {
             "binding-mismatch",
             "Review scene binding is stale.",
           );
-        const expectedSlots = input.reviewPhase === "review" ? 2 : 1;
-        if (row.remaining_review_slots !== expectedSlots)
+        const reviewSlotsAllowed =
+          input.reviewPhase === "review"
+            ? [
+                AUTHORING_RUN_REVIEW_SLOTS,
+                AUTHORING_RUN_REVIEW_SLOTS - 1,
+              ].includes(row.remaining_review_slots)
+            : row.remaining_review_slots === AUTHORING_RUN_REVIEW_SLOTS - 2;
+        if (!reviewSlotsAllowed)
           throw new AuthoringRunLedgerError(
             "phase-conflict",
             "This review phase has already been consumed.",
           );
+        const expectedSlots = row.remaining_review_slots;
         const nextPhase =
           input.reviewPhase === "review" ? "reviewing" : "final-review";
         if (input.signal?.aborted) throw cancellationReason(input.signal);
