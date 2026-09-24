@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 24 Android fallback production promotion: local and Vercel optimized
+builds passed, and deployment
+`https://orbsie-r62i23137-grappeggias-projects.vercel.app` was aliased to
+`https://orbsie.com/`. The Android 15 emulator Chrome visual verifier passed
+against production: software renderer ready, 19,688 sampled planet pixels,
+no page errors, blocked requests or horizontal overflow. Astra inspected the
+live screenshot; the planet is visible. Desktop read-only release smoke also
+passed and Astra inspected its WebGL landing; deployed player and geometry
+worker hashes match the local build. Evidence:
+`docs/evidence/android-production-landing-20260924/production-after-fix/`
+and `docs/evidence/production-release-20260924-android-fallback/`. This
+closes the emulator landing defect, not the physical-device/mobile E2E gate.
+
+Sep 24 ChatGPT local challenge: `POST /api/provider-session` and
+`POST /api/chatgpt/start` both succeeded under a matching local auth origin.
+The fresh device URL/code was shown to the owner, but no authorization
+completed during the 180-second browser watch. No generation call was made.
+A fresh device challenge is needed only when the owner is ready to authorize
+promptly; the old code must not be reused.
+
 Sep 24 Android renderer correction, local acceptance: a known Android Emulator
 Google SwiftShader WebGL2 renderer now routes to the existing Canvas2D scene
 before R3F mounts. This avoids a browser page error and preserves WebGL for
