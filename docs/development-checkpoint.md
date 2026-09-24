@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 live-acceptance harness handoff: the OpenRouter browser harness now
+recognizes the two-correction/final-verdict sequence, preserves the prior
+three-call default, and requires both a four-call limit setting and an
+explicit approval setting before allowing a fourth call. It checks the Luna
+model, 4,096 output-token cap, default tier, no browser-visible retry,
+decreasing review slots, exact revision/evidence chain, and reload recovery.
+Astra reviewed the Luna diff and corrected final-review partial-verdict
+validation so a nonmutating `revise` result is not rejected. All 13 focused
+tests, typecheck, syntax, and formatting checks pass. No live model call was
+made; the owner has been asked separately to approve one bounded four-call
+OpenRouter quality run. Production feature flag remains off. Gateway credit
+remains negative, and computer-use exposes no signed-in Chrome surface for
+ChatGPT acceptance.
+
 Sep 24 signed-in recovery milestone: production-build deterministic browser
 fixture passed a four-request authoring review with three independent cloud
 journal segments, chained snapshot tokens, and reload/recovery of final revision 8. The conflict path still stopped before a correction segment. Astra reviewed

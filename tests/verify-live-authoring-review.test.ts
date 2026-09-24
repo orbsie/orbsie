@@ -1,8 +1,130 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  authorizeAuthoringReviewCall,
+  configuredLiveCallLimit,
   preflightGenerationOrigin,
+  safeReviewResponse,
   summarizeProjectStructure,
+  validateReviewBindingRevision,
+  validateReviewProgression,
 } from "../scripts/verify-live-authoring-review.mjs";
+
+const PROJECT_ID = "123e4567-e89b-42d3-a456-426614174000";
+const RUN_ID = "223e4567-e89b-42d3-a456-426614174001";
+const CLIENT_RUN_ID = "323e4567-e89b-42d3-a456-426614174002";
+const REQUEST_ID = "423e4567-e89b-42d3-a456-426614174003";
+const DIGEST_A = "a".repeat(64);
+const DIGEST_B = "b".repeat(64);
+type CallFixture = Record<string, unknown>;
+type GuardOptions = {
+  liveCallLimit?: number;
+  outputCap?: number;
+  serviceTier?: string;
+  retryCount?: number;
+  expectedInitialRevision?: number | null;
+};
+
+function initialCall(): CallFixture {
+  return {
+    ordinal: 1,
+    phase: "initial-generation",
+    route: "/api/generate",
+    method: "POST",
+    status: 200,
+    requestId: REQUEST_ID,
+    clientRunId: CLIENT_RUN_ID,
+    authoringRunId: RUN_ID,
+    projectId: PROJECT_ID,
+    modelMatched: true,
+    providerMatched: true,
+    authoringReviewEnabled: true,
+    blocked: false,
+  };
+}
+
+function reviewCall({
+  ordinal,
+  phase = "review",
+  projectRevision,
+  bindingRevision,
+  remainingCalls,
+  verdict = "revise",
+  digest = DIGEST_A,
+}: {
+  ordinal: number;
+  phase?: string;
+  projectRevision: number;
+  bindingRevision: number | null;
+  remainingCalls: number | null;
+  verdict?: string;
+  digest?: string;
+}): CallFixture {
+  return {
+    ordinal,
+    phase,
+    route: "/api/generate/review",
+    method: "POST",
+    status: 200,
+    requestId: `523e4567-e89b-42d3-a456-${String(ordinal).padStart(12, "0")}`,
+    clientRunId: CLIENT_RUN_ID,
+    authoringRunId: RUN_ID,
+    requestedAuthoringRunId: RUN_ID,
+    projectId: PROJECT_ID,
+    projectRevision,
+    modelMatched: true,
+    providerMatched: true,
+    reviewScope: "visual+structural",
+    reviewImageProjectId: PROJECT_ID,
+    reviewImageRevision: projectRevision,
+    structuralObservationProjectId: PROJECT_ID,
+    structuralObservationRevision: projectRevision,
+    responseBindingRevision: bindingRevision,
+    responseBindingDigest: digest,
+    remainingCalls,
+    verdict,
+    blocked: false,
+  };
+}
+
+function authorize(
+  call: CallFixture,
+  previousCalls: CallFixture[],
+  options: GuardOptions = {},
+) {
+  return authorizeAuthoringReviewCall({
+    call,
+    previousCalls,
+    liveCallLimit: options.liveCallLimit ?? 3,
+    outputCap: options.outputCap ?? 4096,
+    serviceTier: options.serviceTier ?? "default",
+    retryCount: options.retryCount ?? 0,
+    expectedInitialRevision: options.expectedInitialRevision ?? 1,
+  });
+}
+
+function nextReviewRequest({
+  ordinal,
+  phase,
+  projectRevision,
+}: {
+  ordinal: number;
+  phase: string;
+  projectRevision: number;
+}): CallFixture {
+  return {
+    ...reviewCall({
+      ordinal,
+      phase,
+      projectRevision,
+      bindingRevision: null,
+      remainingCalls: null,
+    }),
+    responseBindingRevision: null,
+    responseBindingDigest: null,
+    verdict: null,
+    remainingCalls: null,
+  };
+}
 
 describe("live authoring structural summary", () => {
   it("counts bounded geometry, part shape, scale, and color facts without retaining source data", () => {
@@ -133,6 +255,342 @@ describe("live authoring structural summary", () => {
 
   it("returns no summary for a missing or malformed snapshot", () => {
     expect(summarizeProjectStructure(null)).toBeNull();
+  });
+});
+
+describe("live authoring review call budget guard", () => {
+  it("keeps three calls as the default and requires explicit approval for four", () => {
+    expect(configuredLiveCallLimit({})).toBe(3);
+    expect(
+      configuredLiveCallLimit({
+        ORBSIE_LIVE_AUTHORING_REVIEW_CALL_LIMIT: "3",
+      }),
+    ).toBe(3);
+    expect(
+      configuredLiveCallLimit({
+        ORBSIE_LIVE_AUTHORING_REVIEW_CALL_LIMIT: "4",
+        ORBSIE_LIVE_AUTHORING_REVIEW_FOUR_CALLS_APPROVED: "1",
+      }),
+    ).toBe(4);
+    expect(() =>
+      configuredLiveCallLimit({
+        ORBSIE_LIVE_AUTHORING_REVIEW_CALL_LIMIT: "4",
+      }),
+    ).toThrow("four-call-budget-approval-required");
+    expect(() =>
+      configuredLiveCallLimit({
+        ORBSIE_LIVE_AUTHORING_REVIEW_FOUR_CALLS_APPROVED: "1",
+      }),
+    ).toThrow("four-call-budget-approval-required");
+    expect(() =>
+      configuredLiveCallLimit({
+        ORBSIE_LIVE_AUTHORING_REVIEW_CALL_LIMIT: "5",
+      }),
+    ).toThrow("invalid-live-call-limit");
+  });
+
+  it("admits legacy one-review then final-review runs", () => {
+    const initial = initialCall();
+    const first = reviewCall({
+      ordinal: 2,
+      projectRevision: 1,
+      bindingRevision: 3,
+      remainingCalls: 1,
+      digest: DIGEST_A,
+    });
+    expect(
+      authorize(
+        nextReviewRequest({ ordinal: 2, phase: "review", projectRevision: 1 }),
+        [initial],
+      ),
+    ).toMatchObject({ allowed: true, expectedPhase: "review" });
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 3,
+          phase: "final-review",
+          projectRevision: 3,
+        }),
+        [initial, first],
+      ),
+    ).toMatchObject({ allowed: true, expectedPhase: "final-review" });
+  });
+
+  it("admits the approved review, review, final-review sequence on decreasing slots", () => {
+    const initial = initialCall();
+    const first = reviewCall({
+      ordinal: 2,
+      projectRevision: 1,
+      bindingRevision: 3,
+      remainingCalls: 2,
+      digest: DIGEST_A,
+    });
+    const second = reviewCall({
+      ordinal: 3,
+      projectRevision: 3,
+      bindingRevision: 5,
+      remainingCalls: 1,
+      digest: DIGEST_B,
+    });
+    expect(
+      authorize(
+        nextReviewRequest({ ordinal: 3, phase: "review", projectRevision: 3 }),
+        [initial, first],
+        { liveCallLimit: 4 },
+      ),
+    ).toMatchObject({ allowed: true, expectedPhase: "review" });
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 4,
+          phase: "final-review",
+          projectRevision: 5,
+        }),
+        [initial, first, second],
+        { liveCallLimit: 4 },
+      ),
+    ).toMatchObject({ allowed: true, expectedPhase: "final-review" });
+  });
+
+  it("accepts review verdicts at either review ordinal and permits a partial final verdict", () => {
+    expect(
+      validateReviewProgression({
+        phase: "review",
+        verdict: "accept",
+        remainingCalls: 0,
+      }),
+    ).toBeNull();
+    expect(
+      validateReviewProgression({
+        phase: "review",
+        verdict: "accept",
+        remainingCalls: 0,
+        previousReviewResponses: [{ remainingCalls: 2 }],
+      }),
+    ).toBeNull();
+    expect(
+      validateReviewProgression({
+        phase: "final-review",
+        verdict: "revise",
+        remainingCalls: 0,
+        previousReviewResponses: [{ remainingCalls: 2 }, { remainingCalls: 1 }],
+      }),
+    ).toBeNull();
+    expect(
+      validateReviewBindingRevision({
+        phase: "final-review",
+        verdict: "revise",
+        reviewedRevision: 8,
+        bindingRevision: 8,
+      }),
+    ).toBeNull();
+    expect(
+      validateReviewBindingRevision({
+        phase: "review",
+        verdict: "revise",
+        reviewedRevision: 5,
+        bindingRevision: 8,
+      }),
+    ).toBeNull();
+    expect(
+      validateReviewBindingRevision({
+        phase: "review",
+        verdict: "revise",
+        reviewedRevision: 5,
+        bindingRevision: 5,
+      }),
+    ).toBe("review-correction-binding-invalid");
+  });
+
+  it("fails closed on missing/nondecreasing slots, unexpected phases, replays, or extra calls", () => {
+    const initial = initialCall();
+    const missingSlots = reviewCall({
+      ordinal: 2,
+      projectRevision: 1,
+      bindingRevision: 3,
+      remainingCalls: null,
+    });
+    const nondecreasingSlots = reviewCall({
+      ordinal: 3,
+      projectRevision: 3,
+      bindingRevision: 5,
+      remainingCalls: 2,
+    });
+    const first = reviewCall({
+      ordinal: 2,
+      projectRevision: 1,
+      bindingRevision: 3,
+      remainingCalls: 2,
+    });
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 3,
+          phase: "review",
+          projectRevision: 3,
+        }),
+        [initial, missingSlots],
+        { liveCallLimit: 4 },
+      ).code,
+    ).toBe("review-remaining-calls-missing");
+    expect(
+      validateReviewProgression({
+        phase: "review",
+        verdict: "revise",
+        remainingCalls: 2,
+        previousReviewResponses: [{ remainingCalls: 2 }],
+      }),
+    ).toBe("review-remaining-calls-nondecreasing");
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 3,
+          phase: "review",
+          projectRevision: 3,
+        }),
+        [initial, first],
+      ).code,
+    ).toBe("four-call-budget-approval-required");
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 3,
+          phase: "final-review",
+          projectRevision: 3,
+        }),
+        [initial, first],
+        { liveCallLimit: 4 },
+      ).code,
+    ).toBe("unexpected-review-phase");
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 4,
+          phase: "review",
+          projectRevision: 5,
+        }),
+        [initial, first, nondecreasingSlots],
+        { liveCallLimit: 4 },
+      ).code,
+    ).toBe("review-remaining-calls-nondecreasing");
+    expect(
+      authorize(
+        nextReviewRequest({
+          ordinal: 3,
+          phase: "final-review",
+          projectRevision: 1,
+        }),
+        [
+          initial,
+          reviewCall({
+            ordinal: 2,
+            projectRevision: 1,
+            bindingRevision: 1,
+            remainingCalls: 0,
+            verdict: "accept",
+          }),
+        ],
+        { liveCallLimit: 4 },
+      ).code,
+    ).toBe("review-sequence-invalid");
+    expect(
+      authorize(
+        {
+          ...nextReviewRequest({
+            ordinal: 5,
+            phase: "final-review",
+            projectRevision: 5,
+          }),
+        },
+        [initial, first, nondecreasingSlots, nondecreasingSlots],
+        { liveCallLimit: 4 },
+      ).code,
+    ).toBe("live-call-budget-exceeded");
+    expect(
+      authorize(
+        {
+          ...nextReviewRequest({
+            ordinal: 2,
+            phase: "private-phase",
+            projectRevision: 1,
+          }),
+        },
+        [initial],
+      ).code,
+    ).toBe("unexpected-review-phase");
+  });
+
+  it("rejects wrong binding, non-Luna, larger-output, non-default-tier, and retry requests", () => {
+    const initial = initialCall();
+    const valid = nextReviewRequest({
+      ordinal: 2,
+      phase: "review",
+      projectRevision: 1,
+    });
+    const invalidRequests: Array<[Record<string, unknown>, string]> = [
+      [{ authoringRunId: PROJECT_ID }, "review-request-binding-invalid"],
+      [
+        { requestedAuthoringRunId: PROJECT_ID },
+        "review-request-binding-invalid",
+      ],
+      [{ clientRunId: RUN_ID }, "review-request-binding-invalid"],
+      [{ projectId: RUN_ID }, "review-request-binding-invalid"],
+      [{ projectRevision: 2 }, "review-request-binding-invalid"],
+      [{ reviewImageRevision: 2 }, "review-request-binding-invalid"],
+      [{ structuralObservationRevision: 2 }, "review-request-binding-invalid"],
+      [{ reviewScope: "structural-only" }, "review-request-binding-invalid"],
+      [{ modelMatched: false }, "exact-luna-model-required"],
+      [{ phase: "other" }, "unexpected-review-phase"],
+      [{ method: "GET" }, "post-required"],
+    ];
+    for (const [change, code] of invalidRequests) {
+      expect(authorize({ ...valid, ...change }, [initial]).code).toBe(code);
+    }
+    expect(authorize(valid, [initial], { outputCap: 8192 }).code).toBe(
+      "4096-output-cap-required",
+    );
+    expect(authorize(valid, [initial], { serviceTier: "priority" }).code).toBe(
+      "default-service-tier-required",
+    );
+    expect(authorize(valid, [initial], { retryCount: 1 }).code).toBe(
+      "automatic-retry-detected",
+    );
+    expect(
+      authorize(valid, [initial], { expectedInitialRevision: 2 }).code,
+    ).toBe("review-revision-binding-invalid");
+  });
+
+  it("keeps untrusted response errors and identifiers out of the parsed report", () => {
+    const parsed = safeReviewResponse({
+      review: {
+        verdict: "revise",
+        projectId: PROJECT_ID,
+        reviewedRevision: 2,
+        error: "raw provider secret",
+      },
+      binding: { revision: 3, digest: DIGEST_A, token: "private-token" },
+      scope: "visual+structural",
+      remainingCalls: 2,
+      error: "credential-like-body-text",
+      prompt: "private user request",
+    });
+    expect(parsed).toEqual({
+      verdict: "revise",
+      scope: "visual+structural",
+      reviewProjectId: PROJECT_ID,
+      reviewedRevision: 2,
+      bindingRevision: 3,
+      bindingDigest: DIGEST_A,
+      remainingCalls: 2,
+    });
+    const safe = JSON.stringify(parsed);
+    for (const privateValue of [
+      "raw provider secret",
+      "private-token",
+      "credential-like-body-text",
+      "private user request",
+    ])
+      expect(safe).not.toContain(privateValue);
   });
 });
 
