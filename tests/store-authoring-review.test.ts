@@ -632,7 +632,7 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().saved).toBe(true);
   });
 
-  it("stops when the admitted model reports a different review capability", async () => {
+  it("uses structural-only review when admitted image support has fallen", async () => {
     let resumed = false;
     const fetcher = vi.fn<typeof fetch>(async (url, init) => {
       if (url === "/api/generate")
@@ -644,9 +644,11 @@ describe("store browser authoring review loop", () => {
           reviewImageSupported: false,
         });
       }
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      const body = JSON.parse(String(init?.body));
       return Response.json(
-        { error: "Review unavailable." },
-        { status: 502, headers: resumed ? {} : undefined },
+        await reviewReply(body.project, "accept", "structural-only"),
       );
     });
     vi.stubGlobal("fetch", fetcher);
@@ -654,12 +656,57 @@ describe("store browser authoring review loop", () => {
 
     await useOrb.getState().resumeInterruptedReview(connection);
 
-    expect(fetcher).toHaveBeenCalledTimes(3);
-    expect(useOrb.getState().error).toContain("capabilities changed");
-    expect(useOrb.getState().interruptedReviewContinuation).toMatchObject({
-      priorRunId: authoringRunId,
-      reviewImageSupported: true,
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    const startBody = JSON.parse(String(fetcher.mock.calls[2]![1]?.body));
+    const reviewBody = JSON.parse(String(fetcher.mock.calls[3]![1]?.body));
+    expect(startBody.priorRunId).toBe(authoringRunId);
+    expect(reviewBody.phase).toBe("review");
+    expect(reviewBody).not.toHaveProperty("reviewImage");
+    expect(reviewBody.structuralObservations).toMatchObject({
+      renderer: "software",
     });
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toBe(
+      "Scene structure verified. Changes are applied.",
+    );
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
+    expect(useOrb.getState().saved).toBe(true);
+  });
+
+  it("preserves disabled browser modeling if support becomes available", async () => {
+    vi.stubGlobal("Worker", undefined);
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          reviewImageSupported: true,
+        });
+      }
+      const body = JSON.parse(String(init?.body));
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      return Response.json(
+        await reviewReply(body.project, "accept", "visual+structural"),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+    expect(
+      useOrb.getState().interruptedReviewContinuation?.browserModeling,
+    ).toBe(false);
+    vi.stubGlobal("Worker", class {});
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    const startBody = JSON.parse(String(fetcher.mock.calls[2]![1]?.body));
+    const reviewBody = JSON.parse(String(fetcher.mock.calls[3]![1]?.body));
+    expect(startBody.browserModeling).toBe(false);
+    expect(reviewBody.browserModeling).toBe(false);
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
   });
 
   it("does not rebind after a review preflight failure without admission evidence", async () => {

@@ -1006,7 +1006,7 @@ export const useOrb = create<State>((setState, getState) => ({
       connection.provider === continuation.provider &&
       connection.model === continuation.model &&
       connection.effort === continuation.effort &&
-      browserModelingAvailable() === continuation.browserModeling;
+      (continuation.browserModeling === false || browserModelingAvailable());
     if (
       initialState.building ||
       initialState.readOnly ||
@@ -1241,10 +1241,6 @@ export const useOrb = create<State>((setState, getState) => ({
       )
         throw Error("The saved review could not be resumed.");
       reviewImageSupported = startBody.reviewImageSupported;
-      if (reviewImageSupported !== continuation.reviewImageSupported)
-        throw Error(
-          "The review capabilities changed. Reconnect the original model before continuing.",
-        );
       publishRecoveryActivity(
         "waiting",
         "Reviewing the saved scene…",
@@ -1578,7 +1574,6 @@ export const useOrb = create<State>((setState, getState) => ({
               : error instanceof Error &&
                   [
                     "The saved scene changed before review could resume. Save it again before continuing.",
-                    "The review capabilities changed. Reconnect the original model before continuing.",
                   ].includes(error.message)
                 ? error.message
                 : "Scene saved, but review could not finish. Your world is safe.",
