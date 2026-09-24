@@ -1,5 +1,12 @@
 # Development checkpoint
 
+Sep 24 external acceptance check: Vercel AI Gateway credit remained
+`-0.0033684` on a single read-only authenticated request (HTTP 200; zero model
+calls). Evidence: `docs/evidence/gateway-credit-check-20260924/report.json`.
+Gateway live inference remains withheld until credit is positive. Browser
+computer-use inventory still exposed no app or browser surface, so the owner's
+existing signed-in Chrome could not be used for live ChatGPT acceptance.
+
 Sep 24 real PostgreSQL admission check: a synthetic free-provider run completed
 creation, admitted two correction reviews at remaining budgets two and one,
 then admitted a final verdict at zero. Exact revised scene bindings and replay

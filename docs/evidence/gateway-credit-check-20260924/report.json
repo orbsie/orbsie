@@ -1,5 +1,5 @@
 {
-  "checkedAtUtc": "2026-09-24T05:09:56.764622+00:00",
+  "checkedAtUtc": "2026-09-24T11:25:50Z",
   "endpoint": "https://ai-gateway.vercel.sh/v1/credits",
   "httpStatus": 200,
   "balance": "-0.0033684",
