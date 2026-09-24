@@ -68,8 +68,10 @@ older rows below are a historical inventory, not a completion claim.
   transport and shared verdict sequence (`51bf796`, `45e3dff`; focused tests
   pass); it captures the saved scene before admission and skips initial
   generation. The hosted admitted-failure marker is now present (`1f0936c`,
-  six route tests). The editor action remains required before this is
-  user-facing. No provider call has exercised the path.
+  six route tests). An exact, untouched review-start child can now be returned
+  after a lost start response without a second free claim (`7343d1f`, 31
+  admission and 13 PostgreSQL ledger tests). The editor action remains
+  required before this is user-facing. No provider call has exercised the path.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

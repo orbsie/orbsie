@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 review-start response recovery: source `7343d1f` makes an explicit
+retry of a lost `/review/start` response reuse the previously issued,
+untouched review-only child when its identity, provider/model/effort, request
+fingerprint, saved revision/digest, live phase, and all three review slots
+match. The unique parent-child index still prevents a second free claim; a
+free retry reports the current balance, including zero. A consumed, terminal,
+expired, or mismatched child remains a safe conflict. Astra reviewed the diff;
+31 admission tests and 13 PostgreSQL ledger tests, TypeScript, Prettier and
+diff checks pass. This does not retry a lost model review response or prove a
+live-provider recovery. The editor still needs an explicit resume control and
+browser validation.
+
 Sep 24 explicit review recovery client core: source `51bf796` adds a
 review-only request builder and store action. The saved failure now retains a
 prior run ID and original request/provider/model/effort/selection/browser
@@ -13,7 +25,8 @@ catalog's actual image support, falling back to structural scope when needed.
 The focused store/connection suites pass (35 tests before the follow-up;
 30 store tests after), TypeScript and Prettier pass. The editor has no action
 to call this method yet. Lost start/review responses still have unknown
-admission outcome; no hidden retry occurs. Source `1f0936c` adds the same
+admission outcome; no hidden retry occurs. A repeated explicit start is now
+idempotent under the conditions above. Source `1f0936c` adds the same
 allowlisted admitted-failure marker to hosted ChatGPT review responses as the
 public route, without exposing raw provider errors or credentials. Six hosted
 route tests, TypeScript and Prettier pass. No browser E2E or provider call has
