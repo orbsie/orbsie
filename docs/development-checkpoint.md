@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 24 higher-detail OpenRouter quality run: an isolated production build,
+database migration, and exact-origin malformed-JSON HTTP 400 preflight passed.
+The single bounded run made four `openai/gpt-6-luna` default-tier calls at
+4,096 output tokens/call, no retry, all HTTP 200. Creation saved revision 13;
+two visual+structural reviews corrected to revisions 20 and 27; final review
+of 27 returned `revise`, so acceptance remains bounded-incomplete. Reload
+recovered revision 27 without storing the key. Sanitized report:
+`docs/evidence/authoring-review/openrouter-higher-detail-20260924/`. The
+private findings and scene image were retained until Astra inspected them,
+then removed. The dominant defect is now concrete: a very large brown canopy
+occludes nearly all five blue berries; their caps, stems, tapered shapes and
+branch connections are unreadable. Earlier reviews also found the subject too
+small and moved/scaled it, but visibility remained poor; the final reviewer
+additionally claimed top cropping, which the separately captured page image
+did not obviously support. The browser recorded one `net::ERR_ABORTED`
+generation request, no page/console errors, and no blocked external requests.
+The test server, database and private credential files were removed. Keep
+production authoring-review off. Next: provide camera-facing placement evidence
+to review and target occluded details directly before another paid quality run.
+
 Sep 24 review-image detail: the scene capture now tries a 768-pixel maximum
 edge before its existing 512/384/256/192/128 fallback ladder, preserving the
 single PNG API, aspect ratio, no-upscale behavior, and 128 KiB encoded limit.
