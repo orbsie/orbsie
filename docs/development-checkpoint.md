@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 24 focused scene-review capture: the review PNG now frames the projected
+union of committed entity world bounds when a crop offers meaningful zoom.
+Unknown bounds, unstable/eye-crossing projections, offscreen-only scenes, and
+marginal crops retain the full game-canvas capture. Both WebGL and Canvas2D use
+their current camera matrices; WebGL removes its render-local origin from
+world bounds. The existing one-PNG, 128 KiB and rendered-revision contract
+remains. Astra reviewed the Luna diff and ran a fresh production build plus
+the zero-provider WebGL/Canvas2D browser fixture. Both renderers passed with
+visible blue fruit and exact revision/readiness bindings. The images are much
+more legible: WebGL initial blue fruit pixels increased from 3,563 in the
+previous full-frame fixture to 8,105; Canvas2D initial increased from 383 to
+4,518. Astra inspected the four actual captures. Evidence:
+`docs/evidence/scene-review-focused-capture-20260924/`. The first fixture
+attempt accidentally targeted unrelated H3 Studio on port 3040; it made no
+Orbsie or provider call and its failed evidence was discarded before the
+isolated production run. One remaining quality risk is that close framing
+alone cannot make the model attach fruit stems or choose the right silhouette.
+Do not run another paid quality test until the next substantive modeling
+change; production authoring-review remains off.
+
 Sep 24 camera-aware OpenRouter quality run: a fresh isolated production build,
 Postgres migration, and exact-origin malformed-JSON HTTP 400 preflight passed.
 Exactly four `openai/gpt-6-luna` default-tier calls, each capped at 4,096 output

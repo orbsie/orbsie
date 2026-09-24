@@ -2248,7 +2248,15 @@ export default function SoftwareWorld({
       capture: () => {
         const canvas = canvasRef.current;
         if (!canvas) throw new Error("Software canvas is not ready.");
-        return captureSceneCanvas(canvas);
+        const camera = navigationCameraRef.current;
+        if (!camera) return captureSceneCanvas(canvas);
+        return captureSceneCanvas(canvas, {
+          boundsByEntity: worldNavigationBoundsByEntity(
+            projectRef.current,
+          ).values(),
+          viewMatrix: camera.matrixWorldInverse.elements,
+          projectionMatrix: camera.projectionMatrix.elements,
+        });
       },
       getCameraView: () => {
         const camera = navigationCameraRef.current;

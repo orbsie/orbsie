@@ -5,6 +5,7 @@ import {
   validateReviewImageDataUrl,
   type SceneReviewRenderer,
 } from "./review-image";
+import type { WorldNavigationBounds } from "./world-navigation";
 
 export type { SceneReviewRenderer } from "./review-image";
 
@@ -44,6 +45,16 @@ export type SceneReviewCaptureRequest = {
   renderer?: SceneReviewRenderer;
   timeoutMs?: number;
   signal?: AbortSignal;
+};
+
+export type SceneReviewCaptureFraming = {
+  /** Bounds are already transformed into world space. */
+  boundsByEntity: Iterable<WorldNavigationBounds | undefined>;
+  /** Matrices from the same rendered camera used to capture the source. */
+  viewMatrix: ArrayLike<number>;
+  projectionMatrix: ArrayLike<number>;
+  /** Absolute-world offset removed from WebGL scene coordinates. */
+  renderOrigin?: readonly [number, number, number];
 };
 
 export type SceneReviewCaptureResult = {
@@ -137,6 +148,161 @@ const MAX_TIMEOUT_MS = 10000;
 // decoded cap for the PNG parser.
 const CAPTURE_EDGES = [768, 512, 384, 256, 192, 128] as const;
 
+type CaptureCrop = { x: number; y: number; width: number; height: number };
+
+function validMatrix(matrix: ArrayLike<number>): boolean {
+  return (
+    matrix.length >= 16 &&
+    Array.from({ length: 16 }, (_, index) => matrix[index]).every((component) =>
+      Number.isFinite(component),
+    )
+  );
+}
+
+function transformPoint(
+  matrix: ArrayLike<number>,
+  point: readonly [number, number, number, number],
+): [number, number, number, number] {
+  return [
+    matrix[0] * point[0] +
+      matrix[4] * point[1] +
+      matrix[8] * point[2] +
+      matrix[12] * point[3],
+    matrix[1] * point[0] +
+      matrix[5] * point[1] +
+      matrix[9] * point[2] +
+      matrix[13] * point[3],
+    matrix[2] * point[0] +
+      matrix[6] * point[1] +
+      matrix[10] * point[2] +
+      matrix[14] * point[3],
+    matrix[3] * point[0] +
+      matrix[7] * point[1] +
+      matrix[11] * point[2] +
+      matrix[15] * point[3],
+  ];
+}
+
+function isValidBounds(bounds: WorldNavigationBounds): boolean {
+  return (
+    bounds.min.length === 3 &&
+    bounds.max.length === 3 &&
+    bounds.min.every(Number.isFinite) &&
+    bounds.max.every(Number.isFinite) &&
+    bounds.min.every((component, axis) => component <= bounds.max[axis])
+  );
+}
+
+/**
+ * Project committed world bounds into the source canvas. Unknown or unstable
+ * projections return undefined so capture keeps the complete renderer frame.
+ */
+export function sceneReviewCaptureCrop(
+  canvasWidth: number,
+  canvasHeight: number,
+  framing: SceneReviewCaptureFraming,
+): CaptureCrop | undefined {
+  const { boundsByEntity, viewMatrix, projectionMatrix } = framing;
+  const renderOrigin = framing.renderOrigin ?? [0, 0, 0];
+  if (
+    !Number.isFinite(canvasWidth) ||
+    !Number.isFinite(canvasHeight) ||
+    canvasWidth <= 0 ||
+    canvasHeight <= 0 ||
+    !validMatrix(viewMatrix) ||
+    !validMatrix(projectionMatrix) ||
+    renderOrigin.length !== 3 ||
+    !renderOrigin.every(Number.isFinite)
+  )
+    return undefined;
+
+  let unionMinX = canvasWidth;
+  let unionMinY = canvasHeight;
+  let unionMaxX = 0;
+  let unionMaxY = 0;
+  let sawVisibleBounds = false;
+
+  for (const bounds of boundsByEntity) {
+    // An unknown entity could be visible anywhere, so retain the full frame.
+    if (!bounds || !isValidBounds(bounds)) return undefined;
+
+    const projected: Array<[number, number, number, number]> = [];
+    for (const x of [bounds.min[0], bounds.max[0]])
+      for (const y of [bounds.min[1], bounds.max[1]])
+        for (const z of [bounds.min[2], bounds.max[2]]) {
+          const view = transformPoint(viewMatrix, [
+            x - renderOrigin[0],
+            y - renderOrigin[1],
+            z - renderOrigin[2],
+            1,
+          ]);
+          const clip = transformPoint(projectionMatrix, view);
+          if (!clip.every(Number.isFinite)) return undefined;
+          projected.push(clip);
+        }
+
+    const behindCount = projected.filter(([, , , w]) => w <= 1e-8).length;
+    if (behindCount === projected.length) continue;
+    // A box crossing the eye plane has unbounded projected corners. Its
+    // visible part cannot be safely isolated with a rectangular crop.
+    if (behindCount > 0) return undefined;
+
+    const outsidePlanes = [
+      (point: number[]) => point[0] < -point[3],
+      (point: number[]) => point[0] > point[3],
+      (point: number[]) => point[1] < -point[3],
+      (point: number[]) => point[1] > point[3],
+      (point: number[]) => point[2] < -point[3],
+      (point: number[]) => point[2] > point[3],
+    ];
+    if (outsidePlanes.some((outside) => projected.every(outside))) continue;
+
+    let entityMinX = canvasWidth;
+    let entityMinY = canvasHeight;
+    let entityMaxX = 0;
+    let entityMaxY = 0;
+    for (const [clipX, clipY, , clipW] of projected) {
+      const pixelX = ((clipX / clipW + 1) * canvasWidth) / 2;
+      const pixelY = ((1 - clipY / clipW) * canvasHeight) / 2;
+      if (!Number.isFinite(pixelX) || !Number.isFinite(pixelY))
+        return undefined;
+      entityMinX = Math.min(entityMinX, pixelX);
+      entityMinY = Math.min(entityMinY, pixelY);
+      entityMaxX = Math.max(entityMaxX, pixelX);
+      entityMaxY = Math.max(entityMaxY, pixelY);
+    }
+    entityMinX = Math.max(0, entityMinX);
+    entityMinY = Math.max(0, entityMinY);
+    entityMaxX = Math.min(canvasWidth, entityMaxX);
+    entityMaxY = Math.min(canvasHeight, entityMaxY);
+    if (entityMaxX <= entityMinX || entityMaxY <= entityMinY) continue;
+
+    sawVisibleBounds = true;
+    unionMinX = Math.min(unionMinX, entityMinX);
+    unionMinY = Math.min(unionMinY, entityMinY);
+    unionMaxX = Math.max(unionMaxX, entityMaxX);
+    unionMaxY = Math.max(unionMaxY, entityMaxY);
+  }
+
+  if (!sawVisibleBounds) return undefined;
+  const unionWidth = unionMaxX - unionMinX;
+  const unionHeight = unionMaxY - unionMinY;
+  const padX = Math.max(16, unionWidth * 0.12);
+  const padY = Math.max(16, unionHeight * 0.12);
+  const x = Math.max(0, Math.floor(unionMinX - padX));
+  const y = Math.max(0, Math.floor(unionMinY - padY));
+  const right = Math.min(canvasWidth, Math.ceil(unionMaxX + padX));
+  const bottom = Math.min(canvasHeight, Math.ceil(unionMaxY + padY));
+  const width = right - x;
+  const height = bottom - y;
+  const zoom = Math.max(canvasWidth, canvasHeight) / Math.max(width, height);
+  // Avoid changing the composition for marginal gains. This threshold also
+  // makes the crop useful after the output is reduced to the existing cap.
+  if (zoom < 1.25 || width * height > canvasWidth * canvasHeight * 0.78)
+    return undefined;
+  return { x, y, width, height };
+}
+
 function captureError(
   code: SceneReviewCaptureErrorCode,
   message: string,
@@ -171,14 +337,29 @@ function inspectPng(image: string): {
 }
 
 /** Copy one renderer canvas into a bounded, aspect-preserving review image. */
-export function captureSceneCanvas(canvas: HTMLCanvasElement): string {
+export function captureSceneCanvas(
+  canvas: HTMLCanvasElement,
+  framing?: SceneReviewCaptureFraming,
+): string {
   if (!canvas.width || !canvas.height)
     throw new Error("Scene canvas is not ready.");
+  const crop = framing
+    ? sceneReviewCaptureCrop(canvas.width, canvas.height, framing)
+    : undefined;
+  const source = crop ?? {
+    x: 0,
+    y: 0,
+    width: canvas.width,
+    height: canvas.height,
+  };
   let lastImage = "";
   for (const maxEdge of CAPTURE_EDGES) {
-    const scale = Math.min(1, maxEdge / Math.max(canvas.width, canvas.height));
-    const width = Math.max(1, Math.round(canvas.width * scale));
-    const height = Math.max(1, Math.round(canvas.height * scale));
+    const scale =
+      crop === undefined
+        ? Math.min(1, maxEdge / Math.max(source.width, source.height))
+        : maxEdge / Math.max(source.width, source.height);
+    const width = Math.max(1, Math.round(source.width * scale));
+    const height = Math.max(1, Math.round(source.height * scale));
     const output = document.createElement("canvas");
     output.width = width;
     output.height = height;
@@ -186,7 +367,17 @@ export function captureSceneCanvas(canvas: HTMLCanvasElement): string {
     if (!context) throw new Error("Could not capture the game canvas.");
     context.fillStyle = "#07100f";
     context.fillRect(0, 0, width, height);
-    context.drawImage(canvas, 0, 0, width, height);
+    context.drawImage(
+      canvas,
+      source.x,
+      source.y,
+      source.width,
+      source.height,
+      0,
+      0,
+      width,
+      height,
+    );
     lastImage = output.toDataURL("image/png");
     if (
       new TextEncoder().encode(lastImage).byteLength <= MAX_REVIEW_IMAGE_BYTES

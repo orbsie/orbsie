@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   captureSceneCanvas,
+  sceneReviewCaptureCrop,
   SceneReviewCaptureBridge,
   SceneReviewCaptureError,
   sceneReviewCameraViewFromMatrixWorld,
@@ -11,10 +12,18 @@ import { MAX_REVIEW_IMAGE_BYTES } from "../src/lib/review-image";
 
 const image =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+const identityMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+function bounds(min: [number, number, number], max: [number, number, number]) {
+  return { min, max } as const;
+}
 
 afterEach(() => vi.unstubAllGlobals());
 
-function stubCanvasCapture(encode: (width: number, height: number) => string) {
+function stubCanvasCapture(
+  encode: (width: number, height: number) => string,
+  onDraw?: (...args: unknown[]) => void,
+) {
   const sizes: Array<{ width: number; height: number }> = [];
   vi.stubGlobal("document", {
     createElement: (tag: string) => {
@@ -25,7 +34,7 @@ function stubCanvasCapture(encode: (width: number, height: number) => string) {
         getContext: () => ({
           fillStyle: "",
           fillRect: () => undefined,
-          drawImage: () => undefined,
+          drawImage: (...args: unknown[]) => onDraw?.(...args),
         }),
         toDataURL: () => {
           sizes.push({ width: output.width, height: output.height });
@@ -62,6 +71,107 @@ describe("scene review canvas capture", () => {
     expect(new TextEncoder().encode(oversized).byteLength).toBeGreaterThan(
       MAX_REVIEW_IMAGE_BYTES,
     );
+  });
+
+  it("crops around the projected visible bounds and retains every visible entity", () => {
+    const canvas = { width: 1600, height: 900 } as HTMLCanvasElement;
+    const framing = {
+      boundsByEntity: [
+        bounds([-0.5, -0.15, 0], [-0.3, 0.15, 0]),
+        bounds([0.3, -0.15, 0], [0.5, 0.15, 0]),
+        // A fully offscreen entity does not prevent a useful crop.
+        bounds([3, -0.15, 0], [4, 0.15, 0]),
+      ],
+      viewMatrix: identityMatrix,
+      projectionMatrix: identityMatrix,
+    };
+    const crop = sceneReviewCaptureCrop(canvas.width, canvas.height, framing);
+    expect(crop).toBeDefined();
+    expect(crop!.x).toBeLessThanOrEqual(400);
+    expect(crop!.x + crop!.width).toBeGreaterThanOrEqual(1200);
+
+    const draws: unknown[][] = [];
+    const sizes = stubCanvasCapture(
+      () => image,
+      (...args) => draws.push(args),
+    );
+    expect(captureSceneCanvas(canvas, framing)).toBe(image);
+    expect(sizes).toEqual([{ width: 768, height: expect.any(Number) }]);
+    expect(draws[0]).toEqual([
+      canvas,
+      crop!.x,
+      crop!.y,
+      crop!.width,
+      crop!.height,
+      0,
+      0,
+      768,
+      sizes[0].height,
+    ]);
+  });
+
+  it("projects absolute world bounds through the WebGL render origin", () => {
+    const crop = sceneReviewCaptureCrop(1600, 900, {
+      boundsByEntity: [bounds([1023.7, -0.15, 0], [1024.3, 0.15, 0])],
+      viewMatrix: identityMatrix,
+      projectionMatrix: identityMatrix,
+      renderOrigin: [1024, 0, 0],
+    });
+    expect(crop).toBeDefined();
+    expect(crop!.x).toBeGreaterThan(0);
+    expect(crop!.x + crop!.width).toBeLessThan(1600);
+  });
+
+  it("keeps the full frame for invalid, eye-crossing, or non-improving bounds", () => {
+    const invalidBounds = sceneReviewCaptureCrop(1600, 900, {
+      boundsByEntity: [undefined],
+      viewMatrix: identityMatrix,
+      projectionMatrix: identityMatrix,
+    });
+    expect(invalidBounds).toBeUndefined();
+
+    const eyeCrossingProjection = [
+      1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0,
+    ];
+    const eyeCrossing = sceneReviewCaptureCrop(1600, 900, {
+      boundsByEntity: [bounds([-0.1, -0.1, -2], [0.1, 0.1, 1])],
+      viewMatrix: identityMatrix,
+      projectionMatrix: eyeCrossingProjection,
+    });
+    expect(eyeCrossing).toBeUndefined();
+
+    const broadBounds = sceneReviewCaptureCrop(1600, 900, {
+      boundsByEntity: [bounds([-0.9, -0.8, 0], [0.9, 0.8, 0])],
+      viewMatrix: identityMatrix,
+      projectionMatrix: identityMatrix,
+    });
+    expect(broadBounds).toBeUndefined();
+
+    const fullFrameDraws: unknown[][] = [];
+    const sizes = stubCanvasCapture(
+      () => image,
+      (...args) => fullFrameDraws.push(args),
+    );
+    const canvas = { width: 1600, height: 900 } as HTMLCanvasElement;
+    expect(
+      captureSceneCanvas(canvas, {
+        boundsByEntity: [undefined],
+        viewMatrix: identityMatrix,
+        projectionMatrix: identityMatrix,
+      }),
+    ).toBe(image);
+    expect(sizes).toEqual([{ width: 768, height: 432 }]);
+    expect(fullFrameDraws[0]).toEqual([
+      canvas,
+      0,
+      0,
+      1600,
+      900,
+      0,
+      0,
+      768,
+      432,
+    ]);
   });
 });
 

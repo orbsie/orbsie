@@ -1957,6 +1957,7 @@ function Scene({
     () => worldNavigationBoundsByEntity(project),
     [project],
   );
+  const reviewBoundsByEntityRef = useRef(boundsByEntity);
   const visibleEntityIds = useMemo(() => {
     if (!navigationEnabled || phase !== "editing" || playing) return undefined;
     return visibleWebGLNavigationEntityIds(
@@ -2150,9 +2151,10 @@ function Scene({
   const reviewMetaRef = useRef({ projectId, revision, phase });
   useLayoutEffect(() => {
     reviewEntitiesRef.current = entities;
+    reviewBoundsByEntityRef.current = boundsByEntity;
     reviewMetaRef.current = { projectId, revision, phase };
     notifySceneReviewCaptureChanged();
-  }, [entities, phase, projectId, revision]);
+  }, [boundsByEntity, entities, phase, projectId, revision]);
   const formationReviewStates = useRef(new Map<string, FormationReviewState>());
   const reviewMounted = useRef(false);
   const reviewTransitionSettled = useRef(false);
@@ -2219,7 +2221,12 @@ function Scene({
       },
       capture: () => {
         gl.render(scene, camera);
-        return captureSceneCanvas(gl.domElement);
+        return captureSceneCanvas(gl.domElement, {
+          boundsByEntity: reviewBoundsByEntityRef.current.values(),
+          viewMatrix: camera.matrixWorldInverse.elements,
+          projectionMatrix: camera.projectionMatrix.elements,
+          renderOrigin: renderOrigin.current,
+        });
       },
       getCameraView: () =>
         sceneReviewCameraViewFromMatrixWorld(
