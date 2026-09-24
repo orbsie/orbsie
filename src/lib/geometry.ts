@@ -111,22 +111,28 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
       sphere([0.55, 0.18, 0.15], [0.35, 0.3, 0.4]);
       break;
     case "custom":
-      for (const part of entity.geometry.parts ?? []) {
-        const g =
-          part.shape === "box"
-            ? new THREE.BoxGeometry(1, 1, 1, 2, 2, 2)
-            : part.shape === "cone"
-              ? new THREE.ConeGeometry(1, 1, segments)
-              : part.shape === "cylinder"
-                ? new THREE.CylinderGeometry(1, 1, 1, segments)
-                : part.shape === "torus"
-                  ? new THREE.TorusGeometry(0.7, 0.25, 8, segments)
-                  : new THREE.SphereGeometry(1, segments, segments);
-        add(g, part.position, part.scale, part.color, part.rotation);
-      }
       break;
     default:
       sphere([0, 0.65, 0], [0.5, 0.5, 0.5], "#bceee0");
+  }
+  if (
+    entity.geometry &&
+    entity.geometry.kind !== "asset" &&
+    entity.geometry.kind !== "generated"
+  ) {
+    for (const part of entity.geometry.parts ?? []) {
+      const g =
+        part.shape === "box"
+          ? new THREE.BoxGeometry(1, 1, 1, 2, 2, 2)
+          : part.shape === "cone"
+            ? new THREE.ConeGeometry(1, 1, segments)
+            : part.shape === "cylinder"
+              ? new THREE.CylinderGeometry(1, 1, 1, segments)
+              : part.shape === "torus"
+                ? new THREE.TorusGeometry(0.7, 0.25, 8, segments)
+                : new THREE.SphereGeometry(1, segments, segments);
+      add(g, part.position, part.scale, part.color, part.rotation);
+    }
   }
   if (!parts.length) sphere([0, 0.5, 0], [0.5, 0.5, 0.5]);
   const merged = mergeGeometries(parts);

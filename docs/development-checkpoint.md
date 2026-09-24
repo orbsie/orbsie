@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 procedural attachment fix: the scene schema had allowed `parts` on
+built-in procedural kinds, but the shared geometry builder silently rendered
+parts only when `kind:custom`. Built-in bases now retain their geometry and
+append optional parts once, so a tree can carry colored fruit or other
+requested details in the same object. The shared builder is used by WebGL,
+Canvas2D and standalone playback. The generator guidance now exposes this
+capability to the model. Astra reviewed the diff and adjusted the test fruit
+position to touch the canopy; 29 focused geometry/prompt tests, typecheck,
+formatting and diff checks passed. This is a concrete rendering-contract fix,
+but the earlier live scene was not retained, so it does **not** prove that
+ignored `parts` caused that run's missing blue fruit or that a fresh model run
+will now be delightful. Next: zero-provider rendered WebGL/Canvas2D fixture for
+built-in parts, then a bounded fresh provider quality test at a milestone.
+
 Sep 24 production promotion: the accumulated branch through `e039b21` passed
 the full Vitest suite (1,715 passed, 26 skipped) and an isolated production
 build. Vercel production deployment at

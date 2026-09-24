@@ -74,6 +74,93 @@ describe("procedural geometry materials", () => {
   });
 });
 
+function hasVertexColor(geometry: THREE.BufferGeometry, color: string) {
+  const expected = new THREE.Color(color);
+  const values = geometry.getAttribute("color").array as Float32Array;
+  for (let index = 0; index < values.length; index += 3) {
+    if (
+      Math.abs(values[index] - expected.r) < 1e-5 &&
+      Math.abs(values[index + 1] - expected.g) < 1e-5 &&
+      Math.abs(values[index + 2] - expected.b) < 1e-5
+    )
+      return true;
+  }
+  return false;
+}
+
+function meshSurfaceArea(geometry: THREE.BufferGeometry) {
+  const position = geometry.getAttribute("position") as THREE.BufferAttribute;
+  let area = 0;
+  for (let index = 0; index < position.count; index += 3) {
+    const a = new THREE.Vector3().fromBufferAttribute(position, index);
+    const b = new THREE.Vector3().fromBufferAttribute(position, index + 1);
+    const c = new THREE.Vector3().fromBufferAttribute(position, index + 2);
+    area += b.sub(a).cross(c.sub(a)).length() / 2;
+  }
+  return area;
+}
+
+describe("procedural geometry parts", () => {
+  it("adds a blue fruit part to a built-in tree", () => {
+    const tree = entitySchema.parse({
+      id: "tree-with-fruit",
+      label: "Tree with fruit",
+      position: [0, 0, 0],
+      color: "#43864c",
+      stage: "ready",
+      geometry: {
+        kind: "tree",
+        parts: [
+          {
+            shape: "sphere",
+            position: [1.08, 2.1, 0.45],
+            scale: [0.28, 0.28, 0.28],
+            color: "#2468bd",
+          },
+        ],
+      },
+    });
+
+    const geometry = entityGeometry(tree);
+    geometry.computeBoundingBox();
+
+    expect(geometry.boundingBox?.max.x).toBeGreaterThanOrEqual(1.35);
+    expect(hasVertexColor(geometry, "#2468bd")).toBe(true);
+    expect(hasVertexColor(geometry, "#98775a")).toBe(true);
+    geometry.dispose();
+  });
+
+  it("keeps a custom part once with its requested bounds and color", () => {
+    const custom = entitySchema.parse({
+      id: "single-custom-part",
+      label: "Single custom part",
+      position: [0, 0, 0],
+      color: "#ffffff",
+      stage: "ready",
+      geometry: {
+        kind: "custom",
+        parts: [
+          {
+            shape: "box",
+            position: [2, 1, 0],
+            scale: [0.5, 0.75, 1],
+            color: "#123456",
+          },
+        ],
+      },
+    });
+
+    const geometry = entityGeometry(custom);
+    geometry.computeBoundingBox();
+
+    expect(geometry.boundingBox?.min.toArray()).toEqual([1.75, 0.625, -0.5]);
+    expect(geometry.boundingBox?.max.toArray()).toEqual([2.25, 1.375, 0.5]);
+    expect(hasVertexColor(geometry, "#123456")).toBe(true);
+    expect(meshSurfaceArea(geometry)).toBeCloseTo(3.25, 5);
+    geometry.dispose();
+  });
+});
+
 function formationGeometry(
   positions: number[],
   colors: number[],
