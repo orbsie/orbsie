@@ -39,6 +39,7 @@ import {
 } from "../src/lib/protocol";
 import { fixtureEntities } from "../src/lib/fixtures";
 import { SceneReviewCaptureError } from "../src/lib/scene-review-capture";
+import { authoringReviewIssueSummary } from "../src/lib/authoring-activity";
 import {
   assertCloudJournalBaseline,
   authoringReviewEligibleForConnection,
@@ -151,6 +152,74 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+function partialReviewFetcher() {
+  let reviewCall = 0;
+  return vi.fn<typeof fetch>(async (url, init) => {
+    if (url === "/api/generate")
+      return streamResponse(JSON.parse(String(init?.body)).project);
+    const body = JSON.parse(String(init?.body));
+    if (reviewCall++ === 0) {
+      const response = await reviewReply(
+        body.project,
+        "revise",
+        "visual+structural",
+      );
+      const runId = "33333333-3333-4333-8333-333333333333";
+      const corrected = applyOperation(
+        body.project,
+        {
+          version: 1,
+          projectId: body.project.id,
+          runId,
+          sequence: 1,
+          operationId: "44444444-4444-4444-8444-444444444444",
+          baseRevision: body.project.revision,
+          command: correction,
+        },
+        { runId, sequence: 0, seen: new Set() },
+      ).project;
+      const final = applyOperation(
+        corrected,
+        {
+          version: 1,
+          projectId: corrected.id,
+          runId,
+          sequence: 2,
+          operationId: "55555555-5555-4555-8555-555555555555",
+          baseRevision: corrected.revision,
+          command: {
+            type: "commit_revision",
+            message: "Review correction applied.",
+          },
+        },
+        { runId, sequence: 1, seen: new Set() },
+      ).project;
+      const binding = await createSceneBinding(final);
+      return Response.json({
+        ...response,
+        binding: { revision: binding.revision, digest: binding.digest },
+        revision: binding.revision,
+        digest: binding.digest,
+      });
+    }
+    const response = await reviewReply(
+      body.project,
+      "revise",
+      "visual+structural",
+    );
+    const binding = await createSceneBinding(body.project);
+    return Response.json({
+      ...response,
+      review: { ...response.review, corrections: [] },
+      corrections: [],
+      binding: { revision: binding.revision, digest: binding.digest },
+      revision: binding.revision,
+      digest: binding.digest,
+      remainingCalls: 0,
+    });
+  });
+}
+
 function journal(): GenerationJournalConnection {
   const runs = new Map<string, GenerationRun>();
   return {
@@ -220,6 +289,15 @@ afterEach(() => {
 });
 
 describe("store browser authoring review loop", () => {
+  it("sanitizes and bounds review issue summaries", () => {
+    const summary = authoringReviewIssueSummary(
+      `  sky\n\u202e mismatch ${"x".repeat(250)}  `,
+    );
+    expect(summary).not.toMatch(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/);
+    expect(Array.from(summary)).toHaveLength(180);
+    expect(summary).toContain("sky mismatch");
+  });
+
   it("requires free allowance for review while a linked ready provider remains eligible", () => {
     expect(
       authoringReviewEligibleForConnection(
@@ -287,77 +365,7 @@ describe("store browser authoring review loop", () => {
   });
 
   it("starts a new cloud journal segment for corrections and ends partial", async () => {
-    let reviewCall = 0;
-    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
-      if (url === "/api/generate")
-        return streamResponse(JSON.parse(String(init?.body)).project);
-      const body = JSON.parse(String(init?.body));
-      if (reviewCall++ === 0) {
-        const response = await reviewReply(
-          body.project,
-          "revise",
-          "visual+structural",
-        );
-        const corrected = applyOperation(
-          body.project,
-          {
-            version: 1,
-            projectId: body.project.id,
-            runId: "33333333-3333-4333-8333-333333333333",
-            sequence: 1,
-            operationId: "44444444-4444-4444-8444-444444444444",
-            baseRevision: body.project.revision,
-            command: correction,
-          },
-          {
-            runId: "33333333-3333-4333-8333-333333333333",
-            sequence: 0,
-            seen: new Set(),
-          },
-        ).project;
-        const final = applyOperation(
-          corrected,
-          {
-            version: 1,
-            projectId: corrected.id,
-            runId: "33333333-3333-4333-8333-333333333333",
-            sequence: 2,
-            operationId: "55555555-5555-4555-8555-555555555555",
-            baseRevision: corrected.revision,
-            command: {
-              type: "commit_revision",
-              message: "Review correction applied.",
-            },
-          },
-          {
-            runId: "33333333-3333-4333-8333-333333333333",
-            sequence: 1,
-            seen: new Set(),
-          },
-        ).project;
-        const binding = await createSceneBinding(final);
-        return Response.json({
-          ...response,
-          binding: { revision: binding.revision, digest: binding.digest },
-          revision: binding.revision,
-          digest: binding.digest,
-        });
-      }
-      return Response.json(
-        await reviewReply(body.project, "revise", "visual+structural").then(
-          (response) => ({
-            ...response,
-            review: {
-              ...response.review,
-              verdict: "revise",
-              corrections: [],
-            },
-            corrections: [],
-            remainingCalls: 0,
-          }),
-        ),
-      );
-    });
+    const fetcher = partialReviewFetcher();
     const durable = journal();
     vi.stubGlobal("fetch", fetcher);
 
@@ -370,7 +378,70 @@ describe("store browser authoring review loop", () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
     expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
-      "remaining issue",
+      "final review still found: Sky mismatch.",
+    );
+    expect(useOrb.getState().reviewContinuation).toMatchObject({
+      projectId: useOrb.getState().project.id,
+      revision: useOrb.getState().project.revision,
+      issue: "Sky mismatch.",
+    });
+    const reviewMessages = useOrb
+      .getState()
+      .project.messages.filter((message) =>
+        message.text.includes("Sky mismatch."),
+      );
+    expect(reviewMessages).toEqual([
+      {
+        role: "assistant",
+        text: "The review found: Sky mismatch.",
+      },
+      {
+        role: "assistant",
+        text: "The final review still found: Sky mismatch.",
+      },
+    ]);
+    const savedLibrary = mocks.db.get("orbsie-library") as Record<
+      string,
+      ReturnType<typeof blankProject>
+    >;
+    expect(
+      savedLibrary[useOrb.getState().project.id]?.messages.filter((message) =>
+        message.text.includes("Sky mismatch."),
+      ),
+    ).toEqual(reviewMessages);
+    expect(mocks.begin.mock.calls[1]![0].checkpoint.messages.at(-1)).toEqual({
+      role: "assistant",
+      text: "The review found: Sky mismatch.",
+    });
+
+    useOrb.getState().undo();
+    expect(useOrb.getState().reviewContinuation).toBeUndefined();
+  });
+
+  it("keeps transient continuation when review notes reach the message limit", async () => {
+    const messages = Array.from({ length: 496 }, (_, index) => ({
+      role: "user" as const,
+      text: `Conversation ${index}`,
+    }));
+    await useOrb.getState().load({
+      ...useOrb.getState().project,
+      messages,
+    });
+    const fetcher = partialReviewFetcher();
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection, journal());
+
+    expect(useOrb.getState().project.messages).toHaveLength(500);
+    expect(useOrb.getState().error).toBe("");
+    expect(
+      useOrb.getState().project.messages.filter((message) =>
+        message.text.includes("Sky mismatch."),
+      ),
+    ).toEqual([{ role: "assistant", text: "The review found: Sky mismatch." }]);
+    expect(useOrb.getState().reviewContinuation?.issue).toBe("Sky mismatch.");
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
+      "final review still found: Sky mismatch.",
     );
   });
 

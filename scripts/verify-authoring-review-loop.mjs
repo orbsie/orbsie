@@ -133,7 +133,7 @@ function correctionProject(project) {
   };
 }
 
-function reviewReply(project, phase) {
+function reviewReply(project, phase, finalVerdict = "accept") {
   const scope = "visual+structural";
   if (phase === "review") {
     const corrected = correctionProject(project);
@@ -175,9 +175,20 @@ function reviewReply(project, phase) {
       projectId: project.id,
       reviewedRevision: project.revision,
       scope,
-      verdict: "accept",
-      summary: "The corrected scene is ready.",
-      issues: [],
+      verdict: finalVerdict,
+      summary:
+        finalVerdict === "accept"
+          ? "The corrected scene is ready."
+          : "The lantern still needs a hanging chain.",
+      issues:
+        finalVerdict === "accept"
+          ? []
+          : [
+              {
+                summary: "The lantern has no visible hanging chain.",
+                entityIds: ["lantern"],
+              },
+            ],
       corrections: [],
     },
     corrections: [],
@@ -283,7 +294,9 @@ function recoveryCheckpoint(project) {
   };
 }
 
-async function runRenderer(renderer) {
+async function runRenderer(renderer, finalVerdict = "accept") {
+  const evidenceName =
+    finalVerdict === "accept" ? renderer : `${renderer}-partial`;
   const args =
     renderer === "software"
       ? ["--disable-gpu"]
@@ -295,6 +308,9 @@ async function runRenderer(renderer) {
   const browser = await chromium.launch({ args: ["--no-sandbox", ...args] });
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
+  });
+  await context.addInitScript(() => {
+    window.__orbsieSceneReviewFixture = {};
   });
   if (renderer === "software")
     await context.addInitScript(() => {
@@ -393,7 +409,7 @@ async function runRenderer(renderer) {
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
       },
-      body: JSON.stringify(reviewReply(body.project, phase)),
+      body: JSON.stringify(reviewReply(body.project, phase, finalVerdict)),
     });
   });
 
@@ -410,8 +426,12 @@ async function runRenderer(renderer) {
       "Up to three model calls",
     );
     await page.getByRole("button", { name: "Create", exact: true }).click();
+    const terminalMessage =
+      finalVerdict === "accept"
+        ? "Scene verified. Changes are applied."
+        : "The correction was applied; the final review still found: The lantern has no visible hanging chain.";
     await expect(page.locator(".authoring-activity-latest p")).toHaveText(
-      "Scene verified. Changes are applied.",
+      terminalMessage,
       { timeout: 15_000 },
     );
     assert.equal(requests.length, 3);
@@ -445,17 +465,49 @@ async function runRenderer(renderer) {
       text.includes("Review correction applied."),
     );
     const terminalIndex = messageTexts.findIndex((text) =>
-      text.includes("Scene verified. Changes are applied."),
+      text.includes(terminalMessage),
     );
     assert(initialCommitIndex >= 0);
     assert(correctionCommitIndex > initialCommitIndex);
     assert(terminalIndex > correctionCommitIndex);
-    assert.match(messageTexts.at(-1) ?? "", /Scene verified/);
+    assert.match(
+      messageTexts.at(-1) ?? "",
+      new RegExp(
+        finalVerdict === "accept"
+          ? "Scene verified"
+          : "final review still found",
+      ),
+    );
     const saved = await storageSnapshot(page);
     assert.equal(saved.project.environment.sky, "#aabbff");
     assert.equal(saved.project.revision, requests[2].body.project.revision);
+    const continuation = page.getByTestId("authoring-review-continuation");
+    if (finalVerdict === "revise") {
+      assert(
+        saved.project.messages.some(
+          (message) =>
+            message.text ===
+            "The final review still found: The lantern has no visible hanging chain.",
+        ),
+      );
+      await expect(continuation).toBeVisible();
+      await continuation.click();
+      await expect(
+        page.getByRole("textbox", { name: "What experience to build?" }),
+      ).toHaveValue(
+        "Continue improving the scene and address this remaining review finding: The lantern has no visible hanging chain.",
+      );
+      assert.equal(
+        requests.length,
+        3,
+        "drafting a continuation must not call the model",
+      );
+      await expect(continuation).toBeVisible();
+    } else {
+      await expect(continuation).toHaveCount(0);
+    }
 
-    await page.screenshot({ path: `${output}/${renderer}-desktop.png` });
+    await page.screenshot({ path: `${output}/${evidenceName}-desktop.png` });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.locator(".chat-panel")).toBeVisible();
     const reviewChoiceLayout = await page
@@ -483,7 +535,12 @@ async function runRenderer(renderer) {
         }),
       );
     assert(bounds.every((box) => box.x >= 0 && box.x + box.width <= 390));
-    await page.screenshot({ path: `${output}/${renderer}-phone.png` });
+    if (finalVerdict === "revise") {
+      const buttonBox = await continuation.boundingBox();
+      assert(buttonBox);
+      assert(buttonBox.x >= 0 && buttonBox.x + buttonBox.width <= 390);
+    }
+    await page.screenshot({ path: `${output}/${evidenceName}-phone.png` });
     assert.deepEqual(unexpectedRequests, []);
     const allowedPageErrors =
       renderer === "software"
@@ -504,6 +561,7 @@ async function runRenderer(renderer) {
     );
     return {
       renderer,
+      finalVerdict,
       initialRevision: requests[1].body.project.revision,
       correctedRevision: requests[2].body.project.revision,
       requestScopes: requests
@@ -520,6 +578,27 @@ async function runRenderer(renderer) {
       requestFailures,
       unexpectedRequests,
     };
+  } catch (error) {
+    console.error("Renderer fixture failed", {
+      renderer,
+      finalVerdict,
+      requests: requests.map((request) => request.kind),
+      activity: await page
+        .locator(".authoring-activity-message")
+        .allTextContents(),
+      appError: await page.locator(".chat-error").allTextContents(),
+      rendererAvailability: await page
+        .locator("[data-renderer-availability]")
+        .getAttribute("data-renderer-availability"),
+      captureState: await page.evaluate(
+        (kind) => window.__orbsieSceneReviewFixture?.[kind]?.read?.(),
+        renderer,
+      ),
+      pageErrors,
+      consoleErrors,
+      requestFailures,
+    });
+    throw error;
   } finally {
     await browser.close();
   }
@@ -941,11 +1020,13 @@ const report = {
   scope: "deterministic browser authoring review loop with real canvas capture",
   liveModelCalls: 0,
   renderers: {},
+  partialReview: {},
   signedInJournal: {},
 };
 try {
   report.renderers.webgl = await runRenderer("webgl");
   report.renderers.software = await runRenderer("software");
+  report.partialReview.software = await runRenderer("software", "revise");
   report.signedInJournal.success = await runSignedInJournalScenario(false);
   report.signedInJournal.conflict = await runSignedInJournalScenario(true);
   report.passed = true;

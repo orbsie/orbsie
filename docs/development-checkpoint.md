@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 partial-review continuation: final `revise` results now put a concrete,
+bounded finding into the parent conversation, save it when message capacity
+allows, and offer an explicit button that drafts a follow-up prompt without
+starting another model call. The action is tied to the saved project revision
+and clears on a new run or project/revision change. The earlier review finding
+is also saved before a correction journal segment begins. A production-browser
+fixture caught two integration issues: a forming mesh settled just after the
+five-second capture deadline, and generic suggestion CSS hid the follow-up
+button. Review capture now waits up to ten seconds and the action has its own
+visible desktop/phone styling. Focused store tests passed 12/12, typecheck and
+production build passed. The deterministic production-browser review fixture
+passed WebGL, software, partial-final-review, and signed-in journal scenarios
+with zero live model calls; the 390px phone screenshot was inspected. Evidence:
+`docs/evidence/authoring-review/partial-continuation-r3-20260924/`.
+This does not establish live provider quality or physical Android performance.
+
 Sep 24 hosted ChatGPT local acceptance preparation: with an isolated local
 PostgreSQL database and production build, the browser created a transparent
 private Orbsie session and obtained a real OpenAI device-code challenge. The

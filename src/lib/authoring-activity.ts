@@ -136,6 +136,18 @@ export function authoringEntityLabel(label: string | undefined): string {
   return cleaned.length > 48 ? `${cleaned.slice(0, 48).trimEnd()}…` : cleaned;
 }
 
+/** Keep review findings readable and bounded before adding them to a project. */
+export function authoringReviewIssueSummary(summary: string): string {
+  const cleaned = summary
+    .replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return "A scene issue remains.";
+  const characters = Array.from(cleaned);
+  if (characters.length <= 180) return cleaned;
+  return `${characters.slice(0, 179).join("").trimEnd()}…`;
+}
+
 export function latestAuthoringActivity(
   events: readonly AuthoringActivity[],
 ): AuthoringActivity | undefined {

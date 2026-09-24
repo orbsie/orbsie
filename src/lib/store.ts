@@ -65,6 +65,7 @@ import {
 import {
   appendAuthoringActivity,
   authoringEntityLabel,
+  authoringReviewIssueSummary,
   createAuthoringActivityThrottle,
   type AuthoringActivity,
   type AuthoringActivityDraft,
@@ -86,6 +87,13 @@ const generationErrorCodes = new Set([
   "CHATGPT_CONNECTION_REQUIRED",
   CHATGPT_STALE_CONNECTION_CODE,
 ]);
+const PROJECT_MESSAGE_LIMIT = 500;
+
+export type ReviewContinuation = {
+  projectId: string;
+  revision: number;
+  issue: string;
+};
 
 function validatedGenerationErrorCode(value: unknown): string | undefined {
   return typeof value === "string" && generationErrorCodes.has(value)
@@ -216,6 +224,7 @@ interface State {
   generationRecovery?: GenerationRecovery;
   modelingFeedback?: ModelingFeedback;
   authoringActivity: AuthoringActivity[];
+  reviewContinuation?: ReviewContinuation;
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
@@ -430,8 +439,14 @@ export const useOrb = create<State>((setState, getState) => ({
         building: false,
         generationRecovery: undefined,
         modelingFeedback: undefined,
+        reviewContinuation: undefined,
       };
-    if ("reset" in patch) patch = { ...patch, generationRecovery: undefined };
+    if ("reset" in patch)
+      patch = {
+        ...patch,
+        generationRecovery: undefined,
+        reviewContinuation: undefined,
+      };
     setState(patch);
   },
   async save() {
@@ -657,6 +672,7 @@ export const useOrb = create<State>((setState, getState) => ({
       generationRecovery: undefined,
       modelingFeedback: undefined,
       authoringActivity: [],
+      reviewContinuation: undefined,
       building: false,
     });
   },
@@ -703,6 +719,7 @@ export const useOrb = create<State>((setState, getState) => ({
       generationRecovery: undefined,
       modelingFeedback: undefined,
       authoringActivity: [],
+      reviewContinuation: undefined,
       readOnly: !writer,
       ...(!writer
         ? {
@@ -785,6 +802,7 @@ export const useOrb = create<State>((setState, getState) => ({
       history: s.history.slice(0, -1),
       selected: undefined,
       generationRecovery: undefined,
+      reviewContinuation: undefined,
       notice: "Previous change restored.",
     });
     void getState().save();
@@ -797,6 +815,7 @@ export const useOrb = create<State>((setState, getState) => ({
       history: [...s.history, s.project].slice(-HISTORY_LIMIT),
       future: s.future.slice(1),
       generationRecovery: undefined,
+      reviewContinuation: undefined,
     });
     void getState().save();
   },
@@ -992,6 +1011,7 @@ export const useOrb = create<State>((setState, getState) => ({
       error: "",
       generationErrorCode: undefined,
       generationRecovery: undefined,
+      reviewContinuation: undefined,
       notice: "",
       saved: false,
       authoringActivity: [],
@@ -1042,6 +1062,8 @@ export const useOrb = create<State>((setState, getState) => ({
     let reviewStarted = false;
     let reviewIncomplete = false;
     let reviewPartial = false;
+    let reviewRemainingIssue: string | undefined;
+    let reviewContinuationRevision: number | undefined;
     const writerCurrent = () =>
       !getState().readOnly && activateWriter(project.id);
     const apply = async (input: ModelCommand) => {
@@ -1291,6 +1313,27 @@ export const useOrb = create<State>((setState, getState) => ({
       (revision === undefined || getState().project.revision === revision) &&
       writerCurrent() &&
       journalCurrent();
+    const appendReviewMessage = (revision: number, message: string) => {
+      setState((state) => {
+        if (
+          state.project.id !== project.id ||
+          state.project.revision !== revision ||
+          state.project.messages.length >= PROJECT_MESSAGE_LIMIT
+        )
+          return state;
+        return {
+          ...state,
+          project: {
+            ...state.project,
+            messages: [
+              ...state.project.messages,
+              { role: "assistant" as const, text: message },
+            ],
+          },
+          saved: false,
+        };
+      });
+    };
     const reviewScope = () =>
       reviewImageSupported
         ? ("visual+structural" as const)
@@ -1301,6 +1344,9 @@ export const useOrb = create<State>((setState, getState) => ({
       const capture = await captureSceneReview({
         projectId: reviewed.id,
         revision: reviewed.revision,
+        // A forming mesh can settle just after the default five-second window
+        // on slower browser renderers; keep the review tied to this revision.
+        timeoutMs: 10_000,
         ...(connection.renderer === "webgl" ||
         connection.renderer === "software"
           ? { renderer: connection.renderer }
@@ -1375,13 +1421,25 @@ export const useOrb = create<State>((setState, getState) => ({
     const finishReviewedRun = async (
       message: string,
       kind: AuthoringActivityKind = "completed",
+      continuationIssue?: string,
+      continuationRevision?: number,
     ) => {
-      if (!currentAt()) return;
+      if (!currentAt(continuationRevision)) return;
       await getState().save();
-      if (!currentAt() || !getState().saved)
+      if (!currentAt(continuationRevision) || !getState().saved)
         throw Error("The reviewed scene could not be saved.");
       markExperience(project.id, "generationComplete", experienceToken);
       finishRunExperience("success");
+      setState({
+        reviewContinuation:
+          continuationIssue !== undefined && continuationRevision !== undefined
+            ? {
+                projectId: project.id,
+                revision: continuationRevision,
+                issue: continuationIssue,
+              }
+            : undefined,
+      });
       publishActivity(kind, message, getState().project.revision);
       setState({
         building: false,
@@ -1438,13 +1496,18 @@ export const useOrb = create<State>((setState, getState) => ({
       // The initial journal is complete at the first commit. Persist the exact
       // reviewed scene and begin a distinct cloud segment before any command.
       assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
+      const firstIssue = authoringReviewIssueSummary(
+        first.review.issues[0]!.summary,
+      );
+      appendReviewMessage(reviewed.revision, `The review found: ${firstIssue}`);
       await getState().save();
       if (!currentAt(reviewed.revision) || !getState().saved)
         throw Error("The reviewed scene could not be saved.");
+      const reviewedWithFinding = committed(getState().project, baseline);
       const correctionRunId = crypto.randomUUID();
       if (journal) {
         durableRun = await journal.begin(
-          reviewed,
+          reviewedWithFinding,
           correctionRunId,
           prompt,
           selected,
@@ -1495,6 +1558,14 @@ export const useOrb = create<State>((setState, getState) => ({
       });
       if (final.review.verdict === "revise") {
         reviewPartial = true;
+        reviewContinuationRevision = corrected.revision;
+        reviewRemainingIssue = authoringReviewIssueSummary(
+          final.review.issues[0]!.summary,
+        );
+        appendReviewMessage(
+          corrected.revision,
+          `The final review still found: ${reviewRemainingIssue}`,
+        );
       }
       return final.review.verdict === "accept";
     };
@@ -1725,15 +1796,15 @@ export const useOrb = create<State>((setState, getState) => ({
           reviewIncomplete
             ? "Scene saved, but review could not finish."
             : reviewPartial
-              ? `Scene correction applied, but final ${
-                  reviewImageSupported ? "review" : "structural review"
-                } found a remaining issue.`
+              ? `The correction was applied; the final review still found: ${reviewRemainingIssue}`
               : reviewEnabled
                 ? reviewImageSupported
                   ? "Scene verified. Changes are applied."
                   : "Scene structure verified. Changes are applied."
                 : "Generation complete. Changes are applied.",
           reviewIncomplete || reviewPartial ? "failed" : "completed",
+          reviewPartial ? reviewRemainingIssue : undefined,
+          reviewPartial ? reviewContinuationRevision : undefined,
         );
       }
     } catch (error) {

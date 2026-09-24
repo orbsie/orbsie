@@ -677,6 +677,24 @@ p {
   padding: 9px 10px;
   color: #829079;
 }
+.review-continuation {
+  margin: 8px 0 14px 25px;
+}
+.review-continuation button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid #d4dec9;
+  border-radius: 8px;
+  background: #edf3e5;
+  color: #48674f;
+  font-size: 11px;
+  text-align: left;
+}
 .chat-panel .prompt-form {
   border-top: 1px solid var(--border);
   margin: 0 10px;

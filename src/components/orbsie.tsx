@@ -1366,6 +1366,15 @@ export default function Orbsie() {
       activity.kind === "cancelled" ||
       activity.kind === "failed",
   );
+  const latestTerminalActivity = terminalActivity.at(-1);
+  const reviewContinuation =
+    s.reviewContinuation?.projectId === s.project.id &&
+    s.reviewContinuation.revision === s.project.revision &&
+    latestTerminalActivity?.kind === "failed" &&
+    latestTerminalActivity.projectId === s.project.id &&
+    latestTerminalActivity.revision === s.project.revision
+      ? s.reviewContinuation
+      : undefined;
   const renderProjectMessage = (
     m: (typeof s.project.messages)[number],
     index: number,
@@ -2012,6 +2021,23 @@ export default function Orbsie() {
     setPrompt(recovery.prompt);
     void submit(undefined, recovery.prompt, selectedId ?? null, true);
   };
+  const draftReviewContinuation = () => {
+    const current = useOrb.getState();
+    const continuation = current.reviewContinuation;
+    if (!continuation) return;
+    if (
+      continuation.projectId !== current.project.id ||
+      continuation.revision !== current.project.revision
+    ) {
+      current.set({ reviewContinuation: undefined });
+      return;
+    }
+    current.set({ selected: undefined });
+    setPrompt(
+      `Continue improving the scene and address this remaining review finding: ${continuation.issue}`,
+    );
+    window.requestAnimationFrame(() => textarea.current?.focus());
+  };
   const reset = () => {
     s.set({
       score: [],
@@ -2510,6 +2536,18 @@ export default function Orbsie() {
                     activity,
                     index === terminalActivity.length - 1,
                   ),
+                )}
+                {reviewContinuation && (
+                  <div className="review-continuation">
+                    <button
+                      type="button"
+                      aria-label={`Draft a follow-up prompt to address: ${reviewContinuation.issue}`}
+                      data-testid="authoring-review-continuation"
+                      onClick={draftReviewContinuation}
+                    >
+                      Address the remaining issue <ArrowUpRight size={12} />
+                    </button>
+                  </div>
                 )}
                 {!s.building && s.project.entities.length > 0 && (
                   <div className="suggested-edits">
