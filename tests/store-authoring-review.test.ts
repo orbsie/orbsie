@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   append: vi.fn(),
   cancel: vi.fn(),
   begin: vi.fn(),
+  failNextDbUpdate: false,
   db: new Map<string, unknown>(),
 }));
 
@@ -26,6 +27,10 @@ vi.mock("idb-keyval", () => ({
   clear: async () => mocks.db.clear(),
   get: async (key: string) => structuredClone(mocks.db.get(key)),
   update: async (key: string, change: (value: unknown) => unknown) => {
+    if (mocks.failNextDbUpdate) {
+      mocks.failNextDbUpdate = false;
+      throw Error("Local save failed.");
+    }
     mocks.db.set(key, structuredClone(change(mocks.db.get(key))));
   },
 }));
@@ -288,6 +293,7 @@ beforeEach(async () => {
   mocks.append.mockReset();
   mocks.cancel.mockReset().mockResolvedValue(undefined);
   mocks.begin.mockReset();
+  mocks.failNextDbUpdate = false;
   mocks.db.clear();
   vi.stubGlobal("Worker", class {});
   const project = {
@@ -433,7 +439,13 @@ describe("store browser authoring review loop", () => {
       projectId: state.project.id,
       revision: state.project.revision,
       prompt: "Recolor the tree",
+      priorRunId: authoringRunId,
+      browserModeling: true,
+      provider: "free",
+      model: "",
+      reviewImageSupported: true,
     });
+    expect(state.interruptedReviewContinuation).not.toHaveProperty("key");
     expect(state.reviewContinuation).toBeUndefined();
     expect(state.generationRecovery).toBeUndefined();
     expect(state.authoringActivity.at(-1)).toMatchObject({
@@ -448,6 +460,416 @@ describe("store browser authoring review loop", () => {
     expect(savedLibrary[state.project.id]?.revision).toBe(
       state.project.revision,
     );
+  });
+
+  it("resumes the saved review with one start and one review request", async () => {
+    const resumedRunId = "33333333-3333-4333-8333-333333333333";
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: resumedRunId,
+          reviewImageSupported: true,
+        });
+      }
+      const body = JSON.parse(String(init?.body));
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      return Response.json(
+        await reviewReply(body.project, "accept", "visual+structural"),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const selected = useOrb.getState().project.entities[0]!.id;
+    useOrb.getState().set({ selected });
+
+    await useOrb.getState().run("Recolor the tree", connection);
+    const failed = useOrb.getState();
+    const savedRevision = failed.project.revision;
+    const originalPromptCount = failed.project.messages.filter(
+      (message) =>
+        message.role === "user" && message.text === "Recolor the tree",
+    ).length;
+    expect(failed.interruptedReviewContinuation).toMatchObject({
+      priorRunId: authoringRunId,
+      selected,
+      browserModeling: true,
+      provider: "free",
+    });
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
+      "/api/generate",
+      "/api/generate/review",
+      "/api/generate/review/start",
+      "/api/generate/review",
+    ]);
+    const startBody = JSON.parse(String(fetcher.mock.calls[2]![1]?.body));
+    expect(startBody).toMatchObject({
+      priorRunId: authoringRunId,
+      prompt: "Recolor the tree",
+      selected,
+      browserModeling: true,
+      project: { id: failed.project.id, revision: savedRevision },
+    });
+    const resumedReviewBody = JSON.parse(
+      String(fetcher.mock.calls[3]![1]?.body),
+    );
+    expect(resumedReviewBody).toMatchObject({
+      runId: resumedRunId,
+      prompt: "Recolor the tree",
+      selected,
+      project: { id: failed.project.id, revision: savedRevision },
+    });
+    const finalState = useOrb.getState();
+    expect(finalState.project.revision).toBe(savedRevision);
+    expect(
+      finalState.project.messages.filter(
+        (message) =>
+          message.role === "user" && message.text === "Recolor the tree",
+      ),
+    ).toHaveLength(originalPromptCount);
+    expect(finalState.interruptedReviewContinuation).toBeUndefined();
+    expect(finalState.saved).toBe(true);
+  });
+
+  it("does not admit a stale or connection-mismatched continuation", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      return Response.json({ error: "Review unavailable." }, { status: 502 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb
+      .getState()
+      .resumeInterruptedReview({ ...connection, model: "different-model" });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+
+    const state = useOrb.getState();
+    useOrb.setState({
+      project: { ...state.project, revision: state.project.revision + 1 },
+    });
+    await useOrb.getState().resumeInterruptedReview(connection);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().interruptedReviewContinuation?.revision).toBe(
+      state.project.revision,
+    );
+  });
+
+  it("does not admit when the pre-start scene capture fails", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      return Response.json({ error: "Review unavailable." }, { status: 502 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+    mocks.capture.mockRejectedValueOnce(
+      new SceneReviewCaptureError("timeout", "capture timeout"),
+    );
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().interruptedReviewContinuation?.priorRunId).toBe(
+      authoringRunId,
+    );
+  });
+
+  it("keeps the prior run binding when the review-start response is lost", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start")
+        throw Error("Connection lost after admission.");
+      return Response.json({ error: "Review unavailable." }, { status: 502 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(useOrb.getState().interruptedReviewContinuation?.priorRunId).toBe(
+      authoringRunId,
+    );
+    expect(useOrb.getState().saved).toBe(true);
+  });
+
+  it("preserves the old binding when the review response is lost", async () => {
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: "77777777-7777-4777-8777-777777777777",
+          reviewImageSupported: true,
+        });
+      }
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      throw Error("Review response lost.");
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(useOrb.getState().interruptedReviewContinuation?.priorRunId).toBe(
+      authoringRunId,
+    );
+    expect(useOrb.getState().error).toContain("admission is unknown");
+    expect(useOrb.getState().saved).toBe(true);
+  });
+
+  it("stops when the admitted model reports a different review capability", async () => {
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: "99999999-9999-4999-8999-999999999999",
+          reviewImageSupported: false,
+        });
+      }
+      return Response.json(
+        { error: "Review unavailable." },
+        { status: 502, headers: resumed ? {} : undefined },
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(useOrb.getState().error).toContain("capabilities changed");
+    expect(useOrb.getState().interruptedReviewContinuation).toMatchObject({
+      priorRunId: authoringRunId,
+      reviewImageSupported: true,
+    });
+  });
+
+  it("does not rebind after a review preflight failure without admission evidence", async () => {
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: "88888888-8888-4888-8888-888888888888",
+          reviewImageSupported: true,
+        });
+      }
+      return Response.json(
+        { error: "Review preflight failed." },
+        {
+          status: 409,
+          headers: resumed ? {} : undefined,
+        },
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(useOrb.getState().interruptedReviewContinuation?.priorRunId).toBe(
+      authoringRunId,
+    );
+    expect(useOrb.getState().error).toContain("review could not finish");
+  });
+
+  it("restores the last saved scene when a resumed correction cannot save", async () => {
+    const resumedRunId = "55555555-5555-4555-8555-555555555555";
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: resumedRunId,
+          reviewImageSupported: true,
+        });
+      }
+      const body = JSON.parse(String(init?.body));
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      const response = await reviewReply(
+        body.project,
+        "revise",
+        "visual+structural",
+        { remainingCalls: 2 },
+      );
+      const corrected = applyReviewCorrections(
+        body.project,
+        response.corrections,
+      );
+      const binding = await createSceneBinding(corrected);
+      return Response.json({
+        ...response,
+        binding: { revision: binding.revision, digest: binding.digest },
+        revision: binding.revision,
+        digest: binding.digest,
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+    const savedBeforeResume = structuredClone(useOrb.getState().project);
+    mocks.failNextDbUpdate = true;
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    const state = useOrb.getState();
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(state.project).toEqual(savedBeforeResume);
+    expect(state.saved).toBe(true);
+    expect(state.interruptedReviewContinuation).toMatchObject({
+      priorRunId: resumedRunId,
+      revision: savedBeforeResume.revision,
+    });
+    const savedLibrary = mocks.db.get("orbsie-library") as Record<
+      string,
+      ReturnType<typeof blankProject>
+    >;
+    expect(savedLibrary[state.project.id]).toEqual(savedBeforeResume);
+  });
+
+  it("cancels during capture before the review-only admission request", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      return Response.json({ error: "Review unavailable." }, { status: 502 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+    const gate = deferred<ReturnType<typeof capture>>();
+    mocks.capture.mockReturnValueOnce(gate.promise);
+
+    const resume = useOrb.getState().resumeInterruptedReview(connection);
+    await vi.waitFor(() => expect(mocks.capture).toHaveBeenCalledTimes(2));
+    useOrb.getState().stop();
+    gate.resolve(capture(useOrb.getState().project));
+    await resume;
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
+  });
+
+  it("refreshes the prior run ID when the resumed review request fails", async () => {
+    const resumedRunId = "44444444-4444-4444-8444-444444444444";
+    let resumed = false;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: resumedRunId,
+          reviewImageSupported: true,
+        });
+      }
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      return Response.json(
+        { error: "Review unavailable again." },
+        {
+          status: 502,
+          headers: { "X-Orbsie-Review-Failure-Kind": "scene-review-model" },
+        },
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+    const revision = useOrb.getState().project.revision;
+
+    await useOrb.getState().resumeInterruptedReview(connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(useOrb.getState().interruptedReviewContinuation).toMatchObject({
+      priorRunId: resumedRunId,
+      revision,
+      projectId: useOrb.getState().project.id,
+    });
+    expect(useOrb.getState().saved).toBe(true);
+    expect(useOrb.getState().project.revision).toBe(revision);
+    const savedLibrary = mocks.db.get("orbsie-library") as Record<
+      string,
+      ReturnType<typeof blankProject>
+    >;
+    expect(savedLibrary[useOrb.getState().project.id]?.revision).toBe(revision);
+  });
+
+  it("starts a journal correction segment for a resumed review finding", async () => {
+    const resumedRunId = "66666666-6666-4666-8666-666666666666";
+    let resumed = false;
+    let reviewOrdinal = 0;
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      if (url === "/api/generate/review/start") {
+        resumed = true;
+        return Response.json({
+          runId: resumedRunId,
+          reviewImageSupported: true,
+        });
+      }
+      if (!resumed)
+        return Response.json({ error: "Review unavailable." }, { status: 502 });
+      const body = JSON.parse(String(init?.body));
+      if (reviewOrdinal++ > 0)
+        return Response.json(
+          await reviewReply(body.project, "accept", "visual+structural"),
+        );
+      const response = await reviewReply(
+        body.project,
+        "revise",
+        "visual+structural",
+        { remainingCalls: 2 },
+      );
+      const corrected = applyReviewCorrections(
+        body.project,
+        response.corrections,
+      );
+      const binding = await createSceneBinding(corrected);
+      return Response.json({
+        ...response,
+        binding: { revision: binding.revision, digest: binding.digest },
+        revision: binding.revision,
+        digest: binding.digest,
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    await useOrb.getState().resumeInterruptedReview(connection, journal());
+
+    expect(mocks.begin).toHaveBeenCalledOnce();
+    expect(mocks.append).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(5);
+    expect(mocks.begin).toHaveBeenCalledOnce();
+    expect(mocks.begin.mock.calls[0]![0].checkpoint.messages.at(-1)).toEqual({
+      role: "assistant",
+      text: "The review found: Sky mismatch.",
+    });
+    expect(mocks.append).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
+    expect(useOrb.getState().saved).toBe(true);
   });
 
   it("runs two correction reviews in separate cloud segments before a partial final verdict", async () => {

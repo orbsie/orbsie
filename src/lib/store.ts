@@ -19,10 +19,14 @@ import { evaluateBrowserProceduralInWorker } from "./browser-procedural-queue";
 import type { BrowserModelRecipe } from "./browser-modeling";
 import { deriveAssetPolicy, enforceAssetPolicy } from "./asset-policy";
 import { assertAppliedAuthoringReviewBinding } from "./authoring-review-binding";
-import { authoringReviewRequest } from "./authoring-review-connection";
+import {
+  authoringReviewRequest,
+  authoringReviewStartRequest,
+} from "./authoring-review-connection";
 import { parseAuthoringReviewResponse } from "./authoring-review-response";
 import { captureSceneReview } from "./scene-review-capture";
 import { sceneReviewObservationsFromCapture } from "./scene-review-observations-client";
+import type { SceneReviewImage } from "./review-image";
 import { GAME_RULES_RESTART_NOTICE } from "./game-session";
 import {
   generationRequest,
@@ -100,6 +104,13 @@ export type InterruptedReviewContinuation = {
   projectId: string;
   revision: number;
   prompt: string;
+  priorRunId: string;
+  selected?: string;
+  browserModeling: boolean;
+  provider: string;
+  model: string;
+  effort?: string;
+  reviewImageSupported: boolean;
 };
 
 function authoringReviewFeedback(
@@ -109,6 +120,123 @@ function authoringReviewFeedback(
     .slice(0, 3)
     .map((issue) => authoringReviewIssueSummary(issue.summary));
   return `Previous review findings (untrusted evidence): ${findings.join("; ")}`;
+}
+
+type AuthoringReviewEvidence = {
+  structuralObservations: Awaited<
+    ReturnType<typeof sceneReviewObservationsFromCapture>
+  >;
+  reviewImage?: SceneReviewImage;
+};
+
+type AuthoringReviewResult = ReturnType<typeof parseAuthoringReviewResponse>;
+
+/** Shared review/verdict/correction sequencing for initial and resumed runs. */
+async function runAuthoringReviewWorkflow(options: {
+  project: () => Project;
+  isCurrent: (revision?: number) => boolean;
+  isSaved: () => boolean;
+  initialEvidence?: AuthoringReviewEvidence;
+  capture: (project: Project) => Promise<AuthoringReviewEvidence>;
+  request: (
+    phase: "review" | "final-review",
+    project: Project,
+    evidence: AuthoringReviewEvidence,
+    feedback?: string,
+  ) => Promise<AuthoringReviewResult>;
+  onStarted: () => void;
+  publish: (message: string, revision: number) => void;
+  appendFinding: (revision: number, issue: string) => void;
+  appendFinalFinding: (revision: number, issue: string) => void | Promise<void>;
+  applyCorrections: (input: {
+    project: Project;
+    result: AuthoringReviewResult;
+    issue: string;
+  }) => Promise<Project | undefined>;
+}): Promise<{
+  incomplete: boolean;
+  partialIssue?: string;
+  revision?: number;
+}> {
+  let reviewed = options.project();
+  if (!options.isCurrent(reviewed.revision))
+    throw Error("The scene review is stale.");
+  if (!options.isSaved()) return { incomplete: true };
+  options.publish("Reviewing the saved scene…", reviewed.revision);
+  const capture = async (project: Project) => {
+    try {
+      return await options.capture(project);
+    } catch (error) {
+      if (options.isCurrent(project.revision)) return undefined;
+      throw error;
+    }
+  };
+  let evidence = options.initialEvidence ?? (await capture(reviewed));
+  if (!evidence) return { incomplete: true };
+  options.onStarted();
+  let phase: "review" | "final-review" = "review";
+  let correctionReviews = 0;
+  let previousReviewFeedback: string | undefined;
+  while (true) {
+    if (!options.isCurrent(reviewed.revision))
+      throw Error("The scene review is stale.");
+    const result = await options.request(
+      phase,
+      reviewed,
+      evidence,
+      previousReviewFeedback,
+    );
+    if (!options.isCurrent(reviewed.revision))
+      throw Error("The scene review is stale.");
+    if (result.review.verdict === "accept") {
+      await assertAppliedAuthoringReviewBinding(reviewed, {
+        projectId: reviewed.id,
+        ...result.binding,
+      });
+      return { incomplete: false };
+    }
+    if (phase === "final-review") {
+      await assertAppliedAuthoringReviewBinding(reviewed, {
+        projectId: reviewed.id,
+        ...result.binding,
+      });
+      const issue = authoringReviewIssueSummary(
+        result.review.issues[0]!.summary,
+      );
+      await options.appendFinalFinding(reviewed.revision, issue);
+      return {
+        incomplete: false,
+        partialIssue: issue,
+        revision: reviewed.revision,
+      };
+    }
+    if (correctionReviews === 1 && result.remainingCalls !== 1)
+      return { incomplete: true };
+    const issue = authoringReviewIssueSummary(result.review.issues[0]!.summary);
+    previousReviewFeedback = authoringReviewFeedback(result.review.issues);
+    options.appendFinding(reviewed.revision, issue);
+    const corrected = await options.applyCorrections({
+      project: reviewed,
+      result,
+      issue,
+    });
+    if (!corrected) return { incomplete: true };
+    await assertAppliedAuthoringReviewBinding(corrected, {
+      projectId: corrected.id,
+      ...result.binding,
+    });
+    reviewed = corrected;
+    if (!options.isCurrent(reviewed.revision))
+      throw Error("The scene review is stale.");
+    options.publish("Checking the corrected scene…", reviewed.revision);
+    evidence = await capture(reviewed);
+    if (!evidence) return { incomplete: true };
+    correctionReviews += 1;
+    phase =
+      result.remainingCalls > 1 && correctionReviews < 2
+        ? "review"
+        : "final-review";
+  }
 }
 
 function validatedGenerationErrorCode(value: unknown): string | undefined {
@@ -255,6 +383,10 @@ interface State {
     journal?: GenerationJournalConnection,
     generationFeedback?: GenerationFeedback,
   ) => Promise<void>;
+  resumeInterruptedReview: (
+    connection: GenerationConnection,
+    journal?: GenerationJournalConnection,
+  ) => Promise<void>;
   stop: () => void;
   undo: () => void;
   redo: () => void;
@@ -398,6 +530,17 @@ let activeAuthoringRun:
         kind: AuthoringActivityKind,
         message: string,
         revision?: number,
+      ) => void;
+      clear: () => void;
+    }
+  | undefined;
+let activeReviewActivity:
+  | {
+      controller: AbortController;
+      publish: (
+        kind: AuthoringActivityKind,
+        message: string,
+        revision: number,
       ) => void;
       clear: () => void;
     }
@@ -758,6 +901,15 @@ export const useOrb = create<State>((setState, getState) => ({
   stop() {
     const run = activeAuthoringRun;
     const current = getState();
+    if (active && activeReviewActivity?.controller === active) {
+      activeReviewActivity.publish(
+        "cancelled",
+        "Stopped. Finished objects are safe.",
+        current.project.revision,
+      );
+      activeReviewActivity.clear();
+      activeReviewActivity = undefined;
+    }
     if (
       run &&
       run.controller === active &&
@@ -843,6 +995,606 @@ export const useOrb = create<State>((setState, getState) => ({
       interruptedReviewContinuation: undefined,
     });
     void getState().save();
+  },
+  async resumeInterruptedReview(connection, journal) {
+    const initialState = getState();
+    const continuation = initialState.interruptedReviewContinuation;
+    if (!continuation) return;
+    const initialProject = initialState.project;
+    const savedCheckpoint = committed(initialProject, baseline);
+    const connectionMatches =
+      connection.provider === continuation.provider &&
+      connection.model === continuation.model &&
+      connection.effort === continuation.effort &&
+      browserModelingAvailable() === continuation.browserModeling;
+    if (
+      initialState.building ||
+      initialState.readOnly ||
+      !initialState.saved ||
+      initialProject.id !== continuation.projectId ||
+      initialProject.revision !== continuation.revision ||
+      !connectionMatches ||
+      !isGenerationReady(connection) ||
+      (journal && !journal.isCurrent())
+    ) {
+      setState({
+        error:
+          "This saved review can only continue from its original scene and AI connection.",
+      });
+      return;
+    }
+    if (!activateWriter(initialProject.id)) {
+      setState({
+        readOnly: true,
+        error:
+          "This world is being edited in another tab. Your saved review was not changed.",
+      });
+      return;
+    }
+    try {
+      const library = await get<Record<string, unknown>>("orbsie-library");
+      const stored = projectSchema.safeParse(library?.[initialProject.id]);
+      if (
+        getState().project !== initialProject ||
+        getState().interruptedReviewContinuation !== continuation ||
+        !stored.success ||
+        JSON.stringify(stored.data) !== JSON.stringify(savedCheckpoint)
+      ) {
+        setState({
+          saved: false,
+          error:
+            "The saved scene changed before review could resume. Save it again before continuing.",
+        });
+        return;
+      }
+    } catch {
+      setState({
+        error:
+          "The saved scene could not be checked before review could resume.",
+      });
+      return;
+    }
+
+    clearActiveAuthoringRun();
+    active?.abort();
+    const controller = new AbortController();
+    const { signal } = controller;
+    active = controller;
+    let expectedProject = initialProject;
+    let latestSavedProject = savedCheckpoint;
+    let admittedRunId: string | undefined;
+    let reviewAttempted = false;
+    let refreshPriorRunId = false;
+    let responseOutcomeUnknown: "start" | "review" | undefined;
+    let reviewImageSupported = continuation.reviewImageSupported;
+    let durableRun: GenerationRun | undefined;
+    let assetPolicy = deriveAssetPolicy(
+      continuation.prompt,
+      continuation.selected,
+      savedCheckpoint,
+    );
+    const clientRunId = crypto.randomUUID();
+    const recoveryActivityThrottle = createAuthoringActivityThrottle(
+      (event) => {
+        if (signal.aborted || active !== controller) return;
+        setState((state) => {
+          if (state.project.id !== continuation.projectId) return state;
+          const activity: AuthoringActivity = {
+            id: crypto.randomUUID(),
+            runId: event.runId,
+            projectId: event.projectId,
+            revision: Number.isInteger(event.revision)
+              ? event.revision
+              : state.project.revision,
+            kind: event.kind,
+            message: event.message,
+            at: Date.now(),
+          };
+          return {
+            ...state,
+            authoringActivity: appendAuthoringActivity(
+              state.authoringActivity,
+              activity,
+            ),
+          };
+        });
+      },
+    );
+    const publishRecoveryActivity = (
+      kind: AuthoringActivityKind,
+      message: string,
+      revision: number,
+    ) =>
+      recoveryActivityThrottle.publish({
+        runId: clientRunId,
+        projectId: continuation.projectId,
+        revision,
+        kind,
+        message,
+      });
+    activeReviewActivity = {
+      controller,
+      publish: publishRecoveryActivity,
+      clear: recoveryActivityThrottle.clear,
+    };
+    const currentAt = (revision?: number) => {
+      const state = getState();
+      return (
+        !signal.aborted &&
+        active === controller &&
+        state.project === expectedProject &&
+        state.project.id === continuation.projectId &&
+        (revision === undefined || state.project.revision === revision) &&
+        state.interruptedReviewContinuation === continuation &&
+        !state.readOnly &&
+        activateWriter(continuation.projectId) &&
+        (!journal || journal.isCurrent())
+      );
+    };
+    const persistCurrent = async (revision: number) => {
+      if (!currentAt(revision)) return false;
+      const snapshot = committed(getState().project, baseline);
+      await getState().save();
+      if (!currentAt(revision) || !getState().saved) return false;
+      const library = await get<Record<string, unknown>>("orbsie-library");
+      const stored = projectSchema.safeParse(library?.[snapshot.id]);
+      if (
+        !stored.success ||
+        JSON.stringify(stored.data) !== JSON.stringify(snapshot)
+      ) {
+        setState({ saved: false });
+        return false;
+      }
+      baseline = snapshot;
+      latestSavedProject = snapshot;
+      return true;
+    };
+    const appendReviewMessage = (revision: number, message: string) => {
+      setState((state) => {
+        if (
+          state.project !== expectedProject ||
+          state.project.revision !== revision ||
+          state.project.messages.length >= PROJECT_MESSAGE_LIMIT
+        )
+          return state;
+        const project = {
+          ...state.project,
+          messages: [
+            ...state.project.messages,
+            { role: "assistant" as const, text: message },
+          ],
+        };
+        expectedProject = project;
+        return { ...state, project, saved: false };
+      });
+    };
+    const captureEvidence = async (
+      reviewed: Project,
+    ): Promise<AuthoringReviewEvidence> => {
+      if (!currentAt(reviewed.revision))
+        throw Error("The scene review is stale.");
+      const capture = await captureSceneReview({
+        projectId: reviewed.id,
+        revision: reviewed.revision,
+        timeoutMs: 10_000,
+        ...(connection.renderer === "webgl" ||
+        connection.renderer === "software"
+          ? { renderer: connection.renderer }
+          : {}),
+        signal,
+      });
+      if (!currentAt(reviewed.revision))
+        throw Error("The scene review is stale.");
+      return {
+        structuralObservations: sceneReviewObservationsFromCapture(capture),
+        reviewImage: {
+          projectId: capture.projectId,
+          revision: capture.revision,
+          renderer: capture.renderer,
+          width: capture.width,
+          height: capture.height,
+          image: capture.image,
+        },
+      } satisfies AuthoringReviewEvidence;
+    };
+
+    setState({ building: true, error: "", saved: true });
+    try {
+      // Capture the exact saved revision before admission, so a capture error
+      // cannot consume a review-only run.
+      let reviewed = committed(getState().project, baseline);
+      const firstEvidence = await captureEvidence(reviewed);
+      if (!currentAt(reviewed.revision)) return;
+      const startRequest = authoringReviewStartRequest(
+        connection,
+        {
+          priorRunId: continuation.priorRunId,
+          prompt: continuation.prompt,
+          project: reviewed,
+          ...(continuation.selected ? { selected: continuation.selected } : {}),
+          browserModeling: continuation.browserModeling,
+        },
+        clientRunId,
+      );
+      let startResponse: Response;
+      try {
+        startResponse = await fetch(startRequest.url, {
+          ...startRequest.init,
+          signal,
+        });
+      } catch {
+        responseOutcomeUnknown = "start";
+        throw Error("The review start response was lost.");
+      }
+      if (!currentAt(reviewed.revision)) return;
+      const startBody = await startResponse.json().catch(() => ({}));
+      if (!startResponse.ok)
+        throw Error(
+          typeof startBody?.error === "string"
+            ? startBody.error
+            : "The saved review could not be resumed.",
+        );
+      admittedRunId = validatedClientRunId(startBody?.runId);
+      if (
+        !admittedRunId ||
+        typeof startBody?.reviewImageSupported !== "boolean"
+      )
+        throw Error("The saved review could not be resumed.");
+      reviewImageSupported = startBody.reviewImageSupported;
+      if (reviewImageSupported !== continuation.reviewImageSupported)
+        throw Error(
+          "The review capabilities changed. Reconnect the original model before continuing.",
+        );
+      publishRecoveryActivity(
+        "waiting",
+        "Reviewing the saved scene…",
+        reviewed.revision,
+      );
+      const reviewScope = () =>
+        reviewImageSupported
+          ? ("visual+structural" as const)
+          : ("structural-only" as const);
+      const requestReview = async (
+        phase: "review" | "final-review",
+        project: Project,
+        evidence: AuthoringReviewEvidence,
+        feedback?: string,
+      ) => {
+        if (!admittedRunId || !currentAt(project.revision))
+          throw Error("The scene review is unavailable.");
+        const request = authoringReviewRequest(
+          connection,
+          {
+            runId: admittedRunId,
+            phase,
+            prompt: continuation.prompt,
+            project,
+            ...(continuation.selected
+              ? { selected: continuation.selected }
+              : {}),
+            browserModeling: continuation.browserModeling,
+            structuralObservations: evidence.structuralObservations,
+            ...(reviewImageSupported
+              ? { reviewImage: evidence.reviewImage }
+              : {}),
+            ...(feedback ? { feedback } : {}),
+          },
+          clientRunId,
+        );
+        reviewAttempted = true;
+        let response: Response;
+        try {
+          response = await fetch(request.url, { ...request.init, signal });
+        } catch {
+          responseOutcomeUnknown = "review";
+          throw Error("The review response was lost.");
+        }
+        if (!currentAt(project.revision))
+          throw Error("The scene review is stale.");
+        if (
+          !response.ok &&
+          response.headers.get("X-Orbsie-Review-Failure-Kind")
+        )
+          refreshPriorRunId = true;
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok)
+          throw Error(
+            typeof body?.error === "string"
+              ? body.error
+              : "The scene review could not be completed.",
+          );
+        refreshPriorRunId = true;
+        const parsed = parseAuthoringReviewResponse(body, {
+          projectId: project.id,
+          revision: project.revision,
+          phase,
+          scope: reviewScope(),
+          browserModeling: continuation.browserModeling,
+          entityIds: project.entities.map((entity) => entity.id),
+        });
+        return parsed;
+      };
+
+      let partialIssue: string | undefined;
+      let reviewIncomplete = false;
+      const workflow = await runAuthoringReviewWorkflow({
+        project: () => committed(getState().project, baseline),
+        isCurrent: currentAt,
+        isSaved: () => getState().saved,
+        initialEvidence: firstEvidence,
+        capture: captureEvidence,
+        request: requestReview,
+        onStarted: () => undefined,
+        publish: (message, revision) =>
+          publishRecoveryActivity("waiting", message, revision),
+        appendFinding: (revision, issue) =>
+          appendReviewMessage(revision, `The review found: ${issue}`),
+        appendFinalFinding: async (revision, issue) => {
+          appendReviewMessage(
+            revision,
+            `The final review still found: ${issue}`,
+          );
+          if (!(await persistCurrent(revision)))
+            throw Error("The reviewed scene could not be saved.");
+        },
+        applyCorrections: async ({ project: reviewed, result }) => {
+          publishRecoveryActivity(
+            "applied",
+            "Applying a targeted correction to the scene…",
+            reviewed.revision,
+          );
+          assetPolicy = deriveAssetPolicy(
+            continuation.prompt,
+            continuation.selected,
+            reviewed,
+          );
+          if (!(await persistCurrent(reviewed.revision)))
+            throw Error("The reviewed scene could not be saved.");
+          const reviewedWithFinding = committed(getState().project, baseline);
+          const correctionRunId = crypto.randomUUID();
+          if (journal) {
+            durableRun = await journal.begin(
+              reviewedWithFinding,
+              correctionRunId,
+              continuation.prompt,
+              continuation.selected,
+            );
+            if (!currentAt(reviewed.revision)) return undefined;
+          }
+          let cursor: Cursor = {
+            runId: correctionRunId,
+            sequence: 0,
+            seen: new Set(),
+          };
+          let working = reviewedWithFinding;
+          for (const input of result.corrections) {
+            if (!currentAt()) throw Error("The scene review is stale.");
+            const modelCommand = enforceAssetPolicy(
+              working,
+              parseModelCommandForProcessing(
+                input,
+                false,
+                continuation.browserModeling,
+              ),
+              assetPolicy,
+            );
+            assertModelingCommand(
+              modelCommand,
+              false,
+              continuation.browserModeling,
+            );
+            let command: Command;
+            if (
+              modelCommand.type === "set_geometry" &&
+              modelCommand.geometry.kind === "generated"
+            ) {
+              const id = modelCommand.id;
+              const job = modelCommand.geometry.job;
+              if (!("backend" in job))
+                throw Error(
+                  "This modeling job is unsupported. Request a browser-manifold recipe instead.",
+                );
+              let recipe: BrowserModelRecipe;
+              let authoring:
+                | {
+                    source: ReturnType<typeof canonicalBrowserProceduralSource>;
+                    sourceHash: string;
+                  }
+                | undefined;
+              if (job.backend === "browser-procedural") {
+                const source = canonicalBrowserProceduralSource(job.source);
+                const sourceHash = await hashBrowserProceduralSource(source);
+                recipe = await evaluateBrowserProceduralInWorker(source, {
+                  signal,
+                });
+                if (!currentAt()) throw Error("The scene review is stale.");
+                authoring = { source, sourceHash };
+              } else recipe = job.recipe;
+              const model = await buildBrowserModel(recipe, {
+                signal,
+                color:
+                  working.entities.find((entity) => entity.id === id)?.color ??
+                  "#6ead60",
+              });
+              if (!currentAt()) throw Error("The scene review is stale.");
+              command = commandSchema.parse({
+                ...modelCommand,
+                geometry: {
+                  ...modelCommand.geometry,
+                  job:
+                    authoring === undefined
+                      ? { backend: "browser-manifold", recipe }
+                      : {
+                          backend: "browser-manifold",
+                          recipe,
+                          authoring,
+                        },
+                  model,
+                },
+              });
+            } else command = commandSchema.parse(modelCommand);
+            const envelope = {
+              version: 1 as const,
+              projectId: working.id,
+              runId: cursor.runId,
+              sequence: cursor.sequence + 1,
+              operationId: crypto.randomUUID(),
+              baseRevision: working.revision,
+              command,
+            };
+            const applied = applyOperation(working, envelope, cursor);
+            working = applied.project;
+            cursor = applied.cursor;
+            if (journal && durableRun) {
+              if (
+                command.type === "set_geometry" &&
+                command.geometry.kind === "generated" &&
+                !(await uploadCloudGeneratedModels(working, () => currentAt()))
+              )
+                throw Error("The scene review is stale.");
+              const acknowledged = await appendCloudGenerationOperation(
+                envelope,
+                signal,
+              );
+              if (!currentAt()) throw Error("The scene review is stale.");
+              if (
+                JSON.stringify(acknowledged.checkpoint) !==
+                JSON.stringify(projectSchema.parse(working))
+              )
+                throw Error(
+                  "The cloud checkpoint differs from this update. Recover it before continuing.",
+                );
+              durableRun = acknowledged;
+            }
+            if (command.type === "commit_revision")
+              baseline = committed(working, baseline);
+            expectedProject = working;
+            setState({
+              project: working,
+              saved: false,
+              ...(command.type === "commit_revision" ? { future: [] } : {}),
+            });
+            if (command.type === "commit_revision") {
+              if (!(await persistCurrent(working.revision)))
+                throw Error("The reviewed scene could not be saved.");
+            }
+          }
+          return committed(getState().project, baseline);
+        },
+      });
+      partialIssue = workflow.partialIssue;
+      reviewIncomplete = workflow.incomplete;
+      if (reviewIncomplete)
+        throw Error("Scene saved, but review could not finish.");
+      if (!currentAt()) return;
+      if (
+        !getState().saved ||
+        JSON.stringify(getState().project) !==
+          JSON.stringify(latestSavedProject)
+      ) {
+        if (!(await persistCurrent(getState().project.revision)))
+          throw Error("The reviewed scene could not be saved.");
+      }
+      publishRecoveryActivity(
+        "completed",
+        partialIssue
+          ? `The correction was applied; the final review still found: ${partialIssue}`
+          : reviewImageSupported
+            ? "Scene verified. Changes are applied."
+            : "Scene structure verified. Changes are applied.",
+        getState().project.revision,
+      );
+      setState({
+        building: false,
+        error: "",
+        notice: partialIssue
+          ? `The correction was applied; the final review still found: ${partialIssue}`
+          : reviewIncomplete
+            ? "Scene saved, but review could not finish."
+            : reviewImageSupported
+              ? "Scene verified. Changes are applied."
+              : "Scene structure verified. Changes are applied.",
+        interruptedReviewContinuation: undefined,
+        reviewContinuation:
+          partialIssue === undefined
+            ? undefined
+            : {
+                projectId: continuation.projectId,
+                revision: getState().project.revision,
+                issue: partialIssue,
+              },
+      });
+    } catch (error) {
+      if (signal.aborted || active !== controller) return;
+      if (
+        getState().project !== expectedProject ||
+        getState().project.id !== continuation.projectId ||
+        getState().interruptedReviewContinuation !== continuation
+      )
+        return;
+      baseline = latestSavedProject;
+      expectedProject = latestSavedProject;
+      let savedCheckpointCurrent = false;
+      try {
+        const library = await get<Record<string, unknown>>("orbsie-library");
+        const stored = projectSchema.safeParse(
+          library?.[latestSavedProject.id],
+        );
+        savedCheckpointCurrent =
+          stored.success &&
+          JSON.stringify(stored.data) === JSON.stringify(latestSavedProject);
+      } catch {}
+      const refreshContinuation =
+        admittedRunId &&
+        reviewAttempted &&
+        refreshPriorRunId &&
+        savedCheckpointCurrent &&
+        getState().project.id === latestSavedProject.id;
+      const refreshed = refreshContinuation
+        ? {
+            ...continuation,
+            revision: latestSavedProject.revision,
+            priorRunId: admittedRunId!,
+            reviewImageSupported,
+          }
+        : continuation;
+      publishRecoveryActivity(
+        "failed",
+        "Scene saved, but review could not finish.",
+        latestSavedProject.revision,
+      );
+      setState({
+        project: latestSavedProject,
+        saved: savedCheckpointCurrent,
+        building: false,
+        interruptedReviewContinuation: savedCheckpointCurrent
+          ? refreshed
+          : undefined,
+        error:
+          responseOutcomeUnknown === "start"
+            ? "The review start response was lost. Your scene is saved, but admission is unknown; retrying may conflict with a review already in progress."
+            : responseOutcomeUnknown === "review"
+              ? "The review response was lost. Your scene is saved, but admission is unknown; retrying may conflict with a review already in progress."
+              : error instanceof Error &&
+                  [
+                    "The saved scene changed before review could resume. Save it again before continuing.",
+                    "The review capabilities changed. Reconnect the original model before continuing.",
+                  ].includes(error.message)
+                ? error.message
+                : "Scene saved, but review could not finish. Your world is safe.",
+        notice: "",
+      });
+    } finally {
+      recoveryActivityThrottle.clear();
+      if (activeReviewActivity?.controller === controller)
+        activeReviewActivity = undefined;
+      if (durableRun?.state === "running")
+        void cancelCloudGenerationRun(durableRun.id).catch(() => undefined);
+      if (active === controller) {
+        active = undefined;
+        setState({ building: false });
+      }
+    }
   },
   async run(
     prompt,
@@ -1403,7 +2155,7 @@ export const useOrb = create<State>((setState, getState) => ({
     const requestReview = async (
       phase: "review" | "final-review",
       reviewed: Project,
-      evidence: Awaited<ReturnType<typeof reviewEvidence>>,
+      evidence: AuthoringReviewEvidence,
       feedback?: string,
     ) => {
       if (!authoringRunId || !currentAt(reviewed.revision))
@@ -1492,140 +2244,64 @@ export const useOrb = create<State>((setState, getState) => ({
         reviewIncomplete = true;
         return false;
       }
-      let reviewed = committed(getState().project, baseline);
-      if (!currentAt(reviewed.revision))
-        throw Error("The scene review is stale.");
-      if (!getState().saved) {
-        reviewIncomplete = true;
-        return false;
-      }
-      publishActivity(
-        "waiting",
-        "Reviewing the saved scene…",
-        reviewed.revision,
-      );
-      let evidence: Awaited<ReturnType<typeof reviewEvidence>>;
-      try {
-        evidence = await reviewEvidence(reviewed);
-      } catch (error) {
-        if (currentAt(reviewed.revision)) {
-          reviewIncomplete = true;
-          return false;
-        }
-        throw error;
-      }
-      reviewStarted = true;
-      let phase: "review" | "final-review" = "review";
-      let correctionReviews = 0;
-      let previousReviewFeedback: string | undefined;
-      while (true) {
-        if (!currentAt(reviewed.revision))
-          throw Error("The scene review is stale.");
-        const result = await requestReview(
-          phase,
-          reviewed,
-          evidence,
-          previousReviewFeedback,
-        );
-        if (!currentAt(reviewed.revision))
-          throw Error("The scene review is stale.");
-
-        if (result.review.verdict === "accept") {
-          await assertAppliedAuthoringReviewBinding(reviewed, {
-            projectId: reviewed.id,
-            ...result.binding,
-          });
-          return true;
-        }
-
-        if (phase === "final-review") {
-          await assertAppliedAuthoringReviewBinding(reviewed, {
-            projectId: reviewed.id,
-            ...result.binding,
-          });
-          reviewPartial = true;
-          reviewContinuationRevision = reviewed.revision;
-          reviewRemainingIssue = authoringReviewIssueSummary(
-            result.review.issues[0]!.summary,
-          );
+      const outcome = await runAuthoringReviewWorkflow({
+        project: () => committed(getState().project, baseline),
+        isCurrent: currentAt,
+        isSaved: () => getState().saved,
+        capture: reviewEvidence,
+        request: requestReview,
+        onStarted: () => {
+          reviewStarted = true;
+        },
+        publish: (message, revision) =>
+          publishActivity("waiting", message, revision),
+        appendFinding: (revision, issue) =>
+          appendReviewMessage(revision, `The review found: ${issue}`),
+        appendFinalFinding: (revision, issue) =>
           appendReviewMessage(
+            revision,
+            `The final review still found: ${issue}`,
+          ),
+        applyCorrections: async ({ project: reviewed, result }) => {
+          // Each correction pass gets a saved finding and its own cloud segment.
+          assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
+          await getState().save();
+          if (!currentAt(reviewed.revision) || !getState().saved)
+            throw Error("The reviewed scene could not be saved.");
+          const reviewedWithFinding = committed(getState().project, baseline);
+          const correctionRunId = crypto.randomUUID();
+          if (journal) {
+            try {
+              durableRun = await journal.begin(
+                reviewedWithFinding,
+                correctionRunId,
+                prompt,
+                selected,
+              );
+              if (!currentAt(reviewed.revision)) return undefined;
+            } catch (error) {
+              journalFailure = true;
+              streamFailure = "completion-record-failure";
+              throw error;
+            }
+          }
+          cursor = { runId: correctionRunId, sequence: 0, seen: new Set() };
+          publishActivity(
+            "applied",
+            "Applying a targeted correction to the scene…",
             reviewed.revision,
-            `The final review still found: ${reviewRemainingIssue}`,
           );
-          return false;
-        }
-
-        if (correctionReviews === 1 && result.remainingCalls !== 1) {
-          reviewIncomplete = true;
-          return false;
-        }
-
-        // Each correction pass gets a saved finding and its own cloud segment.
-        assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
-        previousReviewFeedback = authoringReviewFeedback(result.review.issues);
-        const issue = authoringReviewIssueSummary(
-          result.review.issues[0]!.summary,
-        );
-        appendReviewMessage(reviewed.revision, `The review found: ${issue}`);
-        await getState().save();
-        if (!currentAt(reviewed.revision) || !getState().saved)
-          throw Error("The reviewed scene could not be saved.");
-        const reviewedWithFinding = committed(getState().project, baseline);
-        const correctionRunId = crypto.randomUUID();
-        if (journal) {
-          try {
-            durableRun = await journal.begin(
-              reviewedWithFinding,
-              correctionRunId,
-              prompt,
-              selected,
-            );
-            if (!currentAt(reviewed.revision)) return false;
-          } catch (error) {
-            journalFailure = true;
-            streamFailure = "completion-record-failure";
-            throw error;
+          for (const correction of result.corrections) {
+            if (!(await apply(correction))) return undefined;
           }
-        }
-        cursor = { runId: correctionRunId, sequence: 0, seen: new Set() };
-        publishActivity(
-          "applied",
-          "Applying a targeted correction to the scene…",
-          reviewed.revision,
-        );
-        for (const correction of result.corrections) {
-          if (!(await apply(correction))) return false;
-        }
-        const corrected = committed(getState().project, baseline);
-        if (!currentAt(corrected.revision))
-          throw Error("The scene review is stale.");
-        await assertAppliedAuthoringReviewBinding(corrected, {
-          projectId: corrected.id,
-          ...result.binding,
-        });
-        publishActivity(
-          "waiting",
-          "Checking the corrected scene…",
-          corrected.revision,
-        );
-        try {
-          evidence = await reviewEvidence(corrected);
-        } catch (error) {
-          if (currentAt(corrected.revision)) {
-            reviewIncomplete = true;
-            return false;
-          }
-          throw error;
-        }
-        reviewed = corrected;
-        correctionReviews += 1;
-        // Two calls left means the newer run can take one more correction
-        // review; one call left identifies a legacy run's final verdict.
-        phase =
-          result.remainingCalls > 1 && correctionReviews < 2
-            ? "review"
-            : "final-review";
-      }
+          return committed(getState().project, baseline);
+        },
+      });
+      reviewIncomplete = outcome.incomplete;
+      reviewRemainingIssue = outcome.partialIssue;
+      reviewPartial = outcome.partialIssue !== undefined;
+      reviewContinuationRevision = outcome.revision;
+      return !reviewIncomplete && !reviewPartial;
     };
     try {
       if (journal) {
@@ -1917,6 +2593,7 @@ export const useOrb = create<State>((setState, getState) => ({
         const interruptedReviewContinuation =
           reviewStarted &&
           reviewRequestFailed &&
+          authoringRunId &&
           checkpoint.revision > before.revision &&
           getState().project.id === project.id &&
           getState().project.revision === checkpoint.revision &&
@@ -1927,6 +2604,15 @@ export const useOrb = create<State>((setState, getState) => ({
                 projectId: project.id,
                 revision: checkpoint.revision,
                 prompt,
+                priorRunId: authoringRunId!,
+                ...(selected ? { selected } : {}),
+                browserModeling,
+                provider: connection.provider,
+                model: connection.model,
+                ...(connection.effort !== undefined
+                  ? { effort: connection.effort }
+                  : {}),
+                reviewImageSupported,
               }
             : undefined;
         const restoreUi =
