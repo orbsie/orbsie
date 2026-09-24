@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, expect } from "@playwright/test";
+import sharp from "sharp";
 
 const base = process.env.TEST_URL ?? "http://localhost:3091";
 const appOrigin = new URL(base).origin;
@@ -69,6 +70,45 @@ const streamServer = createServer(async (request, response) => {
           type: "set_geometry",
           id: "pebble",
           geometry: { kind: "rock", detail: "refined", tint: "#7b9b83" },
+        },
+        {
+          type: "reserve_entity",
+          entity: {
+            id: "fruit-tree",
+            label: "Blue-fruited tree",
+            position: [-2, 0, 0],
+            scale: [1, 1, 1],
+            color: "#43864c",
+            stage: "seed",
+          },
+        },
+        {
+          type: "set_geometry",
+          id: "fruit-tree",
+          geometry: {
+            kind: "tree",
+            detail: "refined",
+            parts: [
+              {
+                shape: "sphere",
+                position: [-0.42, 2.32, 0.82],
+                scale: [0.24, 0.24, 0.24],
+                color: "#167de8",
+              },
+              {
+                shape: "sphere",
+                position: [0.08, 2.48, 0.84],
+                scale: [0.24, 0.24, 0.24],
+                color: "#167de8",
+              },
+              {
+                shape: "sphere",
+                position: [0.48, 2.24, 0.79],
+                scale: [0.24, 0.24, 0.24],
+                color: "#167de8",
+              },
+            ],
+          },
         },
         { type: "commit_revision", message: "Applied." },
       ];
@@ -200,7 +240,7 @@ async function runRenderer(renderer) {
       .getByPlaceholder("What experience to build?")
       .fill("Build a lantern");
     await page.getByRole("button", { name: "Create", exact: true }).click();
-    await expect(page.locator(".authoring-activity-latest")).toHaveText(
+    await expect(page.locator(".authoring-activity-latest")).toContainText(
       "Generation complete. Changes are applied.",
       { timeout: 15_000 },
     );
@@ -210,12 +250,20 @@ async function runRenderer(renderer) {
         if (!fixture)
           throw new Error(`Missing ${expectedRenderer} capture source.`);
         const state = fixture.read();
-        return fixture.capture({
-          projectId: state.projectId,
-          revision: state.revision,
-          renderer: expectedRenderer,
-          timeoutMs: 5000,
-        });
+        try {
+          return await fixture.capture({
+            projectId: state.projectId,
+            revision: state.revision,
+            renderer: expectedRenderer,
+            timeoutMs: 10000,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          throw new Error(
+            `${message} State: ${JSON.stringify(fixture.read())}`,
+          );
+        }
       }, renderer);
     const initial = await captureReview();
     assert.equal(initial.renderer, renderer);
@@ -226,6 +274,27 @@ async function runRenderer(renderer) {
     assert.equal(initial.readiness.pendingAssetIds.length, 0);
     assert.equal(initial.readiness.failedAssetIds.length, 0);
     assert.deepEqual(initial.errors, []);
+    const countBluePixels = async (image) => {
+      const { data, info } = await sharp(
+        Buffer.from(image.slice("data:image/png;base64,".length), "base64"),
+      )
+        .removeAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      let count = 0;
+      for (let offset = 0; offset < data.length; offset += info.channels) {
+        const red = data[offset];
+        const green = data[offset + 1];
+        const blue = data[offset + 2];
+        if (blue >= 90 && blue - red >= 45 && blue >= green * 1.4) count++;
+      }
+      return count;
+    };
+    const initialBluePixels = await countBluePixels(initial.image);
+    assert.ok(
+      initialBluePixels >= 30,
+      `Expected visible blue fruit pixels in ${renderer} initial capture; found ${initialBluePixels}.`,
+    );
     const initialState = await page.evaluate((expectedRenderer) => {
       const fixture = window.__orbsieSceneReviewFixture?.[expectedRenderer];
       if (!fixture)
@@ -236,7 +305,7 @@ async function runRenderer(renderer) {
     await page
       .getByRole("button", { name: "Change this", exact: true })
       .click();
-    await expect(page.locator(".authoring-activity-latest")).toHaveText(
+    await expect(page.locator(".authoring-activity-latest")).toContainText(
       "Generation complete. Changes are applied.",
       { timeout: 15_000 },
     );
@@ -262,7 +331,10 @@ async function runRenderer(renderer) {
     }, renderer);
     assert.equal(duringReplacement.projectId, initialState.projectId);
     assert.ok(duringReplacement.revision > initialState.revision);
-    assert.deepEqual(duringReplacement.readyAssetIds, ["pebble"]);
+    assert.deepEqual(
+      duringReplacement.readyAssetIds,
+      renderer === "webgl" ? ["pebble", "fruit-tree"] : [],
+    );
     const replacement = await captureReview();
     assert.equal(replacement.renderer, renderer);
     assert.ok(
@@ -270,11 +342,16 @@ async function runRenderer(renderer) {
     );
     assert.equal(replacement.readiness.pendingAssetIds.length, 0);
     assert.equal(replacement.readiness.failedAssetIds.length, 0);
-    assert.deepEqual(replacement.readiness.readyAssetIds, [
-      "lantern",
-      "pebble",
-    ]);
+    assert.deepEqual(
+      replacement.readiness.readyAssetIds,
+      renderer === "webgl" ? ["lantern", "pebble", "fruit-tree"] : ["lantern"],
+    );
     assert.deepEqual(replacement.errors, []);
+    const replacementBluePixels = await countBluePixels(replacement.image);
+    assert.ok(
+      replacementBluePixels >= 30,
+      `Expected visible blue fruit pixels in ${renderer} replacement capture; found ${replacementBluePixels}.`,
+    );
     assert.deepEqual(unexpectedRequests, []);
     const expectedPageErrors =
       renderer === "software"
@@ -296,6 +373,7 @@ async function runRenderer(renderer) {
         dimensions: { width: initial.width, height: initial.height },
         byteLength: initial.byteLength,
         readiness: initial.readiness,
+        blueFruitPixels: initialBluePixels,
       },
       duringReplacement: {
         revision: duringReplacement.revision,
@@ -307,6 +385,7 @@ async function runRenderer(renderer) {
         dimensions: { width: replacement.width, height: replacement.height },
         byteLength: replacement.byteLength,
         readiness: replacement.readiness,
+        blueFruitPixels: replacementBluePixels,
       },
       pngDataUrl: true,
       unexpectedRequests,

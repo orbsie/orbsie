@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 24 rendered procedural-part acceptance: the zero-provider revision-bound
+scene-capture fixture now builds a procedural `tree` with three blue fruit
+parts and checks actual PNG pixels in both WebGL and forced Canvas2D before
+and after an unrelated object's catalog replacement. It passed with no model
+calls or external requests; both renderers kept the fruits visible. Astra
+inspected all four scene captures: WebGL shows distinct blue spheres on the
+front canopy; Canvas2D also shows them, though its initial framing makes the
+tree small (224 blue pixels versus 932 in WebGL at 512px capture width).
+Software catalog readiness reports only catalog assets, so the fixture now
+asserts that renderer-specific contract. Evidence:
+`docs/evidence/scene-review-capture-procedural-parts-20260924/`. Syntax,
+formatting, and diff checks passed. This proves the fixed rendering path, but
+the previous live OpenRouter project was removed; it does not establish whether
+the model supplied `parts` in that run. Next: capture private scene structure
+and an object-focused review view during one bounded live test; inspect whether
+requested details are absent, tiny, or occluded before changing the loop.
+
 Sep 24 procedural attachment fix: the scene schema had allowed `parts` on
 built-in procedural kinds, but the shared geometry builder silently rendered
 parts only when `kind:custom`. Built-in bases now retain their geometry and
