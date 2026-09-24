@@ -1,0 +1,27 @@
+{
+  "scope": "Exact production frontend, isolated saved one-asset project derived from prior export; no model generation",
+  "origin": "https://orbsie.com",
+  "deploymentId": "dpl_6eAVyVuC5pQ16dcgRNnu5EY9UKvi",
+  "sourceCommit": "78ddac4",
+  "blockedRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "modelCalls": 0,
+  "zoomLabel": "Zoom in, currently 600%",
+  "assetError": false,
+  "canvasCount": 1,
+  "viewportOverflow": false,
+  "status": "passed",
+  "release": {
+    "ready": true,
+    "checks": {
+      "/": 200,
+      "/robots.txt": 200,
+      "/sitemap.xml": 200,
+      "/api/config": 200
+    },
+    "immutableUrl": "https://orbsie-ospjd3n0r-grappeggias-projects.vercel.app"
+  },
+  "fixtureSetupCorrection": "An initial synthetic record had invalid game:null and did not load; the passing run omitted game as required by the project schema.",
+  "screenshotSha256": "f8d8785c7bcb223b17fd4377dc1504ea2a6a36fa75a53076fb33fd2bd49cd88c"
+}

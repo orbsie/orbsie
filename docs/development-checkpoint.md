@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 24 saved-world framing release: source `78ddac4` deployed Ready as
+`dpl_6eAVyVuC5pQ16dcgRNnu5EY9UKvi`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-ospjd3n0r-grappeggias-projects.vercel.app`).
+The exact production frontend opened an isolated saved one-asset tree project
+and framed it at 600% with the asset loaded, no overflow, no browser errors,
+zero provider calls and no external or mutating requests. Root, robots,
+sitemap and config returned HTTP 200. This is a saved-project framing check,
+not a full generated-asset or provider E2E. Evidence:
+`docs/evidence/saved-world-framing-production-20260924/`.
+
 Sep 24 saved-world initial framing: opening a populated project under a new
 project ID now frames committed content once through the existing navigation
 command. Same-project edits/undo, play, manual navigation, errors, generation
@@ -9,7 +19,7 @@ saved subject changed from the default 100% camera to 600% framing, with zero
 provider calls, external requests or browser errors. The fixture proves camera
 repositioning, not the quality of generated geometry. Twenty-five related
 navigation tests and the optimized build pass. Evidence:
-`docs/evidence/initial-project-framing/`. Deployment is pending.
+`docs/evidence/initial-project-framing/`. The release above deployed it.
 
 Sep 24 touch-launch ordering probe: the public flagship CDP driver now sends
 Jump before directional touch input when launching from a moving platform, so
