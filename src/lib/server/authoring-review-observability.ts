@@ -61,7 +61,7 @@ export type AuthoringReviewDiagnostic = {
   requestId: string;
   clientRunId?: string;
   phase: AuthoringReviewDiagnosticPhase;
-  callIndex: 2 | 3;
+  callIndex: 2 | 3 | 4;
   scope: AuthoringReviewDiagnosticScope;
   outcome: AuthoringReviewDiagnosticOutcome;
   failureKind?: AuthoringReviewDiagnosticFailureKind;
@@ -110,6 +110,7 @@ export function createAuthoringReviewDiagnostic(input: {
   requestId: string;
   clientRunId?: string;
   phase: AuthoringReviewDiagnosticPhase;
+  callIndex?: 2 | 3 | 4;
   scope: AuthoringReviewDiagnosticScope;
   state: AuthoringReviewDiagnosticState;
   outcome: AuthoringReviewDiagnosticOutcome;
@@ -135,7 +136,7 @@ export function createAuthoringReviewDiagnostic(input: {
       ? { clientRunId: validatedClientRunId(input.clientRunId) }
       : {}),
     phase,
-    callIndex: phase === "review" ? 2 : 3,
+    callIndex: input.callIndex ?? (phase === "review" ? 2 : 4),
     scope,
     outcome,
     ...(failureKind ? { failureKind } : {}),
@@ -144,6 +145,14 @@ export function createAuthoringReviewDiagnostic(input: {
         ? input.timestamp
         : new Date().toISOString(),
   };
+}
+
+export function authoringReviewCallIndex(
+  phase: AuthoringReviewDiagnosticPhase,
+  remainingReviewSlots: number,
+): 2 | 3 | 4 {
+  if (phase === "final-review") return 4;
+  return remainingReviewSlots === 2 ? 2 : 3;
 }
 
 export function emitAuthoringReviewDiagnostic(

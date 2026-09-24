@@ -114,7 +114,13 @@ function streamBody() {
     .join("\n")}\n`;
 }
 
-function correctionProject(project) {
+function correctionProject(project, reviewOrdinal = 1) {
+  if (reviewOrdinal === 2)
+    return {
+      ...project,
+      revision: project.revision + 2,
+      environment: { ...project.environment, sky: "#88ccff" },
+    };
   return {
     ...project,
     revision: project.revision + 3,
@@ -133,11 +139,24 @@ function correctionProject(project) {
   };
 }
 
-function reviewReply(project, phase, finalVerdict = "accept") {
+function reviewReply(
+  project,
+  phase,
+  finalVerdict = "accept",
+  reviewOrdinal = 1,
+  twoCorrections = false,
+) {
   const scope = "visual+structural";
   if (phase === "review") {
-    const corrected = correctionProject(project);
+    const corrected = correctionProject(project, reviewOrdinal);
     const digest = sceneDigest(corrected);
+    const second = reviewOrdinal === 2;
+    const correctionCommands = second
+      ? [{ type: "set_environment", sky: "#88ccff" }]
+      : [
+          { type: "set_environment", sky: "#aabbff" },
+          { type: "set_material", id: "lantern", color: "#ff4b9e" },
+        ];
     return {
       review: {
         version: 1,
@@ -147,25 +166,17 @@ function reviewReply(project, phase, finalVerdict = "accept") {
         verdict: "revise",
         summary: "The sky needs a targeted correction.",
         issues: [{ summary: "The sky is too pale.", entityIds: [] }],
-        corrections: [
-          { type: "set_environment", sky: "#aabbff" },
-          { type: "set_material", id: "lantern", color: "#ff4b9e" },
-        ],
+        corrections: correctionCommands,
       },
       corrections: [
-        { type: "set_environment", sky: "#aabbff" },
-        {
-          type: "set_material",
-          id: "lantern",
-          color: "#ff4b9e",
-        },
+        ...correctionCommands,
         { type: "commit_revision", message: "Review correction applied." },
       ],
       binding: { revision: corrected.revision, digest },
       revision: corrected.revision,
       digest,
       scope,
-      remainingCalls: 1,
+      remainingCalls: twoCorrections && !second ? 2 : 1,
     };
   }
   const digest = sceneDigest(project);
@@ -294,9 +305,16 @@ function recoveryCheckpoint(project) {
   };
 }
 
-async function runRenderer(renderer, finalVerdict = "accept") {
-  const evidenceName =
-    finalVerdict === "accept" ? renderer : `${renderer}-partial`;
+async function runRenderer(
+  renderer,
+  finalVerdict = "accept",
+  twoCorrections = false,
+) {
+  const evidenceName = twoCorrections
+    ? `${renderer}-two-corrections`
+    : finalVerdict === "accept"
+      ? renderer
+      : `${renderer}-partial`;
   const args =
     renderer === "software"
       ? ["--disable-gpu"]
@@ -403,13 +421,24 @@ async function runRenderer(renderer, finalVerdict = "accept") {
     assert.equal(body.reviewImage.revision, body.project.revision);
     assert.equal(body.structuralObservations.revision, body.project.revision);
     assert.equal(body.structuralObservations.renderer, renderer);
+    const reviewOrdinal = requests.filter(
+      (request) => request.kind === "review",
+    ).length;
     await route.fulfill({
       status: 200,
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
       },
-      body: JSON.stringify(reviewReply(body.project, phase, finalVerdict)),
+      body: JSON.stringify(
+        reviewReply(
+          body.project,
+          phase,
+          finalVerdict,
+          reviewOrdinal,
+          twoCorrections,
+        ),
+      ),
     });
   });
 
@@ -423,7 +452,7 @@ async function runRenderer(renderer, finalVerdict = "accept") {
       .getByPlaceholder("What experience to build?")
       .fill("Build a lantern");
     await expect(page.getByTestId("authoring-review-toggle")).toContainText(
-      "Up to three model calls",
+      "Up to four model calls",
     );
     await page.getByRole("button", { name: "Create", exact: true }).click();
     const terminalMessage =
@@ -434,16 +463,22 @@ async function runRenderer(renderer, finalVerdict = "accept") {
       terminalMessage,
       { timeout: 15_000 },
     );
-    assert.equal(requests.length, 3);
+    const finalIndex = twoCorrections ? 3 : 2;
+    assert.equal(requests.length, finalIndex + 1);
     assert.equal(requests[1].kind, "review");
-    assert.equal(requests[2].kind, "final-review");
+    if (twoCorrections) assert.equal(requests[2].kind, "review");
+    assert.equal(requests[finalIndex].kind, "final-review");
     assert.equal(
       requests[2].body.project.revision > requests[1].body.project.revision,
       true,
     );
+    if (twoCorrections)
+      assert(
+        requests[3].body.project.revision > requests[2].body.project.revision,
+      );
     assert.equal(
-      requests[2].body.reviewImage.revision,
-      requests[2].body.project.revision,
+      requests[finalIndex].body.reviewImage.revision,
+      requests[finalIndex].body.project.revision,
     );
     assert.equal(requests[2].body.project.environment.sky, "#aabbff");
     const initialImageDigest = imageDigest(requests[1].body.reviewImage.image);
@@ -455,6 +490,15 @@ async function runRenderer(renderer, finalVerdict = "accept") {
       correctedImageDigest,
       "corrected rendered revision must change the captured pixels",
     );
+    const finalImageDigest = imageDigest(
+      requests[finalIndex].body.reviewImage.image,
+    );
+    if (twoCorrections)
+      assert.notEqual(
+        correctedImageDigest,
+        finalImageDigest,
+        "second correction must change the captured pixels again",
+      );
     const messageTexts = await page
       .locator(".chat-messages .message")
       .allTextContents();
@@ -479,8 +523,14 @@ async function runRenderer(renderer, finalVerdict = "accept") {
       ),
     );
     const saved = await storageSnapshot(page);
-    assert.equal(saved.project.environment.sky, "#aabbff");
-    assert.equal(saved.project.revision, requests[2].body.project.revision);
+    assert.equal(
+      saved.project.environment.sky,
+      twoCorrections ? "#88ccff" : "#aabbff",
+    );
+    assert.equal(
+      saved.project.revision,
+      requests[finalIndex].body.project.revision,
+    );
     const continuation = page.getByTestId("authoring-review-continuation");
     if (finalVerdict === "revise") {
       assert(
@@ -562,8 +612,9 @@ async function runRenderer(renderer, finalVerdict = "accept") {
     return {
       renderer,
       finalVerdict,
+      requestKinds: requests.map((request) => request.kind),
       initialRevision: requests[1].body.project.revision,
-      correctedRevision: requests[2].body.project.revision,
+      correctedRevision: requests[finalIndex].body.project.revision,
       requestScopes: requests
         .slice(1)
         .map((request) =>
@@ -572,7 +623,9 @@ async function runRenderer(renderer, finalVerdict = "accept") {
       captureBytes: requests
         .slice(1)
         .map((request) => request.body.reviewImage.image.length),
-      captureDigests: [initialImageDigest, correctedImageDigest],
+      captureDigests: twoCorrections
+        ? [initialImageDigest, correctedImageDigest, finalImageDigest]
+        : [initialImageDigest, correctedImageDigest],
       pageErrors,
       consoleErrors,
       requestFailures,
@@ -1020,12 +1073,18 @@ const report = {
   scope: "deterministic browser authoring review loop with real canvas capture",
   liveModelCalls: 0,
   renderers: {},
+  secondCorrection: {},
   partialReview: {},
   signedInJournal: {},
 };
 try {
   report.renderers.webgl = await runRenderer("webgl");
   report.renderers.software = await runRenderer("software");
+  report.secondCorrection.software = await runRenderer(
+    "software",
+    "accept",
+    true,
+  );
   report.partialReview.software = await runRenderer("software", "revise");
   report.signedInJournal.success = await runSignedInJournalScenario(false);
   report.signedInJournal.conflict = await runSignedInJournalScenario(true);

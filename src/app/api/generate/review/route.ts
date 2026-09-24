@@ -46,6 +46,7 @@ import {
   validateSceneReviewStructuralObservations,
 } from "../../../../lib/server/scene-review-observations";
 import {
+  authoringReviewCallIndex,
   emitAuthoringReviewDiagnostic,
   type AuthoringReviewDiagnosticFailureKind,
   type AuthoringReviewDiagnosticScope,
@@ -148,6 +149,7 @@ export async function POST(request: Request) {
   let admission: AuthoringReviewAdmission | undefined;
   let identity: TrialIdentity | undefined;
   let reviewScope: AuthoringReviewDiagnosticScope | undefined;
+  let reviewCallIndex: ReturnType<typeof authoringReviewCallIndex> | undefined;
   let reviewAdmitted = false;
   let reviewTerminalEmitted = false;
   try {
@@ -225,10 +227,15 @@ export async function POST(request: Request) {
       ...(identity ? { trialIdentity: identity } : {}),
     });
     reviewAdmitted = true;
+    reviewCallIndex = authoringReviewCallIndex(
+      input.phase,
+      admission.remainingReviewSlots,
+    );
     emitAuthoringReviewDiagnostic({
       requestId,
       clientRunId: observation.clientRunId,
       phase: input.phase,
+      callIndex: reviewCallIndex,
       scope: reviewScope,
       state: "admission",
       outcome: "admitted",
@@ -262,6 +269,7 @@ export async function POST(request: Request) {
       requestId,
       clientRunId: observation.clientRunId,
       phase: input.phase,
+      callIndex: reviewCallIndex,
       scope: result.review.scope,
       state: "terminal",
       outcome:
@@ -306,6 +314,7 @@ export async function POST(request: Request) {
         requestId,
         clientRunId: observation.clientRunId,
         phase: admission?.reviewPhase ?? "review",
+        callIndex: reviewCallIndex,
         scope: reviewScope,
         state: "terminal",
         outcome: signal.aborted ? "cancelled" : "failed",

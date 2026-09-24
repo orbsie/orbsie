@@ -36,6 +36,7 @@ import {
   withGenerationRequestId,
 } from "@/lib/server/generation-observability";
 import {
+  authoringReviewCallIndex,
   emitAuthoringReviewDiagnostic,
   type AuthoringReviewDiagnosticScope,
 } from "@/lib/server/authoring-review-observability";
@@ -154,6 +155,7 @@ export async function POST(request: Request) {
   ]);
   let admission: AuthoringReviewAdmission | undefined;
   let reviewScope: AuthoringReviewDiagnosticScope | undefined;
+  let reviewCallIndex: ReturnType<typeof authoringReviewCallIndex> | undefined;
   let terminalDiagnostic = false;
   try {
     if (
@@ -228,10 +230,15 @@ export async function POST(request: Request) {
           signal,
           ownerSession: identity,
         });
+        reviewCallIndex = authoringReviewCallIndex(
+          input.phase,
+          admission.remainingReviewSlots,
+        );
         emitAuthoringReviewDiagnostic({
           requestId,
           clientRunId,
           phase: input.phase,
+          callIndex: reviewCallIndex,
           scope: reviewScope!,
           state: "admission",
           outcome: "admitted",
@@ -249,6 +256,7 @@ export async function POST(request: Request) {
       requestId,
       clientRunId,
       phase: input.phase,
+      callIndex: reviewCallIndex,
       scope: result.review.scope,
       state: "terminal",
       outcome,
@@ -283,6 +291,7 @@ export async function POST(request: Request) {
         requestId,
         clientRunId,
         phase: admission.reviewPhase,
+        callIndex: reviewCallIndex,
         scope: reviewScope,
         state: "terminal",
         outcome: signal.aborted ? "cancelled" : "failed",

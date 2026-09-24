@@ -1459,7 +1459,7 @@ export const useOrb = create<State>((setState, getState) => ({
         reviewIncomplete = true;
         return false;
       }
-      const reviewed = committed(getState().project, baseline);
+      let reviewed = committed(getState().project, baseline);
       if (!currentAt(reviewed.revision))
         throw Error("The scene review is stale.");
       if (!getState().saved) {
@@ -1482,92 +1482,110 @@ export const useOrb = create<State>((setState, getState) => ({
         throw error;
       }
       reviewStarted = true;
-      const first = await requestReview("review", reviewed, evidence);
-      if (!currentAt(reviewed.revision))
-        throw Error("The scene review is stale.");
-      if (first.review.verdict === "accept") {
-        await assertAppliedAuthoringReviewBinding(reviewed, {
-          projectId: reviewed.id,
-          ...first.binding,
-        });
-        return true;
-      }
+      let phase: "review" | "final-review" = "review";
+      let correctionReviews = 0;
+      while (true) {
+        if (!currentAt(reviewed.revision))
+          throw Error("The scene review is stale.");
+        const result = await requestReview(phase, reviewed, evidence);
+        if (!currentAt(reviewed.revision))
+          throw Error("The scene review is stale.");
 
-      // The initial journal is complete at the first commit. Persist the exact
-      // reviewed scene and begin a distinct cloud segment before any command.
-      assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
-      const firstIssue = authoringReviewIssueSummary(
-        first.review.issues[0]!.summary,
-      );
-      appendReviewMessage(reviewed.revision, `The review found: ${firstIssue}`);
-      await getState().save();
-      if (!currentAt(reviewed.revision) || !getState().saved)
-        throw Error("The reviewed scene could not be saved.");
-      const reviewedWithFinding = committed(getState().project, baseline);
-      const correctionRunId = crypto.randomUUID();
-      if (journal) {
-        durableRun = await journal.begin(
-          reviewedWithFinding,
-          correctionRunId,
-          prompt,
-          selected,
-        );
-        if (!currentAt(reviewed.revision)) return false;
-      }
-      cursor = { runId: correctionRunId, sequence: 0, seen: new Set() };
-      publishActivity(
-        "applied",
-        "Applying a targeted correction to the scene…",
-        reviewed.revision,
-      );
-      for (const correction of first.corrections) {
-        if (!(await apply(correction))) return false;
-      }
-      const corrected = committed(getState().project, baseline);
-      if (!currentAt(corrected.revision))
-        throw Error("The scene review is stale.");
-      await assertAppliedAuthoringReviewBinding(corrected, {
-        projectId: corrected.id,
-        ...first.binding,
-      });
-      publishActivity(
-        "waiting",
-        "Checking the corrected scene…",
-        corrected.revision,
-      );
-      let finalEvidence: Awaited<ReturnType<typeof reviewEvidence>>;
-      try {
-        finalEvidence = await reviewEvidence(corrected);
-      } catch (error) {
-        if (currentAt(corrected.revision)) {
+        if (result.review.verdict === "accept") {
+          await assertAppliedAuthoringReviewBinding(reviewed, {
+            projectId: reviewed.id,
+            ...result.binding,
+          });
+          return true;
+        }
+
+        if (phase === "final-review") {
+          await assertAppliedAuthoringReviewBinding(reviewed, {
+            projectId: reviewed.id,
+            ...result.binding,
+          });
+          reviewPartial = true;
+          reviewContinuationRevision = reviewed.revision;
+          reviewRemainingIssue = authoringReviewIssueSummary(
+            result.review.issues[0]!.summary,
+          );
+          appendReviewMessage(
+            reviewed.revision,
+            `The final review still found: ${reviewRemainingIssue}`,
+          );
+          return false;
+        }
+
+        if (correctionReviews === 1 && result.remainingCalls !== 1) {
           reviewIncomplete = true;
           return false;
         }
-        throw error;
-      }
-      const final = await requestReview(
-        "final-review",
-        corrected,
-        finalEvidence,
-      );
-      if (!currentAt(corrected.revision))
-        throw Error("The scene review is stale.");
-      await assertAppliedAuthoringReviewBinding(corrected, {
-        projectId: corrected.id,
-        ...final.binding,
-      });
-      if (final.review.verdict === "revise") {
-        reviewPartial = true;
-        reviewContinuationRevision = corrected.revision;
-        reviewRemainingIssue = authoringReviewIssueSummary(
-          final.review.issues[0]!.summary,
+
+        // Each correction pass gets a saved finding and its own cloud segment.
+        assetPolicy = deriveAssetPolicy(prompt, selected, reviewed);
+        const issue = authoringReviewIssueSummary(
+          result.review.issues[0]!.summary,
         );
-        appendReviewMessage(
+        appendReviewMessage(reviewed.revision, `The review found: ${issue}`);
+        await getState().save();
+        if (!currentAt(reviewed.revision) || !getState().saved)
+          throw Error("The reviewed scene could not be saved.");
+        const reviewedWithFinding = committed(getState().project, baseline);
+        const correctionRunId = crypto.randomUUID();
+        if (journal) {
+          try {
+            durableRun = await journal.begin(
+              reviewedWithFinding,
+              correctionRunId,
+              prompt,
+              selected,
+            );
+            if (!currentAt(reviewed.revision)) return false;
+          } catch (error) {
+            journalFailure = true;
+            streamFailure = "completion-record-failure";
+            throw error;
+          }
+        }
+        cursor = { runId: correctionRunId, sequence: 0, seen: new Set() };
+        publishActivity(
+          "applied",
+          "Applying a targeted correction to the scene…",
+          reviewed.revision,
+        );
+        for (const correction of result.corrections) {
+          if (!(await apply(correction))) return false;
+        }
+        const corrected = committed(getState().project, baseline);
+        if (!currentAt(corrected.revision))
+          throw Error("The scene review is stale.");
+        await assertAppliedAuthoringReviewBinding(corrected, {
+          projectId: corrected.id,
+          ...result.binding,
+        });
+        publishActivity(
+          "waiting",
+          "Checking the corrected scene…",
           corrected.revision,
-          `The final review still found: ${reviewRemainingIssue}`,
         );
+        try {
+          evidence = await reviewEvidence(corrected);
+        } catch (error) {
+          if (currentAt(corrected.revision)) {
+            reviewIncomplete = true;
+            return false;
+          }
+          throw error;
+        }
+        reviewed = corrected;
+        correctionReviews += 1;
+        // Two calls left means the newer run can take one more correction
+        // review; one call left identifies a legacy run's final verdict.
+        phase =
+          result.remainingCalls > 1 && correctionReviews < 2
+            ? "review"
+            : "final-review";
       }
-      return final.review.verdict === "accept";
     };
     try {
       if (journal) {

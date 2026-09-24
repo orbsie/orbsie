@@ -2675,7 +2675,7 @@ export default function Orbsie() {
                   <strong>Review the rendered scene</strong>
                   <small>
                     {authoringReviewEligible
-                      ? "Up to three model calls, including this generation."
+                      ? "Up to four model calls, including this generation."
                       : "Connect a provider or restore your free allowance to enable review."}
                   </small>
                 </span>

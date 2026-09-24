@@ -98,8 +98,23 @@ async function reviewReply(
   project: ReturnType<typeof blankProject>,
   verdict: "accept" | "revise",
   scope: "visual+structural" | "structural-only",
+  options: {
+    correction?: Command;
+    remainingCalls?: number;
+    final?: boolean;
+  } = {},
 ) {
   const binding = await createSceneBinding(project);
+  const corrections =
+    verdict === "revise" && !options.final
+      ? [
+          options.correction ?? correction,
+          {
+            type: "commit_revision" as const,
+            message: "Review correction applied.",
+          },
+        ]
+      : [];
   return {
     review: {
       version: 1,
@@ -115,20 +130,18 @@ async function reviewReply(
         verdict === "accept"
           ? []
           : [{ summary: "Sky mismatch.", entityIds: [] }],
-      corrections: verdict === "accept" ? [] : [correction],
+      corrections:
+        verdict === "accept" || options.final
+          ? []
+          : [options.correction ?? correction],
     },
-    corrections:
-      verdict === "accept"
-        ? []
-        : [
-            correction,
-            { type: "commit_revision", message: "Review correction applied." },
-          ],
+    corrections,
     binding: { revision: binding.revision, digest: binding.digest },
     revision: binding.revision,
     digest: binding.digest,
     scope,
-    remainingCalls: verdict === "accept" ? 0 : 1,
+    remainingCalls:
+      options.remainingCalls ?? (verdict === "accept" || options.final ? 0 : 1),
   };
 }
 
@@ -152,70 +165,89 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-function partialReviewFetcher() {
+function applyReviewCorrections(
+  project: ReturnType<typeof blankProject>,
+  commands: readonly Command[],
+) {
+  let current = project;
+  let cursor = {
+    runId: crypto.randomUUID(),
+    sequence: 0,
+    seen: new Set<string>(),
+  };
+  for (const command of commands) {
+    const envelope: Envelope = {
+      version: 1,
+      projectId: current.id,
+      runId: cursor.runId,
+      sequence: cursor.sequence + 1,
+      operationId: crypto.randomUUID(),
+      baseRevision: current.revision,
+      command,
+    };
+    const applied = applyOperation(current, envelope, cursor);
+    current = applied.project;
+    cursor = applied.cursor;
+  }
+  return current;
+}
+
+function partialReviewFetcher(
+  options: {
+    firstRemainingCalls?: number;
+    secondRemainingCalls?: number;
+    secondVerdict?: "accept" | "revise";
+  } = {},
+) {
   let reviewCall = 0;
   return vi.fn<typeof fetch>(async (url, init) => {
     if (url === "/api/generate")
       return streamResponse(JSON.parse(String(init?.body)).project);
     const body = JSON.parse(String(init?.body));
-    if (reviewCall++ === 0) {
+    if (body.phase === "final-review") {
       const response = await reviewReply(
         body.project,
         "revise",
         "visual+structural",
+        { final: true },
       );
-      const runId = "33333333-3333-4333-8333-333333333333";
-      const corrected = applyOperation(
-        body.project,
-        {
-          version: 1,
-          projectId: body.project.id,
-          runId,
-          sequence: 1,
-          operationId: "44444444-4444-4444-8444-444444444444",
-          baseRevision: body.project.revision,
-          command: correction,
-        },
-        { runId, sequence: 0, seen: new Set() },
-      ).project;
-      const final = applyOperation(
-        corrected,
-        {
-          version: 1,
-          projectId: corrected.id,
-          runId,
-          sequence: 2,
-          operationId: "55555555-5555-4555-8555-555555555555",
-          baseRevision: corrected.revision,
-          command: {
-            type: "commit_revision",
-            message: "Review correction applied.",
-          },
-        },
-        { runId, sequence: 1, seen: new Set() },
-      ).project;
-      const binding = await createSceneBinding(final);
-      return Response.json({
-        ...response,
-        binding: { revision: binding.revision, digest: binding.digest },
-        revision: binding.revision,
-        digest: binding.digest,
-      });
+      return Response.json(response);
     }
+    if (body.phase !== "review")
+      throw Error("Unexpected authoring review phase.");
+
+    const ordinal = reviewCall++;
+    if (ordinal > 1 || (ordinal === 1 && options.firstRemainingCalls === 1))
+      throw Error("The review loop exceeded its admitted calls.");
+    const secondPass = ordinal === 1;
+    const verdict = secondPass ? (options.secondVerdict ?? "revise") : "revise";
     const response = await reviewReply(
       body.project,
-      "revise",
+      verdict,
       "visual+structural",
+      {
+        correction: secondPass
+          ? { type: "set_environment", sky: "#ccddaa" }
+          : correction,
+        remainingCalls:
+          verdict === "accept"
+            ? 0
+            : secondPass
+              ? (options.secondRemainingCalls ?? 1)
+              : (options.firstRemainingCalls ?? 2),
+      },
     );
-    const binding = await createSceneBinding(body.project);
+    if (response.review.verdict === "accept") return Response.json(response);
+    const corrected = applyReviewCorrections(
+      body.project,
+      response.corrections,
+    );
+    const binding = await createSceneBinding(corrected);
     return Response.json({
       ...response,
-      review: { ...response.review, corrections: [] },
-      corrections: [],
       binding: { revision: binding.revision, digest: binding.digest },
       revision: binding.revision,
       digest: binding.digest,
-      remainingCalls: 0,
     });
   });
 }
@@ -293,7 +325,9 @@ describe("store browser authoring review loop", () => {
     const summary = authoringReviewIssueSummary(
       `  sky\n\u202e mismatch ${"x".repeat(250)}  `,
     );
-    expect(summary).not.toMatch(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/);
+    expect(summary).not.toMatch(
+      /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/,
+    );
     expect(Array.from(summary)).toHaveLength(180);
     expect(summary).toContain("sky mismatch");
   });
@@ -364,19 +398,35 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().building).toBe(false);
   });
 
-  it("starts a new cloud journal segment for corrections and ends partial", async () => {
+  it("runs two correction reviews in separate cloud segments before a partial final verdict", async () => {
     const fetcher = partialReviewFetcher();
     const durable = journal();
     vi.stubGlobal("fetch", fetcher);
 
     await useOrb.getState().run("Recolor the tree", connection, durable);
 
-    expect(mocks.begin).toHaveBeenCalledTimes(2);
-    expect(mocks.begin.mock.calls[0]![0].id).not.toBe(
-      mocks.begin.mock.calls[1]![0].id,
-    );
-    expect(fetcher).toHaveBeenCalledTimes(3);
-    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(mocks.begin).toHaveBeenCalledTimes(3);
+    const journalIds = mocks.begin.mock.calls.map(([run]) => run.id);
+    expect(new Set(journalIds).size).toBe(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    const reviewBodies = fetcher.mock.calls
+      .slice(1)
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(reviewBodies.map((body) => body.phase)).toEqual([
+      "review",
+      "review",
+      "final-review",
+    ]);
+    expect(reviewBodies.map((body) => body.project.revision)).toEqual([
+      2, 4, 6,
+    ]);
+    expect(
+      mocks.capture.mock.calls.map(([request]) => request.revision),
+    ).toEqual([2, 4, 6]);
+    expect(reviewBodies.map((body) => body.reviewImage?.revision)).toEqual([
+      2, 4, 6,
+    ]);
+    expect(useOrb.getState().project.environment?.sky).toBe("#ccddaa");
     expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
       "final review still found: Sky mismatch.",
     );
@@ -391,6 +441,10 @@ describe("store browser authoring review loop", () => {
         message.text.includes("Sky mismatch."),
       );
     expect(reviewMessages).toEqual([
+      {
+        role: "assistant",
+        text: "The review found: Sky mismatch.",
+      },
       {
         role: "assistant",
         text: "The review found: Sky mismatch.",
@@ -413,13 +467,110 @@ describe("store browser authoring review loop", () => {
       role: "assistant",
       text: "The review found: Sky mismatch.",
     });
+    expect(mocks.begin.mock.calls[2]![0].checkpoint.messages.slice(-3)).toEqual(
+      [
+        { role: "assistant", text: "The review found: Sky mismatch." },
+        { role: "assistant", text: "Review correction applied." },
+        { role: "assistant", text: "The review found: Sky mismatch." },
+      ],
+    );
 
     useOrb.getState().undo();
     expect(useOrb.getState().reviewContinuation).toBeUndefined();
   });
 
+  it("uses an old one-slot run's remaining call for final review", async () => {
+    const fetcher = partialReviewFetcher({ firstRemainingCalls: 1 });
+    const durable = journal();
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection, durable);
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const reviewBodies = fetcher.mock.calls
+      .slice(1)
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(reviewBodies.map((body) => body.phase)).toEqual([
+      "review",
+      "final-review",
+    ]);
+    expect(mocks.begin).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
+      "final review still found: Sky mismatch.",
+    );
+  });
+
+  it("stops before a second correction if its remaining-call count does not decrease", async () => {
+    const fetcher = partialReviewFetcher({ secondRemainingCalls: 2 });
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const reviewBodies = fetcher.mock.calls
+      .slice(1)
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(reviewBodies.map((body) => body.phase)).toEqual([
+      "review",
+      "review",
+    ]);
+    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
+      "review could not finish",
+    );
+  });
+
+  it("finishes when the second correction review accepts", async () => {
+    const fetcher = partialReviewFetcher({ secondVerdict: "accept" });
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection, journal());
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const reviewBodies = fetcher.mock.calls
+      .slice(1)
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(reviewBodies.map((body) => body.phase)).toEqual([
+      "review",
+      "review",
+    ]);
+    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(useOrb.getState().reviewContinuation).toBeUndefined();
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toBe(
+      "Scene verified. Changes are applied.",
+    );
+  });
+
+  it("keeps the first correction when fresh capture for the second review fails", async () => {
+    const fetcher = partialReviewFetcher();
+    const durable = journal();
+    mocks.capture
+      .mockImplementationOnce(
+        async (request: { projectId: string; revision: number }) =>
+          capture({
+            ...useOrb.getState().project,
+            id: request.projectId,
+            revision: request.revision,
+          }),
+      )
+      .mockRejectedValueOnce(
+        new SceneReviewCaptureError("timeout", "capture timeout"),
+      );
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Recolor the tree", connection, durable);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(mocks.begin).toHaveBeenCalledTimes(2);
+    expect(useOrb.getState().project.environment?.sky).toBe("#aabbff");
+    expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
+      "review could not finish",
+    );
+  });
+
   it("keeps transient continuation when review notes reach the message limit", async () => {
-    const messages = Array.from({ length: 496 }, (_, index) => ({
+    const messages = Array.from({ length: 494 }, (_, index) => ({
       role: "user" as const,
       text: `Conversation ${index}`,
     }));
@@ -435,10 +586,15 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().project.messages).toHaveLength(500);
     expect(useOrb.getState().error).toBe("");
     expect(
-      useOrb.getState().project.messages.filter((message) =>
-        message.text.includes("Sky mismatch."),
-      ),
-    ).toEqual([{ role: "assistant", text: "The review found: Sky mismatch." }]);
+      useOrb
+        .getState()
+        .project.messages.filter((message) =>
+          message.text.includes("Sky mismatch."),
+        ),
+    ).toEqual([
+      { role: "assistant", text: "The review found: Sky mismatch." },
+      { role: "assistant", text: "The review found: Sky mismatch." },
+    ]);
     expect(useOrb.getState().reviewContinuation?.issue).toBe("Sky mismatch.");
     expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
       "final review still found: Sky mismatch.",

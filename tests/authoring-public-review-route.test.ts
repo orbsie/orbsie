@@ -63,7 +63,7 @@ function setup() {
   });
   deps.admit.mockResolvedValue({
     runId: "11111111-1111-4111-8111-111111111111",
-    remainingReviewSlots: 1,
+    remainingReviewSlots: 2,
     trialCookie: "orbsie_trial=synthetic",
     complete: vi.fn(),
     fail: vi.fn(),
@@ -199,6 +199,72 @@ it("emits correlated allowlisted review admission and terminal diagnostics", asy
   }
 });
 
+it("labels a second correction review as the third model call", async () => {
+  setup();
+  deps.admit.mockResolvedValueOnce({
+    runId: "11111111-1111-4111-8111-111111111111",
+    remainingReviewSlots: 1,
+    complete: vi.fn(),
+    fail: vi.fn(),
+  });
+  const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+  try {
+    const response = await POST(request({}));
+    expect(response.status).toBe(200);
+    const events = info.mock.calls
+      .map(([line]) => {
+        try {
+          return JSON.parse(String(line)) as Record<string, unknown>;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((event) => event?.event === "authoring-review");
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({ callIndex: 3, state: "admission" });
+    expect(events[1]).toMatchObject({ callIndex: 3, state: "terminal" });
+  } finally {
+    info.mockRestore();
+  }
+});
+
+it("returns the ledger's remaining correction budget after each revised review", async () => {
+  setup();
+  deps.execute.mockResolvedValue({
+    review: {
+      version: 1,
+      projectId: "new-world",
+      reviewedRevision: 0,
+      scope: "structural-only",
+      verdict: "revise",
+      summary: "The sky needs correction.",
+      issues: [{ summary: "Sky mismatch.", entityIds: [] }],
+      corrections: [{ type: "set_environment", sky: "#aabbff" }],
+    },
+    corrections: [
+      { type: "set_environment", sky: "#aabbff" },
+      { type: "commit_revision", message: "Review correction applied." },
+    ],
+    binding: {
+      version: 1,
+      projectId: "new-world",
+      revision: 2,
+      digest: "b".repeat(64),
+    },
+  });
+  for (const remainingReviewSlots of [2, 1]) {
+    deps.admit.mockResolvedValueOnce({
+      runId: "11111111-1111-4111-8111-111111111111",
+      remainingReviewSlots,
+      complete: vi.fn(),
+      fail: vi.fn(),
+    });
+    const response = await POST(request({}));
+    expect(response.status).toBe(200);
+    expect((await response.json()).remainingCalls).toBe(remainingReviewSlots);
+  }
+});
+
 it("emits a sanitized failed terminal diagnostic after admission", async () => {
   setup();
   deps.execute.mockRejectedValueOnce(
@@ -307,7 +373,7 @@ it("records the allowlisted scene review execution code without raw errors", asy
   }
 });
 
-it("records final review as the third call with a partial terminal outcome", async () => {
+it("records final review as the fourth call with a partial terminal outcome", async () => {
   setup();
   deps.execute.mockResolvedValueOnce({
     review: {
@@ -355,14 +421,14 @@ it("records final review as the third call with a partial terminal outcome", asy
     expect(events[0]).toMatchObject({
       state: "admission",
       phase: "final-review",
-      callIndex: 3,
+      callIndex: 4,
       scope: "structural-only",
       outcome: "admitted",
     });
     expect(events[1]).toMatchObject({
       state: "terminal",
       phase: "final-review",
-      callIndex: 3,
+      callIndex: 4,
       scope: "structural-only",
       outcome: "partial",
     });
