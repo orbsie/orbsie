@@ -7,8 +7,9 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_457wh7ZngJYaawrKwyfkW8HT16B9` at this reconciliation. Read-only
-  root, robots, sitemap and config checks passed; the prior release's trial
+  `dpl_4RfSmSTpLqtQxSP19obg49pJ1d3B` at this reconciliation. Read-only
+  root, robots, sitemap, config and exact player runtime/source hash checks
+  passed; the prior release's trial
   check passed. The previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
   free-provider 402 UI recovery passed both local and intercepted production

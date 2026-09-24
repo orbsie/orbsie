@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 24 review-feedback production release: source `f6d72bd` deployed Ready as
+`dpl_4RfSmSTpLqtQxSP19obg49pJ1d3B`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-alef910en-grappeggias-projects.vercel.app`).
+Read-only root, robots, sitemap, config, player runtime and source requests
+returned HTTP 200. Production player runtime/source SHA-256 hashes match the
+checked-in built artifacts exactly; `/api/config` still reports
+`authoringReview:false` and `chatgptHosted:true`. No provider call or full
+authoring-quality acceptance ran as part of this deployment. The existing
+browser-control inventory still reports zero visible browsers.
+
 Sep 24 review-feedback continuity: source `3150a08` sends no feedback for the
 initial scene review, then carries up to three sanitized findings from the
 immediately preceding review into each next correction/final review. The
