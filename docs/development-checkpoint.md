@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 published-player initial camera release: source `f8ff99d` starts the
+standalone player at the existing 12-unit comfortable play minimum instead of
+the editor's 24-unit default. The explicit prop is used only by the published
+player; editor navigation, user zoom, saved projects and gameplay positions are
+unchanged. Astra reviewed the Luna diff and corrected an evidence mismatch:
+the initial screenshot came from an older ZIP. A same-ZIP comparison using the
+current catalog mixed export at 1280×720 and 390×844 shows both tree and crystal
+larger and uncropped, with ready pages and no browser errors. Evidence:
+`docs/evidence/standalone-initial-camera-20260924/`. Targeted navigation tests
+(18), TypeScript, Prettier, diff check and optimized build passed. Source
+`f8ff99d` deployed Ready as `dpl_457wh7ZngJYaawrKwyfkW8HT16B9`, aliased
+to `https://orbsie.com/` (immutable
+`https://orbsie-h0y0goq6a-grappeggias-projects.vercel.app`). Production root,
+player runtime and source returned HTTP 200 with exact checked-in player hashes.
+The exact production frontend passed the catalog browser fixture, including all
+11 asset loads, mixed export and standalone playback with zero real model calls,
+external requests or page errors:
+`docs/evidence/standalone-camera-production-20260924/`. The two-object initial
+legibility gap is improved; broad model-authored visual quality, live-provider
+and physical-device acceptance remain open.
+
 Sep 24 eleven-asset catalog release: source `b5cfd63` fixes the cold-scene
 cache race by keeping prepared geometry protected until every pending consumer
 has acquired or abandoned its lease. Astra reviewed the worker diff, tightened

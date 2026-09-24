@@ -7,7 +7,7 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_5o8L1QdSiftYKbNduMPLTgFBuCPL` at this reconciliation. Read-only
+  `dpl_457wh7ZngJYaawrKwyfkW8HT16B9` at this reconciliation. Read-only
   root, robots, sitemap and config checks passed; the prior release's trial
   check passed. The previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
@@ -27,8 +27,10 @@ older rows below are a historical inventory, not a completion claim.
   was fixed, and local and exact-production browser fixtures passed all 11
   model loads, mixed create/export/standalone playback, and new-only rejection
   with zero real model calls or page errors. The public mushroom GLB hash matches
-  the checked-in manifest. The small exported fixture remains visually distant
-  in the standalone play camera; live-provider and physical-device quality
+  the checked-in manifest. Published playback now starts at the shared 12-unit
+  play minimum. Same-ZIP desktop/mobile screenshots show its two subjects larger
+  and uncropped, and the exact-production catalog browser fixture passes. Broad
+  model-authored visual quality, live-provider and physical-device acceptance
   remain unverified.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
