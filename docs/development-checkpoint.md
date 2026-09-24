@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 24 review-only continuation ledger: source `ed6d908` adds a fresh
+`completed` review run bound to an existing scene revision/digest, with three
+review slots and an atomic one-unit claim for free-provider use. The existing
+failed run remains terminal. Astra reviewed the diff; the PostgreSQL ledger
+file passes 11/11, TypeScript and Prettier pass. This is an internal primitive:
+no route or editor action invokes it yet, and no provider call or browser E2E
+was made. The admission helper must check a prior failed run's identity,
+request fingerprint and last completed scene before issuance; then the route
+and client need explicit user-driven continuation.
+
 Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
 actual failed review request from earlier capture/preflight failures. When the
 current committed revision remains saved and writable, the parent chat offers
