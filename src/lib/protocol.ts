@@ -41,13 +41,30 @@ export const scenePosition = z.tuple([
   z.number().finite().min(-MAX_SCENE_POSITION).max(MAX_SCENE_POSITION),
 ]);
 export const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
-export const partSchema = z.object({
-  shape: z.enum(["box", "sphere", "cone", "cylinder", "torus"]),
+const partTransformSchema = z.object({
   position: vector,
   scale: vector,
   rotation: vector.optional(),
   color,
 });
+const latheProfilePoint = z.tuple([
+  z.number().finite().min(0).max(100),
+  z.number().finite().min(-100).max(100),
+]);
+const nonLathePartSchema = z.discriminatedUnion("shape", [
+  partTransformSchema.extend({ shape: z.literal("box") }).strict(),
+  partTransformSchema.extend({ shape: z.literal("sphere") }).strict(),
+  partTransformSchema.extend({ shape: z.literal("cone") }).strict(),
+  partTransformSchema.extend({ shape: z.literal("cylinder") }).strict(),
+  partTransformSchema.extend({ shape: z.literal("torus") }).strict(),
+]);
+export const partSchema = z.discriminatedUnion("shape", [
+  ...nonLathePartSchema.options,
+  partTransformSchema.extend({
+    shape: z.literal("lathe"),
+    profile: z.array(latheProfilePoint).min(2).max(32),
+  }),
+]);
 const geometryDetail = z.enum(["coarse", "refined"]).default("refined");
 const proceduralGeometryKind = z.enum([
   "tree",

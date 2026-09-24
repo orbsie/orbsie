@@ -6,7 +6,7 @@ import {
   entityGeometry,
   type FormationSnapshot,
 } from "../src/lib/geometry";
-import { entitySchema, type Entity } from "../src/lib/protocol";
+import { entitySchema, partSchema, type Entity } from "../src/lib/protocol";
 
 const multipart = entitySchema.parse({
   id: "multipart",
@@ -157,6 +157,105 @@ describe("procedural geometry parts", () => {
     expect(geometry.boundingBox?.max.toArray()).toEqual([2.25, 1.375, 0.5]);
     expect(hasVertexColor(geometry, "#123456")).toBe(true);
     expect(meshSurfaceArea(geometry)).toBeCloseTo(3.25, 5);
+    geometry.dispose();
+  });
+
+  it("validates bounded lathe profiles only for lathe parts", () => {
+    const lathe = {
+      shape: "lathe",
+      position: [0, 0, 0],
+      scale: [1, 1, 1],
+      color: "#d94e68",
+      profile: [
+        [0, 0],
+        [0.4, 0.2],
+      ],
+    };
+
+    expect(partSchema.parse(lathe)).toMatchObject({
+      shape: "lathe",
+      profile: [
+        [0, 0],
+        [0.4, 0.2],
+      ],
+    });
+
+    const invalidParts = [
+      { ...lathe, profile: undefined },
+      { ...lathe, profile: [[0, 0]] },
+      { ...lathe, profile: [[0, 0], [0.4]] },
+      {
+        ...lathe,
+        profile: [
+          [-0.1, 0],
+          [0.4, 0.2],
+        ],
+      },
+      {
+        ...lathe,
+        profile: [
+          [0, 0],
+          [Number.POSITIVE_INFINITY, 0.2],
+        ],
+      },
+      {
+        ...lathe,
+        profile: [
+          [0, 0],
+          [0.4, 101],
+        ],
+      },
+      {
+        ...lathe,
+        profile: Array.from({ length: 33 }, (_, index) => [0.2, index]),
+      },
+      { ...lathe, shape: "sphere" },
+    ];
+
+    for (const part of invalidParts)
+      expect(partSchema.safeParse(part).success).toBe(false);
+  });
+
+  it("builds a pointed berry-like lathe with its requested bounds and color", () => {
+    const berry = entitySchema.parse({
+      id: "lathe-berry",
+      label: "Lathe berry",
+      position: [0, 0, 0],
+      color: "#ffffff",
+      stage: "ready",
+      geometry: {
+        kind: "custom",
+        parts: [
+          {
+            shape: "lathe",
+            position: [0.25, 0.4, -0.2],
+            scale: [1, 1, 1],
+            color: "#d94e68",
+            profile: [
+              [0, 0],
+              [0.36, 0.08],
+              [0.5, 0.28],
+              [0.4, 0.76],
+              [0.2, 1.18],
+              [0, 1.38],
+            ],
+          },
+        ],
+      },
+    });
+
+    const geometry = entityGeometry(berry);
+    geometry.computeBoundingBox();
+
+    expect(geometry.boundingBox?.min.y).toBeCloseTo(0.4);
+    expect(geometry.boundingBox?.max.y).toBeCloseTo(1.78);
+    expect(geometry.boundingBox?.min.x).toBeLessThan(-0.22);
+    expect(geometry.boundingBox?.max.x).toBeGreaterThan(0.72);
+    expect(geometry.boundingBox?.min.z).toBeLessThan(-0.69);
+    expect(geometry.boundingBox?.max.z).toBeGreaterThan(0.29);
+    expect(hasVertexColor(geometry, "#d94e68")).toBe(true);
+    expect(geometry.getAttribute("position").count).toBeGreaterThan(0);
+    expect(meshSurfaceArea(geometry)).toBeGreaterThan(0);
     geometry.dispose();
   });
 });

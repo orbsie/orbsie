@@ -122,15 +122,22 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
   ) {
     for (const part of entity.geometry.parts ?? []) {
       const g =
-        part.shape === "box"
-          ? new THREE.BoxGeometry(1, 1, 1, 2, 2, 2)
-          : part.shape === "cone"
-            ? new THREE.ConeGeometry(1, 1, segments)
-            : part.shape === "cylinder"
-              ? new THREE.CylinderGeometry(1, 1, 1, segments)
-              : part.shape === "torus"
-                ? new THREE.TorusGeometry(0.7, 0.25, 8, segments)
-                : new THREE.SphereGeometry(1, segments, segments);
+        part.shape === "lathe"
+          ? new THREE.LatheGeometry(
+              part.profile.map(
+                ([radius, height]) => new THREE.Vector2(radius, height),
+              ),
+              segments,
+            )
+          : part.shape === "box"
+            ? new THREE.BoxGeometry(1, 1, 1, 2, 2, 2)
+            : part.shape === "cone"
+              ? new THREE.ConeGeometry(1, 1, segments)
+              : part.shape === "cylinder"
+                ? new THREE.CylinderGeometry(1, 1, 1, segments)
+                : part.shape === "torus"
+                  ? new THREE.TorusGeometry(0.7, 0.25, 8, segments)
+                  : new THREE.SphereGeometry(1, segments, segments);
       add(g, part.position, part.scale, part.color, part.rotation);
     }
   }

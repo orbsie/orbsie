@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { z } from "zod";
 import {
   blankProject,
   applyOperation,
@@ -39,6 +40,10 @@ function setup() {
   return { project, cursor, op };
 }
 describe("scene protocol", () => {
+  it("generates JSON Schema for the command protocol", () => {
+    expect(() => z.toJSONSchema(commandSchema)).not.toThrow();
+  });
+
   it("accepts known catalog geometry and rejects unknown IDs or URLs", () => {
     expect(
       assetGeometrySchema.safeParse({
