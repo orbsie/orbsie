@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 23 second live OpenRouter authoring-review milestone: an isolated local
+production server and fresh PostgreSQL database ran `openai/gpt-6-luna` with
+standard processing, a 4,096-output-token ceiling, and exactly two permitted
+calls. The first call committed project revision 18. A real revision-bound
+visual-plus-structural review requested a correction; the browser applied it
+and persisted revision 20. The third final-review request was blocked before
+the server by the two-call guard. Reload recovered revision 20, the key was
+not persisted in browser storage, and no external browser requests were made.
+The run is explicitly bounded-incomplete, not a verified accept verdict.
+Sanitized report: `docs/evidence/authoring-review/openrouter-live-accept-20260924/`.
+The isolated test server and database were stopped after evidence capture.
+A fresh Gateway read-only credits check still returned -0.0033684, so Gateway
+inference remains withheld. Official OpenAI App Server docs rechecked this
+turn still document a localhost browser callback and a device-code URL plus
+code, with no proven hosted Orbsie subscription OAuth callback.
+
 Sep 23 bounded software-landing performance probe: Luna measured five Canvas
 gradient constructions and 16 color-stop calls per frame on the forced-software
 Android 15 emulator at 412-by-786 CSS pixels. A temporary cache produced a

@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "outcome": "bounded-incomplete",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 2,
+  "actualLiveCalls": 2,
+  "blockedCalls": 1,
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-blocked-before-server",
+    "revise-journey-bounded-incomplete"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 200,
+      "requestId": "13c75b52-2e4d-42cf-aee6-1f165d520356",
+      "clientRunId": "550e0e5f-e37b-4089-a9d1-b78d18f86ba7",
+      "authoringRunId": "cf763858-c2e2-4847-b89b-58ca9d5e69da",
+      "requestedAuthoringRunId": null,
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "140590fe-3d19-4cdc-9424-1317dfd33b36",
+      "clientRunId": "550e0e5f-e37b-4089-a9d1-b78d18f86ba7",
+      "authoringRunId": null,
+      "requestedAuthoringRunId": "cf763858-c2e2-4847-b89b-58ca9d5e69da",
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "projectRevision": 18,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "reviewRevision": 18,
+      "reviewImageProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "reviewImageRevision": 18,
+      "structuralObservationProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "structuralObservationRevision": 18,
+      "responseBindingRevision": 20,
+      "responseBindingDigest": "fc7b2c534ff2a8924165193bf87955f9f4e94c2d3d05aa4087251ce9c9637a08",
+      "verdict": "revise",
+      "blocked": false
+    },
+    {
+      "ordinal": 3,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "status": null,
+      "requestId": null,
+      "clientRunId": "550e0e5f-e37b-4089-a9d1-b78d18f86ba7",
+      "authoringRunId": null,
+      "requestedAuthoringRunId": "cf763858-c2e2-4847-b89b-58ca9d5e69da",
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "projectRevision": 20,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "reviewRevision": 20,
+      "reviewImageProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "reviewImageRevision": 20,
+      "structuralObservationProjectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "structuralObservationRevision": 20,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": true
+    }
+  ],
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "fcf1cc8b5fe497423c54ffa737e1099c28a5d4693bc2a9bae374fe0c021dce59",
+      "bytes": 229291,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "fcf1cc8b5fe497423c54ffa737e1099c28a5d4693bc2a9bae374fe0c021dce59",
+      "privateBytes": 229291
+    },
+    {
+      "label": "revise-bounded-incomplete",
+      "sha256": "806c310b307e41ef72ee0ea28c2213938e0166efbfa2ed8eb3a7e2e7dbf27b19",
+      "bytes": 126920,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "01bfd46cb64cfa67ad7c83bfca6af86a8eaef9e7fb7fae8a128ecc6efb4a6e3a",
+      "privateBytes": 126730
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "revision": 18
+    },
+    "afterBlockedFinalReview": {
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "revision": 20
+    },
+    "afterReload": {
+      "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+      "revision": 20,
+      "keyPersisted": false,
+      "recovered": true
+    }
+  },
+  "requestIds": {
+    "initial": "13c75b52-2e4d-42cf-aee6-1f165d520356",
+    "review": "140590fe-3d19-4cdc-9424-1317dfd33b36"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 2
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 2,
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": false,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": null,
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  },
+  "review": {
+    "phase": "review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "ae0ac68b-c2db-4246-aafe-c40adf199ddc",
+    "reviewedRevision": 18,
+    "reviewImageRevision": 18,
+    "structuralObservationRevision": 18,
+    "bindingRevision": 20,
+    "bindingDigest": "fc7b2c534ff2a8924165193bf87955f9f4e94c2d3d05aa4087251ce9c9637a08",
+    "verdict": "revise"
+  }
+}
