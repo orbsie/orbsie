@@ -682,6 +682,13 @@ async function runGameplayMode(browser, deploymentUrl, evidenceDir, mode) {
     } catch {
       result.cookies = null;
     }
+    try {
+      const failureScreenshot = `failed-${mode.screenshot}`;
+      await page.screenshot({ path: join(evidenceDir, failureScreenshot) });
+      result.failureScreenshot = failureScreenshot;
+    } catch {
+      result.failureScreenshot = null;
+    }
     throw Object.assign(new AcceptanceFailure(result.failureCode), {
       modeResult: result,
     });
