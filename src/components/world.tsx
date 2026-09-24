@@ -70,6 +70,7 @@ import {
 } from "@/lib/world-navigation";
 import {
   initialProjectFrameSettlement,
+  isExistingProjectFrameOpen,
   isInitialProjectFrameBuildStart,
   type InitialProjectFrameAttempt,
   type InitialProjectFrameLifecycle,
@@ -3275,7 +3276,10 @@ export default function World({
     };
     if (pendingInitialFrameRef.current?.projectId !== projectId)
       pendingInitialFrameRef.current = null;
-    if (isInitialProjectFrameBuildStart(previous, current))
+    if (
+      isInitialProjectFrameBuildStart(previous, current) ||
+      isExistingProjectFrameOpen(previous, current)
+    )
       pendingInitialFrameRef.current = {
         projectId,
         userNavigated: false,

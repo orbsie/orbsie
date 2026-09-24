@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isExistingProjectFrameOpen,
   initialProjectFrameSettlement,
   isInitialProjectFrameBuildStart,
   type InitialProjectFrameLifecycle,
@@ -18,6 +19,13 @@ const firstBuild: InitialProjectFrameLifecycle = {
   phase: "descending",
   building: true,
   entityCount: 0,
+};
+
+const openedSavedProject: InitialProjectFrameLifecycle = {
+  projectId: "saved-project",
+  phase: "editing",
+  building: false,
+  entityCount: 1,
 };
 
 const successfulSettlement: InitialProjectFrameSettlement = {
@@ -50,6 +58,48 @@ describe("initial project camera framing", () => {
       isInitialProjectFrameBuildStart(landing, {
         ...firstBuild,
         entityCount: 1,
+      }),
+    ).toBe(false);
+  });
+
+  it("arms when a populated project is opened, but not after same-project edits", () => {
+    const previousProject: InitialProjectFrameLifecycle = {
+      projectId: "another-project",
+      phase: "landing",
+      building: false,
+      entityCount: 0,
+    };
+    expect(
+      isExistingProjectFrameOpen(previousProject, openedSavedProject),
+    ).toBe(true);
+    expect(
+      isExistingProjectFrameOpen(
+        { ...previousProject, phase: "editing", entityCount: 3 },
+        openedSavedProject,
+      ),
+    ).toBe(true);
+    expect(
+      isExistingProjectFrameOpen(
+        { ...openedSavedProject },
+        { ...openedSavedProject, entityCount: 2 },
+      ),
+    ).toBe(false);
+    expect(
+      isExistingProjectFrameOpen(previousProject, {
+        ...openedSavedProject,
+        building: true,
+      }),
+    ).toBe(false);
+    expect(
+      isExistingProjectFrameOpen(previousProject, {
+        ...openedSavedProject,
+        entityCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      isExistingProjectFrameOpen(previousProject, {
+        ...openedSavedProject,
+        phase: "descending",
       }),
     ).toBe(false);
   });

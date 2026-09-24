@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "scope": "World renderer opens a populated saved project from landing; initial default camera compared with committed-bounds frame",
+  "providerCalls": 0,
+  "externalRequests": [],
+  "errors": [],
+  "before": {
+    "zoomLabel": "Zoom in, currently 100%",
+    "position": [
+      0,
+      11.999999999999998,
+      20.784609690826528
+    ]
+  },
+  "after": {
+    "zoomLabel": "Zoom in, currently 600%",
+    "position": [
+      0.009999999403953547,
+      2.034999998658895,
+      3.464101615137755
+    ]
+  },
+  "screenshots": [
+    "before-open.png",
+    "after-open.png"
+  ]
+}

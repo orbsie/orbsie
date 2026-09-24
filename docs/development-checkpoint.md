@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 saved-world initial framing: opening a populated project under a new
+project ID now frames committed content once through the existing navigation
+command. Same-project edits/undo, play, manual navigation, errors, generation
+recovery and empty/unbounded scenes retain their prior safeguards. Astra
+reviewed the Luna diff and the local source-bundled browser fixture: a small
+saved subject changed from the default 100% camera to 600% framing, with zero
+provider calls, external requests or browser errors. The fixture proves camera
+repositioning, not the quality of generated geometry. Twenty-five related
+navigation tests and the optimized build pass. Evidence:
+`docs/evidence/initial-project-framing/`. Deployment is pending.
+
 Sep 24 touch-launch ordering probe: the public flagship CDP driver now sends
 Jump before directional touch input when launching from a moving platform, so
 the direction cannot walk the player off a narrow edge before Jump is

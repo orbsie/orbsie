@@ -37,6 +37,18 @@ export function isInitialProjectFrameBuildStart(
   );
 }
 
+export function isExistingProjectFrameOpen(
+  previous: InitialProjectFrameLifecycle,
+  current: InitialProjectFrameLifecycle,
+) {
+  return (
+    previous.projectId !== current.projectId &&
+    current.phase === "editing" &&
+    !current.building &&
+    current.entityCount > 0
+  );
+}
+
 export function initialProjectFrameSettlement(
   attempt: InitialProjectFrameAttempt,
   current: InitialProjectFrameSettlement,
