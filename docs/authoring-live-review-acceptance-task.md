@@ -13,9 +13,9 @@ explicitly set `VERCEL=0`. The downloaded `.env.production.local` contains
 `VERCEL=1`; leaving that value active on localhost makes anonymous admission
 expect Vercel's trusted forwarded-IP header and fail with HTTP 503 before
 inference. `scripts/verify-live-authoring-review.mjs` is a focused OpenRouter
-CREATE/review harness. Its two-call guard intentionally blocks final review
-after a revise verdict; a bounded-incomplete result is evidence of iteration,
-not full acceptance.
+CREATE/review/final-review harness. Its three-call guard allows one correction
+review and one final verdict after the initial generation. A final `revise`
+verdict is bounded-incomplete evidence, not full acceptance.
 
 For each provider, use a fresh owner-authorized session and explicit create/edit
 prompts. Observe the real initial, review and, on revise, final-review requests;
