@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 exact review-input evidence: the opt-in live OpenRouter verifier now
+writes each permitted review request's validated PNG into fixed-name mode-0600
+files in its mode-0700 private directory, never in the repository. Its public
+report retains only dimensions, decoded byte count, SHA-256 and write status;
+unavailable/invalid inputs add no image text. The call cap and retry gate are
+unchanged. Astra reviewed the Luna diff; 19 focused tests, typecheck, syntax,
+formatting and diff checks pass. A direct Node 22 invocation wrote and removed
+a private 1×1 PNG successfully. No provider call ran for this change. This
+will allow the next live reviewer verdict to be compared against the exact
+scene PNG it saw; private files must be removed after Astra inspects them.
+
 Sep 24 camera-aware scene review: the renderer capture now optionally records
 the camera's world-space position and forward direction with the exact rendered
 revision. WebGL adds the render-local origin; Canvas2D uses its world camera.

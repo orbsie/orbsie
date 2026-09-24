@@ -859,6 +859,66 @@ async function writePrivateScreenshot(directory, filename, png) {
   }
 }
 
+/** Persist only a validated review PNG and return its sanitized file summary. */
+export async function writePrivateReviewImage(directory, reviewImage, ordinal) {
+  const unavailable = { fileWritten: false };
+  if (
+    !Number.isSafeInteger(ordinal) ||
+    ordinal < 2 ||
+    ordinal > 4 ||
+    !reviewImage ||
+    typeof reviewImage !== "object" ||
+    Array.isArray(reviewImage)
+  )
+    return unavailable;
+
+  try {
+    const { MAX_REVIEW_IMAGE_BYTES, validateReviewImageDataUrl } =
+      await import("../src/lib/review-image.ts");
+    const image = reviewImage.image;
+    const validation = validateReviewImageDataUrl(image);
+    if (
+      !Number.isSafeInteger(reviewImage.width) ||
+      !Number.isSafeInteger(reviewImage.height) ||
+      reviewImage.width !== validation.width ||
+      reviewImage.height !== validation.height
+    )
+      return unavailable;
+
+    const encoded = image.slice("data:image/png;base64,".length);
+    const png = Buffer.from(encoded, "base64");
+    if (
+      png.toString("base64") !== encoded ||
+      validation.byteLength > MAX_REVIEW_IMAGE_BYTES ||
+      png.byteLength === 0 ||
+      png.byteLength > MAX_REVIEW_IMAGE_BYTES
+    )
+      return unavailable;
+
+    const evidence = {
+      width: validation.width,
+      height: validation.height,
+      byteLength: png.byteLength,
+      sha256: sha256(png),
+      fileWritten: false,
+    };
+    try {
+      await writePrivateScreenshot(
+        directory,
+        `review-request-${ordinal}.png`,
+        png,
+      );
+      evidence.fileWritten = true;
+    } catch {
+      // Do not expose filesystem or payload details in the public report.
+    }
+    return evidence;
+  } catch {
+    // Invalid or unavailable evidence does not expose input or validator text.
+    return unavailable;
+  }
+}
+
 async function readProjectSummary(page, includeStructure = false) {
   const snapshot = await page.evaluate(
     (captureStructure) =>
@@ -1405,6 +1465,18 @@ async function main() {
         await route.abort("blockedbyclient");
         return;
       }
+
+      if (
+        privateEvidenceDirectory &&
+        call.ordinal >= 2 &&
+        call.ordinal <= 4 &&
+        (call.phase === "review" || call.phase === "final-review")
+      )
+        call.reviewImageEvidence = await writePrivateReviewImage(
+          privateEvidenceDirectory,
+          payload?.reviewImage,
+          call.ordinal,
+        );
 
       report.actualLiveCalls += 1;
       report.phaseOrder.push(`${phase}-request-observed`);

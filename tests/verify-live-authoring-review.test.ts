@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -13,6 +13,7 @@ import {
   validateReviewBindingRevision,
   validateReviewProgression,
   writePrivateReviewFindings,
+  writePrivateReviewImage,
 } from "../scripts/verify-live-authoring-review.mjs";
 
 const PROJECT_ID = "123e4567-e89b-42d3-a456-426614174000";
@@ -21,6 +22,8 @@ const CLIENT_RUN_ID = "323e4567-e89b-42d3-a456-426614174002";
 const REQUEST_ID = "423e4567-e89b-42d3-a456-426614174003";
 const DIGEST_A = "a".repeat(64);
 const DIGEST_B = "b".repeat(64);
+const REVIEW_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 type CallFixture = Record<string, unknown>;
 type GuardOptions = {
   liveCallLimit?: number;
@@ -711,6 +714,138 @@ describe("live authoring review call budget guard", () => {
       ]);
       expect(saved).not.toContain("must not persist");
       expect(((await stat(path)).mode & 0o777).toString(8)).toBe("600");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("writes exact validated review PNGs to fixed ordinal files with private permissions", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "orbsie-review-png-"));
+    try {
+      expect(((await stat(directory)).mode & 0o777).toString(8)).toBe("700");
+      const summaries = [];
+      for (const ordinal of [2, 3, 4]) {
+        const summary = await writePrivateReviewImage(
+          directory,
+          {
+            projectId: PROJECT_ID,
+            revision: ordinal,
+            renderer: "webgl",
+            width: 1,
+            height: 1,
+            image: REVIEW_PNG,
+            prompt: "private review prompt",
+            credential: "private provider credential",
+            callback: "https://private.example/path?token=secret",
+          },
+          ordinal,
+        );
+        summaries.push(summary);
+        const png = Buffer.from(
+          REVIEW_PNG.slice("data:image/png;base64,".length),
+          "base64",
+        );
+        expect(summary).toEqual({
+          width: 1,
+          height: 1,
+          byteLength: png.byteLength,
+          sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+          fileWritten: true,
+        });
+        expect(Object.keys(summary)).toEqual([
+          "width",
+          "height",
+          "byteLength",
+          "sha256",
+          "fileWritten",
+        ]);
+        const path = join(directory, `review-request-${ordinal}.png`);
+        expect(await readFile(path)).toEqual(png);
+        expect(((await stat(path)).mode & 0o777).toString(8)).toBe("600");
+      }
+
+      const publicSummary = JSON.stringify(summaries);
+      for (const privateValue of [
+        REVIEW_PNG,
+        "private review prompt",
+        "private provider credential",
+        "https://private.example/path?token=secret",
+        "private.example",
+        "token=secret",
+        PROJECT_ID,
+      ])
+        expect(publicSummary).not.toContain(privateValue);
+      expect(await readdir(directory)).toEqual([
+        "review-request-2.png",
+        "review-request-3.png",
+        "review-request-4.png",
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("marks malformed, noncanonical, mismatched, oversized, or unapproved images unavailable", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "orbsie-review-invalid-"));
+    try {
+      const prefix = "data:image/png;base64,";
+      const encoded = REVIEW_PNG.slice(prefix.length);
+      const alphabet =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      const padding = encoded.endsWith("==") ? 2 : 1;
+      const finalDataIndex = encoded.length - padding - 1;
+      const value = alphabet.indexOf(encoded[finalDataIndex]);
+      const significantMask = padding === 1 ? 0b111100 : 0b110000;
+      const noncanonical =
+        encoded.slice(0, finalDataIndex) +
+        alphabet[(value & significantMask) | 1] +
+        encoded.slice(finalDataIndex + 1);
+      const invalidImages = [
+        { width: 1, height: 1, image: `${prefix}not-a-png` },
+        { width: 1, height: 1, image: `${prefix}${noncanonical}` },
+        { width: 2, height: 1, image: REVIEW_PNG },
+        { width: 1, height: 1, image: `${prefix}${"A".repeat(128 * 1024)}` },
+      ];
+
+      for (const [index, reviewImage] of invalidImages.entries()) {
+        const summary = await writePrivateReviewImage(
+          directory,
+          reviewImage,
+          index + 2,
+        );
+        expect(summary).toEqual({ fileWritten: false });
+      }
+      expect(
+        await writePrivateReviewImage(
+          directory,
+          { width: 1, height: 1, image: REVIEW_PNG },
+          5,
+        ),
+      ).toEqual({ fileWritten: false });
+      expect(await readdir(directory)).toEqual([]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("does not overwrite a previously written ordinal image", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "orbsie-review-no-replace-"),
+    );
+    try {
+      const reviewImage = { width: 1, height: 1, image: REVIEW_PNG };
+      expect(
+        await writePrivateReviewImage(directory, reviewImage, 2),
+      ).toMatchObject({ fileWritten: true });
+      expect(
+        await writePrivateReviewImage(directory, reviewImage, 2),
+      ).toMatchObject({ width: 1, height: 1, fileWritten: false });
+      expect(await readFile(join(directory, "review-request-2.png"))).toEqual(
+        Buffer.from(
+          REVIEW_PNG.slice("data:image/png;base64,".length),
+          "base64",
+        ),
+      );
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
