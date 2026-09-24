@@ -1,8 +1,23 @@
 # Development checkpoint
 
+Sep 24 OpenRouter visual review after palette guidance: source `dd630de` used
+four capped `openai/gpt-6-luna` calls in an isolated production build: initial
+create and three revision-bound image reviews, all HTTP 200 and no retries.
+The model returned `revise` at the final call limit; outcome is
+**bounded-incomplete**. Astra inspected the private screenshots and rejects the
+result: only three of four blue fruit remain visually distinct, their rounded
+silhouettes read as generic blobs instead of pointed strawberries, and the
+large green caps/stems lack convincing branch attachment. This improves on the
+earlier false `accept` by honestly reporting incomplete work, but it does not
+close visual quality. Authoring review remains disabled in production. The
+sanitized trace is `docs/evidence/authoring-review/openrouter-palette-current-20260924/`.
+One own-origin `net::ERR_ABORTED` was recorded during review without a page or
+console error; its effect is not established by this trace. Gateway's latest
+read-only credit check remains negative, and no ChatGPT inference ran.
+
 Sep 24 provider-readiness recheck at 20:49 UTC: the local OpenRouter key's
 read-only status request returned HTTP 200, so a bounded Luna quality run is
-underway after the catalog-palette guidance change. The Gateway test key's
+recorded above after the catalog-palette guidance change. The Gateway test key's
 read-only credit endpoint still returned HTTP 200 with balance `-0.00456495`;
 no Gateway inference ran. Hosted ChatGPT's pinned App Server 0.153.4 and the
 installed 0.156.1 both generate `TurnStartParams` without a per-turn token cap;

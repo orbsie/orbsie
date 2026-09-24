@@ -33,9 +33,12 @@ older rows below are a historical inventory, not a completion claim.
   model-authored visual quality, live-provider and physical-device acceptance
   remain unverified.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
-  but falsely accepted a blue-strawberry tree with three oversized berries and
-  disconnected stems. Production authoring-review remains off. Gateway credit
-  is negative, so further paid Gateway inference has not run.
+  and ended `bounded-incomplete` with a final `revise` verdict. Astra's visual
+  check confirms that the rounded blue fruit and oversized green caps still
+  miss the requested strawberry silhouette and only three of four fruit remain
+  distinct. This newer run reports the defect honestly; the preceding run
+  falsely accepted a comparable tree. Production authoring-review remains off.
+  Gateway credit is negative, so further paid Gateway inference has not run.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

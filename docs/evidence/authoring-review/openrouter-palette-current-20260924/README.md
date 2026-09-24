@@ -27,3 +27,14 @@ own-origin generation request failure (`net::ERR_ABORTED`) during the review
 flow; no external requests were blocked. The provider key was not persisted in
 browser storage. The local server and disposable database were stopped after
 the run.
+
+Astra inspected all three revision-bound review images and the final scene.
+The broad pale-cyan catalog canopy and four custom blue fruit entities are
+visible, but only three berries remain distinct at review scale. Their rounded
+forms read as blue blobs rather than strawberries with broad upper shoulders
+and pointed lower tips. The green caps are too large, and visible stems do not
+convincingly join fruit to branches. The final review independently reported
+the same defining silhouette and occlusion defects and returned `revise`.
+This is a **visual-quality rejection** even though creation, revision binding,
+storage recovery, and the bounded review protocol worked. Do not enable the
+authoring-review feature or cite this run as a delightful-model acceptance.
