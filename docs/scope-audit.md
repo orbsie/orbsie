@@ -7,8 +7,9 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg` at this reconciliation. Read-only
-  root, robots, sitemap, config and trial checks passed; the previous crawler
+  `dpl_DRbtSyAhxcDTqyBYBkqqYYBEJSmC` at this reconciliation. Read-only
+  root, robots, sitemap and config checks passed; the prior release's trial
+  check passed. The previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
   free-provider 402 UI recovery passed both local and intercepted production
   browser checks at desktop and mobile sizes. This does not prove funded free
@@ -18,9 +19,11 @@ older rows below are a historical inventory, not a completion claim.
   but falsely accepted a blue-strawberry tree with three oversized berries and
   disconnected stems. Production authoring-review remains off. Gateway credit
   is negative, so further paid Gateway inference has not run.
-- The latest hosted ChatGPT device challenge shown to the owner expired
-  without a grant; its private session was cancelled and removed. No ChatGPT
-  inference ran. [Official App Server documentation](https://learn.chatgpt.com/docs/app-server)
+- A fresh hosted ChatGPT device challenge shown to the owner expired without
+  a grant; its private session was cancelled and removed. The production UI
+  now opens the official sign-in tab on direct connection clicks, verified in
+  an intercepted exact-production browser test. Programmatic starts do not
+  open a tab. No ChatGPT inference ran. [Official App Server documentation](https://learn.chatgpt.com/docs/app-server)
   describes a localhost browser callback and a device-code flow, but does not
   establish an arbitrary HTTPS callback to Orbsie. The requested direct-return
   subscription OAuth remains unverified. Computer use currently reports no

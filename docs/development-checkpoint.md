@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 ChatGPT sign-in tab release: source `beeeda5` deployed Ready as
+`dpl_DRbtSyAhxcDTqyBYBkqqYYBEJSmC`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-e6buf2pu1-grappeggias-projects.vercel.app`).
+The exact production frontend passed intercepted signed-out direct-click
+testing: one official OpenAI sign-in tab opened and the synthetic code remained
+visible. A separate programmatic-start case opened no tab. Both tests blocked
+external navigation and made zero real model calls. Root, robots, sitemap and
+config returned HTTP 200. Evidence:
+`docs/evidence/chatgpt-open-tab-production-20260924/`. This is synthetic UI
+acceptance, not a successful owner authorization or ChatGPT inference test.
+
 Sep 24 ChatGPT sign-in follow-up: the owner offered to use a code and URL, so
 production issued one fresh OpenAI device challenge and displayed it in chat.
 Authenticated status stayed pending/disconnected through expiry, then became
@@ -13,7 +24,7 @@ device sign-in page on direct Connect/Retry/Reconnect clicks while preserving
 the visible code and fallback link; programmatic starts do not open a tab.
 Astra reviewed the diff and the worker's fixture result: 18 connection tests,
 five hosted-UI fixture scenarios, typecheck, formatting and syntax passed.
-The optimized production build also passed. Deployment remains pending.
+The optimized production build also passed. The release above deployed it.
 
 Sep 24 free-provider recovery release: source `afb2fd3` deployed Ready as
 `dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg`, aliased to `https://orbsie.com/`

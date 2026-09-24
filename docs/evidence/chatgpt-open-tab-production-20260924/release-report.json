@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-24T19:06:02.269Z",
+  "origin": "https://orbsie.com",
+  "sourceCommit": "beeeda5",
+  "deploymentId": "dpl_DRbtSyAhxcDTqyBYBkqqYYBEJSmC",
+  "immutableUrl": "https://orbsie-e6buf2pu1-grappeggias-projects.vercel.app",
+  "vercelReady": true,
+  "checks": {
+    "/": {
+      "http": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    "/robots.txt": {
+      "http": 200,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    "/sitemap.xml": {
+      "http": 200,
+      "contentType": "application/xml"
+    },
+    "/api/config": {
+      "http": 200,
+      "contentType": "application/json"
+    }
+  },
+  "uiFixture": {
+    "signedOut": "passed",
+    "programmaticStart": "passed",
+    "syntheticAuthorization": true,
+    "liveLogin": false,
+    "actualModelCalls": 0
+  },
+  "ownerDeviceChallenge": {
+    "expiredWithoutGrant": true,
+    "cancelled": true,
+    "privateStateRemoved": true
+  }
+}

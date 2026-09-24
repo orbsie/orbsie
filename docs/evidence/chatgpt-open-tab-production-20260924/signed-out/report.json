@@ -1,0 +1,13 @@
+[
+  {
+    "scenario": "signed-out",
+    "passed": true,
+    "starts": 1,
+    "cancels": 0,
+    "logouts": 0,
+    "polls": 0,
+    "providerSessions": 1,
+    "externalRequests": 0,
+    "blockedAuthNavigations": 1
+  }
+]
