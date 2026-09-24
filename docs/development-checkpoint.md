@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 24 handoff after the latest quality diagnosis: commit `bc3ee65` adjusts
+creation/review guidance to keep plural attached details recognizable from the
+starting play view. It specifically tells the first review to move existing
+obscured instances toward the visible side instead of shrinking them into
+invisibility. The 45 focused prompt/review tests and formatting checks pass.
+This latest wording has **not** had a new live provider run or deployment;
+avoid claiming it fixed quality. The prior bounded run below proved that
+lathe use was already working while visibility remained poor. Next meaningful
+acceptance is one bounded live visual review after improving visibility
+feedback/correction, followed by the production feature-flag decision. A
+read-only Vercel AI Gateway credit request returned HTTP 200 and the same
+negative balance `-0.0033684`, with zero model calls; paid Gateway inference
+remains withheld. Computer-use still exposes no owner Chrome browser surface,
+and live ChatGPT account grant remains unverified. The owner was asked to
+complete a fresh ChatGPT connection in their own Orbsie browser and report
+the resulting state.
+
 Sep 24 post-proportion OpenRouter quality acceptance: an isolated local app
 with fresh PostgreSQL used exactly three `openai/gpt-6-luna` default-tier calls
 at 4,096 output tokens, without retries. Create, review, and final review all
