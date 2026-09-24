@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "startedAt": "2026-09-24T17:28:42.607Z",
+  "sourceCommit": "d4c2b5ec1eb8f1d50d05715471124a93f1b99b2a",
+  "source": {
+    "fixtureZipSha256": "6bde327ef0c63ca558ed35d5a74e26e55098077006f3b065c5effa7261da084b",
+    "canonicalDigest": "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618",
+    "revision": 9,
+    "generatedModelCount": 2,
+    "rules": [
+      "Right +7",
+      "Forward win",
+      "Left lose"
+    ]
+  },
+  "currentPlayerFiles": {
+    "runtime.js": {
+      "bytes": 1925408,
+      "sha256": "0ef8fd32865a8e59b817936234e112c512ed5407e659646df751fa72e39d76fc"
+    },
+    "runtime.css": {
+      "bytes": 6107,
+      "sha256": "76bb712dc7a4e36f80b1668357b07ecc2a379c31d1444b6c5445e839bb6c1026"
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 424448,
+      "sha256": "0be7770bc93086d7771b5ab0f05ca7bd215d5dda152157119749b90d55b66299"
+    }
+  },
+  "device": {
+    "id": "emulator-5554",
+    "androidRelease": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome",
+    "physicalDeviceProof": false
+  },
+  "renderer": "Canvas2D forced by rejecting WebGL context requests",
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "expectedWebglInitializationErrors": 1,
+  "checks": {
+    "ready": true,
+    "touchScore": 7,
+    "restart": true,
+    "win": true,
+    "loss": true
+  },
+  "cookiesBefore": 0,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false,
+    "verticalOverflow": false
+  },
+  "cookiesAfter": 0,
+  "blockedWebglRequests": 3,
+  "cleanup": {
+    "newTabClosed": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryArtifactRemoved": true
+  },
+  "finishedAt": "2026-09-24T17:28:49.795Z"
+}

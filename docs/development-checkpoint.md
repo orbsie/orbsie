@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 post-segment Android current-artifact acceptance: the Android 15
+`droidlm_api35_midrange` emulator Chrome replayed an existing signed-out
+published ZIP with the four current checked-in player files replacing the
+older runtime. Exact SHA-256 hashes in the report match the current runtime,
+CSS, generated-geometry worker and asset-geometry worker. With WebGL forced
+unavailable, Canvas2D loaded at 412×786 without overflow; real touch input
+scored 7, restarted, won and lost. Provider calls, generation requests,
+external requests, unexpected local requests, failed responses and page errors
+were all zero. Astra reviewed the Luna diff/report and the scored/win images.
+The worker removed its ADB mapping and stopped the emulator. Evidence:
+`docs/evidence/android-current-artifact-20260924-post-segment/`. This does not
+certify physical Android, Android WebGL, editor login, or model-authored
+generation on the device. The historical Android report remains intact.
+
 Sep 24 stream-recovery case expansion: the real-editor intercepted-response
 fixture now covers provider-error, provider `length`/output-limit, and
 mid-record EOF after a provisional operation, in addition to its prior clean

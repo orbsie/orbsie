@@ -20,7 +20,16 @@ const PLAYER_FILES = [
   "generated-geometry-worker.js",
   "asset-geometry-worker.js",
 ];
-const EVIDENCE_DIRECTORY = "docs/evidence/android-current-artifact";
+const DEFAULT_EVIDENCE_DIRECTORY = "docs/evidence/android-current-artifact";
+const evidenceDirectoryOverride = process.env.ORBSIE_ANDROID_EVIDENCE_DIRECTORY;
+const EVIDENCE_DIRECTORY = resolve(
+  evidenceDirectoryOverride ?? DEFAULT_EVIDENCE_DIRECTORY,
+);
+assert(
+  !evidenceDirectoryOverride ||
+    EVIDENCE_DIRECTORY !== resolve(DEFAULT_EVIDENCE_DIRECTORY),
+  "Android current-artifact evidence override must preserve the historical report.",
+);
 const DEVICE = process.env.ORBSIE_ANDROID_DEVICE ?? "emulator-5554";
 const CDP_URL = process.env.ORBSIE_ANDROID_CDP_URL ?? "http://127.0.0.1:9222";
 const GENERATION_PATHS = new Set([
