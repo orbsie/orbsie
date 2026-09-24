@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-09-24T09:26:01.065Z",
+  "origin": "http://localhost:10522",
+  "state": {
+    "android": true,
+    "landing": true,
+    "rendererAvailability": "ready",
+    "renderer": "software",
+    "canvasVisible": true,
+    "horizontalOverflow": false,
+    "viewport": {
+      "width": 412,
+      "height": 786
+    }
+  },
+  "visiblePlanetPixels": 19692,
+  "pageErrors": [],
+  "blockedRequests": [],
+  "status": "passed"
+}

@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 Android renderer correction, local acceptance: a known Android Emulator
+Google SwiftShader WebGL2 renderer now routes to the existing Canvas2D scene
+before R3F mounts. This avoids a browser page error and preserves WebGL for
+other renderer names. The Android 15 emulator visual verifier passed against
+the local app: software renderer ready, 19,692 planet pixels in the sampled
+region, no page errors, blocked requests or horizontal overflow. Astra
+inspected the screenshot; the planet is clear behind the composer. A desktop
+SwiftShader browser still selected WebGL and reached ready with no page errors.
+Focused detection tests and typecheck passed. The visual verifier correctly
+failed production before the fix with zero planet pixels. Production build,
+deployment and repeat Android production check remain pending. Evidence:
+`docs/evidence/android-production-landing-20260924/local-after-fix/`.
+
 Sep 24 live-review observability: the bounded OpenRouter authoring-review
 verifier now records stage, geometry-kind, procedural-part, and coarse color
 counts for the initial and final saved revisions. The report excludes raw

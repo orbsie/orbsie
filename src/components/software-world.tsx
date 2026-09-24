@@ -153,7 +153,7 @@ type SoftwareWorldProps = {
 const softwareRendererError =
   "This browser could not start its 2D graphics fallback. Your world needs a browser with canvas support.";
 const softwareFallbackWarning =
-  "WebGL2 could not initialize, so Orbsie is using its software canvas renderer.";
+  "WebGL2 is not usable on this device, so Orbsie is using compatibility graphics.";
 function playerStartForProject(project: Project): PlayerState {
   return { position: playerSpawnForProject(project), velocityY: 0 };
 }

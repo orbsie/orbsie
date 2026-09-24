@@ -2932,10 +2932,53 @@ function Scene({
 }
 const webglUnavailableMessage =
   "Your world needs WebGL2, but WebGL2 could not initialize in this browser.";
+export function isAndroidEmulatorSwiftShaderRenderer(
+  rendererName: unknown,
+): boolean {
+  return (
+    typeof rendererName === "string" &&
+    /Android Emulator OpenGL ES Translator\s+\(Google SwiftShader\)/i.test(
+      rendererName,
+    )
+  );
+}
+function hasAndroidEmulatorSwiftShaderRenderer(): boolean {
+  if (typeof document === "undefined") return false;
+  const canvas = document.createElement("canvas");
+  let context: WebGL2RenderingContext | null = null;
+  try {
+    context = canvas.getContext("webgl2", {
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    if (!context) return false;
+    const debugRendererInfo = context.getExtension(
+      "WEBGL_debug_renderer_info",
+    ) as { UNMASKED_RENDERER_WEBGL: number } | null;
+    if (!debugRendererInfo) return false;
+    return isAndroidEmulatorSwiftShaderRenderer(
+      context.getParameter(debugRendererInfo.UNMASKED_RENDERER_WEBGL),
+    );
+  } catch {
+    // Renderer identification is optional; keep WebGL when the browser hides
+    // the debug extension or rejects the query.
+    return false;
+  } finally {
+    try {
+      context?.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch {
+      // Dropping the detached canvas below still releases the probe reference.
+    }
+    canvas.width = 0;
+    canvas.height = 0;
+    context = null;
+  }
+}
 function CanvasFallback() {
-  // R3F mounts this fallback as a child of <canvas>, including during a
-  // healthy WebGL render. Keep its transient copy out of the accessibility
-  // tree; real renderer failures use Unavailable or GraphicsGuidance below.
+  // Show this placeholder while selecting a renderer and inside R3F's canvas
+  // fallback. Keep transient copy out of the accessibility tree; actionable
+  // failures use Unavailable or GraphicsGuidance below.
   return (
     <div className="webgl-fallback" aria-hidden="true">
       <span>Preparing graphics…</span>
@@ -3284,6 +3327,11 @@ export default function World({
   const [softwareFailedAttempt, setSoftwareFailedAttempt] = useState<
     number | null
   >(null);
+  const [rendererProbe, setRendererProbe] = useState<{
+    attempt: number;
+    result: "pending" | "webgl" | "software";
+  }>(() => ({ attempt: rendererRetryToken, result: "pending" }));
+  const rendererProbeAttemptRef = useRef<number | null>(null);
   const attemptRef = useRef(rendererRetryToken);
   const failedAttemptRef = useRef<number | null>(null);
   const softwareFailedAttemptRef = useRef<number | null>(null);
@@ -3293,15 +3341,23 @@ export default function World({
   if (failedAttemptRef.current !== failedAttempt)
     failedAttemptRef.current = failedAttempt;
   const attempt = rendererRetryToken;
-  const notifyPrimaryFailure = (message: string) => {
-    if (attemptRef.current !== attempt || failedAttemptRef.current === attempt)
-      return;
-    failedAttemptRef.current = attempt;
-    clearNavigationGestures();
-    setNavigationReady(false);
-    setFailedAttempt(attempt);
-    onRendererFallback?.(message);
-  };
+  const notifyPrimaryFailure = useCallback(
+    (message: string) => {
+      if (
+        attemptRef.current !== attempt ||
+        failedAttemptRef.current === attempt
+      )
+        return;
+      failedAttemptRef.current = attempt;
+      clearNavigationGestures();
+      setNavigationReady(false);
+      setFailedAttempt(attempt);
+      onRendererFallback?.(message);
+    },
+    [attempt, clearNavigationGestures, onRendererFallback],
+  );
+  const notifyPrimaryFailureRef = useRef(notifyPrimaryFailure);
+  notifyPrimaryFailureRef.current = notifyPrimaryFailure;
   const notifySoftwareFailure = (message: string) => {
     if (
       attemptRef.current !== attempt ||
@@ -3328,6 +3384,20 @@ export default function World({
     )
       onReady?.();
   };
+  useEffect(() => {
+    if (rendererProbeAttemptRef.current === attempt) return;
+    rendererProbeAttemptRef.current = attempt;
+    const useSoftwareRenderer = hasAndroidEmulatorSwiftShaderRenderer();
+    if (attemptRef.current !== attempt) return;
+    setRendererProbe({
+      attempt,
+      result: useSoftwareRenderer ? "software" : "webgl",
+    });
+    if (useSoftwareRenderer)
+      notifyPrimaryFailureRef.current(webglUnavailableMessage);
+  }, [attempt]);
+  const rendererProbePending =
+    rendererProbe.attempt !== attempt || rendererProbe.result === "pending";
   // Canvas reapplies its DPR prop on parent renders. Keep it in sync with
   // adaptation so typing and scene revisions cannot restore full resolution.
   const [renderDpr, setRenderDpr] = useState(1);
@@ -3335,7 +3405,9 @@ export default function World({
   const navigationGesturesEnabled =
     navigationReady && phase === "editing" && !playing;
   let renderer: ReactNode;
-  if (failedAttempt === attempt) {
+  if (rendererProbePending) {
+    renderer = <CanvasFallback />;
+  } else if (failedAttempt === attempt) {
     if (softwareFailedAttempt === attempt)
       renderer = onError ? null : <Unavailable />;
     else
@@ -3376,7 +3448,7 @@ export default function World({
               });
             } catch (error) {
               // R3F configures the renderer asynchronously, outside the
-              // error boundary. Report construction failure here.
+              // error boundary. Report renderer construction failure here.
               notifyPrimaryFailure(webglUnavailableMessage);
               throw error;
             }
