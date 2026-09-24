@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 four-call live OpenRouter quality check: the first isolated setup attempt
+stopped at exact-origin preflight because a backgrounded `next start` died with
+its launcher shell; zero model calls ran. With a foreground server and verified
+malformed-JSON HTTP 400 preflight, the single corrected test made exactly four
+`openai/gpt-6-luna` default-tier calls, each capped at 4,096 output tokens and
+without retries. All four returned HTTP 200: creation saved revision 17, two
+visual+structural reviews corrected to revisions 24 and 30, and a final
+revision-bound review returned `revise` with no calls left. Reload recovered
+revision 30; no key appeared in browser storage. Sanitized evidence:
+`docs/evidence/authoring-review/openrouter-four-call-quality-20260924/` (failed
+zero-call setup) and `openrouter-four-call-quality-corrected-20260924/`
+(bounded-incomplete). The worker reported five pointed blue fruit with green
+caps and stems but subtle branch attachment; its private screenshot was removed
+during cleanup before Astra could inspect it, so independent visual acceptance
+is not established. One browser request failure lacks a classified cause; there
+were no page/console errors or blocked external requests. Isolated resources
+were removed. Keep the production authoring-review flag off; diagnose quality
+feedback and preserve private images long enough for Astra review on the next
+meaningful live run. Gateway credit remains negative, and ChatGPT live grant
+remains unverified.
+
 Sep 24 combined Canvas2D/coarse-pointer acceptance: one fresh production-server
 run passed while the generation stream remained open and player movement
 advanced 1.0664 units. The same browser then completed five collectibles,
