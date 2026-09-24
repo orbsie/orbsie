@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 24 production release after focused capture and segment integration:
+the full Vitest suite passed (1,783 passed, 27 skipped) and the optimized
+Next.js build passed at source `d11058b`. Vercel deployment
+`dpl_Gtz4xyNC4LN2m9XjXSH6XswFoUVA` reached Ready and was aliased to
+`https://orbsie.com/` (immutable URL
+`https://orbsie-5vff13kr0-grappeggias-projects.vercel.app`). The signed-out
+read-only release smoke passed: root HTTP 200, protected generation-runs
+HTTP 401, visible landing canvas/composer, no page errors/non-GET/external
+requests, and exact SHA-256 matches for the shipped player runtime and five
+geometry-worker artifacts. Astra inspected the landing screenshot. Public
+`/api/config` reports accounts, publishing, hosted ChatGPT and generation
+enabled, with `authoringReview:false`; robots and sitemap return HTTP 200.
+Evidence: `docs/evidence/production-release-20260924-focused-segment/`.
+This is release health, not live OpenRouter/Gateway/ChatGPT provider E2E or
+visual-quality acceptance. Regular Chrome remains unavailable to computer
+use, so the local commits have not been pushed to GitHub through the owner's
+required browser workflow. Gateway credit remains last observed negative;
+ChatGPT still needs a real owner grant; the current
+[App Server turn documentation](https://learn.chatgpt.com/docs/app-server#turns)
+does not document an enforceable 4,096-output-token field for the approved test.
+
 Sep 24 catalog palette guidance: the ten model-facing Kenney summaries now
 describe their actual authored GLB material colors; notably the default tree,
 pine and bush use teal foliage rather than conventional forest green. The
