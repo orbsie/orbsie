@@ -26,10 +26,42 @@ import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 const MODEL = "openai/gpt-6-luna";
 const OUTPUT_CAP = 4096;
 const LIVE_BUDGET = 3;
+const MAX_SCENE_ENTITIES = 160;
+const MAX_PROCEDURAL_PARTS_PER_ENTITY = 32;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 const GENERATION_PATHS = new Set(["/api/generate", "/api/generate/review"]);
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SCENE_STAGES = ["seed", "coarse", "ready"];
+const GEOMETRY_KINDS = [
+  "tree",
+  "mushroom",
+  "platform",
+  "arch",
+  "crystal",
+  "pond",
+  "flower",
+  "rock",
+  "custom",
+  "asset",
+  "generated",
+];
+const PROCEDURAL_GEOMETRY_KINDS = new Set(GEOMETRY_KINDS.slice(0, 9));
+const COLOR_FAMILIES = [
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "cyan",
+  "blue",
+  "purple",
+  "brown",
+  "white",
+  "gray",
+  "black",
+  "other",
+  "absent",
+];
 
 class AcceptanceError extends Error {
   constructor(stage, code, status) {
@@ -178,6 +210,95 @@ function safeRevision(value) {
   return Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
+function emptyColorFamilyCounts() {
+  return Object.fromEntries(COLOR_FAMILIES.map((family) => [family, 0]));
+}
+
+function colorFamily(value) {
+  if (value === null || value === undefined || value === "") return "absent";
+  if (typeof value !== "string" || !/^#[\da-f]{6}$/i.test(value))
+    return "other";
+
+  const red = Number.parseInt(value.slice(1, 3), 16) / 255;
+  const green = Number.parseInt(value.slice(3, 5), 16) / 255;
+  const blue = Number.parseInt(value.slice(5, 7), 16) / 255;
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  const difference = maximum - minimum;
+  const lightness = (maximum + minimum) / 2;
+
+  if (difference < 0.1) {
+    if (lightness < 0.16) return "black";
+    if (lightness > 0.88) return "white";
+    return "gray";
+  }
+
+  let hue;
+  if (maximum === red) hue = 60 * (((green - blue) / difference) % 6);
+  else if (maximum === green) hue = 60 * ((blue - red) / difference + 2);
+  else hue = 60 * ((red - green) / difference + 4);
+  if (hue < 0) hue += 360;
+
+  if (hue < 12 || hue >= 345) return "red";
+  if (hue < 38) return lightness < 0.48 ? "brown" : "orange";
+  if (hue < 68) return "yellow";
+  if (hue < 160) return "green";
+  if (hue < 195) return "cyan";
+  if (hue < 260) return "blue";
+  if (hue < 300) return "purple";
+  if (hue < 345) return "red";
+  return "other";
+}
+
+export function summarizeProjectStructure(entityFacts) {
+  if (!Array.isArray(entityFacts)) return null;
+
+  const boundedEntities = entityFacts.slice(0, MAX_SCENE_ENTITIES);
+  const stageCounts = { seed: 0, coarse: 0, ready: 0, unknown: 0 };
+  const geometryKindCounts = Object.fromEntries([
+    ...GEOMETRY_KINDS.map((kind) => [kind, 0]),
+    ["absent", 0],
+    ["other", 0],
+  ]);
+  const entityColorFamilyCounts = emptyColorFamilyCounts();
+  const partColorFamilyCounts = emptyColorFamilyCounts();
+  let customProceduralPartCount = 0;
+
+  for (const fact of boundedEntities) {
+    const entity = fact && typeof fact === "object" ? fact : {};
+    const stage = SCENE_STAGES.includes(entity.stage)
+      ? entity.stage
+      : "unknown";
+    stageCounts[stage] += 1;
+
+    const geometryKind =
+      entity.geometryKind === null || entity.geometryKind === undefined
+        ? "absent"
+        : GEOMETRY_KINDS.includes(entity.geometryKind)
+          ? entity.geometryKind
+          : "other";
+    geometryKindCounts[geometryKind] += 1;
+    entityColorFamilyCounts[colorFamily(entity.entityColor)] += 1;
+
+    const partColors = Array.isArray(entity.partColors)
+      ? entity.partColors.slice(0, MAX_PROCEDURAL_PARTS_PER_ENTITY)
+      : [];
+    for (const partColor of partColors)
+      partColorFamilyCounts[colorFamily(partColor)] += 1;
+    if (PROCEDURAL_GEOMETRY_KINDS.has(geometryKind))
+      customProceduralPartCount += partColors.length;
+  }
+
+  return {
+    entityCount: boundedEntities.length,
+    stageCounts,
+    geometryKindCounts,
+    customProceduralPartCount,
+    entityColorFamilyCounts,
+    partColorFamilyCounts,
+  };
+}
+
 function reviewCallSucceeded(call) {
   return Boolean(
     call &&
@@ -298,9 +419,9 @@ async function writePrivateScreenshot(directory, filename, png) {
   }
 }
 
-async function readProjectSummary(page) {
-  return page.evaluate(
-    () =>
+async function readProjectSummary(page, includeStructure = false) {
+  const snapshot = await page.evaluate(
+    (captureStructure) =>
       new Promise((resolve) => {
         const request = indexedDB.open("keyval-store");
         request.onupgradeneeded = () => request.transaction.abort();
@@ -328,6 +449,42 @@ async function readProjectSummary(page) {
               project && library && typeof library === "object"
                 ? library[project.id]
                 : null;
+            const entityFacts =
+              captureStructure && Array.isArray(project?.entities)
+                ? project.entities.slice(0, 160).map((entity) => {
+                    const geometry =
+                      entity?.geometry && typeof entity.geometry === "object"
+                        ? entity.geometry
+                        : null;
+                    return {
+                      stage:
+                        entity?.stage === "seed" ||
+                        entity?.stage === "coarse" ||
+                        entity?.stage === "ready"
+                          ? entity.stage
+                          : null,
+                      geometryKind:
+                        typeof geometry?.kind === "string"
+                          ? geometry.kind
+                          : null,
+                      entityColor:
+                        typeof entity?.color === "string" &&
+                        /^#[\da-f]{6}$/i.test(entity.color)
+                          ? entity.color
+                          : null,
+                      partColors: Array.isArray(geometry?.parts)
+                        ? geometry.parts
+                            .slice(0, 32)
+                            .map((part) =>
+                              typeof part?.color === "string" &&
+                              /^#[\da-f]{6}$/i.test(part.color)
+                                ? part.color
+                                : null,
+                            )
+                        : [],
+                    };
+                  })
+                : null;
             db.close();
             resolve(
               project && typeof project.id === "string"
@@ -338,6 +495,7 @@ async function readProjectSummary(page) {
                       : Number.isSafeInteger(project.revision)
                         ? project.revision
                         : null,
+                    entityFacts,
                   }
                 : null,
             );
@@ -348,7 +506,16 @@ async function readProjectSummary(page) {
           };
         };
       }),
+    includeStructure,
   );
+  if (!snapshot) return null;
+  return {
+    projectId: snapshot.projectId,
+    revision: snapshot.revision,
+    structure: includeStructure
+      ? summarizeProjectStructure(snapshot.entityFacts)
+      : null,
+  };
 }
 
 async function waitForSavedRevision(
@@ -356,11 +523,21 @@ async function waitForSavedRevision(
   minimumRevision,
   timeout = 180000,
   shouldStop = () => false,
+  includeStructure = false,
 ) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const summary = await readProjectSummary(page);
-    if (summary && summary.revision >= minimumRevision) return summary;
+    if (summary && summary.revision >= minimumRevision) {
+      if (!includeStructure) return summary;
+      const detailed = await readProjectSummary(page, true);
+      if (
+        detailed &&
+        detailed.projectId === summary.projectId &&
+        detailed.revision >= minimumRevision
+      )
+        return detailed;
+    }
     if (shouldStop()) return null;
     await page.waitForTimeout(250);
   }
@@ -983,6 +1160,7 @@ async function main() {
             call.status !== null &&
             call.status >= 400,
         ),
+      true,
     );
     if (!generated) {
       const failedCall = report.calls.find(
@@ -999,6 +1177,11 @@ async function main() {
         "no-committed-world-observed-within-timeout",
       );
     }
+    report.storage.afterGeneration = {
+      projectId: validId(generated.projectId),
+      revision: safeRevision(generated.revision),
+      structure: generated.structure,
+    };
     if (!authoringRunId)
       throw new AcceptanceError(
         stage,
@@ -1006,10 +1189,6 @@ async function main() {
       );
     if (!initialCall.requestId)
       throw new AcceptanceError(stage, "initial-request-id-invalid-or-missing");
-    report.storage.afterGeneration = {
-      projectId: validId(generated.projectId),
-      revision: safeRevision(generated.revision),
-    };
 
     stage = "review";
     await expect
@@ -1211,6 +1390,8 @@ async function main() {
           page,
           finalReviewCall.projectRevision,
           30000,
+          undefined,
+          true,
         );
         if (
           !afterFinalReview ||
@@ -1221,6 +1402,7 @@ async function main() {
         report.storage.afterFinalReview = {
           projectId: validId(afterFinalReview.projectId),
           revision: safeRevision(afterFinalReview.revision),
+          structure: afterFinalReview.structure,
         };
         await page.reload({ waitUntil: "domcontentloaded" });
         await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
@@ -1281,6 +1463,8 @@ async function main() {
         page,
         acceptedResponse.bindingRevision,
         30000,
+        undefined,
+        true,
       );
       if (
         !completed ||
@@ -1296,11 +1480,13 @@ async function main() {
         projectId: validId(completed.projectId),
         revision: safeRevision(completed.revision),
         phase: acceptedPhase,
+        structure: completed.structure,
       };
       if (acceptedPhase === "final-review")
         report.storage.afterFinalReview = {
           projectId: validId(completed.projectId),
           revision: safeRevision(completed.revision),
+          structure: completed.structure,
         };
       const activity = await readActivityHistory(page);
       report.browserActivity.authoring = activity;

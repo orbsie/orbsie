@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 24 live-review observability: the bounded OpenRouter authoring-review
+verifier now records stage, geometry-kind, procedural-part, and coarse color
+counts for the initial and final saved revisions. The report excludes raw
+colors, labels, prompts, object IDs and positions; counts are capped at the
+scene schema limits. Astra reviewed the Luna diff; six focused tests,
+typecheck, syntax, formatting and diff checks passed. No model calls were
+made. A fresh bounded OpenRouter run is still needed to distinguish absent
+fruit geometry from geometry that renders too small or out of view.
+
+Sep 24 Android production landing diagnostic: Android 15 emulator Chrome
+renders the production composer but the WebGL planet is absent even after
+20 seconds. The page reports graphics ready, produces draw calls, and the
+WebGL framebuffer contains planet color, but Android's displayed canvas is
+blank. The same browser visibly renders the planet when forced onto Orbsie's
+Canvas2D fallback. The WebGL renderer identifies as Android Emulator Google
+SwiftShader. The original DOM-only smoke report was a false pass; visual
+mobile acceptance remains open while a specific fallback fix is tested.
+Evidence: `docs/evidence/android-production-landing-20260924/`.
+
 Sep 24 procedural-parts production promotion: after the shared geometry fix,
 full Vitest passed 1,717 tests (26 skipped) and the local/Vercel production
 builds passed. Commit `8651a9c` refreshed the standalone player bundle. The
