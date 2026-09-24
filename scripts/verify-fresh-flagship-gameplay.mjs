@@ -76,7 +76,7 @@ const entities = [
   {
     id: "fixture-platform-c",
     label: "Bouncy moving platform",
-    position: [0, 1.4, -2.5],
+    position: [0, 1.4, -1.8],
     color: "#ddc4e9",
     scale: [1.7, 0.7, 1.7],
     geometry: { kind: "platform", detail: "refined" },
@@ -107,6 +107,15 @@ const entities = [
     scale: [1.4, 1.4, 1.1],
     geometry: { kind: "arch", detail: "refined" },
     behavior: { type: "portal" },
+    stage: "ready",
+  },
+  {
+    id: "fixture-mushroom",
+    label: "Friendly mushroom",
+    position: [-4, 0.7, 0],
+    color: "#a1f0d7",
+    scale: [0.9, 1.2, 0.9],
+    geometry: { kind: "tree", detail: "refined" },
     stage: "ready",
   },
 ];
@@ -150,6 +159,46 @@ const game = {
   ],
 };
 
+const addedCollectibles = [
+  {
+    id: "fixture-crystal-6",
+    label: "Crystal 6",
+    position: [0.8, 0.8, -3.4],
+    color: "#a1f0d7",
+    scale: [0.6, 0.6, 0.6],
+    geometry: { kind: "crystal", detail: "refined" },
+    behavior: { type: "collect" },
+    stage: "ready",
+  },
+  {
+    id: "fixture-crystal-7",
+    label: "Crystal 7",
+    position: [-0.2, 0.8, -4.3],
+    color: "#a1f0d7",
+    scale: [0.6, 0.6, 0.6],
+    geometry: { kind: "crystal", detail: "refined" },
+    behavior: { type: "collect" },
+    stage: "ready",
+  },
+];
+
+const goal7Game = {
+  ...game,
+  rules: [
+    ...game.rules.slice(0, -1),
+    ...addedCollectibles.map((entity, index) => ({
+      id: `collect-${index + 6}`,
+      trigger: { type: "collect", entityId: entity.id },
+      conditions: [],
+      actions: [{ type: "add_score", amount: 1 }],
+    })),
+    {
+      ...game.rules.at(-1),
+      conditions: [{ operand: { type: "score" }, comparison: "gte", value: 7 }],
+    },
+  ],
+};
+
 function reserveEntity(entity) {
   const { geometry: _geometry, stage: _stage, ...rest } = entity;
   return { type: "reserve_entity", entity: { ...rest, stage: "seed" } };
@@ -165,6 +214,26 @@ const fixtureCommands = [
     type: "commit_revision",
     message:
       "Local fresh gameplay fixture ready: collect five crystals, use three moving platforms, reach the portal, then restart.",
+  },
+];
+const mushroomEditCommands = [
+  {
+    type: "set_geometry",
+    id: "fixture-mushroom",
+    geometry: { kind: "mushroom", detail: "refined" },
+  },
+  { type: "set_material", id: "fixture-mushroom", color: "#ff44aa" },
+  { type: "commit_revision", message: "Fixture mushroom revision committed." },
+];
+const goal7Commands = [
+  ...addedCollectibles.flatMap((entity) => [
+    reserveEntity(entity),
+    { type: "set_geometry", id: entity.id, geometry: entity.geometry },
+  ]),
+  { type: "set_game", game: goal7Game },
+  {
+    type: "commit_revision",
+    message: "Fixture seven-crystal revision committed.",
   },
 ];
 const fixtureProject = {
@@ -192,6 +261,120 @@ function installSoftwareFallback(context) {
       return getContext.call(this, kind, attributes);
     };
   });
+}
+
+function summarizeGameplayRun(run) {
+  if (!run || typeof run !== "object") return null;
+  const inputTrace = Array.isArray(run.inputTrace) ? run.inputTrace : [];
+  const keysUsed = [
+    ...new Set(inputTrace.flatMap((entry) => entry.keys ?? [])),
+  ].sort();
+  return {
+    projectId: run.projectId ?? null,
+    revision: run.revision ?? null,
+    renderer: run.renderer ?? null,
+    expectedCollectibleIds: run.expectedCollectibleIds ?? [],
+    collectedIds: run.collectedIds ?? [],
+    score: run.score ?? null,
+    elapsedMs: run.elapsedMs ?? null,
+    movementDistance: run.movement?.distance ?? null,
+    actualInput: {
+      mode: run.inputMode ?? null,
+      traceEntries: inputTrace.length,
+      keysUsed,
+    },
+    platformEvidence: (run.platformEvidence ?? []).map((platform) => ({
+      id: platform.id,
+      behavior: platform.behavior,
+      groundedFrames: platform.groundedFrames,
+      bounceFrames: platform.bounceFrames,
+      maximumDisplacement: platform.maximumDisplacement,
+    })),
+    win: run.win
+      ? {
+          projectId: run.win.projectId,
+          revision: run.win.revision,
+          score: run.win.score,
+          status: run.win.status,
+          portalId: run.win.portalId,
+        }
+      : null,
+    reset: run.reset
+      ? {
+          projectId: run.reset.projectId,
+          revision: run.reset.revision,
+          scoreIdsCount: run.reset.scoreIds?.length ?? null,
+          score: run.reset.score,
+          status: run.reset.status,
+          lifecycleAdvanced: run.reset.lifecycleAdvanced,
+          playerPosition: run.reset.player?.position ?? null,
+        }
+      : null,
+  };
+}
+
+function summarizePartialTraversal(partial, failure) {
+  if (!partial) return null;
+  const observation = partial.lastObservation ?? null;
+  const inputTrace = Array.isArray(partial.inputTrace)
+    ? partial.inputTrace
+    : [];
+  return {
+    failure,
+    observationCount: partial.observationCount ?? null,
+    lastObservation: observation
+      ? {
+          projectId: observation.projectId,
+          revision: observation.revision,
+          renderer: observation.renderer,
+          atMs: observation.atMs,
+          playerPosition: observation.player?.position ?? null,
+          playerVelocityY: observation.player?.velocityY ?? null,
+        }
+      : null,
+    inputTraceTailEntries: inputTrace.length,
+    platformEvidence: (partial.platformEvidence ?? []).map((platform) => ({
+      id: platform.id,
+      behavior: platform.behavior,
+      groundedFrames: platform.groundedFrames,
+      bounceFrames: platform.bounceFrames,
+      maximumDisplacement: platform.maximumDisplacement,
+    })),
+  };
+}
+
+function summarizeRendererEvidence(evidence) {
+  const phases = evidence.gameplayPhases ?? {};
+  const movement = evidence.generationMovement;
+  const failure = evidence.failure ?? null;
+  const partial = evidence.partialTraversal ?? evidence.traversal;
+  return {
+    status: evidence.status ?? (failure ? "failed" : "passed"),
+    renderer: evidence.renderer ?? null,
+    generationRequests: evidence.generationRequests ?? null,
+    projectId: evidence.projectId ?? null,
+    revision: evidence.revision ?? null,
+    generationMovement: movement
+      ? {
+          status: movement.status,
+          projectId: movement.projectId,
+          revisionBefore: movement.revisionBefore,
+          revisionAfter: movement.revisionAfter,
+          distance: movement.movementDistance ?? null,
+          streamOpenBefore: movement.generationStreamOpenAtMovement,
+          streamOpenAfter: movement.generationStreamOpenAfterMovement,
+          inputMode: movement.inputMode,
+        }
+      : null,
+    gameplayPhases: Object.fromEntries(
+      Object.entries(phases).map(([name, phase]) => [
+        name,
+        summarizeGameplayRun(phase),
+      ]),
+    ),
+    partialTraversal: summarizePartialTraversal(partial, failure),
+    failure,
+  };
 }
 
 function assertViewportBox(
@@ -981,20 +1164,10 @@ function deferred() {
 }
 
 async function startGenerationStream() {
-  const firstChunk =
-    fixtureCommands
-      .slice(0, 2)
-      .map((command) => JSON.stringify(command))
-      .join("\n") + "\n";
-  const remainingChunks =
-    fixtureCommands
-      .slice(2)
-      .map((command) => JSON.stringify(command))
-      .join("\n") + "\n";
   const started = deferred();
   const release = deferred();
   const finished = deferred();
-  let requestProject;
+  const requestBodies = [];
   let requests = 0;
   let responseFinished = false;
   const server = createServer(async (request, response) => {
@@ -1014,24 +1187,50 @@ async function startGenerationStream() {
     }
     const body = [];
     for await (const chunk of request) body.push(chunk);
-    requestProject = JSON.parse(Buffer.concat(body).toString("utf8")).project;
+    const requestBody = JSON.parse(Buffer.concat(body).toString("utf8"));
+    requestBodies.push(requestBody);
+    const requestIndex = requests;
     requests += 1;
+    const commands =
+      requestIndex === 0
+        ? fixtureCommands
+        : requestIndex === 1
+          ? mushroomEditCommands
+          : requestIndex === 2
+            ? goal7Commands
+            : null;
+    if (!commands) {
+      response.writeHead(409, {
+        "Access-Control-Allow-Origin": appOrigin,
+        "Content-Type": "application/json",
+      });
+      response.end(
+        JSON.stringify({ error: "Unexpected fixture generation request." }),
+      );
+      return;
+    }
     response.writeHead(200, {
       "Access-Control-Allow-Origin": appOrigin,
       "Content-Type": "application/x-ndjson",
       "Cache-Control": "no-store",
     });
-    response.write(firstChunk);
-    started.resolve();
-    const markFinished = () => {
-      responseFinished = true;
-      finished.resolve();
-    };
-    response.once("finish", markFinished);
-    response.once("close", markFinished);
-    await release.promise;
-    response.end(remainingChunks);
-    markFinished();
+    const encode = (items) =>
+      items.map((command) => JSON.stringify(command)).join("\n") + "\n";
+    if (requestIndex === 0) {
+      response.write(encode(commands.slice(0, 2)));
+      started.resolve();
+      const markFinished = () => {
+        responseFinished = true;
+        finished.resolve();
+      };
+      response.once("finish", markFinished);
+      response.once("close", markFinished);
+      await release.promise;
+      response.end(encode(commands.slice(2)));
+      markFinished();
+      return;
+    }
+    response.end(encode(commands));
   });
   await new Promise((resolveServer) =>
     server.listen(0, "127.0.0.1", resolveServer),
@@ -1047,7 +1246,10 @@ async function startGenerationStream() {
     release: () => release.resolve(),
     finished: finished.promise,
     get requestProject() {
-      return requestProject;
+      return requestBodies[0]?.project;
+    },
+    get requestBodies() {
+      return requestBodies;
     },
     get requests() {
       return requests;
@@ -1146,6 +1348,9 @@ async function runRenderer(browser, renderer) {
   );
   let generationMovement;
   let result;
+  let goal7Gameplay;
+  let undoGameplay;
+  let stage = "open-page";
   let layout;
   let focusEvidence;
   try {
@@ -1275,6 +1480,7 @@ async function runRenderer(browser, renderer) {
         blockedExternalRequests,
       };
     }
+    stage = "creation-five";
     result = await runFreshFlagshipGameplay(page, project, story, {
       inputMode: "keyboard",
     });
@@ -1295,7 +1501,158 @@ async function runRenderer(browser, renderer) {
     assert.equal(result.win.status, "won");
     assert.equal(result.reset.scoreIds.length, 0);
     assert.equal(result.reset.projectId, project.id);
-    assert.equal(stream.requests, 1);
+    stage = "mushroom-edit";
+
+    const mushroomRevision = {
+      ...project,
+      revision: project.revision + mushroomEditCommands.length,
+      entities: project.entities.map((entity) =>
+        entity.id === "fixture-mushroom"
+          ? {
+              ...entity,
+              geometry: { kind: "mushroom", detail: "refined" },
+              color: "#ff44aa",
+            }
+          : entity,
+      ),
+      messages: [
+        ...project.messages,
+        { role: "user", text: "Make this a giant pink mushroom." },
+        { role: "assistant", text: mushroomEditCommands.at(-1).message },
+      ],
+    };
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    if (!(await page.locator(".object-list").isVisible()))
+      await page
+        .getByRole("button", { name: "Show objects", exact: true })
+        .click();
+    const mushroomRow = page
+      .locator(".object-list button")
+      .filter({ hasText: "Friendly mushroom" })
+      .first();
+    await expect(mushroomRow).toHaveCount(1);
+    await mushroomRow.click();
+    await expect(page.locator(".selection-chip")).toContainText(
+      "Friendly mushroom",
+    );
+    await page.locator("#prompt").fill("Make this a giant pink mushroom.");
+    await page
+      .getByRole("button", { name: "Change this", exact: true })
+      .click();
+    await expect(
+      page.getByText("Fixture mushroom revision committed.", { exact: true }),
+    ).toBeVisible({ timeout: 30000 });
+    assert.equal(stream.requests, 2);
+    assert.equal(stream.requestBodies[1]?.selected, "fixture-mushroom");
+
+    const goal7Project = {
+      ...mushroomRevision,
+      revision: mushroomRevision.revision + goal7Commands.length,
+      entities: [...mushroomRevision.entities, ...addedCollectibles],
+      game: goal7Game,
+      messages: [
+        ...mushroomRevision.messages,
+        {
+          role: "user",
+          text: "Make the middle platform slower and add two more crystals.",
+        },
+        { role: "assistant", text: goal7Commands.at(-1).message },
+      ],
+    };
+    await expect(
+      page.getByRole("button", { name: "Clear selected object", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Clear selected object", exact: true })
+      .click();
+    await page
+      .locator("#prompt")
+      .fill("Make the middle platform slower and add two more crystals.");
+    await page
+      .getByRole("button", { name: "Change this", exact: true })
+      .click();
+    await expect(
+      page.getByText("Fixture seven-crystal revision committed.", {
+        exact: true,
+      }),
+    ).toBeVisible({ timeout: 30000 });
+    assert.equal(stream.requests, 3);
+    assert.equal(
+      stream.requestBodies[2]?.project?.entities?.find(
+        (entity) => entity.id === "fixture-mushroom",
+      )?.geometry?.kind,
+      "mushroom",
+      "The seven-crystal edit did not begin from the selected mushroom revision.",
+    );
+    assert.equal(stream.requestBodies[2]?.selected ?? null, null);
+    const goal7Story = {
+      platforms: goal7Project.entities.filter((entity) =>
+        entity.id.startsWith("fixture-platform-"),
+      ),
+      collectibles: goal7Project.entities.filter(
+        (entity) => entity.behavior?.type === "collect",
+      ),
+      portal: goal7Project.entities.find(
+        (entity) => entity.behavior?.type === "portal",
+      ),
+    };
+    stage = "goal-seven";
+    goal7Gameplay = await runFreshFlagshipGameplay(
+      page,
+      goal7Project,
+      goal7Story,
+      { inputMode: "keyboard", expectedCollectibleCount: 7 },
+    );
+    assert.equal(goal7Gameplay.renderer, renderer);
+    assert.equal(goal7Gameplay.revision, goal7Project.revision);
+    assert.equal(goal7Gameplay.collectedIds.length, 7);
+    assert.equal(goal7Gameplay.win.status, "won");
+    assert.equal(goal7Gameplay.reset.scoreIds.length, 0);
+
+    stage = "ui-undo";
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Undo last change", exact: true })
+      .click();
+    await expect(
+      page.getByText("Previous change restored.", { exact: true }),
+    ).toBeVisible({ timeout: 10000 });
+    const undoneProject = {
+      ...mushroomRevision,
+      revision: goal7Project.revision + 1,
+    };
+    const undoneStory = {
+      platforms: undoneProject.entities.filter((entity) =>
+        entity.id.startsWith("fixture-platform-"),
+      ),
+      collectibles: undoneProject.entities.filter(
+        (entity) => entity.behavior?.type === "collect",
+      ),
+      portal: undoneProject.entities.find(
+        (entity) => entity.behavior?.type === "portal",
+      ),
+    };
+    assert.equal(undoneStory.collectibles.length, 5);
+    assert.equal(
+      undoneProject.entities.find((entity) => entity.id === "fixture-mushroom")
+        ?.geometry?.kind,
+      "mushroom",
+    );
+    stage = "undo-five";
+    undoGameplay = await runFreshFlagshipGameplay(
+      page,
+      undoneProject,
+      undoneStory,
+      { inputMode: "keyboard", expectedCollectibleCount: 5 },
+    );
+    assert.equal(undoGameplay.renderer, renderer);
+    assert.equal(undoGameplay.revision, undoneProject.revision);
+    assert.equal(undoGameplay.collectedIds.length, 5);
+    assert.equal(undoGameplay.win.status, "won");
+    assert.equal(undoGameplay.reset.scoreIds.length, 0);
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    assert.equal(stream.requests, 3);
+    stage = "complete";
     assert.deepEqual(blockedExternalRequests, []);
     if (renderer === "software")
       layout = await verifySoftwareWorkspaceLayout(page, evidenceDir);
@@ -1326,6 +1683,11 @@ async function runRenderer(browser, renderer) {
       revision: project.revision,
       generationMovement,
       focus: focusEvidence,
+      gameplayPhases: {
+        creationFive: result,
+        goalSeven: goal7Gameplay,
+        uiUndoFive: undoGameplay,
+      },
       gameplay: result,
       layout,
       pageErrors,
@@ -1335,6 +1697,7 @@ async function runRenderer(browser, renderer) {
   } catch (error) {
     const partialEvidence = {
       renderer,
+      stage,
       generationRequests: stream.requests,
       projectId: stream.requestProject?.id ?? null,
       generationMovement:
@@ -1347,6 +1710,11 @@ async function runRenderer(browser, renderer) {
         (error && typeof error === "object"
           ? (error.freshGameplayEvidence ?? null)
           : null),
+      gameplayPhases: {
+        creationFive: result,
+        goalSeven: goal7Gameplay ?? null,
+        uiUndoFive: undoGameplay ?? null,
+      },
       focus:
         focusEvidence ??
         (error && typeof error === "object"
@@ -1358,46 +1726,21 @@ async function runRenderer(browser, renderer) {
           ? (error.softwareLayoutEvidence ?? null)
           : null),
     };
-    const fixtureDiagnostics = await page
-      .evaluate(() => {
-        const prompt = document.querySelector("#prompt");
-        const create = Array.from(document.querySelectorAll("button")).find(
-          (button) => button.textContent?.trim() === "Create",
-        );
-        const main = document.querySelector("main");
-        return {
-          readyState: document.readyState,
-          mainRendererAvailability: main?.getAttribute(
-            "data-renderer-availability",
-          ),
-          composerValue:
-            prompt instanceof HTMLInputElement ||
-            prompt instanceof HTMLTextAreaElement
-              ? prompt.value
-              : null,
-          composerExists: Boolean(prompt),
-          createExists: Boolean(create),
-          createDisabled: create?.hasAttribute("disabled") ?? null,
-          bodyText: document.body.innerText.slice(0, 1000),
-        };
-      })
-      .catch((diagnosticError) => ({
-        diagnosticError:
-          diagnosticError instanceof Error
-            ? diagnosticError.message
-            : String(diagnosticError),
-      }));
     const message = error instanceof Error ? error.message : String(error);
+    const code = /No observation/.test(message)
+      ? "no-fresh-observation"
+      : /could not recover|did not contact|could not reach/.test(message)
+        ? "unreachable-target"
+        : /toHaveCount|toBeVisible|Expected values/.test(message)
+          ? "fixture-ui-assertion"
+          : "gameplay-acceptance-failed";
+    const target =
+      message.match(
+        /(?:approaching|contact platform|reach) ([A-Za-z0-9_-]+)/,
+      )?.[1] ?? null;
+    partialEvidence.failure = { stage, code, target };
     const wrappedError = new Error(
-      `${message} Fixture diagnostics: ${JSON.stringify({
-        renderer,
-        ...fixtureDiagnostics,
-        pageErrors,
-        consoleErrors,
-        requestFailures,
-        requestsSeen,
-        partialEvidence,
-      })}`,
+      `${stage}: ${code}${target ? ` (${target})` : ""}`,
     );
     wrappedError.fixtureEvidence = partialEvidence;
     throw wrappedError;
@@ -1449,9 +1792,18 @@ try {
 } finally {
   await browser.close();
   await mkdir(evidenceDir, { recursive: true });
+  const summaryReport = {
+    ...report,
+    renderers: Object.fromEntries(
+      Object.entries(report.renderers).map(([renderer, evidence]) => [
+        renderer,
+        summarizeRendererEvidence(evidence),
+      ]),
+    ),
+  };
   await writeFile(
     resolve(evidenceDir, "report.json"),
-    `${JSON.stringify(report, null, 2)}\n`,
+    `${JSON.stringify(summaryReport, null, 2)}\n`,
   );
-  console.log(JSON.stringify(report, null, 2));
+  console.log(JSON.stringify(summaryReport, null, 2));
 }

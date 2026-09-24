@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 24 fresh flagship gameplay depth: the browser runner now resolves targets
+from each saved revision and, for fresh worlds, requires real input traversal,
+collection, portal win and reset after the seven-crystal edit and again after
+UI Undo restores five crystals. Checkpoint-resume mode remains explicitly
+structural-only. The deterministic zero-provider WebGL fixture completed all
+three phases on one project (revisions 22, 31, 32; scores 5, 7, 5), and a
+separate five-crystal run passed with the original platform spacing. The full
+fixture used a shorter B-to-C gap and still required moving/bounce platform
+contacts. Canvas2D failed during the creation-phase platform-B approach with
+`no-fresh-observation`; its seven/Undo lanes were **not run**. Evidence:
+`docs/evidence/fresh-flagship-gameplay-five-seven-undo-20260924/report.json`.
+Astra removed formatting-only diff churn, preserved the seeded-mode HUD/Play
+transition, reviewed the final change, and verified 82 focused tests,
+typecheck, syntax, and `git diff --check`. No provider calls ran. Next: diagnose
+the software observation stall, then run the fresh live story at a bounded
+provider milestone; do not describe Canvas2D or live provider gameplay as
+accepted yet.
+
 Sep 24 fresh ChatGPT grant attempt after the continuation change: an isolated
 Docker PostgreSQL database, local production app, and private browser session
 issued a real OpenAI device-code challenge. The URL/code were shown to the

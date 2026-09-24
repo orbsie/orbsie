@@ -237,13 +237,28 @@ function finitePosition(value, label) {
   return [...value];
 }
 
-/** Resolve fresh story entities by their observed semantic IDs and layout. */
-export function buildFreshGameplayTargets(project, story) {
+/** Resolve current story entities from one saved project revision. */
+export function buildFreshGameplayTargets(
+  project,
+  story,
+  { expectedCollectibleCount = 5, expectedRevision = project?.revision } = {},
+) {
   if (!project || typeof project.id !== "string")
     throw new Error("Fresh gameplay requires a committed project identity.");
+  if (![5, 7].includes(expectedCollectibleCount))
+    throw new Error("Fresh gameplay collectible count must be five or seven.");
+  if (
+    !Number.isSafeInteger(project.revision) ||
+    project.revision !== expectedRevision
+  )
+    throw new Error(
+      "Fresh gameplay project revision does not match its target.",
+    );
   const entities = new Map(
     (project.entities ?? []).map((entity) => [entity.id, entity]),
   );
+  if (entities.size !== (project.entities ?? []).length)
+    throw new Error("Fresh gameplay project contains duplicate entity IDs.");
   const requireEntity = (entity, label) => {
     if (!entity || typeof entity.id !== "string")
       throw new Error(`Fresh gameplay is missing its ${label} entity.`);
@@ -263,7 +278,27 @@ export function buildFreshGameplayTargets(project, story) {
   const platforms = (story.platforms ?? []).map((entity) =>
     requireEntity(entity, "platform"),
   );
-  const collectibles = (story.collectibles ?? []).map((entity) =>
+  const currentCollectibles = (project.entities ?? []).filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
+  );
+  if (currentCollectibles.length !== expectedCollectibleCount)
+    throw new Error(
+      `Fresh gameplay expected ${expectedCollectibleCount} collectibles in revision ${project.revision}, got ${currentCollectibles.length}.`,
+    );
+  const storyCollectibleIds = (story.collectibles ?? []).map(
+    (entity) => requireEntity(entity, "collectible").id,
+  );
+  const currentCollectibleIds = currentCollectibles.map((entity) => entity.id);
+  if (
+    storyCollectibleIds.length !== expectedCollectibleCount ||
+    new Set(storyCollectibleIds).size !== storyCollectibleIds.length ||
+    currentCollectibleIds.some((id) => !storyCollectibleIds.includes(id)) ||
+    storyCollectibleIds.some((id) => !currentCollectibleIds.includes(id))
+  )
+    throw new Error(
+      "Fresh gameplay collectible IDs do not match the current project revision.",
+    );
+  const collectibles = currentCollectibles.map((entity) =>
     requireEntity(entity, "collectible"),
   );
   const portal = requireEntity(story.portal, "portal");
@@ -272,10 +307,6 @@ export function buildFreshGameplayTargets(project, story) {
   );
   if (new Set(ids).size !== ids.length)
     throw new Error("Fresh gameplay target IDs must be unique.");
-  if (collectibles.length !== 5)
-    throw new Error(
-      `Fresh gameplay expected five collectibles, got ${collectibles.length}.`,
-    );
   if (platforms.length !== 3)
     throw new Error(
       `Fresh gameplay expected three platforms, got ${platforms.length}.`,
@@ -411,15 +442,11 @@ export function chooseGameplayPlatformAction({
 export function platformContactProgress(
   observation,
   targetId,
-  {
-    baselinePlatformContactCount = 0,
-    baselineBounceContactCount = 0,
-  } = {},
+  { baselinePlatformContactCount = 0, baselineBounceContactCount = 0 } = {},
 ) {
   const platformContactCount =
     observation?.platformContactCounts?.[targetId] ?? 0;
-  const bounceContactCount =
-    observation?.bounceContactCounts?.[targetId] ?? 0;
+  const bounceContactCount = observation?.bounceContactCounts?.[targetId] ?? 0;
   const grounded = observation?.player?.groundedOn === targetId;
   const platformContact = platformContactCount > baselinePlatformContactCount;
   const bounced = bounceContactCount > baselineBounceContactCount;

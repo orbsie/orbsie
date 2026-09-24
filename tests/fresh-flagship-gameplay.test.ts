@@ -25,6 +25,7 @@ const project = {
   entities: [
     ...["platform-a", "platform-b", "platform-c"].map((id, index) => ({
       id,
+      stage: "ready",
       position: [index, 0, 0],
       scale: [1, 1, 1],
       behavior: { type: index === 1 ? "bounce" : "move" },
@@ -32,6 +33,7 @@ const project = {
     ...["crystal-a", "crystal-b", "crystal-c", "crystal-d", "crystal-e"].map(
       (id, index) => ({
         id,
+        stage: "ready",
         position: [index, 0, 1],
         scale: [1, 1, 1],
         behavior: { type: "collect" },
@@ -39,6 +41,7 @@ const project = {
     ),
     {
       id: "portal",
+      stage: "ready",
       position: [0, 0, -1],
       scale: [1, 1, 1],
       behavior: { type: "portal" },
@@ -68,6 +71,67 @@ describe("fresh flagship gameplay driver", () => {
     expect(targets.collectibles).toHaveLength(5);
     expect(targets.portal.id).toBe("portal");
     expect(targets.platforms[1].position).toEqual([1, 0, 0]);
+  });
+
+  it("resolves all seven collectibles from the selected saved revision", () => {
+    const added = ["crystal-f", "crystal-g"].map((id, index) => ({
+      id,
+      stage: "ready",
+      position: [8 + index, 2, -3],
+      scale: [1, 1, 1],
+      behavior: { type: "collect" },
+    }));
+    const goal7 = {
+      ...project,
+      revision: project.revision + 1,
+      entities: [...project.entities, ...added],
+    };
+    const currentStory = {
+      ...story,
+      collectibles: goal7.entities.filter(
+        (entity: any) => entity.behavior?.type === "collect",
+      ),
+    };
+    const targets = buildFreshGameplayTargets(goal7, currentStory, {
+      expectedCollectibleCount: 7,
+      expectedRevision: goal7.revision,
+    });
+    expect(targets.collectibles.map((target: any) => target.id)).toHaveLength(
+      7,
+    );
+    expect(
+      targets.collectibles.slice(-2).map((target: any) => target.position),
+    ).toEqual([
+      [8, 2, -3],
+      [9, 2, -3],
+    ]);
+  });
+
+  it("rejects wrong objective counts, stale IDs, and revision mismatches", () => {
+    expect(() =>
+      buildFreshGameplayTargets(project, story, {
+        expectedCollectibleCount: 7,
+      }),
+    ).toThrow(/expected 7 collectibles/);
+    expect(() =>
+      buildFreshGameplayTargets(project, story, {
+        expectedCollectibleCount: 6 as any,
+      }),
+    ).toThrow(/must be five or seven/);
+    expect(() =>
+      buildFreshGameplayTargets(project, {
+        ...story,
+        collectibles: [
+          { ...story.collectibles[0], id: "stale-crystal" },
+          ...story.collectibles.slice(1),
+        ],
+      }),
+    ).toThrow(/is not in the project/);
+    expect(() =>
+      buildFreshGameplayTargets(project, story, {
+        expectedRevision: project.revision + 1,
+      }),
+    ).toThrow(/revision does not match/);
   });
 
   it("steers using the runtime camera-relative movement keys", () => {

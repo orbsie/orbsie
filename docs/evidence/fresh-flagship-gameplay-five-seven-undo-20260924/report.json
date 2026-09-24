@@ -1,0 +1,268 @@
+{
+  "status": "webgl-complete-software-incomplete",
+  "scope": "Deterministic local browser fixture; actual keyboard input through Orbsie WebGL and Canvas2D renderers; no provider, model, credentials, or external network calls.",
+  "appUrl": "http://127.0.0.1:3047",
+  "noProviderCalls": true,
+  "originalGeometryFiveTraversal": {
+    "status": "passed",
+    "renderer": "webgl",
+    "projectId": "d16fc95c-35a4-4198-ac05-74a63b45423a",
+    "fixturePlatformCPositionZ": -2.5,
+    "generationMovement": {
+      "distance": 0.16000000000000023,
+      "streamOpenBefore": true,
+      "streamOpenAfter": true
+    },
+    "gameplay": {
+      "revision": 22,
+      "expectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+      "collectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+      "score": 5,
+      "elapsedMs": 17362,
+      "movementDistance": 0.16000000000000023,
+      "inputs": {
+        "mode": "keyboard",
+        "events": 166,
+        "keys": [
+          "Space",
+          "a",
+          "d",
+          "s",
+          "w"
+        ]
+      },
+      "platforms": [
+        [
+          "fixture-platform-a",
+          7,
+          0,
+          0.274
+        ],
+        [
+          "fixture-platform-b",
+          2,
+          0,
+          0.55
+        ],
+        [
+          "fixture-platform-c",
+          1,
+          1,
+          0.666
+        ]
+      ],
+      "win": {
+        "status": "won",
+        "score": 5,
+        "portalId": "fixture-portal"
+      },
+      "reset": {
+        "revision": 22,
+        "score": 0,
+        "lifecycleAdvanced": true,
+        "sameProject": true
+      }
+    }
+  },
+  "webglFiveSevenUndoFive": {
+    "status": "passed",
+    "projectId": "ec4f1b94-b838-4927-a204-a3b63088abe4",
+    "generationRequests": 3,
+    "fixturePlatformCPositionZ": -1.8,
+    "sameProjectAcrossPhases": true,
+    "revisions": {
+      "creationFive": 22,
+      "goalSeven": 31,
+      "uiUndoFive": 32
+    },
+    "phases": {
+      "creationFive": {
+        "revision": 22,
+        "expectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+        "collectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+        "score": 5,
+        "elapsedMs": 16971,
+        "movementDistance": 0.48000000000000065,
+        "inputs": {
+          "mode": "keyboard",
+          "events": 159,
+          "keys": [
+            "Space",
+            "a",
+            "d",
+            "s",
+            "w"
+          ]
+        },
+        "platforms": [
+          [
+            "fixture-platform-a",
+            6,
+            0,
+            0.226
+          ],
+          [
+            "fixture-platform-b",
+            2,
+            0,
+            0.476
+          ],
+          [
+            "fixture-platform-c",
+            1,
+            1,
+            0.636
+          ]
+        ],
+        "win": {
+          "status": "won",
+          "score": 5,
+          "portalId": "fixture-portal"
+        },
+        "reset": {
+          "revision": 22,
+          "score": 0,
+          "lifecycleAdvanced": true,
+          "sameProject": true
+        }
+      },
+      "goalSeven": {
+        "revision": 31,
+        "expectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5, fixture-crystal-6, fixture-crystal-7",
+        "collectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5, fixture-crystal-6, fixture-crystal-7",
+        "score": 7,
+        "elapsedMs": 16151,
+        "movementDistance": 0.6075999999940402,
+        "inputs": {
+          "mode": "keyboard",
+          "events": 171,
+          "keys": [
+            "Space",
+            "a",
+            "d",
+            "s",
+            "w"
+          ]
+        },
+        "platforms": [
+          [
+            "fixture-platform-a",
+            11,
+            0,
+            0.332
+          ],
+          [
+            "fixture-platform-b",
+            2,
+            0,
+            0.459
+          ],
+          [
+            "fixture-platform-c",
+            1,
+            1,
+            0.773
+          ]
+        ],
+        "win": {
+          "status": "won",
+          "score": 7,
+          "portalId": "fixture-portal"
+        },
+        "reset": {
+          "revision": 31,
+          "score": 0,
+          "lifecycleAdvanced": true,
+          "sameProject": true
+        }
+      },
+      "uiUndoFive": {
+        "revision": 32,
+        "expectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+        "collectedIds": "fixture-crystal-1, fixture-crystal-2, fixture-crystal-3, fixture-crystal-4, fixture-crystal-5",
+        "score": 5,
+        "elapsedMs": 14809,
+        "movementDistance": 0.48000000000000065,
+        "inputs": {
+          "mode": "keyboard",
+          "events": 163,
+          "keys": [
+            "Space",
+            "a",
+            "d",
+            "s",
+            "w"
+          ]
+        },
+        "platforms": [
+          [
+            "fixture-platform-a",
+            10,
+            0,
+            0.344
+          ],
+          [
+            "fixture-platform-b",
+            2,
+            0,
+            0.44
+          ],
+          [
+            "fixture-platform-c",
+            1,
+            1,
+            0.768
+          ]
+        ],
+        "win": {
+          "status": "won",
+          "score": 5,
+          "portalId": "fixture-portal"
+        },
+        "reset": {
+          "revision": 32,
+          "score": 0,
+          "lifecycleAdvanced": true,
+          "sameProject": true
+        }
+      }
+    }
+  },
+  "software": {
+    "status": "failed-before-goal7-and-undo",
+    "projectId": "bed8c6b2-ef46-4e6b-a002-779bb0ceefff",
+    "revision": 22,
+    "failure": {
+      "stage": "creation-five",
+      "code": "no-fresh-observation",
+      "target": "fixture-platform-b"
+    },
+    "observations": 19,
+    "lastObservationAtMs": 9589.79999999702,
+    "lastPlayerPosition": [
+      0.05425278324845126,
+      1.867837618464872,
+      2.2231120872867636
+    ],
+    "inputEventsRecorded": 18,
+    "platforms": [
+      [
+        "fixture-platform-a",
+        3,
+        0
+      ],
+      [
+        "fixture-platform-b",
+        0,
+        0
+      ],
+      [
+        "fixture-platform-c",
+        0,
+        0
+      ]
+    ],
+    "goalSeven": "not-run",
+    "uiUndoFive": "not-run"
+  }
+}

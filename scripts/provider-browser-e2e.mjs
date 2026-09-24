@@ -3781,6 +3781,26 @@ function storyObjectiveEvidence(project, label) {
   };
 }
 
+function freshGameplayStoryForProject(
+  project,
+  expectedCollectibleCount,
+  label,
+) {
+  const platforms = storyPlatforms(project);
+  const collectibles = storyCollectibles(project);
+  const portals = project.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  assert.equal(platforms.length, 3, `${label} must retain three platforms.`);
+  assert.equal(
+    collectibles.length,
+    expectedCollectibleCount,
+    `${label} has the wrong collectible count.`,
+  );
+  assert.equal(portals.length, 1, `${label} must retain one portal.`);
+  return { platforms, collectibles, portal: portals[0] };
+}
+
 function storyEntityMap(project) {
   return new Map(project.entities.map((entity) => [entity.id, entity]));
 }
@@ -4657,7 +4677,10 @@ export async function runFreshFlagshipGameplay(
   story,
   options = {},
 ) {
-  const targets = buildFreshGameplayTargets(project, story);
+  const targets = buildFreshGameplayTargets(project, story, {
+    expectedCollectibleCount: options.expectedCollectibleCount ?? 5,
+    expectedRevision: options.expectedRevision ?? project?.revision,
+  });
   const input = await createFlagshipGameplayInput(
     page,
     options.inputMode ?? "auto",
@@ -5436,7 +5459,11 @@ async function runFlagshipStory(
       page,
       created,
       initialStory,
-      { inputMode: config.flagshipInputMode },
+      {
+        inputMode: config.flagshipInputMode,
+        expectedCollectibleCount: 5,
+        expectedRevision: created.revision,
+      },
     );
     report.flagshipStory.phases.creation.gameplay = creationGameplay;
     await page.screenshot({
@@ -5544,17 +5571,46 @@ async function runFlagshipStory(
     "Story goal-7 edit portal must require seven crystals.",
   );
   onGoodProject(goal7);
-  report.flagshipStory.phases.goal7 = {
-    status: "passed",
-    revision: goal7.revision,
-    ...platformCheck,
-    objective: goal7Objective,
+  let goal7Gameplay = {
+    status: "not-run",
+    reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
   };
-  await page.getByRole("button", { name: "Play", exact: true }).click();
-  await expect(page.locator(".game-hud")).toBeVisible();
-  await expect(page.locator(".game-hud strong")).toHaveText("0");
-  await expect(page.locator(".game-hud")).toContainText("Score");
-  report.flagshipStory.phases.goal7.hud = "game-score-starts-at-zero";
+  if (!options.seeded) {
+    goal7Gameplay = await runFreshFlagshipGameplay(
+      page,
+      goal7,
+      freshGameplayStoryForProject(goal7, 7, "Story goal-7 edit"),
+      {
+        inputMode: config.flagshipInputMode,
+        expectedCollectibleCount: 7,
+        expectedRevision: goal7.revision,
+      },
+    );
+    report.flagshipStory.phases.goal7 = {
+      status: "passed",
+      revision: goal7.revision,
+      ...platformCheck,
+      objective: goal7Objective,
+      gameplay: goal7Gameplay,
+    };
+    await page.screenshot({
+      path: join(evidenceDir, "story-goal-7-gameplay-reset.png"),
+      fullPage: true,
+    });
+    report.evidence.push("story-goal-7-gameplay-reset.png");
+  } else {
+    report.flagshipStory.phases.goal7 = {
+      status: "structural-passed",
+      revision: goal7.revision,
+      ...platformCheck,
+      objective: goal7Objective,
+      gameplay: goal7Gameplay,
+    };
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.locator(".game-hud")).toBeVisible();
+    await expect(page.locator(".game-hud strong")).toHaveText("0");
+    report.flagshipStory.phases.goal7.hud = "game-score-starts-at-zero";
+  }
   await page.screenshot({
     path: join(evidenceDir, "story-goal-7.png"),
     fullPage: true,
@@ -5589,12 +5645,40 @@ async function runFlagshipStory(
     "Story undo portal must restore the five-crystal objective.",
   );
   onGoodProject(undone);
+  let undoGameplay = {
+    status: "not-run",
+    reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
+  };
+  if (!options.seeded) {
+    undoGameplay = await runFreshFlagshipGameplay(
+      page,
+      undone,
+      freshGameplayStoryForProject(undone, 5, "Story undo"),
+      {
+        inputMode: config.flagshipInputMode,
+        expectedCollectibleCount: 5,
+        expectedRevision: undone.revision,
+      },
+    );
+    await page.screenshot({
+      path: join(evidenceDir, "story-undo-gameplay-reset.png"),
+      fullPage: true,
+    });
+    report.evidence.push("story-undo-gameplay-reset.png");
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+  }
+  report.flagshipStory.phases.undo = {
+    status: options.seeded ? "structural-passed" : "passed",
+    revision: undone.revision,
+    objective: undoneObjective,
+    gameplay: undoGameplay,
+  };
   report.flagshipStory = {
     ...report.flagshipStory,
-    status: "structural-passed",
+    status: options.seeded ? "structural-passed" : "passed",
     scope: options.seeded
       ? "structural-and-persistence"
-      : "fresh-gameplay-and-structural-persistence",
+      : "fresh-gameplay-and-persistence",
     visualReview: "pending",
     initial: {
       trees: initialStory.trees.length,
@@ -5608,18 +5692,20 @@ async function runFlagshipStory(
       ...platformCheck,
       revision: goal7.revision,
       objective: goal7Objective,
+      gameplay: goal7Gameplay,
     },
     undo: {
       restoredRevision: undone.revision,
       restoredMushroomState: true,
       exportedGoal: 5,
       objective: undoneObjective,
+      gameplay: undoGameplay,
     },
-    limitations: [
-      options.seeded
-        ? "Fresh-world gameplay was not claimed for the saved checkpoint continuation; the seven-crystal edit and undo only repeat objective-state checks."
-        : "Creation-phase gameplay was traversed in the fresh world; the seven-crystal edit and undo only repeat objective-state checks.",
-    ],
+    limitations: options.seeded
+      ? [
+          "Saved-checkpoint continuation has structural objective checks only; goal-7 and undo gameplay were not run.",
+        ]
+      : [],
   };
   report.edit = {
     status: "passed",
