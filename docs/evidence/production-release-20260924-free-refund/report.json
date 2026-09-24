@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-24",
+  "sourceCommit": "95f074a",
+  "deploymentId": "dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw",
+  "deploymentUrl": "https://orbsie-popxkbfvb-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "deploymentStatus": "Ready",
+  "checks": [
+    { "path": "/", "status": 200 },
+    { "path": "/robots.txt", "status": 200 },
+    { "path": "/sitemap.xml", "status": 200 },
+    { "path": "/api/config", "status": 200 },
+    { "path": "/api/trial", "status": 200 }
+  ],
+  "modelCalls": 0,
+  "note": "Read-only release health; no live Gateway refund or model-quality inference was attempted."
+}

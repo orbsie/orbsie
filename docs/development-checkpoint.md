@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 free-prompt refund release: source `95f074a` built and deployed Ready
+as `dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw`, aliased to `https://orbsie.com/`
+(immutable URL
+`https://orbsie-popxkbfvb-grappeggias-projects.vercel.app`). Read-only
+checks of `/`, robots, sitemap, config and trial all returned HTTP 200. No
+production model call ran after the release because the prior free edit had
+returned a billing HTTP 402. Evidence:
+`docs/evidence/production-release-20260924-free-refund/report.json`. The
+refund is therefore validated in focused route and real isolated PostgreSQL
+tests, but its live 402 path remains unconfirmed; provider funding remains a
+separate blocker for free generation.
+
 Sep 24 free-prompt 402 accounting fix: after the live second prompt was
 rejected by Gateway, `POST /api/generate` now transactionally refunds a
 successfully claimed legacy free prompt only when the upstream provider
