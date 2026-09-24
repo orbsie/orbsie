@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 23 software landing visual fix: the forced-WebGL-failure renderer now
+draws a prominent planet, stars and dark sky during landing/descent rather
+than a cream backdrop with a faint ellipse. The older workspace/play draw
+path remains separate. Astra reviewed the Luna diff, corrected an initial
+overpaint and reduced cached planet texture preparation to 256² samples.
+`tests/software-world.test.ts` passed 21/21, typecheck and production build
+passed, and an Android 15 emulator Chrome screenshot of the production build
+confirmed the visible software planet at a 412-by-786 CSS viewport. See
+`docs/evidence/android-software-landing-20260923/`. Physical Android, native
+WebGL compositing and gameplay performance remain unverified.
+
 Sep 23 Android graphics diagnosis: the current production build shows the
 landing planet in desktop Chromium at the same 412-by-786 mobile viewport,
 but Android 15 emulator Chrome shows only the page background and controls.

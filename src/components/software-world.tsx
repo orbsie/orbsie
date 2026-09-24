@@ -10,7 +10,7 @@ import {
 } from "react";
 import * as THREE from "three";
 import { useOrb } from "@/lib/store";
-import { entityGeometry } from "@/lib/geometry";
+import { entityGeometry, terrainValue } from "@/lib/geometry";
 import { useAssetGeometry } from "@/lib/use-asset-geometry";
 import { useGeneratedGeometry } from "@/lib/use-generated-geometry";
 import { isAssetId } from "@/lib/asset-catalog";
@@ -64,7 +64,11 @@ import {
   type SoftwareProxyDrawRecord,
 } from "@/lib/software-formation-residency";
 import { selectVisibleWorldEntityIds } from "@/lib/world-visibility";
-import { parcelTransitionController } from "@/lib/parcel-transition";
+import {
+  globeScale,
+  parcelTransitionController,
+  smoothTransition,
+} from "@/lib/parcel-transition";
 import {
   worldNavigationCameraPose,
   worldNavigationFarPlane,
@@ -1168,6 +1172,293 @@ type SoftwareSceneDrawResult = Readonly<{
   visibleProxyIds: ReadonlySet<string>;
 }>;
 
+let landingPlanetTexture: HTMLCanvasElement | undefined;
+
+function landingPlanetSurface() {
+  if (landingPlanetTexture) return landingPlanetTexture;
+
+  const size = 256;
+  const texture = document.createElement("canvas");
+  texture.width = size;
+  texture.height = size;
+  const surface = texture.getContext("2d", { alpha: true });
+  if (!surface) return undefined;
+
+  const image = surface.createImageData(size, size);
+  const palette: readonly (readonly [
+    number,
+    readonly [number, number, number],
+  ])[] = [
+    [-0.45, [17, 82, 112]],
+    [-0.05, [36, 139, 157]],
+    [0.16, [75, 192, 185]],
+    [0.27, [219, 210, 158]],
+    [0.72, [148, 188, 120]],
+    [1.2, [85, 139, 92]],
+  ] as const;
+  const light = [-0.44, 0.48, 0.76] as const;
+
+  for (let py = 0; py < size; py++) {
+    const y = ((py + 0.5) / size) * 2 - 1;
+    for (let px = 0; px < size; px++) {
+      const x = ((px + 0.5) / size) * 2 - 1;
+      const radiusSquared = x * x + y * y;
+      if (radiusSquared > 1) continue;
+
+      const z = Math.sqrt(1 - radiusSquared);
+      const terrain = terrainValue(x, y, z);
+      let lower = palette[0];
+      let upper = palette[1];
+      for (let index = 1; index < palette.length; index++) {
+        if (terrain <= palette[index][0]) {
+          lower = palette[index - 1];
+          upper = palette[index];
+          break;
+        }
+        lower = palette[index - 1];
+        upper = palette[index];
+      }
+      const blend = Math.max(
+        0,
+        Math.min(1, (terrain - lower[0]) / (upper[0] - lower[0])),
+      );
+      const illumination = Math.max(
+        0.36,
+        Math.min(
+          1.15,
+          0.55 + (x * light[0] + y * light[1] + z * light[2]) * 0.68,
+        ),
+      );
+      const offset = (py * size + px) * 4;
+      for (let channel = 0; channel < 3; channel++)
+        image.data[offset + channel] = Math.round(
+          (lower[1][channel] +
+            (upper[1][channel] - lower[1][channel]) * blend) *
+            illumination,
+        );
+      image.data[offset + 3] = 255;
+    }
+  }
+
+  surface.putImageData(image, 0, 0);
+  landingPlanetTexture = texture;
+  return texture;
+}
+
+function drawLandingSpace(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  time: number,
+  progress: number,
+  ground: string,
+) {
+  const groundBlend = smoothTransition(progress, 0.73, 0.99);
+  const sky = ctx.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, "#071322");
+  sky.addColorStop(0.52, "#0b2436");
+  sky.addColorStop(1, "#102d3b");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, width, height);
+
+  if (groundBlend > 0) {
+    ctx.globalAlpha = groundBlend;
+    ctx.fillStyle = ground;
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
+  }
+
+  const nebula = ctx.createRadialGradient(
+    width * 0.2,
+    height * 0.31,
+    0,
+    width * 0.2,
+    height * 0.31,
+    Math.max(width, height) * 0.62,
+  );
+  nebula.addColorStop(0, "rgba(58, 139, 157, .17)");
+  nebula.addColorStop(0.52, "rgba(39, 81, 120, .07)");
+  nebula.addColorStop(1, "rgba(14, 32, 58, 0)");
+  ctx.fillStyle = nebula;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.save();
+  ctx.globalAlpha = 1 - groundBlend;
+  for (let index = 0; index < 58; index++) {
+    const x = ((index * 0.61803398875 + 0.13) % 1) * width;
+    const y = ((index * 0.75487766625 + 0.31) % 1) * height;
+    const twinkle = 0.52 + Math.sin(time * 0.6 + index * 2.1) * 0.2;
+    const radius = index % 9 === 0 ? 1.45 : index % 3 === 0 ? 0.95 : 0.6;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220, 244, 241, ${twinkle})`;
+    ctx.fill();
+    if (index % 9 === 0) {
+      ctx.strokeStyle = `rgba(183, 233, 231, ${twinkle * 0.35})`;
+      ctx.lineWidth = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y);
+      ctx.lineTo(x + 4, y);
+      ctx.moveTo(x, y - 4);
+      ctx.lineTo(x, y + 4);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawLandingPlanet(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  time: number,
+  progress: number,
+  reducedMotion: boolean,
+) {
+  const radius = Math.min(width * 0.59, height * 0.43);
+  const zoom = globeScale(progress);
+  const centerX = width * 0.5;
+  const centerY = height * 0.51 - height * 0.3 * progress;
+  const planetRadius = radius * zoom;
+  const opacity = 1 - smoothTransition(progress, 0.86, 0.99);
+  if (opacity <= 0.001) return;
+
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.shadowColor = "rgba(74, 222, 219, .48)";
+  ctx.shadowBlur = Math.max(18, radius * 0.14);
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, planetRadius * 1.018, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(68, 203, 207, .12)";
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, planetRadius, 0, Math.PI * 2);
+  ctx.clip();
+  const ocean = ctx.createRadialGradient(
+    centerX - planetRadius * 0.39,
+    centerY - planetRadius * 0.46,
+    planetRadius * 0.04,
+    centerX,
+    centerY,
+    planetRadius * 1.15,
+  );
+  ocean.addColorStop(0, "#71e6d9");
+  ocean.addColorStop(0.43, "#37bfc2");
+  ocean.addColorStop(0.8, "#19758f");
+  ocean.addColorStop(1, "#0b304c");
+  ctx.fillStyle = ocean;
+  ctx.fillRect(
+    centerX - planetRadius,
+    centerY - planetRadius,
+    planetRadius * 2,
+    planetRadius * 2,
+  );
+
+  const texture = landingPlanetSurface();
+  if (texture) {
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(reducedMotion ? -0.035 : Math.sin(time * 0.12) * 0.055);
+    ctx.filter = "blur(0.75px)";
+    ctx.drawImage(
+      texture,
+      -planetRadius,
+      -planetRadius,
+      planetRadius * 2,
+      planetRadius * 2,
+    );
+    ctx.filter = "none";
+    ctx.restore();
+  }
+
+  const cloudOpacity = reducedMotion ? 0.14 : 0.18;
+  const drift = reducedMotion
+    ? 0
+    : Math.sin(time * 0.17) * planetRadius * 0.025;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = `rgba(236, 255, 245, ${cloudOpacity})`;
+  ctx.lineWidth = Math.max(3, planetRadius * 0.028);
+  ctx.beginPath();
+  ctx.moveTo(
+    centerX - planetRadius * 0.78 + drift,
+    centerY - planetRadius * 0.22,
+  );
+  ctx.bezierCurveTo(
+    centerX - planetRadius * 0.42,
+    centerY - planetRadius * 0.42,
+    centerX + planetRadius * 0.1,
+    centerY - planetRadius * 0.08,
+    centerX + planetRadius * 0.76 + drift,
+    centerY - planetRadius * 0.31,
+  );
+  ctx.stroke();
+  ctx.lineWidth = Math.max(2, planetRadius * 0.017);
+  ctx.beginPath();
+  ctx.moveTo(
+    centerX - planetRadius * 0.7 - drift,
+    centerY + planetRadius * 0.25,
+  );
+  ctx.bezierCurveTo(
+    centerX - planetRadius * 0.18,
+    centerY + planetRadius * 0.04,
+    centerX + planetRadius * 0.34,
+    centerY + planetRadius * 0.48,
+    centerX + planetRadius * 0.81 - drift,
+    centerY + planetRadius * 0.17,
+  );
+  ctx.stroke();
+
+  const atmosphere = ctx.createRadialGradient(
+    centerX - planetRadius * 0.23,
+    centerY - planetRadius * 0.34,
+    planetRadius * 0.3,
+    centerX,
+    centerY,
+    planetRadius * 1.06,
+  );
+  atmosphere.addColorStop(0, "rgba(4, 27, 47, 0)");
+  atmosphere.addColorStop(0.77, "rgba(5, 37, 57, .08)");
+  atmosphere.addColorStop(1, "rgba(3, 26, 47, .64)");
+  ctx.fillStyle = atmosphere;
+  ctx.fillRect(
+    centerX - planetRadius,
+    centerY - planetRadius,
+    planetRadius * 2,
+    planetRadius * 2,
+  );
+
+  const highlight = ctx.createRadialGradient(
+    centerX - planetRadius * 0.42,
+    centerY - planetRadius * 0.48,
+    0,
+    centerX - planetRadius * 0.24,
+    centerY - planetRadius * 0.25,
+    planetRadius * 0.88,
+  );
+  highlight.addColorStop(0, "rgba(236, 255, 231, .18)");
+  highlight.addColorStop(0.65, "rgba(204, 252, 236, .025)");
+  highlight.addColorStop(1, "rgba(204, 252, 236, 0)");
+  ctx.fillStyle = highlight;
+  ctx.fillRect(
+    centerX - planetRadius,
+    centerY - planetRadius,
+    planetRadius * 2,
+    planetRadius * 2,
+  );
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, planetRadius * 1.002, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(164, 245, 230, .72)";
+  ctx.lineWidth = Math.max(1, radius * 0.009);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawScene(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -1189,6 +1480,8 @@ function drawScene(
   camera: THREE.PerspectiveCamera,
   picks: PickedEntity[],
   settledWorkspace: boolean,
+  landingProgress: number | undefined,
+  reducedMotion: boolean,
   navigation: WorldNavigationState,
   terrainCache: TerrainChunkSelectionCache,
   visibilityCache: SoftwareVisibilityCache,
@@ -1206,35 +1499,47 @@ function drawScene(
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
   const groundVisible = settledWorkspace && camera.position.y > 0;
-  if (groundVisible) ctx.fillStyle = project.environment.ground;
-  else {
-    const gradient = ctx.createRadialGradient(
-      width * 0.48,
-      height * 0.34,
-      10,
-      width * 0.48,
-      height * 0.5,
-      Math.max(width, height),
+  if (landingProgress !== undefined) {
+    drawLandingSpace(
+      ctx,
+      width,
+      height,
+      time,
+      landingProgress,
+      project.environment.ground,
     );
-    gradient.addColorStop(0, "#faf8e8");
-    gradient.addColorStop(0.55, "#e7efe3");
-    gradient.addColorStop(1, "#d8eae6");
-    ctx.fillStyle = gradient;
-  }
-  ctx.fillRect(0, 0, width, height);
-  if (!settledWorkspace) {
-    ctx.fillStyle = "rgba(93, 146, 122, .1)";
-    ctx.beginPath();
-    ctx.ellipse(
-      width / 2,
-      height * 0.72,
-      width * 0.4,
-      height * 0.12,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
+    drawLandingPlanet(ctx, width, height, time, landingProgress, reducedMotion);
+  } else {
+    if (groundVisible) ctx.fillStyle = project.environment.ground;
+    else {
+      const gradient = ctx.createRadialGradient(
+        width * 0.48,
+        height * 0.34,
+        10,
+        width * 0.48,
+        height * 0.5,
+        Math.max(width, height),
+      );
+      gradient.addColorStop(0, "#faf8e8");
+      gradient.addColorStop(0.55, "#e7efe3");
+      gradient.addColorStop(1, "#d8eae6");
+      ctx.fillStyle = gradient;
+    }
+    ctx.fillRect(0, 0, width, height);
+    if (!settledWorkspace) {
+      ctx.fillStyle = "rgba(93, 146, 122, .1)";
+      ctx.beginPath();
+      ctx.ellipse(
+        width / 2,
+        height * 0.72,
+        width * 0.4,
+        height * 0.12,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
   }
   camera.aspect = width / Math.max(1, height);
   camera.updateProjectionMatrix();
@@ -2300,6 +2605,10 @@ export default function SoftwareWorld({
             transition.settled &&
             transition.progress >= 1 &&
             initializedScene.current,
+          currentPhase === "landing" || currentPhase === "descending"
+            ? progress
+            : undefined,
+          reduced(),
           activeNavigation,
           terrainCacheRef.current,
           visibilityCacheRef.current,
