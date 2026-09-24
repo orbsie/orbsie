@@ -1,0 +1,23 @@
+{
+  "status": "failed",
+  "sourceCommit": "36efb3f57bf1029f73ef75436ff0be98f17d5e1b",
+  "deploymentUrl": "https://orb-c8952b5b6fd77ac951a4-jp58uek10-grappeggias-projects.vercel.app",
+  "device": {
+    "id": "emulator-5554",
+    "android": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chrome": "124.0.6367.219"
+  },
+  "renderer": "forced Canvas2D compatibility",
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "checks": {},
+  "cookiesBefore": 0,
+  "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('main[data-ready=\"true\"]')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('main[data-ready=\"true\"]') with timeout 30000ms\n  - waiting for locator('main[data-ready=\"true\"]')\n"
+}

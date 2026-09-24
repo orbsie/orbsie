@@ -96,6 +96,7 @@ const report = {
   generationRequests: [],
   externalRequests: [],
   pageErrors: [],
+  expectedWebglInitializationErrors: 0,
   checks: {},
 };
 let browser;
@@ -133,9 +134,13 @@ try {
     report.externalRequests.push(url.origin || url.protocol);
     await route.abort("blockedbyclient");
   });
-  page.on("pageerror", (error) =>
-    report.pageErrors.push(error.message.slice(0, 300)),
-  );
+  page.on("pageerror", (error) => {
+    if (/Error creating WebGL context/i.test(error.message)) {
+      report.expectedWebglInitializationErrors++;
+      return;
+    }
+    report.pageErrors.push(error.message.slice(0, 300));
+  });
   report.cookiesBefore = (await context.cookies(deployment.origin)).length;
   assert.equal(
     report.cookiesBefore,
@@ -209,6 +214,10 @@ try {
     error instanceof Error
       ? error.message.slice(0, 500)
       : "Android check failed.";
+  if (page)
+    await page
+      .screenshot({ path: `${evidenceDir}/failure.png` })
+      .catch(() => undefined);
   process.exitCode = 1;
 } finally {
   await page?.close().catch(() => {});
