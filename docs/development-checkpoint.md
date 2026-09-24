@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 23 Android graphics diagnosis: the current production build shows the
+landing planet in desktop Chromium at the same 412-by-786 mobile viewport,
+but Android 15 emulator Chrome shows only the page background and controls.
+The emulator reports WebGL2 ready, issues thousands of draw calls with no
+shader/link/GL errors, and `readPixels` finds planet-colored pixels in the
+framebuffer. A separate minimal WebGL2 page cleared a canvas to red and read
+back red `[255,0,0,255]`, yet the emulator screenshot remained blue (the CSS
+page background) after settling. This isolates the observed blank screen to
+that emulator's WebGL canvas compositing path; it does not establish a product
+scene regression or physical Android behavior. Do not use this emulator's
+WebGL screenshots as visual acceptance until its graphics backend is fixed or
+replaced. The Orbsie software renderer remains available but was not a visual
+match in this check. A fresh ChatGPT device challenge is pending owner grant;
+do not record the one-time code here.
+
 Sep 23 live authoring-review acceptance reached the first real review route on
 an isolated local Postgres database and production build. The new
 `scripts/verify-live-authoring-review.mjs` gates exact OpenRouter GPT-6 Luna,
