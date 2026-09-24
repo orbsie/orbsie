@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 23 bounded software-landing performance probe: Luna measured five Canvas
+gradient constructions and 16 color-stop calls per frame on the forced-software
+Android 15 emulator at 412-by-786 CSS pixels. A temporary cache produced a
+zero-difference frozen-frame image, but six-second frame-interval median
+remained 33.4 ms and p95 varied from 66.8 to 83.3 ms. Callback median only
+shifted from 0.8 to 0.7 ms. Astra accepted the no-change conclusion rather
+than shipping an optimization without a reliable frame-time gain. The 21
+targeted software-world tests passed; no new source or deployment resulted.
+
 Sep 23 production release: local commit `0a28ae0` passed `npm run build`,
 then Vercel deployment `dpl_2K6W21xkePP1Egkv9brNrbBEZFc4` built Ready in the
 production environment and was promoted to `https://orbsie.com/`. Vercel
