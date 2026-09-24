@@ -112,6 +112,7 @@ it("preflights and admits free review without charging the trial again", async (
   setup();
   const response = await POST(request({}));
   expect(response.status).toBe(200);
+  expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBeNull();
   expect(await response.json()).toMatchObject({
     scope: "structural-only",
     remainingCalls: 0,
@@ -276,6 +277,9 @@ it("emits a sanitized failed terminal diagnostic after admission", async () => {
       request({}, "33333333-3333-4333-8333-333333333333"),
     );
     expect(response.status).toBe(502);
+    expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBe(
+      "unknown",
+    );
     const events = info.mock.calls
       .map(([line]) => {
         try {
@@ -350,6 +354,9 @@ it("records the allowlisted scene review execution code without raw errors", asy
       ),
     );
     expect(response.status).toBe(502);
+    expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBe(
+      "provider-response",
+    );
     expect(await response.json()).toEqual({ error: rawMessage });
 
     const events = info.mock.calls
@@ -452,6 +459,7 @@ it("rejects unsupported images before ledger admission", async () => {
     }),
   );
   expect(response.status).toBe(400);
+  expect(response.headers.get("X-Orbsie-Review-Failure-Kind")).toBeNull();
   expect(deps.admit).not.toHaveBeenCalled();
   expect(deps.execute).not.toHaveBeenCalled();
 });

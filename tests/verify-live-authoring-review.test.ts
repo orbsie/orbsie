@@ -8,6 +8,7 @@ import {
   configuredLiveCallLimit,
   preflightGenerationOrigin,
   safePrivateReviewFinding,
+  safeReviewFailureKind,
   safeReviewResponse,
   summarizeProjectStructure,
   validateReviewBindingRevision,
@@ -136,6 +137,17 @@ function nextReviewRequest({
 }
 
 describe("live authoring structural summary", () => {
+  it("keeps review failure headers inside the report allowlist", () => {
+    expect(safeReviewFailureKind("provider-response")).toBe(
+      "provider-response",
+    );
+    expect(safeReviewFailureKind("unknown")).toBe("unknown");
+    expect(safeReviewFailureKind(undefined)).toBeUndefined();
+    expect(
+      safeReviewFailureKind("private provider error with token=secret"),
+    ).toBeUndefined();
+  });
+
   it("counts bounded geometry, part shape, scale, and color facts without retaining source data", () => {
     const summary = summarizeProjectStructure([
       {

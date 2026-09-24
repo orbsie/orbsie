@@ -36,6 +36,20 @@ const MAX_REVIEW_FINDINGS = 4;
 const MAX_REVIEW_ISSUES = 8;
 const MAX_REVIEW_ISSUE_SUMMARY_LENGTH = 300;
 const MAX_REQUEST_FAILURE_DETAILS = 16;
+const REVIEW_FAILURE_KINDS = new Set([
+  "invalid-input",
+  "unsupported-image",
+  "provider-rejected",
+  "provider-response",
+  "semantic-validation",
+  "aborted",
+  "route-aborted",
+  "http-error",
+  "authoring-ledger",
+  "review-image-validation",
+  "generation-format-config",
+  "unknown",
+]);
 const PART_SHAPES = [
   "box",
   "sphere",
@@ -654,6 +668,12 @@ export function safeReviewResponse(body) {
       ? Math.min(review.issues.length, MAX_REVIEW_ISSUES)
       : null,
   };
+}
+
+export function safeReviewFailureKind(value) {
+  return typeof value === "string" && REVIEW_FAILURE_KINDS.has(value)
+    ? value
+    : undefined;
 }
 
 function safeReviewIssueSummaries(issues) {
@@ -1560,6 +1580,12 @@ async function main() {
           report.phaseOrder.push(`initial-generation-response-${call.status}`);
         } else if (call.phase === "review" || call.phase === "final-review") {
           call.requestId = validId(headers["x-orbsie-request-id"]);
+          if (call.status >= 400) {
+            const failureKind = safeReviewFailureKind(
+              headers["x-orbsie-review-failure-kind"],
+            );
+            if (failureKind) call.reviewFailureKind = failureKind;
+          }
           if (call.phase === "review") {
             const reviewOrdinal = report.reviewAttempts.length + 1;
             if (reviewOrdinal === 1) report.requestIds.review = call.requestId;

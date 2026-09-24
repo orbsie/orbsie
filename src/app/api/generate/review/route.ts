@@ -309,6 +309,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     await admission?.fail(error);
+    const failureKind = reviewFailureKind(error, signal);
     if (reviewAdmitted && !reviewTerminalEmitted && reviewScope)
       emitAuthoringReviewDiagnostic({
         requestId,
@@ -318,7 +319,7 @@ export async function POST(request: Request) {
         scope: reviewScope,
         state: "terminal",
         outcome: signal.aborted ? "cancelled" : "failed",
-        failureKind: reviewFailureKind(error, signal),
+        failureKind,
       });
     const safe = publicError(error, signal);
     observation.terminal({
@@ -354,6 +355,9 @@ export async function POST(request: Request) {
           headers: {
             "Cache-Control": "no-store",
             ...cookieHeaders(admission),
+            ...(reviewAdmitted && !reviewTerminalEmitted
+              ? { "X-Orbsie-Review-Failure-Kind": failureKind }
+              : {}),
           },
         },
       ),
