@@ -73,7 +73,7 @@ const NEW_RUN_ID = "22222222-2222-4222-8222-222222222222";
 function payload(extra: Record<string, unknown> = {}) {
   return {
     priorRunId: PRIOR_RUN_ID,
-    model: "gpt-5.6-luna",
+    model: "gpt-6-luna",
     effort: "low",
     prompt: "Make the saved garden more open.",
     project: blankProject(),
@@ -121,7 +121,7 @@ function setup() {
   deps.models.mockResolvedValue([
     {
       id: "catalog-gpt-luna",
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       displayName: "GPT Luna",
       supportedReasoningEfforts: ["low", "medium"],
       defaultReasoningEffort: "low",
@@ -166,7 +166,7 @@ describe("hosted ChatGPT review-only start route", () => {
       expect.objectContaining({
         priorRunId: PRIOR_RUN_ID,
         provider: "chatgpt",
-        model: "gpt-5.6-luna",
+        model: "gpt-6-luna",
         effort: "low",
         prompt: "Make the saved garden more open.",
         localModeling: false,
