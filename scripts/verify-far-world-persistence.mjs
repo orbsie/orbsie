@@ -43,7 +43,7 @@ const editedGeometry = { kind: "platform", detail: "refined" };
 const report = {
   status: "failed",
   scope:
-    "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and verifies distant content is visible in the isolated standalone player.",
+    "A deterministic local browser journey creates a grouped entity at 12 km, verifies initial automatic framing and the manual Frame control, edits its geometry, reloads saved state, exports a ZIP, and verifies distant content is visible in the isolated standalone player.",
   sourceCommit,
   appUrl,
   stableIds: ids,
@@ -428,14 +428,30 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     const canvas = page.locator(".scene canvas").first();
     await expect(canvas).toBeVisible();
     const canvasBounds = await canvas.boundingBox();
-    const beforeFrame = await page.screenshot({ animations: "disabled" });
-    await page.screenshot({
+    const frame = page.getByRole("button", { name: "Frame content" });
+    await expect(frame).toBeEnabled({ timeout: 30000 });
+    await expect
+      .poll(async () =>
+        page.getByRole("button", { name: /^Zoom in, currently/ }).getAttribute("aria-label"),
+      )
+      .toMatch(/^Zoom in, currently (?!100%)/);
+    const autoFramedImage = await page.screenshot({
       path: `${outputPath}/${rendererName}-created.png`,
       animations: "disabled",
     });
+    const autoFramedMarker = await inspectCanvasCenter(
+      autoFramedImage,
+      canvasBounds,
+    );
+    lane.checks.newWorldAutoFramedFarContent = true;
 
-    const frame = page.getByRole("button", { name: "Frame content" });
-    await expect(frame).toBeEnabled({ timeout: 30000 });
+    // A deliberate zoom away from the generated object gives the manual
+    // Frame control a distinct job after initial automatic framing.
+    for (let index = 0; index < 7; index += 1)
+      await page.getByRole("button", { name: /^Zoom out, currently/ }).click();
+    await page.waitForTimeout(300);
+    const beforeFrame = await page.screenshot({ animations: "disabled" });
+
     await frame.click();
     await page.waitForTimeout(500);
     const afterFrameImage = await page.screenshot({ animations: "disabled" });
@@ -454,6 +470,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     );
     lane.navigationVisibility = {
       canvasBounds,
+      autoFramedMarkerPixels: autoFramedMarker.markerPixels,
       ...(await assertCanvasChanged(
         beforeFrame,
         afterFrameImage,
@@ -714,8 +731,8 @@ try {
     `Status: **${report.status}**\n\n` +
     `${report.scope}\n\n` +
     `Source commit: \`${sourceCommit}\`. Provider calls: ${report.providerCalls}. External requests: ${report.externalRequests.length}.\n\n` +
-    `The browser creates and edits a grouped object at [12,000, 0, 0] meters, frames it in the editor, checks that entering Play shows the object, reloads local state, downloads the project ZIP, and checks that the object is visible in a fresh standalone player context. Both Chromium SwiftShader WebGL and forced Canvas2D fallback lanes are included.\n\n` +
-    `After Frame, the harness checks the centered canvas pixels for the fixture marker's tolerant teal color signature and requires at least 500 matching pixels and a 500-pixel increase over the pre-frame view. It also requires at least 5,000 central pixels to change from the pre-frame view.\n\n` +
+    `The browser creates and edits a grouped object at [12,000, 0, 0] meters, verifies the new world is auto-framed, zooms away and uses the manual Frame control, then checks Play, reload, ZIP export and a fresh standalone player. Both Chromium SwiftShader WebGL and forced Canvas2D fallback lanes are included.\n\n` +
+    `The harness requires at least 500 centered teal marker pixels immediately after generation. After manual Frame, it requires another 500-pixel increase over the zoomed-out view and at least 5,000 changed central pixels.\n\n` +
     `Limitations: ${report.limitations.join(" ")}\n\n` +
     `See [report.json](./report.json) for assertions and request audits. Screenshots show the created, framed, edited, editor Play, reloaded, and standalone states for each lane.\n`;
   await writeFile(`${outputPath}/README.md`, markdown);

@@ -68,6 +68,12 @@ import {
   WORLD_NAVIGATION_DEFAULT_DISTANCE,
 } from "@/lib/world-navigation";
 import {
+  initialProjectFrameSettlement,
+  isInitialProjectFrameBuildStart,
+  type InitialProjectFrameAttempt,
+  type InitialProjectFrameLifecycle,
+} from "@/lib/initial-project-frame";
+import {
   selectRenderOrigin,
   worldCameraPoseToRenderLocal,
   type RenderOriginVec3,
@@ -3080,7 +3086,21 @@ export default function World({
   const project = useOrb((state) => state.project);
   const projectId = project.id;
   const phase = useOrb((state) => state.phase);
+  const building = useOrb((state) => state.building);
   const playing = useOrb((state) => state.playing);
+  const error = useOrb((state) => state.error);
+  const generationRecovery = useOrb((state) => state.generationRecovery);
+  const pendingInitialFrameRef = useRef<InitialProjectFrameAttempt | null>(
+    null,
+  );
+  const previousInitialFrameLifecycleRef = useRef<InitialProjectFrameLifecycle>(
+    {
+      projectId,
+      phase,
+      building,
+      entityCount: project.entities.length,
+    },
+  );
   const navigationGestureController = useMemo(
     () => new WorldNavigationGestureController(),
     [],
@@ -3150,7 +3170,10 @@ export default function World({
   }, [clearNavigationGestures, phase, playing, projectId, rendererRetryToken]);
   useEffect(() => () => clearNavigationGestures(), [clearNavigationGestures]);
   const dispatchNavigation = useCallback(
-    (command: WorldNavigationCommand) => {
+    (command: WorldNavigationCommand, userInitiated = true) => {
+      const pendingInitialFrame = pendingInitialFrameRef.current;
+      if (userInitiated && pendingInitialFrame?.projectId === projectId)
+        pendingInitialFrame.userNavigated = true;
       const current = worldNavigationProjectState(
         projectId,
         navigationProjectRef.current,
@@ -3186,6 +3209,74 @@ export default function World({
       verticalFovRadians: (43 * Math.PI) / 180,
     });
   }, [dispatchNavigation]);
+  useEffect(() => {
+    const previous = previousInitialFrameLifecycleRef.current;
+    const current: InitialProjectFrameLifecycle = {
+      projectId,
+      phase,
+      building,
+      entityCount: project.entities.length,
+    };
+    if (pendingInitialFrameRef.current?.projectId !== projectId)
+      pendingInitialFrameRef.current = null;
+    if (isInitialProjectFrameBuildStart(previous, current))
+      pendingInitialFrameRef.current = {
+        projectId,
+        userNavigated: false,
+      };
+
+    const pending = pendingInitialFrameRef.current;
+    if (pending) {
+      const hasRecovery = generationRecovery?.projectId === projectId;
+      const canReadCommittedBounds =
+        !building &&
+        !playing &&
+        !error &&
+        !hasRecovery &&
+        !pending.userNavigated &&
+        phase !== "landing";
+      const committedBounds = canReadCommittedBounds
+        ? committedWorldNavigationBounds(project)
+        : [];
+      const settlement = initialProjectFrameSettlement(pending, {
+        projectId,
+        phase,
+        building,
+        playing,
+        hasError: Boolean(error),
+        hasRecovery,
+        hasCommittedBounds: committedBounds.length > 0,
+        userNavigated: pending.userNavigated,
+      });
+      if (settlement === "discard") pendingInitialFrameRef.current = null;
+      else if (settlement === "frame") {
+        pendingInitialFrameRef.current = null;
+        const viewportAspect =
+          typeof window === "undefined"
+            ? 1
+            : window.innerWidth / Math.max(1, window.innerHeight);
+        dispatchNavigation(
+          {
+            type: "frame_content",
+            committedEntityBounds: committedBounds,
+            viewportAspect,
+            verticalFovRadians: (43 * Math.PI) / 180,
+          },
+          false,
+        );
+      }
+    }
+    previousInitialFrameLifecycleRef.current = current;
+  }, [
+    building,
+    dispatchNavigation,
+    error,
+    generationRecovery,
+    phase,
+    playing,
+    project,
+    projectId,
+  ]);
   const notifyNavigationReady = useCallback(() => {
     setNavigationReady(true);
   }, []);
