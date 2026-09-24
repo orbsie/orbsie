@@ -325,13 +325,16 @@ async function screenshotEvidence(page, label, privateDirectory) {
     privateDirectory &&
     (label === "review-complete" ||
       label === "revise-bounded-incomplete" ||
-      label === "final-review-bounded-incomplete")
+      label === "final-review-bounded-incomplete" ||
+      label === "review-failed")
   ) {
     // Save only the rendered canvas, excluding prompts and chat responses.
     privatePng = await page.locator("canvas").screenshot();
     await writePrivateScreenshot(
       privateDirectory,
-      "post-review-scene.png",
+      label === "review-failed"
+        ? "post-review-failed-scene.png"
+        : "post-review-scene.png",
       privatePng,
     );
     privatePngWritten = true;
@@ -463,6 +466,7 @@ async function main() {
 
   let stage = "server-preflight";
   let browser;
+  let page;
   let clientRunId = null;
   let authoringRunId = null;
   let reviewResponse = null;
@@ -680,7 +684,7 @@ async function main() {
       },
     );
 
-    const page = await context.newPage();
+    page = await context.newPage();
     page.on("console", (message) => {
       if (message.type() === "error") report.browserActivity.consoleErrors += 1;
     });
@@ -1279,6 +1283,28 @@ async function main() {
         ? "AcceptanceError"
         : (error?.constructor?.name ?? "Error"),
     };
+    if (page && (stage === "review" || stage === "final-review")) {
+      try {
+        const summary = await readProjectSummary(page);
+        report.storage.afterFailure = summary
+          ? {
+              projectId: validId(summary.projectId),
+              revision: safeRevision(summary.revision),
+            }
+          : null;
+        report.browserActivity.authoring = await readActivityHistory(page);
+        const failureEvidence = await screenshotEvidence(
+          page,
+          "review-failed",
+          privateEvidenceDirectory,
+        );
+        report.evidence.push(failureEvidence);
+        if (failureEvidence.privatePngWritten)
+          report.privateEvidence.screenshotsWritten += 1;
+      } catch {
+        report.failure.evidenceCapture = "unavailable";
+      }
+    }
   } finally {
     if (browser) await browser.close().catch(() => {});
     try {
