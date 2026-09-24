@@ -9,8 +9,9 @@ but does not establish that the admitted review and final-review routes executed
 
 For local production-build tests, use an isolated migrated PostgreSQL database,
 set `ORBSIE_AUTHORING_REVIEW=1` and `ORBSIE_GENERATION_MAX_TOKENS=4096`, and
-explicitly set `VERCEL=0`. The downloaded `.env.production.local` contains
-`VERCEL=1`; leaving that value active on localhost makes anonymous admission
+set `BETTER_AUTH_URL` to the exact loopback origin in `ORBSIE_TEST_URL`, with
+the same hostname and port. Explicitly set `VERCEL=0`; the downloaded
+`.env.production.local` contains `VERCEL=1`, which makes anonymous admission
 expect Vercel's trusted forwarded-IP header and fail with HTTP 503 before
 inference. `scripts/verify-live-authoring-review.mjs` is a focused OpenRouter
 CREATE/review/final-review harness. Its three-call guard allows one correction
