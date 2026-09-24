@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 free-provider recovery release: source `afb2fd3` deployed Ready as
+`dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-9nawgxeph-grappeggias-projects.vercel.app`).
+Read-only root/robots/sitemap/config/trial checks all returned HTTP 200.
+The exact production frontend passed the intercepted HTTP 402 browser journey
+on desktop and mobile: original prompt retained, provider settings visible,
+unusable free CTA hidden, no horizontal overflow or browser/network errors,
+and zero real model calls or external requests. Astra reviewed the production
+mobile screenshot. Evidence:
+`docs/evidence/production-release-20260924-free-ux/` and
+`docs/evidence/free-unavailable-browser-production-20260924/`. Upstream
+funding/credit remains unresolved, so real free generation and live Gateway
+refund were not retested.
+
 Sep 24 signed-out free-provider 402 recovery: `FREE_PROVIDER_UNAVAILABLE` now
 survives the server-to-store path, preserves the rejected prompt and opens
 provider settings directly without Orbsie email/password login. The settings
@@ -10,8 +24,8 @@ screenshots from an intercepted, isolated optimized build at 1440×900 and
 one intercepted 402, zero live model/external/unexpected API calls and zero
 page/network errors. Twenty-four focused tests, typecheck and optimized build
 pass. Source commits `e18aa17` and `beae2d5`; evidence:
-`docs/evidence/free-unavailable-browser-20260924/`. Production deployment of
-this latest UI change remains pending at this checkpoint.
+`docs/evidence/free-unavailable-browser-20260924/`. The release above deployed
+this UI change.
 
 The latest owner-visible ChatGPT device challenge also expired without a
 grant before 18:40 UTC. Authenticated status became idle/disconnected, the

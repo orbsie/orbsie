@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-24",
+  "sourceCommit": "afb2fd3",
+  "deploymentId": "dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg",
+  "deploymentUrl": "https://orbsie-9nawgxeph-grappeggias-projects.vercel.app",
+  "alias": "https://orbsie.com",
+  "deploymentStatus": "Ready",
+  "checks": [
+    { "path": "/", "status": 200 },
+    { "path": "/robots.txt", "status": 200 },
+    { "path": "/sitemap.xml", "status": 200 },
+    { "path": "/api/config", "status": 200 },
+    { "path": "/api/trial", "status": 200 }
+  ],
+  "interceptedProductionBrowserReport": "docs/evidence/free-unavailable-browser-production-20260924/report.json",
+  "modelCalls": 0,
+  "note": "Production frontend 402 recovery passed with intercepted responses; funded Gateway inference remains unverified."
+}

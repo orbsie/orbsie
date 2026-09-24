@@ -7,11 +7,12 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw` at this reconciliation. Read-only
+  `dpl_AeXC9mJ8aFxCChi8oKvtun8MbfLg` at this reconciliation. Read-only
   root, robots, sitemap, config and trial checks passed; the previous crawler
   smoke found ten promoted public Orbs and an indexable share page. The latest
-  free-provider 402 UI recovery is locally browser-verified but awaits its own
-  production release. This does not prove model-authored visual quality or the
+  free-provider 402 UI recovery passed both local and intercepted production
+  browser checks at desktop and mobile sizes. This does not prove funded free
+  generation, model-authored visual quality or the
   full provider E2E matrix.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
