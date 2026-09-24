@@ -96,6 +96,12 @@ export type ReviewContinuation = {
   issue: string;
 };
 
+export type InterruptedReviewContinuation = {
+  projectId: string;
+  revision: number;
+  prompt: string;
+};
+
 function authoringReviewFeedback(
   issues: readonly { summary: string }[],
 ): string {
@@ -235,6 +241,7 @@ interface State {
   modelingFeedback?: ModelingFeedback;
   authoringActivity: AuthoringActivity[];
   reviewContinuation?: ReviewContinuation;
+  interruptedReviewContinuation?: InterruptedReviewContinuation;
   saved: boolean;
   recovered?: Project;
   drafts: Project[];
@@ -450,12 +457,14 @@ export const useOrb = create<State>((setState, getState) => ({
         generationRecovery: undefined,
         modelingFeedback: undefined,
         reviewContinuation: undefined,
+        interruptedReviewContinuation: undefined,
       };
     if ("reset" in patch)
       patch = {
         ...patch,
         generationRecovery: undefined,
         reviewContinuation: undefined,
+        interruptedReviewContinuation: undefined,
       };
     setState(patch);
   },
@@ -683,6 +692,7 @@ export const useOrb = create<State>((setState, getState) => ({
       modelingFeedback: undefined,
       authoringActivity: [],
       reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
       building: false,
     });
   },
@@ -730,6 +740,7 @@ export const useOrb = create<State>((setState, getState) => ({
       modelingFeedback: undefined,
       authoringActivity: [],
       reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
       readOnly: !writer,
       ...(!writer
         ? {
@@ -796,6 +807,8 @@ export const useOrb = create<State>((setState, getState) => ({
         : {}),
       generationRecovery: undefined,
       notice: "Stopped. Finished objects are safe.",
+      reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
     });
     if (
       committedWorld.entities.length > 0 ||
@@ -813,6 +826,7 @@ export const useOrb = create<State>((setState, getState) => ({
       selected: undefined,
       generationRecovery: undefined,
       reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
       notice: "Previous change restored.",
     });
     void getState().save();
@@ -826,6 +840,7 @@ export const useOrb = create<State>((setState, getState) => ({
       future: s.future.slice(1),
       generationRecovery: undefined,
       reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
     });
     void getState().save();
   },
@@ -1022,6 +1037,7 @@ export const useOrb = create<State>((setState, getState) => ({
       generationErrorCode: undefined,
       generationRecovery: undefined,
       reviewContinuation: undefined,
+      interruptedReviewContinuation: undefined,
       notice: "",
       saved: false,
       authoringActivity: [],
@@ -1070,6 +1086,7 @@ export const useOrb = create<State>((setState, getState) => ({
     let authoringRunId: string | undefined;
     let reviewImageSupported = false;
     let reviewStarted = false;
+    let reviewRequestFailed = false;
     let reviewIncomplete = false;
     let reviewPartial = false;
     let reviewRemainingIssue: string | undefined;
@@ -1408,6 +1425,7 @@ export const useOrb = create<State>((setState, getState) => ({
         },
         runId,
       );
+      reviewRequestFailed = true;
       const response = await fetch(request.url, {
         ...request.init,
         signal,
@@ -1421,7 +1439,7 @@ export const useOrb = create<State>((setState, getState) => ({
             ? body.error
             : "The scene review could not be completed.",
         );
-      return parseAuthoringReviewResponse(body, {
+      const parsed = parseAuthoringReviewResponse(body, {
         projectId: reviewed.id,
         revision: reviewed.revision,
         phase,
@@ -1429,6 +1447,8 @@ export const useOrb = create<State>((setState, getState) => ({
         browserModeling,
         entityIds: reviewed.entities.map((entity) => entity.id),
       });
+      reviewRequestFailed = false;
+      return parsed;
     };
     const finishReviewedRun = async (
       message: string,
@@ -1451,6 +1471,7 @@ export const useOrb = create<State>((setState, getState) => ({
                 issue: continuationIssue,
               }
             : undefined,
+        interruptedReviewContinuation: undefined,
       });
       publishActivity(kind, message, getState().project.revision);
       setState({
@@ -1893,6 +1914,21 @@ export const useOrb = create<State>((setState, getState) => ({
         finishRunExperience("error");
         publishActivity("failed", "This request could not be completed.");
         const checkpoint = baseline ?? before;
+        const interruptedReviewContinuation =
+          reviewStarted &&
+          reviewRequestFailed &&
+          checkpoint.revision > before.revision &&
+          getState().project.id === project.id &&
+          getState().project.revision === checkpoint.revision &&
+          getState().saved &&
+          writerCurrent() &&
+          journalCurrent()
+            ? {
+                projectId: project.id,
+                revision: checkpoint.revision,
+                prompt,
+              }
+            : undefined;
         const restoreUi =
           checkpoint.revision > before.revision ? getState() : preservedUiState;
         const recoverySelected =
@@ -1928,6 +1964,7 @@ export const useOrb = create<State>((setState, getState) => ({
                 checkpoint,
                 ...(failureFeedback ? { feedback: failureFeedback } : {}),
               },
+          interruptedReviewContinuation,
           error: reviewStarted
             ? "Scene saved, but review could not finish. Your world is safe."
             : generationFailureCopy(failureReason ?? "parser-failure"),

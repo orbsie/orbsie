@@ -406,6 +406,50 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().building).toBe(false);
   });
 
+  it("offers a saved-revision continuation when an admitted review fails", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (url, init) => {
+      if (url === "/api/generate")
+        return streamResponse(JSON.parse(String(init?.body)).project);
+      return new Response(JSON.stringify({ error: "Review unavailable." }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const originalIds = useOrb
+      .getState()
+      .project.entities.map((entity) => entity.id);
+
+    await useOrb.getState().run("Recolor the tree", connection);
+
+    const state = useOrb.getState();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(state.project.revision).toBe(2);
+    expect(state.project.entities.map((entity) => entity.id)).toEqual(
+      originalIds,
+    );
+    expect(state.saved).toBe(true);
+    expect(state.interruptedReviewContinuation).toEqual({
+      projectId: state.project.id,
+      revision: state.project.revision,
+      prompt: "Recolor the tree",
+    });
+    expect(state.reviewContinuation).toBeUndefined();
+    expect(state.generationRecovery).toBeUndefined();
+    expect(state.authoringActivity.at(-1)).toMatchObject({
+      kind: "failed",
+      message: "Scene saved, but review could not finish.",
+      revision: state.project.revision,
+    });
+    const savedLibrary = mocks.db.get("orbsie-library") as Record<
+      string,
+      ReturnType<typeof blankProject>
+    >;
+    expect(savedLibrary[state.project.id]?.revision).toBe(
+      state.project.revision,
+    );
+  });
+
   it("runs two correction reviews in separate cloud segments before a partial final verdict", async () => {
     const fetcher = partialReviewFetcher();
     const durable = journal();
@@ -554,6 +598,7 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().authoringActivity.at(-1)?.message).toContain(
       "review could not finish",
     );
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
   });
 
   it("finishes when the second correction review accepts", async () => {
@@ -723,6 +768,7 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().building).toBe(false);
     expect(useOrb.getState().project.revision).toBe(beforeStop.revision);
     expect(useOrb.getState().authoringActivity.at(-1)?.kind).toBe("cancelled");
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
   });
 
   it("drops a stale project before a review reply can mutate it", async () => {
@@ -747,6 +793,7 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().project.id).toBe(replacement.id);
     expect(useOrb.getState().project.revision).toBe(replacement.revision);
     expect(useOrb.getState().building).toBe(false);
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
   });
 
   it("fences a same-id same-revision replacement before a late verdict", async () => {

@@ -1375,6 +1375,15 @@ export default function Orbsie() {
     latestTerminalActivity.revision === s.project.revision
       ? s.reviewContinuation
       : undefined;
+  const interruptedReviewContinuation =
+    s.interruptedReviewContinuation?.projectId === s.project.id &&
+    s.interruptedReviewContinuation.revision === s.project.revision &&
+    s.saved &&
+    latestTerminalActivity?.kind === "failed" &&
+    latestTerminalActivity.projectId === s.project.id &&
+    latestTerminalActivity.revision === s.project.revision
+      ? s.interruptedReviewContinuation
+      : undefined;
   const renderProjectMessage = (
     m: (typeof s.project.messages)[number],
     index: number,
@@ -2051,6 +2060,24 @@ export default function Orbsie() {
     );
     window.requestAnimationFrame(() => textarea.current?.focus());
   };
+  const draftInterruptedReviewContinuation = () => {
+    const current = useOrb.getState();
+    const continuation = current.interruptedReviewContinuation;
+    if (!continuation) return;
+    if (
+      continuation.projectId !== current.project.id ||
+      continuation.revision !== current.project.revision ||
+      !current.saved
+    ) {
+      current.set({ interruptedReviewContinuation: undefined });
+      return;
+    }
+    current.set({ selected: undefined });
+    setPrompt(
+      `Continue improving the saved scene based on the original request: ${continuation.prompt}`,
+    );
+    window.requestAnimationFrame(() => textarea.current?.focus());
+  };
   const reset = () => {
     s.set({
       score: [],
@@ -2559,6 +2586,18 @@ export default function Orbsie() {
                       onClick={draftReviewContinuation}
                     >
                       Address the remaining issue <ArrowUpRight size={12} />
+                    </button>
+                  </div>
+                )}
+                {interruptedReviewContinuation && (
+                  <div className="review-continuation">
+                    <button
+                      type="button"
+                      aria-label="Draft a prompt to continue improving the saved scene"
+                      data-testid="interrupted-review-continuation"
+                      onClick={draftInterruptedReviewContinuation}
+                    >
+                      Continue improving <ArrowUpRight size={12} />
                     </button>
                   </div>
                 )}

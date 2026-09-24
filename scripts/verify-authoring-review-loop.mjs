@@ -309,12 +309,15 @@ async function runRenderer(
   renderer,
   finalVerdict = "accept",
   twoCorrections = false,
+  reviewFailure = false,
 ) {
   const evidenceName = twoCorrections
     ? `${renderer}-two-corrections`
-    : finalVerdict === "accept"
-      ? renderer
-      : `${renderer}-partial`;
+    : reviewFailure
+      ? `${renderer}-interrupted-review`
+      : finalVerdict === "accept"
+        ? renderer
+        : `${renderer}-partial`;
   const args =
     renderer === "software"
       ? ["--disable-gpu"]
@@ -424,6 +427,18 @@ async function runRenderer(
     const reviewOrdinal = requests.filter(
       (request) => request.kind === "review",
     ).length;
+    if (reviewFailure) {
+      assert.equal(phase, "review");
+      await route.fulfill({
+        status: 502,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify({ error: "Synthetic review failure." }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       headers: {
@@ -455,6 +470,44 @@ async function runRenderer(
       "Up to four model calls",
     );
     await page.getByRole("button", { name: "Create", exact: true }).click();
+    if (reviewFailure) {
+      await expect(page.locator(".authoring-activity-latest p")).toHaveText(
+        "Scene saved, but review could not finish.",
+        { timeout: 15_000 },
+      );
+      assert.equal(requests.length, 2);
+      assert.equal(requests[1].kind, "review");
+      const saved = await storageSnapshot(page);
+      assert.equal(saved.project.revision, requests[1].body.project.revision);
+      assert.deepEqual(
+        saved.project.entities.map((entity) => entity.id),
+        requests[1].body.project.entities.map((entity) => entity.id),
+      );
+      const continuation = page.getByTestId("interrupted-review-continuation");
+      await expect(continuation).toBeVisible();
+      await continuation.click();
+      await expect(
+        page.getByRole("textbox", { name: "What experience to build?" }),
+      ).toHaveValue(
+        "Continue improving the saved scene based on the original request: Build a lantern",
+      );
+      assert.equal(
+        requests.length,
+        2,
+        "drafting a continuation must not call the model",
+      );
+      await page.getByRole("button", { name: "Undo last change" }).click();
+      await expect(continuation).toHaveCount(0);
+      assert.equal(requests.length, 2);
+      return {
+        renderer,
+        savedRevision: saved.project.revision,
+        requestKinds: requests.map((request) => request.kind),
+        draftedPrompt: `Continue improving the saved scene based on the original request: ${requests[0].body.prompt}`,
+        extraRequestsAfterDraft: 0,
+        continuationHiddenAfterRevisionChange: true,
+      };
+    }
     const terminalMessage =
       finalVerdict === "accept"
         ? "Scene verified. Changes are applied."
@@ -1148,19 +1201,30 @@ const report = {
   renderers: {},
   secondCorrection: {},
   partialReview: {},
+  failedReview: {},
   signedInJournal: {},
 };
 try {
-  report.renderers.webgl = await runRenderer("webgl");
-  report.renderers.software = await runRenderer("software");
-  report.secondCorrection.software = await runRenderer(
-    "software",
-    "accept",
-    true,
-  );
-  report.partialReview.software = await runRenderer("software", "revise");
-  report.signedInJournal.success = await runSignedInJournalScenario(false);
-  report.signedInJournal.conflict = await runSignedInJournalScenario(true);
+  if (process.env.AUTHORING_REVIEW_FAILURE_ONLY === "1") {
+    report.failedReview = await runRenderer("software", "accept", false, true);
+  } else {
+    report.renderers.webgl = await runRenderer("webgl");
+    report.renderers.software = await runRenderer("software");
+    report.secondCorrection.software = await runRenderer(
+      "software",
+      "accept",
+      true,
+    );
+    report.partialReview.software = await runRenderer("software", "revise");
+    report.failedReview.software = await runRenderer(
+      "software",
+      "accept",
+      false,
+      true,
+    );
+    report.signedInJournal.success = await runSignedInJournalScenario(false);
+    report.signedInJournal.conflict = await runSignedInJournalScenario(true);
+  }
   report.passed = true;
 } finally {
   await writeFile(
