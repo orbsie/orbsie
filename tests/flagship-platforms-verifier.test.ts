@@ -258,7 +258,7 @@ it("excludes pre-jump ground frames and captures ground contact after observed t
       [initialGround, preJumpGround, upwardLaunch, laterGround],
       takeoff!.frameId,
       0.5,
-    ).map((frame) => frame.frameId),
+    ).map((frame: { frameId: number }) => frame.frameId),
   ).toEqual([33]);
 });
 
