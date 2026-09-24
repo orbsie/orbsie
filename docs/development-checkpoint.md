@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 review failure diagnosis: source `bd70b48` adds an allowlisted
+`X-Orbsie-Review-Failure-Kind` response header only after a review was admitted
+and failed or cancelled. The bounded OpenRouter acceptance harness records only
+recognized values on failed review responses; it does not retain provider bodies,
+raw errors, or credentials. Astra reviewed the route/harness diff and reran the
+two focused suites (30 tests), TypeScript, and diff whitespace checks; all pass.
+No live call or deployment was part of this change, so the previous HTTP 502
+still has an unknown underlying cause. The authoring ledger marks an admitted
+failed review run terminal, clearing its phase token. Recovery therefore needs
+an explicit, budgeted continuation bound to the saved revision; automatic replay
+would risk duplicate paid inference. The previously saved revision 21 survived.
+The owner-offered ChatGPT code could not be issued through the local acceptance
+session because it is signed out, and computer use currently reports no browser
+surfaces. The owner can initiate the connection from their signed-in Orbsie tab.
+
 Sep 24 failed-review framing release: source `0fa9b2c` retains the first
 automatic content-frame attempt after a new world settles with a recoverable
 generation/review error or recovery notice, provided ready committed bounds

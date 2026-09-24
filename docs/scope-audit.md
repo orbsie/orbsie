@@ -47,6 +47,11 @@ older rows below are a historical inventory, not a completion claim.
   a verdict; Astra still rejects the corrected round fruit on visual review.
   Production authoring-review remains off.
   Gateway credit is negative, so further paid Gateway inference has not run.
+- Admitted review failures now return an allowlisted failure-kind header and the
+  live OpenRouter harness records only recognized values on failed responses.
+  Thirty focused tests and TypeScript pass; no later live 502 has exercised it.
+  The ledger terminalizes a failed review run, so saved-scene continuation needs
+  a new, explicitly budgeted review admission rather than automatic replay.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

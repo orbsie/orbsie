@@ -530,6 +530,13 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   output, and validate recovery from actual interruption. Preserve committed objects,
   stable IDs, undo and saved state. Never fabricate a successful commit or blindly
   replay geometry/model calls. Recovery must remain bounded and visible.
+- [ ] Recover an admitted scene-review failure from the last committed revision.
+  A failed ledger run is terminal, so continuation needs a fresh, budgeted
+  admission bound to that revision and an explicit user action; do not silently
+  repeat an upstream call whose outcome may be unknown. Show the saved scene and
+  the specific safe failure category while retaining a way to continue review.
+  The response and live acceptance harness now carry an allowlisted failure kind,
+  but a post-change live failure has not yet verified that diagnostic path.
 - [x] Display progress/activity chat updates no more often than once every two
   seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
   Keep final results/errors and controls timely; do not throttle actual scene updates,
