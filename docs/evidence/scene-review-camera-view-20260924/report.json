@@ -1,0 +1,149 @@
+{
+  "passed": true,
+  "scope": "local revision-bound game-canvas capture in WebGL and software renderers",
+  "liveModelCalls": 0,
+  "externalRequests": [],
+  "rendererResults": {
+    "webgl": {
+      "projectId": "47d62759-e87f-4c80-bc19-6bd412321b47",
+      "initialRevision": 7,
+      "replacementRevision": 9,
+      "renderer": "webgl",
+      "cameraViewPresent": true,
+      "initial": {
+        "dimensions": {
+          "width": 768,
+          "height": 540
+        },
+        "byteLength": 81726,
+        "readiness": {
+          "renderedRevision": 7,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble",
+            "fruit-tree"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        },
+        "blueFruitPixels": 3563
+      },
+      "duringReplacement": {
+        "revision": 8,
+        "readyAssetIds": [
+          "pebble",
+          "fruit-tree"
+        ],
+        "pendingAssetIds": [
+          "lantern"
+        ],
+        "failedAssetIds": []
+      },
+      "replacement": {
+        "dimensions": {
+          "width": 768,
+          "height": 540
+        },
+        "byteLength": 72302,
+        "readiness": {
+          "renderedRevision": 9,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern",
+            "pebble",
+            "fruit-tree"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        },
+        "blueFruitPixels": 3564
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    },
+    "software": {
+      "projectId": "31ae3988-0da8-40d6-a6f4-386a48eff7b4",
+      "initialRevision": 7,
+      "replacementRevision": 9,
+      "renderer": "software",
+      "cameraViewPresent": true,
+      "initial": {
+        "dimensions": {
+          "width": 512,
+          "height": 360
+        },
+        "byteLength": 94174,
+        "readiness": {
+          "renderedRevision": 7,
+          "transitionSettled": true,
+          "readyAssetIds": [],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        },
+        "blueFruitPixels": 383
+      },
+      "duringReplacement": {
+        "revision": 9,
+        "readyAssetIds": [],
+        "pendingAssetIds": [
+          "lantern"
+        ],
+        "failedAssetIds": []
+      },
+      "replacement": {
+        "dimensions": {
+          "width": 768,
+          "height": 540
+        },
+        "byteLength": 61886,
+        "readiness": {
+          "renderedRevision": 9,
+          "transitionSettled": true,
+          "readyAssetIds": [
+            "lantern"
+          ],
+          "pendingAssetIds": [],
+          "failedAssetIds": []
+        },
+        "blueFruitPixels": 4746
+      },
+      "pngDataUrl": true,
+      "unexpectedRequests": []
+    }
+  },
+  "pageErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "consoleErrors": {
+    "webgl": [],
+    "software": [
+      "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+    ]
+  },
+  "requestFailures": {
+    "webgl": [
+      {
+        "url": "http://127.0.0.1:34353/api/generate",
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:34353/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ],
+    "software": [
+      {
+        "url": "http://127.0.0.1:34353/api/generate",
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:34353/api/generate",
+        "failure": "net::ERR_ABORTED"
+      }
+    ]
+  }
+}

@@ -9,8 +9,13 @@ binding. Reviewer guidance now moves hidden or tiny details toward the actual
 camera-facing support surface, keeps attachment contact, and avoids enlarging
 the support as a shortcut. Legacy captures still work. Astra reviewed the
 Luna diff and tightened surface-contact wording; 43 focused tests, typecheck,
-formatting, syntax, and diff checks pass. The deterministic renderer browser
-fixture and live quality recheck remain pending.
+formatting, syntax, and diff checks pass. A fresh isolated production build and
+zero-provider revision-bound browser fixture passed in WebGL and forced
+Canvas2D. Both renderer captures reported a normalized camera view facing the
+fixture scene; fruit remained visible, revisions/readiness stayed bound, and
+no unexpected external request occurred. Evidence:
+`docs/evidence/scene-review-camera-view-20260924/`. The temporary server and
+worktree were removed. A live camera-aware quality recheck remains pending.
 
 Sep 24 higher-detail OpenRouter quality run: an isolated production build,
 database migration, and exact-origin malformed-JSON HTTP 400 preflight passed.
