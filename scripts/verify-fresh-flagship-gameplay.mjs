@@ -1995,25 +1995,27 @@ const report = {
   appUrl,
   renderers: {},
 };
-const browser = await chromium.launch({
-  args: [
-    "--no-sandbox",
-    "--use-gl=angle",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
-  ],
-});
 try {
   await mkdir(evidenceDir, { recursive: true });
   const renderers =
     requestedRenderer === "all" ? ["webgl", "software"] : [requestedRenderer];
   for (const renderer of renderers) {
+    const browser = await chromium.launch({
+      args: [
+        "--no-sandbox",
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+      ],
+    });
     try {
       report.renderers[renderer] = await runRenderer(browser, renderer);
     } catch (error) {
       if (error && typeof error === "object" && error.fixtureEvidence)
         report.renderers[renderer] = error.fixtureEvidence;
       throw error;
+    } finally {
+      await browser.close();
     }
   }
   report.passed = true;
@@ -2021,7 +2023,6 @@ try {
   report.error = error instanceof Error ? error.message : String(error);
   process.exitCode = 1;
 } finally {
-  await browser.close();
   await mkdir(evidenceDir, { recursive: true });
   const summaryReport = {
     ...report,

@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 24 combined fresh-gameplay fixture isolation: after a WebGL-pass and
+Canvas2D Undo movement failure, diagnostics showed a roughly 3.8-second gap
+in both RAF and the page heartbeat while Canvas2D drawing stayed below 26 ms.
+A separate software-only run passed the full five→seven→Undo five journey,
+so no deterministic product-renderer defect was established. The fixture now
+launches and closes a separate Chromium process for each renderer, preserving
+its real-input, fresh-observation, movement, contact and report assertions.
+An isolated production build and combined WebGL/Canvas2D run then passed all
+three gameplay phases, including grounded platform contacts, bounce, wins and
+resets; zero provider/model calls ran. Node syntax, Prettier and diff checks
+passed. Temporary browser evidence was removed after worker verification.
+One passing isolated run does not rule out future host-wide scheduling pauses.
+
 Sep 24 owner-visible ChatGPT device challenge: production created an isolated
 anonymous Orbsie acceptance session and returned a real OpenAI device URL/code.
 The code was shown to the owner, but the challenge expired without a grant;
