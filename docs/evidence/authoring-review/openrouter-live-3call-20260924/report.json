@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "outcome": "failed",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 3,
+  "blockedCalls": 0,
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-request-observed",
+    "final-review-response-502"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 200,
+      "requestId": "f3b7c667-6d35-46a6-96d7-de73f06107d1",
+      "clientRunId": "70987146-c747-41d7-9045-8a76043fe6ef",
+      "authoringRunId": "858b1183-08da-4f05-8dc4-2d8d3b7b3a48",
+      "requestedAuthoringRunId": null,
+      "projectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "51d92136-cf3e-418a-a79c-22a85cfb927a",
+      "clientRunId": "70987146-c747-41d7-9045-8a76043fe6ef",
+      "authoringRunId": "858b1183-08da-4f05-8dc4-2d8d3b7b3a48",
+      "requestedAuthoringRunId": "858b1183-08da-4f05-8dc4-2d8d3b7b3a48",
+      "projectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "projectRevision": 15,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "reviewRevision": 15,
+      "reviewImageProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "reviewImageRevision": 15,
+      "structuralObservationProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "structuralObservationRevision": 15,
+      "responseBindingRevision": 17,
+      "responseBindingDigest": "72445646d7db17ae98d8d93ef8451493a23467f9cc1e6992ee80becab1c22c10",
+      "verdict": "revise",
+      "blocked": false
+    },
+    {
+      "ordinal": 3,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "status": 502,
+      "requestId": "8baed5f6-9341-493e-872f-5333b6471ac8",
+      "clientRunId": "70987146-c747-41d7-9045-8a76043fe6ef",
+      "authoringRunId": "858b1183-08da-4f05-8dc4-2d8d3b7b3a48",
+      "requestedAuthoringRunId": "858b1183-08da-4f05-8dc4-2d8d3b7b3a48",
+      "projectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "projectRevision": 17,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "reviewRevision": 17,
+      "reviewImageProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "reviewImageRevision": 17,
+      "structuralObservationProjectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "structuralObservationRevision": 17,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+    "reviewedRevision": 15,
+    "reviewImageRevision": 15,
+    "structuralObservationRevision": 15,
+    "bindingRevision": 17,
+    "bindingDigest": "72445646d7db17ae98d8d93ef8451493a23467f9cc1e6992ee80becab1c22c10",
+    "verdict": "revise"
+  },
+  "finalReview": null,
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "94ebd6f09cbc1430eaba9cb06ec39da0371deeba551c242425e9cc9fd3c5d49f",
+      "bytes": 236881,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "94ebd6f09cbc1430eaba9cb06ec39da0371deeba551c242425e9cc9fd3c5d49f",
+      "privateBytes": 236881
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "993bc440-5908-4a23-9b9f-e5dc7ef46c29",
+      "revision": 15
+    }
+  },
+  "requestIds": {
+    "initial": "f3b7c667-6d35-46a6-96d7-de73f06107d1",
+    "review": "51d92136-cf3e-418a-a79c-22a85cfb927a",
+    "finalReview": "8baed5f6-9341-493e-872f-5333b6471ac8"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 1
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 1
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": {
+    "stage": "final-review",
+    "code": "final-review-http-failure",
+    "status": 502,
+    "errorType": "AcceptanceError"
+  },
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

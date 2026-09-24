@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 live OpenRouter authoring review: a new bounded three-call harness
+(`0eeb1de`) ran against an isolated local production app/database with
+`openai/gpt-6-luna`, standard processing and a 4,096-output-token ceiling.
+Generation committed revision 15; the first visual+structural review requested
+a correction and bound revision 17. The browser sent a final review for that
+exact project/revision/run, but the route returned HTTP 502 after 6.7 seconds.
+There were exactly three live calls and no retry. This is a failed/incomplete
+acceptance, not an accept verdict. The sanitized report is in
+`docs/evidence/authoring-review/openrouter-live-3call-20260924/`. Existing
+terminal logs do not distinguish provider rejection from malformed response or
+semantic validation; a bounded diagnostic improvement is in progress. The
+failure path did not verify revision-17 reload persistence. The harness now
+captures sanitized post-failure scene evidence on future runs (`bcba3ea`).
+
 Sep 24 Android current-artifact acceptance: `scripts/verify-android-current-artifact.mjs`
 repacked the pinned Gateway-generated revision-9 ZIP with the current local
 runtime/CSS and both geometry workers, served it on loopback through ADB reverse,
