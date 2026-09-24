@@ -32,7 +32,7 @@ export async function generateMetadata({
         : `${title} — Revision ${revision} | Orbsie`,
     description,
     alternates: { canonical },
-    robots: { index: false, follow: true },
+    robots: { index: true, follow: true },
     openGraph: {
       title,
       description,

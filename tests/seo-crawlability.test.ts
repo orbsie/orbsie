@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 vi.mock("@/components/orbsie", () => ({ default: () => null }));
+const query = vi.hoisted(() => vi.fn());
+vi.mock("../src/lib/server/auth", () => ({ database: () => ({ query }) }));
 import { metadata } from "../src/app/layout";
 import { metadata as homeMetadata } from "../src/app/page";
 import robots from "../src/app/robots";
@@ -29,15 +31,50 @@ describe("crawlable metadata", () => {
     expect(homeMetadata.alternates?.canonical).toBe("/");
   });
 
-  it("publishes only the intentional homepage URL", () => {
-    expect(sitemap()).toEqual([
+  it("lists only promoted public Orbs alongside the homepage", async () => {
+    vi.stubEnv("DATABASE_URL", "test");
+    query.mockResolvedValueOnce({ rows: [{ id: "public-1" }] });
+    expect(await sitemap()).toEqual([
+      {
+        url: `${ORBSIE_SITE_ORIGIN}/`,
+        changeFrequency: "weekly",
+        priority: 1,
+      },
+      {
+        url: `${ORBSIE_SITE_ORIGIN}/o/public-1`,
+        changeFrequency: "weekly",
+        priority: 0.6,
+      },
+    ]);
+    expect(query.mock.calls.at(-1)?.[0]).toContain(
+      "public_url IS NOT NULL AND published_revision IS NOT NULL",
+    );
+  });
+
+  it("keeps the homepage available without a database", async () => {
+    vi.stubEnv("DATABASE_URL", "");
+    expect(await sitemap()).toEqual([
       {
         url: `${ORBSIE_SITE_ORIGIN}/`,
         changeFrequency: "weekly",
         priority: 1,
       },
     ]);
-    expect(sitemap()[0]).not.toHaveProperty("lastModified");
+  });
+
+  it("does not expose malformed project identifiers or fail on database outages", async () => {
+    vi.stubEnv("DATABASE_URL", "test");
+    query.mockResolvedValueOnce({
+      rows: [{ id: "safe-orb" }, { id: "../private" }, { id: "" }],
+    });
+    expect((await sitemap()).map((entry) => entry.url)).toEqual([
+      `${ORBSIE_SITE_ORIGIN}/`,
+      `${ORBSIE_SITE_ORIGIN}/o/safe-orb`,
+    ]);
+    query.mockRejectedValueOnce(Error("database unavailable"));
+    expect((await sitemap()).map((entry) => entry.url)).toEqual([
+      `${ORBSIE_SITE_ORIGIN}/`,
+    ]);
   });
 
   it("allows share pages to be fetched while excluding APIs", () => {

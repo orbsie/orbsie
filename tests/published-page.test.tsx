@@ -63,7 +63,7 @@ it("does not expose draft or mismatched metadata on legacy releases", async () =
   expect(JSON.stringify(metadata)).not.toContain("Pending title");
 });
 
-it("uses immutable publication metadata for a noindex share page", async () => {
+it("uses immutable publication metadata for an indexable share page", async () => {
   query.mockResolvedValue({
     rows: [
       {
@@ -84,7 +84,7 @@ it("uses immutable publication metadata for a noindex share page", async () => {
   expect(metadata.description).toContain("Artist");
   expect(metadata.description).toContain("revision 7");
   expect(metadata.alternates?.canonical).toBe("https://orbsie.com/o/orb");
-  expect(metadata.robots).toMatchObject({ index: false, follow: true });
+  expect(metadata.robots).toMatchObject({ index: true, follow: true });
   expect(metadata.openGraph).toMatchObject({
     url: "https://orbsie.com/o/orb",
     type: "website",
