@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 24 authoring-review diagnostics: the four-call quality run's sanitized
+report retained verdicts and revisions but lost the reviewer's defect text,
+while its private scene image was removed before Astra inspection. The live
+OpenRouter verifier now records bounded issue counts and own-origin failure
+categories in its sanitized report. When private evidence is requested, it
+writes a fixed-name, mode-0600 findings file outside the repository with only
+bounded review issue summaries; summaries resembling credentials or links are
+omitted. Future workers must keep private findings and the scene-only image
+until Astra reviews them, then remove them. Sixteen focused tests, typecheck,
+syntax, formatting, and diff checks pass; no provider or full E2E call ran.
+The quality cause is still unproven, and the production authoring-review flag
+stays off. A future live run should be tied to a substantive quality-loop
+change, not diagnostics alone.
+
 Sep 24 four-call live OpenRouter quality check: the first isolated setup attempt
 stopped at exact-origin preflight because a backgrounded `next start` died with
 its launcher shell; zero model calls ran. With a foreground server and verified

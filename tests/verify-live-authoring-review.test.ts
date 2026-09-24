@@ -1,12 +1,18 @@
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   authorizeAuthoringReviewCall,
+  classifyOwnOriginRequestFailure,
   configuredLiveCallLimit,
   preflightGenerationOrigin,
+  safePrivateReviewFinding,
   safeReviewResponse,
   summarizeProjectStructure,
   validateReviewBindingRevision,
   validateReviewProgression,
+  writePrivateReviewFindings,
 } from "../scripts/verify-live-authoring-review.mjs";
 
 const PROJECT_ID = "123e4567-e89b-42d3-a456-426614174000";
@@ -582,6 +588,7 @@ describe("live authoring review call budget guard", () => {
       bindingRevision: 3,
       bindingDigest: DIGEST_A,
       remainingCalls: 2,
+      issueCount: null,
     });
     const safe = JSON.stringify(parsed);
     for (const privateValue of [
@@ -591,6 +598,148 @@ describe("live authoring review call budget guard", () => {
       "private user request",
     ])
       expect(safe).not.toContain(privateValue);
+  });
+
+  it("keeps bounded issue counts public and clips private findings to review schema fields", () => {
+    const body = {
+      review: {
+        verdict: "revise",
+        issues: [
+          {
+            summary: ` ${"Shape remains round. ".repeat(20)} `,
+            entityIds: ["private-entity-id"],
+          },
+          {
+            summary: "Skip extra fields",
+            entityIds: [],
+            credential: "private-token",
+          },
+          { summary: "Skip malformed identifiers", entityIds: ["secret/id"] },
+          {
+            summary: "Credential sk-123456789012345678901234 must not persist",
+            entityIds: [],
+          },
+          {
+            summary: "See https://private.example/?token=secret",
+            entityIds: [],
+          },
+          { summary: "A useful finding", entityIds: [] },
+        ],
+        summary: "Do not retain review-wide text",
+        projectId: PROJECT_ID,
+        arbitrary: "do not retain",
+      },
+      requestBody: "private prompt",
+      image: "data:image/png;base64,private-image",
+      credential: "private-key",
+    };
+
+    expect(safeReviewResponse(body).issueCount).toBe(6);
+    const finding = safePrivateReviewFinding(body, "review", 2);
+    expect(finding).toEqual({
+      phase: "review",
+      ordinal: 2,
+      verdict: "revise",
+      issues: [
+        "Shape remains round. ".repeat(20).trim().slice(0, 300),
+        "A useful finding",
+      ],
+    });
+    expect(Object.keys(finding!)).toEqual([
+      "phase",
+      "ordinal",
+      "verdict",
+      "issues",
+    ]);
+    const serialized = JSON.stringify(finding);
+    for (const privateValue of [
+      "private-entity-id",
+      "private-token",
+      "secret/id",
+      "Do not retain review-wide text",
+      "private prompt",
+      "private-image",
+      "private-key",
+      "arbitrary",
+      "sk-123456789012345678901234",
+      "private.example",
+    ])
+      expect(serialized).not.toContain(privateValue);
+    expect(safePrivateReviewFinding(body, "other", 2)).toBeNull();
+    expect(safePrivateReviewFinding(body, "review", 5)).toBeNull();
+
+    const tooMany = safePrivateReviewFinding(
+      {
+        review: {
+          verdict: "accept",
+          issues: Array.from({ length: 20 }, (_, index) => ({
+            summary: `issue-${index}`,
+            entityIds: [],
+          })),
+        },
+      },
+      "final-review",
+      4,
+    );
+    expect(tooMany?.issues).toEqual(
+      Array.from({ length: 8 }, (_, index) => `issue-${index}`),
+    );
+  });
+
+  it("writes only strict bounded findings with private file permissions", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "orbsie-review-private-"));
+    try {
+      await writePrivateReviewFindings(directory, [
+        {
+          phase: "review",
+          ordinal: 2,
+          verdict: "revise",
+          issues: ["Visible root shape"],
+          requestBody: "must not persist",
+          image: "must not persist",
+        },
+      ]);
+      const path = join(directory, "review-findings.json");
+      const saved = await readFile(path, "utf8");
+      expect(JSON.parse(saved)).toEqual([
+        {
+          phase: "review",
+          ordinal: 2,
+          verdict: "revise",
+          issues: ["Visible root shape"],
+        },
+      ]);
+      expect(saved).not.toContain("must not persist");
+      expect(((await stat(path)).mode & 0o777).toString(8)).toBe("600");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("live authoring request failure diagnostics", () => {
+  it("records only a safe route category and recognized browser error code", () => {
+    expect(
+      classifyOwnOriginRequestFailure(
+        "http://127.0.0.1:3100",
+        "http://127.0.0.1:3100/api/generate/review?token=private",
+        "net::ERR_CONNECTION_REFUSED https://secret.example/?key=private",
+      ),
+    ).toEqual({ route: "review", code: "net::ERR_CONNECTION_REFUSED" });
+    expect(
+      classifyOwnOriginRequestFailure(
+        "http://127.0.0.1:3100",
+        "http://127.0.0.1:3100/api/config",
+        "private browser text with no recognized code",
+      ),
+    ).toEqual({ route: "configuration", code: null });
+    expect(
+      classifyOwnOriginRequestFailure(
+        "http://127.0.0.1:3100",
+        "https://secret.example/path?token=private",
+        "net::ERR_FAILED",
+      ),
+    ).toBeNull();
   });
 });
 

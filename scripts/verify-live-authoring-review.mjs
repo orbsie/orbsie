@@ -32,6 +32,10 @@ const FOUR_CALL_APPROVAL_ENV =
   "ORBSIE_LIVE_AUTHORING_REVIEW_FOUR_CALLS_APPROVED";
 const MAX_SCENE_ENTITIES = 160;
 const MAX_PROCEDURAL_PARTS_PER_ENTITY = 32;
+const MAX_REVIEW_FINDINGS = 4;
+const MAX_REVIEW_ISSUES = 8;
+const MAX_REVIEW_ISSUE_SUMMARY_LENGTH = 300;
+const MAX_REQUEST_FAILURE_DETAILS = 16;
 const PART_SHAPES = ["box", "sphere", "cylinder", "cone", "torus", "lathe"];
 const PART_SHAPE_CATEGORIES = [...PART_SHAPES, "absent", "unknown"];
 const PART_SCALE_FACTOR_BINS = [
@@ -638,7 +642,134 @@ export function safeReviewResponse(body) {
       body.remainingCalls <= 2
         ? body.remainingCalls
         : null,
+    issueCount: Array.isArray(review?.issues)
+      ? Math.min(review.issues.length, MAX_REVIEW_ISSUES)
+      : null,
   };
+}
+
+function safeReviewIssueSummaries(issues) {
+  if (!Array.isArray(issues)) return [];
+  const summaries = [];
+  for (const issue of issues.slice(0, MAX_REVIEW_ISSUES)) {
+    if (
+      !issue ||
+      typeof issue !== "object" ||
+      Array.isArray(issue) ||
+      Object.keys(issue).length !== 2 ||
+      !Object.hasOwn(issue, "summary") ||
+      !Object.hasOwn(issue, "entityIds") ||
+      typeof issue.summary !== "string" ||
+      !Array.isArray(issue.entityIds) ||
+      issue.entityIds.length > 16 ||
+      !issue.entityIds.every(
+        (id) => typeof id === "string" && /^[\w-]{1,80}$/.test(id),
+      )
+    )
+      continue;
+    const summary = issue.summary
+      .trim()
+      .slice(0, MAX_REVIEW_ISSUE_SUMMARY_LENGTH);
+    // A provider may echo credentials or links in free-form issue text. Keep
+    // only diagnostic prose that does not resemble an address or bearer token.
+    if (
+      summary &&
+      !/(?:https?:\/\/|www\.|\b\S+@\S+\.\S+\b|\b(?:bearer|authorization|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|password|secret)\b|\b(?:sk[-_]|vck_|vcp_)[A-Za-z0-9_-]{8,}\b|\b[A-Fa-f0-9]{32,}\b|\b[A-Za-z0-9+/_-]{40,}={0,2}\b)/i.test(
+        summary,
+      )
+    )
+      summaries.push(summary);
+  }
+  return summaries;
+}
+
+/** Return only bounded review findings suitable for the opt-in private file. */
+export function safePrivateReviewFinding(body, phase, ordinal) {
+  if (
+    !["review", "final-review"].includes(phase) ||
+    !Number.isSafeInteger(ordinal) ||
+    ordinal < 2 ||
+    ordinal > 4
+  )
+    return null;
+  const review = body?.review;
+  return {
+    phase,
+    ordinal,
+    verdict:
+      review?.verdict === "accept" || review?.verdict === "revise"
+        ? review.verdict
+        : null,
+    issues: safeReviewIssueSummaries(review?.issues),
+  };
+}
+
+/** Persist a fixed-shape findings file beneath the already validated directory. */
+export async function writePrivateReviewFindings(directory, findings) {
+  const boundedFindings = (Array.isArray(findings) ? findings : [])
+    .slice(0, MAX_REVIEW_FINDINGS)
+    .flatMap((finding) => {
+      if (!finding || typeof finding !== "object") return [];
+      const safe = safePrivateReviewFinding(
+        {
+          review: {
+            verdict: finding.verdict,
+            issues: Array.isArray(finding.issues)
+              ? finding.issues
+                  .slice(0, MAX_REVIEW_ISSUES)
+                  .map((summary) => ({ summary, entityIds: [] }))
+              : [],
+          },
+        },
+        finding.phase,
+        finding.ordinal,
+      );
+      return safe ? [safe] : [];
+    });
+  const path = resolve(directory, "review-findings.json");
+  await writeFile(path, `${JSON.stringify(boundedFindings, null, 2)}\n`, {
+    mode: 0o600,
+    flag: "wx",
+  });
+  await chmod(path, 0o600);
+  if (((await stat(path)).mode & 0o777) !== 0o600)
+    throw new Error("Private review findings permissions did not apply.");
+}
+
+/** Categorize an own-origin browser failure without retaining its URL or text. */
+export function classifyOwnOriginRequestFailure(
+  originValue,
+  requestUrlValue,
+  errorText,
+) {
+  let origin;
+  let requestUrl;
+  try {
+    origin = new URL(originValue);
+    requestUrl = new URL(requestUrlValue, origin);
+  } catch {
+    return null;
+  }
+  if (requestUrl.origin !== origin.origin) return null;
+
+  const route =
+    requestUrl.pathname === "/api/generate/review" ||
+    requestUrl.pathname === "/api/chatgpt/review"
+      ? "review"
+      : requestUrl.pathname === "/api/generate" ||
+          requestUrl.pathname.startsWith("/api/generate/") ||
+          requestUrl.pathname === "/api/chatgpt/generate"
+        ? "generation"
+        : requestUrl.pathname === "/api/config"
+          ? "configuration"
+          : "other-app";
+  const match =
+    typeof errorText === "string"
+      ? errorText.match(
+          /^\s*(net::ERR_[A-Z0-9_]{1,64}|ERR_[A-Z0-9_]{1,64}|NS_ERROR_[A-Z0-9_]{1,64})\b/,
+        )
+      : null;
+  return { route, code: match?.[1] ?? null };
 }
 
 function writeSafeReport(path, report) {
@@ -1058,8 +1189,15 @@ async function main() {
       directoryMode: privateEvidenceDirectory ? "0700" : null,
       fileMode: privateEvidenceDirectory ? "0600" : null,
       screenshotsWritten: 0,
+      reviewFindingsStatus: privateEvidenceDirectory ? "pending" : "disabled",
+      reviewFindingsCount: 0,
     },
-    browserActivity: { consoleErrors: 0, pageErrors: 0, requestFailures: 0 },
+    browserActivity: {
+      consoleErrors: 0,
+      pageErrors: 0,
+      requestFailures: 0,
+      requestFailureDetails: [],
+    },
     blockedExternalRequests: 0,
     blockedExternalOrigins: [],
     failure: null,
@@ -1071,6 +1209,7 @@ async function main() {
   let authoringRunId = null;
   const reviewResponses = [];
   const reviewResponsesByOrdinal = new Map();
+  const privateReviewFindings = [];
   let finalReviewResponse = null;
   const requestRecords = new WeakMap();
   const inFlight = new Set();
@@ -1307,8 +1446,22 @@ async function main() {
     });
     page.on("requestfailed", (request) => {
       const url = new URL(request.url());
-      if (url.origin === config.baseOrigin)
+      if (url.origin === config.baseOrigin) {
         report.browserActivity.requestFailures += 1;
+        if (
+          report.browserActivity.requestFailureDetails.length <
+          MAX_REQUEST_FAILURE_DETAILS
+        ) {
+          const failure = request.failure();
+          report.browserActivity.requestFailureDetails.push(
+            classifyOwnOriginRequestFailure(
+              config.baseOrigin,
+              request.url(),
+              failure?.errorText,
+            ),
+          );
+        }
+      }
     });
     page.on("response", (response) => {
       const task = (async () => {
@@ -1333,7 +1486,16 @@ async function main() {
           report.phaseOrder.push(`${call.phase}-response-${call.status}`);
           if (call.status >= 200 && call.status < 300) {
             try {
-              const parsed = safeReviewResponse(await response.json());
+              const responseBody = await response.json();
+              const parsed = safeReviewResponse(responseBody);
+              if (privateEvidenceDirectory) {
+                const finding = safePrivateReviewFinding(
+                  responseBody,
+                  call.phase,
+                  call.ordinal,
+                );
+                if (finding) privateReviewFindings.push(finding);
+              }
               call.verdict = parsed.verdict;
               call.remainingCalls = parsed.remainingCalls;
               call.responseBindingRevision = parsed.bindingRevision;
@@ -1352,6 +1514,7 @@ async function main() {
                   bindingDigest: parsed.bindingDigest,
                   verdict: parsed.verdict,
                   remainingCalls: parsed.remainingCalls,
+                  issueCount: parsed.issueCount,
                 });
               } else {
                 finalReviewResponse = parsed;
@@ -1675,6 +1838,7 @@ async function main() {
       bindingDigest: response.bindingDigest,
       verdict: response.verdict,
       remainingCalls: response.remainingCalls,
+      issueCount: response.issueCount,
     });
 
     stage = "review";
@@ -1756,6 +1920,7 @@ async function main() {
           bindingDigest: currentFinalResponse.bindingDigest,
           verdict: currentFinalResponse.verdict,
           remainingCalls: currentFinalResponse.remainingCalls,
+          issueCount: currentFinalResponse.issueCount,
         };
         report.phaseOrder.push(
           `final-review-verdict-${currentFinalResponse.verdict}`,
@@ -1976,6 +2141,21 @@ async function main() {
     }
   } finally {
     if (browser) await browser.close().catch(() => {});
+    if (privateEvidenceDirectory) {
+      try {
+        await writePrivateReviewFindings(
+          privateEvidenceDirectory,
+          privateReviewFindings,
+        );
+        report.privateEvidence.reviewFindingsStatus = "written";
+        report.privateEvidence.reviewFindingsCount = Math.min(
+          privateReviewFindings.length,
+          MAX_REVIEW_FINDINGS,
+        );
+      } catch {
+        report.privateEvidence.reviewFindingsStatus = "unavailable";
+      }
+    }
     try {
       await writeSafeReport(reportPath, report);
     } catch {
