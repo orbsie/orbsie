@@ -4,11 +4,14 @@ Sep 24 review-only continuation ledger: source `ed6d908` adds a fresh
 `completed` review run bound to an existing scene revision/digest, with three
 review slots and an atomic one-unit claim for free-provider use. The existing
 failed run remains terminal. Astra reviewed the diff; the PostgreSQL ledger
-file passes 11/11, TypeScript and Prettier pass. This is an internal primitive:
-no route or editor action invokes it yet, and no provider call or browser E2E
-was made. The admission helper must check a prior failed run's identity,
-request fingerprint and last completed scene before issuance; then the route
-and client need explicit user-driven continuation.
+file passed 11/11, TypeScript and Prettier passed. Source `467588e` adds an
+admission helper that checks the prior failed run's identity, request
+fingerprint and last completed scene before issuance. Source `1c3b0b2` adds a
+nullable recovery-parent column and unique index, so concurrent duplicate
+requests roll back the second free-trial claim and return a safe conflict.
+PostgreSQL ledger tests pass 13/13, admission tests 13/13, TypeScript and
+Prettier pass; the SQL migration is idempotent in its local test. The route
+and editor action remain open, and no provider call or browser E2E was made.
 
 Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
 actual failed review request from earlier capture/preflight failures. When the

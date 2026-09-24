@@ -57,10 +57,12 @@ older rows below are a historical inventory, not a completion claim.
   with zero automatic model calls; Undo hides the stale action. It does not
   resume the terminal review ledger phase or prove live-provider recovery.
 - The ledger now supports fresh review-only runs against a revision/digest,
-  charging one free trial unit atomically when applicable (`ed6d908`, 11/11
-  PostgreSQL ledger tests). Prior-failed-run admission, the API route and an
-  explicit editor action are still required before this is a user-facing
-  recovery path. No provider call has exercised the new primitive.
+  charging one free trial unit atomically when applicable. A helper verifies
+  the prior failed run's exact identity, request and last committed scene;
+  a unique recovery-parent index prevents duplicate charging (`ed6d908`,
+  `467588e`, `1c3b0b2`; 13/13 PostgreSQL and 13/13 admission tests). The API
+  route and explicit editor action are still required before this is a
+  user-facing recovery path. No provider call has exercised the new primitive.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in
