@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 ChatGPT failure-feedback release: Vercel deployed source commit
+`115830b` to `https://orbsie.com/` (deployment
+`https://orbsie-k5pb3tvfo-grappeggias-projects.vercel.app`). The read-only
+production smoke passed: root 200, protected generation route 401, matching
+player/worker hashes, visible browser canvas, no page errors or writes. Astra
+inspected the landing screenshot. A production synthetic failed-completion
+browser scenario also passed and exercised its retry action with two mocked
+starts and zero external requests. Evidence:
+`docs/evidence/production-release-20260924-chatgpt-feedback/`. This is not a
+live ChatGPT grant or generation acceptance.
+
 Sep 24 ChatGPT failure feedback: the failed device-login completion now carries
 only a bounded, allowlisted failure category through the local session and
 public route. The connection dialog shows a visible retry action and specific

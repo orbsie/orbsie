@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-24T10:30:24.956Z",
+  "sourceCommit": "115830b264d5f8b9530b7503755942d5c3c020a0",
+  "deployment": {
+    "origin": "https://orbsie.com",
+    "id": null,
+    "environment": null,
+    "url": null
+  },
+  "checks": {
+    "root": {
+      "status": "passed",
+      "httpStatus": 200
+    },
+    "generationRunsUnauthorized": {
+      "status": "passed",
+      "httpStatus": 401
+    },
+    "playerRuntime": {
+      "status": "passed",
+      "httpStatus": 200,
+      "expectedSha256": "43b2dd78d37e496152b903f9d4f80b7cd8428b763db3b1137683f073c67f0662",
+      "observedSha256": "43b2dd78d37e496152b903f9d4f80b7cd8428b763db3b1137683f073c67f0662",
+      "bytes": 1919140
+    },
+    "browser": {
+      "status": "passed",
+      "rootHttpStatus": 200,
+      "canvasVisible": true,
+      "promptPlaceholder": "What experience to build?",
+      "pageErrors": [],
+      "nonGetRequests": [],
+      "externalRequests": []
+    },
+    "geometryWorkers": [
+      {
+        "file": "player/generated-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a",
+        "bytes": 844831
+      },
+      {
+        "file": "player/asset-geometry-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "9877556dde2379412a82b81540cef9d942db8ac612cf2e78fc5696978dd165d8",
+        "bytes": 424237
+      },
+      {
+        "file": "modeling/worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "20d7329c7cb37126bff5a127deb3497fbb35e1e948c5ed51f43e541a4397923c",
+        "bytes": 504323
+      },
+      {
+        "file": "modeling/procedural-worker.js",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "57dbba3ebb60804a6e07032ec980a8f502f1656c26fe958af540bb747ddeb68b",
+        "bytes": 498786
+      },
+      {
+        "file": "modeling/emscripten-module.wasm",
+        "status": "passed",
+        "httpStatus": 200,
+        "sha256": "105c3bed22d457e43e3d1c3c1c6959fda62a8fe06f0fc8a985303c3a2be72232",
+        "bytes": 503134
+      }
+    ]
+  },
+  "screenshot": "docs/evidence/production-release-20260924-chatgpt-feedback/landing.png"
+}
