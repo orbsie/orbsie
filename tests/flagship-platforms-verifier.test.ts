@@ -9,6 +9,7 @@ import {
   renderedDimensionsMatchSource,
   sourcePlatformContact,
   sourceLandingEvidence,
+  selectCatalogManifest,
   touchControlLabel,
   transformedAssetDimensions,
 } from "../scripts/lib/flagship-platforms-verifier.mjs";
@@ -22,12 +23,21 @@ const project = JSON.parse(strFromU8(zip["project.json"]));
 // These traces belong to this immutable export, whose runtime used its own
 // catalog bounds. Current-source geometry is covered by catalog-source-bounds.
 const manifest = JSON.parse(strFromU8(zip["assets/catalog/manifest.json"]));
+const repositoryManifest = JSON.parse(
+  readFileSync("assets/catalog/manifest.json", "utf8"),
+);
 const asset = manifest.assets.find(
   (candidate: { id: string }) =>
     candidate.id === "kenney.nature.platform-grass",
 );
 const retained = JSON.parse(
   readFileSync("docs/evidence/flagship-platforms/report.json", "utf8"),
+);
+const touchSnapshotMismatch = JSON.parse(
+  readFileSync(
+    "docs/evidence/publication-flagship-openrouter/platforms-sequential-touch-current/report.json",
+    "utf8",
+  ),
 );
 
 if (!asset) throw new Error("retained flagship catalog asset is missing");
@@ -135,6 +145,60 @@ it("rejects the touch run's late below-platform sample as a false landing", () =
   );
   expect(nearMissEvidence.atContactHeight).toBe(false);
   expect(nearMissEvidence.accepted).toBe(false);
+});
+
+it("uses saved catalog bounds to measure a published touch run from its snapshot", () => {
+  const saved = selectCatalogManifest(manifest, repositoryManifest);
+  const fallback = selectCatalogManifest(null, repositoryManifest);
+  expect(saved.source).toBe("saved ZIP assets/catalog/manifest.json");
+  expect(fallback.source).toBe(
+    "repository assets/catalog/manifest.json fallback",
+  );
+
+  const savedAsset = saved.manifest.assets.find(
+    (candidate: { id: string }) =>
+      candidate.id === "kenney.nature.platform-grass",
+  );
+  const currentAsset = fallback.manifest.assets.find(
+    (candidate: { id: string }) =>
+      candidate.id === "kenney.nature.platform-grass",
+  );
+  const entity = entityFor("platform-1");
+  const stage = touchSnapshotMismatch.runs[0].stages[0];
+  const samples = stage.landingSamples;
+  const acceptedIndex = samples.findIndex(
+    (sample: unknown, index: number) =>
+      index > 0 &&
+      sourceLandingEvidence(samples[index - 1], sample, entity, savedAsset)
+        .accepted,
+  );
+
+  expect(touchSnapshotMismatch.inputMode).toBe("mobile-touch");
+  expect(touchSnapshotMismatch.runs[0].inputMethod).toBe(
+    "mobile CDP multitouch buttons",
+  );
+  expect(stage.landedAt).toBeNull();
+  expect(acceptedIndex).toBeGreaterThan(0);
+
+  const currentSample = samples[acceptedIndex];
+  const previousSample = samples[acceptedIndex - 1];
+  const savedEvidence = sourceLandingEvidence(
+    previousSample,
+    currentSample,
+    entity,
+    savedAsset,
+  );
+  const fallbackEvidence = sourceLandingEvidence(
+    previousSample,
+    currentSample,
+    entity,
+    currentAsset,
+  );
+  expect(savedEvidence.accepted).toBe(true);
+  expect(savedEvidence.currentY).toBeCloseTo(1.440625, 5);
+  expect(savedEvidence.source?.contactY).toBeCloseTo(1.440625, 5);
+  expect(fallbackEvidence.accepted).toBe(false);
+  expect(fallbackEvidence.source?.contactY).toBeCloseTo(1.428125, 5);
 });
 
 it("uses the rendered runtime matrix when a game action changes platform height", () => {

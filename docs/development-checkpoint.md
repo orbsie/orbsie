@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 24 published OpenRouter flagship touch diagnosis: a bounded read-only CDP
+touch replay found that the platform verifier used today's catalog bounds for
+an older exported/published snapshot. The saved ZIP's embedded manifest is now
+the source of contact geometry; the verifier records its SHA-256 and source.
+Nine targeted verifier tests pass, including a captured-trace regression that
+distinguishes true contact Y 1.440625 from the mismatched 1.428125. The
+corrected public run landed on platform 1 and recorded nine carry samples,
+then failed platform 2 after a direction-plus-Jump touch sequence. It made zero
+model, external or mutating requests. The full touch route remains open; the
+published runtime hash differs from the saved ZIP runtime hash. Evidence:
+`docs/evidence/publication-flagship-openrouter/platforms-sequential-touch-current/`
+and `platforms-sequential-touch-snapshot-metadata/`. Astra review found the
+player only 0.036 m from the platform's moving edge before the second jump,
+while the verifier presses Right before Jump with roughly 95 ms of driver
+latency; at 4 m/s, support can be lost in about 9 ms. This is a testable driver
+hypothesis, not yet a proven gameplay-runtime defect.
+
 Sep 24 ChatGPT sign-in tab release: source `beeeda5` deployed Ready as
 `dpl_DRbtSyAhxcDTqyBYBkqqYYBEJSmC`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-e6buf2pu1-grappeggias-projects.vercel.app`).

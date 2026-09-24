@@ -22,6 +22,18 @@ export const DEFAULT_DIMENSION_RELATIVE_TOLERANCE = 0.08;
 export const DEFAULT_DIMENSION_ABSOLUTE_TOLERANCE = 0.015;
 const MATRIX_EPSILON = 1e-9;
 
+export function selectCatalogManifest(snapshotManifest, repositoryManifest) {
+  const manifest = snapshotManifest ?? repositoryManifest;
+  if (!Array.isArray(manifest?.assets))
+    throw new Error("Catalog manifest must contain an assets array.");
+  return {
+    manifest,
+    source: snapshotManifest
+      ? "saved ZIP assets/catalog/manifest.json"
+      : "repository assets/catalog/manifest.json fallback",
+  };
+}
+
 export function touchControlLabel(key) {
   return { w: "Forward", a: "Left", s: "Back", d: "Right", " ": "Jump" }[key];
 }

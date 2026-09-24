@@ -11,7 +11,14 @@ import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { posix as posixPath, resolve, join } from "node:path";
+import {
+  basename,
+  join,
+  posix as posixPath,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import {
@@ -27,6 +34,7 @@ import {
   renderedDimensionsMatchSource,
   sourcePlatformContact,
   sourceLandingEvidence,
+  selectCatalogManifest,
   touchControlLabel,
 } from "./lib/flagship-platforms-verifier.mjs";
 
@@ -135,9 +143,18 @@ for (const entity of platforms) {
       `Unsupported source-contact motion for ${entity.id}: Y-moving platforms require a runtime clock transform.`,
     );
 }
-const catalogManifest = JSON.parse(
-  (await readFile(resolve("assets/catalog/manifest.json"))).toString("utf8"),
-);
+const archivedCatalogBytes = files["assets/catalog/manifest.json"];
+const repositoryCatalogBytes = archivedCatalogBytes
+  ? null
+  : await readFile(resolve("assets/catalog/manifest.json"));
+const { manifest: catalogManifest, source: catalogManifestSource } =
+  selectCatalogManifest(
+    archivedCatalogBytes ? JSON.parse(strFromU8(archivedCatalogBytes)) : null,
+    repositoryCatalogBytes
+      ? JSON.parse(repositoryCatalogBytes.toString("utf8"))
+      : null,
+  );
+const catalogManifestBytes = archivedCatalogBytes ?? repositoryCatalogBytes;
 const catalogAssets = new Map(
   catalogManifest.assets.map((asset) => [asset.id, asset]),
 );
@@ -242,8 +259,17 @@ const report = {
     helperPath: verifierHelperPath,
     helperSha256: verifierHelperSha256,
   },
+  catalogManifest: {
+    source: catalogManifestSource,
+    sha256: sha256(catalogManifestBytes),
+  },
   zip: {
-    path: zipPath,
+    path: (() => {
+      const repoRelativePath = relative(process.cwd(), zipPath);
+      return repoRelativePath.startsWith("..")
+        ? basename(zipPath)
+        : repoRelativePath.split(sep).join("/");
+    })(),
     sha256: sha256(zipBytes),
     bytes: zipBytes.byteLength,
     projectSha256: sha256(projectBytes),
