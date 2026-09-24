@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 23 initial-world camera integration: `dd9bc59` auto-frames committed
+bounds once after a new landing-page build succeeds, using the shared
+WebGL/software navigation command. Manual navigation, project changes,
+playing, errors/recovery and later edits cancel or bypass that candidate.
+The far-world deterministic browser journey passed in both Chromium
+SwiftShader and forced Canvas2D: an object at 12 km appeared automatically
+(5,591 and 48,849 centered teal pixels), then a manual zoom-out and Frame
+restored it. Targeted edit, Play, reload, ZIP export and independent standalone
+playback also passed in each lane with zero provider/external calls. Focused
+navigation tests 21/21, typecheck and production build passed. Evidence:
+`docs/evidence/far-world-browser/auto-frame-20260923-r2/`. The first harness
+attempt used a disallowed `127.0.0.1` dev origin and stopped before canvas;
+the passing rerun used `localhost`. Evidence reports pre-commit HEAD `5316714`;
+the tested diff was committed unchanged as `dd9bc59`. Visual camera movement
+can snap if a build completes after descent; smooth interpolation and review-
+capture framing remain open. This local change is not deployed.
+
 Sep 23 second live OpenRouter authoring-review milestone: an isolated local
 production server and fresh PostgreSQL database ran `openai/gpt-6-luna` with
 standard processing, a 4,096-output-token ceiling, and exactly two permitted
