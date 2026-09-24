@@ -7,20 +7,24 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC`. Live crawler smoke passed the dynamic
-  sitemap with ten promoted public Orbs and one indexable public share page.
-  Earlier signed-out smoke verified matching player/worker hashes and the
-  landing composer. This does not prove model-authored visual quality or the
+  `dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw` at this reconciliation. Read-only
+  root, robots, sitemap, config and trial checks passed; the previous crawler
+  smoke found ten promoted public Orbs and an indexable share page. The latest
+  free-provider 402 UI recovery is locally browser-verified but awaits its own
+  production release. This does not prove model-authored visual quality or the
   full provider E2E matrix.
 - The latest bounded OpenRouter Luna authoring-review run completed four calls
   but falsely accepted a blue-strawberry tree with three oversized berries and
   disconnected stems. Production authoring-review remains off. Gateway credit
   is negative, so further paid Gateway inference has not run.
-- Two real hosted ChatGPT device challenges were shown to the owner on Sep 24
-  and expired without a grant. No ChatGPT inference ran. The requested direct
-  ChatGPT subscription OAuth return to Orbsie remains unverified. Computer use
-  currently reports no Chrome or other browser surface; do not claim access to
-  the owner's signed-in session.
+- The latest hosted ChatGPT device challenge shown to the owner expired
+  without a grant; its private session was cancelled and removed. No ChatGPT
+  inference ran. [Official App Server documentation](https://learn.chatgpt.com/docs/app-server)
+  describes a localhost browser callback and a device-code flow, but does not
+  establish an arbitrary HTTPS callback to Orbsie. The requested direct-return
+  subscription OAuth remains unverified. Computer use currently reports no
+  Chrome or other browser surface; do not claim access to the owner's signed-in
+  session.
 - An isolated combined WebGL/Canvas2D local fixture passed the five→seven→Undo
   five gameplay journey with real input and no model calls after giving each
   renderer its own Chromium process. This is not physical-device or
@@ -31,6 +35,9 @@ older rows below are a historical inventory, not a completion claim.
   source artifacts. A WebGL-allowed replay also passed touch gameplay, but the
   emulator's SwiftShader probe intentionally selected Canvas2D. Physical
   Android and Android WebGL remain unverified.
+- Playwright WebKit 26.6 touch emulation at 390×844 passed signed-out landing
+  and standalone score 7/restart/win/loss with current player files and no
+  overflow or unexpected requests. This is not physical iOS Safari evidence.
 
 ## Historical reconciliation — 2026-09-13
 

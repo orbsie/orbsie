@@ -1,15 +1,30 @@
 # Development checkpoint
 
-Sep 24 current ChatGPT owner-code handoff: a new isolated anonymous Orbsie
-production session was started after the owner offered to use a shown device
-URL/code. Its private storage state is at
-`/home/marcos/.cache/orbsie/provider-tests/chatgpt-owner-current.storage.json`
-(mode 0600), and the challenge expires at `2026-09-24T18:40:32.925Z`. The
-URL/code were given only in chat, never in repo evidence. On the next turn,
-check `/api/chatgpt/status` with that private state before doing anything
-else; if connected, run only the allowed read-only connection checks because
-the hosted runtime does not yet expose an enforceable 4,096-output-token cap.
-If expired/disconnected, cancel the challenge and delete the private state.
+Sep 24 signed-out free-provider 402 recovery: `FREE_PROVIDER_UNAVAILABLE` now
+survives the server-to-store path, preserves the rejected prompt and opens
+provider settings directly without Orbsie email/password login. The settings
+modal suppresses the unusable "Use free prompts" CTA while that failure is
+active. Astra reviewed the Luna diff and visually inspected desktop/mobile
+screenshots from an intercepted, isolated optimized build at 1440×900 and
+390×844. Both passed prompt preservation, connection controls, no overflow,
+one intercepted 402, zero live model/external/unexpected API calls and zero
+page/network errors. Twenty-four focused tests, typecheck and optimized build
+pass. Source commits `e18aa17` and `beae2d5`; evidence:
+`docs/evidence/free-unavailable-browser-20260924/`. Production deployment of
+this latest UI change remains pending at this checkpoint.
+
+The latest owner-visible ChatGPT device challenge also expired without a
+grant before 18:40 UTC. Authenticated status became idle/disconnected, the
+challenge was cancelled, and the mode-0600 private state file was removed.
+Zero ChatGPT model calls ran. Sanitized evidence:
+`docs/evidence/production-hosted-chatgpt/owner-code-followup-20260924-3/`.
+Official
+[Codex App Server documentation](https://learn.chatgpt.com/docs/app-server)
+currently describes the managed browser OAuth callback as a `localhost`
+callback served by app-server and separately documents device-code sign-in.
+The documentation does not establish a supported arbitrary HTTPS callback to
+`orbsie.com`; treat direct-return subscription OAuth as unverified, not as
+implemented or categorically impossible.
 
 Sep 24 free-prompt refund release: source `95f074a` built and deployed Ready
 as `dpl_4ktCbEy1YRGqAa49hG2Ep4EMS2fw`, aliased to `https://orbsie.com/`
@@ -31,8 +46,8 @@ reports the restored remaining count. Other provider failures and the separate
 authoring-review admission path do not use this refund. Astra reviewed the
 Luna diff, ran 22 focused route tests, typecheck, formatting and diff checks,
 and ran both trial-database tests against an isolated PostgreSQL 16 container;
-all passed. The container was removed. Commit `da3b54b`. This source fix is
-not deployed yet; it does not restore funding for free generation.
+all passed. The container was removed. Commit `da3b54b`; the release above
+deployed it but did not restore funding for free generation.
 
 Sep 24 second owner-visible ChatGPT follow-up: after the owner offered to use
 a shown URL/code, a fresh isolated production session received a real OpenAI

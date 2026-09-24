@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-24T18:40:30Z",
+  "origin": "https://orbsie.com",
+  "deviceChallengeIssued": true,
+  "statusAtExpiry": {
+    "http": 200,
+    "lifecycle": "idle",
+    "authStatus": "disconnected"
+  },
+  "cancel": {
+    "http": 200,
+    "lifecycle": "idle",
+    "authStatus": "disconnected"
+  },
+  "privateStateRemoved": true,
+  "chatgptModelCalls": 0,
+  "note": "The owner-visible device code and private session are omitted."
+}
