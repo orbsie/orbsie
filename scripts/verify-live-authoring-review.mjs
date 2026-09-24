@@ -3,9 +3,24 @@
 // local app and server routes; route handling only observes, continues the
 // first two authorized calls, and aborts any later generation/review call.
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  realpath,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import { chromium, expect } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const MODEL = "openai/gpt-6-luna";
@@ -84,6 +99,7 @@ function requireConfiguration(argv) {
   return {
     baseOrigin: url.origin,
     evidenceDirectory: resolve(argv[0]),
+    privateEvidenceDirectory: process.env.ORBSIE_PRIVATE_EVIDENCE_DIR,
     prompt,
     expectedModel: MODEL,
     outputCap: OUTPUT_CAP,
@@ -108,6 +124,86 @@ function writeSafeReport(path, report) {
     mode: 0o600,
     flag: "wx",
   });
+}
+
+function isWithinDirectory(directory, target) {
+  const pathFromDirectory = relative(directory, target);
+  return (
+    pathFromDirectory === "" ||
+    (pathFromDirectory !== ".." &&
+      !pathFromDirectory.startsWith(`..${sep}`) &&
+      !isAbsolute(pathFromDirectory))
+  );
+}
+
+async function preparePrivateEvidenceDirectory(value) {
+  if (value === undefined || value === "") return null;
+  if (!isAbsolute(value))
+    throw new AcceptanceError(
+      "configuration",
+      "private-evidence-directory-must-be-absolute",
+    );
+  const target = resolve(value);
+  let repository;
+  let parent;
+  try {
+    repository = await realpath(fileURLToPath(new URL("../", import.meta.url)));
+    parent = await realpath(dirname(target));
+  } catch {
+    throw new AcceptanceError(
+      "configuration",
+      "private-evidence-directory-parent-unavailable",
+    );
+  }
+  if (
+    isWithinDirectory(repository, target) ||
+    isWithinDirectory(repository, resolve(parent, basename(target)))
+  )
+    throw new AcceptanceError(
+      "configuration",
+      "private-evidence-directory-inside-repository",
+    );
+  try {
+    await lstat(target);
+    throw new AcceptanceError(
+      "configuration",
+      "private-evidence-directory-already-exists",
+    );
+  } catch (error) {
+    if (error instanceof AcceptanceError) throw error;
+    if (error?.code !== "ENOENT")
+      throw new AcceptanceError(
+        "configuration",
+        "private-evidence-directory-unavailable",
+      );
+  }
+  try {
+    await mkdir(target, { recursive: false, mode: 0o700 });
+    await chmod(target, 0o700);
+    if (((await stat(target)).mode & 0o777) !== 0o700)
+      throw new Error("Private directory permissions did not apply.");
+  } catch {
+    throw new AcceptanceError(
+      "configuration",
+      "private-evidence-directory-creation-failed",
+    );
+  }
+  return target;
+}
+
+async function writePrivateScreenshot(directory, filename, png) {
+  const path = `${directory}/${filename}`;
+  try {
+    await writeFile(path, png, { mode: 0o600, flag: "wx" });
+    await chmod(path, 0o600);
+    if (((await stat(path)).mode & 0o777) !== 0o600)
+      throw new Error("Private screenshot permissions did not apply.");
+  } catch {
+    throw new AcceptanceError(
+      "private-evidence",
+      "private-screenshot-write-failed",
+    );
+  }
 }
 
 async function readProjectSummary(page) {
@@ -179,14 +275,45 @@ async function waitForSavedRevision(
   return null;
 }
 
-async function screenshotEvidence(page, label) {
+async function screenshotEvidence(page, label, privateDirectory) {
   // Pixels stay in memory. The report stores only a one-way digest and size.
   const png = await page.screenshot({ fullPage: true, animations: "disabled" });
+  let privatePngWritten = false;
+  let privatePng;
+  if (privateDirectory && label === "connection-model-selection") {
+    privatePng = png;
+    await writePrivateScreenshot(
+      privateDirectory,
+      "connection-model-selection.png",
+      privatePng,
+    );
+    privatePngWritten = true;
+  } else if (
+    privateDirectory &&
+    (label === "review-complete" || label === "revise-bounded-incomplete")
+  ) {
+    // Save only the rendered canvas, excluding prompts and chat responses.
+    privatePng = await page.locator("canvas").screenshot();
+    await writePrivateScreenshot(
+      privateDirectory,
+      "post-review-scene.png",
+      privatePng,
+    );
+    privatePngWritten = true;
+  }
   return {
     label,
     sha256: sha256(png),
     bytes: png.byteLength,
     persisted: false,
+    persistedScope: "full-page-png",
+    privatePngWritten,
+    ...(privatePng
+      ? {
+          privateSha256: sha256(privatePng),
+          privateBytes: privatePng.byteLength,
+        }
+      : {}),
   };
 }
 
@@ -252,6 +379,9 @@ function isInferenceRoute(origin, url) {
 
 async function main() {
   const config = requireConfiguration(process.argv.slice(2));
+  const privateEvidenceDirectory = await preparePrivateEvidenceDirectory(
+    config.privateEvidenceDirectory,
+  );
   const reportPath = `${config.evidenceDirectory}/report.json`;
   await mkdir(dirname(config.evidenceDirectory), { recursive: true });
   await mkdir(config.evidenceDirectory, { recursive: false });
@@ -270,6 +400,13 @@ async function main() {
     calls: [],
     evidence: [],
     storage: {},
+    requestIds: { initial: null, review: null },
+    privateEvidence: {
+      enabled: Boolean(privateEvidenceDirectory),
+      directoryMode: privateEvidenceDirectory ? "0700" : null,
+      fileMode: privateEvidenceDirectory ? "0600" : null,
+      screenshotsWritten: 0,
+    },
     browserActivity: { consoleErrors: 0, pageErrors: 0, requestFailures: 0 },
     blockedExternalRequests: 0,
     blockedExternalOrigins: [],
@@ -349,6 +486,7 @@ async function main() {
         phase,
         route: url.pathname,
         status: null,
+        requestId: null,
         clientRunId: validId(request.headers()["x-orbsie-client-run-id"]),
         authoringRunId: null,
         requestedAuthoringRunId: validId(payload?.runId),
@@ -477,10 +615,14 @@ async function main() {
         const headers = response.headers();
         if (call.phase === "initial-generation") {
           generationResponseStatus = call.status;
+          call.requestId = validId(headers["x-orbsie-request-id"]);
+          report.requestIds.initial = call.requestId;
           authoringRunId = validId(headers["x-orbsie-authoring-run-id"]);
           call.authoringRunId = authoringRunId;
           report.phaseOrder.push(`initial-generation-response-${call.status}`);
         } else if (call.phase === "review") {
+          call.requestId = validId(headers["x-orbsie-request-id"]);
+          report.requestIds.review = call.requestId;
           report.phaseOrder.push(`review-response-${call.status}`);
           if (call.status >= 200 && call.status < 300) {
             try {
@@ -601,9 +743,14 @@ async function main() {
     await expect(modelRow).toHaveCount(1, { timeout: 30000 });
     await modelRow.click();
     await expect(modelRow).toHaveAttribute("aria-pressed", "true");
-    report.evidence.push(
-      await screenshotEvidence(page, "connection-model-selection"),
+    const connectionEvidence = await screenshotEvidence(
+      page,
+      "connection-model-selection",
+      privateEvidenceDirectory,
     );
+    report.evidence.push(connectionEvidence);
+    if (connectionEvidence.privatePngWritten)
+      report.privateEvidence.screenshotsWritten += 1;
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (typeof apiKey !== "string" || apiKey.length < 10)
       throw new AcceptanceError(stage, "openrouter-key-unavailable");
@@ -702,6 +849,8 @@ async function main() {
         stage,
         "initial-generation-missing-authoring-run-id",
       );
+    if (!initialCall.requestId)
+      throw new AcceptanceError(stage, "initial-request-id-invalid-or-missing");
     report.storage.afterGeneration = {
       projectId: validId(generated.projectId),
       revision: safeRevision(generated.revision),
@@ -733,6 +882,10 @@ async function main() {
         "review-http-failure",
         reviewCall.status,
       );
+    if (!reviewCall.requestId)
+      throw new AcceptanceError(stage, "review-request-id-invalid-or-missing");
+    if (reviewCall.requestId === initialCall.requestId)
+      throw new AcceptanceError(stage, "request-ids-not-distinct");
     if (
       !reviewResponse?.verdict ||
       !reviewResponse.scope ||
@@ -794,7 +947,14 @@ async function main() {
       };
       const activity = await readActivityHistory(page);
       report.browserActivity.authoring = activity;
-      report.evidence.push(await screenshotEvidence(page, "review-complete"));
+      const reviewedEvidence = await screenshotEvidence(
+        page,
+        "review-complete",
+        privateEvidenceDirectory,
+      );
+      report.evidence.push(reviewedEvidence);
+      if (reviewedEvidence.privatePngWritten)
+        report.privateEvidence.screenshotsWritten += 1;
       await page.reload({ waitUntil: "domcontentloaded" });
       await expect(page.locator("canvas")).toBeVisible({ timeout: 30000 });
       const reloaded = await waitForSavedRevision(
@@ -845,9 +1005,14 @@ async function main() {
       report.phaseOrder.push("revise-journey-bounded-incomplete");
       const activity = await readActivityHistory(page);
       report.browserActivity.authoring = activity;
-      report.evidence.push(
-        await screenshotEvidence(page, "revise-bounded-incomplete"),
+      const reviseEvidence = await screenshotEvidence(
+        page,
+        "revise-bounded-incomplete",
+        privateEvidenceDirectory,
       );
+      report.evidence.push(reviseEvidence);
+      if (reviseEvidence.privatePngWritten)
+        report.privateEvidence.screenshotsWritten += 1;
       const afterBlockedReview = await readProjectSummary(page);
       report.storage.afterBlockedFinalReview = afterBlockedReview
         ? {
