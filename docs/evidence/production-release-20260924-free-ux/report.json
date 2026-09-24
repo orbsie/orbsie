@@ -13,6 +13,8 @@
     { "path": "/api/trial", "status": 200 }
   ],
   "interceptedProductionBrowserReport": "docs/evidence/free-unavailable-browser-production-20260924/report.json",
+  "postReleaseTests": { "passed": 1789, "skipped": 27 },
+  "gatewayTestKeyCredits": { "http": 200, "balance": "-0.00456495" },
   "modelCalls": 0,
   "note": "Production frontend 402 recovery passed with intercepted responses; funded Gateway inference remains unverified."
 }

@@ -12,7 +12,10 @@ mobile screenshot. Evidence:
 `docs/evidence/production-release-20260924-free-ux/` and
 `docs/evidence/free-unavailable-browser-production-20260924/`. Upstream
 funding/credit remains unresolved, so real free generation and live Gateway
-refund were not retested.
+refund were not retested. The repository-wide Vitest run after the release
+passed 1,789 tests with 27 skipped. A read-only Gateway test-key credits GET
+returned HTTP 200 with balance `-0.00456495`; this credential does not expose
+the server-funded free key's exact balance. No paid inference ran.
 
 Sep 24 signed-out free-provider 402 recovery: `FREE_PROVIDER_UNAVAILABLE` now
 survives the server-to-store path, preserves the rejected prompt and opens
