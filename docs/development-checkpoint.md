@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 ChatGPT local grant retry: with a separate ephemeral PostgreSQL
+database, local optimized app and private browser session, anonymous provider
+session creation and `/api/chatgpt/start` returned HTTP 200. A fresh OpenAI
+device URL/code was shown to the owner. Before its stated expiry, host status
+changed from pending/disconnected to failed/disconnected; the route exposed no
+failure reason. No grant or ChatGPT inference occurred. The attempt was
+cancelled (HTTP 200), and the local server, database, watcher, temporary env
+file and private browser state were removed. Do not reuse that code. Further
+work needs to diagnose the early host failure or start a fresh coordinated
+challenge; the prior attempt does not prove direct subscription OAuth.
+
 Sep 24 post-lathe OpenRouter quality acceptance: one fresh isolated local run
 used exactly three Luna default-tier calls at 4,096 output tokens, with no
 retries. Create, review, and final review all returned HTTP 200. Review bound
