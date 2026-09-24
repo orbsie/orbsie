@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 23 Android standalone current-player check: a previous real OpenRouter
+world ZIP was locally repackaged with the current player build and loaded in
+Android 15 midrange-emulator Chrome with WebGL forced unavailable. A 700 ms
+Forward touch moved the player 2.79 world units; after release, movement
+settled to zero within the following 500 ms. Jump raised the player 0.65
+units. The software renderer stayed playable and made zero external requests.
+The expected Three.js WebGL-context error appeared once during fallback.
+The screenshot exposed compatibility advice overlapping the title and score.
+The rebuilt player CSS now places the advice below the score in portrait and
+above the controls in short landscape viewports, where the redundant footer
+is hidden. Android DOM rectangles and screenshots show no overlap with the
+header, score or controls in both orientations. The current-player touch
+layout script passed portrait/landscape gameplay and synthetic safe-area
+checks after this change. Evidence:
+`docs/evidence/android-current-standalone-20260923/`. This is a local runtime
+repackage, not a fresh provider export, public deployment, or physical-device
+acceptance.
+
 Sep 23 compact landscape advice: on short coarse-pointer landing viewports,
 the compatibility-graphics banner now sits below the prompt composer and the
 duplicate software-renderer status is hidden. The Android 15 emulator Chrome
@@ -18,8 +36,9 @@ percentile remained ~83 ms in portrait and fell from ~100 ms to ~83 ms in
 landscape, so frame pacing is still uneven. Evidence and both screenshots:
 `docs/evidence/android-software-landing-20260923/`. The 866-by-308 landscape
 capture exposed a separate overlap between graphics guidance and the composer;
-that layout issue remains open. These measurements do not prove physical-phone
-performance or automatic recovery from the emulator compositor fault.
+the compact-landscape fix above resolved it. These measurements do not prove
+physical-phone performance or automatic recovery from the emulator compositor
+fault.
 
 Sep 23 graphics failure acceptance: repaired the deterministic production-
 browser script for the current parent-thread authoring activity messages and

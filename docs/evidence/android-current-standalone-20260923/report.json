@@ -1,0 +1,35 @@
+{
+  "source": "local repackaging of previously generated OpenRouter standalone world with current public/player assets",
+  "device": "Android 15 midrange emulator Chrome",
+  "renderer": "software",
+  "ready": true,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625
+  },
+  "forward": {
+    "heldMs": 700,
+    "displacementWorldUnits": 2.7868000000000017,
+    "postReleaseFirst500msWorldUnits": 0.2,
+    "postReleaseSecond500msWorldUnits": 0
+  },
+  "jump": {
+    "heldMs": 120,
+    "heightGainWorldUnits": 0.6457164000000004,
+    "velocityAtHold": 4.000499999999996,
+    "velocityAfter350ms": -2.1990000000000065
+  },
+  "externalRequestOrigins": [],
+  "pageErrors": [
+    "THREE.WebGLRenderer: Error creating WebGL context."
+  ],
+  "screenshotBeforeLayoutFix": "standalone-android-software-portrait.png",
+  "screenshotsAfterLayoutFix": [
+    "standalone-android-software-portrait-fixed.png",
+    "standalone-android-software-landscape-fixed.png"
+  ],
+  "liveModelCalls": 0,
+  "publicationVerified": false,
+  "physicalDeviceVerified": false
+}

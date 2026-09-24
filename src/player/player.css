@@ -235,7 +235,7 @@ main.touch-layout footer {
   padding: 10px 14px;
 }
 .graphics-player-error:has(.is-advisory) {
-  top: 64px;
+  top: calc(144px + var(--player-safe-top));
   transform: translateX(-50%);
   width: min(360px, calc(100% - 32px));
   min-width: 0;
@@ -315,6 +315,13 @@ main.touch-layout footer {
   line-height: 1.4;
 }
 @media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  main.touch-layout footer {
+    display: none;
+  }
+  .graphics-player-error:has(.is-advisory) {
+    top: auto;
+    bottom: calc(86px + var(--player-safe-bottom));
+  }
   .world-navigation-controls {
     top: auto;
     right: auto;

@@ -176,7 +176,7 @@ function assertTouchLayout(layout, label, safeInsets = null) {
     for (const element of [
       layout.header,
       layout.score,
-      layout.footer,
+      ...(layout.footer.display === "none" ? [] : [layout.footer]),
       layout.controls,
     ]) {
       assert(
@@ -241,7 +241,9 @@ function assertSafeAreaShift(base, safe, expected, label) {
   assert(Math.abs(safe.header.left - base.header.left - left) < 1.5);
   assert(Math.abs(base.header.right - safe.header.right - right) < 1.5);
   assert(Math.abs(base.score.right - safe.score.right - right) < 1.5);
-  assert(Math.abs(base.footer.bottom - safe.footer.bottom - bottom) < 1.5);
+  assert.equal(safe.footer.display, base.footer.display);
+  if (base.footer.display !== "none")
+    assert(Math.abs(base.footer.bottom - safe.footer.bottom - bottom) < 1.5);
   assert(Math.abs(base.controls.bottom - safe.controls.bottom - bottom) < 1.5);
 }
 
