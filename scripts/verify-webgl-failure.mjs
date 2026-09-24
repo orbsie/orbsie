@@ -169,6 +169,53 @@ async function openGraphicsOptions(page) {
   if (await summary.count()) await summary.click();
 }
 
+async function inspectSoftwareLandingPlanet(page) {
+  return page.locator(".software-world canvas").evaluate((canvas) => {
+    if (!(canvas instanceof HTMLCanvasElement)) return null;
+    const context = canvas.getContext("2d");
+    if (!context || !canvas.width || !canvas.height) return null;
+    const { data, width, height } = context.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    let pixels = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = Math.floor(height * 0.18); y < height * 0.88; y++) {
+      for (let x = Math.floor(width * 0.12); x < width * 0.88; x++) {
+        const offset = (y * width + x) * 4;
+        const red = data[offset];
+        const green = data[offset + 1];
+        const blue = data[offset + 2];
+        if (
+          red < 145 &&
+          green > 100 &&
+          blue > 105 &&
+          green - red > 35 &&
+          blue - red > 35
+        ) {
+          pixels += 1;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    return {
+      canvas: { width, height },
+      pixelSignature:
+        "R<145, G>100, B>105, G-R>35 and B-R>35 within the central landing viewport",
+      pixels,
+      bounds: pixels > 0 ? { minX, minY, maxX, maxY } : undefined,
+    };
+  });
+}
+
 const browser = await chromium.launch({
   args: [
     "--no-sandbox",
@@ -199,6 +246,16 @@ try {
   await expect(failurePage.locator(".graphics-error")).toContainText(
     "Your world is playable",
   );
+  let softwarePlanet;
+  await expect
+    .poll(
+      async () => {
+        softwarePlanet = await inspectSoftwareLandingPlanet(failurePage);
+        return softwarePlanet?.pixels ?? 0;
+      },
+      { timeout: 20000 },
+    )
+    .toBeGreaterThan(5000);
   const failurePrompt = failurePage.locator("#prompt");
   await failurePrompt.fill("Keep this draft while graphics recover");
   const failureCreate = failurePage.getByRole("button", {
@@ -226,6 +283,7 @@ try {
   report.checks.forcedFailure = {
     visibleAccessibleMessage: true,
     softwareFallbackVisible: true,
+    softwarePlanet,
     createRemainsEnabled: true,
     retryStillUsesSoftwareFallback: true,
     draftRetained: true,
@@ -383,7 +441,11 @@ try {
   await activePrompt.fill("Keep this active generation draft");
   await activePage.getByRole("button", { name: "Create", exact: true }).click();
   await activeFixture.generationStarted;
-  await expect(activePage.locator(".building-message")).toBeVisible();
+  const activeActivity = activePage.locator(
+    '.authoring-activity-message[role="status"]',
+  );
+  await expect(activeActivity).toBeVisible();
+  await expect(activeActivity).toContainText("Waiting for a response");
   const injected = await triggerRendererError(
     activePage,
     "Synthetic renderer failure during generation.",
@@ -392,10 +454,27 @@ try {
   await expect(activePage.locator(".graphics-error")).toContainText(
     "Synthetic renderer failure during generation.",
   );
-  await expect(activePage.locator(".building-message")).toHaveCount(0);
+  const cancelledActivity = activePage.locator(
+    '.authoring-activity-message[role="status"].is-cancelled',
+  );
+  await expect(cancelledActivity).toContainText(
+    "Stopped. Finished objects are safe.",
+  );
+  await expect(cancelledActivity).toBeVisible();
+  await expect(
+    activePage.locator(
+      '.authoring-activity-message[role="status"].is-waiting, .authoring-activity-message[role="status"].is-constructing, .authoring-activity-message[role="status"].is-preparing',
+    ),
+  ).toHaveCount(0);
+  await expect(
+    activePage.getByRole("button", { name: "Stop", exact: true }),
+  ).toHaveCount(0);
   await expect(activePrompt).toHaveValue("Keep this active generation draft");
   activeFixture.releaseGeneration();
   report.checks.activeGenerationFailure = {
+    activeStatusAppeared: true,
+    activeStatusClearedAfterRendererFailure: true,
+    cancellationStatusVisible: true,
     stopsGeneration: true,
     persistentMessage: true,
     draftRetained: true,

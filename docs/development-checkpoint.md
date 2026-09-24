@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 graphics failure acceptance: repaired the deterministic production-
+browser script for the current parent-thread authoring activity messages and
+added a direct software-canvas planet pixel check. The local production run
+passed fallback visibility, fatal guidance, explicit retry/recovery, trial
+preflight, active-generation cancellation and normal readiness with two
+synthetic generation requests, zero live model calls, zero external requests
+and zero unexpected page errors. Report:
+`docs/evidence/webgl-failure-acceptance-20260923-r3/report.json`. A read-only
+Vercel AI Gateway model-list request returned HTTP 200 with `openai/gpt-6-luna`
+listed; that does not verify account credit or paid inference. Computer use
+still enumerates no Chrome browser surfaces. The latest ChatGPT device
+challenge expired without a grant.
+
 Sep 23 software landing visual fix: the forced-WebGL-failure renderer now
 draws a prominent planet, stars and dark sky during landing/descent rather
 than a cream backdrop with a faint ellipse. The older workspace/play draw
