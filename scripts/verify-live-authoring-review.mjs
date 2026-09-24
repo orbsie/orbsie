@@ -4,7 +4,7 @@
 // first two authorized calls, and aborts any later generation/review call.
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { chromium, expect } from "@playwright/test";
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
@@ -253,6 +253,7 @@ function isInferenceRoute(origin, url) {
 async function main() {
   const config = requireConfiguration(process.argv.slice(2));
   const reportPath = `${config.evidenceDirectory}/report.json`;
+  await mkdir(dirname(config.evidenceDirectory), { recursive: true });
   await mkdir(config.evidenceDirectory, { recursive: false });
 
   const report = {
