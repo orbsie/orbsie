@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 24 follow-up OpenRouter review: a new three-call isolated browser run
+completed without HTTP error after adding allowlisted review failure kinds
+(`d2ae11c`; targeted tests 10/10, typecheck and production build passed).
+The first visual+structural review corrected revision 14 to revision 16; the
+final review checked that exact corrected revision and returned `revise`, so
+acceptance remains **bounded-incomplete**. Revision 16 survived reload, the
+provider key was absent from browser storage, and no external browser request
+was allowed. The private screenshot was visually inspected; the shapes are
+simple and the model identified a remaining issue. Sanitized report:
+`docs/evidence/authoring-review/openrouter-live-3call-diagnostic-20260924/`.
+The earlier 502 did not reproduce, so its exact cause remains unknown. The
+old private scene capture included composited UI despite being called a canvas
+screenshot; the harness now temporarily hides overlays and a no-model-call
+browser check confirmed a scene-only image and restored composer. Do not use
+the older private screenshot as privacy-isolated canvas evidence.
+
 Sep 24 live OpenRouter authoring review: a new bounded three-call harness
 (`0eeb1de`) ran against an isolated local production app/database with
 `openai/gpt-6-luna`, standard processing and a 4,096-output-token ceiling.

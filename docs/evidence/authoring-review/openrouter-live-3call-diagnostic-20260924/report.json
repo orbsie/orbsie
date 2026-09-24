@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "outcome": "bounded-incomplete",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 3,
+  "blockedCalls": 0,
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-request-observed",
+    "final-review-response-200",
+    "final-review-verdict-revise",
+    "final-review-revise-bounded-incomplete"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 200,
+      "requestId": "89d10bf6-a0f2-469e-93e2-66130d4ca256",
+      "clientRunId": "def77958-529c-489e-939f-efc7c46cbc7d",
+      "authoringRunId": "bd3620a8-a809-4f98-b818-f35757b729d8",
+      "requestedAuthoringRunId": null,
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "cb973195-b4de-4d33-afaf-310905bfe95b",
+      "clientRunId": "def77958-529c-489e-939f-efc7c46cbc7d",
+      "authoringRunId": "bd3620a8-a809-4f98-b818-f35757b729d8",
+      "requestedAuthoringRunId": "bd3620a8-a809-4f98-b818-f35757b729d8",
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "projectRevision": 14,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "reviewRevision": 14,
+      "reviewImageProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "reviewImageRevision": 14,
+      "structuralObservationProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "structuralObservationRevision": 14,
+      "responseBindingRevision": 16,
+      "responseBindingDigest": "da00f21e92fb3f66448c1d2f7df47f85a1cd2b0cda4cbd6067283b604127d47a",
+      "verdict": "revise",
+      "blocked": false
+    },
+    {
+      "ordinal": 3,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "df9894df-f478-4318-b11e-55ef9edd964b",
+      "clientRunId": "def77958-529c-489e-939f-efc7c46cbc7d",
+      "authoringRunId": "bd3620a8-a809-4f98-b818-f35757b729d8",
+      "requestedAuthoringRunId": "bd3620a8-a809-4f98-b818-f35757b729d8",
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "projectRevision": 16,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "reviewRevision": 16,
+      "reviewImageProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "reviewImageRevision": 16,
+      "structuralObservationProjectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "structuralObservationRevision": 16,
+      "responseBindingRevision": 16,
+      "responseBindingDigest": "da00f21e92fb3f66448c1d2f7df47f85a1cd2b0cda4cbd6067283b604127d47a",
+      "verdict": "revise",
+      "blocked": false
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+    "reviewedRevision": 14,
+    "reviewImageRevision": 14,
+    "structuralObservationRevision": 14,
+    "bindingRevision": 16,
+    "bindingDigest": "da00f21e92fb3f66448c1d2f7df47f85a1cd2b0cda4cbd6067283b604127d47a",
+    "verdict": "revise"
+  },
+  "finalReview": {
+    "phase": "final-review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+    "reviewedRevision": 16,
+    "reviewImageRevision": 16,
+    "structuralObservationRevision": 16,
+    "bindingRevision": 16,
+    "bindingDigest": "da00f21e92fb3f66448c1d2f7df47f85a1cd2b0cda4cbd6067283b604127d47a",
+    "verdict": "revise"
+  },
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "a53c05a62f1928cc2e08dd5a7f0bb6f0dd044d383682764e2021fdd90b6a99ab",
+      "bytes": 222245,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "a53c05a62f1928cc2e08dd5a7f0bb6f0dd044d383682764e2021fdd90b6a99ab",
+      "privateBytes": 222245
+    },
+    {
+      "label": "final-review-bounded-incomplete",
+      "sha256": "70a04a57682c8ef350ad6d9aa9aac7cd810f5035c76d44d13bbfffe9c80a24d8",
+      "bytes": 148480,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "70a04a57682c8ef350ad6d9aa9aac7cd810f5035c76d44d13bbfffe9c80a24d8",
+      "privateBytes": 148480
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "revision": 14
+    },
+    "afterFinalReview": {
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "revision": 16
+    },
+    "afterReload": {
+      "projectId": "93a3344b-d67d-4459-8400-ddbf112fe65c",
+      "revision": 16,
+      "keyPersisted": false,
+      "recovered": true
+    }
+  },
+  "requestIds": {
+    "initial": "89d10bf6-a0f2-469e-93e2-66130d4ca256",
+    "review": "cb973195-b4de-4d33-afaf-310905bfe95b",
+    "finalReview": "df9894df-f478-4318-b11e-55ef9edd964b"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 2
+  },
+  "browserActivity": {
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "requestFailures": 1,
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": true,
+      "reviewIncomplete": false,
+      "reviewPartial": true,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": null,
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

@@ -328,8 +328,18 @@ async function screenshotEvidence(page, label, privateDirectory) {
       label === "final-review-bounded-incomplete" ||
       label === "review-failed")
   ) {
-    // Save only the rendered canvas, excluding prompts and chat responses.
-    privatePng = await page.locator("canvas").screenshot();
+    // The canvas fills the viewport, so an ordinary element screenshot also
+    // captures composited chat/UI overlays. Hide them without changing layout
+    // while recording the scene image, then restore the page immediately.
+    const sceneOnlyStyle = await page.addStyleTag({
+      content:
+        "body * { visibility: hidden !important; } canvas { visibility: visible !important; }",
+    });
+    try {
+      privatePng = await page.locator("canvas").screenshot();
+    } finally {
+      await sceneOnlyStyle.evaluate((element) => element.remove());
+    }
     await writePrivateScreenshot(
       privateDirectory,
       label === "review-failed"
