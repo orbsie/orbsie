@@ -1,0 +1,85 @@
+{
+  "mode": "exported-zip-android-solid-wall-acceptance",
+  "startedAt": "2026-09-24T14:24:17.711Z",
+  "fixture": {
+    "zipSha256": "93b16bd69d64288ec6385f702d90d6b6549bd96284c6abadbe3ecc068808caa0",
+    "bytes": 1114173,
+    "fileCount": 97,
+    "title": "Create a bounded box wall with a collect…",
+    "revision": 6,
+    "wallId": "fixture-solid-wall",
+    "behindWallCollectibleId": "fixture-behind-wall"
+  },
+  "device": {
+    "emulatorStartedByHarness": true,
+    "id": "emulator-5554",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome",
+    "physicalDeviceProof": false,
+    "reusedInitialBlankTab": true
+  },
+  "renderer": "Canvas2D forced by denying WebGL context requests",
+  "wallApproachControl": {
+    "accessibleLabel": "Back",
+    "mappedKey": "s",
+    "fixtureDirection": "+Z toward the authored wall from spawn"
+  },
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "expectedWebglInitializationErrors": 2,
+  "checks": {
+    "readySolidWall": true,
+    "visibleRenderedScene": true,
+    "noViewportOverflow": true,
+    "freshWallContact": true,
+    "playerRemainsBeforeWallFace": true,
+    "scoreElevenAndNoRearCollectible": true
+  },
+  "cookiesBefore": 0,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false,
+    "verticalOverflow": false
+  },
+  "blocking": {
+    "baselineAtMs": 4222.4,
+    "contactAtMs": 6092.1,
+    "renderer": "software",
+    "playerCenter": [
+      2.455,
+      0.42,
+      6.724
+    ],
+    "wallNearFaceZ": 6.944,
+    "maximumFrontPlayerZ": 6.844,
+    "wallContact": true,
+    "score": 11,
+    "behindWallCollected": false
+  },
+  "cookiesAfter": 0,
+  "blockedWebglRequests": 3,
+  "status": "passed",
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "newTabClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-24T14:25:00.100Z"
+}

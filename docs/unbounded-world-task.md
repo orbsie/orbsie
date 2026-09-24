@@ -57,10 +57,12 @@ contacts to game rules. Unit tests cover pass-through without opt-in, blocking,
 sliding, jumping, and distant transformed walls. A deterministic headless
 browser fixture has also verified an authored bounded wall in both renderers,
 touch and keyboard input, and downloaded offline playback; see
-`docs/evidence/solid-wall-browser/`. This is not proof of physical containment
+`docs/evidence/solid-wall-browser/`. Android 15 emulator Chrome also passed
+touch blocking in the exported software-rendered player; see
+`docs/evidence/android-solid-wall/`. This is not proof of physical containment
 for an island mesh or cliff: those remain visual geometry, and a conservative
-axis-aligned box can overblock irregular or rotated shapes. Physical Android
-and live model-authored wall acceptance remain open.
+axis-aligned box can overblock irregular or rotated shapes. Physical-device,
+Android WebGL, and live model-authored wall acceptance remain open.
 
 Use sequential bounded handoffs rather than a single renderer rewrite:
 

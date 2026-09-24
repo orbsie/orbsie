@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 Android exported-wall acceptance: the `droidlm_api35_midrange` Android
+15 emulator's Chrome 124 opened the freshly exported deterministic wall ZIP
+through a read-only local server. With WebGL deliberately unavailable, the
+actual Canvas2D player rendered the wall and touch controls at 412×786 without
+viewport overflow. Holding the wall-directed Back touch reached a fresh wall
+contact, scored 11, and left the player center at z=6.724 before the wall face
+at z=6.944; the rear collectible stayed uncollected. No model, generation, or
+external request ran. Astra inspected both screenshots and the bounded report;
+syntax, formatting, and cleanup checks pass. Evidence:
+`docs/evidence/android-solid-wall/`. Chrome's first cold CDP attachments were
+unstable before the app loaded; the verifier waits for a stable initial tab and
+reuses it. The final run passed and stopped the emulator/ADB mappings. This is
+emulator software-renderer evidence, not physical-device or Android WebGL
+acceptance.
+
 Sep 24 solid-wall browser acceptance: the committed opt-in wall behavior now
 passes one deterministic production-build fixture in the real editor. WebGL
 keyboard and forced-software touch each blocked a ready wall, fired its
