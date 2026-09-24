@@ -1,0 +1,197 @@
+{
+  "status": "passed",
+  "scope": "A deterministic local browser journey creates a grouped entity at 12 km, frames it in the editor, edits its geometry, reloads saved state, exports a ZIP, and opens that ZIP in an isolated standalone player.",
+  "sourceCommit": "32c327292dd9d79342c5892eed6f24a7a71d63d1",
+  "appUrl": "http://localhost:3001",
+  "stableIds": {
+    "group": "far-world-group-12km",
+    "entity": "far-world-marker-12km"
+  },
+  "worldPositionMeters": [
+    12000,
+    0,
+    0
+  ],
+  "providerCalls": 0,
+  "externalRequests": [],
+  "unexpectedLocalApiRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "assumptions": [
+    "The browser harness supplies deterministic NDJSON responses to the editor's /api/generate endpoint; no provider inference is performed.",
+    "The software path forces HTML canvas WebGL context creation to return null so the product selects its Canvas2D fallback."
+  ],
+  "limitations": [
+    "WebGL runs under Chromium SwiftShader; this is not native GPU evidence.",
+    "The standalone runtime is verified to load and respond to its restart control, and its ZIP project retains the 12 km group. The player starts at the origin, so this does not demonstrate gameplay traversal to 12 km.",
+    "No physical mobile, growing-world performance, memory, or live provider acceptance is claimed."
+  ],
+  "renderers": {
+    "webgl-swiftshader": {
+      "renderer": "webgl-swiftshader",
+      "forceSoftware": false,
+      "generationRequests": 2,
+      "generationSelections": [
+        null,
+        "far-world-marker-12km"
+      ],
+      "apiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ],
+      "unexpectedLocalApiRequests": [],
+      "blockedExternalRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "checks": {
+        "deterministicFarWorldCreated": true,
+        "navigationFramedFarContent": true,
+        "editedAtFarWorldWithStableIdAndCoordinates": true,
+        "localReloadRetainsStableIdAndCoordinates": true,
+        "zipProjectRetainsStableIdAndCoordinates": true,
+        "independentStandaloneReadyAndInteractive": true,
+        "standaloneHasNoEditorApiOrExternalRequests": true,
+        "noProviderOrExternalRequests": true
+      },
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "navigationVisibility": {
+        "canvasBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "pixelDeltaThreshold": 60,
+        "changedPixels": 25373,
+        "minimumChangedPixels": 5000,
+        "beforeMarkerPixels": 0,
+        "region": "center 30% x 60% of the rendered canvas",
+        "pixelSignature": "G>150, B>150, B-R>30, G-R>30 for fixture tint #a1f0d7",
+        "markerPixels": 2668,
+        "minimumMarkerPixels": 500,
+        "markerBounds": {
+          "minX": 384,
+          "minY": 402,
+          "maxX": 750,
+          "maxY": 602
+        }
+      },
+      "zip": {
+        "bytes": 1100799,
+        "projectId": "1f2952d5-ce12-487c-ac1f-eabe70860045",
+        "revision": 6,
+        "projectSHA256": "0a910095a442d4ddf7ad88efc861889a3595a3194932438f072bd30712e442d9"
+      },
+      "standalone": {
+        "renderer": "WebGL / Chromium SwiftShader",
+        "projectServed": true,
+        "runtimeServed": true,
+        "editorApiRequests": [],
+        "externalRequests": []
+      },
+      "localApiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ]
+    },
+    "software-fallback": {
+      "renderer": "software-fallback",
+      "forceSoftware": true,
+      "generationRequests": 2,
+      "generationSelections": [
+        null,
+        "far-world-marker-12km"
+      ],
+      "apiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ],
+      "unexpectedLocalApiRequests": [],
+      "blockedExternalRequests": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "checks": {
+        "deterministicFarWorldCreated": true,
+        "navigationFramedFarContent": true,
+        "editedAtFarWorldWithStableIdAndCoordinates": true,
+        "localReloadRetainsStableIdAndCoordinates": true,
+        "zipProjectRetainsStableIdAndCoordinates": true,
+        "independentStandaloneReadyAndInteractive": true,
+        "standaloneHasNoEditorApiOrExternalRequests": true,
+        "noProviderOrExternalRequests": true
+      },
+      "actualRenderer": "software canvas fallback",
+      "navigationVisibility": {
+        "canvasBounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 900
+        },
+        "pixelDeltaThreshold": 60,
+        "changedPixels": 49174,
+        "minimumChangedPixels": 5000,
+        "beforeMarkerPixels": 0,
+        "region": "center 30% x 60% of the rendered canvas",
+        "pixelSignature": "G>150, B>150, B-R>30, G-R>30 for fixture tint #a1f0d7",
+        "markerPixels": 48849,
+        "minimumMarkerPixels": 500,
+        "markerBounds": {
+          "minX": 384,
+          "minY": 227,
+          "maxX": 759,
+          "maxY": 630
+        }
+      },
+      "zip": {
+        "bytes": 1100803,
+        "projectId": "c819a674-08a2-40a6-949f-fa289960a4c3",
+        "revision": 6,
+        "projectSHA256": "b2dea1524e86377c4571fd7a49f34de619ac59d0bbfab075359a53b1fbf9b888"
+      },
+      "standalone": {
+        "renderer": "software canvas fallback",
+        "projectServed": true,
+        "runtimeServed": true,
+        "editorApiRequests": [],
+        "externalRequests": []
+      },
+      "localApiPaths": [
+        "/api/trial",
+        "/api/config",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/generate",
+        "/api/trial",
+        "/api/trial",
+        "/api/config"
+      ]
+    }
+  }
+}

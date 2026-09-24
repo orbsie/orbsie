@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 23 far-world deterministic browser acceptance: `scripts/verify-far-world-persistence.mjs`
+ran against the local production build with fixture-intercepted generation in
+Chromium SwiftShader WebGL and forced software Canvas. Each lane created a group
+and entity at 12 km, framed the object with visible pixel evidence, edited its
+geometry while preserving ID and coordinates, reloaded the local project,
+exported a ZIP, and opened the same snapshot in an isolated standalone server
+and browser context. Both passed with two fixture requests, zero model calls,
+external requests or page errors. Evidence:
+`docs/evidence/far-world-browser/acceptance-20260923-r6/`. Astra reviewed the
+worker's first pass, required direct visibility assertions, calibrated them
+against the actual WebGL and software screenshots, and reran the final script.
+The published player starts at the origin, so this does not demonstrate a
+playable 12 km traversal. Native GPU, growing-world memory/frame-time,
+physical mobile and live provider far-world acceptance remain open. A fresh
+read-only Gateway credit check still returned -0.0033684; no inference was run.
+The owner-shared ChatGPT device code expired without a grant.
+
 Sep 23 OpenRouter browser OAuth diagnosis: `Connect with OpenRouter` from
 the local app navigated to OpenRouter's documented PKCE authorization route
 with a localhost callback and S256 challenge. In the accessible Chrome profile,
