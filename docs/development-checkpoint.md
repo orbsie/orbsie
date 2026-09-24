@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 fresh ChatGPT grant attempt after the continuation change: an isolated
+Docker PostgreSQL database, local production app, and private browser session
+issued a real OpenAI device-code challenge. The URL/code were shown to the
+owner in chat, but the challenge expired without a grant. No ChatGPT inference
+ran. The local two-call Luna/standard-tier harness passed its no-model
+preflight only. The isolated ChatGPT host logout returned HTTP 200, the Vercel
+Sandbox list shows the project hosts stopped, the local app/database were
+stopped, and the temporary private environment/browser-state files removed.
+No fresh code remains active. Browser computer use still listed no Chrome
+surfaces. A new challenge requires a coordinated owner action and separate
+live acceptance run; direct-return subscription OAuth remains unproven.
+
 Sep 24 partial-review continuation: final `revise` results now put a concrete,
 bounded finding into the parent conversation, save it when message capacity
 allows, and offer an explicit button that drafts a follow-up prompt without
