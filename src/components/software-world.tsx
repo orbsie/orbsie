@@ -104,6 +104,31 @@ export type SoftwareGeometryEntry = {
   sourceColor?: string;
 };
 
+type SoftwareWorldFixtureDiagnostics = typeof globalThis & {
+  __ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_REQUESTED__?: boolean;
+  __ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_READ__?: () => {
+    renderer: "software";
+    mounted: boolean;
+    canvasConnected: boolean;
+    playing: boolean;
+    phase: string;
+    documentVisibility: DocumentVisibilityState;
+    documentHasFocus: boolean;
+    loopStopped: boolean;
+    frameScheduled: boolean;
+    frameCount: number;
+    lastFrameAtMs: number | null;
+    lastFrameAgeMs: number | null;
+    observationCount: number;
+    lastObservationAtMs: number | null;
+    runtimeError: {
+      name: string;
+      message: string;
+      stack: string | null;
+    } | null;
+  };
+};
+
 const localSoftwareBounds = new WeakMap<
   THREE.BufferGeometry,
   THREE.Box3 | null
@@ -2313,14 +2338,67 @@ export default function SoftwareWorld({
     let frame = 0;
     let last = performance.now();
     let stopped = false;
-    const reportRuntimeError = () => {
+    let mounted = true;
+    let frameScheduled = false;
+    let frameCount = 0;
+    let lastFrameAtMs: number | null = null;
+    let observationCount = 0;
+    let lastObservationAtMs: number | null = null;
+    let runtimeError: {
+      name: string;
+      message: string;
+      stack: string | null;
+    } | null = null;
+    const fixtureDiagnostics = globalThis as SoftwareWorldFixtureDiagnostics;
+    const collectFixtureDiagnostics =
+      fixtureDiagnostics.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_REQUESTED__ ===
+      true;
+    if (collectFixtureDiagnostics)
+      fixtureDiagnostics.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_READ__ = () => {
+        const now = performance.now();
+        return {
+          renderer: "software",
+          mounted,
+          canvasConnected: canvas.isConnected,
+          playing: useOrb.getState().playing,
+          phase: useOrb.getState().phase,
+          documentVisibility: document.visibilityState,
+          documentHasFocus: document.hasFocus(),
+          loopStopped: stopped,
+          frameScheduled,
+          frameCount,
+          lastFrameAtMs,
+          lastFrameAgeMs:
+            lastFrameAtMs === null ? null : Math.max(0, now - lastFrameAtMs),
+          observationCount,
+          lastObservationAtMs,
+          runtimeError,
+        };
+      };
+    const reportRuntimeError = (error?: unknown) => {
       if (stopped) return;
       stopped = true;
+      if (collectFixtureDiagnostics) {
+        frameScheduled = false;
+        runtimeError = {
+          name: error instanceof Error ? error.name : "UnknownError",
+          message: error instanceof Error ? error.message : String(error),
+          stack:
+            error instanceof Error
+              ? (error.stack?.split("\n").slice(0, 7).join("\n") ?? null)
+              : null,
+        };
+      }
       cancelAnimationFrame(frame);
       onErrorRef.current?.(softwareRendererError);
     };
     const animate = (now: number) => {
       if (stopped) return;
+      if (collectFixtureDiagnostics) {
+        frameScheduled = false;
+        frameCount += 1;
+        lastFrameAtMs = now;
+      }
       try {
         const delta = Math.min(0.04, Math.max(0, (now - last) / 1000));
         last = now;
@@ -2483,6 +2561,10 @@ export default function SoftwareWorld({
               reset: latest.reset,
               sessionGeneration: session.resetGeneration,
             });
+            if (collectFixtureDiagnostics) {
+              observationCount += 1;
+              lastObservationAtMs = performance.now();
+            }
           }
         } else inputRef.current.clear();
         if (current.playing) {
@@ -2674,17 +2756,23 @@ export default function SoftwareWorld({
           onReadyRef.current?.();
         }
         frame = requestAnimationFrame(animate);
-      } catch {
-        reportRuntimeError();
+        if (collectFixtureDiagnostics) frameScheduled = true;
+      } catch (error) {
+        reportRuntimeError(error);
       }
     };
     try {
       frame = requestAnimationFrame(animate);
-    } catch {
-      reportRuntimeError();
+      if (collectFixtureDiagnostics) frameScheduled = true;
+    } catch (error) {
+      reportRuntimeError(error);
     }
     return () => {
       stopped = true;
+      if (collectFixtureDiagnostics) {
+        mounted = false;
+        frameScheduled = false;
+      }
       cancelAnimationFrame(frame);
       navigationCameraRef.current = null;
       inputRef.current.clear();

@@ -1,0 +1,131 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3061",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "0ab67840-01d2-4874-8427-5bc8f09ffbec",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "0ab67840-01d2-4874-8427-5bc8f09ffbec",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0668000000000004,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": {
+        "failure": {
+          "stage": "creation-five",
+          "code": "no-fresh-observation",
+          "target": "fixture-platform-a"
+        },
+        "observationCount": 10,
+        "lastObservation": {
+          "projectId": "0ab67840-01d2-4874-8427-5bc8f09ffbec",
+          "revision": 22,
+          "renderer": "software",
+          "atMs": 4916.70000000298,
+          "playerPosition": [
+            -0.02830777421320245,
+            1.398499349999999,
+            3.0757145530930288
+          ],
+          "playerVelocityY": -2.1000000000000068
+        },
+        "inputTraceTailEntries": 10,
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.24928978763402998
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.3478296770768593
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.3426800000000003
+          }
+        ]
+      },
+      "componentBoundary": {
+        "classification": "raf-frame-delayed",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "descending",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 98,
+        "lastFrameAtMs": 4915.2,
+        "lastFrameAgeMs": 1104.8000000000002,
+        "lastFrameGapMs": 16.599999999999454,
+        "maxFrameGapMs": 1133.3000000000002,
+        "lastFrameDurationMs": 7.4000000059604645,
+        "maxFrameDurationMs": 28.599999994039536,
+        "slowestFramePhase": {
+          "phase": "draw-scene",
+          "durationMs": 24.600000001490116
+        },
+        "observationCount": 88,
+        "lastObservationAtMs": 4916.80000000447,
+        "runtimeError": null,
+        "longTasks": [
+          {
+            "startTime": 184,
+            "duration": 116
+          },
+          {
+            "startTime": 379.6000000014901,
+            "duration": 64
+          },
+          {
+            "startTime": 1887.5,
+            "duration": 54
+          },
+          {
+            "startTime": 1971.6000000014901,
+            "duration": 56
+          },
+          {
+            "startTime": 2490.7000000029802,
+            "duration": 538
+          },
+          {
+            "startTime": 3029.8000000044703,
+            "duration": 58
+          }
+        ]
+      },
+      "failure": {
+        "stage": "creation-five",
+        "code": "no-fresh-observation",
+        "target": "fixture-platform-a"
+      }
+    }
+  },
+  "error": "creation-five: no-fresh-observation (fixture-platform-a)"
+}

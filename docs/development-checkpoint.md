@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 Canvas2D fresh-gameplay stall diagnosis: two valid isolated software
+fixture runs reproduced `no-fresh-observation` during the creation-phase first
+platform approach. An opt-in component snapshot showed a mounted, visible,
+focused page, active Play state, scheduled RAF and no renderer exception; the
+second run measured a 1,133 ms RAF scheduling gap while the preceding frame
+took 7.4 ms and its slowest draw took 24.6 ms. A separate 538 ms browser long
+task occurred earlier and does not explain the final gap. Source and fixture
+now expose bounded, opt-in boundary diagnostics; no timeout or gameplay change
+was made because the scheduling cause remains unknown. Evidence:
+`docs/evidence/fresh-gameplay-software-stall-diagnostic-20260924/`. Focused
+software/gameplay tests passed 39/39, along with typecheck, syntax, and diff
+checks. No provider calls ran. Next: capture browser scheduler/tracing evidence
+or test the same lane on a different browser/device before changing the
+freshness policy. Canvas2D seven/Undo gameplay is still unaccepted.
+
 Sep 24 second local ChatGPT grant attempt: the owner offered to receive the
 URL/code in chat, and a fresh isolated local production app, in-memory
 PostgreSQL database, private Orbsie browser session, and Vercel-hosted runtime

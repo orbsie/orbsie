@@ -1,0 +1,97 @@
+{
+  "passed": false,
+  "scope": "Local deterministic browser fixture using the real Orbsie renderers, physics, input handlers, and opt-in observation bridge; no external provider/model/auth/network calls (local fixture HTTP only).",
+  "appUrl": "http://127.0.0.1:3061",
+  "renderers": {
+    "software": {
+      "status": "failed",
+      "renderer": "software",
+      "generationRequests": 1,
+      "projectId": "c6620cde-549c-43e2-99b5-36c7fe4ebbde",
+      "revision": null,
+      "generationMovement": {
+        "status": "passed",
+        "projectId": "c6620cde-549c-43e2-99b5-36c7fe4ebbde",
+        "revisionBefore": 2,
+        "revisionAfter": 2,
+        "distance": 1.0668000000000017,
+        "streamOpenBefore": true,
+        "streamOpenAfter": true,
+        "inputMode": "keyboard"
+      },
+      "gameplayPhases": {
+        "creationFive": null,
+        "goalSeven": null,
+        "uiUndoFive": null
+      },
+      "partialTraversal": {
+        "failure": {
+          "stage": "creation-five",
+          "code": "no-fresh-observation",
+          "target": "fixture-platform-a"
+        },
+        "observationCount": 10,
+        "lastObservation": {
+          "projectId": "c6620cde-549c-43e2-99b5-36c7fe4ebbde",
+          "revision": 22,
+          "renderer": "software",
+          "atMs": 9290,
+          "playerPosition": [
+            0.16364881510922075,
+            1.4909993999999995,
+            3.03358426973335
+          ],
+          "playerVelocityY": -1.3500000000000023
+        },
+        "inputTraceTailEntries": 10,
+        "platformEvidence": [
+          {
+            "id": "fixture-platform-a",
+            "behavior": "move",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.16240604614378118
+          },
+          {
+            "id": "fixture-platform-b",
+            "behavior": "move",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.28295010840392215
+          },
+          {
+            "id": "fixture-platform-c",
+            "behavior": "bounce",
+            "groundedFrames": 0,
+            "bounceFrames": 0,
+            "maximumDisplacement": 0.3226400000000006
+          }
+        ]
+      },
+      "componentBoundary": {
+        "classification": "raf-frame-delayed",
+        "renderer": "software",
+        "mounted": true,
+        "canvasConnected": true,
+        "playing": true,
+        "phase": "descending",
+        "documentVisibility": "visible",
+        "documentHasFocus": true,
+        "loopStopped": false,
+        "frameScheduled": true,
+        "frameCount": 105,
+        "lastFrameAtMs": 9288.6,
+        "lastFrameAgeMs": 1109.5000000014898,
+        "observationCount": 94,
+        "lastObservationAtMs": 9290,
+        "runtimeError": null
+      },
+      "failure": {
+        "stage": "creation-five",
+        "code": "no-fresh-observation",
+        "target": "fixture-platform-a"
+      }
+    }
+  },
+  "error": "creation-five: no-fresh-observation (fixture-platform-a)"
+}

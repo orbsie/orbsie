@@ -373,8 +373,47 @@ function summarizeRendererEvidence(evidence) {
       ]),
     ),
     partialTraversal: summarizePartialTraversal(partial, failure),
+    componentBoundary: evidence.componentBoundary ?? null,
     failure,
   };
+}
+
+async function readSoftwareWorldDiagnostics(page) {
+  try {
+    const snapshot = await page.evaluate(() => {
+      const read = window.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_READ__;
+      return {
+        diagnostics: typeof read === "function" ? read() : null,
+        longTasks: Array.isArray(window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__)
+          ? window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__.slice(-16)
+          : [],
+      };
+    });
+    const { diagnostics } = snapshot;
+    if (!diagnostics) return { classification: "diagnostics-unavailable" };
+    const classification =
+      !diagnostics.mounted || !diagnostics.canvasConnected
+        ? "component-unmounted"
+        : diagnostics.runtimeError
+          ? "raf-stopped-after-exception"
+          : diagnostics.documentVisibility !== "visible"
+            ? "page-hidden-or-paused"
+            : diagnostics.frameScheduled &&
+                diagnostics.lastFrameAgeMs !== null &&
+                diagnostics.lastFrameAgeMs > 1000
+              ? "raf-frame-delayed"
+              : diagnostics.loopStopped
+                ? "raf-stopped-without-error"
+                : diagnostics.frameScheduled
+                  ? "raf-running"
+                  : "raf-state-incomplete";
+    return { classification, ...diagnostics, longTasks: snapshot.longTasks };
+  } catch (error) {
+    return {
+      classification: "diagnostic-read-failed",
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 function assertViewportBox(
@@ -1278,6 +1317,25 @@ async function runRenderer(browser, renderer) {
   await context.addInitScript(() => {
     window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
   });
+  await context.addInitScript((fixtureRenderer) => {
+    if (fixtureRenderer === "software") {
+      window.__ORBSIE_SOFTWARE_WORLD_DIAGNOSTICS_REQUESTED__ = true;
+      window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__ = [];
+      if (typeof PerformanceObserver === "function") {
+        try {
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries())
+              window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__.push({
+                startTime: entry.startTime,
+                duration: entry.duration,
+              });
+            window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__ =
+              window.__ORBSIE_SOFTWARE_WORLD_LONG_TASKS__.slice(-32);
+          }).observe({ type: "longtask", buffered: true });
+        } catch {}
+      }
+    }
+  }, renderer);
   await context.addInitScript(
     ({ streamUrl }) => {
       const originalFetch = window.fetch.bind(window);
@@ -1353,6 +1411,7 @@ async function runRenderer(browser, renderer) {
   let stage = "open-page";
   let layout;
   let focusEvidence;
+  let componentBoundary;
   try {
     await page.goto(appUrl, { waitUntil: "domcontentloaded" });
     await expect(page.locator("main")).toHaveAttribute(
@@ -1695,6 +1754,8 @@ async function runRenderer(browser, renderer) {
       blockedExternalRequests,
     };
   } catch (error) {
+    if (renderer === "software")
+      componentBoundary = await readSoftwareWorldDiagnostics(page);
     const partialEvidence = {
       renderer,
       stage,
@@ -1725,6 +1786,7 @@ async function runRenderer(browser, renderer) {
         (error && typeof error === "object"
           ? (error.softwareLayoutEvidence ?? null)
           : null),
+      componentBoundary: componentBoundary ?? null,
     };
     const message = error instanceof Error ? error.message : String(error);
     const code = /No observation/.test(message)
