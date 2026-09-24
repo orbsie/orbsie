@@ -20,8 +20,13 @@ endpoint. It checks origin, feature flag, bounded request, model catalog and
 the failed-run admission before returning a new run ID and image capability;
 it does not call a model. Astra reviewed the route diff; 12 focused route tests,
 TypeScript and Prettier pass. The route test mocks admission, while the real
-ledger/admission suites above cover the underlying database path. Hosted
-ChatGPT start, client action and browser E2E are still open.
+ledger/admission suites above cover the underlying database path. Source
+`d871b67` adds the hosted ChatGPT start route: it requires an existing guest
+or account session, checks the hosted connection/model catalog and effort
+before admission, and returns a run ID without inference. Astra reviewed its
+diff and aligned the focused fixture with GPT-6 Luna in `e79127e`; six route
+tests, TypeScript and Prettier pass. The client action and browser E2E remain
+open.
 
 Sep 24 interrupted-review continuation: source `1dd8d55` distinguishes an
 actual failed review request from earlier capture/preflight failures. When the
