@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 23 production release: local commit `0a28ae0` passed `npm run build`,
+then Vercel deployment `dpl_2K6W21xkePP1Egkv9brNrbBEZFc4` built Ready in the
+production environment and was promoted to `https://orbsie.com/`. Vercel
+inspection resolves the domain to that deployment; the served player CSS SHA-256
+matches the local build. A signed-out 390-by-844 production Chromium smoke with
+WebGL deliberately disabled rendered the software planet and prompt composer,
+with HTTP 200, zero generation requests, and only the expected failed-WebGL
+initialization error. Evidence: `docs/evidence/production-release-20260923/`.
+This does not establish live provider create/edit, physical-device performance,
+or publication acceptance. Production `/api/config` still reports
+`authoringReview:false`; the three-call visual inspect/correct loop is not yet
+enabled for users.
+
 Sep 23 Android standalone current-player check: a previous real OpenRouter
 world ZIP was locally repackaged with the current player build and loaded in
 Android 15 midrange-emulator Chrome with WebGL forced unavailable. A 700 ms
