@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 24 procedural support segments: `geometry.parts` accepts a bounded
+`segment` with local `from`/`to`, radius and color, so models can join visible
+stems, branches and other supports by endpoint instead of Euler rotation.
+Segments reject less than 0.001m length and nonpositive/out-of-range radius;
+legacy parts remain valid. Generation and review guidance points the model to
+actual contact locations. Astra reviewed the Luna diff and tightened the
+near-zero guard. Forty-six focused geometry/strict-schema/review tests,
+typecheck, formatting and the production build pass. A zero-provider browser
+fixture passed in WebGL and forced Canvas2D with endpoint stems in a fruit
+tree, including revision-bound initial/replacement captures and no unexpected
+external requests. Astra inspected both initial images and saw all three
+stems. Evidence: `docs/evidence/scene-review-segment-20260924/`. The software
+fixture logs the expected WebGL-context failure before fallback; no other
+page/console error occurred. This proves rendering, not live model use of
+segments or final quality. Next meaningful milestone is one bounded Luna-only
+live quality run with the focused review image and new support primitive;
+inspect its exact private images/findings before deleting them.
+
 Sep 24 focused scene-review capture: the review PNG now frames the projected
 union of committed entity world bounds when a crop offers meaningful zoom.
 Unknown bounds, unstable/eye-crossing projections, offscreen-only scenes, and

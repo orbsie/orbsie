@@ -51,6 +51,29 @@ const latheProfilePoint = z.tuple([
   z.number().finite().min(0).max(100),
   z.number().finite().min(-100).max(100),
 ]);
+const segmentPartSchema = z
+  .object({
+    shape: z.literal("segment"),
+    from: vector,
+    to: vector,
+    radius: z.number().finite().min(0.001).max(10),
+    color,
+  })
+  .strict()
+  .superRefine((part, context) => {
+    if (
+      Math.hypot(
+        part.to[0] - part.from[0],
+        part.to[1] - part.from[1],
+        part.to[2] - part.from[2],
+      ) < 0.001
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["to"],
+        message: "Segment endpoints must be at least 0.001 apart.",
+      });
+  });
 const nonLathePartSchema = z.discriminatedUnion("shape", [
   partTransformSchema.extend({ shape: z.literal("box") }).strict(),
   partTransformSchema.extend({ shape: z.literal("sphere") }).strict(),
@@ -60,6 +83,7 @@ const nonLathePartSchema = z.discriminatedUnion("shape", [
 ]);
 export const partSchema = z.discriminatedUnion("shape", [
   ...nonLathePartSchema.options,
+  segmentPartSchema,
   partTransformSchema.extend({
     shape: z.literal("lathe"),
     profile: z.array(latheProfilePoint).min(2).max(32),

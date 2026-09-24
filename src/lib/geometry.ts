@@ -42,6 +42,36 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
     add(new THREE.SphereGeometry(1, segments, segments), p, s, c);
   const cylinder = (p: number[], s: number[], c = entity.color) =>
     add(new THREE.CylinderGeometry(0.65, 1, 1, segments), p, s, c);
+  const segment = (
+    from: [number, number, number],
+    to: [number, number, number],
+    radius: number,
+    c: string,
+  ) => {
+    const start = new THREE.Vector3(...from);
+    const end = new THREE.Vector3(...to);
+    const direction = new THREE.Vector3().subVectors(end, start);
+    const midpoint = new THREE.Vector3()
+      .addVectors(start, end)
+      .multiplyScalar(0.5);
+    const geometry = new THREE.CylinderGeometry(
+      radius,
+      radius,
+      direction.length(),
+      segments,
+    );
+    geometry.applyMatrix4(
+      new THREE.Matrix4().compose(
+        midpoint,
+        new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          direction.normalize(),
+        ),
+        new THREE.Vector3(1, 1, 1),
+      ),
+    );
+    add(geometry, [0, 0, 0], [1, 1, 1], c);
+  };
   switch (entity.geometry?.kind) {
     case "tree":
       cylinder([0, 0.8, 0], [0.2, 1.6, 0.2], "#98775a");
@@ -121,6 +151,10 @@ export function entityGeometry(entity: Entity): THREE.BufferGeometry {
     entity.geometry.kind !== "generated"
   ) {
     for (const part of entity.geometry.parts ?? []) {
+      if (part.shape === "segment") {
+        segment(part.from, part.to, part.radius, part.color);
+        continue;
+      }
       const g =
         part.shape === "lathe"
           ? new THREE.LatheGeometry(

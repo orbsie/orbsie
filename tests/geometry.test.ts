@@ -216,6 +216,71 @@ describe("procedural geometry parts", () => {
       expect(partSchema.safeParse(part).success).toBe(false);
   });
 
+  it("validates distinct segment endpoints and a bounded positive radius", () => {
+    const segment = {
+      shape: "segment",
+      from: [0, 0, 0],
+      to: [1, 1, 0],
+      radius: 0.1,
+      color: "#d94e68",
+    };
+
+    expect(partSchema.parse(segment)).toEqual(segment);
+    for (const invalidPart of [
+      { ...segment, from: segment.to },
+      { ...segment, to: [0.0001, 0, 0] },
+      { ...segment, radius: 0 },
+      { ...segment, radius: -0.1 },
+      { ...segment, radius: 10.001 },
+      { ...segment, to: [101, 1, 0] },
+      { ...segment, position: [0, 0, 0] },
+    ])
+      expect(partSchema.safeParse(invalidPart).success).toBe(false);
+  });
+
+  it("builds a bounded colored segment through both local-space endpoints", () => {
+    const entity = entitySchema.parse({
+      id: "diagonal-segment",
+      label: "Diagonal segment",
+      position: [0, 0, 0],
+      color: "#ffffff",
+      stage: "ready",
+      geometry: {
+        kind: "custom",
+        parts: [
+          {
+            shape: "segment",
+            from: [0, 0, 0],
+            to: [1, 1, 0],
+            radius: 0.1,
+            color: "#d94e68",
+          },
+        ],
+      },
+    });
+    const geometry = entityGeometry(entity);
+    geometry.computeBoundingBox();
+    const positions = geometry.getAttribute("position");
+    const hasVertex = (point: [number, number, number]) =>
+      Array.from({ length: positions.count }, (_, index) => index).some(
+        (index) =>
+          new THREE.Vector3()
+            .fromBufferAttribute(positions, index)
+            .distanceTo(new THREE.Vector3(...point)) < 1e-5,
+      );
+
+    expect(hasVertex([0, 0, 0])).toBe(true);
+    expect(hasVertex([1, 1, 0])).toBe(true);
+    expect(geometry.boundingBox?.min.x).toBeLessThan(0);
+    expect(geometry.boundingBox?.max.x).toBeGreaterThan(1);
+    expect(geometry.boundingBox?.min.y).toBeLessThan(0);
+    expect(geometry.boundingBox?.max.y).toBeGreaterThan(1);
+    expect(hasVertexColor(geometry, "#d94e68")).toBe(true);
+    expect(positions.count).toBeLessThan(256);
+    expect(meshSurfaceArea(geometry)).toBeGreaterThan(0);
+    geometry.dispose();
+  });
+
   it("builds a pointed berry-like lathe with its requested bounds and color", () => {
     const berry = entitySchema.parse({
       id: "lathe-berry",

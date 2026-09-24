@@ -45,6 +45,20 @@ const blueBerry = (position) => ({
   ],
 });
 
+const berryStem = ([x, y, z]) => ({
+  shape: "segment",
+  from: [x, y + 0.34, z],
+  to: [x, y + 0.48, z - 0.3],
+  radius: 0.035,
+  color: "#755531",
+});
+
+const fruitPositions = [
+  [-0.42, 2.32, 1.16],
+  [0.08, 2.48, 1.18],
+  [0.48, 2.24, 1.13],
+];
+
 const streamServer = createServer(async (request, response) => {
   if (request.method !== "POST" || request.url !== "/api/generate") {
     response.writeHead(404).end();
@@ -105,11 +119,10 @@ const streamServer = createServer(async (request, response) => {
           geometry: {
             kind: "tree",
             detail: "refined",
-            parts: [
-              blueBerry([-0.42, 2.32, 1.16]),
-              blueBerry([0.08, 2.48, 1.18]),
-              blueBerry([0.48, 2.24, 1.13]),
-            ],
+            parts: fruitPositions.flatMap((position) => [
+              blueBerry(position),
+              berryStem(position),
+            ]),
           },
         },
         { type: "commit_revision", message: "Applied." },
