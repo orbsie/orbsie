@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 24 post-form OpenRouter quality acceptance: one isolated local browser run
+against `bb6ec50` used exactly three `openai/gpt-6-luna` default-tier calls
+at 4,096 output tokens, all HTTP 200 without retries. Create saved revision
+13, review corrected to revision 24, and final visual/structural review still
+returned `revise`: bounded-incomplete. Revision 24 survived reload; no key was
+stored in the browser. The aggregate report shows five lathe, five cone, and
+five cylinder parts. Astra inspected the private image: all five blue fruit
+are visible and taper toward a point, improving on prior round/occluded
+results, but a convincing leafy calyx and visible branch attachment are still
+missing. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-form-20260924/`.
+The isolated server/database were removed. Repeated three-call runs now show
+that prompt guidance improves one defect at a time but the first-review-only
+correction loop cannot finish the remaining defect; investigate a bounded
+second correction/review phase with explicit cost and revision guards before
+enabling production authoring review. Do not repeat the same paid test with
+only another wording tweak.
+
 Sep 24 post-visibility OpenRouter quality acceptance: one fresh isolated local
 browser run against `bc3ee65` made exactly three `openai/gpt-6-luna`
 default-tier calls at 4,096 output tokens, all HTTP 200 with no retries.
