@@ -189,6 +189,8 @@ describe("executeSceneReview", () => {
 
       expect(prompt).toContain("defining silhouette and relative scale");
       expect(prompt).toContain("attached forms have visible connected support");
+      expect(prompt).toContain("requested color but the wrong characteristic shape");
+      expect(prompt).toContain("A lathe part uses [radius,height] profile points");
       expect(prompt).toContain(
         "keep its base kind and existing parts while adding or repositioning visible details through geometry.parts",
       );
