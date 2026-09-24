@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { readFile } from "node:fs/promises";
 
@@ -953,9 +954,16 @@ describe("authoring run ledger PostgreSQL contention", () => {
         initialRevision: 7,
         initialSceneDigest: "d".repeat(64),
       };
+      const firstRecovery = {
+        ...savedBinding,
+        priorRunId: randomUUID(),
+      };
+      const freshPriorRunId = randomUUID();
+      const exhaustedPriorRunId = randomUUID();
       const runIds: string[] = [];
       try {
-        const { trialIdentity: _trialIdentity, ...withoutTrial } = savedBinding;
+        const { trialIdentity: _trialIdentity, ...withoutTrial } =
+          firstRecovery;
         await expect(
           issueReviewOnlyAuthoringRun(withoutTrial),
         ).rejects.toMatchObject({ code: "binding-mismatch" });
@@ -965,7 +973,7 @@ describe("authoring run ledger PostgreSQL contention", () => {
         );
         expect(beforeClaim.rows[0].count).toBe(0);
 
-        const first = await issueReviewOnlyAuthoringRun(savedBinding);
+        const first = await issueReviewOnlyAuthoringRun(firstRecovery);
         runIds.push(first.runId);
         expect(first.trialRemaining).toBe(1);
         await expect(readAuthoringRun(first.runId)).resolves.toMatchObject({
@@ -976,6 +984,23 @@ describe("authoring run ledger PostgreSQL contention", () => {
           completedSceneBindingDigest: "d".repeat(64),
           remainingReviewSlots: 3,
         });
+        await expect(
+          issueReviewOnlyAuthoringRun(firstRecovery),
+        ).rejects.toMatchObject({ code: "phase-conflict" });
+        const afterDuplicate = await pool!.query(
+          "SELECT count(*)::int AS count FROM orbsie_authoring_runs WHERE recovered_from_run_id=$1",
+          [firstRecovery.priorRunId],
+        );
+        expect(afterDuplicate.rows[0].count).toBe(1);
+        const usageAfterDuplicate = await pool!.query(
+          "SELECT bucket,used FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2 ORDER BY bucket",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+        expect(usageAfterDuplicate.rows).toEqual([
+          { bucket: `global:${prefix}`, used: 1 },
+          { bucket: `${prefix}:network`, used: 1 },
+          { bucket: `${prefix}:visitor`, used: 1 },
+        ]);
 
         await expect(
           admitAuthoringReview({
@@ -1064,7 +1089,10 @@ describe("authoring run ledger PostgreSQL contention", () => {
           accepted: false,
         });
 
-        const fresh = await issueReviewOnlyAuthoringRun(savedBinding);
+        const fresh = await issueReviewOnlyAuthoringRun({
+          ...firstRecovery,
+          priorRunId: freshPriorRunId,
+        });
         runIds.push(fresh.runId);
         expect(fresh.runId).not.toBe(first.runId);
         expect(fresh.trialRemaining).toBe(0);
@@ -1076,7 +1104,10 @@ describe("authoring run ledger PostgreSQL contention", () => {
         });
 
         await expect(
-          issueReviewOnlyAuthoringRun(savedBinding),
+          issueReviewOnlyAuthoringRun({
+            ...firstRecovery,
+            priorRunId: exhaustedPriorRunId,
+          }),
         ).rejects.toBeInstanceOf(TrialExhausted);
         const persisted = await pool!.query(
           "SELECT count(*)::int AS count FROM orbsie_authoring_runs WHERE identity_hash=$1 AND project_id=$2 AND request_fingerprint=$3",
@@ -1092,16 +1123,93 @@ describe("authoring run ledger PostgreSQL contention", () => {
           remainingReviewSlots: 3,
         });
       } finally {
-        if (runIds.length)
-          await pool!.query(
-            "DELETE FROM orbsie_authoring_runs WHERE run_id = ANY($1::uuid[])",
-            [runIds],
-          );
+        await pool!.query(
+          "DELETE FROM orbsie_authoring_runs WHERE run_id = ANY($1::uuid[]) OR recovered_from_run_id = ANY($2::uuid[])",
+          [
+            runIds,
+            [firstRecovery.priorRunId, freshPriorRunId, exhaustedPriorRunId],
+          ],
+        );
         await pool!.query(
           "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
           [`${prefix}%`, `global:${prefix}`],
         );
       }
+    },
+    30000,
+  );
+
+  run(
+    "admits only one concurrent recovery per prior run and rolls back the duplicate free claim",
+    async () => {
+      const prefix = `ledger:${Date.now()}:review-only-concurrent`;
+      const trial = identity(prefix, 5);
+      const priorRunId = randomUUID();
+      const recovery = { ...binding(trial), priorRunId };
+      const runIds: string[] = [];
+      try {
+        const results = await Promise.allSettled([
+          issueReviewOnlyAuthoringRun(recovery),
+          issueReviewOnlyAuthoringRun(recovery),
+        ]);
+        const admitted = results.filter(
+          (
+            result,
+          ): result is PromiseFulfilledResult<
+            Awaited<ReturnType<typeof issueReviewOnlyAuthoringRun>>
+          > => result.status === "fulfilled",
+        );
+        const rejected = results.filter(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected",
+        );
+        expect(admitted).toHaveLength(1);
+        expect(rejected).toHaveLength(1);
+        expect(rejected[0].reason).toMatchObject({ code: "phase-conflict" });
+        runIds.push(admitted[0].value.runId);
+
+        const persisted = await pool!.query(
+          "SELECT count(*)::int AS count FROM orbsie_authoring_runs WHERE recovered_from_run_id=$1",
+          [priorRunId],
+        );
+        expect(persisted.rows[0].count).toBe(1);
+        const buckets = await pool!.query(
+          "SELECT bucket,used FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2 ORDER BY bucket",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+        expect(buckets.rows).toEqual([
+          { bucket: `global:${prefix}`, used: 1 },
+          { bucket: `${prefix}:network`, used: 1 },
+          { bucket: `${prefix}:visitor`, used: 1 },
+        ]);
+      } finally {
+        await pool!.query(
+          "DELETE FROM orbsie_authoring_runs WHERE recovered_from_run_id=$1 OR run_id = ANY($2::uuid[])",
+          [priorRunId, runIds],
+        );
+        await pool!.query(
+          "DELETE FROM orbsie_trial_usage WHERE bucket LIKE $1 OR bucket=$2",
+          [`${prefix}%`, `global:${prefix}`],
+        );
+      }
+    },
+    30000,
+  );
+
+  run(
+    "can rerun the recovery-column schema migration",
+    async () => {
+      const schema = await readFile("scripts/authoring-run-schema.sql", "utf8");
+      await pool!.query(schema);
+      await pool!.query(schema);
+      const column = await pool!.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name='orbsie_authoring_runs' AND column_name='recovered_from_run_id'",
+      );
+      const index = await pool!.query(
+        "SELECT indexname FROM pg_indexes WHERE tablename='orbsie_authoring_runs' AND indexname='orbsie_authoring_runs_recovered_from_run_id_idx'",
+      );
+      expect(column.rows).toHaveLength(1);
+      expect(index.rows).toHaveLength(1);
     },
     30000,
   );

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS orbsie_authoring_runs (
   phase_token_expires_at timestamptz,
   completed_revision bigint CHECK (completed_revision IS NULL OR completed_revision >= 0),
   completed_scene_digest text CHECK (completed_scene_digest IS NULL OR completed_scene_digest ~ '^[0-9a-f]{64}$'),
+  recovered_from_run_id uuid,
   failed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL,
@@ -29,6 +30,9 @@ CREATE TABLE IF NOT EXISTS orbsie_authoring_runs (
 
 ALTER TABLE orbsie_authoring_runs
   ALTER COLUMN remaining_review_slots SET DEFAULT 3;
+
+ALTER TABLE orbsie_authoring_runs
+  ADD COLUMN IF NOT EXISTS recovered_from_run_id uuid;
 
 DO $$
 DECLARE
@@ -67,3 +71,5 @@ CREATE INDEX IF NOT EXISTS orbsie_authoring_runs_identity_idx
   ON orbsie_authoring_runs(identity_hash, created_at DESC);
 CREATE INDEX IF NOT EXISTS orbsie_authoring_runs_expiry_idx
   ON orbsie_authoring_runs(expires_at);
+CREATE UNIQUE INDEX IF NOT EXISTS orbsie_authoring_runs_recovered_from_run_id_idx
+  ON orbsie_authoring_runs(recovered_from_run_id);

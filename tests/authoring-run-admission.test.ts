@@ -18,7 +18,8 @@ vi.mock("../src/lib/server/trial", async () => ({
   ...(await vi.importActual("../src/lib/server/trial")),
   trialIdentity: deps.trialIdentity,
 }));
-vi.mock("../src/lib/server/authoring-run-ledger", () => ({
+vi.mock("../src/lib/server/authoring-run-ledger", async () => ({
+  ...(await vi.importActual("../src/lib/server/authoring-run-ledger")),
   issueAuthoringRun: deps.issue,
   issueReviewOnlyAuthoringRun: deps.issueReviewOnly,
   readAuthoringRun: deps.readRun,
@@ -36,6 +37,7 @@ import {
   resolveAuthoringRequestIdentity,
 } from "../src/lib/server/authoring-run-identity";
 import { TrialExhausted } from "../src/lib/server/trial";
+import { AuthoringRunLedgerError } from "../src/lib/server/authoring-run-ledger";
 import {
   admitReviewOnlyAuthoringRun,
   admitAuthoringReviewPhase,
@@ -232,6 +234,7 @@ it("admits a fresh review only for the exact failed scene and request", async ()
     provider: value.provider,
     model: value.model,
     requestFingerprint: prior.requestFingerprint,
+    priorRunId: value.priorRunId,
     initialRevision: prior.completedRevision,
     initialSceneDigest: prior.completedSceneBindingDigest,
   });
@@ -324,6 +327,22 @@ it("preserves free trial exhaustion as an HTTP 429", async () => {
 
   await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
     status: 429,
+  });
+});
+
+it("maps a duplicate recovery conflict to a safe HTTP 409", async () => {
+  const value = recoveryInput();
+  deps.readRun.mockResolvedValue(await matchingPrior(value));
+  deps.issueReviewOnly.mockRejectedValue(
+    new AuthoringRunLedgerError(
+      "phase-conflict",
+      "The stored error must not be exposed.",
+    ),
+  );
+
+  await expect(admitReviewOnlyAuthoringRun(value)).rejects.toMatchObject({
+    status: 409,
+    message: "This failed review can no longer be recovered.",
   });
 });
 

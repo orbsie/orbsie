@@ -176,6 +176,7 @@ export async function admitReviewOnlyAuthoringRun(input: {
   try {
     issued = await issueReviewOnlyAuthoringRun({
       ...binding,
+      priorRunId: input.priorRunId,
       initialRevision: expectedBinding.revision,
       initialSceneDigest: expectedBinding.digest,
       ...(input.provider === "free"
@@ -185,6 +186,11 @@ export async function admitReviewOnlyAuthoringRun(input: {
   } catch (error) {
     // TrialExhausted extends HttpError and must reach the route as a 429.
     if (error instanceof HttpError) throw error;
+    if (
+      error instanceof AuthoringRunLedgerError &&
+      error.code === "phase-conflict"
+    )
+      throw invalidRecoveryError();
     if (
       error instanceof AuthoringRunLedgerError &&
       error.code === "invalid-input"
