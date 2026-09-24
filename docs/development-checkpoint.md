@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 24 hosted ChatGPT local acceptance preparation: with an isolated local
+PostgreSQL database and production build, the browser created a transparent
+private Orbsie session and obtained a real OpenAI device-code challenge. The
+owner was given the verification URL/code in the live conversation. The code
+expired without a completed grant; **no ChatGPT model call** occurred. The
+isolated Vercel Sandbox host was explicitly deleted, local Next server and
+database stopped, and temporary database credentials removed. Computer-use
+still enumerated no Chrome browser surfaces. Luna prepared a two-call,
+Luna-only, opt-in local hosted create/edit browser acceptance harness
+(`30b1a46`); Astra reviewed its route guard and removed raw browser/console
+message persistence. Syntax, formatting, opt-in refusal, and no-model preflight
+passed. It has not run end to end and needs a fresh user-approved device grant
+and private browser storage state. This interim code flow does not satisfy the
+direct Orbsie HTTPS subscription OAuth requirement.
+
 Sep 24 visual-quality follow-up: Astra reviewed Luna's small generation-guidance
 change (`84740ff`) to prioritize a subject's defining silhouette, attached
 forms, proportions, and requested colors at play-camera scale. Focused prompt
