@@ -1,0 +1,473 @@
+{
+  "schemaVersion": 1,
+  "outcome": "bounded-incomplete",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 3,
+  "blockedCalls": 0,
+  "originPreflight": {
+    "status": 400,
+    "inferenceCalls": 0
+  },
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-request-observed",
+    "final-review-response-200",
+    "final-review-verdict-revise",
+    "final-review-revise-bounded-incomplete"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 200,
+      "requestId": "81bbdeaf-2c66-4b84-b72d-a8a58a52f611",
+      "clientRunId": "d97c7908-b364-4992-803c-1ac0aa4e6e4c",
+      "authoringRunId": "328a45bd-4d94-439d-bce0-15b15bde1808",
+      "requestedAuthoringRunId": null,
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "8260760e-238f-4519-9c5d-3376ef059b54",
+      "clientRunId": "d97c7908-b364-4992-803c-1ac0aa4e6e4c",
+      "authoringRunId": "328a45bd-4d94-439d-bce0-15b15bde1808",
+      "requestedAuthoringRunId": "328a45bd-4d94-439d-bce0-15b15bde1808",
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "projectRevision": 13,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "reviewRevision": 13,
+      "reviewImageProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "reviewImageRevision": 13,
+      "structuralObservationProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "structuralObservationRevision": 13,
+      "responseBindingRevision": 19,
+      "responseBindingDigest": "e6434a06329b201746ba4a8805042ec4f7a787519053448303d6dccf5d15bdec",
+      "verdict": "revise",
+      "blocked": false
+    },
+    {
+      "ordinal": 3,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "status": 200,
+      "requestId": "7e075871-13ff-4cc8-bd0d-a7092b098431",
+      "clientRunId": "d97c7908-b364-4992-803c-1ac0aa4e6e4c",
+      "authoringRunId": "328a45bd-4d94-439d-bce0-15b15bde1808",
+      "requestedAuthoringRunId": "328a45bd-4d94-439d-bce0-15b15bde1808",
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "projectRevision": 19,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "reviewRevision": 19,
+      "reviewImageProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "reviewImageRevision": 19,
+      "structuralObservationProjectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "structuralObservationRevision": 19,
+      "responseBindingRevision": 19,
+      "responseBindingDigest": "e6434a06329b201746ba4a8805042ec4f7a787519053448303d6dccf5d15bdec",
+      "verdict": "revise",
+      "blocked": false
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+    "reviewedRevision": 13,
+    "reviewImageRevision": 13,
+    "structuralObservationRevision": 13,
+    "bindingRevision": 19,
+    "bindingDigest": "e6434a06329b201746ba4a8805042ec4f7a787519053448303d6dccf5d15bdec",
+    "verdict": "revise"
+  },
+  "finalReview": {
+    "phase": "final-review",
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+    "reviewedRevision": 19,
+    "reviewImageRevision": 19,
+    "structuralObservationRevision": 19,
+    "bindingRevision": 19,
+    "bindingDigest": "e6434a06329b201746ba4a8805042ec4f7a787519053448303d6dccf5d15bdec",
+    "verdict": "revise"
+  },
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "74905665c5e5df3ecb4eece234e37cc1c1565f1f1d57851dac172d628bb86402",
+      "bytes": 231256,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "74905665c5e5df3ecb4eece234e37cc1c1565f1f1d57851dac172d628bb86402",
+      "privateBytes": 231256
+    },
+    {
+      "label": "final-review-bounded-incomplete",
+      "sha256": "222272917eca7333e189dc8764d66d3168d3aef848e68e76017cc169650efe0a",
+      "bytes": 126357,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "4632cde6f8ff01beb8110ca27a8c99d2ed88f9928c6ee31e0a453272c5e90203",
+      "privateBytes": 42935
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "revision": 13,
+      "structure": {
+        "entityCount": 6,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 6,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 5,
+          "asset": 1,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 25,
+        "customPartShapeCounts": {
+          "box": 10,
+          "sphere": 5,
+          "cylinder": 5,
+          "cone": 0,
+          "torus": 0,
+          "lathe": 5,
+          "absent": 0,
+          "unknown": 0
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 10,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 0,
+            "halfToOne": 5,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 5,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 20,
+          "cyan": 0,
+          "blue": 5,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterFinalReview": {
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "revision": 19,
+      "structure": {
+        "entityCount": 6,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 6,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 5,
+          "asset": 1,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 25,
+        "customPartShapeCounts": {
+          "box": 10,
+          "sphere": 5,
+          "cylinder": 5,
+          "cone": 0,
+          "torus": 0,
+          "lathe": 5,
+          "absent": 0,
+          "unknown": 0
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 10,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 5,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 20,
+          "cyan": 0,
+          "blue": 5,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterReload": {
+      "projectId": "86127b6a-e921-4298-ae3d-f344a6c84e59",
+      "revision": 19,
+      "keyPersisted": false,
+      "recovered": true
+    }
+  },
+  "requestIds": {
+    "initial": "81bbdeaf-2c66-4b84-b72d-a8a58a52f611",
+    "review": "8260760e-238f-4519-9c5d-3376ef059b54",
+    "finalReview": "7e075871-13ff-4cc8-bd0d-a7092b098431"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 2
+  },
+  "browserActivity": {
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "requestFailures": 1,
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": true,
+      "reviewIncomplete": false,
+      "reviewPartial": true,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": null,
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

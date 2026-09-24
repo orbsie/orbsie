@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 24 post-proportion OpenRouter quality acceptance: an isolated local app
+with fresh PostgreSQL used exactly three `openai/gpt-6-luna` default-tier calls
+at 4,096 output tokens, without retries. Create, review, and final review all
+returned HTTP 200. Initial revision 13 was corrected to revision 19; final
+review still said `revise`, so acceptance is bounded-incomplete. Revision 19
+survived reload and no key was stored in the browser. The new aggregate
+telemetry confirms five lathe parts among 25 custom parts and shows their
+declared scale-factor bins all moved from `halfToOne` to `belowHalf` at first
+review. Astra inspected the private final image: most blue fruit is obscured
+behind the canopy, with only a tiny visible fruit. Shape selection works;
+placement, visibility, and one-pass correction quality remain open. Evidence:
+`docs/evidence/authoring-review/openrouter-blue-strawberry-proportion-20260924/`.
+The isolated server and database were removed; no live publication occurred.
+
+Sep 24 proportion guidance and live telemetry: creation and visual review now
+explicitly compare attached details to their supporting object and tell the
+first review to resize or reshape disproportionate forms. The 45 related
+focused tests and local production build passed. Astra reviewed and committed
+Luna's sanitized live-harness shape/scale histograms; six targeted tests,
+syntax, formatting, and diff checks passed. The telemetry is capped aggregate
+evidence only, not actual world-space mesh dimensions.
+
 Sep 24 ChatGPT failure-feedback release: Vercel deployed source commit
 `115830b` to `https://orbsie.com/` (deployment
 `https://orbsie-k5pb3tvfo-grappeggias-projects.vercel.app`). The read-only
