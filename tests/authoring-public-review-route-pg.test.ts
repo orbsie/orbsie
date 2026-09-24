@@ -12,7 +12,10 @@ vi.mock("../src/lib/server/auth", async (original) => ({
 import { blankProject } from "../src/lib/protocol";
 import { createSceneBinding } from "../src/lib/scene-binding";
 import { trialIdentity, type TrialIdentity } from "../src/lib/server/trial";
-import { admitInitialAuthoringRun } from "../src/lib/server/authoring-run-admission";
+import {
+  admitAuthoringReviewPhase,
+  admitInitialAuthoringRun,
+} from "../src/lib/server/authoring-run-admission";
 import type { AuthoringProvider } from "../src/lib/server/authoring-run-ledger";
 import { readAuthoringRun } from "../src/lib/server/authoring-run-ledger";
 import { POST } from "../src/app/api/generate/review/route";
@@ -83,6 +86,89 @@ afterAll(async () => {
   await pool?.end();
   vi.unstubAllEnvs();
 });
+
+it.runIf(process.env.RUN_AUTHORING_LEDGER_DATABASE_TEST === "1")(
+  "admits two correction reviews and one final verdict through PostgreSQL",
+  async () => {
+    if (!pool) throw Error("Synthetic PostgreSQL URL required");
+    const project = blankProject();
+    const seedIdentity = trialIdentity(
+      new Request("https://orbsie.test/api/generate"),
+    );
+    const cookie = seedIdentity.cookie.split(";", 1)[0];
+    const initial = await seedCompletedRun(
+      project,
+      cookie,
+      model,
+      "free",
+      seedIdentity,
+    );
+    const signal = new AbortController().signal;
+    const firstCorrection = {
+      ...project,
+      revision: project.revision + 1,
+      environment: { ...project.environment, sky: "#aabbff" },
+    };
+    const secondCorrection = {
+      ...firstCorrection,
+      revision: firstCorrection.revision + 1,
+      environment: { ...firstCorrection.environment, sky: "#88ccff" },
+    };
+    const admit = (
+      scene: typeof project,
+      reviewPhase: "review" | "final-review",
+    ) =>
+      admitAuthoringReviewPhase({
+        request: reviewRequest(cookie, {}),
+        project: scene,
+        prompt: "Make a garden",
+        provider: "free",
+        model,
+        localModeling: false,
+        browserModeling: false,
+        runId: initial.runId,
+        reviewPhase,
+        signal,
+        trialIdentity: seedIdentity,
+      });
+    try {
+      const first = await admit(project, "review");
+      expect(first.remainingReviewSlots).toBe(2);
+      await first.complete(
+        await createSceneBinding(firstCorrection),
+        false,
+        signal,
+      );
+
+      const second = await admit(firstCorrection, "review");
+      expect(second.remainingReviewSlots).toBe(1);
+      await second.complete(
+        await createSceneBinding(secondCorrection),
+        false,
+        signal,
+      );
+
+      const final = await admit(secondCorrection, "final-review");
+      expect(final.remainingReviewSlots).toBe(0);
+      await final.complete(
+        await createSceneBinding(secondCorrection),
+        true,
+        signal,
+      );
+      expect(await readAuthoringRun(initial.runId)).toMatchObject({
+        phase: "finalized",
+        remainingReviewSlots: 0,
+        completedRevision: secondCorrection.revision,
+      });
+      await expect(admit(secondCorrection, "final-review")).rejects.toThrow();
+    } finally {
+      await pool.query("DELETE FROM orbsie_authoring_runs WHERE run_id=$1", [
+        initial.runId,
+      ]);
+    }
+  },
+  15000,
+);
 
 it.runIf(process.env.RUN_AUTHORING_LEDGER_DATABASE_TEST === "1")(
   "runs one real public review route through coordinator, provider adapter, and PostgreSQL",

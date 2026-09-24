@@ -1,5 +1,11 @@
 # Development checkpoint
 
+Sep 24 real PostgreSQL admission check: a synthetic free-provider run completed
+creation, admitted two correction reviews at remaining budgets two and one,
+then admitted a final verdict at zero. Exact revised scene bindings and replay
+rejection were exercised against temporary PostgreSQL 16; all three route/DB
+tests passed with no model calls. The isolated database was removed.
+
 Sep 24 four-call local integration: the browser loop now supports two bounded
 correction-bearing reviews, each with a saved finding, independent cloud journal
 segment, fresh canvas evidence, and exact scene binding check, followed by a
