@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 24 camera-aware OpenRouter quality run: a fresh isolated production build,
+Postgres migration, and exact-origin malformed-JSON HTTP 400 preflight passed.
+Exactly four `openai/gpt-6-luna` default-tier calls, each capped at 4,096 output
+tokens with no retry, returned HTTP 200. Creation saved revision 13; two
+visual+structural reviews corrected it to revisions 24 and 30; the final review
+of revision 30 still returned `revise`, so acceptance remains bounded-incomplete.
+Each review request had the expected camera-view observations and exact PNG
+captured privately; reload recovered revision 30 without persisting the key.
+Sanitized evidence: `docs/evidence/authoring-review/openrouter-camera-aware-20260924/`.
+Astra inspected all three exact review images and the final close-up before
+deleting private evidence. The review images show the entire tree very small
+(roughly 100 pixels tall in a 768×533 frame), making detail judgments hard;
+the close-up confirms five blue berries with caps but floating/disconnected
+stems, weak branch attachment, and fruit profiles that are too symmetric. The
+model's camera-aware corrections improved visible count but did not resolve
+these core defects. One own-origin generation request reported
+`net::ERR_ABORTED`; there were no page/console errors or blocked external
+requests. The isolated server, database and credentials were removed. Keep
+production authoring-review off. Next: improve review framing to make the
+subject legible while preserving scene context, then address attachment and
+silhouette quality before spending on another live quality run.
+
 Sep 24 exact review-input evidence: the opt-in live OpenRouter verifier now
 writes each permitted review request's validated PNG into fixed-name mode-0600
 files in its mode-0700 private directory, never in the repository. Its public
