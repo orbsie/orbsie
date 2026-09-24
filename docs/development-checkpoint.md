@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 23 production promotion: Vercel production deployment
+`dpl_7rrUPQyL4DE8RLTZw2WKWaQaxY5n` built Ready from the camera-framing
+release and was promoted to `https://orbsie.com/`. Domain inspection resolves
+to that deployment. The signed-out read-only browser smoke passed: landing
+canvas and composer visible, root200, generation-runs unauthorized401, no page
+errors, non-GET requests or external requests. Player runtime and five
+geometry-worker hashes match local build bytes. `/api/config` retains
+`chatgptHosted:true`, `chatgptGeneration:true`, accounts/publishing true and
+`authoringReview:false`. Evidence:
+`docs/evidence/production-release-20260923-auto-frame/`. No live model call,
+signed-in ChatGPT consent or fresh publication was part of this release check.
+
 Sep 23 initial-world camera integration: `dd9bc59` auto-frames committed
 bounds once after a new landing-page build succeeds, using the shared
 WebGL/software navigation command. Manual navigation, project changes,
@@ -15,7 +27,7 @@ attempt used a disallowed `127.0.0.1` dev origin and stopped before canvas;
 the passing rerun used `localhost`. Evidence reports pre-commit HEAD `5316714`;
 the tested diff was committed unchanged as `dd9bc59`. Visual camera movement
 can snap if a build completes after descent; smooth interpolation and review-
-capture framing remain open. This local change is not deployed.
+capture framing remain open. The change is now deployed as noted above.
 
 Sep 23 second live OpenRouter authoring-review milestone: an isolated local
 production server and fresh PostgreSQL database ran `openai/gpt-6-luna` with
