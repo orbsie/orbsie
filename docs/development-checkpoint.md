@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 24 Android current-artifact acceptance: `scripts/verify-android-current-artifact.mjs`
+repacked the pinned Gateway-generated revision-9 ZIP with the current local
+runtime/CSS and both geometry workers, served it on loopback through ADB reverse,
+and drove actual Android 15 emulator Chrome by CDP with WebGL forced unavailable.
+The standalone game reached Canvas2D readiness with both generated objects
+visible; touch Right scored 7, Restart reset, Forward won, Restart reset, and
+Left lost. There were zero provider/generation/external requests, failed
+responses, unexpected page errors, cookies, or viewport overflows. Four
+screenshots were inspected; the simple software silhouettes and large optional
+graphics advice are visible but do not obscure the score or controls. Report
+and screenshots: `docs/evidence/android-current-artifact/`. This proves a
+repacked **local** artifact on an emulator, not a newly published current-runtime
+URL or physical-device quality. A read-only Sep 24 Gateway credit check again
+returned -0.0033684, so paid Gateway inference remains withheld. Current
+OpenAI App Server docs still show a localhost browser callback or a code-based
+device flow; the requested direct Orbsie HTTPS subscription OAuth grant remains
+unverified (see `docs/chatgpt-subscription-oauth-feasibility-20260922.md`).
+
 Sep 24 fresh provider-artifact publication acceptance prepared: the saved
 Gateway-generated revision-9 ZIP is pinned by canonical digest and its two
 generated GLB hashes. `scripts/verify-provider-artifact-publication.mjs`
