@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "outcome": "failed",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 2,
+  "actualLiveCalls": 1,
+  "blockedCalls": 0,
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-503"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "status": 503,
+      "clientRunId": "988f5b55-7940-45f9-bb44-8e831794eb75",
+      "authoringRunId": null,
+      "requestedAuthoringRunId": null,
+      "projectId": "ac501564-e1a5-49ba-9d54-f7aee2573056",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "blocked": false
+    }
+  ],
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "8817ea41b9791a78bd374b3fe08bf870142d5980f30c9e15fc44540507e7d6de",
+      "bytes": 239492,
+      "persisted": false
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 0
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": {
+    "stage": "initial-generation",
+    "code": "initial-generation-http-failure",
+    "status": 503,
+    "errorType": "AcceptanceError"
+  },
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}

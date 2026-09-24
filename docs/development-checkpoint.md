@@ -1,5 +1,29 @@
 # Development checkpoint
 
+Sep 23 live authoring-review acceptance reached the first real review route on
+an isolated local Postgres database and production build. The new
+`scripts/verify-live-authoring-review.mjs` gates exact OpenRouter GPT-6 Luna,
+default processing, a server/client 4,096-output-token ceiling and two total
+live calls, blocks external browser traffic, and writes only allowlisted
+sanitized evidence. A no-key browser preflight passed with zero model calls.
+The first credentialed attempt failed before provider inference because the
+local server inherited `VERCEL=1` from `.env.production.local` and therefore
+expected a trusted Vercel forwarded-IP header; the server was restarted with
+`VERCEL=0`. The corrected run made exactly two Luna calls: initial generation
+committed revision 7, and a revision-bound visual+structural review returned a
+targeted revise verdict. The browser applied the correction through revision
+10, saved it, and recovered the same project/revision after reload. The third
+final-review request was blocked before the server by the owner-approved
+OpenRouter two-call cap; full review acceptance, Undo, gameplay, export and
+publication are not established. Reports:
+`docs/evidence/authoring-review/openrouter-live-create-20260923/` and
+`openrouter-live-create-20260923-r2/`. Sanitized server events confirm distinct
+request IDs and the review's admitted/revised terminal outcome. The direct
+PostgreSQL review suite passed 14/14 after changing one stale GPT-5.6 fixture
+to GPT-6 Luna (`050ca01`). Gateway still lacks credit. The fresh ChatGPT device
+code expired without a grant, and browser computer use currently exposes no
+Chrome tabs. Await owner guidance before raising the OpenRouter per-run cap.
+
 Sep 23 far-world play start and camera accepted locally: an optional bounded
 `game.spawn` supplies an explicit world-space player start for authored games;
 legacy authored games without it keep the origin start. Rule-free worlds with
