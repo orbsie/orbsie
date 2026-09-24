@@ -6,8 +6,17 @@ single PNG API, aspect ratio, no-upscale behavior, and 128 KiB encoded limit.
 The earlier procedural-fruit fixture's WebGL 512×360 image was only 44.7 KiB,
 so it had unused room for detail; the software image was 94.1 KiB and may
 need the prior fallback. Astra reviewed the narrow Luna diff; nine focused
-capture tests, typecheck, formatting, and diff checks pass. This is not yet a
-browser fixture or live visual-quality acceptance result.
+capture tests, typecheck, formatting, and diff checks pass. A fresh isolated
+production build and zero-provider browser fixture passed in WebGL and forced
+Canvas2D. WebGL initial/replacement captures were 768×540 at 81.9/72.3 KiB;
+Canvas2D initial fell back to 512×360 at 94.1 KiB, then replacement used
+768×540 at 61.9 KiB. All retained visible blue fruit, exact revision/readiness
+bindings, and no unexpected external requests. Astra inspected the scene PNGs;
+the initial Canvas2D framing still renders the tree small. The fixture now
+waits for the final rendered replacement revision instead of attempting an
+intermediate revision. Evidence:
+`docs/evidence/scene-review-capture-high-detail-20260924/`. This does not
+prove live model quality or a completed authoring review.
 
 Sep 24 authoring-review diagnostics: the four-call quality run's sanitized
 report retained verdicts and revisions but lost the reviewer's defect text,

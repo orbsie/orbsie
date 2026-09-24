@@ -270,7 +270,7 @@ async function runRenderer(renderer) {
     const initial = await captureReview();
     assert.equal(initial.renderer, renderer);
     assert.ok(initial.width > 0 && initial.height > 0);
-    assert.ok(Math.max(initial.width, initial.height) <= 512);
+    assert.ok(Math.max(initial.width, initial.height) <= 768);
     assert.ok(initial.byteLength > 0 && initial.byteLength <= 128 * 1024);
     assert.match(initial.image, /^data:image\/png;base64,/);
     assert.equal(initial.readiness.pendingAssetIds.length, 0);
@@ -337,6 +337,23 @@ async function runRenderer(renderer) {
       duringReplacement.readyAssetIds,
       renderer === "webgl" ? ["pebble", "fruit-tree"] : [],
     );
+    await expect
+      .poll(
+        () =>
+          page.evaluate((expectedRenderer) => {
+            const state =
+              window.__orbsieSceneReviewFixture?.[expectedRenderer]?.read();
+            return state &&
+              state.revision > 0 &&
+              state.renderedRevision === state.revision &&
+              state.pendingAssetIds.length === 0 &&
+              state.readyAssetIds.includes("lantern")
+              ? state.revision
+              : null;
+          }, renderer),
+        { timeout: 10_000 },
+      )
+      .toBeGreaterThanOrEqual(duringReplacement.revision);
     const replacement = await captureReview();
     assert.equal(replacement.renderer, renderer);
     assert.ok(
