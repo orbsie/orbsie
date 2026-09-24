@@ -85,7 +85,7 @@ const MAX_TIMEOUT_MS = 10000;
 // Leave room for this data URL in the existing bounded review request. The
 // cap is on the encoded payload callers actually transport, with a matching
 // decoded cap for the PNG parser.
-const CAPTURE_EDGES = [512, 384, 256, 192, 128] as const;
+const CAPTURE_EDGES = [768, 512, 384, 256, 192, 128] as const;
 
 function captureError(
   code: SceneReviewCaptureErrorCode,

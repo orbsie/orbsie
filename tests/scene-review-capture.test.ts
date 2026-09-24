@@ -1,13 +1,68 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  captureSceneCanvas,
   SceneReviewCaptureBridge,
   SceneReviewCaptureError,
   type SceneReviewCaptureSource,
   type SceneReviewSourceState,
 } from "../src/lib/scene-review-capture";
+import { MAX_REVIEW_IMAGE_BYTES } from "../src/lib/review-image";
 
 const image =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+afterEach(() => vi.unstubAllGlobals());
+
+function stubCanvasCapture(encode: (width: number, height: number) => string) {
+  const sizes: Array<{ width: number; height: number }> = [];
+  vi.stubGlobal("document", {
+    createElement: (tag: string) => {
+      expect(tag).toBe("canvas");
+      const output = {
+        width: 0,
+        height: 0,
+        getContext: () => ({
+          fillStyle: "",
+          fillRect: () => undefined,
+          drawImage: () => undefined,
+        }),
+        toDataURL: () => {
+          sizes.push({ width: output.width, height: output.height });
+          return encode(output.width, output.height);
+        },
+      };
+      return output;
+    },
+  });
+  return sizes;
+}
+
+describe("scene review canvas capture", () => {
+  it("uses the higher-detail size when its PNG fits the existing cap", () => {
+    const sizes = stubCanvasCapture(() => image);
+    const canvas = { width: 1600, height: 900 } as HTMLCanvasElement;
+
+    expect(captureSceneCanvas(canvas)).toBe(image);
+    expect(sizes).toEqual([{ width: 768, height: 432 }]);
+  });
+
+  it("falls back to the prior size when the higher-detail PNG exceeds the cap", () => {
+    const oversized = `data:image/png;base64,${"A".repeat(MAX_REVIEW_IMAGE_BYTES)}`;
+    const sizes = stubCanvasCapture((width) =>
+      width === 768 ? oversized : image,
+    );
+    const canvas = { width: 1600, height: 900 } as HTMLCanvasElement;
+
+    expect(captureSceneCanvas(canvas)).toBe(image);
+    expect(sizes).toEqual([
+      { width: 768, height: 432 },
+      { width: 512, height: 288 },
+    ]);
+    expect(new TextEncoder().encode(oversized).byteLength).toBeGreaterThan(
+      MAX_REVIEW_IMAGE_BYTES,
+    );
+  });
+});
 
 function source(
   renderer: "webgl" | "software",

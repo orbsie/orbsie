@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 24 review-image detail: the scene capture now tries a 768-pixel maximum
+edge before its existing 512/384/256/192/128 fallback ladder, preserving the
+single PNG API, aspect ratio, no-upscale behavior, and 128 KiB encoded limit.
+The earlier procedural-fruit fixture's WebGL 512×360 image was only 44.7 KiB,
+so it had unused room for detail; the software image was 94.1 KiB and may
+need the prior fallback. Astra reviewed the narrow Luna diff; nine focused
+capture tests, typecheck, formatting, and diff checks pass. This is not yet a
+browser fixture or live visual-quality acceptance result.
+
 Sep 24 authoring-review diagnostics: the four-call quality run's sanitized
 report retained verdicts and revisions but lost the reviewer's defect text,
 while its private scene image was removed before Astra inspection. The live
