@@ -539,9 +539,10 @@ restart/restore/generation, disconnect, isolation and failure-recovery evidence.
   but a post-change live failure has not yet verified that diagnostic path. The
   editor offers both an explicit new-generation draft and a budgeted review-only
   ledger continuation after a saved review failure. The latter passes local
-  deterministic browser checks, including lost-start retry and a signed-in
-  correction journal, but live-provider and production-enabled acceptance
-  remain open.
+  deterministic browser checks, including reload/reopen, lost-start retry,
+  signed-in correction journaling, stale-cloud rejection, an existing local-only
+  draft, and an exact cloud snapshot. Live-provider and production-enabled
+  acceptance remain open.
 - [x] Display progress/activity chat updates no more often than once every two
   seconds. Coalesce bursts into a useful current summary, not a delayed backlog.
   Keep final results/errors and controls timely; do not throttle actual scene updates,
