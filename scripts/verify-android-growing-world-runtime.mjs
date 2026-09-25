@@ -1402,7 +1402,9 @@ try {
   if (CONTROL_PAGE) {
     report.comparisonAssessment =
       report.failureStage === "chrome-startup-and-cdp-connect"
-        ? `The Chrome ${report.androidChromeCDP?.browser ?? "DevTools endpoint"} endpoint responded, but Playwright's CDP attachment timed out before a page was created. Control navigation attempts: ${report.controlNavigationAttempts}. Filtered logcat matched ${report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? 0} Chrome failure lines; this does not identify the attachment timeout's cause.`
+        ? report.androidChromeCDP
+          ? `The ${report.androidChromeCDP.browser} DevTools endpoint responded, but Playwright's CDP attachment failed before a page was created. Control navigation attempts: ${report.controlNavigationAttempts}. Filtered logcat matched ${report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? 0} Chrome failure lines; this does not identify the attachment failure's cause.`
+          : `Chrome's DevTools endpoint did not become ready, so Playwright never attempted CDP attachment or control-page navigation. Control navigation attempts: ${report.controlNavigationAttempts}. Filtered logcat matched ${report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? 0} Chrome failure lines; this does not identify the endpoint failure's cause.`
         : `The static control run failed during ${report.failureStage}; control navigation attempts: ${report.controlNavigationAttempts}. Filtered logs do not identify the cause, and no fixture bundle or SoftwareWorld was loaded.`;
   } else if (READINESS_ONLY) {
     const rendererDeathLine =

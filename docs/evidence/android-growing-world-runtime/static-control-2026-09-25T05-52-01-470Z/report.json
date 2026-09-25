@@ -1,0 +1,152 @@
+{
+  "status": "failed",
+  "currentStage": "chrome-startup-and-cdp-connect",
+  "runId": "2026-09-25T05-52-01-470Z",
+  "sourceCommit": "5bd9c31872e9c9de3eb6f22a8ba87c0c23af83d5",
+  "harnessSourceSha256": "85a6dcbe3c07cb8a6afeceb0ee14133948ad9367958f95473c40988d425371f1",
+  "scope": "Android Chrome static control-page diagnostic; no fixture JavaScript or SoftwareWorld",
+  "fixture": {
+    "mode": "static HTML control page; fixture bundle and SoftwareWorld omitted",
+    "entityCount": 0,
+    "entitySelection": "none; static HTML only",
+    "additionalCluster": "none",
+    "rendererQuery": "none; no renderer instantiated",
+    "initialCameraDistance": null
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": false,
+  "pageCdpSessionCreatedAfterNavigation": false,
+  "controlNavigationAttempts": 0,
+  "timings": {
+    "failureElapsedMs": 56524
+  },
+  "lifecycleEvents": [
+    {
+      "event": "avd-process-started",
+      "at": "2026-09-25T05:52:01.509Z",
+      "elapsedMs": 39,
+      "detail": {
+        "avd": "droidlm_api36_latest"
+      }
+    },
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T05:52:27.174Z",
+      "elapsedMs": 25704,
+      "detail": {
+        "avd": "droidlm_api36_latest"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T05:52:27.746Z",
+      "elapsedMs": 26276,
+      "detail": {
+        "androidApi": "36",
+        "chromeVersion": "133.0.6943.137"
+      }
+    },
+    {
+      "event": "probe-failed",
+      "at": "2026-09-25T05:52:57.994Z",
+      "elapsedMs": 56524,
+      "detail": {
+        "error": "Android Chrome CDP did not become ready within 30000 ms."
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-started",
+      "at": "2026-09-25T05:52:57.994Z",
+      "elapsedMs": 56524,
+      "detail": {
+        "failureStage": "chrome-startup-and-cdp-connect"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-finished",
+      "at": "2026-09-25T05:52:58.165Z",
+      "elapsedMs": 56695,
+      "detail": {
+        "matchedLogcatLines": 0
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T05:52:58.165Z",
+      "elapsedMs": 56695
+    }
+  ],
+  "httpResponses": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": []
+  },
+  "cycles": [],
+  "screenshots": [],
+  "limitations": [
+    "This static control navigation is an Android emulator diagnostic, not physical-device certification.",
+    "The page contains no fixture bundle, renderer, canvas, or application runtime; a result does not establish application behavior.",
+    "The diagnostic run failed before completion; see lifecycle, timing, process-state, and filtered logcat records for evidence and any remaining uncertainty."
+  ],
+  "device": {
+    "id": "emulator-5556",
+    "avd": "droidlm_api36_latest",
+    "androidRelease": "16",
+    "androidApi": "36",
+    "buildId": "BE2A.250530.026.F3",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:16/BE2A.250530.026.F3/13894323:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "133.0.6943.137",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": true
+  },
+  "failureStage": "chrome-startup-and-cdp-connect",
+  "error": "Android Chrome CDP did not become ready within 30000 ms.",
+  "failurePageSnapshot": {
+    "unavailable": "no page object was created; control navigation was not attempted"
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T05:52:57.994Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 0,
+      "lines": []
+    },
+    "chromePid": "1804",
+    "chromeProcesses": [
+      "u0_a160 1804 479 32485728 247364 0 0 S com.android.chrome",
+      "u0_a160 2584 479 33352160 88612 0 0 S com.android.chrome_zygote",
+      "u0_i0 2682 2584 32730100 103504 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0",
+      "u0_i9000 2975 1010 281153704 198688 0 0 S com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0"
+    ]
+  },
+  "comparisonAssessment": "Chrome's DevTools endpoint did not become ready, so Playwright never attempted CDP attachment or control-page navigation. Control navigation attempts: 0. Filtered logcat matched 0 Chrome failure lines; this does not identify the endpoint failure's cause.",
+  "reviewCorrection": {
+    "field": "comparisonAssessment",
+    "original": "The Chrome DevTools endpoint endpoint responded, but Playwright's CDP attachment timed out before a page was created. Control navigation attempts: 0. Filtered logcat matched 0 Chrome failure lines; this does not identify the attachment timeout's cause.",
+    "reason": "The run's androidChromeCDP field is absent and its terminal error states that /json/version did not become ready; the original generic failure template described the wrong stage. Timings and observed events are unchanged."
+  },
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T05:52:59.730Z"
+}

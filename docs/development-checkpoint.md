@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 Android 16 alternate-emulator control attempt: the existing static
+control harness was run once on `droidlm_api36_latest` (Android 16, Chrome 133,
+emulator memory capped at 3 GiB). The owned AVD booted, but Chrome's DevTools
+`/json/version` endpoint did not become ready within 30 seconds. CDP attachment,
+page creation and navigation never occurred; filtered logcat had zero Chrome
+failure lines, and Chrome main/sandbox processes remained present. The worker's
+earlier control-failure template incorrectly claimed endpoint readiness; Astra
+corrected that conditional for future runs and retained the original wording
+in the report's `reviewCorrection` field. This alternate emulator also yields
+no application or growing-world acceptance. Node syntax, Prettier, JSON and
+diff checks passed; owned ADB mappings/emulator were removed. Evidence:
+`docs/evidence/android-growing-world-runtime/static-control-2026-09-25T05-52-01-470Z/`.
+
 Sep 25 Android static-control diagnostic: source/evidence `9ea2ac5` adds a
 separate no-bundle, no-renderer static HTML mode to the same owned AVD/ADB/CDP
 harness. One fresh Android 15/Chrome 124 run reached Chrome's `/json/version`
