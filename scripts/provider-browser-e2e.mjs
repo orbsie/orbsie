@@ -1025,6 +1025,11 @@ function safeGameplayCount(value, maximum = 6000) {
   return count !== null && count >= 0 ? Math.min(count, maximum) : null;
 }
 
+function safeGameplayTime(value) {
+  const time = safeGameplayNumber(value);
+  return time !== null && time >= 0 ? time : null;
+}
+
 function safeGameplayId(value, allowedIds) {
   return typeof value === "string" &&
     value.length <= 128 &&
@@ -1074,7 +1079,7 @@ function safeGameplayObservation(observation, projectId, revision, allowedIds) {
   return {
     projectId,
     revision,
-    atMs: safeGameplayNumber(observation.atMs),
+    atMs: safeGameplayTime(observation.atMs),
     renderer: ["webgl", "software"].includes(observation.renderer)
       ? observation.renderer
       : null,
@@ -1096,6 +1101,85 @@ function safeGameplayObservation(observation, projectId, revision, allowedIds) {
     reset: safeGameplayCount(observation.reset),
     sessionGeneration: safeGameplayCount(observation.sessionGeneration),
   };
+}
+
+function safePlatformTraversalObservation(observation, allowedIds) {
+  if (!observation || typeof observation !== "object") return null;
+  const platform = observation.platform;
+  return {
+    atMs: safeGameplayTime(observation.atMs),
+    player: {
+      position: safeGameplayVector(observation.player?.position),
+      velocityY: safeGameplayNumber(observation.player?.velocityY),
+      groundedOn:
+        observation.player?.groundedOn === "ground"
+          ? "ground"
+          : safeGameplayId(observation.player?.groundedOn, allowedIds),
+    },
+    platform: platform
+      ? {
+          position: safeGameplayVector(platform.position),
+          scale: safeGameplayVector(platform.scale),
+        }
+      : null,
+    platformContactId: safeGameplayId(
+      observation.platformContactId,
+      allowedIds,
+    ),
+    bounceContactId: safeGameplayId(observation.bounceContactId, allowedIds),
+    platformContactCount: safeGameplayCount(
+      observation.platformContactCount,
+    ),
+    bounceContactCount: safeGameplayCount(observation.bounceContactCount),
+  };
+}
+
+function safeGameplayAttempt(value) {
+  if (Number.isSafeInteger(value) && value >= 0 && value <= 2) return value;
+  const recovery = typeof value === "string" && /^recovery-([0-2])$/.exec(value);
+  return recovery ? `recovery-${recovery[1]}` : null;
+}
+
+function safePlatformJumpEvidence(attempts, platformId, allowedIds) {
+  if (!Array.isArray(attempts)) return [];
+  return attempts.slice(-3).flatMap((attempt) => {
+    if (
+      safeGameplayId(attempt?.id, allowedIds) !== platformId ||
+      safeGameplayAttempt(attempt?.attempt) === null
+    )
+      return [];
+    const safeKeys = (keys) =>
+      Array.isArray(keys)
+        ? keys
+            .slice(0, 5)
+            .filter((key) => SAFE_GAMEPLAY_KEYS.has(key))
+        : [];
+    return [
+      {
+        attempt: safeGameplayAttempt(attempt.attempt),
+        before: safePlatformTraversalObservation(attempt.before, allowedIds),
+        inputKeys: Array.isArray(attempt.inputKeys)
+          ? attempt.inputKeys
+              .slice(-8)
+              .map((keys) => safeKeys(keys))
+          : [],
+        samples: Array.isArray(attempt.samples)
+          ? attempt.samples
+              .slice(-8)
+              .map((sample) =>
+                safePlatformTraversalObservation(sample, allowedIds),
+              )
+          : [],
+        apex: safePlatformTraversalObservation(attempt.apex, allowedIds),
+        landing: safePlatformTraversalObservation(attempt.landing, allowedIds),
+        contact: safePlatformTraversalObservation(attempt.contact, allowedIds),
+        recovery: safePlatformTraversalObservation(
+          attempt.recovery,
+          allowedIds,
+        ),
+      },
+    ];
+  });
 }
 
 /** Record failed traversal with bounded gameplay fields bound to its revision. */
@@ -1127,7 +1211,7 @@ export function recordFreshFlagshipGameplayFailure(
         if (!entry || !SAFE_GAMEPLAY_REASONS.has(entry.reason)) return [];
         return [
           {
-            atMs: safeGameplayNumber(entry.atMs),
+            atMs: safeGameplayTime(entry.atMs),
             keys: Array.isArray(entry.keys)
               ? entry.keys
                   .slice(0, 5)
@@ -1153,6 +1237,11 @@ export function recordFreshFlagshipGameplayFailure(
                 startPosition: safeGameplayVector(platform.startPosition),
                 maximumDisplacement: safeGameplayNumber(
                   platform.maximumDisplacement,
+                ),
+                jumpEvidence: safePlatformJumpEvidence(
+                  platform.jumpEvidence,
+                  id,
+                  allowedIds,
                 ),
               },
             ]

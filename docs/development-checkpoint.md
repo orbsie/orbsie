@@ -16,10 +16,12 @@ dev server. Sanitized mode-0600 evidence is in
 
 Sep 25 failure-reporting repair: fresh creation, goal-7 and undo traversal
 exceptions now mark both the gameplay phase and flagship story failed, retaining
-bounded allowlisted evidence bound to the attempted project revision. The
-top-level sanitized error remains intact. A deterministic focused test covers
-failure status, revision binding, evidence bounds and omission of provider text;
-the historical OpenRouter report above remains unchanged. No model call ran.
+bounded allowlisted evidence bound to the attempted project revision, including
+the last three sanitized platform-jump attempts with at most eight samples each.
+The top-level sanitized error remains intact. A deterministic focused test
+covers failure status, revision binding, nested evidence bounds and omission of
+provider text; the historical OpenRouter report above remains unchanged. No
+model call ran.
 
 Sep 25 OpenRouter Android publication check: the exact URL pinned by
 `docs/evidence/provider-artifact-publication-openrouter-current-20260925/report.json`

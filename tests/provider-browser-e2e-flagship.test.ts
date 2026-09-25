@@ -481,6 +481,20 @@ describe("flagship provider story contract", () => {
         phases: { creation: { revision: 42 } },
       },
     };
+    const compactAttemptObservation = (id: string, atMs: number) => ({
+      atMs,
+      player: {
+        position: [1, 2, 3],
+        velocityY: 0.5,
+        groundedOn: id,
+      },
+      platform: { position: [4, 5, 6], scale: [1, 1, 1] },
+      platformContactId: id,
+      bounceContactId: "provider raw response",
+      platformContactCount: 12,
+      bounceContactCount: -1,
+      rawProviderText: "must not be copied",
+    });
     const thrown = new Error(initialReport.error) as Error & {
       freshGameplayEvidence: Record<string, any>;
     };
@@ -506,7 +520,32 @@ describe("flagship provider story contract", () => {
         bounceFrames: 0,
         startPosition: [index, 0, 0],
         maximumDisplacement: 0.2,
-        jumpEvidence: [{ rawProviderText: "must be omitted" }],
+        jumpEvidence: [
+          0,
+          1,
+          2,
+          "recovery-0",
+          "recovery-1",
+        ].map((attempt) => ({
+          id: `entity-${index}`,
+          attempt,
+          before: compactAttemptObservation(`entity-${index}`, 10),
+          inputKeys: Array.from({ length: 12 }, () => [
+            "d",
+            "secret-provider-token",
+          ]),
+          samples: Array.from({ length: 12 }, (_, sampleIndex) =>
+            compactAttemptObservation(
+              `entity-${index}`,
+              sampleIndex === 11 ? -1 : sampleIndex + 20,
+            ),
+          ),
+          apex: compactAttemptObservation(`entity-${index}`, 30),
+          landing: compactAttemptObservation(`entity-${index}`, 40),
+          contact: compactAttemptObservation(`entity-${index}`, 50),
+          recovery: compactAttemptObservation(`entity-${index}`, 60),
+          rawProviderText: "must be omitted",
+        })),
       })),
       rawProviderText: "must not be copied",
       apiKey: "must not be copied",
@@ -561,6 +600,32 @@ describe("flagship provider story contract", () => {
       expect(evidence.lastObservation.entities).toHaveLength(32);
       expect(evidence.inputTrace).toHaveLength(20);
       expect(evidence.platformEvidence).toHaveLength(32);
+      expect(evidence.platformEvidence[0].jumpEvidence).toHaveLength(3);
+      expect(
+        evidence.platformEvidence[0].jumpEvidence.map(
+          (attempt: any) => attempt.attempt,
+        ),
+      ).toEqual([2, "recovery-0", "recovery-1"]);
+      expect(
+        evidence.platformEvidence[0].jumpEvidence.every(
+          (attempt: any) =>
+            attempt.samples.length === 8 && attempt.inputKeys.length === 8,
+        ),
+      ).toBe(true);
+      expect(
+        evidence.platformEvidence[0].jumpEvidence[0].samples.at(-1),
+      ).toMatchObject({
+        atMs: null,
+        platformContactId: "entity-0",
+        bounceContactId: null,
+        platformContactCount: 12,
+        bounceContactCount: null,
+      });
+      expect(
+        evidence.platformEvidence[0].jumpEvidence[0].inputKeys.every(
+          (keys: string[]) => keys.join("") === "d",
+        ),
+      ).toBe(true);
       expect(
         evidence.inputTrace.every(
           (entry: any) =>
