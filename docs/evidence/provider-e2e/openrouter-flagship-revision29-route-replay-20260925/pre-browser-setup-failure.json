@@ -1,0 +1,13 @@
+{
+  "kind": "replay-setup-failure",
+  "phase": "revision29-asset-reference-count-preflight",
+  "errorCode": "asset-reference-count-mismatch",
+  "observedAssetReferences": 2,
+  "initiallyExpectedAssetReferences": 3,
+  "browserStarted": false,
+  "gameplayStarted": false,
+  "providerCalls": 0,
+  "cloudCalls": 0,
+  "resolution": "The diagnostic now expects two asset references for this revision and validates both local catalog files; the older revision31 replay still expects three.",
+  "actualGameplayEvidence": "report.json"
+}

@@ -8,43 +8,78 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { chromium } from "@playwright/test";
 import {
+  assertFlagshipStoryCreation,
   recordFreshFlagshipGameplayFailure,
   runFreshFlagshipGameplay,
 } from "./provider-browser-e2e.mjs";
 import { buildFreshGameplayTargets } from "./lib/fresh-flagship-gameplay.mjs";
 
-const sourcePath =
+const DEFAULT_SOURCE_PATH =
   "docs/evidence/provider-e2e/openrouter-flagship-current-20260925/openrouter/story-created-project.json";
+const REVISION_29_SOURCE_PATH =
+  "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json";
+const REVISION_29_SOURCE = {
+  projectId: "b2e30ab2-c77b-4f88-a623-f532a4df323b",
+  revision: 29,
+  sha256: "a7b8964167a6df97e1154124be5eb4f02a5ce8669ed6a0d048a8ae7405903b47",
+};
+const args = process.argv.slice(2);
+const replayRevision29 = args.includes("--revision29");
+const outputArgs = args.filter((argument) => argument !== "--revision29");
+assert(outputArgs.length <= 1, "Provide at most one output directory.");
+const sourcePath = replayRevision29
+  ? REVISION_29_SOURCE_PATH
+  : DEFAULT_SOURCE_PATH;
 const outputPath = resolve(
-  process.argv[2] ??
-    "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925",
+  outputArgs[0] ??
+    (replayRevision29
+      ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
+      : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const projectBytes = await readFile(resolve(sourcePath));
 const project = JSON.parse(projectBytes.toString("utf8"));
-assert.equal(project.id, "2d8c071d-13be-4f4f-9c49-5d1d50c13b93");
-assert.equal(project.revision, 31);
+if (replayRevision29) {
+  assert.equal(project.id, REVISION_29_SOURCE.projectId);
+  assert.equal(project.revision, REVISION_29_SOURCE.revision);
+  assert.equal(sha256(projectBytes), REVISION_29_SOURCE.sha256);
+} else {
+  assert.equal(project.id, "2d8c071d-13be-4f4f-9c49-5d1d50c13b93");
+  assert.equal(project.revision, 31);
+}
 assert.equal(
   project.entities.filter((entity) => entity.geometry?.kind === "generated")
     .length,
   0,
 );
-const platforms = ["bounce-one", "bounce-two", "bounce-three"].map((id) => {
-  const entity = project.entities.find((candidate) => candidate.id === id);
-  assert(entity && entity.behavior?.type === "bounce");
-  return entity;
-});
-const collectibles = project.entities.filter(
-  (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
-);
-const portals = project.entities.filter(
-  (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
-);
+let platforms;
+let collectibles;
+let portal;
+if (replayRevision29) {
+  const story = assertFlagshipStoryCreation(project);
+  platforms = story.platforms;
+  collectibles = story.collectibles;
+  portal = story.portal;
+} else {
+  platforms = ["bounce-one", "bounce-two", "bounce-three"].map((id) => {
+    const entity = project.entities.find((candidate) => candidate.id === id);
+    assert(entity && entity.behavior?.type === "bounce");
+    return entity;
+  });
+  collectibles = project.entities.filter(
+    (entity) =>
+      entity.stage === "ready" && entity.behavior?.type === "collect",
+  );
+  const portals = project.entities.filter(
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
+  );
+  assert.equal(portals.length, 1);
+  portal = portals[0];
+}
 assert.equal(collectibles.length, 5);
-assert.equal(portals.length, 1);
 const targets = buildFreshGameplayTargets(
   project,
-  { platforms, collectibles, portal: portals[0] },
+  { platforms, collectibles, portal },
   { expectedCollectibleCount: 5, expectedRevision: project.revision },
 );
 
@@ -55,7 +90,7 @@ const catalogAssets = new Map(catalog.assets.map((asset) => [asset.id, asset]));
 const assetReferences = project.entities
   .filter((entity) => entity.geometry?.kind === "asset")
   .map((entity) => ({ entityId: entity.id, assetId: entity.geometry.assetId }));
-assert.equal(assetReferences.length, 3);
+assert.equal(assetReferences.length, replayRevision29 ? 2 : 3);
 const files = new Map([["/project.json", projectBytes]]);
 const runtimeEvidence = {};
 for (const name of [
@@ -152,6 +187,9 @@ const sanitizeDiagnosticText = (value) =>
     .slice(0, 300);
 const report = {
   mode: "single-static-saved-openrouter-creation-replay",
+  routeSelection: replayRevision29
+    ? "production-spawn-relative-validator"
+    : "pinned-revision31-identifiers",
   status: "running",
   repoHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   sourceProject: {
@@ -166,6 +204,10 @@ const report = {
   catalogAssets: assets,
   targets: {
     platforms: targets.platforms.map((entity) => entity.id),
+    platformPositions: targets.platforms.map((entity) => ({
+      id: entity.id,
+      position: entity.position,
+    })),
     collectibles: targets.collectibles.map((entity) => entity.id),
     portal: targets.portal.id,
   },

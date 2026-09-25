@@ -4173,7 +4173,7 @@ function storyActiveStartPath(project, entityId) {
 }
 
 function storyPlatforms(project) {
-  return project.entities
+  const candidates = project.entities
     .filter((entity) => {
       if (
         entity.stage !== "ready" ||
@@ -4188,13 +4188,29 @@ function storyPlatforms(project) {
         entity.behavior?.type === "bounce" &&
         Boolean(storyActiveStartPath(project, entity.id))
       );
-    })
-    .sort(
+    });
+  const spawn =
+    Array.isArray(project.game?.spawn) &&
+    project.game.spawn.length === 3 &&
+    project.game.spawn.every(Number.isFinite)
+      ? project.game.spawn
+      : [0, 0.5, 5];
+  const distanceSquared = (from, to) =>
+    from.reduce((sum, component, axis) => sum + (component - to[axis]) ** 2, 0);
+  const route = [];
+  let anchor = spawn;
+  while (candidates.length > 0) {
+    candidates.sort(
       (a, b) =>
-        a.position[0] - b.position[0] ||
-        a.position[2] - b.position[2] ||
+        distanceSquared(anchor, a.position) -
+          distanceSquared(anchor, b.position) ||
         a.id.localeCompare(b.id),
     );
+    const next = candidates.shift();
+    route.push(next);
+    anchor = next.position;
+  }
+  return route;
 }
 
 export function assertFlagshipStoryCreation(project) {

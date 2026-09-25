@@ -445,6 +445,98 @@ function publicationFixture({
 }
 
 describe("flagship provider story contract", () => {
+  it("orders platforms from the spawn and preserves the middle identity", () => {
+    const savedProject = JSON.parse(
+      readFileSync(
+        resolve(
+          "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json",
+        ),
+        "utf8",
+      ),
+    );
+    const createdStory = assertFlagshipStoryCreation(savedProject);
+    expect(createdStory.platforms.map((platform) => platform.id)).toEqual([
+      "bounce-1",
+      "bounce-2",
+      "bounce-3",
+    ]);
+    expect(createdStory.middlePlatform.id).toBe("bounce-2");
+
+    const editedProject = structuredClone(savedProject);
+    editedProject.revision += 1;
+    const editedMiddlePath = editedProject.game.rules
+      .flatMap((rule: any) => rule.actions ?? [])
+      .find(
+        (action: any) =>
+          action.type === "move_path" && action.entityId === "bounce-2",
+      );
+    editedMiddlePath.duration += 0.5;
+    expect(assertFlagshipStoryCreation(editedProject).middlePlatform.id).toBe(
+      createdStory.middlePlatform.id,
+    );
+
+    const undoneProject = structuredClone(savedProject);
+    undoneProject.revision += 2;
+    expect(assertFlagshipStoryCreation(undoneProject).middlePlatform.id).toBe(
+      createdStory.middlePlatform.id,
+    );
+
+    const tiedProject = structuredClone(savedProject);
+    const setPlatformPosition = (id: string, position: number[]) => {
+      const entity = tiedProject.entities.find((item: any) => item.id === id);
+      const path = tiedProject.game.rules
+        .flatMap((rule: any) => rule.actions ?? [])
+        .find((action: any) => action.type === "move_path" && action.entityId === id);
+      const delta = position.map(
+        (component, axis) => component - entity.position[axis],
+      );
+      entity.position = position;
+      path.points = path.points.map((point: number[]) =>
+        point.map((component, axis) => component + delta[axis]),
+      );
+    };
+    setPlatformPosition("bounce-2", [1, 1.5, 0]);
+    setPlatformPosition("bounce-3", [-1, 1.5, 0]);
+    expect(
+      assertFlagshipStoryCreation(tiedProject).platforms.map(
+        (platform) => platform.id,
+      ),
+    ).toEqual(["bounce-1", "bounce-2", "bounce-3"]);
+
+    const reversedIdMap = new Map([
+      ["bounce-1", "bounce-z"],
+      ["bounce-2", "bounce-y"],
+      ["bounce-3", "bounce-x"],
+    ]);
+    const remapIds = (value: any): any => {
+      if (typeof value === "string") return reversedIdMap.get(value) ?? value;
+      if (Array.isArray(value)) return value.map(remapIds);
+      if (value && typeof value === "object")
+        return Object.fromEntries(
+          Object.entries(value).map(([key, item]) => [key, remapIds(item)]),
+        );
+      return value;
+    };
+    const rotatedProject = remapIds(structuredClone(savedProject));
+    const rotatePosition = ([x, y, z]: number[]) => [z, y, -x];
+    rotatedProject.game.spawn = rotatePosition(rotatedProject.game.spawn);
+    for (const entity of rotatedProject.entities)
+      entity.position = rotatePosition(entity.position);
+    for (const rule of rotatedProject.game.rules) {
+      for (const action of rule.actions ?? []) {
+        if (action.type === "move_path")
+          action.points = action.points.map(rotatePosition);
+      }
+    }
+    const rotatedStory = assertFlagshipStoryCreation(rotatedProject);
+    expect(rotatedStory.platforms.map((platform) => platform.id)).toEqual([
+      "bounce-z",
+      "bounce-y",
+      "bounce-x",
+    ]);
+    expect(rotatedStory.middlePlatform.id).toBe("bounce-y");
+  });
+
   it("records thrown traversal evidence as a bounded phase failure", () => {
     const project = {
       id: "story-project-1",

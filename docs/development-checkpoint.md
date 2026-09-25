@@ -28,8 +28,42 @@ Y values were 1.428, 1.428, and 1.476 while the platform center was Y=2.3.
 From the spawn Z=5, the platforms are respectively 5 m, 8 m, and 11 m away on
 the horizontal Z axis.
 The surface-crossing pair is null, so no exact crossing position is claimed.
-This identifies a driver target-order mismatch; bounce-one/two traversal and a
-full create/edit journey remain untested. No physics conclusion is drawn.
+That run exposed a driver target-order mismatch; bounce-one/two traversal and a
+full create/edit journey were untested. It did not establish a physics cause.
+
+Sep 25 offline route-order repair: `storyPlatforms()` now walks from the saved
+game spawn to the nearest remaining platform, then repeats from each selected
+platform; exact distance ties use stable entity IDs. It has no world-axis
+assumption. A focused regression over the saved revision29 project, an edited
+and undo snapshot, and a rotated scene with reversed platform IDs confirms the
+same middle-platform identity (`bounce-2` in the original scene). Syntax,
+focused test, typecheck, and diff checks pass.
+
+One loopback-only keyboard replay used that exact revision29 project
+(`a7b89641…05903b47`) and the checked-in player runtime (`d70d5d1f…df967619`);
+the production validator selected bounce-1, bounce-2, bounce-3. The local
+project/runtime/asset preflights passed; browser readiness matched project and
+revision, with no external requests, page errors, console errors, request
+failures, provider calls, or cloud calls. Traversal still failed on bounce-1
+after three jump attempts and 62 observations, with no platform/bounce contact,
+collection, score, win, or reset. The third apex was `(0.709, 1.476, 0.007)`;
+the moving platform was `(0.485, 0.700, 0)`. The player was inside the estimated
+X/Z footprint, but its center stayed 0.164 m below the estimated platform-top
+center height (1.640 m); contact counters remained zero and no surface crossing
+was recorded. This supports a vertical-clearance shortfall in this bounded
+traversal, not proof that every approach is unreachable. Bounce-2/3 and all
+objectives remain untested. The initial local asset-count preflight failure
+(revision29 has two references, not the revision31 fixture's three) is kept
+separately from gameplay in `pre-browser-setup-failure.json`. Report,
+diagnostic, and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925/`.
+The source physics constants provide a tighter bound: `src/lib/gameplay.ts`
+sets ground center 0.42, jump speed 6, gravity 15, and player half-height 0.42.
+The ideal rise is 1.20 m, so the ideal center apex is 1.62 m; the procedural
+platform top rule puts bounce-1's landing center at 0.7 + 0.52 + 0.42 = 1.64 m.
+That makes a direct ground jump 0.02 m short even at the ideal apex. This is a
+source-grounded reachability inference, not contact evidence; the actual replay
+apex was 1.476 m with contact counters still zero.
 
 Sep 25 stream-budget prevention: generation prompts now explicitly reserve the
 final model-authored command for `commit_revision` and prioritize a minimal

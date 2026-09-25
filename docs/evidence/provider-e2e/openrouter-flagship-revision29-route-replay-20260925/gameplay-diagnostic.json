@@ -1,0 +1,151 @@
+{
+  "kind": "bounded-route-replay-interpretation",
+  "sourceProject": {
+    "path": "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json",
+    "bytes": 11036,
+    "sha256": "a7b8964167a6df97e1154124be5eb4f02a5ce8669ed6a0d048a8ae7405903b47",
+    "projectId": "b2e30ab2-c77b-4f88-a623-f532a4df323b",
+    "revision": 29
+  },
+  "runtime": {
+    "runtime.js": {
+      "bytes": 1944517,
+      "sha256": "d70d5d1f7ad23d5d5a14065a47c7b5c72a7d2ede2a9f2baa869b6eccdf967619"
+    },
+    "runtime.css": {
+      "bytes": 6236,
+      "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 427305,
+      "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+    }
+  },
+  "routeSelection": "production-spawn-relative-validator",
+  "orderedPlatformIds": [
+    "bounce-1",
+    "bounce-2",
+    "bounce-3"
+  ],
+  "initialPlayerPosition": [
+    0,
+    0.42,
+    5
+  ],
+  "gameplayStatus": "traversal-failed",
+  "errorCode": {
+    "code": "platform-contact-not-observed",
+    "targetId": "bounce-1"
+  },
+  "observationCount": 62,
+  "keyboardMovementDistance": 0.6400000000000009,
+  "failedTarget": "bounce-1",
+  "jumpAttempts": [
+    {
+      "attempt": 0,
+      "apexPlayerPosition": [
+        0.9354080032614873,
+        1.4760000000000004,
+        3.017475037415184
+      ],
+      "targetPositionAtApex": [
+        0.6749500000178817,
+        0.7,
+        0
+      ],
+      "estimatedPlayerCenterSurfaceY": 1.64,
+      "estimatedVerticalShortfall": 0.164,
+      "insideEstimatedHorizontalFootprintAtApex": false,
+      "contactCountersAtApex": {
+        "platform": 0,
+        "bounce": 0
+      },
+      "surfaceCrossingRecorded": false,
+      "contactRecorded": false
+    },
+    {
+      "attempt": 1,
+      "apexPlayerPosition": [
+        0.9390072998187655,
+        1.4760000000000004,
+        0.19224727852716905
+      ],
+      "targetPositionAtApex": [
+        0.905049999982118,
+        0.7,
+        0
+      ],
+      "estimatedPlayerCenterSurfaceY": 1.64,
+      "estimatedVerticalShortfall": 0.164,
+      "insideEstimatedHorizontalFootprintAtApex": true,
+      "contactCountersAtApex": {
+        "platform": 0,
+        "bounce": 0
+      },
+      "surfaceCrossingRecorded": false,
+      "contactRecorded": false
+    },
+    {
+      "attempt": 2,
+      "apexPlayerPosition": [
+        0.7087712728445266,
+        1.4760000000000004,
+        0.006787743641877286
+      ],
+      "targetPositionAtApex": [
+        0.4850499999821176,
+        0.7,
+        0
+      ],
+      "estimatedPlayerCenterSurfaceY": 1.64,
+      "estimatedVerticalShortfall": 0.164,
+      "insideEstimatedHorizontalFootprintAtApex": true,
+      "contactCountersAtApex": {
+        "platform": 0,
+        "bounce": 0
+      },
+      "surfaceCrossingRecorded": false,
+      "contactRecorded": false
+    }
+  ],
+  "score": 0,
+  "contacts": [],
+  "collections": [],
+  "portalWin": null,
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "interpretation": "The corrected route reached bounce-1 first and three jump attempts produced no authoritative platform or bounce contact. On the third attempt the player apex was within the estimated horizontal footprint, but remained below the estimated player-center platform-top height. This supports a vertical-clearance shortfall in this bounded traversal; the surface and footprint are estimates, and this does not prove that every possible approach is unreachable.",
+  "untested": [
+    "bounce-2",
+    "bounce-3",
+    "collectibles",
+    "portal",
+    "win",
+    "reset"
+  ],
+  "sourcePhysicsBoundInference": {
+    "source": "src/lib/gameplay.ts",
+    "constants": {
+      "groundCenterY": 0.42,
+      "jumpSpeed": 6,
+      "gravity": 15,
+      "playerHalfHeight": 0.42
+    },
+    "idealRiseFromGround": 1.2,
+    "idealMaximumPlayerCenterY": 1.62,
+    "proceduralPlatformTopCenterRule": "platform y + max(-0.025*scaleY, 0.52*scaleY) + player half-height",
+    "bounceOne": {
+      "positionY": 0.7,
+      "scaleY": 1,
+      "estimatedPlayerCenterLandingY": 1.64
+    },
+    "estimatedVerticalBoundShortfall": 0.02,
+    "inference": "A direct jump from the ground is outside the ideal vertical bound for bounce-1 by 0.02 m under these constants. This is a source-grounded reachability inference, not observed contact proof; actual bounded replay apex was 1.476 m and authoritative contact counters stayed zero."
+  }
+}
