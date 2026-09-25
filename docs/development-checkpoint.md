@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 surface-crossing replay: one bounded keyboard traversal of saved project
+revision 31 now recorded a compact pair bracketing bounce-three's estimated
+top plane (y=2.10). At 8,222 ms the player was `(0.661, 2.206, -3.576)` and
+the platform `(-0.592, 1.550, -3.600)`; at 8,266 ms the player was
+`(0.507, 1.982, -3.621)` and the platform `(-0.580, 1.550, -3.600)`. Both
+frames were outside the estimated X footprint (half-width 0.6325) but inside
+its Z footprint; platform and bounce contact counters stayed 0 across the
+pair. This brackets the crossing but does not claim an exact interpolated
+contact position or authoritative collision; the run remains failed with only
+crystal-five collected. No external/provider/cloud requests or page/console/
+request errors occurred. Sanitized pair and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-surface-crossing-20260925/`.
+
 Sep 25 expanded-sample replay: fresh loopback traversal of the same saved
 revision-31 OpenRouter project, with per-attempt jump telemetry now retaining
 the first four plus latest eight frames (12 maximum). WebGL loaded and all
