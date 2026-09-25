@@ -1,0 +1,684 @@
+{
+  "checkedAt": "2026-09-25T21:15:16.523Z",
+  "provenance": {
+    "checkedAt": "2026-09-25T21:15:16.523Z",
+    "harness": {
+      "checkoutSHA": "f11ef40188c5fc9cbd136b9a876a0d1771035c28",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "f11ef40188c5fc9cbd136b9a876a0d1771035c28",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3051",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 3,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 28,
+    "firstReservationMs": 5287,
+    "seedObserved": true,
+    "gameplayDuringGeneration": {
+      "status": "passed",
+      "inputMode": "keyboard",
+      "startedAt": "2026-09-25T21:15:27.415Z",
+      "movementAtMs": 488,
+      "movementAt": "2026-09-25T21:15:27.903Z",
+      "generationRequestsAtMovement": 1,
+      "generationResponsesAtMovement": 1,
+      "generationStreamOpenAtMovement": true,
+      "generationStreamOpenAfterMovement": true,
+      "generationRequestAtMs": 1790370920783,
+      "generationRequestAt": "2026-09-25T21:15:20.783Z",
+      "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+      "revisionBefore": 5,
+      "revisionAfter": 6,
+      "movementDistance": 0.7836000000014911,
+      "before": {
+        "renderer": "webgl",
+        "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+        "revision": 5,
+        "simulationDeltaMs": 36.30000000074506,
+        "playing": true,
+        "player": {
+          "position": [
+            0,
+            0.42,
+            5
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "island",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              -0.2,
+              0
+            ],
+            "scale": [
+              8,
+              1,
+              6
+            ]
+          },
+          {
+            "id": "tree-a",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0.075,
+              1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-b",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              3,
+              0.075,
+              1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "pond",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              0.05,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "crystal-1",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              -2,
+              0.65,
+              3
+            ],
+            "scale": [
+              0.65,
+              0.8,
+              0.65
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 10775.199999999255,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "after": {
+        "renderer": "webgl",
+        "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+        "revision": 6,
+        "simulationDeltaMs": 40,
+        "playing": true,
+        "player": {
+          "position": [
+            0.6876736954986038,
+            0.42,
+            4.62432214794903
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "island",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              -0.2,
+              0
+            ],
+            "scale": [
+              8,
+              1,
+              6
+            ]
+          },
+          {
+            "id": "tree-a",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0.075,
+              1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-b",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              3,
+              0.075,
+              1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "pond",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              0.05,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "crystal-1",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              -2,
+              0.65,
+              3
+            ],
+            "scale": [
+              0.65,
+              0.8,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-2",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              2,
+              0.65,
+              3
+            ],
+            "scale": [
+              0.65,
+              0.8,
+              0.65
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 11048,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "beforeSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+          "revision": 5,
+          "simulationDeltaMs": 36.30000000074506,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "island",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                -0.2,
+                0
+              ],
+              "scale": [
+                8,
+                1,
+                6
+              ]
+            },
+            {
+              "id": "tree-a",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0.075,
+                1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-b",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                3,
+                0.075,
+                1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "pond",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                0.05,
+                -2
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "crystal-1",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                -2,
+                0.65,
+                3
+              ],
+              "scale": [
+                0.65,
+                0.8,
+                0.65
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 10775.199999999255,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      },
+      "afterSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+          "revision": 6,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0.6876736954986038,
+              0.42,
+              4.62432214794903
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "island",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                -0.2,
+                0
+              ],
+              "scale": [
+                8,
+                1,
+                6
+              ]
+            },
+            {
+              "id": "tree-a",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0.075,
+                1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-b",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                3,
+                0.075,
+                1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "pond",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                0.05,
+                -2
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "crystal-1",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                -2,
+                0.65,
+                3
+              ],
+              "scale": [
+                0.65,
+                0.8,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-2",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                2,
+                0.65,
+                3
+              ],
+              "scale": [
+                0.65,
+                0.8,
+                0.65
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 11048,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      }
+    },
+    "catalogEntities": 2,
+    "proceduralEntities": 11,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "flagshipStory": {
+    "status": "creation-observed",
+    "generationBudget": 3,
+    "visualReview": "pending",
+    "phases": {
+      "creation": {
+        "revision": 28
+      }
+    },
+    "generatedModels": {
+      "status": "complete",
+      "writtenHashes": [],
+      "phases": {
+        "created": {
+          "status": "complete",
+          "modelCount": 0,
+          "missingCount": 0,
+          "totalBytes": 0
+        }
+      }
+    }
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790370920783,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [],
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "story-created-project.json",
+    "story-created-generated.json",
+    "scene-after-creation.png"
+  ],
+  "error": "Story creation must contain one portal.\n\n0 !== 1\n",
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "movement-during-generation",
+      "creation-win-reset",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  },
+  "sanitization": {
+    "projectSnapshot": {
+      "file": "openrouter/story-created-project.json",
+      "sourceSha256BeforeSanitization": "4faeccf713837b44adda5a6d2386c13bf86a7d99b09e14d78a03b34e84263acb",
+      "retainedSha256": "8b7e682efbbb1243db9211e8bc5e665ab6f4a74fc45036487c27c66280b59a27",
+      "conversationMessagesRemoved": 2,
+      "titleNormalized": true,
+      "sceneFieldsRetained": true,
+      "byteIdenticalToLiveProject": false
+    },
+    "screenshots": {
+      "retainedConnectionScreenshot": "openrouter/connection-model.png",
+      "sceneScreenshot": {
+        "file": "openrouter/scene-after-creation.png",
+        "sourceFile": "openrouter/failure.png",
+        "sourceSha256BeforeCropping": "eb27dc6f7f292ee3f32219f875cbdcc3223d3e4fe0c4f691d79b1d9d2ba248d4",
+        "chatAndTitleCropped": true
+      },
+      "promptBearingIntermediateScreenshotOmitted": true
+    }
+  },
+  "acceptanceSummary": {
+    "status": "failed",
+    "stoppedAt": "creation",
+    "generationRequests": 1,
+    "generationHttpStatuses": [
+      200
+    ],
+    "maximumGenerationRequests": 3,
+    "fallbackUsed": false,
+    "projectId": "e48ce72d-41d9-4545-b80c-87bee82b6173",
+    "revision": 28,
+    "portalGate": {
+      "expectedReadyBehaviorPortals": 1,
+      "observedReadyBehaviorPortals": 0,
+      "visualArchEntity": {
+        "id": "portal",
+        "stage": "ready",
+        "geometry": "arch",
+        "behavior": "static"
+      }
+    },
+    "keyboardMovementWhileGenerationOpen": "passed",
+    "platformTraversal": "not-reached",
+    "authoritativePlatformContacts": "not-measured",
+    "collections": "not-reached",
+    "score": "not-reached",
+    "win": "not-reached",
+    "reset": "not-reached",
+    "mushroomEdit": "not-reached",
+    "goal7Edit": "not-reached",
+    "undo": "not-reached",
+    "export": "not-reached",
+    "standalonePlayback": "not-reached",
+    "cloudRecovery": "not-requested",
+    "publication": "not-requested"
+  },
+  "runSetup": {
+    "sourceCommit": "f11ef40188c5fc9cbd136b9a876a0d1771035c28",
+    "codexQuotaRemainingPercentBeforeRun": 37,
+    "isolatedProductionBuild": "passed",
+    "serverOrigin": "http://127.0.0.1:3051",
+    "serverBoundToLoopback": true,
+    "authOriginMatched": true,
+    "serverDatabaseConfigured": false,
+    "serverAccountsEnabled": false,
+    "serverPublicationEnabled": false,
+    "generationMaxTokens": 4096,
+    "serverConfigHttpStatus": 200,
+    "generateOriginPreflightHttpStatus": 400,
+    "openrouterCatalogHttpStatus": 200,
+    "exactExpectedModelPresent": true,
+    "expectedModel": "openai/gpt-6-luna",
+    "reasoning": "low",
+    "serviceTier": "default"
+  }
+}
