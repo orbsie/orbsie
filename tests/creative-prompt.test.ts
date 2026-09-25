@@ -63,6 +63,22 @@ describe("creative and playable authoring prompt", () => {
     );
   });
 
+  it("coordinates moving-platform starts and visible collectible scoring", () => {
+    const prompt = systemPromptForCapabilities();
+    expect(prompt).toContain(
+      "align its entity position with the first world-space point in its move_path",
+    );
+    expect(prompt).toContain(
+      "update the entity position and first path point together",
+    );
+    expect(prompt).toContain(
+      "pair each collect rule's objective-variable increment with a positive add_score action",
+    );
+    expect(prompt).toContain(
+      "An explicit user request for no scoring takes precedence",
+    );
+  });
+
   it("allows horizontal worlds while preserving explicit bounded game spaces", () => {
     const prompt = systemPromptForCapabilities();
     expect(prompt).toContain(

@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 25 generation guidance now asks that a moving platform's entity position
+match the first world-space `move_path` point, with both updated together when
+changing its start. It also asks collect rules to pair objective-variable
+increments with positive `add_score` when HUD collection progress or score is
+intended; an explicit no-scoring request takes precedence. The pinned revision29
+source had bounce-1's anchor and all three path Y values at 0.7; its clone-only
+anchor+path diagnostic observed contacts on all three platforms, collected four
+crystals, but left score at 0 because collect rules only incremented `crystals`.
+No runtime semantics or validators changed. Evidence:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-diagnostic-20260925/`.
+
 Sep 25 one loopback-only Chromium keyboard replay of the pinned revision29
 scene used `--clearance-path-diagnostic`, a clone-only mutation that changed
 `bounce-1.position[1]` and all three Y values in its sole `move_path` from 0.7
