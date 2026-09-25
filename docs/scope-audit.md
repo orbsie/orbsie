@@ -6,6 +6,18 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- The compatibility notice and save toast no longer cover editor navigation
+  controls in three tested mobile viewport layouts. Source `9dafeea` is Ready
+  on `https://orbsie.com/`; the exact production fixture passed geometry,
+  dismissibility and saved-scene checks with no model calls. Evidence:
+  `docs/evidence/mobile-navigation-overlays/`. Physical-device and native-GPU
+  checks remain open.
+- A production 12 km navigation fixture passed desktop Canvas2D buttons,
+  pan/wheel, compass north reset, overlay isolation and mobile-sized Canvas2D
+  drag/pinch; WebGL SwiftShader stopped after wheel zoom because a pixel-count
+  threshold became too strict for the shrunken marker. Evidence:
+  `docs/evidence/world-navigation-browser/`. This is partial navigation
+  acceptance, not the full unbounded-world or physical-device gate.
 - Android 15 midrange-emulator Chrome 124 closed the direct SoftwareWorld
   growing-world fixture before readiness in four bounded configurations (160
   and 120 entities, 5,000 m and 100 m camera distance). One filtered system

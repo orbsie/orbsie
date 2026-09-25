@@ -1,5 +1,31 @@
 # Development checkpoint
 
+Sep 25 mobile navigation overlay release: source `9dafeea` confines the
+compatibility advisory and saved-state toast to a left column in portrait and
+places the short-landscape navigation controls in a left rail with notices
+above the chat sheet. A deterministic no-model-call production-build fixture
+passed non-overlap, viewport bounds, dismissibility, saved entity/selection and
+zero unexpected request/error checks at 390×844, 390×640 and 844×390. Vercel
+deployment `dpl_4kJ822fSm7AbChCFg3BhZ1tx7BnQ` is Ready and aliased to
+`https://orbsie.com/`; the same three checks passed against the served site
+after release. Evidence: `docs/evidence/mobile-navigation-overlays/`. This is
+Chromium touch emulation on the Canvas2D path, not physical mobile or native
+GPU certification. The published player was outside the CSS selectors.
+
+Sep 25 production navigation fixture: source/evidence `03929eb` exercises a
+12 km grouped marker through deterministic intercepted generation with zero
+provider calls. Desktop Canvas2D passed zoom buttons, mouse pan/wheel, compass
+north reset preserving zoom/location, overlay isolation, and stable saved
+selection/position. Mobile-sized Canvas2D passed touch drag, CDP pinch,
+overlay isolation and saved-state checks. WebGL SwiftShader passed zoom
+buttons, pan and wheel; its marker signature fell below the harness's
+100-pixel post-wheel threshold, so later WebGL compass/overlay assertions
+were not reached. Astra inspected the retained screenshots and found mobile
+advisory/toast overlap with navigation; the later release above corrects it.
+Evidence: `docs/evidence/world-navigation-browser/`. This is partial browser
+acceptance, not physical multi-touch, provider or full unbounded-world
+validation.
+
 Sep 25 Android growing-world diagnostic: source/evidence `aa2530c` adds a
 reproducible Android 15/API 35 midrange-emulator Chrome 124 SoftwareWorld
 fixture harness with owned ADB/CDP/emulator cleanup, touch-travel and
