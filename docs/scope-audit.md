@@ -6,6 +6,12 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- The current production editor passed a deterministic 12 km create/edit,
+  framing, reload, ZIP and standalone playback journey in WebGL/SwiftShader
+  and Canvas2D, with stable IDs/positions and no provider calls. Evidence:
+  `docs/evidence/far-world-browser/production-current-20260925/`. Live
+  model-authored far edits, physical Android, repeated long traversal and
+  growing-world performance remain open.
 - Source `0af88e2` is deployed. The provider SSE parser now consumes a complete
   final `data:` line without a trailing newline while refusing malformed or
   error-terminated streams before commit. Focused tests and the production

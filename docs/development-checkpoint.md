@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 production far-world fixture acceptance: the current `https://orbsie.com/`
+editor accepted deterministic intercepted commands to create a group and
+marker at X=12,000 m, then a selected geometry edit preserving ID and world
+position. WebGL/SwiftShader and forced Canvas2D both passed initial automatic
+framing, zoom-away/manual Frame, editor Play visibility, local reload, exact
+ZIP project persistence, and independent standalone playback with distant
+content visible. No provider or external requests, page errors or unexpected
+API requests occurred. Astra reviewed the report and renderer screenshots;
+the desktop standalone Canvas2D compatibility notice touches/overlaps the
+small distant platform. Evidence:
+`docs/evidence/far-world-browser/production-current-20260925/`. This is a
+fixture with intercepted generation, not live provider authoring, sustained
+long-distance traversal, physical mobile, or growing-world performance.
+
 Sep 25 provider SSE EOF resilience: source `0af88e2` processes a complete
 trailing provider `data:` line when the stream closes without a final newline.
 A valid structured finish marker can now release its deferred commit. Regression
