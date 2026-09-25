@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 standalone flagship gameplay handoff: the provider harness now binds
+standalone traversal to the exported project's exact ID and undo revision and
+records input, contacts/collections, portal win, runtime hash and UI reset in
+`report.standaloneGameplay`. The deterministic current-runtime ZIP fixture keeps
+the revision-41 project/assets from the older Gateway archive but replaces its
+runtime and worker bundles with checked-in `public/player` assets; the source ZIP
+is unchanged and is not treated as current. Real keyboard movement/jump reached
+the page with zero external/editor/provider requests, but the bounded route could
+not contact `platform-1`; the report remains failed/incomplete, with no claimed
+collection, win or restart. Evidence:
+`docs/evidence/provider-e2e/standalone-current-runtime-gameplay-fixture/`.
+The fixture does not establish fresh live-provider publication gameplay.
+
 Sep 25 Android published-player touch follow-up: the same immutable OpenRouter
 Vercel URL loaded directly in Chrome 124 on the Android 15/API 35 midrange AVD.
 The score and controls appeared, but the game canvas stayed visually blank

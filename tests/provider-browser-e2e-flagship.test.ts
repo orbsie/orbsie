@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { zipSync } from "fflate";
+import { strFromU8, unzipSync, zipSync } from "fflate";
+import { chromium } from "@playwright/test";
 import {
   assertFlagshipStoryCreation,
   assertFlagshipStoryAssetReferences,
@@ -23,6 +24,7 @@ import {
   flagshipResumeExecutionMode,
   runProjectFollowOnPhases,
   verifyFreshPublicationArtifacts,
+  verifyStandalone,
 } from "../scripts/provider-browser-e2e.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
@@ -441,6 +443,176 @@ function publicationFixture({
 }
 
 describe("flagship provider story contract", () => {
+  it("keeps an unreachable current-runtime ZIP route incomplete", async () => {
+    const sourceArchiveRelative =
+      "docs/evidence/provider-e2e/gateway-flagship-offline-continuation/gateway/world.zip";
+    const sourceArchivePath = resolve(sourceArchiveRelative);
+    const sourceArchiveBytes = readFileSync(sourceArchivePath);
+    const sourceFiles = unzipSync(new Uint8Array(sourceArchiveBytes));
+    const currentRuntimePaths = [
+      "runtime.js",
+      "runtime.css",
+      "generated-geometry-worker.js",
+      "asset-geometry-worker.js",
+    ];
+    const originalRuntimeHash = createHash("sha256")
+      .update(sourceFiles["runtime.js"])
+      .digest("hex");
+    const currentFiles = { ...sourceFiles };
+    for (const path of currentRuntimePaths)
+      currentFiles[path] = readFileSync(resolve("public/player", path));
+    expect(strFromU8(currentFiles["runtime.js"])).toContain(
+      "__ORBSIE_GAMEPLAY_READ_REQUESTED__",
+    );
+    expect(
+      createHash("sha256").update(currentFiles["runtime.js"]).digest("hex"),
+    ).not.toBe(originalRuntimeHash);
+    expect(currentFiles["project.json"]).toEqual(sourceFiles["project.json"]);
+
+    const archive = zipSync(currentFiles, {
+      level: 6,
+      mtime: new Date("2000-01-01T12:00:00Z"),
+    });
+    const temporary = await mkdtemp(
+      join(tmpdir(), "orbsie-standalone-gameplay-fixture-"),
+    );
+    const evidenceDir = resolve(
+      "docs/evidence/provider-e2e/standalone-current-runtime-gameplay-fixture",
+    );
+    await mkdir(evidenceDir, { recursive: true, mode: 0o700 });
+    await writeFile(join(temporary, "world.zip"), archive);
+    const project = JSON.parse(strFromU8(currentFiles["project.json"]));
+    const gameplayPhase = (revision: number) => ({
+      status: "passed",
+      projectId: project.id,
+      revision,
+    });
+    const report: any = {
+      evidence: [],
+      flagshipStory: {
+        status: "passed",
+        scope: "fresh-gameplay-and-persistence",
+        phases: {
+          creation: {
+            revision: project.revision - 2,
+            gameplay: gameplayPhase(project.revision - 2),
+          },
+          goal7: {
+            revision: project.revision - 1,
+            gameplay: gameplayPhase(project.revision - 1),
+          },
+          undo: {
+            revision: project.revision,
+            gameplay: gameplayPhase(project.revision),
+          },
+        },
+      },
+    };
+    const runtimeSha256 = createHash("sha256")
+      .update(currentFiles["runtime.js"])
+      .digest("hex");
+    const browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+      ],
+    });
+    let failure: unknown;
+    try {
+      await verifyStandalone(
+        browser,
+        { tempDir: temporary, project },
+        {
+          baseOrigin: "https://editor.example.test",
+          provider: "gateway",
+          generationBudget: 3,
+          flagshipStory: true,
+          flagshipInputMode: "keyboard",
+          requireInputGame: false,
+        } as any,
+        report,
+        evidenceDir,
+      );
+    } catch (error) {
+      failure = error;
+    } finally {
+      await browser.close();
+      await writeFile(
+        join(evidenceDir, "report.json"),
+        `${JSON.stringify(
+          {
+            mode: "deterministic-current-runtime-static-zip-fixture",
+            sourceProjectZip: sourceArchiveRelative,
+            sourceProjectZipSha256: createHash("sha256")
+              .update(sourceArchiveBytes)
+              .digest("hex"),
+            sourceRuntimeSha256: originalRuntimeHash,
+            currentRuntimeSha256: runtimeSha256,
+            fixtureZipSha256: createHash("sha256")
+              .update(archive)
+              .digest("hex"),
+            projectId: project.id,
+            revision: project.revision,
+            status: report.standaloneGameplay?.status ?? "not-run",
+            standaloneGameplay: report.standaloneGameplay ?? null,
+            standalone: report.standalone ?? null,
+            evidence: report.evidence,
+            error:
+              failure instanceof Error ? failure.message : (failure ?? null),
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      await rm(temporary, { recursive: true, force: true });
+    }
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toContain(
+      "Fresh gameplay did not contact platform",
+    );
+    expect(report.standaloneGameplay).toMatchObject({
+      status: "failed",
+      projectId: project.id,
+      revision: project.revision,
+      expectedCollectibleCount: 5,
+      runtime: { sha256: runtimeSha256 },
+      editorProviderRequests: 0,
+      blockedExternalRequests: 0,
+      failureEvidence: {
+        movement: { distance: expect.any(Number) },
+        lastObservation: {
+          projectId: project.id,
+          revision: project.revision,
+          renderer: expect.stringMatching(/^(webgl|software)$/),
+        },
+        portalWin: null,
+        restart: { attempted: false },
+      },
+    });
+    expect(
+      report.standaloneGameplay.failureEvidence.movement.distance,
+    ).toBeGreaterThan(0.12);
+    expect(report.standaloneGameplay.won).not.toBe(true);
+    expect(report.standaloneGameplay.win).toBeUndefined();
+    expect(report.standaloneGameplay.reset).toBeUndefined();
+    expect(report.standaloneGameplay.failureEvidence.collections).toEqual([]);
+    expect(
+      report.standaloneGameplay.failureEvidence.inputTrace,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reason: "platform-jump-start",
+          keys: [" "],
+        }),
+      ]),
+    );
+    expect(report.standalone?.pageErrors).toEqual([]);
+    expect(report.standalone?.blockedExternalRequests).toBe(0);
+  }, 180_000);
+
   it("binds portal contact evidence to its transformed render group", () => {
     const traversal = readFileSync(
       resolve("scripts/verify-winning-traversal.mjs"),

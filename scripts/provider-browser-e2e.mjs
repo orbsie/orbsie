@@ -4693,10 +4693,18 @@ async function focusGameplaySurface(page) {
     exact: true,
   });
   await expect(surface).toBeVisible({ timeout: 30000 });
+  if (
+    !(await surface.evaluate((element) => element === document.activeElement))
+  )
+    await surface.focus();
   await expect(surface).toBeFocused();
 }
 
-async function createFlagshipGameplayInput(page, requestedMode = "auto") {
+async function createFlagshipGameplayInput(
+  page,
+  requestedMode = "auto",
+  { standalone = false } = {},
+) {
   const touch =
     requestedMode === "touch" ||
     (requestedMode === "auto" &&
@@ -4715,7 +4723,11 @@ async function createFlagshipGameplayInput(page, requestedMode = "auto") {
     touchInput = createTraversalTouchInput({
       cdp,
       touchPoint: async (key, id) => {
-        const label = key === " " ? "Jump" : `Move ${key}`;
+        const label = standalone
+          ? { " ": "Jump", a: "Left", d: "Right", s: "Back", w: "Forward" }[key]
+          : key === " "
+            ? "Jump"
+            : `Move ${key}`;
         const box = await page
           .getByRole("button", { name: label, exact: true })
           .boundingBox();
@@ -4774,6 +4786,7 @@ export async function runFreshFlagshipGameplay(
   story,
   options = {},
 ) {
+  const standalone = options.surface === "standalone";
   const targets = buildFreshGameplayTargets(project, story, {
     expectedCollectibleCount: options.expectedCollectibleCount ?? 5,
     expectedRevision: options.expectedRevision ?? project?.revision,
@@ -4781,6 +4794,7 @@ export async function runFreshFlagshipGameplay(
   const input = await createFlagshipGameplayInput(
     page,
     options.inputMode ?? "auto",
+    { standalone },
   );
   const observations = [];
   const inputTrace = [];
@@ -4804,6 +4818,12 @@ export async function runFreshFlagshipGameplay(
   let expectedSessionGeneration;
   let lastObservationAt = -Infinity;
   let previous;
+  let movementBefore;
+  let movementAfter;
+  let movementDistance;
+  let portalWinObservation;
+  let restartControl;
+  let restartAttempted = false;
   const staleObservationWaits = [];
   const read = async ({ allowLifecycleChange = false } = {}) => {
     let observation = await readGameplayObservation(page);
@@ -4948,8 +4968,20 @@ export async function runFreshFlagshipGameplay(
   };
   try {
     const play = page.getByRole("button", { name: "Play", exact: true });
-    if (await play.isVisible()) await play.click();
-    await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
+    if (!standalone && (await play.isVisible())) await play.click();
+    if (standalone) {
+      await expect(page.locator("main[data-ready=true]")).toBeVisible({
+        timeout: 30000,
+      });
+      await expect(page.locator(".score")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator(".score")).toHaveText(
+        new RegExp(
+          `^(?:Score: 0|◆\\s*0\\s*/\\s*${targets.collectibles.length})$`,
+        ),
+      );
+    } else {
+      await expect(page.locator(".game-hud")).toBeVisible({ timeout: 30000 });
+    }
     if (input.mode === "keyboard") await focusGameplaySurface(page);
     const observationEpoch = await page.evaluate(() => performance.now());
     await expect
@@ -4971,14 +5003,14 @@ export async function runFreshFlagshipGameplay(
         "Fresh gameplay started with a different project snapshot.",
       );
 
-    const movementBefore = start;
+    movementBefore = start;
     await setKeys(["d"], "movement-check");
     await page.waitForTimeout(280);
-    const movementAfter = await read();
+    movementAfter = await read();
     await setKeys([], "movement-release");
     if (!movementAfter)
       throw new Error("Fresh gameplay movement produced no observation.");
-    const movementDistance = Math.hypot(
+    movementDistance = Math.hypot(
       movementAfter.player.position[0] - movementBefore.player.position[0],
       movementAfter.player.position[2] - movementBefore.player.position[2],
     );
@@ -5222,6 +5254,7 @@ export async function runFreshFlagshipGameplay(
     await setKeys([], "portal-settle");
     await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
     const won = await read();
+    portalWinObservation = won;
     await expect(
       page.getByText("Adventure complete", { exact: true }),
     ).toBeVisible({
@@ -5248,6 +5281,7 @@ export async function runFreshFlagshipGameplay(
       throw new Error(
         "Fresh gameplay did not collect the complete crystal set.",
       );
+    await options.onWin?.(won);
 
     const platformResults = [...platformEvidence.values()];
     const missingPlatforms = platformResults.filter(
@@ -5278,9 +5312,14 @@ export async function runFreshFlagshipGameplay(
           .join(", ")}`,
       );
     const resetBefore = won.reset;
-    await page
-      .getByRole("button", { name: "Restart game", exact: true })
-      .click();
+    const restart = standalone
+      ? page.getByRole("button", { name: /Restart/ }).first()
+      : page.getByRole("button", { name: "Restart game", exact: true });
+    restartControl =
+      (await restart.getAttribute("aria-label")) ||
+      (await restart.innerText()).trim();
+    restartAttempted = true;
+    await restart.click();
     await expect
       .poll(
         async () => {
@@ -5298,6 +5337,14 @@ export async function runFreshFlagshipGameplay(
       .toBe(true);
     await page.waitForTimeout(30);
     const reset = await read({ allowLifecycleChange: true });
+    if (standalone) {
+      await expect(page.locator(".score")).toHaveText(
+        new RegExp(
+          `^(?:Score: 0|◆\\s*0\\s*/\\s*${targets.collectibles.length})$`,
+        ),
+      );
+      await expect(page.locator(".win")).toHaveCount(0);
+    }
     if (
       !reset ||
       reset.projectId !== project.id ||
@@ -5314,9 +5361,12 @@ export async function runFreshFlagshipGameplay(
       throw new Error(
         "Fresh gameplay reset did not restore the same world and avatar state.",
       );
+    await options.onReset?.(reset);
     return {
+      status: "passed",
       ...completion,
       inputMode: input.mode,
+      surface: standalone ? "standalone-player" : "editor-play",
       startedAt: new Date(startedAt).toISOString(),
       finishedAt: new Date().toISOString(),
       inputTrace,
@@ -5350,6 +5400,7 @@ export async function runFreshFlagshipGameplay(
       reset: {
         projectId: reset.projectId,
         revision: reset.revision,
+        control: restartControl,
         scoreIds: reset.scoreIds,
         reset: reset.reset,
         score: reset.gameScore,
@@ -5365,6 +5416,38 @@ export async function runFreshFlagshipGameplay(
       observationCount: observations.length,
       lastObservation: previous,
       inputTrace: inputTrace.slice(-20),
+      movement:
+        movementBefore && movementAfter
+          ? {
+              distance: movementDistance,
+              before: movementBefore,
+              after: movementAfter,
+            }
+          : null,
+      contacts: [
+        ...new Set(observations.flatMap((observation) => observation.contacts)),
+      ],
+      collections: [
+        ...new Set(
+          observations.flatMap((observation) => observation.collected),
+        ),
+      ],
+      scoreIds: previous?.scoreIds ?? [],
+      score: previous?.gameScore ?? null,
+      portalWin: portalWinObservation
+        ? {
+            projectId: portalWinObservation.projectId,
+            revision: portalWinObservation.revision,
+            status: portalWinObservation.status,
+            won: portalWinObservation.won,
+            portalId: targets.portal.id,
+          }
+        : null,
+      restart: {
+        attempted: restartAttempted,
+        control: restartControl,
+        resetCounter: previous?.reset ?? null,
+      },
       platformEvidence: [...platformEvidence.values()],
     };
     if (error && typeof error === "object") {
@@ -6682,6 +6765,11 @@ export async function verifyStandalone(
     await writeFile(target, content);
   }
   const served = await serveStaticDirectory(zip.tempDir);
+  const freshStory = report.flagshipStory;
+  const standaloneGameplayEligible =
+    config.flagshipStory === true &&
+    freshStory?.status === "passed" &&
+    freshStory?.scope === "fresh-gameplay-and-persistence";
   const standaloneReport = {
     status: "running",
     readyObservedMs: null,
@@ -6699,6 +6787,17 @@ export async function verifyStandalone(
       : null,
   };
   report.standalone = standaloneReport;
+  let standaloneGameplayBase = null;
+  if (config.flagshipStory) {
+    report.standaloneGameplay = {
+      status: "not-run",
+      reason: standaloneGameplayEligible
+        ? "fresh-story-export-binding-pending"
+        : "fresh-flagship-story-not-complete",
+      projectId: zip.project?.id ?? null,
+      revision: zip.project?.revision ?? null,
+    };
+  }
   let context;
   const info = {
     generationRequests: 0,
@@ -6715,6 +6814,68 @@ export async function verifyStandalone(
     });
     await installTrafficGuard(context, config, approved, info);
     const page = await context.newPage();
+    if (standaloneGameplayEligible) {
+      const phaseGameplay = [
+        freshStory.phases?.creation?.gameplay,
+        freshStory.phases?.goal7?.gameplay,
+        freshStory.phases?.undo?.gameplay,
+      ];
+      const phaseRevisions = [
+        freshStory.phases?.creation?.revision,
+        freshStory.phases?.goal7?.revision,
+        freshStory.phases?.undo?.revision,
+      ];
+      assert(
+        phaseGameplay.every((gameplay) => gameplay?.status === "passed"),
+        "Fresh flagship standalone gameplay requires passed creation, seven, and undo traversal.",
+      );
+      assert.equal(
+        zip.project.id,
+        phaseGameplay[0].projectId,
+        "Standalone ZIP changed the fresh flagship project identity.",
+      );
+      assert.deepEqual(
+        phaseGameplay.map((gameplay) => gameplay.projectId),
+        [zip.project.id, zip.project.id, zip.project.id],
+        "Standalone ZIP project identity differs from a gameplay phase.",
+      );
+      assert.deepEqual(
+        phaseGameplay.map((gameplay) => gameplay.revision),
+        phaseRevisions,
+        "A fresh flagship gameplay result is not bound to its phase revision.",
+      );
+      assert.equal(
+        zip.project.revision,
+        freshStory.phases?.undo?.revision,
+        "Standalone ZIP revision differs from the original undo revision.",
+      );
+      const targets = freshGameplayStoryForProject(
+        zip.project,
+        5,
+        "Fresh flagship standalone export",
+      );
+      standaloneGameplayBase = {
+        status: "running",
+        projectId: zip.project.id,
+        revision: zip.project.revision,
+        expectedCollectibleIds: targets.collectibles.map(
+          (collectible) => collectible.id,
+        ),
+        expectedCollectibleCount: 5,
+        runtime: {
+          bytes: files["runtime.js"]?.byteLength ?? 0,
+          sha256: createHash("sha256")
+            .update(files["runtime.js"] ?? new Uint8Array())
+            .digest("hex"),
+          source: "exported-static-zip",
+        },
+        inputMode: config.flagshipInputMode ?? "auto",
+      };
+      report.standaloneGameplay = standaloneGameplayBase;
+      await page.addInitScript(() => {
+        window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+      });
+    }
     const unexpected = [];
     page.on("pageerror", (error) => {
       standaloneReport.pageErrors.push(
@@ -6786,6 +6947,62 @@ export async function verifyStandalone(
       });
       report.evidence.push("standalone-input-loss.png");
     }
+    if (standaloneGameplayEligible) {
+      const targets = freshGameplayStoryForProject(
+        zip.project,
+        5,
+        "Fresh flagship standalone export",
+      );
+      try {
+        const gameplay = await runFreshFlagshipGameplay(
+          page,
+          zip.project,
+          targets,
+          {
+            surface: "standalone",
+            inputMode: config.flagshipInputMode,
+            expectedCollectibleCount: 5,
+            expectedRevision: zip.project.revision,
+            onWin: async () => {
+              await page.screenshot({
+                path: join(
+                  evidenceDir,
+                  "standalone-flagship-gameplay-win.png",
+                ),
+                fullPage: true,
+              });
+              report.evidence.push("standalone-flagship-gameplay-win.png");
+            },
+            onReset: async () => {
+              await page.screenshot({
+                path: join(
+                  evidenceDir,
+                  "standalone-flagship-gameplay-reset.png",
+                ),
+                fullPage: true,
+              });
+              report.evidence.push("standalone-flagship-gameplay-reset.png");
+            },
+          },
+        );
+        report.standaloneGameplay = {
+          ...standaloneGameplayBase,
+          ...gameplay,
+          editorProviderRequests: unexpected.length,
+          blockedExternalRequests: info.blockedExternalRequests,
+        };
+      } catch (error) {
+        report.standaloneGameplay = {
+          ...standaloneGameplayBase,
+          status: "failed",
+          error: sanitizeMessage(error?.message ?? error, config),
+          failureEvidence: error?.freshGameplayEvidence ?? null,
+          editorProviderRequests: unexpected.length,
+          blockedExternalRequests: info.blockedExternalRequests,
+        };
+        throw error;
+      }
+    }
     // Capture the loaded scene after its initial formation frames, not the globe.
     await page.waitForTimeout(2000);
     standaloneReport.blockedExternalRequests = info.blockedExternalRequests;
@@ -6811,6 +7028,23 @@ export async function verifyStandalone(
     standaloneReport.status = "passed";
   } catch (error) {
     standaloneReport.status = "failed";
+    if (standaloneGameplayBase) {
+      report.standaloneGameplay = {
+        ...standaloneGameplayBase,
+        ...(report.standaloneGameplay ?? {}),
+        status: "failed",
+        error: sanitizeMessage(error?.message ?? error, config),
+        failureEvidence: error?.freshGameplayEvidence ?? null,
+        blockedExternalRequests: info.blockedExternalRequests,
+      };
+    } else if (standaloneGameplayEligible) {
+      report.standaloneGameplay = {
+        ...(report.standaloneGameplay ?? {}),
+        status: "failed",
+        error: sanitizeMessage(error?.message ?? error, config),
+        blockedExternalRequests: info.blockedExternalRequests,
+      };
+    }
     throw error;
   } finally {
     standaloneReport.blockedExternalRequests = info.blockedExternalRequests;
