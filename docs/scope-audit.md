@@ -6,13 +6,21 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- A stationary 12 km platform fixture now passes production WebGL SwiftShader
+  zoom, pan, wheel, north reset, chat/control overlay isolation and exact
+  saved ID/position checks. Prior crystal-based centroid failures were test
+  ambiguity from edit-mode animation; the pure-state north-reset test verifies
+  target/distance preservation. Evidence:
+  `docs/evidence/world-navigation-browser/run-20260924-webgl-static-mask/`.
+  This completes the desktop WebGL fixture lane, not native GPU or physical
+  mobile acceptance.
 - The compatibility notice and save toast no longer cover editor navigation
   controls in three tested mobile viewport layouts. Source `9dafeea` is Ready
   on `https://orbsie.com/`; the exact production fixture passed geometry,
   dismissibility and saved-scene checks with no model calls. Evidence:
   `docs/evidence/mobile-navigation-overlays/`. Physical-device and native-GPU
   checks remain open.
-- A production 12 km navigation fixture passed desktop Canvas2D buttons,
+- An initial production 12 km navigation fixture passed desktop Canvas2D buttons,
   pan/wheel, compass north reset, overlay isolation and mobile-sized Canvas2D
   drag/pinch; WebGL SwiftShader stopped after wheel zoom because a pixel-count
   threshold became too strict for the shrunken marker. Evidence:

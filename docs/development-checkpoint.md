@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 WebGL navigation fixture closure: source/evidence `fcb1f84` uses a
+stationary platform at the same 12 km saved group/entity position for a
+focused production WebGL SwiftShader run. The original animated crystal
+made pixel-centroid overlay checks invalid: WebGL bobs and spins crystals in
+edit mode. Astra checked the static screenshot, calibrated its mint/ground
+pixel signature offline, and reviewed the final report. Zoom buttons
+(600→480→600%), pan (70 px marker movement), wheel (600→453%), heading
+reset (28°→0° with zoom retained), and both chat/control overlay drags (0 px
+shift) passed. The selected entity ID and group/entity positions remained
+exact; there were zero provider calls, page/console errors, external origins
+or unexpected API paths. The direct `north_reset` state test passed 20/20 in
+its focused suite, establishing target/distance preservation; browser
+screenshots alone do not directly expose world target. Earlier partial runs
+are retained as diagnostic evidence. This closes the desktop WebGL fixture
+navigation checks, not native-GPU, physical multi-touch or full unbounded
+world acceptance. Evidence: `docs/evidence/world-navigation-browser/`.
+
 Sep 25 mobile navigation overlay release: source `9dafeea` confines the
 compatibility advisory and saved-state toast to a left column in portrait and
 places the short-landscape navigation controls in a left rail with notices
