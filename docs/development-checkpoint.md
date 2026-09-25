@@ -9,8 +9,11 @@ visible. Combined touch, score increase and portal win/loss were not verified.
 The emulator log reported its host OpenGL backend as SwiftShader/software after
 a GPU warning; the published page's canvas context type was not established, so
 the blank canvas is not attributed to an Orbsie renderer path.
-This retests the prior artifact associated with `b34dad2`, not a fresh current
-publication. No login, consent, terms acceptance or model call occurred. See
+The same URL showed a visible scene in the earlier ADB smoke, so this blank
+capture is not a deterministic product failure. `b34dad2` was the checkout at
+the earlier test, not verified provenance of the immutable published artifact.
+This was not a fresh current-runtime publication. No login, consent, terms
+acceptance or model call occurred. See
 `docs/evidence/android-published-touch-20260925/`.
 
 Sep 25 fresh Android distance diagnosis: a 120-entity readiness-only run passed

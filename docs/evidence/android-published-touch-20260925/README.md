@@ -20,9 +20,11 @@ this run did not establish whether the published page used Canvas2D or WebGL.
 The blank canvas is an observation only; it does not identify an Orbsie renderer
 fallback or establish a product defect.
 
-This is an inconclusive gameplay check, not a pass. The URL is the same
-immutable artifact previously recorded with source commit `b34dad2`; it is not a
-fresh publication of current source. CDP was used read-only after load to inspect
+This is an inconclusive gameplay check, not a pass. The same URL showed a
+visible world in the earlier ADB smoke, so the blank capture is intermittent in
+this emulator. The URL is the same immutable artifact tested while the checkout
+was at `b34dad2`; its build commit was not established. It is not a fresh
+publication of current source. CDP was used read-only after load to inspect
 the visible text, canvas bounds and resource origins. Gameplay actions and
 screenshots used ADB touchscreen input. No app or deployment files were changed,
 and no model call was made. See [interactive.json](./interactive.json) for exact

@@ -4,7 +4,8 @@
   "publishedUrl": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
   "artifact": {
     "immutable": true,
-    "priorEvidenceSourceCommit": "b34dad2",
+    "priorEvidenceCheckoutCommit": "b34dad2",
+    "publishedArtifactBuildCommit": "not established",
     "freshCurrentSourcePublication": false,
     "repoHeadAtTest": "154a6c4f434241328171553abe803cac5843b3c3"
   },
