@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 25 fresh OpenRouter GPT-6 Luna flagship attempt on source commit
+`cb0e3d44ea9f40038b4820bac5d6031f7138f36d`: the isolated loopback server,
+matching-origin probe, 4,096-token cap, and exact `openai/gpt-6-luna` catalog
+preflight passed. The standard-tier harness was bounded to three calls but
+stopped on its first creation request: HTTP 200 returned
+`INVALID_SCENE_PROTOCOL` (operation 30, finish reason `stop`), the seed was
+observed, and zero operations were committed. The UI reported that the model
+stopped before finishing the scene update. No retry or fallback occurred, and
+gameplay, edits, undo, export, standalone playback, cloud recovery, and
+publication did not run. No project artifact was created. Sanitized report and
+three credential-free screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925/`.
+The initial Turbopack symlink-root startup failure happened before preflights
+and consumed no provider/model call; it is separately recorded as
+`setup-failure.json`, not gameplay evidence.
+
 Sep 25 portal-arrival replay: the fresh gameplay driver now treats portal
 proximity as a settle point and continues steering toward its center until the
 existing authoritative predicate sees portal contact, a win, and every expected

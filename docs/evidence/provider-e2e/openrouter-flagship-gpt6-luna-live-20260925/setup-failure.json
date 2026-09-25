@@ -1,0 +1,9 @@
+{
+  "phase": "preflight-server-startup",
+  "status": "failed-and-recovered",
+  "errorCode": "TURBOPACK_SYMLINK_OUTSIDE_ROOT",
+  "message": "The first isolated Next dev-server process exited because its node_modules symlink pointed outside the worktree root.",
+  "providerOrModelCalls": 0,
+  "gameplayEvidence": false,
+  "recovery": "Copied node_modules into the isolated worktree and restarted Next with webpack. Origin, cap, and exact-model preflights then passed before the single harness run."
+}
