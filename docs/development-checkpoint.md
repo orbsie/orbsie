@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 25 desktop standalone compatibility notice: source `c369062` positions
+the dismissible Canvas2D advisory 48 px above the viewport bottom, retaining
+the portrait/landscape touch overrides and fatal renderer guidance. A local
+standalone retest of the saved 12 km export showed the object unobscured and a
+9 px measured gap above the footer at 1280×900. The optimized build passed;
+production deployment `https://orbsie-28si08bmh-grappeggias-projects.vercel.app`
+is Ready and aliased to `https://orbsie.com/`, whose served player CSS SHA-256
+matches local `b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e`.
+No model calls ran. Evidence:
+`docs/evidence/standalone-graphics-advisory-20260925/`. This is not a fresh
+publication or physical-device acceptance run.
+
 Sep 25 production far-world fixture acceptance: the current `https://orbsie.com/`
 editor accepted deterministic intercepted commands to create a group and
 marker at X=12,000 m, then a selected geometry edit preserving ID and world

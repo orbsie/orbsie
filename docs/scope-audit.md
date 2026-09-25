@@ -6,6 +6,10 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- The desktop standalone Canvas2D advice now sits below the scene and above
+  the footer. Local screenshot/bounds and exact served CSS hash are recorded in
+  `docs/evidence/standalone-graphics-advisory-20260925/`; touch overrides remain
+  in place. A new public publication after this CSS-only release was not run.
 - The current production editor passed a deterministic 12 km create/edit,
   framing, reload, ZIP and standalone playback journey in WebGL/SwiftShader
   and Canvas2D, with stable IDs/positions and no provider calls. Evidence:

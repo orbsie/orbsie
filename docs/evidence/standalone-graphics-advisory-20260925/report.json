@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "sourceCommit": "c369062",
+  "fixture": "docs/evidence/far-world-browser/production-current-20260925/software-fallback-world.zip",
+  "runtimeCssSha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e",
+  "viewport": { "width": 1280, "height": 900 },
+  "renderer": "forced Canvas2D fallback",
+  "advisory": { "top": 812, "bottom": 852 },
+  "footer": { "top": 861, "bottom": 876 },
+  "footerGapPixels": 9,
+  "objectVisibleAboveAdvisory": true,
+  "productionCssHashMatched": true,
+  "modelCalls": 0,
+  "scope": "Local standalone rendering with the rebuilt player CSS; production served the same CSS bytes. This is visual placement evidence, not a new end-to-end publication or physical-device test."
+}
