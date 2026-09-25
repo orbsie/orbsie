@@ -25,7 +25,10 @@ vi.mock("../src/lib/cloud-generated-models", () => ({
 }));
 vi.mock("idb-keyval", () => ({
   clear: async () => mocks.db.clear(),
+  del: async (key: string) => mocks.db.delete(key),
   get: async (key: string) => structuredClone(mocks.db.get(key)),
+  set: async (key: string, value: unknown) =>
+    mocks.db.set(key, structuredClone(value)),
   update: async (key: string, change: (value: unknown) => unknown) => {
     if (mocks.failNextDbUpdate) {
       mocks.failNextDbUpdate = false;
@@ -413,9 +416,12 @@ describe("store browser authoring review loop", () => {
   });
 
   it("offers a saved-revision continuation when an admitted review fails", async () => {
+    let generationRequestedAt = 0;
     const fetcher = vi.fn<typeof fetch>(async (url, init) => {
-      if (url === "/api/generate")
+      if (url === "/api/generate") {
+        generationRequestedAt = Date.now();
         return streamResponse(JSON.parse(String(init?.body)).project);
+      }
       return new Response(JSON.stringify({ error: "Review unavailable." }), {
         status: 502,
         headers: { "Content-Type": "application/json" },
@@ -435,7 +441,7 @@ describe("store browser authoring review loop", () => {
       originalIds,
     );
     expect(state.saved).toBe(true);
-    expect(state.interruptedReviewContinuation).toEqual({
+    expect(state.interruptedReviewContinuation).toMatchObject({
       projectId: state.project.id,
       revision: state.project.revision,
       prompt: "Recolor the tree",
@@ -445,6 +451,9 @@ describe("store browser authoring review loop", () => {
       model: "",
       reviewImageSupported: true,
     });
+    expect(state.interruptedReviewContinuation!.expiresAt).toBeLessThanOrEqual(
+      generationRequestedAt + 15 * 60 * 1000,
+    );
     expect(state.interruptedReviewContinuation).not.toHaveProperty("key");
     expect(state.reviewContinuation).toBeUndefined();
     expect(state.generationRecovery).toBeUndefined();
@@ -460,6 +469,51 @@ describe("store browser authoring review loop", () => {
     expect(savedLibrary[state.project.id]?.revision).toBe(
       state.project.revision,
     );
+    const continuationKey = `orbsie-review-continuation:${state.project.id}`;
+    const savedContinuation = mocks.db.get(continuationKey) as {
+      version: number;
+      projectDigest: string;
+      continuation: Record<string, unknown>;
+    };
+    expect(savedContinuation.version).toBe(1);
+    expect(savedContinuation.projectDigest).toMatch(/^[a-f0-9]{64}$/);
+    expect(savedContinuation.continuation).toMatchObject({
+      projectId: state.project.id,
+      revision: state.project.revision,
+      priorRunId: authoringRunId,
+      provider: "free",
+    });
+    expect(savedContinuation.continuation.expiresAt).toBeGreaterThan(
+      Date.now(),
+    );
+    expect(savedContinuation).not.toHaveProperty("key");
+    expect(savedContinuation.continuation).not.toHaveProperty("key");
+
+    await useOrb.getState().load(state.project);
+    expect(useOrb.getState().authoringActivity).toEqual([]);
+    expect(useOrb.getState().interruptedReviewContinuation).toMatchObject({
+      priorRunId: authoringRunId,
+      revision: state.project.revision,
+    });
+
+    mocks.db.set(continuationKey, {
+      ...savedContinuation,
+      continuation: {
+        ...savedContinuation.continuation,
+        expiresAt: Date.now() - 1,
+      },
+    });
+    await useOrb.getState().load(state.project);
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
+    expect(mocks.db.has(continuationKey)).toBe(false);
+
+    mocks.db.set(continuationKey, savedContinuation);
+    await useOrb.getState().load({
+      ...state.project,
+      revision: state.project.revision + 1,
+    });
+    expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
+    expect(mocks.db.has(continuationKey)).toBe(false);
   });
 
   it("resumes the saved review with one start and one review request", async () => {
@@ -500,6 +554,14 @@ describe("store browser authoring review loop", () => {
       provider: "free",
     });
 
+    const savedProject = failed.project;
+    await useOrb.getState().load(savedProject);
+    expect(useOrb.getState().authoringActivity).toEqual([]);
+    expect(useOrb.getState().interruptedReviewContinuation).toMatchObject({
+      priorRunId: authoringRunId,
+      revision: savedRevision,
+    });
+
     await useOrb.getState().resumeInterruptedReview(connection);
 
     expect(fetcher).toHaveBeenCalledTimes(4);
@@ -536,6 +598,9 @@ describe("store browser authoring review loop", () => {
     ).toHaveLength(originalPromptCount);
     expect(finalState.interruptedReviewContinuation).toBeUndefined();
     expect(finalState.saved).toBe(true);
+    expect(mocks.db.has(`orbsie-review-continuation:${savedProject.id}`)).toBe(
+      false,
+    );
   });
 
   it("does not admit a stale or connection-mismatched continuation", async () => {
@@ -593,6 +658,8 @@ describe("store browser authoring review loop", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     await useOrb.getState().run("Recolor the tree", connection);
+    const originalExpiry =
+      useOrb.getState().interruptedReviewContinuation!.expiresAt;
 
     await useOrb.getState().resumeInterruptedReview(connection);
 
@@ -600,7 +667,17 @@ describe("store browser authoring review loop", () => {
     expect(useOrb.getState().interruptedReviewContinuation?.priorRunId).toBe(
       authoringRunId,
     );
+    expect(useOrb.getState().interruptedReviewContinuation?.expiresAt).toBe(
+      originalExpiry,
+    );
     expect(useOrb.getState().saved).toBe(true);
+    const savedContinuation = mocks.db.get(
+      `orbsie-review-continuation:${useOrb.getState().project.id}`,
+    ) as { continuation: Record<string, unknown> };
+    expect(savedContinuation.continuation).toMatchObject({
+      priorRunId: authoringRunId,
+      expiresAt: originalExpiry,
+    });
   });
 
   it("preserves the old binding when the review response is lost", async () => {
@@ -621,6 +698,8 @@ describe("store browser authoring review loop", () => {
     });
     vi.stubGlobal("fetch", fetcher);
     await useOrb.getState().run("Recolor the tree", connection);
+    const originalExpiry =
+      useOrb.getState().interruptedReviewContinuation!.expiresAt;
 
     await useOrb.getState().resumeInterruptedReview(connection);
 
@@ -629,6 +708,9 @@ describe("store browser authoring review loop", () => {
       authoringRunId,
     );
     expect(useOrb.getState().error).toContain("admission is unknown");
+    expect(useOrb.getState().interruptedReviewContinuation?.expiresAt).toBe(
+      originalExpiry,
+    );
     expect(useOrb.getState().saved).toBe(true);
   });
 
@@ -843,6 +925,8 @@ describe("store browser authoring review loop", () => {
     vi.stubGlobal("fetch", fetcher);
     await useOrb.getState().run("Recolor the tree", connection);
     const revision = useOrb.getState().project.revision;
+    const originalExpiry =
+      useOrb.getState().interruptedReviewContinuation!.expiresAt;
 
     await useOrb.getState().resumeInterruptedReview(connection);
 
@@ -852,8 +936,18 @@ describe("store browser authoring review loop", () => {
       revision,
       projectId: useOrb.getState().project.id,
     });
+    expect(
+      useOrb.getState().interruptedReviewContinuation!.expiresAt,
+    ).toBeGreaterThan(originalExpiry);
     expect(useOrb.getState().saved).toBe(true);
     expect(useOrb.getState().project.revision).toBe(revision);
+    const savedContinuation = mocks.db.get(
+      `orbsie-review-continuation:${useOrb.getState().project.id}`,
+    ) as { continuation: Record<string, unknown> };
+    expect(savedContinuation.continuation).toMatchObject({
+      priorRunId: resumedRunId,
+      expiresAt: useOrb.getState().interruptedReviewContinuation!.expiresAt,
+    });
     const savedLibrary = mocks.db.get("orbsie-library") as Record<
       string,
       ReturnType<typeof blankProject>

@@ -366,6 +366,22 @@ export default function Orbsie() {
       .catch(() => undefined);
   }, [modal, s.loadDrafts]);
   useEffect(() => {
+    const continuation = s.interruptedReviewContinuation;
+    if (!continuation) return;
+    const expire = () => {
+      const current = useOrb.getState().interruptedReviewContinuation;
+      if (current === continuation && current.expiresAt <= Date.now())
+        useOrb.getState().set({ interruptedReviewContinuation: undefined });
+    };
+    const delay = continuation.expiresAt - Date.now();
+    if (delay <= 0) {
+      expire();
+      return;
+    }
+    const timer = window.setTimeout(expire, delay);
+    return () => window.clearTimeout(timer);
+  }, [s.interruptedReviewContinuation]);
+  useEffect(() => {
     let current = true;
     const effectInstance = ++oauthEffectInstance.current;
     const version = connectionVersion.current;
@@ -1367,6 +1383,11 @@ export default function Orbsie() {
       activity.kind === "failed",
   );
   const latestTerminalActivity = terminalActivity.at(-1);
+  const interruptedReviewFailureMatches =
+    s.authoringActivity.length === 0 ||
+    (latestTerminalActivity?.kind === "failed" &&
+      latestTerminalActivity.projectId === s.project.id &&
+      latestTerminalActivity.revision === s.project.revision);
   const reviewContinuation =
     s.reviewContinuation?.projectId === s.project.id &&
     s.reviewContinuation.revision === s.project.revision &&
@@ -1378,10 +1399,9 @@ export default function Orbsie() {
   const interruptedReviewContinuation =
     s.interruptedReviewContinuation?.projectId === s.project.id &&
     s.interruptedReviewContinuation.revision === s.project.revision &&
+    s.interruptedReviewContinuation.expiresAt > Date.now() &&
     s.saved &&
-    latestTerminalActivity?.kind === "failed" &&
-    latestTerminalActivity.projectId === s.project.id &&
-    latestTerminalActivity.revision === s.project.revision
+    interruptedReviewFailureMatches
       ? s.interruptedReviewContinuation
       : undefined;
   const renderProjectMessage = (

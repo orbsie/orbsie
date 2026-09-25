@@ -568,6 +568,16 @@ async function runRenderer(
         };
       }
 
+      if (interruptedReviewMode === "resume") {
+        await page.reload();
+        await expect(page.locator("canvas")).toBeVisible();
+        await page
+          .getByRole("button", { name: "Continue your saved world" })
+          .click();
+        await expect(resume).toBeVisible();
+        await page.setViewportSize({ width: 1280, height: 900 });
+      }
+
       const originalEntityIds = saved.project.entities.map(
         (entity) => entity.id,
       );
@@ -653,19 +663,28 @@ async function runRenderer(
       await expect(resume).toHaveCount(0);
       await expect(continuation).toHaveCount(0);
       assert.deepEqual(unexpectedRequests, []);
-      const expectedPageErrors =
+      const rendererErrorCount =
         renderer === "software"
-          ? ["THREE.WebGLRenderer: Error creating WebGL context."]
-          : [];
-      const expectedConsoleErrors =
-        renderer === "software"
-          ? [
-              "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
-            ]
-          : [];
+          ? interruptedReviewMode === "resume"
+            ? 2
+            : 1
+          : 0;
+      const expectedPageErrors = Array.from(
+        { length: rendererErrorCount },
+        () => "THREE.WebGLRenderer: Error creating WebGL context.",
+      );
+      const expectedConsoleErrors = [];
+      if (rendererErrorCount > 0)
+        expectedConsoleErrors.push(
+          "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        );
       if (reviewFailure)
         expectedConsoleErrors.push(
           "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        );
+      if (rendererErrorCount > 1)
+        expectedConsoleErrors.push(
+          "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
         );
       if (interruptedReviewMode === "resume-start-retry")
         expectedConsoleErrors.push("Failed to load resource: net::ERR_FAILED");

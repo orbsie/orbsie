@@ -34,7 +34,7 @@ import {
   type GenerationConnection,
 } from "./generation-connection";
 import { create } from "zustand";
-import { clear, get, update } from "idb-keyval";
+import { clear, del, get, set as idbSet, update } from "idb-keyval";
 import {
   blankProject,
   commandSchema,
@@ -93,6 +93,11 @@ const generationErrorCodes = new Set([
   CHATGPT_STALE_CONNECTION_CODE,
 ]);
 const PROJECT_MESSAGE_LIMIT = 500;
+const INTERRUPTED_REVIEW_LEDGER_TTL_MS = 15 * 60 * 1000;
+
+function interruptedReviewContinuationKey(projectId: string) {
+  return `orbsie-review-continuation:${projectId}`;
+}
 
 export type ReviewContinuation = {
   projectId: string;
@@ -103,6 +108,7 @@ export type ReviewContinuation = {
 export type InterruptedReviewContinuation = {
   projectId: string;
   revision: number;
+  expiresAt: number;
   prompt: string;
   priorRunId: string;
   selected?: string;
@@ -112,6 +118,240 @@ export type InterruptedReviewContinuation = {
   effort?: string;
   reviewImageSupported: boolean;
 };
+
+type PersistedInterruptedReviewContinuation = {
+  version: 1;
+  projectDigest: string;
+  continuation: InterruptedReviewContinuation;
+};
+
+const continuationProviders = [
+  "free",
+  "openrouter",
+  "gateway",
+  "chatgpt-hosted",
+] as const;
+
+function parseInterruptedReviewContinuation(
+  value: unknown,
+  project: Project,
+  now = Date.now(),
+): InterruptedReviewContinuation | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
+  const record = value as Record<string, unknown>;
+  const allowedKeys = new Set([
+    "projectId",
+    "revision",
+    "expiresAt",
+    "prompt",
+    "priorRunId",
+    "selected",
+    "browserModeling",
+    "provider",
+    "model",
+    "effort",
+    "reviewImageSupported",
+  ]);
+  if (Object.keys(record).some((key) => !allowedKeys.has(key)))
+    return undefined;
+  const projectId = validatedClientRunId(record.projectId);
+  const priorRunId = validatedClientRunId(record.priorRunId);
+  const provider = record.provider;
+  const model = record.model;
+  const effort = record.effort;
+  const selected = record.selected;
+  const prompt = record.prompt;
+  const expiresAt = record.expiresAt;
+  if (
+    !projectId ||
+    projectId !== project.id ||
+    record.revision !== project.revision ||
+    !priorRunId ||
+    !Number.isSafeInteger(expiresAt) ||
+    (expiresAt as number) <= now ||
+    (expiresAt as number) - now > INTERRUPTED_REVIEW_LEDGER_TTL_MS ||
+    typeof prompt !== "string" ||
+    prompt.trim().length === 0 ||
+    prompt.length > 4000 ||
+    typeof record.browserModeling !== "boolean" ||
+    typeof record.reviewImageSupported !== "boolean" ||
+    !(continuationProviders as readonly unknown[]).includes(provider) ||
+    typeof model !== "string" ||
+    model.length > (provider === "chatgpt-hosted" ? 256 : 150) ||
+    (provider !== "free" && model.length === 0) ||
+    (provider === "free" && model.length !== 0) ||
+    (effort !== undefined &&
+      (typeof effort !== "string" ||
+        effort.length === 0 ||
+        effort.length > 32)) ||
+    (provider === "chatgpt-hosted" && effort === undefined) ||
+    (provider === "free" && effort !== undefined) ||
+    (selected !== undefined &&
+      (typeof selected !== "string" ||
+        selected.length === 0 ||
+        selected.length > 80 ||
+        !project.entities.some((entity) => entity.id === selected)))
+  )
+    return undefined;
+  return {
+    projectId,
+    revision: project.revision,
+    expiresAt: expiresAt as number,
+    prompt,
+    priorRunId,
+    ...(selected === undefined ? {} : { selected }),
+    browserModeling: record.browserModeling,
+    provider: provider as InterruptedReviewContinuation["provider"],
+    model,
+    ...(effort === undefined ? {} : { effort }),
+    reviewImageSupported: record.reviewImageSupported,
+  };
+}
+
+function parsePersistedInterruptedReviewContinuation(
+  value: unknown,
+  project: Project,
+  now = Date.now(),
+): PersistedInterruptedReviewContinuation | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
+  const record = value as Record<string, unknown>;
+  if (
+    Object.keys(record).length !== 3 ||
+    Object.keys(record).some(
+      (key) => !["version", "projectDigest", "continuation"].includes(key),
+    ) ||
+    record.version !== 1 ||
+    typeof record.projectDigest !== "string" ||
+    !/^[a-f0-9]{64}$/.test(record.projectDigest)
+  )
+    return undefined;
+  const continuation = parseInterruptedReviewContinuation(
+    record.continuation,
+    project,
+    now,
+  );
+  if (!continuation) return undefined;
+  return {
+    version: 1,
+    projectDigest: record.projectDigest,
+    continuation,
+  };
+}
+
+async function savedProjectDigest(project: Project) {
+  const serialized = JSON.stringify(projectSchema.parse(project));
+  const bytes = new TextEncoder().encode(serialized);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function removePersistedInterruptedReviewContinuation(projectId: string) {
+  try {
+    await del(interruptedReviewContinuationKey(projectId));
+  } catch {
+    // A stale local action is still fenced by project digest and ledger expiry.
+  }
+}
+
+async function restorePersistedInterruptedReviewContinuation(project: Project) {
+  const key = interruptedReviewContinuationKey(project.id);
+  try {
+    const raw = await get<unknown>(key);
+    if (raw === undefined) return undefined;
+    const parsed = parsePersistedInterruptedReviewContinuation(raw, project);
+    if (!parsed) {
+      await removePersistedInterruptedReviewContinuation(project.id);
+      return undefined;
+    }
+    const [digest, library] = await Promise.all([
+      savedProjectDigest(project),
+      get<Record<string, unknown>>("orbsie-library"),
+    ]);
+    const stored = projectSchema.safeParse(library?.[project.id]);
+    if (
+      digest !== parsed.projectDigest ||
+      !stored.success ||
+      JSON.stringify(stored.data) !== JSON.stringify(project)
+    ) {
+      await removePersistedInterruptedReviewContinuation(project.id);
+      return undefined;
+    }
+    return parsed.continuation;
+  } catch {
+    return undefined;
+  }
+}
+
+async function persistInterruptedReviewContinuation(
+  project: Project,
+  continuation: InterruptedReviewContinuation | undefined,
+  isCurrent: () => boolean = () => true,
+) {
+  const key = interruptedReviewContinuationKey(project.id);
+  if (!isCurrent()) return;
+  if (
+    !continuation ||
+    continuation.projectId !== project.id ||
+    continuation.revision !== project.revision ||
+    !parseInterruptedReviewContinuation(continuation, project)
+  ) {
+    await removePersistedInterruptedReviewContinuation(project.id);
+    return;
+  }
+  try {
+    const library = await get<Record<string, unknown>>("orbsie-library");
+    const stored = projectSchema.safeParse(library?.[project.id]);
+    if (
+      !stored.success ||
+      JSON.stringify(stored.data) !== JSON.stringify(project)
+    ) {
+      await removePersistedInterruptedReviewContinuation(project.id);
+      return;
+    }
+    const projectDigest = await savedProjectDigest(project);
+    const currentRecord = parsePersistedInterruptedReviewContinuation(
+      await get<unknown>(key),
+      project,
+    );
+    const expiresAt =
+      currentRecord?.projectDigest === projectDigest &&
+      sameInterruptedReviewContinuation(
+        currentRecord.continuation,
+        continuation,
+      )
+        ? currentRecord.continuation.expiresAt
+        : continuation.expiresAt;
+    if (!isCurrent()) return;
+    await idbSet(key, {
+      version: 1,
+      projectDigest,
+      continuation: { ...continuation, expiresAt },
+    } satisfies PersistedInterruptedReviewContinuation);
+  } catch {
+    // Scene saving remains successful if this optional recovery record cannot be written.
+  }
+}
+
+function sameInterruptedReviewContinuation(
+  left: InterruptedReviewContinuation,
+  right: InterruptedReviewContinuation,
+) {
+  const fields = [
+    "projectId",
+    "revision",
+    "prompt",
+    "priorRunId",
+    "selected",
+    "browserModeling",
+    "provider",
+    "model",
+    "effort",
+    "reviewImageSupported",
+  ] as const;
+  return fields.every((field) => left[field] === right[field]);
+}
 
 function authoringReviewFeedback(
   issues: readonly { summary: string }[],
@@ -588,11 +828,19 @@ export const useOrb = create<State>((setState, getState) => ({
   reset: 0,
   set(patch) {
     if ("project" in patch || "reset" in patch) {
+      void removePersistedInterruptedReviewContinuation(getState().project.id);
+      if (patch.project)
+        void removePersistedInterruptedReviewContinuation(patch.project.id);
       invalidatePendingLoad();
       clearActiveAuthoringRun();
       active?.abort();
       active = undefined;
     }
+    if (
+      "interruptedReviewContinuation" in patch &&
+      patch.interruptedReviewContinuation === undefined
+    )
+      void removePersistedInterruptedReviewContinuation(getState().project.id);
     if ("project" in patch)
       patch = {
         ...patch,
@@ -678,6 +926,17 @@ export const useOrb = create<State>((setState, getState) => ({
           ...getState().drafts.filter((p) => p.id !== snapshot.id),
         ],
       });
+      const currentContinuation = getState().interruptedReviewContinuation;
+      const continuation = getState().building
+        ? undefined
+        : currentContinuation;
+      await persistInterruptedReviewContinuation(
+        snapshot,
+        continuation,
+        () =>
+          isCurrent() &&
+          getState().interruptedReviewContinuation === currentContinuation,
+      );
     } catch {
       if (isCurrent())
         setState({
@@ -859,11 +1118,22 @@ export const useOrb = create<State>((setState, getState) => ({
       return false;
     const parsedProject = projectSchema.parse(project);
     const writer = play || activateWriter(project.id);
-    const saved = getState().drafts.some(
+    let saved = getState().drafts.some(
       (draft) =>
         draft.id === project.id &&
         JSON.stringify(draft) === JSON.stringify(project),
     );
+    const interruptedReviewContinuation =
+      writer && !play
+        ? await restorePersistedInterruptedReviewContinuation(parsedProject)
+        : undefined;
+    if (interruptedReviewContinuation) saved = true;
+    if (
+      epoch !== loadEpoch ||
+      getState().project !== startingProject ||
+      !isCurrent()
+    )
+      return false;
     baseline = parsedProject;
     setState({
       project: parsedProject,
@@ -883,7 +1153,7 @@ export const useOrb = create<State>((setState, getState) => ({
       modelingFeedback: undefined,
       authoringActivity: [],
       reviewContinuation: undefined,
-      interruptedReviewContinuation: undefined,
+      interruptedReviewContinuation,
       readOnly: !writer,
       ...(!writer
         ? {
@@ -936,6 +1206,7 @@ export const useOrb = create<State>((setState, getState) => ({
       committedWorld.entities.some((entity) => entity.id === recovery.selected)
         ? recovery.selected
         : undefined;
+    void removePersistedInterruptedReviewContinuation(s.project.id);
     setState({
       phase:
         recovery?.phase === "landing" || (!recovery && s.phase === "descending")
@@ -971,6 +1242,7 @@ export const useOrb = create<State>((setState, getState) => ({
   undo() {
     const s = getState();
     if (s.readOnly || s.building || !s.history.length) return;
+    void removePersistedInterruptedReviewContinuation(s.project.id);
     setState({
       project: { ...s.history.at(-1)!, revision: s.project.revision + 1 },
       future: [s.project, ...s.future].slice(0, HISTORY_LIMIT),
@@ -986,6 +1258,7 @@ export const useOrb = create<State>((setState, getState) => ({
   redo() {
     const s = getState();
     if (s.readOnly || s.building || !s.future.length) return;
+    void removePersistedInterruptedReviewContinuation(s.project.id);
     setState({
       project: { ...s.future[0], revision: s.project.revision + 1 },
       history: [...s.history, s.project].slice(-HISTORY_LIMIT),
@@ -1001,6 +1274,13 @@ export const useOrb = create<State>((setState, getState) => ({
     const continuation = initialState.interruptedReviewContinuation;
     if (!continuation) return;
     const initialProject = initialState.project;
+    if (continuation.expiresAt <= Date.now()) {
+      await removePersistedInterruptedReviewContinuation(
+        continuation.projectId,
+      );
+      setState({ interruptedReviewContinuation: undefined });
+      return;
+    }
     const savedCheckpoint = committed(initialProject, baseline);
     const connectionMatches =
       connection.provider === continuation.provider &&
@@ -1055,6 +1335,7 @@ export const useOrb = create<State>((setState, getState) => ({
       return;
     }
 
+    await removePersistedInterruptedReviewContinuation(initialProject.id);
     clearActiveAuthoringRun();
     active?.abort();
     const controller = new AbortController();
@@ -1063,6 +1344,7 @@ export const useOrb = create<State>((setState, getState) => ({
     let expectedProject = initialProject;
     let latestSavedProject = savedCheckpoint;
     let admittedRunId: string | undefined;
+    let admittedAt: number | undefined;
     let reviewAttempted = false;
     let refreshPriorRunId = false;
     let responseOutcomeUnknown: "start" | "review" | undefined;
@@ -1217,6 +1499,7 @@ export const useOrb = create<State>((setState, getState) => ({
         clientRunId,
       );
       let startResponse: Response;
+      const startRequestedAt = Date.now();
       try {
         startResponse = await fetch(startRequest.url, {
           ...startRequest.init,
@@ -1240,6 +1523,7 @@ export const useOrb = create<State>((setState, getState) => ({
         typeof startBody?.reviewImageSupported !== "boolean"
       )
         throw Error("The saved review could not be resumed.");
+      admittedAt = startRequestedAt;
       reviewImageSupported = startBody.reviewImageSupported;
       publishRecoveryActivity(
         "waiting",
@@ -1520,6 +1804,9 @@ export const useOrb = create<State>((setState, getState) => ({
                 issue: partialIssue,
               },
       });
+      await removePersistedInterruptedReviewContinuation(
+        continuation.projectId,
+      );
     } catch (error) {
       if (signal.aborted || active !== controller) return;
       if (
@@ -1550,6 +1837,8 @@ export const useOrb = create<State>((setState, getState) => ({
         ? {
             ...continuation,
             revision: latestSavedProject.revision,
+            expiresAt:
+              (admittedAt ?? Date.now()) + INTERRUPTED_REVIEW_LEDGER_TTL_MS,
             priorRunId: admittedRunId!,
             reviewImageSupported,
           }
@@ -1579,6 +1868,14 @@ export const useOrb = create<State>((setState, getState) => ({
                 : "Scene saved, but review could not finish. Your world is safe.",
         notice: "",
       });
+      await persistInterruptedReviewContinuation(
+        latestSavedProject,
+        savedCheckpointCurrent ? refreshed : undefined,
+        () =>
+          getState().project === latestSavedProject &&
+          getState().interruptedReviewContinuation ===
+            (savedCheckpointCurrent ? refreshed : undefined),
+      );
     } finally {
       recoveryActivityThrottle.clear();
       if (activeReviewActivity?.controller === controller)
@@ -1775,6 +2072,7 @@ export const useOrb = create<State>((setState, getState) => ({
       publish: publishActivity,
       clear: activityThrottle.clear,
     };
+    void removePersistedInterruptedReviewContinuation(project.id);
     setState({
       project,
       phase: initial ? "descending" : "editing",
@@ -1831,6 +2129,7 @@ export const useOrb = create<State>((setState, getState) => ({
       | "other"
       | undefined;
     let authoringRunId: string | undefined;
+    let authoringRunExpiresAt: number | undefined;
     let reviewImageSupported = false;
     let reviewStarted = false;
     let reviewRequestFailed = false;
@@ -2341,12 +2640,16 @@ export const useOrb = create<State>((setState, getState) => ({
           diagnostic.noteInputBytes(
             new TextEncoder().encode(request.init.body).byteLength,
           );
+        const requestStartedAt = Date.now();
         const response = await fetch(request.url, { ...request.init, signal });
         diagnostic.requestId(response.headers.get("X-Orbsie-Request-Id"));
         if (reviewEnabled) {
           authoringRunId = validatedClientRunId(
             response.headers.get(AUTHORING_RUN_HEADER),
           );
+          if (authoringRunId)
+            authoringRunExpiresAt =
+              requestStartedAt + INTERRUPTED_REVIEW_LEDGER_TTL_MS;
           reviewImageSupported =
             response.headers.get(REVIEW_IMAGE_HEADER) === "1";
         }
@@ -2598,6 +2901,9 @@ export const useOrb = create<State>((setState, getState) => ({
             ? {
                 projectId: project.id,
                 revision: checkpoint.revision,
+                expiresAt:
+                  authoringRunExpiresAt ??
+                  Date.now() + INTERRUPTED_REVIEW_LEDGER_TTL_MS,
                 prompt,
                 priorRunId: authoringRunId!,
                 ...(selected ? { selected } : {}),
