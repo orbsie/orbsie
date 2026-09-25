@@ -190,8 +190,7 @@ function parseInterruptedReviewContinuation(
     (selected !== undefined &&
       (typeof selected !== "string" ||
         selected.length === 0 ||
-        selected.length > 80 ||
-        !project.entities.some((entity) => entity.id === selected)))
+        selected.length > 80))
   )
     return undefined;
   return {

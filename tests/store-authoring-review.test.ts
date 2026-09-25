@@ -169,6 +169,23 @@ function streamResponse(project: ReturnType<typeof blankProject>) {
   });
 }
 
+function selectedRemovalResponse(selected: string) {
+  const commands: Command[] = [
+    { type: "remove_entity", id: selected },
+    { type: "commit_revision", message: "Removed selected object." },
+  ];
+  return new Response(
+    commands.map((command) => JSON.stringify(command)).join("\n") + "\n",
+    {
+      headers: {
+        "Content-Type": "application/x-ndjson",
+        "X-Orbsie-Authoring-Run-Id": authoringRunId,
+        "X-Orbsie-Review-Image-Supported": "1",
+      },
+    },
+  );
+}
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: Error) => void;
@@ -514,6 +531,35 @@ describe("store browser authoring review loop", () => {
     });
     expect(useOrb.getState().interruptedReviewContinuation).toBeUndefined();
     expect(mocks.db.has(continuationKey)).toBe(false);
+  });
+
+  it("restores the original selection when the saved scene removed that entity", async () => {
+    const selected = useOrb.getState().project.entities[0]!.id;
+    useOrb.getState().set({ selected });
+    const fetcher = vi.fn<typeof fetch>(async (url) => {
+      if (url === "/api/generate") return selectedRemovalResponse(selected);
+      return new Response(JSON.stringify({ error: "Review unavailable." }), {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    await useOrb.getState().run("Remove the selected tree", connection);
+
+    const saved = useOrb.getState();
+    expect(
+      saved.project.entities.some((entity) => entity.id === selected),
+    ).toBe(false);
+    expect(saved.saved).toBe(true);
+    expect(saved.interruptedReviewContinuation?.selected).toBe(selected);
+
+    await useOrb.getState().load(saved.project);
+
+    expect(useOrb.getState().authoringActivity).toEqual([]);
+    expect(useOrb.getState().interruptedReviewContinuation?.selected).toBe(
+      selected,
+    );
   });
 
   it("resumes the saved review with one start and one review request", async () => {
