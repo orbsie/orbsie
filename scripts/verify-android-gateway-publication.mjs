@@ -453,7 +453,7 @@ try {
   assert.deepEqual(report.externalRequests, []);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
-  report.status = "passed-pending-visual-review";
+  report.status = "passed";
 } catch (error) {
   report.status = "failed";
   report.error =
