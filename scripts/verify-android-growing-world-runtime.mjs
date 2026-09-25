@@ -17,12 +17,14 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 import { build } from "esbuild";
+import { installAdbReverseWithRetry } from "./android-adb-reverse.mjs";
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const AVD = process.env.ORBSIE_ANDROID_AVD ?? "droidlm_api35_midrange";
 const DEVICE = process.env.ORBSIE_ANDROID_DEVICE ?? "emulator-5554";
 const BOOT_TIMEOUT_MS = 180_000;
 const CHROME_CDP_TIMEOUT_MS = 30_000;
+const ADB_REVERSE_BIND_ATTEMPTS = 5;
 const LOWER_COST_BASELINE = process.argv.includes("--baseline-120");
 const READINESS_ONLY = process.argv.includes("--readiness-only");
 const CONTROL_PAGE = process.argv.includes("--control-page");
@@ -259,12 +261,13 @@ async function availableLoopbackPort() {
   return port;
 }
 
-function chooseDevicePort(command) {
+function chooseDevicePort(command, excludedPorts = new Set()) {
   const configured = new Set(
     adb(command, "--list")
       .split(/\s+/)
       .filter((value) => value.startsWith("tcp:")),
   );
+  for (const port of excludedPorts) configured.add(`tcp:${port}`);
   for (let attempt = 0; attempt < 40; attempt++) {
     const port = randomInt(20_000, 50_000);
     if (!configured.has(`tcp:${port}`)) return port;
@@ -776,6 +779,7 @@ const report = {
   timings: {},
   lifecycleEvents: [],
   httpResponses: [],
+  adbReverseBindRetries: [],
   failedRequests: [],
   providerCalls: 0,
   generationRequests: [],
@@ -842,8 +846,20 @@ try {
     : "local-fixture-and-adb-bridges";
   server = createStaticServer(bundle, CONTROL_PAGE);
   serverPort = await listen(server);
-  reversePort = chooseDevicePort("reverse");
-  adb("reverse", `tcp:${reversePort}`, `tcp:${serverPort}`);
+  reversePort = installAdbReverseWithRetry({
+    maxAttempts: ADB_REVERSE_BIND_ATTEMPTS,
+    choosePort: (excludedPorts) => chooseDevicePort("reverse", excludedPorts),
+    installReverse: (port) =>
+      adb("reverse", `tcp:${port}`, `tcp:${serverPort}`),
+    onCollision: ({ port, attempt, maxAttempts }) => {
+      report.adbReverseBindRetries.push({ port, attempt });
+      recordLifecycleEvent(report, "adb-reverse-bind-collision", {
+        port,
+        attempt,
+        maxAttempts,
+      });
+    },
+  });
   reverseInstalled = true;
   forwardPort = await availableLoopbackPort();
   adb("forward", `tcp:${forwardPort}`, "localabstract:chrome_devtools_remote");
