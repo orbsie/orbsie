@@ -403,11 +403,22 @@ function samePosition(
 
 function interpolatePath(path: GameProgramPathState): GameProgramVec3 {
   const progress = Math.max(0, Math.min(1, path.elapsed / path.duration));
-  const scaled = progress * (path.points.length - 1);
-  const segment = Math.min(path.points.length - 2, Math.floor(scaled));
+  const explicitlyClosed = samePosition(
+    path.points[0],
+    path.points[path.points.length - 1],
+  );
+  const segmentCount =
+    path.loop && !explicitlyClosed
+      ? path.points.length
+      : path.points.length - 1;
+  const scaled = progress * segmentCount;
+  const segment = Math.min(segmentCount - 1, Math.floor(scaled));
   const amount = scaled - segment;
   const from = path.points[segment];
-  const to = path.points[segment + 1];
+  const to =
+    path.loop && !explicitlyClosed
+      ? path.points[(segment + 1) % path.points.length]
+      : path.points[segment + 1];
   return [
     from[0] + (to[0] - from[0]) * amount,
     from[1] + (to[1] - from[1]) * amount,

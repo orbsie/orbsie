@@ -65,7 +65,7 @@ describe("program physics integration", () => {
 
     session.advance(0.04);
     const moved = session.effectiveEntity(movingBounce)!;
-    expect(moved.position).toEqual([0.04, 1, 0]);
+    expect(moved.position).toEqual([0.08, 1, 0]);
     expect(moved.behavior).toEqual({ type: "bounce" });
     const scene = resolveRuntimeScene({ entities: [movingBounce, tree] });
     const matrix = runtimeEntityMatrix(
@@ -93,7 +93,7 @@ describe("program physics integration", () => {
 
     session.advance(0.04);
     expect(session.effectiveEntity(movingBounce)?.position).toEqual([
-      0.08, 1, 0,
+      0.16, 1, 0,
     ]);
     expect(session.state?.pathStates).toHaveProperty("moving-bounce");
     expect(session.effectiveEntity(tree)).toEqual(tree);

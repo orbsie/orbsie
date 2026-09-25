@@ -12,6 +12,32 @@ import {
 
 const emptyProgram: GameProgram = { variables: [], rules: [] };
 
+function movementProgram(
+  points: [number, number, number][],
+  duration: number,
+  loop: boolean,
+): GameProgram {
+  return {
+    variables: [],
+    rules: [
+      {
+        id: "move",
+        trigger: { type: "input", action: "right" },
+        conditions: [],
+        actions: [
+          {
+            type: "move_path",
+            entityId: "orb",
+            points,
+            duration,
+            loop,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 describe("game program schema and references", () => {
   it("accepts an optional bounded world-space spawn", () => {
     expect(
@@ -295,6 +321,101 @@ describe("game program deterministic stepping", () => {
     });
     expect(finished.entityOverrides.orb.position).toEqual([2, 2, 0]);
     expect(finished.pathStates.orb).toBeUndefined();
+  });
+
+  it("uses the virtual closing segment for an open three-point loop", () => {
+    const program = movementProgram(
+      [
+        [0, 0, 0],
+        [3, 0, 0],
+        [3, 3, 0],
+      ],
+      3,
+      true,
+    );
+    const moving = stepGameProgram(program, createGameProgramState(program), {
+      type: "input",
+      action: "right",
+    });
+    const secondPoint = stepGameProgram(program, moving, {
+      type: "tick",
+      delta: 1,
+    });
+    expect(secondPoint.entityOverrides.orb.position).toEqual([3, 0, 0]);
+    const thirdPoint = stepGameProgram(program, secondPoint, {
+      type: "tick",
+      delta: 1,
+    });
+    expect(thirdPoint.entityOverrides.orb.position).toEqual([3, 3, 0]);
+    const closingSegment = stepGameProgram(program, thirdPoint, {
+      type: "tick",
+      delta: 0.5,
+    });
+    expect(closingSegment.entityOverrides.orb.position).toEqual([1.5, 1.5, 0]);
+    const looped = stepGameProgram(program, closingSegment, {
+      type: "tick",
+      delta: 0.5,
+    });
+    expect(looped.entityOverrides.orb.position).toEqual([0, 0, 0]);
+    expect(looped.pathStates.orb).toBeDefined();
+  });
+
+  it("keeps open-loop positions continuous across the duration boundary", () => {
+    const program = movementProgram(
+      [
+        [0, 0, 0],
+        [3, 0, 0],
+        [3, 3, 0],
+      ],
+      3,
+      true,
+    );
+    const moving = stepGameProgram(program, createGameProgramState(program), {
+      type: "input",
+      action: "right",
+    });
+    const beforeBoundary = stepGameProgram(program, moving, {
+      type: "tick",
+      delta: 2.999,
+    });
+    const afterBoundary = stepGameProgram(program, beforeBoundary, {
+      type: "tick",
+      delta: 0.002,
+    });
+    const before = beforeBoundary.entityOverrides.orb.position!;
+    const after = afterBoundary.entityOverrides.orb.position!;
+    expect(before[0]).toBeCloseTo(0.003, 5);
+    expect(before[1]).toBeCloseTo(0.003, 5);
+    expect(after[0]).toBeCloseTo(0.003, 5);
+    expect(after[1]).toBeCloseTo(0, 5);
+    expect(afterBoundary.pathStates.orb).toBeDefined();
+  });
+
+  it("preserves the existing segment timing for an explicitly closed loop", () => {
+    const program = movementProgram(
+      [
+        [0, 0, 0],
+        [2, 0, 0],
+        [0, 0, 0],
+      ],
+      2,
+      true,
+    );
+    const moving = stepGameProgram(program, createGameProgramState(program), {
+      type: "input",
+      action: "right",
+    });
+    const middle = stepGameProgram(program, moving, {
+      type: "tick",
+      delta: 1,
+    });
+    expect(middle.entityOverrides.orb.position).toEqual([2, 0, 0]);
+    const wrapped = stepGameProgram(program, middle, {
+      type: "tick",
+      delta: 1,
+    });
+    expect(wrapped.entityOverrides.orb.position).toEqual([0, 0, 0]);
+    expect(wrapped.pathStates.orb).toBeDefined();
   });
 
   it("cancels an active path when an explicit position is set", () => {
