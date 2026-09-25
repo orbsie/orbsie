@@ -1,0 +1,159 @@
+{
+  "mode": "single-static-saved-openrouter-creation-replay",
+  "status": "replay-setup-failed",
+  "repoHead": "047ff1ee8884fddcae7be610c91384b21508b151",
+  "sourceProject": {
+    "path": "docs/evidence/provider-e2e/openrouter-flagship-current-20260925/openrouter/story-created-project.json",
+    "bytes": 12566,
+    "sha256": "b6bfb722cd537366487205bf8faa9e148b114debeb5e9f69060eb43d93fe1e09",
+    "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+    "revision": 31
+  },
+  "runtime": {
+    "runtime.js": {
+      "bytes": 1944408,
+      "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+    },
+    "runtime.css": {
+      "bytes": 6236,
+      "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 427305,
+      "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+    }
+  },
+  "catalogAssets": [
+    {
+      "entityId": "tree-one",
+      "assetId": "kenney.nature.tree-default",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "bytes": 9428,
+      "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+    },
+    {
+      "entityId": "tree-two",
+      "assetId": "kenney.nature.tree-pine-tall-a",
+      "path": "/models/kenney/nature-kit/tree_pineTallA.glb",
+      "bytes": 7200,
+      "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+    },
+    {
+      "entityId": "tree-three",
+      "assetId": "kenney.nature.tree-default",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "bytes": 9428,
+      "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+    }
+  ],
+  "targets": {
+    "platforms": [
+      "bounce-one",
+      "bounce-two",
+      "bounce-three"
+    ],
+    "collectibles": [
+      "crystal-one",
+      "crystal-two",
+      "crystal-three",
+      "crystal-four",
+      "crystal-five"
+    ],
+    "portal": "portal"
+  },
+  "providerCalls": 0,
+  "cloudCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "localRequests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "contentType": "application/octet-stream"
+    }
+  ],
+  "screenshots": [
+    "setup-failure.png"
+  ],
+  "readiness": {
+    "status": "not-ready"
+  },
+  "flagshipStory": {
+    "status": "failed",
+    "phases": {
+      "creation": {
+        "revision": 31,
+        "status": "failed",
+        "gameplay": {
+          "status": "failed",
+          "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+          "revision": 31,
+          "failureEvidence": {
+            "source": "fresh-gameplay-traversal",
+            "phase": "creation",
+            "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+            "revision": 31,
+            "observationCount": 0,
+            "lastObservation": null,
+            "inputTrace": [],
+            "movement": null,
+            "contacts": [],
+            "collections": [],
+            "scoreIds": [],
+            "score": null,
+            "portalWin": null,
+            "restart": {
+              "attempted": false,
+              "resetCounter": null
+            },
+            "platformEvidence": [
+              {
+                "id": "bounce-one",
+                "behavior": "bounce",
+                "groundedFrames": 0,
+                "bounceFrames": 0,
+                "startPosition": null,
+                "maximumDisplacement": 0,
+                "jumpEvidence": []
+              },
+              {
+                "id": "bounce-two",
+                "behavior": "bounce",
+                "groundedFrames": 0,
+                "bounceFrames": 0,
+                "startPosition": null,
+                "maximumDisplacement": 0,
+                "jumpEvidence": []
+              },
+              {
+                "id": "bounce-three",
+                "behavior": "bounce",
+                "groundedFrames": 0,
+                "bounceFrames": 0,
+                "startPosition": null,
+                "maximumDisplacement": 0,
+                "jumpEvidence": []
+              }
+            ]
+          }
+        },
+        "failureStage": "browser-navigation-before-gameplay"
+      }
+    }
+  },
+  "navigationError": "page.goto: Download is starting\nCall log:\n\u001b[2m  - navigating to \"[local-origin]/\", waiting until \"domcontentloaded\"\u001b[22m\n",
+  "errorCode": {
+    "code": "standalone-shell-served-as-download"
+  },
+  "diagnosis": {
+    "category": "replay-driver-setup-failure",
+    "basis": "The first loopback response for / was served as application/octet-stream. Chromium reported that a download was starting; only GET / was observed, readiness was not reached, and no runtime asset or game route was exercised."
+  },
+  "finishedAt": "2026-09-25T08:14:57.582Z"
+}

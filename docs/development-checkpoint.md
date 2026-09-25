@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 exact saved OpenRouter creation replay: pinned revision 31
+(`b6bfb722…1e09`) against checked-in player runtime (`runtime.js`
+`4767933f…1179`) in a loopback-only static page. The first setup response
+incorrectly served `/` as a download; that failure and blank screenshot are
+preserved separately and are not gameplay evidence. After `/` and `/runtime.js`
+content-type preflights passed, one real keyboard traversal loaded the exact
+project in WebGL with no external/provider/cloud requests, page errors, or
+missing assets. The player moved 0.64 m, collected crystal-five (score 1), and
+recorded contact/bounce on bounce-one and bounce-two. Bounce-three moved 0.98 m
+but recorded no grounded/bounce frames or contact; no portal win or reset was
+observed. The run remains failed and leaves authored-route versus driver
+uncertainty unresolved. Sanitized telemetry and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925/`.
+
 Sep 25 fresh OpenRouter GPT-6 Luna flagship browser attempt: source commit
 `47ea2e68e3da565504838eb6526df8ded915d6fc` was served from an isolated
 loopback Next dev server at `127.0.0.1:3057` with the 4,096-token cap and
