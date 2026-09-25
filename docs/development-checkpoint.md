@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 growing-world browser measurement: source/evidence `08a7b10` adds an
+opt-in 160-entity stress fixture and a repeatable six-cycle home-to-outer
+travel/reentry probe. All cycles held 48 full formations and 112 proxies,
+kept the selected distant entity resident, and returned with no active
+formation replay. Settled WebGL counts were 184 geometries, 5 textures and 7
+programs at home in every cycle (180/5/7 at the outer cluster). Chromium 153
+on SwiftShader measured 708 animation intervals: p50 16.7 ms, p95 50 ms, p99
+66.6 ms. CDP heap samples are retained but fluctuate with garbage collection;
+they do not establish a stable memory ceiling. The direct SoftwareWorld path
+was ready at both locations. Astra reviewed the report and screenshots and
+confirmed the synthetic objects are tiny colored primitives, so this is
+resource-bounded traversal evidence, not representative high-detail modeling,
+native-GPU/physical-mobile performance, or full growing-world acceptance.
+There were zero model calls, external requests and page/console errors. Node
+syntax, Prettier and diff checks passed. Evidence is in
+`docs/evidence/growing-world-runtime/`.
+
 Sep 25 browser procedural isolation: source `b0d5d48` adds a production-editor
 fixture with four intercepted `/api/generate` responses and no model calls.
 It created a valid QuickJS/Manifold object, seeded a random synthetic canary in

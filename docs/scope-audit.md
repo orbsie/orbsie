@@ -6,6 +6,14 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- A 160-entity synthetic browser fixture passed six repeated distant-travel
+  and home-reentry cycles with 48 full formations, 112 proxies, the distant
+  selection retained, and settled WebGL resource counts unchanged by cycle.
+  SwiftShader frame intervals were p50/p95/p99 16.7/50/66.6 ms; the direct
+  SoftwareWorld path stayed ready at both locations. Evidence:
+  `docs/evidence/growing-world-runtime/`. Tiny primitive fixtures, variable
+  CDP heap, and software rendering do not establish high-detail or physical
+  mobile performance; the broader growing-world gate remains open.
 - The browser procedural isolation release gate now has an actual production
   editor fixture, not only isolated evaluator tests. Four intercepted generation
   requests created an object, rejected a hostile host-API/storage/network probe,
