@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 OpenRouter Android publication check: the exact URL pinned by
+`docs/evidence/provider-artifact-publication-openrouter-current-20260925/report.json`
+passed one signed-out Android 15/API 35 midrange AVD Chrome touch run in
+automatic renderer mode. WebGL2 was available and reported SwiftShader; the
+active visible game view used its successful 2D context and `.software-world`
+path, selected automatically without blocking WebGL. Right scored 7, Restart
+reset, Forward won, and Left lost after Restart. Screenshots visibly show the
+scene and both end states. The request log has zero generation/external
+requests; provider calls, cookies, page errors, and console errors were zero.
+No login, terms, or Chrome privacy choice was accepted. This is emulator
+evidence, not physical-device certification. See
+`docs/evidence/android-openrouter-publication/current-runtime-20260925/`.
+
 Sep 25 OpenRouter-origin current-runtime publication: one live isolated
 publication of the retained `openai/gpt-5.6-luna` input-game ZIP passed. The
 production save/readback, two generated-model uploads, Vercel deployment,

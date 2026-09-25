@@ -1,0 +1,162 @@
+{
+  "status": "passed",
+  "sourceCommit": "39adcc4e0e16f404062fb8c627ef49f7c547f3fb",
+  "publication": {
+    "path": "docs/evidence/provider-artifact-publication-openrouter-current-20260925/report.json",
+    "provider": "openrouter",
+    "pinned": true,
+    "model": "openai/gpt-5.6-luna",
+    "projectId": "provider-artifact-b179047e-7d1f-459f-b62b-b9c85b1f6f94",
+    "revision": 8,
+    "digest": "1376f1c06f0b6b26490de37b5e2f1b48ca88d390129be6f4b10e246014946bf6",
+    "deploymentId": "dpl_G5GDfWhGQd5FvKqtj7RWemAqrrLj",
+    "deploymentUrl": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app"
+  },
+  "deploymentUrl": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app",
+  "device": {
+    "id": "emulator-5554",
+    "android": "15",
+    "apiLevel": 35,
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chrome": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome",
+    "physicalDevice": false
+  },
+  "renderer": {
+    "mode": "auto",
+    "selection": "automatic",
+    "actual": "Canvas2D",
+    "activeEvidence": "The visible .software-world and successful 2d context identify the active Canvas2D game view. A separate successful WebGL2 context reported the Android Emulator OpenGL ES Translator (Google SwiftShader); no context was forced unavailable.",
+    "contexts": [
+      {
+        "requested": "webgl2",
+        "actual": "webgl2",
+        "forcedUnavailable": false,
+        "canvasId": null,
+        "canvasClass": "",
+        "vendor": "Google Inc. (Google (Google Inc.))",
+        "renderer": "ANGLE (Google (Google Inc.), Android Emulator OpenGL ES Translator (Google SwiftShader), OpenGL ES 3.0)"
+      },
+      {
+        "requested": "2d",
+        "actual": "2d",
+        "forcedUnavailable": false,
+        "canvasId": null,
+        "canvasClass": ""
+      }
+    ]
+  },
+  "touchInput": {
+    "method": "Chrome DevTools Protocol Input.dispatchTouchEvent",
+    "actions": ["Right", "/Restart/", "Forward", "/Restart/", "Left"]
+  },
+  "providerCalls": 0,
+  "requests": [
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/",
+      "resourceType": "document",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/runtime.css",
+      "resourceType": "stylesheet",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/runtime.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/project.json",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/models/generated/1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa.glb",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/models/generated/c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6.glb",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/generated-geometry-worker.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app/generated-geometry-worker.js",
+      "resourceType": "script",
+      "blocked": false
+    }
+  ],
+  "generationRequests": [],
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "expectedWebglInitializationErrors": 0,
+  "checks": {
+    "ready": true,
+    "touchScore": 7,
+    "restart": true,
+    "win": true,
+    "loss": true
+  },
+  "cookiesBefore": 0,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false
+  },
+  "cookiesAfter": 0,
+  "visualReview": {
+    "status": "passed",
+    "finding": "The ready and scored captures visibly show the player, tree, and mushroom in the scene. The win and loss captures show the corresponding game end states."
+  },
+  "screenshots": [
+    {
+      "file": "ready.png",
+      "bytes": 110675,
+      "sha256": "fba791c260eee73cd86a636918590ee67eb69ee24ff586625099708629cc5611"
+    },
+    {
+      "file": "scored.png",
+      "bytes": 111556,
+      "sha256": "92319170519d7d1f0367949aece8cf8beb69ac52d8e062d84c8db4810fa86d46"
+    },
+    {
+      "file": "won.png",
+      "bytes": 111048,
+      "sha256": "9345773819667fa8466a7aed61ae58ca41e79ce99d08f4a2508cf0c29385a4f2"
+    },
+    {
+      "file": "lost.png",
+      "bytes": 112229,
+      "sha256": "54b27e3db14e13b61bcfaf0126c317557b97eca6becd653cf9d60955b13ea189"
+    }
+  ],
+  "interactionLimits": {
+    "loginAttempted": false,
+    "termsAccepted": false,
+    "chromePrivacyChoiceChanged": false,
+    "providerCalls": 0,
+    "rendererOverride": "none",
+    "physicalDeviceTest": false
+  },
+  "finishedAt": "2026-09-25T07:30:51.698Z"
+}
