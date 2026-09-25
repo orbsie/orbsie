@@ -34,6 +34,7 @@ import {
   detectDescendingPlatformSurfaceCrossing,
   generationStreamIsOpen,
   gameplaySupportId,
+  isFreshGameplayOrdinaryGroundSupport,
   observePlatformContact,
   orderFreshGameplayCollectiblesFromSupport,
   platformContactProgress,
@@ -5214,6 +5215,9 @@ export async function runFreshFlagshipGameplay(
   const observations = [];
   const inputTrace = [];
   const collectibleTraversalOrder = [];
+  const traversalPlatformIds = new Set(
+    targets.platforms.map((platform) => platform.id),
+  );
   const platformEvidence = new Map(
     targets.platforms.map((target) => [
       target.id,
@@ -5596,6 +5600,10 @@ export async function runFreshFlagshipGameplay(
           observation: last,
           target: { ...target, position: steeringPosition },
           jumping,
+          groundApproachRequired: isFreshGameplayOrdinaryGroundSupport(
+            last,
+            traversalPlatformIds,
+          ),
         });
         if (action.phase === "recovered") {
           phase.recovery = compactPlatformObservation(last, target.id);

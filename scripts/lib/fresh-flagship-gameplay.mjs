@@ -6,7 +6,9 @@ export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   movementMinDistance: 0.12,
   targetDistance: 0.44,
   centeringDistance: 0.22,
-  platformLandingSafetyMargin: 0.12,
+  // Keep the stop radius (0.22) plus a 0.12 m sample buffer inside contact bounds.
+  platformLandingSafetyMargin: 0.34,
+  groundJumpApproachDistance: 2.5,
   maxSteeringStepsPerTarget: 240,
   steeringStepMs: 70,
   jumpFeedbackStepMs: 50,
@@ -504,6 +506,31 @@ export function gameplaySupportId(observation, groundY = 0.42) {
   return null;
 }
 
+/**
+ * Identify a low, stable support outside the authored traversal-platform set.
+ * This includes the ordinary island floor while excluding supported route
+ * platforms, which should launch directly toward the next transition.
+ */
+export function isFreshGameplayOrdinaryGroundSupport(
+  observation,
+  traversalPlatformIds = new Set(),
+  groundY = 0.42,
+) {
+  const supportId = gameplaySupportId(observation, groundY);
+  if (!supportId) return false;
+  if (supportId === "ground") return true;
+  const isTraversalSupport =
+    traversalPlatformIds instanceof Set
+      ? traversalPlatformIds.has(supportId)
+      : Array.isArray(traversalPlatformIds) &&
+        traversalPlatformIds.some((platform) => platform?.id === supportId);
+  return (
+    !isTraversalSupport &&
+    Number.isFinite(observation?.player?.position?.[1]) &&
+    observation.player.position[1] <= groundY + 0.08
+  );
+}
+
 /** Estimate a target platform's top surface using its committed geometry bounds. */
 export function gameplayPlatformSurfaceHeight(
   target,
@@ -616,6 +643,7 @@ export function chooseGameplayPlatformAction({
   target,
   jumping = false,
   targetContacted = false,
+  groundApproachRequired = false,
   groundY = 0.42,
 }) {
   if (targetContacted) return { phase: "contacted", keys: [] };
@@ -634,11 +662,18 @@ export function chooseGameplayPlatformAction({
     verticalPhase === "apex"
   )
     return { phase: "airborne", keys: steering };
-  if (supportId && gameplayPlatformSurfaceHeight(target) > player[1] + 0.18)
+  if (supportId && gameplayPlatformSurfaceHeight(target) > player[1] + 0.18) {
+    if (
+      groundApproachRequired &&
+      Math.hypot(player[0] - targetPosition[0], player[2] - targetPosition[2]) >
+        FRESH_GAMEPLAY_LIMITS.groundJumpApproachDistance
+    )
+      return { phase: "steering", keys: steering };
     return {
       phase: "jumping",
       keys: chooseGameplayJumpKeys(player, targetPosition),
     };
+  }
   return { phase: "steering", keys: steering };
 }
 

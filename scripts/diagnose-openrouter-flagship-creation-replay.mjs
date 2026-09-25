@@ -23,10 +23,24 @@ const REVISION_29_SOURCE = {
   revision: 29,
   sha256: "a7b8964167a6df97e1154124be5eb4f02a5ce8669ed6a0d048a8ae7405903b47",
 };
+const OPENROUTER_C245B8E_SOURCE_PATH =
+  "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter/story-created-project.json";
+const OPENROUTER_C245B8E_SOURCE = {
+  commit: "c245b8e0c0226899ae8c65d42c7b75cc77624d0d",
+  projectId: "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+  revision: 29,
+  sha256: "d478be5d83342e9632c91ce417b9b555aa03dab16467114fe15ab43d1d747985",
+  assetReferenceCount: 2,
+};
 const args = process.argv.slice(2);
 const replayRevision29 = args.includes("--revision29");
+const replayOpenRouterC245B8e = args.includes("--openrouter-live-c245b8e");
 const clearanceDiagnostic = args.includes("--clearance-diagnostic");
 const clearancePathDiagnostic = args.includes("--clearance-path-diagnostic");
+assert(
+  !(replayRevision29 && replayOpenRouterC245B8e),
+  "Choose only one pinned revision29 source mode.",
+);
 assert(
   !(clearanceDiagnostic && clearancePathDiagnostic),
   "Choose only one clearance diagnostic mode.",
@@ -38,22 +52,27 @@ assert(
 const outputArgs = args.filter(
   (argument) =>
     argument !== "--revision29" &&
+    argument !== "--openrouter-live-c245b8e" &&
     argument !== "--clearance-diagnostic" &&
     argument !== "--clearance-path-diagnostic",
 );
 assert(outputArgs.length <= 1, "Provide at most one output directory.");
-const sourcePath = replayRevision29
-  ? REVISION_29_SOURCE_PATH
-  : DEFAULT_SOURCE_PATH;
+const sourcePath = replayOpenRouterC245B8e
+  ? OPENROUTER_C245B8E_SOURCE_PATH
+  : replayRevision29
+    ? REVISION_29_SOURCE_PATH
+    : DEFAULT_SOURCE_PATH;
 const outputPath = resolve(
   outputArgs[0] ??
     (clearancePathDiagnostic
       ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-diagnostic-20260925"
       : clearanceDiagnostic
         ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925"
-        : replayRevision29
-          ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
-          : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
+        : replayOpenRouterC245B8e
+          ? "docs/evidence/provider-e2e/openrouter-flagship-live-c245b8e-driver-replay-20260925"
+          : replayRevision29
+            ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
+            : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const gameplayHarnessBytes = await readFile(
@@ -65,7 +84,11 @@ const gameplayHelperBytes = await readFile(
 const sourceProjectBytes = await readFile(resolve(sourcePath));
 const sourceProject = JSON.parse(sourceProjectBytes.toString("utf8"));
 const project = structuredClone(sourceProject);
-if (replayRevision29) {
+if (replayOpenRouterC245B8e) {
+  assert.equal(project.id, OPENROUTER_C245B8E_SOURCE.projectId);
+  assert.equal(project.revision, OPENROUTER_C245B8E_SOURCE.revision);
+  assert.equal(sha256(sourceProjectBytes), OPENROUTER_C245B8E_SOURCE.sha256);
+} else if (replayRevision29) {
   assert.equal(project.id, REVISION_29_SOURCE.projectId);
   assert.equal(project.revision, REVISION_29_SOURCE.revision);
   assert.equal(sha256(sourceProjectBytes), REVISION_29_SOURCE.sha256);
@@ -169,6 +192,10 @@ const targetDocumentBytes =
 const targetDocumentSha256 = sha256(targetDocumentBytes);
 if (clearanceDiagnostic || clearancePathDiagnostic)
   assert.notEqual(targetDocumentSha256, sha256(sourceProjectBytes));
+if (replayOpenRouterC245B8e) {
+  assert.equal(targetDocumentBytes, sourceProjectBytes);
+  assert.equal(targetDocumentSha256, OPENROUTER_C245B8E_SOURCE.sha256);
+}
 assert.equal(
   project.entities.filter((entity) => entity.geometry?.kind === "generated")
     .length,
@@ -177,7 +204,7 @@ assert.equal(
 let platforms;
 let collectibles;
 let portal;
-if (replayRevision29) {
+if (replayRevision29 || replayOpenRouterC245B8e) {
   const story = assertFlagshipStoryCreation(project);
   platforms = story.platforms;
   collectibles = story.collectibles;
@@ -211,7 +238,15 @@ const catalogAssets = new Map(catalog.assets.map((asset) => [asset.id, asset]));
 const assetReferences = project.entities
   .filter((entity) => entity.geometry?.kind === "asset")
   .map((entity) => ({ entityId: entity.id, assetId: entity.geometry.assetId }));
-assert.equal(assetReferences.length, replayRevision29 ? 2 : 3);
+assert.equal(
+  assetReferences.length,
+  replayRevision29 || replayOpenRouterC245B8e ? 2 : 3,
+);
+if (replayOpenRouterC245B8e)
+  assert.equal(
+    assetReferences.length,
+    OPENROUTER_C245B8E_SOURCE.assetReferenceCount,
+  );
 const files = new Map([["/project.json", targetDocumentBytes]]);
 const runtimeEvidence = {};
 for (const name of [
@@ -245,7 +280,7 @@ const html = Buffer.from(
 files.set("/", html);
 files.set("/favicon.ico", Buffer.alloc(0));
 
-if (clearanceDiagnostic || clearancePathDiagnostic)
+if (clearanceDiagnostic || clearancePathDiagnostic || replayOpenRouterC245B8e)
   await mkdir(outputPath, { mode: 0o700 });
 else await mkdir(outputPath, { recursive: true, mode: 0o700 });
 const localRequests = [];
@@ -314,14 +349,17 @@ const sanitizeDiagnosticText = (value) =>
     .replace(/\b(?:sk|or)-[A-Za-z0-9_-]{12,}\b/g, "[redacted-key]")
     .slice(0, 300);
 const report = {
-  mode: clearancePathDiagnostic
-    ? "single-static-revision29-bounce1-anchor-path-clearance-diagnostic"
-    : clearanceDiagnostic
-      ? "single-static-revision29-bounce1-clearance-diagnostic"
-      : "single-static-saved-openrouter-creation-replay",
-  routeSelection: replayRevision29
-    ? "production-spawn-relative-validator"
-    : "pinned-revision31-identifiers",
+  mode: replayOpenRouterC245B8e
+    ? "single-static-openrouter-live-c245b8e-source-replay"
+    : clearancePathDiagnostic
+      ? "single-static-revision29-bounce1-anchor-path-clearance-diagnostic"
+      : clearanceDiagnostic
+        ? "single-static-revision29-bounce1-clearance-diagnostic"
+        : "single-static-saved-openrouter-creation-replay",
+  routeSelection:
+    replayRevision29 || replayOpenRouterC245B8e
+      ? "production-spawn-relative-validator"
+      : "pinned-revision31-identifiers",
   status: "running",
   repoHead: execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
@@ -332,6 +370,9 @@ const report = {
     sha256: sha256(sourceProjectBytes),
     projectId: project.id,
     revision: project.revision,
+    ...(replayOpenRouterC245B8e
+      ? { providerOriginCommit: OPENROUTER_C245B8E_SOURCE.commit }
+      : {}),
   },
   runtime: runtimeEvidence,
   gameplayDriverSources: {
@@ -369,12 +410,20 @@ const report = {
     phases: { creation: { revision: project.revision } },
   },
 };
-if (clearanceDiagnostic || clearancePathDiagnostic) {
+if (clearanceDiagnostic || clearancePathDiagnostic || replayOpenRouterC245B8e) {
   report.targetDocument = {
     path: "/project.json",
     bytes: targetDocumentBytes.byteLength,
     sha256: targetDocumentSha256,
+    ...(replayOpenRouterC245B8e
+      ? {
+          identicalToSource: targetDocumentBytes === sourceProjectBytes,
+          mutation: "none",
+        }
+      : {}),
   };
+}
+if (clearanceDiagnostic || clearancePathDiagnostic) {
   report.diagnosticMutation = diagnosticMutation;
 }
 

@@ -1,0 +1,269 @@
+{
+  "mode": "single-static-openrouter-live-c245b8e-source-replay",
+  "routeSelection": "production-spawn-relative-validator",
+  "status": "passed",
+  "repoHead": "c245b8e0c0226899ae8c65d42c7b75cc77624d0d",
+  "sourceProject": {
+    "path": "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter/story-created-project.json",
+    "bytes": 10350,
+    "sha256": "d478be5d83342e9632c91ce417b9b555aa03dab16467114fe15ab43d1d747985",
+    "projectId": "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+    "revision": 29,
+    "providerOriginCommit": "c245b8e0c0226899ae8c65d42c7b75cc77624d0d"
+  },
+  "runtime": {
+    "runtime.js": {
+      "bytes": 1944525,
+      "sha256": "53d7cc3dcfc5af58340f6a17c3ea34df88fa596367cd40b905a1b3a4ce9479eb"
+    },
+    "runtime.css": {
+      "bytes": 6236,
+      "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 427305,
+      "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+    }
+  },
+  "gameplayDriverSources": {
+    "harness": {
+      "path": "scripts/provider-browser-e2e.mjs",
+      "sha256": "e549aa80926c69dd075f5c944c3c6f7251caf94e3dc9190442fc52296e0305fe"
+    },
+    "helper": {
+      "path": "scripts/lib/fresh-flagship-gameplay.mjs",
+      "sha256": "c34d0237e2fc27f08367320a2a1f6a2c005fe73b544ceaa1bdd9a267374b4db6"
+    }
+  },
+  "serverPreflight": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bodyBytes": null
+    },
+    {
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8",
+      "bodyBytes": null
+    }
+  ],
+  "catalogAssets": [
+    {
+      "entityId": "island-tree-a",
+      "assetId": "kenney.nature.tree-default",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "bytes": 9428,
+      "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+    },
+    {
+      "entityId": "island-tree-b",
+      "assetId": "kenney.nature.tree-pine-tall-a",
+      "path": "/models/kenney/nature-kit/tree_pineTallA.glb",
+      "bytes": 7200,
+      "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+    }
+  ],
+  "targets": {
+    "platforms": [
+      "moving-platform-1",
+      "moving-platform-2",
+      "moving-platform-3"
+    ],
+    "platformPositions": [
+      {
+        "id": "moving-platform-1",
+        "position": [
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "id": "moving-platform-2",
+        "position": [
+          0,
+          0,
+          -2
+        ]
+      },
+      {
+        "id": "moving-platform-3",
+        "position": [
+          0,
+          0,
+          -5
+        ]
+      }
+    ],
+    "collectibles": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5"
+    ],
+    "portal": "crystal-portal"
+  },
+  "providerCalls": 0,
+  "cloudCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "localRequests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/project.json",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "method": "GET",
+      "path": "/models/kenney/nature-kit/tree_pineTallA.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "method": "GET",
+      "path": "/asset-geometry-worker.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/asset-geometry-worker.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    }
+  ],
+  "screenshots": [
+    "scene-ready.png",
+    "portal-win.png",
+    "ui-reset.png",
+    "traversal-final.png"
+  ],
+  "readiness": {
+    "status": "ready",
+    "projectId": "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+    "revision": 29,
+    "renderer": "webgl",
+    "initialPlayerPosition": [
+      0,
+      0.452,
+      5
+    ],
+    "score": "Score: 0"
+  },
+  "flagshipStory": {
+    "status": "passed",
+    "phases": {
+      "creation": {
+        "status": "passed",
+        "revision": 29,
+        "gameplay": {
+          "status": "passed",
+          "projectId": "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+          "revision": 29,
+          "contacts": [
+            "crystal-portal"
+          ],
+          "collections": [
+            "crystal-4",
+            "crystal-5",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "collectibleTraversalOrder": [
+            "crystal-4",
+            "crystal-5",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "win": {
+            "projectId": "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+            "revision": 29,
+            "score": 5,
+            "status": "won",
+            "portalId": "crystal-portal"
+          },
+          "reset": {
+            "projectId": "860b8fd5-d30b-4021-9c12-62b7ab2539f5",
+            "revision": 29,
+            "control": "↻ Restart",
+            "scoreIds": [],
+            "reset": 1,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "player": {
+              "position": [
+                0,
+                0.452,
+                5
+              ],
+              "velocityY": 0,
+              "groundedOn": "sunny-island",
+              "supportPosition": [
+                0,
+                -0.8,
+                0
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "targetDocument": {
+    "path": "/project.json",
+    "bytes": 10350,
+    "sha256": "d478be5d83342e9632c91ce417b9b555aa03dab16467114fe15ab43d1d747985",
+    "identicalToSource": true,
+    "mutation": "none"
+  },
+  "finishedAt": "2026-09-25T12:01:21.379Z"
+}

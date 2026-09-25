@@ -15,6 +15,7 @@ import {
   gameplayPlatformSurfaceHeight,
   gameplaySupportId,
   gameplaySurfaceCandidatePoints,
+  isFreshGameplayOrdinaryGroundSupport,
   observePlatformContact,
   orderFreshGameplayCollectiblesFromSupport,
   portalCompletionIsAuthoritative,
@@ -205,14 +206,133 @@ describe("fresh flagship gameplay driver", () => {
     expect(observation.player.position[2]).toBeCloseTo(-5.114966318305735);
     expect(crossing.current.insideEstimatedFootprint).toBe(false);
     expect(target?.[0]).toBeCloseTo(observation.player.position[0]);
-    expect(target?.[2]).toBeCloseTo(-5.295);
+    expect(target?.[2]).toBeCloseTo(-5.515);
     expect(target?.[2]).toBeLessThan(observation.player.position[2]);
     expect(
       Math.abs(target![0] - observation.platform.position[0]),
-    ).toBeLessThanOrEqual(0.55 * platform.scale[0] - 0.12);
+    ).toBeLessThanOrEqual(
+      0.55 * platform.scale[0] -
+        FRESH_GAMEPLAY_LIMITS.platformLandingSafetyMargin +
+        1e-9,
+    );
     expect(
       Math.abs(target![2] - observation.platform.position[2]),
-    ).toBeLessThanOrEqual(0.55 * platform.scale[2] - 0.12);
+    ).toBeLessThanOrEqual(
+      0.55 * platform.scale[2] -
+        FRESH_GAMEPLAY_LIMITS.platformLandingSafetyMargin +
+        1e-9,
+    );
+  });
+
+  it("keeps the c245b8e recovery crossing outside the steering stop radius", () => {
+    const sourcePath =
+      "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter/story-created-project.json";
+    const reportPath =
+      "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter.json";
+    const saved = JSON.parse(readFileSync(sourcePath, "utf8"));
+    const report = JSON.parse(readFileSync(reportPath, "utf8"));
+    const failure =
+      report.flagshipStory.phases.creation.gameplay.failureEvidence;
+    const attempt = failure.platformEvidence
+      .find((entry: any) => entry.id === "moving-platform-1")
+      .jumpEvidence.find((entry: any) => entry.attempt === "recovery-0");
+    const crossing = attempt.surfaceCrossing.current.observation;
+    const platform = saved.entities.find(
+      (entity: any) => entity.id === "moving-platform-1",
+    );
+    const landing = chooseGameplayPlatformLandingPoint(
+      crossing.player.position,
+      platform,
+      crossing.platform.position,
+    );
+
+    expect(crossing.player.position[2]).toBeCloseTo(-0.1109597731);
+    expect(crossing.platform.position[2]).toBe(1);
+    expect(landing?.[2]).toBeCloseTo(0.24);
+    expect(
+      chooseGameplaySteeringKeys(crossing.player.position, landing!),
+    ).not.toEqual([]);
+    expect(FRESH_GAMEPLAY_LIMITS.platformLandingSafetyMargin).toBeGreaterThan(
+      FRESH_GAMEPLAY_LIMITS.centeringDistance + 0.11,
+    );
+  });
+
+  it("steers closer on low ordinary ground before launching at the first platform", () => {
+    const saved = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter/story-created-project.json",
+        "utf8",
+      ),
+    );
+    const report = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/openrouter.json",
+        "utf8",
+      ),
+    );
+    const evidence =
+      report.flagshipStory.phases.creation.gameplay.failureEvidence;
+    const firstAttempt = evidence.platformEvidence
+      .find((entry: any) => entry.id === "moving-platform-1")
+      .jumpEvidence.find((entry: any) => entry.attempt === 0);
+    const observation = { player: firstAttempt.before.player };
+    const platform = saved.entities.find(
+      (entity: any) => entity.id === "moving-platform-1",
+    );
+    const platformIds = new Set(
+      evidence.platformEvidence.map((entry: any) => entry.id),
+    );
+    const landing = chooseGameplayPlatformLandingPoint(
+      observation.player.position,
+      platform,
+      firstAttempt.before.platform.position,
+    );
+    const target = { ...platform, position: landing };
+
+    expect(isFreshGameplayOrdinaryGroundSupport(observation, platformIds)).toBe(
+      true,
+    );
+    const farAction = chooseGameplayPlatformAction({
+      observation,
+      target,
+      groundApproachRequired: true,
+    });
+    expect(farAction.phase).toBe("steering");
+    expect(farAction.keys).not.toContain(" ");
+
+    const closer = {
+      player: {
+        ...observation.player,
+        position: [
+          observation.player.position[0],
+          observation.player.position[1],
+          landing![2] + 2.2,
+        ],
+      },
+    };
+    expect(isFreshGameplayOrdinaryGroundSupport(closer, platformIds)).toBe(
+      true,
+    );
+    expect(
+      chooseGameplayPlatformAction({
+        observation: closer,
+        target,
+        groundApproachRequired: true,
+      }),
+    ).toMatchObject({ phase: "jumping", keys: expect.arrayContaining([" "]) });
+
+    expect(
+      isFreshGameplayOrdinaryGroundSupport(
+        {
+          player: {
+            ...closer.player,
+            position: [0, 0.94, 0],
+            groundedOn: "moving-platform-1",
+          },
+        },
+        platformIds,
+      ),
+    ).toBe(false);
   });
 
   it("clamps to a rotated platform's near side and preserves safe inside aims", () => {
@@ -228,7 +348,7 @@ describe("fresh flagship gameplay driver", () => {
       rotatedPlatform,
       rotatedPlatform.position,
     );
-    expect(rotatedAim?.[0]).toBeCloseTo(12.08);
+    expect(rotatedAim?.[0]).toBeCloseTo(11.86);
     expect(rotatedAim?.[2]).toBeCloseTo(20);
 
     const platform = {
@@ -242,8 +362,8 @@ describe("fresh flagship gameplay driver", () => {
       platform,
       platform.position,
     );
-    expect(outsideAim?.[0]).toBeCloseTo(0.43);
-    expect(outsideAim?.[2]).toBeCloseTo(-0.98);
+    expect(outsideAim?.[0]).toBeCloseTo(0.21);
+    expect(outsideAim?.[2]).toBeCloseTo(-0.76);
 
     const insideAim = chooseGameplayPlatformLandingPoint(
       [0.2, 2, 0.4],

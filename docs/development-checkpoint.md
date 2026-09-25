@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 25 the fresh gameplay driver now keeps the steering stop radius plus a
+0.12 m observation buffer inside the platform footprint, and approaches from
+low stable non-route ground until within 2.5 m of the safe landing aim before
+jumping; 2.5 m leaves about 0.33 m against the ideal 2.83 m travel for the
+observed 0.49 m rise (runtime movement/jump/gravity 4/6/15). The pinned
+c245b8e report showed the recovery crossing 0.011 m beyond
+platform one's front edge and the first jump starting 3.69 m from its center.
+No physics, scene, contact criteria, or platform geometry changed.
+All 29 focused gameplay tests and typecheck pass. One loopback-only Chromium
+keyboard replay of the exact provider-origin revision29 project passed from
+the checked-in player runtime: project ID `860b8fd5-d30b-4021-9c12-62b7ab2539f5`,
+source and served project hash `d478be5d…747985`, no mutation, two verified
+catalog assets, runtime hash `53d7cc3d…9479eb`. The driver observed contact,
+bounce, and motion on all three platforms, collected all five crystals,
+contacted the portal, won with score 5, then reset to playing with score 0
+(reset counter 1). Provider/cloud calls, external requests, page/console errors,
+and request failures were zero. This is a local replay of saved provider-origin
+content, not a fresh provider acceptance run. Evidence:
+`docs/evidence/provider-e2e/openrouter-flagship-live-c245b8e-driver-replay-20260925/`.
+
 Sep 25 one fresh OpenRouter flagship attempt used exact `openai/gpt-6-luna`
 with low reasoning/default tier, 4096 output cap, three-call budget, and a
 local-only key. The isolated build and loopback origin/model/cap preflights
