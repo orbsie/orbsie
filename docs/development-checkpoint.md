@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 fresh Android distance comparison: the normal 120-entity fixture reached
+scene readiness at 100 m on a fresh Android 15/Chrome 124 emulator, with no
+console/page errors or provider calls. The same 120-entity fixture lost the page
+before `fixture.ready()` at 5000 m both in the full four-cycle mode and in
+readiness-only mode; HTTP 200 and DOMContentLoaded occurred first. This makes
+the travel loop an unlikely trigger but does not yet prove a camera/rendering
+root cause, because the emulator/browser environment can vary. One filtered
+lowmemorykiller line in the 5000 m readiness report is insufficient to classify
+the loss as OOM. No traversal or frame/heap result was collected. Luna is
+investigating the distance-specific failure without weakening acceptance.
+Evidence: `docs/evidence/android-growing-world-runtime/120-entity-distance-100-readiness-2026-09-25T06-14-28-661Z/`,
+`docs/evidence/android-growing-world-runtime/120-entity-baseline-2026-09-25T06-15-33-469Z/`,
+`docs/evidence/android-growing-world-runtime/120-entity-distance-5000-readiness-2026-09-25T06-16-52-089Z/`.
+Gateway credits read-only GET still returned HTTP 200 and balance
+`-0.00456495`; no paid Gateway inference ran. Computer use currently reports
+zero browser surfaces, so signed-in ChatGPT acceptance remains unavailable.
+
 Sep 25 Android browser recovery: Chrome 124 on the existing Android 15
 midrange emulator loaded the signed-out published OpenRouter Orb after a second
 URL intent; the first showed Chrome Enhanced ad privacy onboarding, with no
