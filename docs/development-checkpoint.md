@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 25 owner-visible ChatGPT challenge: after the owner permitted displaying
+the URL and code, production created a fresh isolated guest session and issued
+one official OpenAI device challenge. Its URL and one-time code were shown in
+chat; read-only status stayed pending/disconnected until expiry, then
+idle/disconnected. Cancellation returned HTTP 200 and the private mode-0600
+local test-session file was removed. No ChatGPT inference ran. Browser control
+inventory remained empty. A fresh challenge is needed when the owner is ready
+to complete it within the ten-minute window.
+
 Sep 25 production release: source/evidence through `114e13c` deployed Ready
 as `dpl_H73dfGFRGszuuy9LFMVdymEvU4vc`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-gkg6k3qvn-grappeggias-projects.vercel.app`).
