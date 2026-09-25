@@ -1,0 +1,283 @@
+{
+  "status": "partial/failed",
+  "scope": "Production Chromium navigation checks use deterministic intercepted generation for one grouped marker at 12 km. Each renderer lane checks editor zoom controls, background pan, wheel zoom, rotation and north reset, and chat/control overlay gesture isolation. A mobile viewport lane checks touch drag, pinch, and overlay isolation.",
+  "sourceCommit": "113fbab85e9121ced56b964d37d4a738e261b70f",
+  "appUrl": "https://orbsie.com",
+  "providerCalls": 0,
+  "fixture": {
+    "ids": {
+      "group": "navigation-fixture-group-12km",
+      "entity": "navigation-fixture-marker-12km"
+    },
+    "groupPosition": [12000, 0, 0],
+    "entityPosition": [0, 1, 0]
+  },
+  "renderers": {
+    "desktop-webgl-swiftshader": {
+      "renderer": "desktop-webgl-swiftshader",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "generationRequests": 1,
+      "checks": {
+        "fixtureReadyAndSelected": true,
+        "visibleZoomButtons": {
+          "original": "Zoom in, currently 600%",
+          "out": "Zoom in, currently 480%",
+          "returned": "Zoom in, currently 600%"
+        },
+        "mouseBackgroundPan": {
+          "distancePixels": 50.8,
+          "before": {
+            "pixels": 5587,
+            "centroid": {
+              "x": 687.3749776266333,
+              "y": 520.2276713799893
+            },
+            "bounds": {
+              "minX": 640,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 624
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            }
+          },
+          "after": {
+            "pixels": 11914,
+            "centroid": {
+              "x": 716.3784623132449,
+              "y": 561.9043981870069
+            },
+            "bounds": {
+              "minX": 636,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 654
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            }
+          }
+        },
+        "mouseWheelZoom": {
+          "from": "Zoom in, currently 600%",
+          "to": "Zoom in, currently 453%"
+        }
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "expectedFallbackDiagnostics": [],
+      "blockedExternalOrigins": [],
+      "unexpectedApiPaths": [],
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "screenshotInitial": "desktop-webgl-swiftshader-initial.png",
+      "selectionBefore": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [12000, 0, 0],
+        "entityPosition": [0, 1, 0]
+      },
+      "failure": "AssertionError: fixture marker pixel signature found 39 pixels"
+    },
+    "desktop-forced-canvas2d": {
+      "renderer": "desktop-forced-canvas2d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "generationRequests": 1,
+      "checks": {
+        "fixtureReadyAndSelected": true,
+        "visibleZoomButtons": {
+          "original": "Zoom in, currently 600%",
+          "out": "Zoom in, currently 480%",
+          "returned": "Zoom in, currently 600%"
+        },
+        "mouseBackgroundPan": {
+          "distancePixels": 64.6,
+          "before": {
+            "pixels": 48261,
+            "centroid": {
+              "x": 639.982677524295,
+              "y": 435.7432295228031
+            },
+            "bounds": {
+              "minX": 520,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 630
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            }
+          },
+          "after": {
+            "pixels": 50601,
+            "centroid": {
+              "x": 702.0520938321378,
+              "y": 453.5891187921187
+            },
+            "bounds": {
+              "minX": 578,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 652
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            }
+          }
+        },
+        "mouseWheelZoom": {
+          "from": "Zoom in, currently 600%",
+          "to": "Zoom in, currently 453%"
+        },
+        "compassNorthReset": {
+          "fromHeading": 28,
+          "toHeading": 0,
+          "preservedZoom": "Zoom in, currently 453%",
+          "distancePixels": 0,
+          "tolerancePixels": 8
+        },
+        "chatOverlayDoesNotNavigate": {
+          "distancePixels": 0,
+          "tolerancePixels": 4
+        },
+        "controlOverlayDoesNotNavigate": {
+          "distancePixels": 0.7,
+          "tolerancePixels": 4
+        },
+        "selectedIdAndSavedPositionStable": true,
+        "noPageOrConsoleErrors": true
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "expectedFallbackDiagnostics": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "blockedExternalOrigins": [],
+      "unexpectedApiPaths": [],
+      "actualRenderer": "editor Canvas2D fallback",
+      "screenshotInitial": "desktop-forced-canvas2d-initial.png",
+      "selectionBefore": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [12000, 0, 0],
+        "entityPosition": [0, 1, 0]
+      },
+      "selectionAfter": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [12000, 0, 0],
+        "entityPosition": [0, 1, 0]
+      }
+    },
+    "mobile-canvas2d-touch": {
+      "renderer": "mobile-canvas2d-touch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "generationRequests": 1,
+      "checks": {
+        "fixtureReadyAndSelected": true,
+        "touchBackgroundDrag": {
+          "distancePixels": 47.2,
+          "before": {
+            "pixels": 13692,
+            "centroid": {
+              "x": 194.57581069237511,
+              "y": 407.9810838445808
+            },
+            "bounds": {
+              "minX": 122,
+              "minY": 331,
+              "maxX": 267,
+              "maxY": 470
+            },
+            "imageSize": {
+              "width": 390,
+              "height": 844
+            }
+          },
+          "after": {
+            "pixels": 13220,
+            "centroid": {
+              "x": 241.39213313161875,
+              "y": 413.59387291981847
+            },
+            "bounds": {
+              "minX": 166,
+              "minY": 331,
+              "maxX": 315,
+              "maxY": 470
+            },
+            "imageSize": {
+              "width": 390,
+              "height": 844
+            }
+          }
+        },
+        "touchPinchZoom": {
+          "from": "Zoom in, currently 387%",
+          "to": "Zoom in, currently 558%"
+        },
+        "mobileChatOverlayDoesNotNavigate": {
+          "distancePixels": 0,
+          "tolerancePixels": 4
+        },
+        "mobileNavigationControlsDoNotNavigate": {
+          "distancePixels": 0,
+          "tolerancePixels": 4
+        },
+        "selectedIdAndSavedPositionStable": true,
+        "mobileTouchViewport": {
+          "navigatorMaxTouchPoints": 1
+        },
+        "noPageOrConsoleErrors": true
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "expectedFallbackDiagnostics": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "blockedExternalOrigins": [],
+      "unexpectedApiPaths": [],
+      "actualRenderer": "editor Canvas2D fallback",
+      "screenshotInitial": "mobile-canvas2d-touch-initial.png",
+      "selectionBefore": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [12000, 0, 0],
+        "entityPosition": [0, 1, 0]
+      },
+      "selectionAfter": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [12000, 0, 0],
+        "entityPosition": [0, 1, 0]
+      }
+    }
+  },
+  "blockedExternalOrigins": [],
+  "unexpectedApiPaths": [],
+  "assumptions": [
+    "The browser intercepts /api/generate and returns a deterministic fixture; no provider inference runs.",
+    "WebGL is Chromium SwiftShader. The fallback lane forces WebGL context creation to fail and uses the editor's Canvas2D path."
+  ],
+  "limitations": [
+    "No native GPU, physical mobile device, or live provider behavior is measured.",
+    "Touch is injected through Chromium CDP in a mobile viewport; navigator.maxTouchPoints reported 1, so this does not establish physical multi-touch hardware behavior.",
+    "After WebGL wheel zoom, the far marker color signature fell to 39 pixels, below the 100-pixel measurement threshold. The WebGL lane stopped before rotation, north reset, and overlay checks; those checks completed on the Canvas2D desktop lane.",
+    "Browser input events and screenshots establish behavior only for this production Chromium run."
+  ]
+}
