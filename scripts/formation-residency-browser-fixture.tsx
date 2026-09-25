@@ -107,6 +107,15 @@ const baseEntities = [
 ];
 const growingWorldEnabled =
   new URLSearchParams(location.search).get("entities") === "160";
+const requestedSoftwareDistance = Number(
+  new URLSearchParams(location.search).get("distance"),
+);
+const softwareFixtureDistance =
+  Number.isFinite(requestedSoftwareDistance) &&
+  requestedSoftwareDistance >= 100 &&
+  requestedSoftwareDistance <= 10000
+    ? requestedSoftwareDistance
+    : 100;
 const growingWorldEntities = growingWorldEnabled
   ? [
       ...visibleCluster("outer", GROWING_WORLD_CENTER_X, 120, 30),
@@ -442,7 +451,7 @@ function SoftwareFixtureHost() {
   const [navigation, setNavigation] = useState(() =>
     createWorldNavigationState({
       target: [CLUSTER_CENTERS.home, 0, 0],
-      distance: 100,
+      distance: softwareFixtureDistance,
     }),
   );
   const navigationRef = useRef(navigation);
@@ -477,6 +486,52 @@ function SoftwareFixtureHost() {
           type: "pan",
           delta: [targetX - current.target[0], 0],
         });
+      },
+      panPlanTo(targetX: number) {
+        const canvas = document.querySelector("canvas");
+        if (!canvas) throw Error("Software world canvas is missing.");
+        const rect = canvas.getBoundingClientRect();
+        const current = navigationRef.current;
+        const metersPerPixel =
+          (2 * current.distance * Math.tan((43 * Math.PI) / 360)) /
+          Math.max(1, rect.height);
+        const dx = (current.target[0] - targetX) / metersPerPixel;
+        const startX = dx < 0 ? rect.width - 16 : 16;
+        const startY = rect.height / 2;
+        const endX = startX + dx;
+        if (endX < 4 || endX > rect.width - 4)
+          throw Error(
+            `Predicted touch pan exceeds viewport (${startX} to ${endX}).`,
+          );
+        const gesture = new WorldNavigationGestureController();
+        gesture.pointerDown({
+          pointerId: 902,
+          pointerType: "touch",
+          x: startX,
+          y: startY,
+          button: "primary",
+          objectHit: false,
+        });
+        const movement = gesture.pointerMove(
+          { pointerId: 902, x: endX, y: startY },
+          {
+            width: rect.width,
+            height: rect.height,
+            verticalFovRadians: (43 * Math.PI) / 180,
+            distance: current.distance,
+            heading: current.heading,
+          },
+        );
+        const command = movement.commands.find((item) => item.type === "pan");
+        if (!command || command.type !== "pan")
+          throw Error("Could not calculate a software-world touch pan.");
+        return {
+          start: { x: rect.left + startX, y: rect.top + startY },
+          end: { x: rect.left + endX, y: rect.top + startY },
+          expectedNavigation: cloneNavigation(
+            applyWorldNavigationCommand(current, command),
+          ),
+        };
       },
       select(id: string) {
         if (!entityById.has(id)) throw Error(`Unknown fixture entity: ${id}`);

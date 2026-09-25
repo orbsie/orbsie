@@ -1,0 +1,255 @@
+{
+  "status": "failed",
+  "currentStage": "scene-readiness",
+  "runId": "2026-09-25T04-08-22-096Z",
+  "sourceCommit": "8780061402b9f417115691163125c0283f373827",
+  "scope": "Readiness-only diagnostic with 120 default fixture entities at 100 m; no travel cycles",
+  "fixture": {
+    "mode": "default 120-entity scene-readiness diagnostic",
+    "entityCount": 120,
+    "additionalCluster": "none; default home and distant clusters only",
+    "rendererQuery": "renderer=software",
+    "initialCameraDistance": 100
+  },
+  "timings": {
+    "navigationStartedElapsedMs": 31120,
+    "domContentLoadedElapsedMs": 32543,
+    "failureElapsedMs": 34160
+  },
+  "lifecycleEvents": [
+    {
+      "event": "avd-process-started",
+      "at": "2026-09-25T04:08:22.553Z",
+      "elapsedMs": 456,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T04:08:46.130Z",
+      "elapsedMs": 24033,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T04:08:46.825Z",
+      "elapsedMs": 24728,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "chrome-cdp-ready",
+      "at": "2026-09-25T04:08:52.300Z",
+      "elapsedMs": 30203,
+      "detail": {
+        "browser": "Chrome/124.0.6367.219"
+      }
+    },
+    {
+      "event": "page-created-and-instrumented",
+      "at": "2026-09-25T04:08:53.154Z",
+      "elapsedMs": 31057
+    },
+    {
+      "event": "main-frame-navigated",
+      "at": "2026-09-25T04:08:53.901Z",
+      "elapsedMs": 31804,
+      "detail": {
+        "urlPath": "/"
+      }
+    },
+    {
+      "event": "dom-content-loaded",
+      "at": "2026-09-25T04:08:54.728Z",
+      "elapsedMs": 32631,
+      "detail": {
+        "httpStatus": 200
+      }
+    },
+    {
+      "event": "page-closed",
+      "at": "2026-09-25T04:08:56.256Z",
+      "elapsedMs": 34159,
+      "detail": {
+        "initiatedByHarnessCleanup": false
+      }
+    },
+    {
+      "event": "probe-failed",
+      "at": "2026-09-25T04:08:56.257Z",
+      "elapsedMs": 34160,
+      "detail": {
+        "error": "page.waitForFunction: Target page, context or browser has been closed"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-started",
+      "at": "2026-09-25T04:08:56.257Z",
+      "elapsedMs": 34160,
+      "detail": {
+        "failureStage": "scene-readiness"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-finished",
+      "at": "2026-09-25T04:08:56.441Z",
+      "elapsedMs": 34344,
+      "detail": {
+        "matchedLogcatLines": 2
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T04:08:56.441Z",
+      "elapsedMs": 34344
+    },
+    {
+      "event": "context-closed",
+      "at": "2026-09-25T04:08:56.447Z",
+      "elapsedMs": 34350,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "browser-disconnected",
+      "at": "2026-09-25T04:08:56.447Z",
+      "elapsedMs": 34350,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    }
+  ],
+  "httpResponses": [
+    {
+      "path": "/",
+      "status": 200,
+      "elapsedMs": 31760
+    },
+    {
+      "path": "/fixture.js",
+      "status": 200,
+      "elapsedMs": 31856
+    }
+  ],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": []
+  },
+  "cycles": [],
+  "screenshots": [],
+  "limitations": [
+    "This is an Android 15 emulator run, not physical-device certification.",
+    "SoftwareWorld renders through Canvas2D; this run does not measure WebGL, native GPU behavior, or physical-device graphics performance.",
+    "Frame intervals are from the emulated Chrome viewport and do not establish 60 fps.",
+    "SoftwareWorld has no WebGL particle-formation animation; no-replay evidence checks that project identity/revision and ready review state persist across reentry.",
+    "CDP JavaScript heap values are tab-level samples and can vary with garbage collection.",
+    "The diagnostic run failed before completion; see lifecycle, timing, process-state, and filtered logcat records for evidence and any remaining uncertainty."
+  ],
+  "device": {
+    "id": "emulator-5554",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": true
+  },
+  "androidChromeCDP": {
+    "browser": "Chrome/124.0.6367.219",
+    "protocolVersion": "1.3",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  },
+  "cookiesBefore": 0,
+  "pageTimingAtDomContentLoaded": {
+    "documentReadyState": "complete",
+    "initStartedAtMs": 655.9000000000015,
+    "lifecycle": [
+      {
+        "event": "document-start",
+        "at": 655.9000000000015
+      },
+      {
+        "event": "dom-content-loaded",
+        "at": 1405.1000000000022
+      },
+      {
+        "event": "load",
+        "at": 1405.4000000000015
+      }
+    ],
+    "navigation": {
+      "responseStartMs": 87.70000000000073,
+      "responseEndMs": 88,
+      "domInteractiveMs": 680.1000000000022,
+      "domContentLoadedEventEndMs": 1405.2000000000007,
+      "loadEventEndMs": 1405.4000000000015,
+      "transferSizeBytes": 853
+    },
+    "resources": [
+      {
+        "path": "/fixture.js",
+        "durationMs": 236.59999999999854,
+        "responseEndMs": 868.2000000000007,
+        "transferSizeBytes": 4394794
+      }
+    ]
+  },
+  "earlyScreenshotError": "page.screenshot: Target page, context or browser has been closed Call log: - taking page screenshot ",
+  "failureStage": "scene-readiness",
+  "error": "page.waitForFunction: Target page, context or browser has been closed",
+  "failurePageSnapshot": {
+    "unavailable": "page target was already closed"
+  },
+  "androidFailureDiagnostic": {
+    "collectedAt": "2026-09-25T04:08:56.257Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 2,
+      "lines": [
+        "I/ActivityManager( 562): Process com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1 (pid 2123) has died: cch CACC",
+        "W/ActivityManager( 562): Scheduling restart of crashed service com.android.chrome/org.chromium.content.app.SandboxedProcessService0:1 in 1000ms for connection"
+      ]
+    },
+    "chromePid": "1644",
+    "chromeProcesses": [
+      "u0_a145 1644 366 33477332 315940 0 0 S com.android.chrome",
+      "u0_a145 1846 366 32453320 93584 0 0 S com.android.chrome_zygote",
+      "u0_a145 2015 366 33329144 205900 0 0 S com.android.chrome:privileged_process0"
+    ]
+  },
+  "comparisonAssessment": "The 120-entity fixture failed at 100 m, and filtered ActivityManager logcat says its Chrome sandboxed Chromium child process died and the service was scheduled to restart; Chrome’s main process remained. This explains the closed page target and shows 5000 m is not required for the failure. The log does not establish whether the emulator/Chrome environment or fixture triggered the child-process death; OOM is unproven.",
+  "cdpSessionDetachAcknowledged": false,
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T04:08:57.818Z"
+}
