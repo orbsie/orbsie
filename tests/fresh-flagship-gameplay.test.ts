@@ -14,6 +14,7 @@ import {
   gameplaySurfaceCandidatePoints,
   observePlatformContact,
   portalCompletionIsAuthoritative,
+  retainFreshGameplayJumpSample,
   validateGenerationMovementObservation,
   validateFreshGameplayObservation,
   waitForFreshGameplayObservation,
@@ -63,6 +64,20 @@ afterEach(() => {
 });
 
 describe("fresh flagship gameplay driver", () => {
+  it("keeps first and recent bounded platform jump samples", () => {
+    let samples: Array<{ index: number; privateText: string }> = [];
+    for (let index = 0; index < 30; index++)
+      samples = retainFreshGameplayJumpSample(samples, {
+        index,
+        privateText: "must be removed by the report sanitizer",
+      });
+
+    expect(samples).toHaveLength(12);
+    expect(samples.map((sample) => sample.index)).toEqual([
+      0, 1, 2, 3, 22, 23, 24, 25, 26, 27, 28, 29,
+    ]);
+  });
+
   it("binds dynamic target IDs and layout to the current project", () => {
     const targets = buildFreshGameplayTargets(project, story);
     expect(targets.platforms.map((target: any) => target.id)).toEqual([

@@ -35,6 +35,7 @@ import {
   observePlatformContact,
   platformContactProgress,
   portalCompletionIsAuthoritative,
+  retainFreshGameplayJumpSample,
   summarizeFreshGameplayRun,
   validateGenerationMovementObservation,
   validateFreshGameplayObservation,
@@ -1165,7 +1166,7 @@ function safePlatformJumpEvidence(attempts, platformId, allowedIds) {
           : [],
         samples: Array.isArray(attempt.samples)
           ? attempt.samples
-              .slice(-8)
+              .slice(-12)
               .map((sample) =>
                 safePlatformTraversalObservation(sample, allowedIds),
               )
@@ -5291,7 +5292,7 @@ export async function runFreshFlagshipGameplay(
     const sample = compactPlatformObservation(observation, phase.id);
     if (!sample) return;
     const previousSample = phase.samples.at(-1) ?? phase.before;
-    if (phase.samples.length < 8) phase.samples.push(sample);
+    phase.samples = retainFreshGameplayJumpSample(phase.samples, sample);
     if (
       !phase.apex &&
       previousSample?.player?.velocityY > 0 &&

@@ -534,12 +534,13 @@ describe("flagship provider story contract", () => {
             "d",
             "secret-provider-token",
           ]),
-          samples: Array.from({ length: 12 }, (_, sampleIndex) =>
-            compactAttemptObservation(
+          samples: Array.from({ length: 20 }, (_, sampleIndex) => ({
+            ...compactAttemptObservation(
               `entity-${index}`,
-              sampleIndex === 11 ? -1 : sampleIndex + 20,
+              sampleIndex === 19 ? -1 : sampleIndex + 20,
             ),
-          ),
+            rawProviderText: "private sample provider output",
+          })),
           apex: compactAttemptObservation(`entity-${index}`, 30),
           landing: compactAttemptObservation(`entity-${index}`, 40),
           contact: compactAttemptObservation(`entity-${index}`, 50),
@@ -609,9 +610,17 @@ describe("flagship provider story contract", () => {
       expect(
         evidence.platformEvidence[0].jumpEvidence.every(
           (attempt: any) =>
-            attempt.samples.length === 8 && attempt.inputKeys.length === 8,
+            attempt.samples.length === 12 && attempt.inputKeys.length === 8,
         ),
       ).toBe(true);
+      expect(
+        evidence.platformEvidence[0].jumpEvidence[0].samples.map(
+          (sample: any) => sample.atMs,
+        ),
+      ).toEqual([28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, null]);
+      expect(JSON.stringify(report)).not.toContain(
+        "private sample provider output",
+      );
       expect(
         evidence.platformEvidence[0].jumpEvidence[0].samples.at(-1),
       ).toMatchObject({

@@ -1,4 +1,6 @@
 const CAMERA_ANGLE = 0.5;
+const JUMP_SAMPLE_FIRST_COUNT = 4;
+const JUMP_SAMPLE_RECENT_COUNT = 8;
 
 export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   movementMinDistance: 0.12,
@@ -13,6 +15,17 @@ export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   maxJumpAttempts: 3,
   maxObservationWaitMs: 3000,
 });
+
+/** Keep the first four and latest eight samples from one platform jump. */
+export function retainFreshGameplayJumpSample(samples, sample) {
+  const current = Array.isArray(samples) ? samples : [];
+  const first = current.slice(0, JUMP_SAMPLE_FIRST_COUNT);
+  if (first.length < JUMP_SAMPLE_FIRST_COUNT) return [...first, sample];
+  const recent = [...current.slice(JUMP_SAMPLE_FIRST_COUNT), sample].slice(
+    -JUMP_SAMPLE_RECENT_COUNT,
+  );
+  return [...first, ...recent];
+}
 
 const GAMEPLAY_SURFACE_FRACTIONS = Object.freeze([
   [0.08, 0.08],
