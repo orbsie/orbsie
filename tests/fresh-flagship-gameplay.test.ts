@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   FRESH_GAMEPLAY_LIMITS,
   buildFreshGameplayTargets,
@@ -14,6 +15,7 @@ import {
   gameplaySupportId,
   gameplaySurfaceCandidatePoints,
   observePlatformContact,
+  orderFreshGameplayCollectiblesFromSupport,
   portalCompletionIsAuthoritative,
   retainFreshGameplayJumpSample,
   validateGenerationMovementObservation,
@@ -58,6 +60,43 @@ const story = {
   collectibles: project.entities.slice(3, 8),
   portal: project.entities[8],
 };
+
+function targetsFromPinnedStory(path: string) {
+  const saved = JSON.parse(readFileSync(path, "utf8"));
+  const spawn = saved.game?.spawn ?? [0, 0, 5];
+  const distanceSquared = (from: number[], to: number[]) =>
+    from.reduce((sum, component, axis) => sum + (component - to[axis]) ** 2, 0);
+  const candidates = saved.entities.filter(
+    (entity: any) =>
+      entity.stage === "ready" &&
+      entity.geometry?.kind === "platform" &&
+      ["move", "bounce"].includes(entity.behavior?.type),
+  );
+  const platforms: any[] = [];
+  let anchor: number[] = spawn;
+  while (candidates.length > 0) {
+    candidates.sort(
+      (a: any, b: any) =>
+        distanceSquared(anchor, a.position) -
+          distanceSquared(anchor, b.position) || a.id.localeCompare(b.id),
+    );
+    const next = candidates.shift();
+    platforms.push(next);
+    anchor = next.position;
+  }
+  const storyTargets = {
+    platforms,
+    collectibles: saved.entities.filter(
+      (entity: any) =>
+        entity.stage === "ready" && entity.behavior?.type === "collect",
+    ),
+    portal: saved.entities.find(
+      (entity: any) =>
+        entity.stage === "ready" && entity.behavior?.type === "portal",
+    ),
+  };
+  return buildFreshGameplayTargets(saved, storyTargets);
+}
 
 afterEach(() => {
   delete (globalThis as any).__ORBSIE_GAMEPLAY_READ_REQUESTED__;
@@ -138,6 +177,102 @@ describe("fresh flagship gameplay driver", () => {
     expect(targets.collectibles).toHaveLength(5);
     expect(targets.portal.id).toBe("portal");
     expect(targets.platforms[1].position).toEqual([1, 0, 0]);
+  });
+
+  it("prioritizes rev29's elevated crystal-five immediately after bounce-three", () => {
+    const targets = targetsFromPinnedStory(
+      "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json",
+    );
+    const sourceIds = targets.collectibles.map((target: any) => target.id);
+    const finalSupport = targets.platforms.at(-1);
+    const ordered = orderFreshGameplayCollectiblesFromSupport(
+      targets.collectibles,
+      finalSupport.position,
+    );
+
+    expect(targets.platforms.map((target: any) => target.id)).toEqual([
+      "bounce-1",
+      "bounce-2",
+      "bounce-3",
+    ]);
+    expect(ordered.map((target: any) => target.id)).toEqual([
+      "crystal-5",
+      "crystal-4",
+      "crystal-3",
+      "crystal-2",
+      "crystal-1",
+    ]);
+    expect(ordered.map((target: any) => target.id).sort()).toEqual(
+      [...sourceIds].sort(),
+    );
+    expect(targets.collectibles.map((target: any) => target.id)).toEqual(
+      sourceIds,
+    );
+  });
+
+  it("orders rev31's pickups relative to its final support while preserving all five", () => {
+    const targets = targetsFromPinnedStory(
+      "docs/evidence/provider-e2e/openrouter-flagship-current-20260925/openrouter/story-created-project.json",
+    );
+    const finalSupport = targets.platforms.at(-1);
+    const ordered = orderFreshGameplayCollectiblesFromSupport(
+      targets.collectibles,
+      finalSupport.position,
+    );
+
+    expect(targets.platforms.map((target: any) => target.id)).toEqual([
+      "bounce-one",
+      "bounce-two",
+      "bounce-three",
+    ]);
+    expect(ordered.map((target: any) => target.id)).toEqual([
+      "crystal-five",
+      "crystal-four",
+      "crystal-three",
+      "crystal-two",
+      "crystal-one",
+    ]);
+    expect(new Set(ordered.map((target: any) => target.id)).size).toBe(5);
+  });
+
+  it("uses support-relative height and 3D distance, independent of IDs and horizontal orientation", () => {
+    const support = [0, 2, 0];
+    const pickups = [
+      {
+        id: "z-first",
+        semantic: "lower-near",
+        position: [0, 1, 0.1],
+      },
+      {
+        id: "a-first",
+        semantic: "elevated-near",
+        position: [1, 2, 0],
+      },
+      {
+        id: "m-first",
+        semantic: "elevated-far",
+        position: [4, 2, 0],
+      },
+    ];
+    const ordered = orderFreshGameplayCollectiblesFromSupport(pickups, support);
+    const rotateTranslate = ([x, y, z]: number[]) => [z + 20, y, -x - 40];
+    const transformedOrder = orderFreshGameplayCollectiblesFromSupport(
+      pickups.map((pickup, index) => ({
+        ...pickup,
+        id: `renamed-${pickups.length - index}`,
+        position: rotateTranslate(pickup.position),
+      })),
+      rotateTranslate(support),
+    );
+
+    expect(ordered.map((pickup) => pickup.semantic)).toEqual([
+      "elevated-near",
+      "elevated-far",
+      "lower-near",
+    ]);
+    expect(transformedOrder.map((pickup) => pickup.semantic)).toEqual(
+      ordered.map((pickup) => pickup.semantic),
+    );
   });
 
   it("resolves all seven collectibles from the selected saved revision", () => {

@@ -34,6 +34,7 @@ import {
   generationStreamIsOpen,
   gameplaySupportId,
   observePlatformContact,
+  orderFreshGameplayCollectiblesFromSupport,
   platformContactProgress,
   portalCompletionIsAuthoritative,
   retainFreshGameplayJumpSample,
@@ -1321,6 +1322,10 @@ export function recordFreshFlagshipGameplayFailure(
         allowedIds,
       ),
       inputTrace,
+      collectibleTraversalOrder: safeGameplayIdList(
+        raw?.collectibleTraversalOrder,
+        allowedIds,
+      ),
       movement: movement
         ? {
             distance: safeGameplayNumber(movement.distance),
@@ -5207,6 +5212,7 @@ export async function runFreshFlagshipGameplay(
   );
   const observations = [];
   const inputTrace = [];
+  const collectibleTraversalOrder = [];
   const platformEvidence = new Map(
     targets.platforms.map((target) => [
       target.id,
@@ -5668,7 +5674,18 @@ export async function runFreshFlagshipGameplay(
         );
     }
 
-    for (const target of targets.collectibles) {
+    const finalPlatform = targets.platforms.at(-1);
+    const liveFinalSupport = previous?.entities.find(
+      (entity) => entity.id === finalPlatform.id,
+    );
+    const finalSupportPosition =
+      liveFinalSupport?.position ?? finalPlatform.position;
+    const orderedCollectibles = orderFreshGameplayCollectiblesFromSupport(
+      targets.collectibles,
+      finalSupportPosition,
+    );
+    for (const target of orderedCollectibles) {
+      collectibleTraversalOrder.push(target.id);
       const before = previous;
       await approach(target, "collect");
       let after = previous;
@@ -5808,6 +5825,7 @@ export async function runFreshFlagshipGameplay(
     return {
       status: "passed",
       ...completion,
+      collectibleTraversalOrder,
       inputMode: input.mode,
       surface: standalone ? "standalone-player" : "editor-play",
       startedAt: new Date(startedAt).toISOString(),
@@ -5859,6 +5877,7 @@ export async function runFreshFlagshipGameplay(
       observationCount: observations.length,
       lastObservation: previous,
       inputTrace: inputTrace.slice(-20),
+      collectibleTraversalOrder,
       movement:
         movementBefore && movementAfter
           ? {

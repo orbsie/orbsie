@@ -339,6 +339,40 @@ export function buildFreshGameplayTargets(
   return { platforms, collectibles, portal };
 }
 
+/**
+ * Collect pickups at or above the final support plane before descending ones,
+ * then minimize 3D travel distance within each group. This preserves elevated
+ * pickups while bounce height is available; original order breaks exact ties.
+ */
+export function orderFreshGameplayCollectiblesFromSupport(
+  collectibles,
+  supportPosition,
+) {
+  if (!Array.isArray(collectibles))
+    throw new Error("Fresh gameplay collectibles must be an array.");
+  const support = finitePosition(supportPosition, "final support");
+  return collectibles
+    .map((target, index) => {
+      const position = finitePosition(
+        target?.position,
+        `collectible ${target?.id ?? index}`,
+      );
+      const verticalPriority = position[1] >= support[1] ? 0 : 1;
+      const distanceSquared = position.reduce(
+        (total, component, axis) => total + (component - support[axis]) ** 2,
+        0,
+      );
+      return { target, index, verticalPriority, distanceSquared };
+    })
+    .sort(
+      (a, b) =>
+        a.verticalPriority - b.verticalPriority ||
+        a.distanceSquared - b.distanceSquared ||
+        a.index - b.index,
+    )
+    .map(({ target }) => target);
+}
+
 /** Choose camera-relative real inputs for the currently observed target. */
 export function chooseGameplayKeys(playerPosition, targetPosition) {
   const player = finitePosition(playerPosition, "player");

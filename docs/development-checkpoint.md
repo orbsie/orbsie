@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 the fresh gameplay driver now prioritizes collectibles at or above the
+last live platform anchor height, then sorts by full 3D distance with original
+order as the deterministic tie-break. This preserves high pickups while bounce
+height is available without relying on target IDs or horizontal world
+direction. One loopback keyboard replay of the path-aware rev29 clone was
+inconclusive for this ordering: bounce-1 and bounce-2 each recorded one
+grounded and one bounce frame, but bounce-3 recorded none, so the driver never
+entered collection; the attempted collectible order is empty. The report keeps
+the generic `fresh-gameplay-traversal-incomplete` code, with platform counters
+localizing the failure to bounce-3. Score remained 0, with no win or reset. No
+provider/cloud/external requests or browser errors occurred. This is not
+provider acceptance. Evidence and driver source hashes:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-collectible-priority-replay-20260925/`.
+
 Sep 25 generation guidance now asks that a moving platform's entity position
 match the first world-space `move_path` point, with both updated together when
 changing its start. It also asks collect rules to pair objective-variable

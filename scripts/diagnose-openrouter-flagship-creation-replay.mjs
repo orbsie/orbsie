@@ -56,6 +56,12 @@ const outputPath = resolve(
           : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const gameplayHarnessBytes = await readFile(
+  resolve("scripts/provider-browser-e2e.mjs"),
+);
+const gameplayHelperBytes = await readFile(
+  resolve("scripts/lib/fresh-flagship-gameplay.mjs"),
+);
 const sourceProjectBytes = await readFile(resolve(sourcePath));
 const sourceProject = JSON.parse(sourceProjectBytes.toString("utf8"));
 const project = structuredClone(sourceProject);
@@ -328,6 +334,16 @@ const report = {
     revision: project.revision,
   },
   runtime: runtimeEvidence,
+  gameplayDriverSources: {
+    harness: {
+      path: "scripts/provider-browser-e2e.mjs",
+      sha256: sha256(gameplayHarnessBytes),
+    },
+    helper: {
+      path: "scripts/lib/fresh-flagship-gameplay.mjs",
+      sha256: sha256(gameplayHelperBytes),
+    },
+  },
   serverPreflight,
   catalogAssets: assets,
   targets: {
@@ -483,6 +499,7 @@ try {
             revision: project.revision,
             contacts: result.contacts,
             collections: result.collectedIds,
+            collectibleTraversalOrder: result.collectibleTraversalOrder,
             win: result.win,
             reset: result.reset,
           },

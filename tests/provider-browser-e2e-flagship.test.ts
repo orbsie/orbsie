@@ -628,6 +628,12 @@ describe("flagship provider story contract", () => {
         reason: index === 0 ? "provider raw response" : "platform-jump-start",
       })),
       movement: { distance: 0.5, before: observation, after: observation },
+      collectibleTraversalOrder: [
+        "entity-4",
+        "entity-2",
+        "private provider text",
+        "entity-4",
+      ],
       contacts: ["entity-1", "provider raw response"],
       collections: [],
       scoreIds: [],
@@ -715,6 +721,7 @@ describe("flagship provider story contract", () => {
             revision,
             observationCount: 6000,
             lastObservation: { revision, entities: expect.any(Array) },
+            collectibleTraversalOrder: ["entity-4", "entity-2"],
           },
         },
       });
