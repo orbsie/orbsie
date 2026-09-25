@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "scope": "Fixture-backed actual editor acceptance for procedural isolation and recovery; no live provider, model call, or full secret audit.",
+  "fixtureProviderCalls": 0,
+  "fixtureGenerateRequests": 4,
+  "externalRequestAttempts": {
+    "maliciousProbe": 0,
+    "limitFailure": 0,
+    "maliciousCanaryUrl": 0,
+    "maliciousWebSocket": 0,
+    "total": 0
+  },
+  "pageErrorCount": 0,
+  "unexpectedGenerationEndpoints": 0,
+  "checks": {
+    "validBrowserProceduralObject": true,
+    "initialWorkerEvaluation": true,
+    "syntheticCanarySeededInEditorStorage": true,
+    "maliciousSourceReachedWorker": true,
+    "hostStorageCanaryNotCommitted": true,
+    "exactSceneAndSourcePreservedAfterProbe": true,
+    "noExternalRequestDuringProbe": true,
+    "infiniteLoopBoundedFailure": true,
+    "limitWorkerTerminatedBeforeRecovery": true,
+    "exactSceneAndSourcePreservedAfterLimit": true,
+    "noExternalRequestDuringLimitFailure": true,
+    "validTargetedRecoveryEdit": true,
+    "reloadPreservesStableEntityIdAndSource": true,
+    "reloadUsesCachedGeometry": true,
+    "syntheticCanaryScopedToEphemeralContext": true
+  },
+  "timingsMs": {
+    "loopFailure": 2638
+  }
+}
