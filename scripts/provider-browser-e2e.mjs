@@ -5420,6 +5420,14 @@ export async function runFreshFlagshipGameplay(
 
     const approach = async (target, kind) => {
       let last;
+      let portalSettled = false;
+      const portalCompleted = (observation) =>
+        portalCompletionIsAuthoritative(observation, {
+          portalId: targets.portal.id,
+          expectedCollectibleIds: targets.collectibles.map(
+            (collectible) => collectible.id,
+          ),
+        });
       for (
         let step = 0;
         step < FRESH_GAMEPLAY_LIMITS.maxSteeringStepsPerTarget;
@@ -5428,43 +5436,62 @@ export async function runFreshFlagshipGameplay(
         last = await read();
         if (!last)
           throw new Error(`No observation while approaching ${target.id}.`);
-        const live = last.entities.find((entity) => entity.id === target.id);
+        let live = last.entities.find((entity) => entity.id === target.id);
         if (!live)
           throw new Error(
             `Fresh gameplay could not observe target ${target.id}.`,
           );
         if (kind === "collect" && last.scoreIds.includes(target.id))
           return last;
-        if (
-          kind === "portal" &&
-          portalCompletionIsAuthoritative(last, {
-            portalId: targets.portal.id,
-            expectedCollectibleIds: targets.collectibles.map(
-              (collectible) => collectible.id,
-            ),
-          })
-        )
-          return last;
-        const distance = Math.hypot(
+        if (kind === "portal" && portalCompleted(last)) return last;
+        let distance = Math.hypot(
           last.player.position[0] - live.position[0],
           last.player.position[2] - live.position[2],
         );
-        if (distance <= FRESH_GAMEPLAY_LIMITS.targetDistance) {
+        if (
+          distance <= FRESH_GAMEPLAY_LIMITS.targetDistance &&
+          (kind !== "portal" || !portalSettled)
+        ) {
           await setKeys([], `${kind}-settle`);
           await page.waitForTimeout(FRESH_GAMEPLAY_LIMITS.settleMs);
           last = await read();
-          if (kind !== "collect" || last?.scoreIds.includes(target.id))
+          if (kind === "portal") {
+            if (portalCompleted(last)) return last;
+            portalSettled = true;
+            if (!last)
+              throw new Error(
+                `No observation while approaching ${target.id}.`,
+              );
+            const settledTarget = last.entities.find(
+              (entity) => entity.id === target.id,
+            );
+            if (!settledTarget)
+              throw new Error(
+                `Fresh gameplay could not observe target ${target.id}.`,
+              );
+            live = settledTarget;
+            distance = Math.hypot(
+              last.player.position[0] - live.position[0],
+              last.player.position[2] - live.position[2],
+            );
+          } else if (
+            kind !== "collect" ||
+            last?.scoreIds.includes(target.id)
+          ) {
             return last;
+          }
         }
         const supportId = gameplaySupportId(last);
         const jump =
           Boolean(supportId) &&
           (live.position[1] > last.player.position[1] + 0.15 ||
             (kind === "collect" && step % 18 === 0));
-        const steering = chooseGameplaySteeringKeys(
-          last.player.position,
-          live.position,
-        );
+        const steering =
+          kind === "portal"
+            ? distance > 0
+              ? chooseGameplayKeys(last.player.position, live.position)
+              : []
+            : chooseGameplaySteeringKeys(last.player.position, live.position);
         await setKeys(
           jump ? [" ", ...steering] : steering,
           `${kind}-${jump ? "jump" : "steer"}`,

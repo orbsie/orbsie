@@ -446,7 +446,7 @@ describe("fresh flagship gameplay driver", () => {
     ).toContain("movement-distance-nonfinite");
   });
 
-  it("accepts a terminal portal win even when the player is already past its target distance", () => {
+  it("requires authoritative portal contact and the full score after a near arrival", () => {
     const observation = {
       projectId: project.id,
       revision: project.revision,
@@ -463,6 +463,21 @@ describe("fresh flagship gameplay driver", () => {
       status: "won",
       won: true,
     };
+    const nearPortalWithoutContact = {
+      ...observation,
+      player: { position: [0, 0.42, -1.1] },
+      contacts: [],
+      status: "playing",
+      won: false,
+    };
+    expect(
+      portalCompletionIsAuthoritative(nearPortalWithoutContact, {
+        portalId: "portal",
+        expectedCollectibleIds: story.collectibles.map(
+          (target: any) => target.id,
+        ),
+      }),
+    ).toBe(false);
     expect(
       portalCompletionIsAuthoritative(observation, {
         portalId: "portal",
