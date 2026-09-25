@@ -235,7 +235,8 @@ main.touch-layout footer {
   padding: 10px 14px;
 }
 .graphics-player-error:has(.is-advisory) {
-  top: calc(144px + var(--player-safe-top));
+  top: auto;
+  bottom: calc(48px + var(--player-safe-bottom));
   transform: translateX(-50%);
   width: min(360px, calc(100% - 32px));
   min-width: 0;
