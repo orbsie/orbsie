@@ -660,7 +660,6 @@ export default function Orbsie() {
     accountVersion: number,
     options: {
       allowMissing?: boolean;
-      requireJournalRun?: boolean;
       continuation?: NonNullable<
         ReturnType<typeof useOrb.getState>["interruptedReviewContinuation"]
       >;
@@ -728,16 +727,8 @@ export default function Orbsie() {
     if (!stillCurrent())
       throw Error("The account or saved scene changed during cloud recovery.");
     if (response.status === 404 && options.allowMissing) {
-      const current = useOrb.getState();
-      if (
-        !current.saved &&
-        project.revision === 0 &&
-        project.entities.length === 0 &&
-        project.messages.length === 0
-      ) {
-        await assertCurrentScene(localBinding.digest);
-        return null;
-      }
+      await assertCurrentScene(localBinding.digest);
+      return null;
     }
     if (response.status === 404)
       throw Error("The saved world has no available cloud checkpoint.");
@@ -771,10 +762,7 @@ export default function Orbsie() {
       snapshotToken: remote.snapshotToken,
     };
     const savedProject = committed(project);
-    if (
-      !options.requireJournalRun &&
-      sameSnapshot(parsedSnapshot.data, savedProject)
-    ) {
+    if (sameSnapshot(parsedSnapshot.data, savedProject)) {
       await assertCurrentScene(localBinding.digest);
       return baseline;
     }
@@ -2379,7 +2367,7 @@ export default function Orbsie() {
         baselineOverride = await resolveCloudJournalBaseline(
           current.project,
           accountVersion,
-          { requireJournalRun: true, continuation },
+          { continuation },
         );
         if (!baselineOverride)
           throw Error("The saved review's cloud checkpoint is unavailable.");

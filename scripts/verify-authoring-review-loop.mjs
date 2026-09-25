@@ -283,6 +283,29 @@ function cloudProjectView(project, snapshotToken) {
   };
 }
 
+function localOnlyDraftProject() {
+  return {
+    version: 1,
+    id: "local-only-saved-world",
+    title: "A local saved world",
+    seed: 42,
+    revision: 2,
+    entities: [
+      {
+        id: "local-ground",
+        label: "Ground",
+        position: [0, 0, 0],
+        scale: [1, 1, 1],
+        color: "#91b977",
+        geometry: { kind: "platform", detail: "refined", tint: "#91b977" },
+        stage: "ready",
+      },
+    ],
+    environment: { sky: "#dceee9", ground: "#91b977", water: "#59bdbb" },
+    messages: [],
+  };
+}
+
 function runView(run) {
   return {
     run: {
@@ -930,6 +953,8 @@ async function runSignedInJournalScenario(
   conflict,
   resumeAfterFailure = false,
   staleCloudDuringResume = false,
+  localOnlySavedDraft = false,
+  exactCloudResume = false,
 ) {
   const renderer = "software";
   const browser = await chromium.launch({
@@ -967,9 +992,11 @@ async function runSignedInJournalScenario(
     latestRunId: undefined,
   };
   const initialToken = "a".repeat(64);
+  const exactResumeToken = "e".repeat(64);
   const correctedToken = "b".repeat(64);
   const secondCorrectedToken = "d".repeat(64);
   const conflictToken = "c".repeat(64);
+  const revisionOffset = localOnlySavedDraft ? 2 : 0;
   let recovery;
   let clientCorrelation;
   let resumedClientCorrelation;
@@ -1280,10 +1307,47 @@ async function runSignedInJournalScenario(
     await expect(
       page.locator("[data-renderer-availability=ready]"),
     ).toBeVisible();
+    if (localOnlySavedDraft) {
+      await page.evaluate(async (project) => {
+        const db = await new Promise((resolve, reject) => {
+          const request = indexedDB.open("keyval-store", 1);
+          request.onupgradeneeded = () =>
+            request.result.createObjectStore("keyval");
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+        });
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction("keyval", "readwrite");
+          const store = transaction.objectStore("keyval");
+          store.put({ project }, "orbsie-draft");
+          store.put({ [project.id]: project }, "orbsie-library");
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error);
+        });
+        db.close();
+      }, localOnlyDraftProject());
+      await page.reload();
+      await expect(page.locator("canvas")).toBeVisible();
+      await page
+        .getByRole("button", { name: "Continue your saved world" })
+        .click();
+      await expect(
+        page.locator("[data-renderer-availability=ready]"),
+      ).toBeVisible();
+      const openedDraft = await storageSnapshot(page);
+      assert.equal(openedDraft.project.id, localOnlyDraftProject().id);
+    }
+    const promptBox = localOnlySavedDraft
+      ? page.locator("#prompt")
+      : page.getByPlaceholder("What experience to build?");
+    await promptBox.fill("Build a lantern");
     await page
-      .getByPlaceholder("What experience to build?")
-      .fill("Build a lantern");
-    await page.getByRole("button", { name: "Create", exact: true }).click();
+      .getByRole("button", {
+        name: localOnlySavedDraft ? "Change this" : "Create",
+        exact: true,
+      })
+      .click();
     await expect(page.locator(".authoring-activity-latest p")).toHaveText(
       conflict || resumeAfterFailure
         ? "Scene saved, but review could not finish."
@@ -1297,6 +1361,13 @@ async function runSignedInJournalScenario(
       await expect(page.locator(".review-continuation-cost")).toHaveText(
         "Uses one free prompt.",
       );
+      if (exactCloudResume) {
+        assert(!staleCloudDuringResume);
+        const interruptedSave = await storageSnapshot(page);
+        assert(state.cloudProject);
+        state.cloudProject = interruptedSave.project;
+        state.cloudToken = exactResumeToken;
+      }
       if (staleCloudDuringResume) {
         assert(state.cloudProject);
         state.cloudProject = {
@@ -1362,6 +1433,23 @@ async function runSignedInJournalScenario(
           : 8,
     );
     assert.equal(puts[0].baseRevision, null);
+    if (localOnlySavedDraft) {
+      assert.equal(puts[0].revision, revisionOffset);
+      assert.equal(
+        cloudEvents.filter((event) => event.kind === "get-missing").length,
+        1,
+      );
+      assert.equal(
+        requests.filter((request) => request.kind === "initial").length,
+        1,
+      );
+      assert.deepEqual(
+        state.cloudProject.messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.text),
+        ["Build a lantern"],
+      );
+    }
     if (conflict) {
       assert.equal(puts[0].baseSnapshotToken, null);
       assert.equal(requests.length, 2);
@@ -1398,16 +1486,26 @@ async function runSignedInJournalScenario(
       assert.equal(requests[2].body.prompt, requests[0].body.prompt);
       assert.equal(requests[3].body.prompt, requests[0].body.prompt);
       assert.equal(requests[2].body.priorRunId, authoringRunId);
-      assert.equal(requests[2].body.project.revision, 3);
+      assert.equal(requests[2].body.project.revision, 3 + revisionOffset);
       assert.deepEqual(
         requests.slice(1).map((request) => request.body.project.revision),
-        [3, 3, 3, 5],
+        [3, 3, 3, 5].map((revision) => revision + revisionOffset),
       );
       assert.equal(puts.length, 2);
-      assert.equal(puts[1].baseRevision, puts[0].revision);
-      assert.equal(puts[1].baseSnapshotToken, initialToken);
-      assert.equal(puts[1].revision, 3);
+      assert.equal(
+        puts[1].baseRevision,
+        exactCloudResume ? 3 + revisionOffset : puts[0].revision,
+      );
+      assert.equal(
+        puts[1].baseSnapshotToken,
+        exactCloudResume ? exactResumeToken : initialToken,
+      );
+      assert.equal(puts[1].revision, 3 + revisionOffset);
       assert.equal(puts[1].snapshotToken, correctedToken);
+      if (exactCloudResume) {
+        assert.equal(latestReads[0].revision, 3 + revisionOffset);
+        assert.equal(latestReads[0].snapshotToken, exactResumeToken);
+      }
       assert.equal(starts[0].projectRevision, puts[0].revision);
       assert.equal(starts[1].projectRevision, puts[1].revision);
       assert.equal(new Set(starts.map((start) => start.runId)).size, 2);
@@ -1433,7 +1531,7 @@ async function runSignedInJournalScenario(
         generationEvents
           .filter((event) => event.kind === "read")
           .map((event) => event.by),
-        ["project"],
+        exactCloudResume ? [] : ["project"],
       );
       const cloudCorrectionBase = state.cloudProject;
       assert(cloudCorrectionBase);
@@ -1450,14 +1548,14 @@ async function runSignedInJournalScenario(
       );
       const cloudCorrectionRun = state.runs.get(starts[1].runId);
       assert.equal(cloudCorrectionRun.state, "complete");
-      assert.equal(cloudCorrectionRun.checkpoint.revision, 5);
+      assert.equal(cloudCorrectionRun.checkpoint.revision, 5 + revisionOffset);
       assert.equal(cloudCorrectionRun.checkpoint.environment.sky, "#88ccff");
       assert.deepEqual(
         cloudCorrectionRun.checkpoint.entities.map((entity) => entity.id),
         ["lantern"],
       );
       const saved = await storageSnapshot(page);
-      assert.equal(saved.project.revision, 5);
+      assert.equal(saved.project.revision, 5 + revisionOffset);
       assert.equal(saved.project.environment.sky, "#88ccff");
       assert.deepEqual(
         saved.project.messages
@@ -1484,7 +1582,7 @@ async function runSignedInJournalScenario(
       );
       assert.deepEqual(
         requests.slice(1).map((request) => request.body.project.revision),
-        [3, 6, 8],
+        [3, 6, 8].map((revision) => revision + revisionOffset),
       );
       assert.deepEqual(
         latestReads.map((read) => read.snapshotToken),
@@ -1533,9 +1631,13 @@ async function runSignedInJournalScenario(
         ),
       ).toBeVisible({ timeout: 15_000 });
       const recovered = await storageSnapshot(page);
-      assert.equal(recovered.project.revision, 8);
+      assert.equal(recovered.project.revision, 8 + revisionOffset);
       assert.equal(recovered.project.environment.sky, "#88ccff");
-      assert.equal(recovered.project.entities[0].color, "#ff4b9e");
+      assert.equal(
+        recovered.project.entities.find((entity) => entity.id === "lantern")
+          ?.color,
+        "#ff4b9e",
+      );
       const readsAfterReload = generationEvents.filter(
         (event) => event.kind === "read",
       );
@@ -1561,7 +1663,15 @@ async function runSignedInJournalScenario(
     assert.deepEqual(
       pageErrors,
       Array.from(
-        { length: conflict ? 1 : resumeAfterFailure ? 2 : 2 },
+        {
+          length: conflict
+            ? 1
+            : resumeAfterFailure
+              ? 2
+              : localOnlySavedDraft
+                ? 3
+                : 2,
+        },
         () => "THREE.WebGLRenderer: Error creating WebGL context.",
       ),
     );
@@ -1575,7 +1685,14 @@ async function runSignedInJournalScenario(
             "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
             rendererConsoleError,
           ]
-        : [rendererConsoleError, rendererConsoleError];
+        : localOnlySavedDraft
+          ? [
+              rendererConsoleError,
+              rendererConsoleError,
+              "Failed to load resource: the server responded with a status of 404 (Not Found)",
+              rendererConsoleError,
+            ]
+          : [rendererConsoleError, rendererConsoleError];
     assert.deepEqual(consoleErrors, expectedConsoleErrors);
     assert(
       requestFailures.every(
@@ -1586,6 +1703,8 @@ async function runSignedInJournalScenario(
       conflict,
       resumeAfterFailure,
       staleCloudDuringResume,
+      localOnlySavedDraft,
+      exactCloudResume,
       requests: requests.map((request) => request.kind),
       reviewedRevisions: requests
         .slice(1)
@@ -1667,13 +1786,30 @@ try {
       false,
       "resume-start-retry",
     );
+  } else if (failureOnly === "signed-in-baseline-regressions") {
+    report.signedInJournal.localOnlyDraft = await runSignedInJournalScenario(
+      false,
+      false,
+      false,
+      true,
+    );
+    report.signedInJournal.exactSnapshotResume =
+      await runSignedInJournalScenario(false, true, false, false, true);
   } else if (failureOnly === "signed-in-resume") {
     report.signedInJournal.success = await runSignedInJournalScenario(false);
     report.signedInJournal.conflict = await runSignedInJournalScenario(true);
+    report.signedInJournal.localOnlyDraft = await runSignedInJournalScenario(
+      false,
+      false,
+      false,
+      true,
+    );
     report.signedInJournal.resumedReview = await runSignedInJournalScenario(
       false,
       true,
     );
+    report.signedInJournal.exactSnapshotResume =
+      await runSignedInJournalScenario(false, true, false, false, true);
     report.signedInJournal.staleResume = await runSignedInJournalScenario(
       false,
       true,
