@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 one loopback-only bounce-one clearance diagnostic (`--revision29
+--clearance-diagnostic`) used the pinned revision29 project
+(`a7b89641…05903b47`) and an in-memory clone changing only
+`bounce-1.position[1]` from 0.7 to 0.4. The source hash stayed unchanged; the
+served `/project.json` hash was `c495bfac…7b036ad`. Chromium loaded revision29
+in WebGL and recorded 0.64 m of keyboard movement, but no bounce-one contact
+across three attempts; score stayed 0, with no win or reset. The highest player
+center was 1.480 m. The unchanged `move_path` starts at `[0,0.7,0]` and all its
+Y points are 0.7; runtime telemetry likewise observed the platform at Y=0.7.
+Thus the path overrode the anchor-only diagnostic, which did not test the
+lowered support plane; route versus driver uncertainty remains. Provider,
+cloud, and external requests, page errors, console errors, and request failures
+were zero. Report and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925/`.
+The path-overrides-anchor interpretation was added from captured telemetry and
+the saved move_path after the run; the browser was not rerun.
+
 Sep 25 bounded platform-clearance advisory: the server derives one direct
 ground-jump estimate to the nearest ready, root-level, unrotated built-in
 traversal platform (`bounce` or `move`), excluding static ground/island

@@ -25,28 +25,63 @@ const REVISION_29_SOURCE = {
 };
 const args = process.argv.slice(2);
 const replayRevision29 = args.includes("--revision29");
-const outputArgs = args.filter((argument) => argument !== "--revision29");
+const clearanceDiagnostic = args.includes("--clearance-diagnostic");
+assert(!clearanceDiagnostic || replayRevision29, "--clearance-diagnostic requires --revision29.");
+const outputArgs = args.filter((argument) => argument !== "--revision29" && argument !== "--clearance-diagnostic");
 assert(outputArgs.length <= 1, "Provide at most one output directory.");
 const sourcePath = replayRevision29
   ? REVISION_29_SOURCE_PATH
   : DEFAULT_SOURCE_PATH;
 const outputPath = resolve(
   outputArgs[0] ??
-    (replayRevision29
-      ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
-      : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
+    (clearanceDiagnostic
+      ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925"
+      : replayRevision29
+        ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
+        : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const projectBytes = await readFile(resolve(sourcePath));
-const project = JSON.parse(projectBytes.toString("utf8"));
+const sourceProjectBytes = await readFile(resolve(sourcePath));
+const sourceProject = JSON.parse(sourceProjectBytes.toString("utf8"));
+const project = structuredClone(sourceProject);
 if (replayRevision29) {
   assert.equal(project.id, REVISION_29_SOURCE.projectId);
   assert.equal(project.revision, REVISION_29_SOURCE.revision);
-  assert.equal(sha256(projectBytes), REVISION_29_SOURCE.sha256);
+  assert.equal(sha256(sourceProjectBytes), REVISION_29_SOURCE.sha256);
 } else {
   assert.equal(project.id, "2d8c071d-13be-4f4f-9c49-5d1d50c13b93");
   assert.equal(project.revision, 31);
 }
+let diagnosticMutation = null;
+if (clearanceDiagnostic) {
+  const bounceOne = project.entities.find((entity) => entity.id === "bounce-1");
+  assert(bounceOne, "Pinned revision29 project is missing bounce-1.");
+  assert.equal(bounceOne.stage, "ready");
+  assert.equal(bounceOne.geometry?.kind, "platform");
+  assert.equal(bounceOne.behavior?.type, "bounce");
+  assert.equal(bounceOne.position[1], 0.7);
+  bounceOne.position[1] = 0.4;
+  const bounceOnePaths = (project.game?.rules ?? []).flatMap((rule) => rule.actions)
+    .filter((action) => action.type === "move_path" && action.entityId === "bounce-1");
+  assert.equal(bounceOnePaths.length, 1);
+  const bounceOnePath = bounceOnePaths[0];
+  diagnosticMutation = {
+    entityId: "bounce-1",
+    field: "position[1]",
+    sourceValue: 0.7,
+    diagnosticValue: 0.4,
+    unchangedMovePath: {
+      startPosition: [...bounceOnePath.points[0]],
+      pointYValues: bounceOnePath.points.map((point) => point[1]),
+    },
+  };
+  const restoredProject = structuredClone(project);
+  restoredProject.entities.find((entity) => entity.id === "bounce-1").position[1] = diagnosticMutation.sourceValue;
+  assert.deepEqual(restoredProject, sourceProject, "Clearance diagnostic must change only bounce-1 position[1].");
+}
+const targetDocumentBytes = clearanceDiagnostic ? Buffer.from(JSON.stringify(project)) : sourceProjectBytes;
+const targetDocumentSha256 = sha256(targetDocumentBytes);
+if (clearanceDiagnostic) assert.notEqual(targetDocumentSha256, sha256(sourceProjectBytes));
 assert.equal(
   project.entities.filter((entity) => entity.geometry?.kind === "generated")
     .length,
@@ -91,7 +126,7 @@ const assetReferences = project.entities
   .filter((entity) => entity.geometry?.kind === "asset")
   .map((entity) => ({ entityId: entity.id, assetId: entity.geometry.assetId }));
 assert.equal(assetReferences.length, replayRevision29 ? 2 : 3);
-const files = new Map([["/project.json", projectBytes]]);
+const files = new Map([["/project.json", targetDocumentBytes]]);
 const runtimeEvidence = {};
 for (const name of [
   "runtime.js",
@@ -119,7 +154,8 @@ const html = Buffer.from(
 files.set("/", html);
 files.set("/favicon.ico", Buffer.alloc(0));
 
-await mkdir(outputPath, { recursive: true, mode: 0o700 });
+if (clearanceDiagnostic) await mkdir(outputPath, { mode: 0o700 });
+else await mkdir(outputPath, { recursive: true, mode: 0o700 });
 const localRequests = [];
 const contentTypeForPath = (path) => {
   if (path === "/") return "text/html; charset=utf-8";
@@ -186,7 +222,9 @@ const sanitizeDiagnosticText = (value) =>
     .replace(/\b(?:sk|or)-[A-Za-z0-9_-]{12,}\b/g, "[redacted-key]")
     .slice(0, 300);
 const report = {
-  mode: "single-static-saved-openrouter-creation-replay",
+  mode: clearanceDiagnostic
+    ? "single-static-revision29-bounce1-clearance-diagnostic"
+    : "single-static-saved-openrouter-creation-replay",
   routeSelection: replayRevision29
     ? "production-spawn-relative-validator"
     : "pinned-revision31-identifiers",
@@ -194,8 +232,8 @@ const report = {
   repoHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   sourceProject: {
     path: sourcePath,
-    bytes: projectBytes.byteLength,
-    sha256: sha256(projectBytes),
+    bytes: sourceProjectBytes.byteLength,
+    sha256: sha256(sourceProjectBytes),
     projectId: project.id,
     revision: project.revision,
   },
@@ -225,6 +263,14 @@ const report = {
     phases: { creation: { revision: project.revision } },
   },
 };
+if (clearanceDiagnostic) {
+  report.targetDocument = {
+    path: "/project.json",
+    bytes: targetDocumentBytes.byteLength,
+    sha256: targetDocumentSha256,
+  };
+  report.diagnosticMutation = diagnosticMutation;
+}
 
 const browser = await chromium.launch({
   headless: true,
@@ -379,6 +425,21 @@ try {
   const last = evidence?.lastObservation;
   const movement = evidence?.movement?.distance > 0.12;
   const third = evidence?.platformEvidence?.find((item) => item.id === "bounce-three");
+  const bounceOneEvidence = evidence?.platformEvidence?.find((item) => item.id === "bounce-1");
+  const bounceOneObservedYValues = [
+    ...(bounceOneEvidence?.jumpEvidence ?? []).flatMap((attempt) =>
+      (attempt.samples ?? []).map((sample) => sample.platform?.position?.[1]),
+    ),
+  ].filter(Number.isFinite).filter((value, index, values) => values.indexOf(value) === index).sort((a, b) => a - b);
+  if (clearanceDiagnostic) {
+    report.diagnosticResult = {
+      observedBounceOnePlatformYValues: bounceOneObservedYValues,
+      observedContactFrames: (bounceOneEvidence?.groundedFrames ?? 0) + (bounceOneEvidence?.bounceFrames ?? 0),
+      score: last?.gameScore ?? null,
+      won: last?.won ?? null,
+      reset: last?.reset ?? null,
+    };
+  }
   const runtimeResponded =
     report.readiness?.status === "ready" &&
     last?.projectId === project.id &&
@@ -387,7 +448,18 @@ try {
     report.pageErrors.length === 0 &&
     report.externalRequests.length === 0;
   if (report.status !== "passed") {
-    if (report.navigationError?.includes("Download is starting")) {
+    if (
+      clearanceDiagnostic &&
+      diagnosticMutation.unchangedMovePath.pointYValues.every((value) => value === diagnosticMutation.sourceValue) &&
+      bounceOneObservedYValues.includes(diagnosticMutation.sourceValue)
+    ) {
+      report.diagnosis = {
+        category: "diagnostic-anchor-overridden-by-authored-path",
+        basis: "The anchor-only mutation was retained in the served document, but the unchanged move_path starts bounce-1 at its original Y and all path points keep Y constant there. Browser telemetry likewise observed bounce-1 at the original Y. This traversal did not test the lowered landing plane, and route versus driver uncertainty remains.",
+        observedBounceOnePlatformYValues: bounceOneObservedYValues,
+        routeOutcome: report.status,
+      };
+    } else if (report.navigationError?.includes("Download is starting")) {
       report.status = "replay-setup-failed";
       report.errorCode = { code: "standalone-shell-served-as-download" };
       report.diagnosis = {
