@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "sourceCommit": "79664d255e2910e87992a4ae32cc4cc5b40c133a",
+  "deploymentUrl": "https://orb-847864082049ad60fd35-b4hptmcr5-grappeggias-projects.vercel.app",
+  "device": {
+    "id": "emulator-5554",
+    "android": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chrome": "124.0.6367.219"
+  },
+  "renderer": "forced Canvas2D compatibility",
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "pageErrors": [],
+  "expectedWebglInitializationErrors": 1,
+  "checks": {
+    "ready": true,
+    "touchScore": 7,
+    "restart": true,
+    "win": true,
+    "loss": true
+  },
+  "cookiesBefore": 0,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false
+  },
+  "cookiesAfter": 0
+}

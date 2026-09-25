@@ -6,6 +6,12 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- The exact immutable Gateway-authored deployment passed Android 15 emulator
+  Chrome touch score, restart, win and loss under forced Canvas2D fallback with
+  no credentials or generation requests. Screenshot review found clipped tree
+  framing and an intrusive graphics notice in portrait; mobile visual polish
+  remains open. Evidence:
+  `docs/evidence/android-gateway-publication/current-runtime-20260925/`.
 - A fresh production account/project published an existing Gateway-authored
   revision-9 world with two generated GLBs into its own Vercel deployment.
   Exact public snapshot/model/runtime hashes and signed-out desktop, portrait

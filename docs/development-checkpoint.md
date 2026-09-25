@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 25 exact-publication Android acceptance: `scripts/verify-android-gateway-publication.mjs`
+loaded the immutable Gateway-authored deployment below on an Android 15
+midrange-profile emulator (Chrome 124, 412×786 CSS viewport), forced Canvas2D
+compatibility rendering, and passed real touch score 7, restart, win and loss.
+It observed zero cookies, provider/generation/external requests or page errors;
+one WebGL initialization error was expected from the forced fallback. Astra
+reviewed the report and screenshots in
+`docs/evidence/android-gateway-publication/current-runtime-20260925/`.
+Portrait framing clips the left tree, and the compatibility notice obscures
+part of the scene. Functional emulator acceptance passed; visual mobile polish
+and physical-device acceptance remain open.
+
 Sep 25 current-runtime production publication: a no-model-call run of
 `scripts/verify-provider-artifact-publication.mjs` copied the saved
 Gateway-authored revision-9 world into a new isolated account/project,
