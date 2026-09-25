@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 25 portal-arrival replay: the fresh gameplay driver now treats portal
+proximity as a settle point and continues steering toward its center until the
+existing authoritative predicate sees portal contact, a win, and every expected
+score ID; the 240-step bound and collectible behavior are unchanged. A focused
+predicate test rejects near/no-contact and accepts contact with the full score;
+syntax, that test, and typecheck pass. One loopback standalone replay of the
+same saved revision 31 and checked-in runtime passed: it recorded portal contact,
+all five crystals (score 5), `won`, then Restart returned to `playing` at score 0
+with reset 1. Provider/cloud/external requests, page errors, console errors, and
+request failures were zero. Evidence and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-portal-arrival-20260925/`.
+
 Sep 25 looped-path replay: `move_path` with `loop:true` now spends the same
 duration across each listed segment plus a virtual last-to-first segment when
 the path is open; explicitly closed and non-looping paths keep their prior
