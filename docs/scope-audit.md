@@ -6,6 +6,11 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- Source `0af88e2` is deployed. The provider SSE parser now consumes a complete
+  final `data:` line without a trailing newline while refusing malformed or
+  error-terminated streams before commit. Focused tests and the production
+  build pass; the broader frequent-interruption and real-provider recovery
+  acceptance remain open.
 - Source `a6295cf` is deployed to `https://orbsie.com/` and a fresh
   Gateway-authored saved artifact was independently published with exact
   current-runtime and model hashes. Signed-out desktop and touch browser

@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 provider SSE EOF resilience: source `0af88e2` processes a complete
+trailing provider `data:` line when the stream closes without a final newline.
+A valid structured finish marker can now release its deferred commit. Regression
+tests prove that malformed trailing JSON and a provider reader error still
+withhold the commit and show failure; the generation/envelope suites pass 34/34,
+and the optimized build passes. Deployed Ready at
+`https://orbsie-9bvf04hwi-grappeggias-projects.vercel.app`, aliased to
+`https://orbsie.com/`; read-only root/config/GET-generate smoke passed and
+served standalone player JS still matches the committed hash. No model call ran.
+This addresses one deterministic clean-EOF case, not the full recurring
+interruption issue or live-provider interruption acceptance. Gateway credit
+remained `-0.00456495` on a read-only check at 02:27 UTC.
+
 Sep 25 portrait play framing release: source `a6295cf` makes the temporary
 play-camera minimum scale with viewport aspect in both WebGL and Canvas2D,
 including WebGL residency selection, while preserving authored navigation.
