@@ -1,0 +1,163 @@
+{
+  "status": "failed",
+  "currentStage": "chrome-startup-and-cdp-connect",
+  "runId": "2026-09-25T05-43-30-085Z",
+  "sourceCommit": "cf1f397df854b31a43a713d77b0192c2aca692fd",
+  "harnessSourceSha256": "c8d69ff02c59ac23c69eba289d19ab2bf63c7ad2609335df44065923a372fc02",
+  "scope": "Android Chrome static control-page diagnostic; no fixture JavaScript or SoftwareWorld",
+  "fixture": {
+    "mode": "static HTML control page; fixture bundle and SoftwareWorld omitted",
+    "entityCount": 0,
+    "entitySelection": "none; static HTML only",
+    "additionalCluster": "none",
+    "rendererQuery": "none; no renderer instantiated",
+    "initialCameraDistance": null
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": false,
+  "pageCdpSessionCreatedAfterNavigation": false,
+  "timings": {
+    "failureElapsedMs": 61186
+  },
+  "lifecycleEvents": [
+    {
+      "event": "avd-process-started",
+      "at": "2026-09-25T05:43:30.126Z",
+      "elapsedMs": 41,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T05:43:53.659Z",
+      "elapsedMs": 23574,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T05:43:54.269Z",
+      "elapsedMs": 24184,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "chrome-cdp-ready",
+      "at": "2026-09-25T05:44:01.242Z",
+      "elapsedMs": 31157,
+      "detail": {
+        "browser": "Chrome/124.0.6367.219"
+      }
+    },
+    {
+      "event": "probe-failed",
+      "at": "2026-09-25T05:44:31.271Z",
+      "elapsedMs": 61186,
+      "detail": {
+        "error": "browserType.connectOverCDP: Timeout 30000ms exceeded. Call log: - <ws preparing> retrieving websocket url from http://127.0.0.1:44409 - <ws connecting> ws://127.0.0.1:44409/devtools/browser - <ws connected> ws://127.0.0.1:44409/devtools/browser "
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-started",
+      "at": "2026-09-25T05:44:31.271Z",
+      "elapsedMs": 61186,
+      "detail": {
+        "failureStage": "chrome-startup-and-cdp-connect"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-finished",
+      "at": "2026-09-25T05:44:31.457Z",
+      "elapsedMs": 61372,
+      "detail": {
+        "matchedLogcatLines": 0
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T05:44:31.457Z",
+      "elapsedMs": 61372
+    }
+  ],
+  "httpResponses": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": []
+  },
+  "cycles": [],
+  "screenshots": [],
+  "limitations": [
+    "This static control navigation is an Android emulator diagnostic, not physical-device certification.",
+    "The page contains no fixture bundle, renderer, canvas, or application runtime; a result does not establish application behavior.",
+    "The diagnostic run failed before completion; see lifecycle, timing, process-state, and filtered logcat records for evidence and any remaining uncertainty."
+  ],
+  "device": {
+    "id": "emulator-5554",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": true
+  },
+  "androidChromeCDP": {
+    "browser": "Chrome/124.0.6367.219",
+    "protocolVersion": "1.3",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  },
+  "failureStage": "chrome-startup-and-cdp-connect",
+  "error": "browserType.connectOverCDP: Timeout 30000ms exceeded. Call log: - <ws preparing> retrieving websocket url from http://127.0.0.1:44409 - <ws connecting> ws://127.0.0.1:44409/devtools/browser - <ws connected> ws://127.0.0.1:44409/devtools/browser ",
+  "failurePageSnapshot": {
+    "unavailable": "no page object was created; control navigation was not attempted"
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T05:44:31.271Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 0,
+      "lines": []
+    },
+    "chromePid": "1589",
+    "chromeProcesses": [
+      "u0_a145 1589 352 32833192 236428 0 0 S com.android.chrome",
+      "u0_a145 1789 352 32250568 67012 0 0 S com.android.chrome_zygote",
+      "u0_a145 1946 352 32731728 160396 0 0 S com.android.chrome:privileged_process0",
+      "u0_i2 2307 1789 244059316 129476 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:2",
+      "u0_i4 2361 1789 244078368 137384 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:4",
+      "u0_i5 2374 1789 244060276 130048 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:5",
+      "u0_i6 2416 1789 244059188 129964 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:6"
+    ]
+  },
+  "comparisonAssessment": "Chrome 124's /json/version endpoint responded, but Playwright's connectOverCDP timed out after the websocket connected. No page object was created and controlNavigationAttempts was 0, so no navigation occurred. Filtered logcat matched 0 Chrome failure lines; the Chrome main process (PID 1589) and sandboxed child processes remained listed. The cause of the CDP attachment timeout is unresolved.",
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T05:44:33.384Z",
+  "controlNavigationAttempts": 0
+}

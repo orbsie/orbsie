@@ -25,6 +25,7 @@ const BOOT_TIMEOUT_MS = 180_000;
 const CHROME_CDP_TIMEOUT_MS = 30_000;
 const LOWER_COST_BASELINE = process.argv.includes("--baseline-120");
 const READINESS_ONLY = process.argv.includes("--readiness-only");
+const CONTROL_PAGE = process.argv.includes("--control-page");
 const diagnosticEntityFlags = process.argv.filter((argument) =>
   argument.startsWith("--diagnostic-entities="),
 );
@@ -88,6 +89,14 @@ assert(
   !distanceFlag || (READINESS_ONLY && LOWER_COST_BASELINE),
   "--diagnostic-distance requires --baseline-120 --readiness-only.",
 );
+assert(
+  !CONTROL_PAGE ||
+    (!LOWER_COST_BASELINE &&
+      !READINESS_ONLY &&
+      !diagnosticEntityFlag &&
+      !distanceFlag),
+  "--control-page cannot be combined with fixture diagnostic options.",
+);
 const CAMERA_DISTANCE = requestedDiagnosticDistance ?? 5000;
 const GENERATION_PATHS = new Set([
   "/api/generate",
@@ -105,11 +114,13 @@ const RUN_STARTED_AT = Date.now();
 const HARNESS_SOURCE_SHA256 = createHash("sha256")
   .update(await readFile(fileURLToPath(import.meta.url)))
   .digest("hex");
-const EVIDENCE_PREFIX = LOWER_COST_BASELINE
-  ? READINESS_ONLY
-    ? `${ENTITY_COUNT}-entity-distance-${CAMERA_DISTANCE}-readiness`
-    : "120-entity-baseline"
-  : "160-entity";
+const EVIDENCE_PREFIX = CONTROL_PAGE
+  ? "static-control"
+  : LOWER_COST_BASELINE
+    ? READINESS_ONLY
+      ? `${ENTITY_COUNT}-entity-distance-${CAMERA_DISTANCE}-readiness`
+      : "120-entity-baseline"
+    : "160-entity";
 const EVIDENCE_DIRECTORY = join(
   REPO_ROOT,
   "docs/evidence/android-growing-world-runtime",
@@ -261,8 +272,11 @@ function chooseDevicePort(command) {
   throw new Error(`Could not choose an unused ADB ${command} port.`);
 }
 
-function createStaticServer(bundle) {
-  const html = `<!doctype html>
+function createStaticServer(bundle, controlPage = false) {
+  const html = controlPage
+    ? `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:,"><title>Android Chrome static control</title></head><body><main id="control-page">Static Android Chrome control page loaded.</main></body></html>`
+    : `<!doctype html>
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:,"><title>Android growing world runtime fixture</title>
 <style>
 html,body,#root{margin:0;width:100%;height:100%;overflow:hidden;background:#07100f}
@@ -276,7 +290,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
       return;
     }
     const path = new URL(request.url ?? "/", "http://local").pathname;
-    if (path !== "/" && path !== "/fixture.js") {
+    if (path !== "/" && (controlPage || path !== "/fixture.js")) {
       response.writeHead(404).end();
       return;
     }
@@ -710,36 +724,55 @@ function summarizeSoftwareSample(sample) {
 
 const report = {
   status: "running",
-  currentStage: "fixture-build",
+  currentStage: CONTROL_PAGE ? "static-control-page-setup" : "fixture-build",
   runId: RUN_ID,
   sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim(),
   harnessSourceSha256: HARNESS_SOURCE_SHA256,
-  scope: LOWER_COST_BASELINE
-    ? READINESS_ONLY
-      ? `Readiness-only diagnostic with ${ENTITY_COUNT} fixture ${ENTITY_LABEL} at ${CAMERA_DISTANCE} m; no travel cycles`
-      : `Lower-cost baseline with ${ENTITY_COUNT} default fixture entities, ${CYCLE_COUNT} Android touch travel/reentry cycles`
-    : `${ENTITY_COUNT} ready entities, ${CYCLE_COUNT} Android touch travel/reentry cycles, direct SoftwareWorld path`,
-  fixture: {
-    mode: LOWER_COST_BASELINE
+  scope: CONTROL_PAGE
+    ? "Android Chrome static control-page diagnostic; no fixture JavaScript or SoftwareWorld"
+    : LOWER_COST_BASELINE
       ? READINESS_ONLY
-        ? requestedDiagnosticEntityCount
-          ? `${ENTITY_COUNT}-entity scene-readiness diagnostic with post-ready page CDP session`
-          : "default 120-entity scene-readiness diagnostic with post-ready page CDP session"
-        : "default 120-entity fixture diagnostic baseline"
-      : "160-entity growing-world acceptance",
-    entityCount: ENTITY_COUNT,
-    entitySelection: requestedDiagnosticEntityCount
-      ? `first ${ENTITY_COUNT} entities from the default home cluster, selected through a diagnostic-only in-memory fixture transform`
-      : "default fixture entity set",
-    additionalCluster: LOWER_COST_BASELINE
-      ? "none; default home and distant clusters only"
-      : "40 entities at X=1000 m (30 visible and 10 nearby), enabled by entities=160",
-    rendererQuery: "renderer=software",
-    initialCameraDistance: CAMERA_DISTANCE,
+        ? `Readiness-only diagnostic with ${ENTITY_COUNT} fixture ${ENTITY_LABEL} at ${CAMERA_DISTANCE} m; no travel cycles`
+        : `Lower-cost baseline with ${ENTITY_COUNT} default fixture entities, ${CYCLE_COUNT} Android touch travel/reentry cycles`
+      : `${ENTITY_COUNT} ready entities, ${CYCLE_COUNT} Android touch travel/reentry cycles, direct SoftwareWorld path`,
+  fixture: {
+    mode: CONTROL_PAGE
+      ? "static HTML control page; fixture bundle and SoftwareWorld omitted"
+      : LOWER_COST_BASELINE
+        ? READINESS_ONLY
+          ? requestedDiagnosticEntityCount
+            ? `${ENTITY_COUNT}-entity scene-readiness diagnostic with post-ready page CDP session`
+            : "default 120-entity scene-readiness diagnostic with post-ready page CDP session"
+          : "default 120-entity fixture diagnostic baseline"
+        : "160-entity growing-world acceptance",
+    entityCount: CONTROL_PAGE ? 0 : ENTITY_COUNT,
+    ...(CONTROL_PAGE
+      ? {
+          entitySelection: "none; static HTML only",
+          additionalCluster: "none",
+          rendererQuery: "none; no renderer instantiated",
+          initialCameraDistance: null,
+        }
+      : {
+          entitySelection: requestedDiagnosticEntityCount
+            ? `first ${ENTITY_COUNT} entities from the default home cluster, selected through a diagnostic-only in-memory fixture transform`
+            : "default fixture entity set",
+          additionalCluster: LOWER_COST_BASELINE
+            ? "none; default home and distant clusters only"
+            : "40 entities at X=1000 m (30 visible and 10 nearby), enabled by entities=160",
+          rendererQuery: "renderer=software",
+          initialCameraDistance: CAMERA_DISTANCE,
+        }),
   },
   pageCdpSessionCreatedAfterFixtureReady: false,
+  ...(CONTROL_PAGE
+    ? {
+        pageCdpSessionCreatedAfterNavigation: false,
+        controlNavigationAttempts: 0,
+      }
+    : {}),
   timings: {},
   lifecycleEvents: [],
   httpResponses: [],
@@ -754,13 +787,18 @@ const report = {
   heap: { supported: null, samples: [] },
   cycles: [],
   screenshots: [],
-  limitations: [
-    "This is an Android 15 emulator run, not physical-device certification.",
-    "SoftwareWorld renders through Canvas2D; this run does not measure WebGL, native GPU behavior, or physical-device graphics performance.",
-    "Frame intervals are from the emulated Chrome viewport and do not establish 60 fps.",
-    "SoftwareWorld has no WebGL particle-formation animation; no-replay evidence checks that project identity/revision and ready review state persist across reentry.",
-    "CDP JavaScript heap values are tab-level samples and can vary with garbage collection.",
-  ],
+  limitations: CONTROL_PAGE
+    ? [
+        "This static control navigation is an Android emulator diagnostic, not physical-device certification.",
+        "The page contains no fixture bundle, renderer, canvas, or application runtime; a result does not establish application behavior.",
+      ]
+    : [
+        "This is an Android 15 emulator run, not physical-device certification.",
+        "SoftwareWorld renders through Canvas2D; this run does not measure WebGL, native GPU behavior, or physical-device graphics performance.",
+        "Frame intervals are from the emulated Chrome viewport and do not establish 60 fps.",
+        "SoftwareWorld has no WebGL particle-formation animation; no-replay evidence checks that project identity/revision and ready review state persist across reentry.",
+        "CDP JavaScript heap values are tab-level samples and can vary with garbage collection.",
+      ],
 };
 
 let emulatorProcess;
@@ -780,12 +818,15 @@ let harnessCleanupStarted = false;
 await mkdir(EVIDENCE_DIRECTORY, { recursive: true });
 
 try {
-  temporaryDirectory = await mkdtemp(
-    join(tmpdir(), "orbsie-android-growing-world-"),
-  );
-  const bundlePath = join(temporaryDirectory, "fixture.js");
-  await buildFixtureBundle(bundlePath);
-  const bundle = await readFile(bundlePath);
+  let bundle;
+  if (!CONTROL_PAGE) {
+    temporaryDirectory = await mkdtemp(
+      join(tmpdir(), "orbsie-android-growing-world-"),
+    );
+    const bundlePath = join(temporaryDirectory, "fixture.js");
+    await buildFixtureBundle(bundlePath);
+    bundle = await readFile(bundlePath);
+  }
 
   report.currentStage = "emulator-boot";
   ({ processHandle: emulatorProcess, startedHere: emulatorStartedHere } =
@@ -796,8 +837,10 @@ try {
     chromeVersion: report.device.chromeVersion,
   });
 
-  report.currentStage = "local-fixture-and-adb-bridges";
-  server = createStaticServer(bundle);
+  report.currentStage = CONTROL_PAGE
+    ? "static-control-page-and-adb-bridges"
+    : "local-fixture-and-adb-bridges";
+  server = createStaticServer(bundle, CONTROL_PAGE);
   serverPort = await listen(server);
   reversePort = chooseDevicePort("reverse");
   adb("reverse", `tcp:${reversePort}`, `tcp:${serverPort}`);
@@ -838,8 +881,10 @@ try {
         urlPath: new URL(frame.url()).pathname,
       });
   });
-  await page.addInitScript(pageProbeInitScript);
-  report.currentStage = "fixture-navigation-and-dom-ready";
+  if (!CONTROL_PAGE) await page.addInitScript(pageProbeInitScript);
+  report.currentStage = CONTROL_PAGE
+    ? "static-control-navigation-and-dom-ready"
+    : "fixture-navigation-and-dom-ready";
   recordLifecycleEvent(report, "page-created-and-instrumented");
 
   const artifactOrigin = `http://127.0.0.1:${reversePort}`;
@@ -908,7 +953,11 @@ try {
     fixtureQuery.set("entities", "160");
   }
   report.timings.navigationStartedElapsedMs = Date.now() - RUN_STARTED_AT;
-  const response = await page.goto(`${artifactOrigin}/?${fixtureQuery}`, {
+  if (CONTROL_PAGE) report.controlNavigationAttempts += 1;
+  const navigationUrl = CONTROL_PAGE
+    ? `${artifactOrigin}/`
+    : `${artifactOrigin}/?${fixtureQuery}`;
+  const response = await page.goto(navigationUrl, {
     waitUntil: "domcontentloaded",
     timeout: 30_000,
   });
@@ -918,241 +967,328 @@ try {
     200,
     "Local fixture server did not return HTTP 200.",
   );
-  report.pageTimingAtDomContentLoaded = await page.evaluate(() => {
-    const navigation = performance.getEntriesByType("navigation")[0];
-    const probe = window.__androidGrowingWorld;
-    return {
-      documentReadyState: document.readyState,
-      initStartedAtMs: probe?.initStartedAt ?? null,
-      lifecycle: probe?.lifecycle ?? [],
-      navigation: navigation
-        ? {
-            responseStartMs: navigation.responseStart,
-            responseEndMs: navigation.responseEnd,
-            domInteractiveMs: navigation.domInteractive,
-            domContentLoadedEventEndMs: navigation.domContentLoadedEventEnd,
-            loadEventEndMs: navigation.loadEventEnd,
-            transferSizeBytes: navigation.transferSize,
-          }
-        : null,
-      resources: performance
-        .getEntriesByType("resource")
-        .filter((entry) => entry.name.startsWith(location.origin))
-        .slice(0, 12)
-        .map((entry) => ({
-          path: new URL(entry.name).pathname,
-          durationMs: entry.duration,
-          responseEndMs: entry.responseEnd,
-          transferSizeBytes: entry.transferSize,
-        })),
-    };
-  });
   recordLifecycleEvent(report, "dom-content-loaded", {
     httpStatus: response?.status() ?? null,
   });
-  await page
-    .screenshot({
-      path: join(EVIDENCE_DIRECTORY, "early-domcontentloaded.png"),
-      timeout: 5_000,
-    })
-    .then(() => recordLifecycleEvent(report, "early-screenshot-captured"))
-    .catch((error) => {
-      report.earlyScreenshotError = compactError(error);
+  if (CONTROL_PAGE) {
+    await page.waitForLoadState("load", { timeout: 10_000 });
+    report.timings.loadElapsedMs = Date.now() - RUN_STARTED_AT;
+    report.currentStage = "static-control-page-checks";
+    report.controlPage = await page.evaluate(() => ({
+      documentReadyState: document.readyState,
+      title: document.title,
+      bodyText: document.body.innerText.trim(),
+      scriptCount: document.scripts.length,
+      canvasCount: document.querySelectorAll("canvas").length,
+      softwareWorldCount: document.querySelectorAll(
+        ".software-world, .software-fixture",
+      ).length,
+      navigation: (() => {
+        const entry = performance.getEntriesByType("navigation")[0];
+        return entry
+          ? {
+              responseStartMs: entry.responseStart,
+              responseEndMs: entry.responseEnd,
+              domInteractiveMs: entry.domInteractive,
+              domContentLoadedEventEndMs: entry.domContentLoadedEventEnd,
+              loadEventEndMs: entry.loadEventEnd,
+              transferSizeBytes: entry.transferSize,
+            }
+          : null;
+      })(),
+      resources: performance
+        .getEntriesByType("resource")
+        .filter((entry) => entry.name.startsWith(location.origin))
+        .map((entry) => ({
+          path: new URL(entry.name).pathname,
+          durationMs: entry.duration,
+          transferSizeBytes: entry.transferSize,
+        })),
+    }));
+    assert.equal(report.controlPage.documentReadyState, "complete");
+    assert.equal(report.controlPage.title, "Android Chrome static control");
+    assert.equal(
+      report.controlPage.bodyText,
+      "Static Android Chrome control page loaded.",
+    );
+    assert.equal(report.controlPage.scriptCount, 0);
+    assert.equal(report.controlPage.canvasCount, 0);
+    assert.equal(report.controlPage.softwareWorldCount, 0);
+    report.controlPage.mainFrameNavigations = report.lifecycleEvents.filter(
+      ({ event, detail }) =>
+        event === "main-frame-navigated" && detail?.urlPath === "/",
+    ).length;
+    assert.equal(report.controlPage.mainFrameNavigations, 1);
+    report.renderer = "none; static HTML control page";
+    report.browser = await page.evaluate(() => ({
+      userAgent: navigator.userAgent,
+      viewport: { width: innerWidth, height: innerHeight },
+      devicePixelRatio,
+      maxTouchPoints: navigator.maxTouchPoints,
+    }));
+    report.viewport = report.browser.viewport;
+    await page.screenshot({
+      path: join(EVIDENCE_DIRECTORY, "control-page.png"),
+      timeout: 10_000,
     });
-  report.currentStage = "scene-readiness";
-  await page.waitForFunction(() => window.formationResidencyFixture?.ready(), {
-    timeout: 60_000,
-  });
-  report.timings.fixtureReadyElapsedMs = Date.now() - RUN_STARTED_AT;
-  recordLifecycleEvent(report, "fixture-ready");
-  report.currentStage = "post-readiness-performance-cdp-session";
-  session = await context.newCDPSession(page);
-  report.pageCdpSessionCreatedAfterFixtureReady = true;
-  report.timings.pageCdpSessionCreatedElapsedMs = Date.now() - RUN_STARTED_AT;
-  recordLifecycleEvent(report, "page-cdp-session-created-after-fixture-ready");
-  try {
-    await session.send("Performance.enable");
-    report.heap.performanceDomainEnabled = true;
-  } catch (error) {
-    report.heap.supported = false;
-    report.heap.error = compactError(error);
-    report.heap.performanceDomainEnabled = false;
-  }
-  report.timings.performanceDomainEnabledElapsedMs =
-    Date.now() - RUN_STARTED_AT;
-  report.currentStage = READINESS_ONLY
-    ? "software-scene-readiness-sample"
-    : "four-cycle-travel-probe";
-  await page
-    .locator(".software-world")
-    .waitFor({ state: "visible", timeout: 20_000 });
-  await page.locator("canvas").waitFor({ state: "visible", timeout: 20_000 });
-
-  report.browser = await page.evaluate(() => ({
-    userAgent: navigator.userAgent,
-    viewport: { width: innerWidth, height: innerHeight },
-    devicePixelRatio,
-    maxTouchPoints: navigator.maxTouchPoints,
-    hardwareConcurrency: navigator.hardwareConcurrency,
-    deviceMemoryGiB: navigator.deviceMemory ?? null,
-    renderer:
-      window.__androidGrowingWorld.webglContextAttempts === 0
-        ? "direct SoftwareWorld Canvas2D; zero WebGL context attempts"
-        : "unexpected WebGL attempt",
-    fixtureNavigation: window.formationResidencyFixture.navigation(),
-  }));
-  assert(
-    report.browser.maxTouchPoints > 0,
-    "Android Chrome did not expose touch input.",
-  );
-  assert.equal(
-    report.browser.renderer,
-    "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
-  );
-  assert.equal(report.browser.fixtureNavigation.distance, CAMERA_DISTANCE);
-  report.renderer = report.browser.renderer;
-  report.viewport = report.browser.viewport;
-
-  await page.evaluate((selectedId) => {
-    window.formationResidencyFixture.select(selectedId);
-    window.formationResidencyFixture.resetPaint();
-  }, SELECTED_ID);
-  const initial = await waitForSoftwareState(page, HOME_X);
-  assertSoftwareSample(initial, HOME_X);
-  report.initial = summarizeSoftwareSample(initial);
-  report.projectIdentity = {
-    id: initial.review.projectId,
-    revision: initial.review.revision,
-    renderedRevision: initial.review.renderedRevision,
-  };
-  report.timings.initialSoftwareStateReadyElapsedMs =
-    Date.now() - RUN_STARTED_AT;
-  if (READINESS_ONLY) {
+    recordLifecycleEvent(report, "control-page-screenshot-captured");
+    session = await context.newCDPSession(page);
+    report.pageCdpSessionCreatedAfterNavigation = true;
+    await session.send("Runtime.enable");
+    const remoteTitle = await session.send("Runtime.evaluate", {
+      expression: "document.title",
+      returnByValue: true,
+    });
+    assert.equal(remoteTitle.result?.value, report.controlPage.title);
+    report.controlPage.remoteCdpTitle = remoteTitle.result.value;
+  } else {
+    report.pageTimingAtDomContentLoaded = await page.evaluate(() => {
+      const navigation = performance.getEntriesByType("navigation")[0];
+      const probe = window.__androidGrowingWorld;
+      return {
+        documentReadyState: document.readyState,
+        initStartedAtMs: probe?.initStartedAt ?? null,
+        lifecycle: probe?.lifecycle ?? [],
+        navigation: navigation
+          ? {
+              responseStartMs: navigation.responseStart,
+              responseEndMs: navigation.responseEnd,
+              domInteractiveMs: navigation.domInteractive,
+              domContentLoadedEventEndMs: navigation.domContentLoadedEventEnd,
+              loadEventEndMs: navigation.loadEventEnd,
+              transferSizeBytes: navigation.transferSize,
+            }
+          : null,
+        resources: performance
+          .getEntriesByType("resource")
+          .filter((entry) => entry.name.startsWith(location.origin))
+          .slice(0, 12)
+          .map((entry) => ({
+            path: new URL(entry.name).pathname,
+            durationMs: entry.duration,
+            responseEndMs: entry.responseEnd,
+            transferSizeBytes: entry.transferSize,
+          })),
+      };
+    });
     await page
       .screenshot({
-        path: join(EVIDENCE_DIRECTORY, "ready-scene.png"),
-        timeout: 10_000,
+        path: join(EVIDENCE_DIRECTORY, "early-domcontentloaded.png"),
+        timeout: 5_000,
       })
-      .then(() => {
-        report.readyScreenshotCaptured = true;
-        recordLifecycleEvent(report, "ready-scene-screenshot-captured");
-      })
+      .then(() => recordLifecycleEvent(report, "early-screenshot-captured"))
       .catch((error) => {
-        report.readyScreenshotError = compactError(error);
+        report.earlyScreenshotError = compactError(error);
       });
-    report.timings.readyScreenshotElapsedMs = Date.now() - RUN_STARTED_AT;
-  } else {
-    const heapStart = await readHeapMetrics(session, report);
-    if (heapStart)
-      report.heap.samples.push({ phase: "initial-home", ...heapStart });
-    await page.screenshot({
-      path: join(EVIDENCE_DIRECTORY, "initial-home.png"),
-    });
-
-    await page.evaluate(() => window.__androidGrowingWorldFrameProbe.start());
-    for (let cycle = 1; cycle <= CYCLE_COUNT; cycle++) {
-      const homeBefore = await waitForSoftwareState(page, HOME_X);
-      assertSoftwareSample(homeBefore, HOME_X);
-      const outboundPlan = await page.evaluate(
-        (target) => window.formationResidencyFixture.panPlanTo(target),
-        DISTANT_X,
-      );
-      await page.evaluate(() => window.formationResidencyFixture.resetPaint());
-      await touchSwipe(page, session, outboundPlan);
-      const distant = await waitForSoftwareState(page, DISTANT_X);
-      assertSoftwareSample(distant, DISTANT_X);
-      const distantHeap = await readHeapMetrics(session, report);
-
-      const returnPlan = await page.evaluate(
-        (target) => window.formationResidencyFixture.panPlanTo(target),
-        HOME_X,
-      );
-      await page.evaluate(() => window.formationResidencyFixture.resetPaint());
-      await touchSwipe(page, session, returnPlan);
-      const homeReentry = await waitForSoftwareState(page, HOME_X);
-      assertSoftwareSample(homeReentry, HOME_X);
-      const sameProject =
-        homeReentry.review.projectId === report.projectIdentity.id;
-      const sameRevision =
-        homeReentry.review.revision === report.projectIdentity.revision;
-      const noReplay =
-        homeReentry.fixtureReady &&
-        homeReentry.review.transitionSettled &&
-        homeReentry.review.renderedRevision ===
-          report.projectIdentity.revision &&
-        sameProject &&
-        sameRevision;
-      assert(
-        noReplay,
-        `SoftwareWorld reentry did not preserve its ready project state (cycle ${cycle}).`,
-      );
-      const homeHeap = await readHeapMetrics(session, report);
-      const cycleReport = {
-        cycle,
-        outboundTouch: {
-          fromX: Number(homeBefore.navigation.target[0].toFixed(2)),
-          toX: DISTANT_X,
-          expectedTargetX: Number(
-            outboundPlan.expectedNavigation.target[0].toFixed(2),
-          ),
-          start: outboundPlan.start,
-          end: outboundPlan.end,
-        },
-        distant: summarizeSoftwareSample(distant),
-        distantHeapBytes: distantHeap?.jsHeapUsedBytes ?? null,
-        returnTouch: {
-          fromX: Number(distant.navigation.target[0].toFixed(2)),
-          toX: HOME_X,
-          expectedTargetX: Number(
-            returnPlan.expectedNavigation.target[0].toFixed(2),
-          ),
-          start: returnPlan.start,
-          end: returnPlan.end,
-        },
-        homeReentry: summarizeSoftwareSample(homeReentry),
-        homeHeapBytes: homeHeap?.jsHeapUsedBytes ?? null,
-        sameProject,
-        sameRevision,
-        noReplayObserved: noReplay,
-      };
-      report.cycles.push(cycleReport);
-      if (distantHeap)
-        report.heap.samples.push({ cycle, phase: "distant", ...distantHeap });
-      if (homeHeap)
-        report.heap.samples.push({ cycle, phase: "home-reentry", ...homeHeap });
-      if (cycle === 1)
-        await page.screenshot({
-          path: join(EVIDENCE_DIRECTORY, "first-distant-touch.png"),
-        });
-      if (cycle === CYCLE_COUNT)
-        await page.screenshot({
-          path: join(EVIDENCE_DIRECTORY, "final-home-reentry.png"),
-        });
-    }
-    evaluateHeapGrowth(report);
-    const intervals = await page.evaluate(() =>
-      window.__androidGrowingWorldFrameProbe.stop(),
+    report.currentStage = "scene-readiness";
+    await page.waitForFunction(
+      () => window.formationResidencyFixture?.ready(),
+      {
+        timeout: 60_000,
+      },
     );
-    report.frameIntervals = {
-      unit: "milliseconds between requestAnimationFrame callbacks",
-      sampleCount: intervals.length,
-      p50: percentile(intervals, 0.5),
-      p95: percentile(intervals, 0.95),
-      p99: percentile(intervals, 0.99),
-      max: intervals.length ? Math.max(...intervals) : null,
-    };
-    assert.equal(report.cycles.length, CYCLE_COUNT);
-    assert.ok(
-      intervals.length > 20,
-      "Android rAF probe did not collect enough frames.",
+    report.timings.fixtureReadyElapsedMs = Date.now() - RUN_STARTED_AT;
+    recordLifecycleEvent(report, "fixture-ready");
+    report.currentStage = "post-readiness-performance-cdp-session";
+    session = await context.newCDPSession(page);
+    report.pageCdpSessionCreatedAfterFixtureReady = true;
+    report.timings.pageCdpSessionCreatedElapsedMs = Date.now() - RUN_STARTED_AT;
+    recordLifecycleEvent(
+      report,
+      "page-cdp-session-created-after-fixture-ready",
+    );
+    try {
+      await session.send("Performance.enable");
+      report.heap.performanceDomainEnabled = true;
+    } catch (error) {
+      report.heap.supported = false;
+      report.heap.error = compactError(error);
+      report.heap.performanceDomainEnabled = false;
+    }
+    report.timings.performanceDomainEnabledElapsedMs =
+      Date.now() - RUN_STARTED_AT;
+    report.currentStage = READINESS_ONLY
+      ? "software-scene-readiness-sample"
+      : "four-cycle-travel-probe";
+    await page
+      .locator(".software-world")
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.locator("canvas").waitFor({ state: "visible", timeout: 20_000 });
+
+    report.browser = await page.evaluate(() => ({
+      userAgent: navigator.userAgent,
+      viewport: { width: innerWidth, height: innerHeight },
+      devicePixelRatio,
+      maxTouchPoints: navigator.maxTouchPoints,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      deviceMemoryGiB: navigator.deviceMemory ?? null,
+      renderer:
+        window.__androidGrowingWorld.webglContextAttempts === 0
+          ? "direct SoftwareWorld Canvas2D; zero WebGL context attempts"
+          : "unexpected WebGL attempt",
+      fixtureNavigation: window.formationResidencyFixture.navigation(),
+    }));
+    assert(
+      report.browser.maxTouchPoints > 0,
+      "Android Chrome did not expose touch input.",
     );
     assert.equal(
-      await page.evaluate(
-        () => window.__androidGrowingWorld.webglContextAttempts,
-      ),
-      0,
-      "WebGL was unexpectedly requested by this direct SoftwareWorld fixture.",
+      report.browser.renderer,
+      "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
     );
+    assert.equal(report.browser.fixtureNavigation.distance, CAMERA_DISTANCE);
+    report.renderer = report.browser.renderer;
+    report.viewport = report.browser.viewport;
+
+    await page.evaluate((selectedId) => {
+      window.formationResidencyFixture.select(selectedId);
+      window.formationResidencyFixture.resetPaint();
+    }, SELECTED_ID);
+    const initial = await waitForSoftwareState(page, HOME_X);
+    assertSoftwareSample(initial, HOME_X);
+    report.initial = summarizeSoftwareSample(initial);
+    report.projectIdentity = {
+      id: initial.review.projectId,
+      revision: initial.review.revision,
+      renderedRevision: initial.review.renderedRevision,
+    };
+    report.timings.initialSoftwareStateReadyElapsedMs =
+      Date.now() - RUN_STARTED_AT;
+    if (READINESS_ONLY) {
+      await page
+        .screenshot({
+          path: join(EVIDENCE_DIRECTORY, "ready-scene.png"),
+          timeout: 10_000,
+        })
+        .then(() => {
+          report.readyScreenshotCaptured = true;
+          recordLifecycleEvent(report, "ready-scene-screenshot-captured");
+        })
+        .catch((error) => {
+          report.readyScreenshotError = compactError(error);
+        });
+      report.timings.readyScreenshotElapsedMs = Date.now() - RUN_STARTED_AT;
+    } else {
+      const heapStart = await readHeapMetrics(session, report);
+      if (heapStart)
+        report.heap.samples.push({ phase: "initial-home", ...heapStart });
+      await page.screenshot({
+        path: join(EVIDENCE_DIRECTORY, "initial-home.png"),
+      });
+
+      await page.evaluate(() => window.__androidGrowingWorldFrameProbe.start());
+      for (let cycle = 1; cycle <= CYCLE_COUNT; cycle++) {
+        const homeBefore = await waitForSoftwareState(page, HOME_X);
+        assertSoftwareSample(homeBefore, HOME_X);
+        const outboundPlan = await page.evaluate(
+          (target) => window.formationResidencyFixture.panPlanTo(target),
+          DISTANT_X,
+        );
+        await page.evaluate(() =>
+          window.formationResidencyFixture.resetPaint(),
+        );
+        await touchSwipe(page, session, outboundPlan);
+        const distant = await waitForSoftwareState(page, DISTANT_X);
+        assertSoftwareSample(distant, DISTANT_X);
+        const distantHeap = await readHeapMetrics(session, report);
+
+        const returnPlan = await page.evaluate(
+          (target) => window.formationResidencyFixture.panPlanTo(target),
+          HOME_X,
+        );
+        await page.evaluate(() =>
+          window.formationResidencyFixture.resetPaint(),
+        );
+        await touchSwipe(page, session, returnPlan);
+        const homeReentry = await waitForSoftwareState(page, HOME_X);
+        assertSoftwareSample(homeReentry, HOME_X);
+        const sameProject =
+          homeReentry.review.projectId === report.projectIdentity.id;
+        const sameRevision =
+          homeReentry.review.revision === report.projectIdentity.revision;
+        const noReplay =
+          homeReentry.fixtureReady &&
+          homeReentry.review.transitionSettled &&
+          homeReentry.review.renderedRevision ===
+            report.projectIdentity.revision &&
+          sameProject &&
+          sameRevision;
+        assert(
+          noReplay,
+          `SoftwareWorld reentry did not preserve its ready project state (cycle ${cycle}).`,
+        );
+        const homeHeap = await readHeapMetrics(session, report);
+        const cycleReport = {
+          cycle,
+          outboundTouch: {
+            fromX: Number(homeBefore.navigation.target[0].toFixed(2)),
+            toX: DISTANT_X,
+            expectedTargetX: Number(
+              outboundPlan.expectedNavigation.target[0].toFixed(2),
+            ),
+            start: outboundPlan.start,
+            end: outboundPlan.end,
+          },
+          distant: summarizeSoftwareSample(distant),
+          distantHeapBytes: distantHeap?.jsHeapUsedBytes ?? null,
+          returnTouch: {
+            fromX: Number(distant.navigation.target[0].toFixed(2)),
+            toX: HOME_X,
+            expectedTargetX: Number(
+              returnPlan.expectedNavigation.target[0].toFixed(2),
+            ),
+            start: returnPlan.start,
+            end: returnPlan.end,
+          },
+          homeReentry: summarizeSoftwareSample(homeReentry),
+          homeHeapBytes: homeHeap?.jsHeapUsedBytes ?? null,
+          sameProject,
+          sameRevision,
+          noReplayObserved: noReplay,
+        };
+        report.cycles.push(cycleReport);
+        if (distantHeap)
+          report.heap.samples.push({ cycle, phase: "distant", ...distantHeap });
+        if (homeHeap)
+          report.heap.samples.push({
+            cycle,
+            phase: "home-reentry",
+            ...homeHeap,
+          });
+        if (cycle === 1)
+          await page.screenshot({
+            path: join(EVIDENCE_DIRECTORY, "first-distant-touch.png"),
+          });
+        if (cycle === CYCLE_COUNT)
+          await page.screenshot({
+            path: join(EVIDENCE_DIRECTORY, "final-home-reentry.png"),
+          });
+      }
+      evaluateHeapGrowth(report);
+      const intervals = await page.evaluate(() =>
+        window.__androidGrowingWorldFrameProbe.stop(),
+      );
+      report.frameIntervals = {
+        unit: "milliseconds between requestAnimationFrame callbacks",
+        sampleCount: intervals.length,
+        p50: percentile(intervals, 0.5),
+        p95: percentile(intervals, 0.95),
+        p99: percentile(intervals, 0.99),
+        max: intervals.length ? Math.max(...intervals) : null,
+      };
+      assert.equal(report.cycles.length, CYCLE_COUNT);
+      assert.ok(
+        intervals.length > 20,
+        "Android rAF probe did not collect enough frames.",
+      );
+      assert.equal(
+        await page.evaluate(
+          () => window.__androidGrowingWorld.webglContextAttempts,
+        ),
+        0,
+        "WebGL was unexpectedly requested by this direct SoftwareWorld fixture.",
+      );
+    }
   }
   report.cookiesAfter = (await context.cookies(artifactOrigin)).length;
   assert.equal(report.cookiesAfter, 0);
@@ -1162,23 +1298,31 @@ try {
   assert.deepEqual(report.failedResponses, []);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
-  report.checks = READINESS_ONLY
+  report.checks = CONTROL_PAGE
     ? {
-        sceneReadyAtRequestedDistance: true,
-        readySceneScreenshotCaptured: report.readyScreenshotCaptured === true,
-        travelCyclesAttempted: 0,
+        oneStaticControlNavigation: true,
+        noFixtureBundleOrSoftwareWorld: true,
+        pageCdPRuntimeEvaluationSucceeded: true,
         noProviderOrExternalRequests: true,
         noPageOrConsoleErrors: true,
       }
-    : {
-        androidTouchInputAvailable: true,
-        softwareRendererReviewReady: true,
-        allTravelAndReentryCyclesReady: true,
-        selectedDistantEntityRemainedResident: true,
-        noSoftwareSceneRevisionReplayObserved: true,
-        noProviderOrExternalRequests: true,
-        noPageOrConsoleErrors: true,
-      };
+    : READINESS_ONLY
+      ? {
+          sceneReadyAtRequestedDistance: true,
+          readySceneScreenshotCaptured: report.readyScreenshotCaptured === true,
+          travelCyclesAttempted: 0,
+          noProviderOrExternalRequests: true,
+          noPageOrConsoleErrors: true,
+        }
+      : {
+          androidTouchInputAvailable: true,
+          softwareRendererReviewReady: true,
+          allTravelAndReentryCyclesReady: true,
+          selectedDistantEntityRemainedResident: true,
+          noSoftwareSceneRevisionReplayObserved: true,
+          noProviderOrExternalRequests: true,
+          noPageOrConsoleErrors: true,
+        };
   recordLifecycleEvent(report, "android-process-diagnostics-started");
   collectAndroidProcessDiagnostic(report);
   recordLifecycleEvent(report, "android-process-diagnostics-finished", {
@@ -1186,7 +1330,10 @@ try {
       report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? null,
   });
   report.status = "passed";
-  if (READINESS_ONLY) {
+  if (CONTROL_PAGE) {
+    report.comparisonAssessment =
+      "The static control page completed one navigation and a post-navigation CDP Runtime.evaluate with no fixture JavaScript or SoftwareWorld. This demonstrates the basic AVD, ADB, Chrome, and CDP navigation path for this run; it does not establish application behavior or explain earlier fixture failures.";
+  } else if (READINESS_ONLY) {
     report.comparisonAssessment = requestedDiagnosticEntityCount
       ? `The ${ENTITY_COUNT}-entity diagnostic fixture reached scene readiness at ${CAMERA_DISTANCE} m. It used a diagnostic-only fixture transform and did not exercise the 120- or 160-entity acceptance scene; no travel cycles were run.`
       : "With the same 120-entity, 100 m fixture settings, this run reached ready after creating the page CDP session and enabling Performance only afterward; the prior run with pre-navigation CDP setup closed before ready. This favors pre-navigation page CDP instrumentation as a possible contributor, but one run does not prove causality. The 1200 m route still needs multiple swipes or a bounded zoom-out/travel/zoom-in sequence; no travel cycles were run here.";
@@ -1243,14 +1390,21 @@ try {
       });
   } else {
     report.failurePageSnapshot = {
-      unavailable: "page target was already closed",
+      unavailable: CONTROL_PAGE
+        ? "no page object was created; control navigation was not attempted"
+        : "page target was already closed",
     };
   }
   recordLifecycleEvent(report, "android-failure-diagnostics-started", {
     failureStage: report.failureStage,
   });
   collectAndroidProcessDiagnostic(report);
-  if (READINESS_ONLY) {
+  if (CONTROL_PAGE) {
+    report.comparisonAssessment =
+      report.failureStage === "chrome-startup-and-cdp-connect"
+        ? `The Chrome ${report.androidChromeCDP?.browser ?? "DevTools endpoint"} endpoint responded, but Playwright's CDP attachment timed out before a page was created. Control navigation attempts: ${report.controlNavigationAttempts}. Filtered logcat matched ${report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? 0} Chrome failure lines; this does not identify the attachment timeout's cause.`
+        : `The static control run failed during ${report.failureStage}; control navigation attempts: ${report.controlNavigationAttempts}. Filtered logs do not identify the cause, and no fixture bundle or SoftwareWorld was loaded.`;
+  } else if (READINESS_ONLY) {
     const rendererDeathLine =
       report.androidProcessDiagnostic?.logcat?.lines?.find((line) =>
         /sandboxed_process|SandboxedProcessService|renderer.*died/i.test(line),
@@ -1379,10 +1533,10 @@ try {
     join(EVIDENCE_DIRECTORY, "README.md"),
     `# Android growing world runtime probe\n\n` +
       `Result: **${report.status}**. ${report.scope}.\n\n` +
-      `Mode: ${report.fixture.mode}. Device: ${report.device?.avd ?? AVD}, Android ${report.device?.androidRelease ?? "not reached"} (API ${report.device?.androidApi ?? "unknown"}), Chrome ${report.device?.chromeVersion ?? "not reached"}. Renderer requested: direct SoftwareWorld Canvas2D. Provider calls: 0; external requests: ${report.externalRequests.length}.\n\n` +
+      `Mode: ${report.fixture.mode}. Device: ${report.device?.avd ?? AVD}, Android ${report.device?.androidRelease ?? "not reached"} (API ${report.device?.androidApi ?? "unknown"}), Chrome ${report.device?.chromeVersion ?? "not reached"}. Renderer requested: ${CONTROL_PAGE ? "none; static HTML control page" : "direct SoftwareWorld Canvas2D"}. Provider calls: 0; external requests: ${report.externalRequests.length}.\n\n` +
       `${report.comparisonAssessment ? `${report.comparisonAssessment}\n\n` : ""}` +
-      `${READINESS_ONLY ? "This is a scene-readiness-only run; it performs no travel gesture and records no rAF or heap result. The page CDP session and Performance domain are created only after fixture.ready(). " : "The JSON includes page/browser lifecycle times, local response timing, travel readiness, rAF percentiles and CDP heap metrics when reached. "}` +
-      `The JSON also includes early/failure screenshots when captured, and only filtered/redacted Chrome renderer, low-memory, or ANR logcat lines plus Chrome process state. This emulator run does not establish physical-device behavior, native GPU performance, visual quality or 60 fps. Screenshots captured: ${report.screenshots.length ? report.screenshots.join(", ") : "none"}. See [report.json](./report.json).\n`,
+      `${CONTROL_PAGE ? `The control mode permits one static HTML navigation after CDP attachment; this run attempted ${report.controlNavigationAttempts ?? 0}. The page contains no fixture bundle, script, canvas, or SoftwareWorld. ` : READINESS_ONLY ? "This is a scene-readiness-only run; it performs no travel gesture and records no rAF or heap result. The page CDP session and Performance domain are created only after fixture.ready(). " : "The JSON includes page/browser lifecycle times, local response timing, travel readiness, rAF percentiles and CDP heap metrics when reached. "}` +
+      `The JSON also includes lifecycle timing, screenshots when captured, and only filtered/redacted Chrome renderer, low-memory, or ANR logcat lines plus Chrome process state. This emulator diagnostic does not establish physical-device behavior or application acceptance. Screenshots captured: ${report.screenshots.length ? report.screenshots.join(", ") : "none"}. See [report.json](./report.json).\n`,
   );
   console.log(
     JSON.stringify({
