@@ -6,6 +6,13 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- Android 15 midrange-emulator Chrome 124 closed the direct SoftwareWorld
+  growing-world fixture before readiness in four bounded configurations (160
+  and 120 entities, 5,000 m and 100 m camera distance). One filtered system
+  log confirms a Chrome sandboxed child process died, without establishing
+  its cause. No travel, frame-time, or memory acceptance result was obtained;
+  `docs/evidence/android-growing-world-runtime/` retains the failure and
+  cleanup evidence. Prior Android published-game checks still stand.
 - A 160-entity synthetic browser fixture passed six repeated distant-travel
   and home-reentry cycles with 48 full formations, 112 proxies, the distant
   selection retained, and settled WebGL resource counts unchanged by cycle.

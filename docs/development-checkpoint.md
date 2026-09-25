@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 25 Android growing-world diagnostic: source/evidence `aa2530c` adds a
+reproducible Android 15/API 35 midrange-emulator Chrome 124 SoftwareWorld
+fixture harness with owned ADB/CDP/emulator cleanup, touch-travel and
+frame/heap collection when the page reaches readiness. Four bounded attempts
+all failed before scene readiness: 160 entities at 5,000 m, 120 at 5,000 m,
+120 at 100 m, and 120 at 100 m with CDP Performance enabled only after
+readiness. The instrumented 120-entity baselines loaded the 4.39 MB fixture
+before Chrome closed the tab; the last attempt closed during navigation. One
+filtered ActivityManager log
+confirms a Chrome sandboxed child process died while Chrome's main process
+remained. It does not establish why it died or prove OOM. No travel cycles,
+screenshots, frame percentiles or heap samples were collected, so Android
+growing-world acceptance remains open. All attempts used zero model calls and
+external requests; syntax, Prettier and diff checks pass; owned ADB mappings
+and emulator were removed. Evidence:
+`docs/evidence/android-growing-world-runtime/`. This is separate from prior
+passing Android published-game checks and does not establish an app-wide
+mobile regression.
+
 Sep 25 growing-world browser measurement: source/evidence `08a7b10` adds an
 opt-in 160-entity stress fixture and a repeatable six-cycle home-to-outer
 travel/reentry probe. All cycles held 48 full formations and 112 proxies,
