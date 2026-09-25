@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 25 one fresh OpenRouter flagship attempt used exact `openai/gpt-6-luna`
+with low reasoning/default tier, 4096 output cap, three-call budget, and a
+local-only key. The isolated build and loopback origin/model/cap preflights
+passed on source `b73564aa`; quota was 38% before the run. The harness made one
+generation request (HTTP 200), with no retry, fallback, publication, or cloud
+recovery. Creation reached revision 29, then failed fresh gameplay with
+`Fresh gameplay could not recover reachable support moving-platform-1 before
+retrying moving-platform-2.` Moving-platform-1 recorded one grounded and one
+bounce contact frame; platforms 2 and 3 recorded none. No collectibles were
+collected, score stayed 0, and there was no win, loss, or reset. Edit/undo/
+export did not run. The read-only OpenRouter model catalog preflight found the
+exact model; browser telemetry recorded zero blocked external requests.
+Sanitized report, scene-only screenshot, and saved project (chat messages
+removed) are in
+`docs/evidence/provider-e2e/openrouter-flagship-live-nearside-20260925/`.
+
 Sep 25 the fresh gameplay driver now steers toward the nearest point inside a
 0.12 m inset of an unparented built-in platform footprint, recomputing from the
 live platform position throughout approach and after jump release. Yaw-only
