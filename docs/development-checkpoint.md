@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 expanded-sample replay: fresh loopback traversal of the same saved
+revision-31 OpenRouter project, with per-attempt jump telemetry now retaining
+the first four plus latest eight frames (12 maximum). WebGL loaded and all
+local runtime/project/model requests returned 200; provider/cloud/external
+requests and page/console/request errors were zero. Bounce-three still had no
+contact or bounce. Its apex was `(0.591, 3.110, -2.640)` at 8,170 ms. The first
+retained descending sample was at 9,491 ms: player `(-0.366, 1.485, -3.615)`,
+platform `(-0.370, 1.550, -3.600)`. The estimated player-center landing plane is
+y=2.10, so this frame was already 0.615 below it; the exact crossing position
+falls in the gap between retained frames. Score remained 1 (crystal-five), with
+no portal win or reset; the report stays failed and does not establish whether
+the route or driver caused the miss. Evidence:
+`docs/evidence/provider-e2e/openrouter-flagship-current-runtime-samples-20260925/`.
+
 Sep 25 exact saved OpenRouter creation replay: pinned revision 31
 (`b6bfb722…1e09`) against checked-in player runtime (`runtime.js`
 `4767933f…1179`) in a loopback-only static page. The first setup response
@@ -31,7 +45,8 @@ dev server. Sanitized mode-0600 evidence is in
 Sep 25 failure-reporting repair: fresh creation, goal-7 and undo traversal
 exceptions now mark both the gameplay phase and flagship story failed, retaining
 bounded allowlisted evidence bound to the attempted project revision, including
-the last three sanitized platform-jump attempts with at most eight samples each.
+the last three sanitized platform-jump attempts. Initial capture kept at most
+eight samples each; it now keeps the first four plus latest eight (12 maximum).
 The top-level sanitized error remains intact. A deterministic focused test
 covers failure status, revision binding, nested evidence bounds and omission of
 provider text; the historical OpenRouter report above remains unchanged. No
