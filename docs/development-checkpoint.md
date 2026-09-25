@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 Android static-control diagnostic: source/evidence `9ea2ac5` adds a
+separate no-bundle, no-renderer static HTML mode to the same owned AVD/ADB/CDP
+harness. One fresh Android 15/Chrome 124 run reached Chrome's `/json/version`
+endpoint, but Playwright `connectOverCDP` timed out after the WebSocket
+connected. No page object or navigation was created (zero control attempts).
+Filtered logcat had zero Chrome failure lines and main/sandbox processes were
+still listed; the cause of CDP attachment timeout is unknown. This run cannot
+establish whether plain HTML navigation works, and does not prove an app
+regression or explain earlier fixture child deaths. Astra reviewed the diff and
+report; syntax/format/diff/JSON checks passed, no retry occurred, and owned
+emulator/ADB resources were removed. Evidence:
+`docs/evidence/android-growing-world-runtime/static-control-2026-09-25T05-43-30-085Z/`.
+
 Sep 25 Android growing-world low-count diagnosis: `aa00c71` adds a
 diagnostic-only 1..119 entity count to the Android SoftwareWorld harness;
 normal 120/160 acceptance fixtures are unchanged. Fresh owned Android 15 /
