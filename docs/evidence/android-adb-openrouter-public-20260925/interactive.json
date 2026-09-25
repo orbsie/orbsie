@@ -1,0 +1,113 @@
+{
+  "status": "partial-mobile-smoke-passed",
+  "observedAtUtc": "2026-09-25T06:05:32.971065+00:00",
+  "sourceCommitAtInteraction": "b34dad2",
+  "publishedUrl": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
+  "device": {
+    "avd": "droidlm_api35_midrange",
+    "android": "15",
+    "chrome": "124.0.6367.219",
+    "emulatorMemoryMiB": 3072,
+    "emulatorSerial": "emulator-5556",
+    "physicalDevice": false
+  },
+  "method": "ADB launch, touchscreen input and screencap; no CDP used for gameplay interactions",
+  "steps": [
+    {
+      "action": "first URL intent after fresh AVD boot",
+      "observed": "Chrome Enhanced ad privacy onboarding obscured the game; screenshot screen.png. No consent choice was tapped."
+    },
+    {
+      "action": "second URL intent in the same Chrome session",
+      "observed": "Published game loaded after its Opening your little world transition; ready scene, Score: 0, Restart and touch controls visible."
+    },
+    {
+      "action": "hold right touch control for 1500 ms at physical pixels (516,2200)",
+      "observed": "Player visibly moved from the left side of the scene to near the portal; Score remained 0."
+    },
+    {
+      "action": "tap Restart at physical pixels (917,390)",
+      "observed": "Player visibly returned to the starting left-side position; Score remained 0."
+    },
+    {
+      "action": "rotate to landscape, capture, restore portrait",
+      "observed": "Published scene and all movement, jump, Restart and Score controls remained visible; scene appeared small in the wide viewport."
+    },
+    {
+      "action": "attach CDP read-only after game loaded",
+      "observed": "Playwright connected successfully to Chrome 124, found one context and four tabs; this did not exercise the game. It does not prove the onboarding screen caused earlier CDP failures."
+    }
+  ],
+  "limitations": [
+    "No crystal collection, score increase, win/loss, jump, simultaneous controls, portal traversal or reload was exercised.",
+    "ADB screenshots do not reveal renderer type, network requests, frame time or heap.",
+    "This is a midrange emulator, not a physical Android device.",
+    "The published URL is an existing immutable OpenRouter-authored artifact, not a fresh current-source publication.",
+    "The first screenshot shows Chrome onboarding rather than Orbsie; no optional ad settings or consent were changed."
+  ],
+  "screenshots": [
+    {
+      "file": "screen.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 208192,
+      "sha256": "747e4836d4dda6c3366552f356e99eee7ab4b6a853e286c3421a68dce9b56df6"
+    },
+    {
+      "file": "privacy-before.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 1389607,
+      "sha256": "df1e6ab593ea55ffce64edd2554036e788e55fd3b80d27d51264ecdcc419913e"
+    },
+    {
+      "file": "privacy-reopened.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 437315,
+      "sha256": "d57aad4fcdf059dbaa221fd83c9380d540dddf964b2aa1c1942a5eda86984112"
+    },
+    {
+      "file": "public-loaded.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 462044,
+      "sha256": "f6db67d79c5cd0703ba017ecc61a79d2c1fabe01d123d34065c337fb8ba5d522"
+    },
+    {
+      "file": "after-right-hold.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 452759,
+      "sha256": "3be456058c218bdfe4e02288241e4bf0053304147d1e6d9278e193d8573e3c7b"
+    },
+    {
+      "file": "after-restart.png",
+      "size": [
+        1080,
+        2400
+      ],
+      "bytes": 458348,
+      "sha256": "642a23cf5921a8c3712ce49dbb785c759ce6d85131400d69bfa29f69a206b39a"
+    },
+    {
+      "file": "landscape.png",
+      "size": [
+        2400,
+        1080
+      ],
+      "bytes": 438409,
+      "sha256": "f3ebc4197ad926ff28f83274244cdb75095926918322f68be8de65dec81d6a9d"
+    }
+  ]
+}

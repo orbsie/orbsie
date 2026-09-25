@@ -1,0 +1,152 @@
+{
+  "status": "failed",
+  "currentStage": "static-control-page-and-adb-bridges",
+  "runId": "2026-09-25T06-01-57-966Z",
+  "sourceCommit": "b34dad299fc8c8f5209f0909261bb7693f82a220",
+  "harnessSourceSha256": "e8c31f9114b7563abcb02d8257c9a1a0960bfc7084ccd03a7c1fcdc86888142a",
+  "scope": "Android Chrome static control-page diagnostic; no fixture JavaScript or SoftwareWorld",
+  "fixture": {
+    "mode": "static HTML control page; fixture bundle and SoftwareWorld omitted",
+    "entityCount": 0,
+    "entitySelection": "none; static HTML only",
+    "additionalCluster": "none",
+    "rendererQuery": "none; no renderer instantiated",
+    "initialCameraDistance": null
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": false,
+  "pageCdpSessionCreatedAfterNavigation": false,
+  "controlNavigationAttempts": 0,
+  "timings": {
+    "failureElapsedMs": 539
+  },
+  "lifecycleEvents": [
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T06:01:58.057Z",
+      "elapsedMs": 91,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T06:01:58.474Z",
+      "elapsedMs": 508,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "probe-failed",
+      "at": "2026-09-25T06:01:58.505Z",
+      "elapsedMs": 539,
+      "detail": {
+        "error": "Command failed: adb -s emulator-5556 reverse tcp:44416 tcp:37463 adb: error: cannot bind listener: Address already in use "
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-started",
+      "at": "2026-09-25T06:01:58.505Z",
+      "elapsedMs": 539,
+      "detail": {
+        "failureStage": "static-control-page-and-adb-bridges"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-finished",
+      "at": "2026-09-25T06:01:58.654Z",
+      "elapsedMs": 688,
+      "detail": {
+        "matchedLogcatLines": 9
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T06:01:58.654Z",
+      "elapsedMs": 688
+    }
+  ],
+  "httpResponses": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": []
+  },
+  "cycles": [],
+  "screenshots": [],
+  "limitations": [
+    "This static control navigation is an Android emulator diagnostic, not physical-device certification.",
+    "The page contains no fixture bundle, renderer, canvas, or application runtime; a result does not establish application behavior.",
+    "The diagnostic run failed before completion; see lifecycle, timing, process-state, and filtered logcat records for evidence and any remaining uncertainty."
+  ],
+  "device": {
+    "id": "emulator-5556",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": false
+  },
+  "failureStage": "static-control-page-and-adb-bridges",
+  "error": "Command failed: adb -s emulator-5556 reverse tcp:44416 tcp:37463 adb: error: cannot bind listener: Address already in use ",
+  "failurePageSnapshot": {
+    "unavailable": "no page object was created; control navigation was not attempted"
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T06:01:58.505Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 9,
+      "lines": [
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3432)",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3449)",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3465)",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3481)",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3497)",
+        "I/ActivityManager( 559): Process com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:9 (pid 3497) has died: vis BTOP",
+        "W/ActivityManager( 559): Scheduling restart of crashed service com.android.chrome/org.chromium.content.app.SandboxedProcessService0:9 in 1000ms for connection",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3515)",
+        "W/chromium( 2851): [WARNING:compositor_view.cc(339)] Child process died (type=6) pid=3532)"
+      ]
+    },
+    "chromePid": "2851",
+    "chromeProcesses": [
+      "u0_a145 2851 363 33129196 266616 0 0 S com.android.chrome",
+      "u0_a145 3123 363 32522956 70992 0 0 S com.android.chrome_zygote",
+      "u0_i0 3135 3123 244358792 199636 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0",
+      "u0_a145 3167 363 33038120 179392 0 0 S com.android.chrome:privileged_process0",
+      "u0_i2 3216 3123 244346668 155604 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:2",
+      "u0_i3 3227 3123 244332676 145124 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:3",
+      "u0_i4 3258 3123 244332676 145320 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:4"
+    ]
+  },
+  "comparisonAssessment": "The static control run failed during static-control-page-and-adb-bridges; control navigation attempts: 0. Filtered logs do not identify the cause, and no fixture bundle or SoftwareWorld was loaded.",
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T06:01:58.654Z"
+}

@@ -1,0 +1,243 @@
+{
+  "status": "passed",
+  "currentStage": "complete",
+  "runId": "2026-09-25T06-09-40-851Z",
+  "sourceCommit": "7bb840753ce99a19da50c9fb0be68d300fb2f0f1",
+  "harnessSourceSha256": "a1fff2cf2b177bdc7b37d44b0dbaba88aa561e7a892435fd6127518d32d869a5",
+  "scope": "Android Chrome static control-page diagnostic; no fixture JavaScript or SoftwareWorld",
+  "fixture": {
+    "mode": "static HTML control page; fixture bundle and SoftwareWorld omitted",
+    "entityCount": 0,
+    "entitySelection": "none; static HTML only",
+    "additionalCluster": "none",
+    "rendererQuery": "none; no renderer instantiated",
+    "initialCameraDistance": null
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": false,
+  "pageCdpSessionCreatedAfterNavigation": true,
+  "controlNavigationAttempts": 1,
+  "timings": {
+    "navigationStartedElapsedMs": 837,
+    "domContentLoadedElapsedMs": 974,
+    "loadElapsedMs": 977
+  },
+  "lifecycleEvents": [
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T06:09:40.938Z",
+      "elapsedMs": 87,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T06:09:41.308Z",
+      "elapsedMs": 457,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "chrome-cdp-ready",
+      "at": "2026-09-25T06:09:41.363Z",
+      "elapsedMs": 512,
+      "detail": {
+        "browser": "Chrome/124.0.6367.219"
+      }
+    },
+    {
+      "event": "page-created-and-instrumented",
+      "at": "2026-09-25T06:09:41.637Z",
+      "elapsedMs": 786
+    },
+    {
+      "event": "main-frame-navigated",
+      "at": "2026-09-25T06:09:41.823Z",
+      "elapsedMs": 972,
+      "detail": {
+        "urlPath": "/"
+      }
+    },
+    {
+      "event": "dom-content-loaded",
+      "at": "2026-09-25T06:09:41.825Z",
+      "elapsedMs": 974,
+      "detail": {
+        "httpStatus": 200
+      }
+    },
+    {
+      "event": "control-page-screenshot-captured",
+      "at": "2026-09-25T06:09:42.184Z",
+      "elapsedMs": 1333
+    },
+    {
+      "event": "android-process-diagnostics-started",
+      "at": "2026-09-25T06:09:42.192Z",
+      "elapsedMs": 1341
+    },
+    {
+      "event": "android-process-diagnostics-finished",
+      "at": "2026-09-25T06:09:42.290Z",
+      "elapsedMs": 1439,
+      "detail": {
+        "matchedLogcatLines": 0
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T06:09:42.290Z",
+      "elapsedMs": 1439
+    },
+    {
+      "event": "page-closed",
+      "at": "2026-09-25T06:09:42.381Z",
+      "elapsedMs": 1530,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "context-closed",
+      "at": "2026-09-25T06:09:42.398Z",
+      "elapsedMs": 1547,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "browser-disconnected",
+      "at": "2026-09-25T06:09:42.398Z",
+      "elapsedMs": 1547,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    }
+  ],
+  "httpResponses": [
+    {
+      "path": "/",
+      "status": 200,
+      "elapsedMs": 942
+    }
+  ],
+  "adbReverseBindRetries": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": []
+  },
+  "cycles": [],
+  "screenshots": [
+    "control-page.png"
+  ],
+  "limitations": [
+    "This static control navigation is an Android emulator diagnostic, not physical-device certification.",
+    "The page contains no fixture bundle, renderer, canvas, or application runtime; a result does not establish application behavior."
+  ],
+  "device": {
+    "id": "emulator-5556",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": false
+  },
+  "androidChromeCDP": {
+    "browser": "Chrome/124.0.6367.219",
+    "protocolVersion": "1.3",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  },
+  "cookiesBefore": 0,
+  "controlPage": {
+    "documentReadyState": "complete",
+    "title": "Android Chrome static control",
+    "bodyText": "Static Android Chrome control page loaded.",
+    "scriptCount": 0,
+    "canvasCount": 0,
+    "softwareWorldCount": 0,
+    "navigation": {
+      "responseStartMs": 65.69999999995343,
+      "responseEndMs": 68.39999999990687,
+      "domInteractiveMs": 130.89999999990687,
+      "domContentLoadedEventEndMs": 131.19999999995343,
+      "loadEventEndMs": 132,
+      "transferSizeBytes": 593
+    },
+    "resources": [],
+    "mainFrameNavigations": 1,
+    "remoteCdpTitle": "Android Chrome static control"
+  },
+  "renderer": "none; static HTML control page",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+    "viewport": {
+      "width": 412,
+      "height": 786
+    },
+    "devicePixelRatio": 2.625,
+    "maxTouchPoints": 5
+  },
+  "viewport": {
+    "width": 412,
+    "height": 786
+  },
+  "cookiesAfter": 0,
+  "checks": {
+    "oneStaticControlNavigation": true,
+    "noFixtureBundleOrSoftwareWorld": true,
+    "pageCdPRuntimeEvaluationSucceeded": true,
+    "noProviderOrExternalRequests": true,
+    "noPageOrConsoleErrors": true
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T06:09:42.192Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 0,
+      "lines": []
+    },
+    "chromePid": "2851",
+    "chromeProcesses": [
+      "u0_a145 2851 363 33139272 274440 0 0 S com.android.chrome",
+      "u0_a145 3123 363 32522956 70992 0 0 S com.android.chrome_zygote",
+      "u0_i0 3135 3123 244358792 208824 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0",
+      "u0_a145 3167 363 33050200 196424 0 0 S com.android.chrome:privileged_process0",
+      "u0_i2 3216 3123 244352944 156960 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:2",
+      "u0_i3 3227 3123 244332676 146724 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:3",
+      "u0_i4 3258 3123 244332676 146996 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:4",
+      "u0_i12 3822 3123 244738304 155012 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:12"
+    ]
+  },
+  "comparisonAssessment": "The static control page completed one navigation and a post-navigation CDP Runtime.evaluate with no fixture JavaScript or SoftwareWorld. This demonstrates the basic AVD, ADB, Chrome, and CDP navigation path for this run; it does not establish application behavior or explain earlier fixture failures.",
+  "cdpSessionDetachAcknowledged": true,
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T06:10:42.393Z"
+}

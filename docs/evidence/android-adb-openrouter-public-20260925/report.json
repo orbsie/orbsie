@@ -1,0 +1,26 @@
+{
+  "status": "captured",
+  "startedAt": "2026-09-25T05:57:05.718785+00:00",
+  "avd": "droidlm_api35_midrange",
+  "serial": "emulator-5556",
+  "url": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
+  "method": "ADB-only Chrome launch and screenshot; no CDP, model calls or account",
+  "sourceCommit": "b34dad299fc8c8f5209f0909261bb7693f82a220",
+  "events": [
+    "boot-completed",
+    "chrome-url-launched",
+    "screenshot-captured"
+  ],
+  "androidVersion": "15",
+  "chromeVersion": "124.0.6367.219",
+  "launchExitCode": 0,
+  "launchMessage": "Starting: Intent { act=android.intent.action.VIEW dat=https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/... pkg=com.android.chrome }",
+  "screenBytes": 208192,
+  "chromePid": "1525",
+  "resumedActivities": [
+    "topResumedActivity=ActivityRecord{86a3cb0 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity t65}"
+  ],
+  "chromeFailureLines": [],
+  "cleanup": "owned emulator stopped",
+  "finishedAt": "2026-09-25T05:57:49.968182+00:00"
+}

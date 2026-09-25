@@ -1,0 +1,317 @@
+{
+  "status": "passed",
+  "currentStage": "complete",
+  "runId": "2026-09-25T06-11-08-575Z",
+  "sourceCommit": "7bb840753ce99a19da50c9fb0be68d300fb2f0f1",
+  "harnessSourceSha256": "a1fff2cf2b177bdc7b37d44b0dbaba88aa561e7a892435fd6127518d32d869a5",
+  "scope": "Readiness-only diagnostic with 40 fixture entities at 100 m; no travel cycles",
+  "fixture": {
+    "mode": "40-entity scene-readiness diagnostic with post-ready page CDP session",
+    "entityCount": 40,
+    "entitySelection": "first 40 entities from the default home cluster, selected through a diagnostic-only in-memory fixture transform",
+    "additionalCluster": "none; default home and distant clusters only",
+    "rendererQuery": "renderer=software",
+    "initialCameraDistance": 100
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": true,
+  "timings": {
+    "navigationStartedElapsedMs": 1499,
+    "domContentLoadedElapsedMs": 1811,
+    "fixtureReadyElapsedMs": 3044,
+    "pageCdpSessionCreatedElapsedMs": 3130,
+    "performanceDomainEnabledElapsedMs": 3136,
+    "initialSoftwareStateReadyElapsedMs": 3332,
+    "readyScreenshotElapsedMs": 4573
+  },
+  "lifecycleEvents": [
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T06:11:09.259Z",
+      "elapsedMs": 684,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T06:11:09.616Z",
+      "elapsedMs": 1041,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "chrome-cdp-ready",
+      "at": "2026-09-25T06:11:09.679Z",
+      "elapsedMs": 1104,
+      "detail": {
+        "browser": "Chrome/124.0.6367.219"
+      }
+    },
+    {
+      "event": "page-created-and-instrumented",
+      "at": "2026-09-25T06:11:10.023Z",
+      "elapsedMs": 1448
+    },
+    {
+      "event": "main-frame-navigated",
+      "at": "2026-09-25T06:11:10.179Z",
+      "elapsedMs": 1604,
+      "detail": {
+        "urlPath": "/"
+      }
+    },
+    {
+      "event": "dom-content-loaded",
+      "at": "2026-09-25T06:11:10.386Z",
+      "elapsedMs": 1811,
+      "detail": {
+        "httpStatus": 200
+      }
+    },
+    {
+      "event": "early-screenshot-captured",
+      "at": "2026-09-25T06:11:11.592Z",
+      "elapsedMs": 3017
+    },
+    {
+      "event": "fixture-ready",
+      "at": "2026-09-25T06:11:11.619Z",
+      "elapsedMs": 3044
+    },
+    {
+      "event": "page-cdp-session-created-after-fixture-ready",
+      "at": "2026-09-25T06:11:11.705Z",
+      "elapsedMs": 3130
+    },
+    {
+      "event": "ready-scene-screenshot-captured",
+      "at": "2026-09-25T06:11:13.148Z",
+      "elapsedMs": 4573
+    },
+    {
+      "event": "android-process-diagnostics-started",
+      "at": "2026-09-25T06:11:13.151Z",
+      "elapsedMs": 4576
+    },
+    {
+      "event": "android-process-diagnostics-finished",
+      "at": "2026-09-25T06:11:13.274Z",
+      "elapsedMs": 4699,
+      "detail": {
+        "matchedLogcatLines": 0
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T06:11:13.274Z",
+      "elapsedMs": 4699
+    },
+    {
+      "event": "page-closed",
+      "at": "2026-09-25T06:11:13.372Z",
+      "elapsedMs": 4797,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "context-closed",
+      "at": "2026-09-25T06:11:13.382Z",
+      "elapsedMs": 4807,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "browser-disconnected",
+      "at": "2026-09-25T06:11:13.382Z",
+      "elapsedMs": 4807,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    }
+  ],
+  "httpResponses": [
+    {
+      "path": "/",
+      "status": 200,
+      "elapsedMs": 1600
+    },
+    {
+      "path": "/fixture.js",
+      "status": 200,
+      "elapsedMs": 1649
+    }
+  ],
+  "adbReverseBindRetries": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": [],
+    "performanceDomainEnabled": true
+  },
+  "cycles": [],
+  "screenshots": [
+    "early-domcontentloaded.png",
+    "ready-scene.png"
+  ],
+  "limitations": [
+    "This is an Android 15 emulator run, not physical-device certification.",
+    "SoftwareWorld renders through Canvas2D; this run does not measure WebGL, native GPU behavior, or physical-device graphics performance.",
+    "Frame intervals are from the emulated Chrome viewport and do not establish 60 fps.",
+    "SoftwareWorld has no WebGL particle-formation animation; no-replay evidence checks that project identity/revision and ready review state persist across reentry.",
+    "CDP JavaScript heap values are tab-level samples and can vary with garbage collection."
+  ],
+  "device": {
+    "id": "emulator-5556",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": false
+  },
+  "androidChromeCDP": {
+    "browser": "Chrome/124.0.6367.219",
+    "protocolVersion": "1.3",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  },
+  "cookiesBefore": 0,
+  "pageTimingAtDomContentLoaded": {
+    "documentReadyState": "complete",
+    "initStartedAtMs": 89.70000000006985,
+    "lifecycle": [
+      {
+        "event": "document-start",
+        "at": 89.70000000006985
+      },
+      {
+        "event": "dom-content-loaded",
+        "at": 304.9000000000233
+      },
+      {
+        "event": "load",
+        "at": 305.4000000000233
+      }
+    ],
+    "navigation": {
+      "responseStartMs": 57.300000000046566,
+      "responseEndMs": 57.59999999997672,
+      "domInteractiveMs": 92.20000000006985,
+      "domContentLoadedEventEndMs": 305.20000000006985,
+      "loadEventEndMs": 305.4000000000233,
+      "transferSizeBytes": 853
+    },
+    "resources": [
+      {
+        "path": "/fixture.js",
+        "durationMs": 74.39999999990687,
+        "responseEndMs": 158.09999999997672,
+        "transferSizeBytes": 4395147
+      }
+    ]
+  },
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+    "viewport": {
+      "width": 412,
+      "height": 786
+    },
+    "devicePixelRatio": 2.625,
+    "maxTouchPoints": 5,
+    "hardwareConcurrency": 2,
+    "deviceMemoryGiB": 2,
+    "renderer": "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
+    "fixtureNavigation": {
+      "target": [
+        -600,
+        0,
+        0
+      ],
+      "heading": 0,
+      "distance": 100
+    }
+  },
+  "renderer": "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
+  "viewport": {
+    "width": 412,
+    "height": 786
+  },
+  "initial": {
+    "targetX": -600,
+    "readyEntityCount": 40,
+    "fullResidentCount": 40,
+    "proxyCount": 0,
+    "selectedId": "home-visible-00",
+    "selectedIsResident": true,
+    "visibleMainCount": 40,
+    "reviewReady": true,
+    "transitionSettled": true,
+    "renderedRevision": 0,
+    "canvasFrames": 2,
+    "proxyArcsPainted": 0
+  },
+  "projectIdentity": {
+    "id": "4f8da5b4-7c26-47db-9d4a-d1141e4c4015",
+    "revision": 0,
+    "renderedRevision": 0
+  },
+  "readyScreenshotCaptured": true,
+  "cookiesAfter": 0,
+  "checks": {
+    "sceneReadyAtRequestedDistance": true,
+    "readySceneScreenshotCaptured": true,
+    "travelCyclesAttempted": 0,
+    "noProviderOrExternalRequests": true,
+    "noPageOrConsoleErrors": true
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T06:11:13.152Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 0,
+      "lines": []
+    },
+    "chromePid": "2851",
+    "chromeProcesses": [
+      "u0_a145 2851 363 33139752 277016 0 0 S com.android.chrome",
+      "u0_a145 3123 363 32522956 70992 0 0 S com.android.chrome_zygote",
+      "u0_i0 3135 3123 244355528 208956 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0",
+      "u0_a145 3167 363 33046748 198980 0 0 S com.android.chrome:privileged_process0",
+      "u0_i2 3216 3123 244350768 157136 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:2",
+      "u0_i3 3227 3123 244332676 147212 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:3",
+      "u0_i4 3258 3123 244332676 147252 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:4",
+      "u0_i13 3929 3123 244740824 203820 0 0 S com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:13"
+    ]
+  },
+  "comparisonAssessment": "The 40-entity diagnostic fixture reached scene readiness at 100 m. It used a diagnostic-only fixture transform and did not exercise the 120- or 160-entity acceptance scene; no travel cycles were run.",
+  "cdpSessionDetachAcknowledged": true,
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T06:12:13.390Z"
+}

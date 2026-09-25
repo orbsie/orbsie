@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 25 Android browser recovery: Chrome 124 on the existing Android 15
+midrange emulator loaded the signed-out published OpenRouter Orb after a second
+URL intent; the first showed Chrome Enhanced ad privacy onboarding, with no
+consent choice selected. ADB screenshots show the playable portrait screen,
+right-control movement, Restart returning the player to start, and controls
+visible in landscape. Score, win/loss, jump, simultaneous touch, renderer and
+performance were not checked. Evidence:
+`docs/evidence/android-adb-openrouter-public-20260925/`.
+
+After the initial existing-AVD static-control run hit an occupied ADB reverse
+port, `7bb8407` added bounded collision-only retries (3 focused tests passed;
+Astra reviewed the diff). On the same existing emulator, the next static HTML
+control run passed CDP, HTTP 200, DOMContentLoaded, screenshot and cleanup.
+A subsequent 40-entity/100 m SoftwareWorld readiness diagnostic also passed
+with zero WebGL context attempts. This changes the prior fresh-AVD failure
+interpretation: the browser can load the fixture in a warmed session, but the
+cause of the fresh-session child deaths remains unknown. Neither run establishes
+120/160-entity traversal, frame-time or memory acceptance. Evidence:
+`docs/evidence/android-growing-world-runtime/static-control-2026-09-25T06-01-57-966Z/`,
+`docs/evidence/android-growing-world-runtime/static-control-2026-09-25T06-09-40-851Z/`,
+`docs/evidence/android-growing-world-runtime/40-entity-distance-100-readiness-2026-09-25T06-11-08-575Z/`.
+
 Sep 25 Android 16 alternate-emulator control attempt: the existing static
 control harness was run once on `droidlm_api36_latest` (Android 16, Chrome 133,
 emulator memory capped at 3 GiB). The owned AVD booted, but Chrome's DevTools

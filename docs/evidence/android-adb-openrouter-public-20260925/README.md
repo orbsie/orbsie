@@ -1,0 +1,5 @@
+# Android ADB smoke of published OpenRouter game
+
+An Android 15 midrange emulator with Chrome 124 loaded the existing signed-out published Orb after a second URL intent. The first intent displayed Chrome’s Enhanced ad privacy onboarding; no consent choice was selected. Portrait screenshots show the ready game, a held right control moving the player, and Restart returning the player to the start. Landscape kept controls visible, though the scene looked small. A later CDP attachment succeeded after navigation; this correlation does not prove why earlier harness sessions failed.
+
+This is a partial mobile smoke check: score increase, win/loss, jump, simultaneous touch, portal traversal, current-runtime publication, network calls, renderer choice and performance were not verified. It is an emulator, not a physical device. See [interactive.json](./interactive.json) for actions, bounds and screenshot hashes. The first ADB-only run is retained in [report.json](./report.json); its `screen.png` captured Chrome onboarding rather than game readiness.
