@@ -10,13 +10,38 @@ import { strFromU8, unzipSync } from "fflate";
 import { assertLivePublicationOptIn } from "./lib/publication-acceptance.mjs";
 import { createPublicationTransport } from "./lib/publication-transport.mjs";
 
-const SOURCE_ZIP =
-  "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip";
 const PRODUCTION_HOST = "orbsie.com";
-const EXPECTED_SOURCE_PROJECT_ID = "4a5d7783-c7fd-44e0-bf19-864bab9f9b08";
-const EXPECTED_SOURCE_REVISION = 9;
-const EXPECTED_SOURCE_DIGEST =
-  "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618";
+const DEFAULT_SOURCE = "gateway";
+const PUBLICATION_SOURCES = Object.freeze({
+  gateway: Object.freeze({
+    provider: "gateway",
+    zipPath:
+      "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    zipSha256:
+      "6bde327ef0c63ca558ed35d5a74e26e55098077006f3b065c5effa7261da084b",
+    projectId: "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    revision: 9,
+    projectSha256:
+      "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    sourceDigest:
+      "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618",
+    originModel: null,
+  }),
+  openrouter: Object.freeze({
+    provider: "openrouter",
+    zipPath:
+      "docs/evidence/provider-e2e/input-game-union-policy/openrouter/world.zip",
+    zipSha256:
+      "c1aca064d323d1ceafb434fd7b67669cba07e4da2fb2005b6cb214bf423f561f",
+    projectId: "3be44077-067b-4177-bf63-ad0ed4cc7a8a",
+    revision: 8,
+    projectSha256:
+      "1953b8a4833cf87ccb4ebb8df66bae57c5c5707d2889250abbb4f0889ba5dc47",
+    sourceDigest:
+      "1376f1c06f0b6b26490de37b5e2f1b48ca88d390129be6f4b10e246014946bf6",
+    originModel: "openai/gpt-5.6-luna",
+  }),
+});
 const EXPECTED_ENTITY_IDS = ["original-tree", "original-mushroom"];
 const GENERATION_PATHS = new Set([
   "/api/generate",
@@ -45,6 +70,14 @@ function ensure(condition, code) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function publicationSource(name = DEFAULT_SOURCE) {
+  ensure(
+    typeof name === "string" && Object.hasOwn(PUBLICATION_SOURCES, name),
+    "config-source-invalid",
+  );
+  return PUBLICATION_SOURCES[name];
 }
 
 function canonicalJson(value) {
@@ -163,29 +196,28 @@ function validateInputGame(game) {
   }
 }
 
-function validateEntity(entity, expectedId) {
-  exactKeys(
-    entity,
-    [
-      "id",
-      "label",
-      "position",
-      "scale",
-      "rotation",
-      "color",
-      "geometry",
-      "behavior",
-      "assetPolicy",
-      "stage",
-    ],
-    "fixture-entity-shape",
-  );
+function validateEntity(entity, expectedId, sourceProvider) {
+  const entityKeys = [
+    "id",
+    "label",
+    "position",
+    "scale",
+    "rotation",
+    "color",
+    "geometry",
+    "behavior",
+    "assetPolicy",
+    "stage",
+  ];
+  if (sourceProvider === "openrouter")
+    entityKeys.splice(entityKeys.indexOf("rotation"), 1);
+  exactKeys(entity, entityKeys, "fixture-entity-shape");
   ensure(entity.id === expectedId, "fixture-entity-id");
   ensure(entity.stage === "ready", "fixture-entity-stage");
   ensure(entity.assetPolicy === "new-only", "fixture-entity-asset-policy");
   ensure(entity.behavior?.type === "static", "fixture-entity-behavior");
   ensure(
-    [entity.position, entity.scale, entity.rotation].every(
+    [entity.position, entity.scale, entity.rotation ?? [0, 0, 0]].every(
       (vector) =>
         Array.isArray(vector) &&
         vector.length === 3 &&
@@ -193,11 +225,10 @@ function validateEntity(entity, expectedId) {
     ),
     "fixture-entity-transform",
   );
-  exactKeys(
-    entity.geometry,
-    ["kind", "collision", "job", "model", "detail", "tint"],
-    "fixture-geometry-shape",
-  );
+  const geometryKeys = ["kind", "collision", "job", "model", "detail", "tint"];
+  if (sourceProvider === "openrouter" && expectedId === "original-mushroom")
+    geometryKeys.splice(geometryKeys.indexOf("tint"), 1);
+  exactKeys(entity.geometry, geometryKeys, "fixture-geometry-shape");
   ensure(
     entity.geometry.kind === "generated" &&
       entity.geometry.collision === "none" &&
@@ -216,7 +247,9 @@ function validateEntity(entity, expectedId) {
 }
 
 /** Validate and digest the immutable source fixture without contacting a server. */
-export function preflightArtifact(zipBytes) {
+export function preflightArtifact(zipBytes, sourceName = DEFAULT_SOURCE) {
+  const source = publicationSource(sourceName);
+  ensure(sha256(zipBytes) === source.zipSha256, "fixture-source-zip-hash");
   const files = unzipSync(new Uint8Array(zipBytes));
   for (const path of Object.keys(files))
     ensure(
@@ -247,10 +280,11 @@ export function preflightArtifact(zipBytes) {
     "fixture-project-shape",
   );
   ensure(project.version === 1, "fixture-project-version");
-  ensure(project.id === EXPECTED_SOURCE_PROJECT_ID, "fixture-project-id");
+  ensure(project.id === source.projectId, "fixture-project-id");
+  ensure(project.revision === source.revision, "fixture-project-revision");
   ensure(
-    project.revision === EXPECTED_SOURCE_REVISION,
-    "fixture-project-revision",
+    sha256(projectBytes) === source.projectSha256,
+    "fixture-project-sha256",
   );
   ensure(
     typeof project.title === "string" && project.title.length > 0,
@@ -269,7 +303,7 @@ export function preflightArtifact(zipBytes) {
     "fixture-entity-count",
   );
   EXPECTED_ENTITY_IDS.forEach((id, index) =>
-    validateEntity(project.entities[index], id),
+    validateEntity(project.entities[index], id, source.provider),
   );
   validateInputGame(project.game);
 
@@ -349,8 +383,12 @@ export function preflightArtifact(zipBytes) {
       ].join("\n"),
     ),
   );
-  ensure(sourceDigest === EXPECTED_SOURCE_DIGEST, "fixture-source-digest");
+  ensure(sourceDigest === source.sourceDigest, "fixture-source-digest");
   return {
+    sourceProvider: source.provider,
+    sourceZipPath: source.zipPath,
+    sourceZipSha256: source.zipSha256,
+    sourceOriginModel: source.originModel,
     project,
     models,
     sourceDigest,
@@ -429,7 +467,7 @@ function sessionCookieHeader(storageState, base) {
   return scoped.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
 }
 
-async function savePrivateCredentials(runId, projectId, password) {
+async function savePrivateCredentials(runId, projectId, password, source) {
   await mkdir(CREDENTIAL_ROOT, { recursive: true, mode: 0o700 });
   await chmod(CREDENTIAL_ROOT, 0o700);
   const parentMode = await stat(CREDENTIAL_ROOT);
@@ -444,8 +482,14 @@ async function savePrivateCredentials(runId, projectId, password) {
     email,
     password,
     projectId,
-    sourceProjectId: EXPECTED_SOURCE_PROJECT_ID,
-    sourceRevision: EXPECTED_SOURCE_REVISION,
+    sourceProvider: source.provider,
+    sourcePath: source.zipPath,
+    sourceOriginModel: source.originModel,
+    sourceZipSha256: source.zipSha256,
+    sourceDigest: source.sourceDigest,
+    sourceProjectSha256: source.projectSha256,
+    sourceProjectId: source.projectId,
+    sourceRevision: source.revision,
   };
   await writeFile(path, `${JSON.stringify(data, null, 2)}\n`, {
     flag: "wx",
@@ -739,29 +783,33 @@ async function validateSignedOutGameplay(
   report.browser.modeCount = modes.length;
 }
 
-function makeReport(base, sourceProjectId, projectId, runId) {
+function makeReport(base, source, projectId, runId) {
   return {
     schemaVersion: "orbsie.provider-artifact-publication/v1",
     status: "running",
     startedAt: new Date().toISOString(),
     baseOrigin: base,
     source: {
-      path: SOURCE_ZIP,
-      projectId: sourceProjectId,
-      revision: EXPECTED_SOURCE_REVISION,
-      digest: null,
-      projectSha256: null,
+      provider: source.provider,
+      originModel: source.originModel,
+      path: source.zipPath,
+      zipSha256: source.zipSha256,
+      projectId: source.projectId,
+      revision: source.revision,
+      digest: source.sourceDigest,
+      projectSha256: source.projectSha256,
       models: [],
     },
     acceptance: {
       runId,
+      sourceProvider: source.provider,
       projectId,
-      revision: EXPECTED_SOURCE_REVISION,
+      revision: source.revision,
       credentialFile: null,
     },
     account: { status: "not_run" },
     modelUploads: { status: "not_run", count: 0, models: [] },
-    projectSave: { status: "not_run", revision: EXPECTED_SOURCE_REVISION },
+    projectSave: { status: "not_run", revision: source.revision },
     publication: { status: "not_run" },
     publicArtifacts: { status: "not_run" },
     browser: { status: "not_run", modes: [] },
@@ -782,6 +830,9 @@ async function runLiveAcceptance() {
   // This must stay ahead of credential creation, reads, and every network call.
   assertLivePublicationOptIn();
 
+  const source = publicationSource(
+    process.env.ORBSIE_PUBLICATION_SOURCE ?? DEFAULT_SOURCE,
+  );
   const base = assertProductionBase(process.env.ORBSIE_TEST_URL);
   const evidenceSetting = process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR;
   ensure(
@@ -791,7 +842,7 @@ async function runLiveAcceptance() {
   const evidenceDir = resolve(evidenceSetting);
   const runId = randomUUID();
   const projectId = `provider-artifact-${runId}`;
-  const report = makeReport(base, EXPECTED_SOURCE_PROJECT_ID, projectId, runId);
+  const report = makeReport(base, source, projectId, runId);
 
   await mkdir(evidenceDir, { recursive: true });
   await writeReport(evidenceDir, report);
@@ -808,11 +859,12 @@ async function runLiveAcceptance() {
 
   try {
     await runStage(report, evidenceDir, "preflight", async () => {
-      const zipBytes = await readFile(SOURCE_ZIP);
-      artifact = preflightArtifact(zipBytes);
+      const zipBytes = await readFile(source.zipPath);
+      artifact = preflightArtifact(zipBytes, source.provider);
       runtimeArtifacts = await loadRuntimeArtifacts();
       report.source.digest = artifact.sourceDigest;
       report.source.projectSha256 = artifact.sourceProjectSha256;
+      report.source.zipSha256 = artifact.sourceZipSha256;
       report.source.projectBytes = artifact.sourceProjectBytes;
       report.source.zipFileCount = artifact.zipFileCount;
       report.source.entityIds = artifact.project.entities.map(({ id }) => id);
@@ -832,7 +884,12 @@ async function runLiveAcceptance() {
 
     await runStage(report, evidenceDir, "account", async () => {
       const password = randomBytes(24).toString("base64url");
-      credentials = await savePrivateCredentials(runId, projectId, password);
+      credentials = await savePrivateCredentials(
+        runId,
+        projectId,
+        password,
+        source,
+      );
       report.acceptance.credentialFile = credentials.path;
       const auth = await request.newContext({
         baseURL: base,
@@ -1202,14 +1259,23 @@ async function runLiveAcceptance() {
 
 async function runOfflinePreflight() {
   try {
-    const artifact = preflightArtifact(await readFile(SOURCE_ZIP));
+    const source = publicationSource(
+      process.env.ORBSIE_PUBLICATION_SOURCE ?? DEFAULT_SOURCE,
+    );
+    const artifact = preflightArtifact(
+      await readFile(source.zipPath),
+      source.provider,
+    );
     const runtime = await loadRuntimeArtifacts();
     console.log(
       JSON.stringify(
         {
           status: "preflight-passed",
           source: {
-            path: SOURCE_ZIP,
+            provider: source.provider,
+            originModel: source.originModel,
+            path: source.zipPath,
+            zipSha256: artifact.sourceZipSha256,
             projectId: artifact.project.id,
             revision: artifact.project.revision,
             digest: artifact.sourceDigest,

@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 provider artifact publication handoff: `verify-provider-artifact-publication.mjs`
+now selects either the pinned Gateway or OpenRouter input-game ZIP through
+`ORBSIE_PUBLICATION_SOURCE` (Gateway default). ZIP, project JSON, and canonical
+project/model digests are pinned per source; source identity is carried through
+reports and private credential metadata. The OpenRouter source preserves the
+same two entities and three input rules, with only its schema-valid omitted
+optional rotations and mushroom tint allowed. Offline preflights and five
+focused checks pass for both presets, tampered ZIPs, wrong-source selection,
+and the legacy Gateway API. The retained OpenRouter ZIP came from
+`openai/gpt-5.6-luna`; it is provider-origin evidence, not a fresh GPT-6
+create/edit or complete provider E2E. No live publication, account creation,
+or model call was run; current-runtime publication remains for Astra.
+
 Sep 25 standalone flagship gameplay handoff: the provider harness now binds
 standalone traversal to the exported project's exact ID and undo revision and
 records input, contacts/collections, portal win, runtime hash and UI reset in
