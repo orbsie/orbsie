@@ -16,6 +16,15 @@ export function isAdbReverseBindCollision(error) {
     .some((line) => line === REVERSE_BIND_COLLISION);
 }
 
+/**
+ * @typedef {object} AdbReverseRetryOptions
+ * @property {(attemptedPorts: Set<number>) => number} choosePort
+ * @property {(port: number) => void} installReverse
+ * @property {number} [maxAttempts=5]
+ * @property {(collision: {port: number, attempt: number, maxAttempts: number}) => void} [onCollision]
+ */
+
+/** @param {AdbReverseRetryOptions} options */
 export function installAdbReverseWithRetry({
   choosePort,
   installReverse,
