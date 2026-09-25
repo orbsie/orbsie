@@ -79,6 +79,24 @@ describe("creative and playable authoring prompt", () => {
     );
   });
 
+  it("makes requested portal goals explicit without closing exploratory worlds", () => {
+    const prompt = systemPromptForCapabilities();
+    expect(prompt).toContain(
+      "When reaching or entering a portal is a requested completion objective",
+    );
+    expect(prompt).toContain('ready portal entity behavior.type "portal"');
+    expect(prompt).toContain("collision-triggered set_game rule");
+    expect(prompt).toContain("requested collection-progress target");
+    expect(prompt).toContain("otherwise the portal collision itself may win");
+    expect(prompt).toContain("reachable from the actual spawn");
+    expect(prompt).toContain(
+      "An arch shape or portal label alone is decorative",
+    );
+    expect(prompt).toContain(
+      "Preserve exploratory/open-ended requests and explicit no-win constraints",
+    );
+  });
+
   it("allows horizontal worlds while preserving explicit bounded game spaces", () => {
     const prompt = systemPromptForCapabilities();
     expect(prompt).toContain(
