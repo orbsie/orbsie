@@ -581,6 +581,50 @@ export async function generateCommands({
       const envelopeDecoder = structuredOutput
         ? new SceneCommandEnvelopeDecoder({ onCommand: emit })
         : undefined;
+      const processProviderLine = (line: string) => {
+        if (!line.startsWith("data:")) return;
+        const text = line.slice(5).trim();
+        if (!text || text === "[DONE]") return;
+        let event: unknown;
+        try {
+          event = JSON.parse(text);
+        } catch {
+          throw new SceneProtocolError(finishReason);
+        }
+        const record = objectRecord(event);
+        if (!record) throw new SceneProtocolError(finishReason);
+        const choice = Array.isArray(record.choices)
+          ? objectRecord(record.choices[0])
+          : undefined;
+        if (choice) {
+          const reason = choice.finish_reason;
+          if (reason === "refusal") refusalSeen = true;
+          if (reason !== undefined && reason !== null)
+            finishReason = normalizeFinishReason(reason);
+        }
+        if (record.error)
+          throw new ProviderStreamError(record.error, finishReason);
+        const deltaRecord = objectRecord(choice?.delta);
+        if (typeof deltaRecord?.refusal === "string") refusalSeen = true;
+        const delta = deltaRecord?.content;
+        if (typeof delta !== "string") return;
+        if (structuredOutput) {
+          try {
+            envelopeDecoder!.push(delta);
+          } catch (error) {
+            if (error instanceof SceneCommandEnvelopeError)
+              throw new SceneJSONError(finishReason);
+            throw error;
+          }
+        } else {
+          records += delta;
+          if (records.length > 100000)
+            throw Error("Scene command exceeded the size limit.");
+          const complete = records.split("\n");
+          records = complete.pop()!;
+          for (const record of complete) emit(record);
+        }
+      };
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -592,50 +636,14 @@ export async function generateCommands({
             throw Error("Provider event exceeded the size limit.");
           const lines = buffer.split("\n");
           buffer = lines.pop()!;
-          for (const line of lines) {
-            if (!line.startsWith("data:")) continue;
-            const text = line.slice(5).trim();
-            if (!text || text === "[DONE]") continue;
-            let event: unknown;
-            try {
-              event = JSON.parse(text);
-            } catch {
-              throw new SceneProtocolError(finishReason);
-            }
-            const record = objectRecord(event);
-            if (!record) throw new SceneProtocolError(finishReason);
-            const choice = Array.isArray(record.choices)
-              ? objectRecord(record.choices[0])
-              : undefined;
-            if (choice) {
-              const reason = choice.finish_reason;
-              if (reason === "refusal") refusalSeen = true;
-              if (reason !== undefined && reason !== null)
-                finishReason = normalizeFinishReason(reason);
-            }
-            if (record.error)
-              throw new ProviderStreamError(record.error, finishReason);
-            const deltaRecord = objectRecord(choice?.delta);
-            if (typeof deltaRecord?.refusal === "string") refusalSeen = true;
-            const delta = deltaRecord?.content;
-            if (typeof delta !== "string") continue;
-            if (structuredOutput) {
-              try {
-                envelopeDecoder!.push(delta);
-              } catch (error) {
-                if (error instanceof SceneCommandEnvelopeError)
-                  throw new SceneJSONError(finishReason);
-                throw error;
-              }
-            } else {
-              records += delta;
-              if (records.length > 100000)
-                throw Error("Scene command exceeded the size limit.");
-              const complete = records.split("\n");
-              records = complete.pop()!;
-              for (const record of complete) emit(record);
-            }
-          }
+          for (const line of lines) processProviderLine(line);
+        }
+        buffer += decoder.decode();
+        if (buffer.length > 200000)
+          throw Error("Provider event exceeded the size limit.");
+        if (buffer) {
+          processProviderLine(buffer);
+          buffer = "";
         }
         if (structuredOutput) {
           try {

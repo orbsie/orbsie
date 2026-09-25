@@ -66,6 +66,40 @@ function responseWithoutFinish(content: string) {
   );
 }
 
+function responseWithTrailingDataLine(content: string, data: string) {
+  const encoder = new TextEncoder();
+  const trailingLine = encoder.encode(`data: ${data}`);
+  const splitAt = Math.floor(trailingLine.byteLength / 2);
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(sseEvent(content)));
+        controller.enqueue(trailingLine.slice(0, splitAt));
+        controller.enqueue(trailingLine.slice(splitAt));
+        controller.close();
+      },
+    }),
+  );
+}
+
+function responseWithTrailingDataLineError(content: string, data: string) {
+  const encoder = new TextEncoder();
+  const chunks = [
+    encoder.encode(sseEvent(content)),
+    encoder.encode(`data: ${data}`),
+  ];
+  let nextChunk = 0;
+  return new Response(
+    new ReadableStream({
+      pull(controller) {
+        const chunk = chunks[nextChunk++];
+        if (chunk) controller.enqueue(chunk);
+        else controller.error(new Error("provider stream interrupted"));
+      },
+    }),
+  );
+}
+
 function bodyOf(fetcher: ReturnType<typeof vi.fn>) {
   return JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
 }
@@ -504,6 +538,70 @@ describe("structured generation envelopes", () => {
     expect(records[1]).toMatchObject({
       code: "INVALID_SCENE_PROTOCOL",
       diagnostic: { operation: 2, finishReason: null },
+    });
+    expect(records.some((record) => record.type === "commit_revision")).toBe(
+      false,
+    );
+  });
+
+  it("accepts a complete structured finish event at EOF without a newline", async () => {
+    const terminalEvent = JSON.stringify({
+      choices: [{ delta: {}, finish_reason: "stop" }],
+    });
+    const fetcher = vi.fn(async () =>
+      responseWithTrailingDataLine(
+        JSON.stringify({ commands: [commit] }),
+        terminalEvent,
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-object")),
+    );
+    expect(records).toEqual([commit]);
+  });
+
+  it("does not commit when the trailing EOF finish event is truncated", async () => {
+    const envelope = JSON.stringify({ commands: [reservation, commit] });
+    const fetcher = vi.fn(async () =>
+      responseWithTrailingDataLine(
+        envelope,
+        '{"choices":[{"delta":{},"finish_reason":"stop"',
+      ),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-object")),
+    );
+    expect(records[0]).toEqual(reservation);
+    expect(records[1]).toMatchObject({
+      code: "INVALID_SCENE_PROTOCOL",
+      diagnostic: { operation: 2, finishReason: null },
+    });
+    expect(records.some((record) => record.type === "commit_revision")).toBe(
+      false,
+    );
+  });
+
+  it("does not accept a trailing finish fragment when the provider stream errors", async () => {
+    const envelope = JSON.stringify({ commands: [reservation, commit] });
+    const terminalEvent = JSON.stringify({
+      choices: [{ delta: {}, finish_reason: "stop" }],
+    });
+    const fetcher = vi.fn(async () =>
+      responseWithTrailingDataLineError(envelope, terminalEvent),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-object")),
+    );
+    expect(records[0]).toEqual(reservation);
+    expect(records[1]).toMatchObject({
+      error: "The provider response was interrupted.",
+      failure: "stream-error",
     });
     expect(records.some((record) => record.type === "commit_revision")).toBe(
       false,
