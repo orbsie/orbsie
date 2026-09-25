@@ -1,0 +1,9 @@
+# Fresh OpenRouter flagship acceptance
+
+One fresh harness run on clean source commit `21f24cd7ead590579eedccad6dd8e19250c301c1` used loopback origin `http://127.0.0.1:3052`, `openai/gpt-6-luna`, low reasoning/default tier, local-only key scope, a 4,096-token output cap, and a three-generation-request budget. The quota helper reported 37% remaining immediately before the run. All three generation requests returned HTTP 200; no fallback or retry was used. Cloud recovery and publication were not requested, and the browser recorded zero blocked external requests.
+
+Creation passed at revision 30. The keyboard gameplay gates collected all five crystals, reached score 5 and a portal win, then restarted at score 0. The mushroom edit passed at revision 35: selected entity `tree-a` retained its ID and received the label `Giant Pink Mushroom`. The report proves the saved same-entity result; it does not retain the provider's raw command stream, so the exact wire command cannot be independently confirmed from this evidence. The goal edit passed at revision 41 with seven collectibles and a 7/7 portal win. Undo passed at revision 42 and restored the five-item objective and gameplay result. Export and standalone playback passed; standalone keyboard play collected five, won at score 5, and restarted at score 0. No visual-quality review was performed.
+
+`openrouter.json` records the run. Project snapshots have conversation messages removed and prompt-derived titles normalized; `world.zip` has the same title normalization. Screenshots retain only the rendered scene or the model-selection view. Source and sanitized hashes are recorded in `openrouter.json`.
+
+The harness's strict full-journey status is `incomplete` because signed-out publication artifacts and a published-playthrough restart were not exercised. No publication or cloud operation was attempted. This does not negate the passed creation, gameplay, edit, undo, export, and local standalone phases.
