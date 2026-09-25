@@ -1,0 +1,669 @@
+{
+  "checkedAt": "2026-09-25T07:43:40.716Z",
+  "provenance": {
+    "checkedAt": "2026-09-25T07:43:40.716Z",
+    "harness": {
+      "checkoutSHA": "47ea2e68e3da565504838eb6526df8ded915d6fc",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "47ea2e68e3da565504838eb6526df8ded915d6fc",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3057",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 3,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 31,
+    "firstReservationMs": 6043,
+    "seedObserved": true,
+    "gameplayDuringGeneration": {
+      "status": "passed",
+      "inputMode": "keyboard",
+      "startedAt": "2026-09-25T07:43:56.377Z",
+      "movementAtMs": 589,
+      "movementAt": "2026-09-25T07:43:56.966Z",
+      "generationRequestsAtMovement": 1,
+      "generationResponsesAtMovement": 1,
+      "generationStreamOpenAtMovement": true,
+      "generationStreamOpenAfterMovement": true,
+      "generationRequestAtMs": 1790322229510,
+      "generationRequestAt": "2026-09-25T07:43:49.510Z",
+      "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+      "revisionBefore": 6,
+      "revisionAfter": 7,
+      "movementDistance": 0.8316000000238426,
+      "before": {
+        "renderer": "webgl",
+        "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+        "revision": 6,
+        "simulationDeltaMs": 16.599999994039536,
+        "playing": true,
+        "player": {
+          "position": [
+            0,
+            0.42,
+            5
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "sunny-island",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              -0.45,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "pond",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -2,
+              0.03,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "tree-one",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0,
+              3
+            ],
+            "scale": [
+              1.3,
+              1.3,
+              1.3
+            ]
+          },
+          {
+            "id": "tree-two",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              3,
+              0,
+              2
+            ],
+            "scale": [
+              1.45,
+              1.45,
+              1.45
+            ]
+          },
+          {
+            "id": "tree-three",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0,
+              -2
+            ],
+            "scale": [
+              1.1,
+              1.1,
+              1.1
+            ]
+          },
+          {
+            "id": "crystal-one",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              -1.5,
+              0.55,
+              3.2
+            ],
+            "scale": [
+              0.38,
+              0.6,
+              0.38
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 15589.60000000894,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "after": {
+        "renderer": "webgl",
+        "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+        "revision": 7,
+        "simulationDeltaMs": 40,
+        "playing": true,
+        "player": {
+          "position": [
+            0.7297976584889572,
+            0.42,
+            4.601309722085313
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "sunny-island",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              0,
+              -0.45,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "pond",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -2,
+              0.03,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "tree-one",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0,
+              3
+            ],
+            "scale": [
+              1.3,
+              1.3,
+              1.3
+            ]
+          },
+          {
+            "id": "tree-two",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              3,
+              0,
+              2
+            ],
+            "scale": [
+              1.45,
+              1.45,
+              1.45
+            ]
+          },
+          {
+            "id": "tree-three",
+            "behavior": null,
+            "stage": "seed",
+            "position": [
+              -3,
+              0,
+              -2
+            ],
+            "scale": [
+              1.1,
+              1.1,
+              1.1
+            ]
+          },
+          {
+            "id": "crystal-one",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              -1.5,
+              0.55,
+              3.2
+            ],
+            "scale": [
+              0.38,
+              0.6,
+              0.38
+            ]
+          },
+          {
+            "id": "crystal-two",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              1.5,
+              0.55,
+              2.4
+            ],
+            "scale": [
+              0.38,
+              0.6,
+              0.38
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 15912.40000000596,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "beforeSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+          "revision": 6,
+          "simulationDeltaMs": 16.599999994039536,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "sunny-island",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                -0.45,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "pond",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -2,
+                0.03,
+                1
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "tree-one",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0,
+                3
+              ],
+              "scale": [
+                1.3,
+                1.3,
+                1.3
+              ]
+            },
+            {
+              "id": "tree-two",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                3,
+                0,
+                2
+              ],
+              "scale": [
+                1.45,
+                1.45,
+                1.45
+              ]
+            },
+            {
+              "id": "tree-three",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0,
+                -2
+              ],
+              "scale": [
+                1.1,
+                1.1,
+                1.1
+              ]
+            },
+            {
+              "id": "crystal-one",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                -1.5,
+                0.55,
+                3.2
+              ],
+              "scale": [
+                0.38,
+                0.6,
+                0.38
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 15589.60000000894,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      },
+      "afterSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "2d8c071d-13be-4f4f-9c49-5d1d50c13b93",
+          "revision": 7,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0.7297976584889572,
+              0.42,
+              4.601309722085313
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "sunny-island",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                0,
+                -0.45,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "pond",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -2,
+                0.03,
+                1
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "tree-one",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0,
+                3
+              ],
+              "scale": [
+                1.3,
+                1.3,
+                1.3
+              ]
+            },
+            {
+              "id": "tree-two",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                3,
+                0,
+                2
+              ],
+              "scale": [
+                1.45,
+                1.45,
+                1.45
+              ]
+            },
+            {
+              "id": "tree-three",
+              "behavior": null,
+              "stage": "seed",
+              "position": [
+                -3,
+                0,
+                -2
+              ],
+              "scale": [
+                1.1,
+                1.1,
+                1.1
+              ]
+            },
+            {
+              "id": "crystal-one",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                -1.5,
+                0.55,
+                3.2
+              ],
+              "scale": [
+                0.38,
+                0.6,
+                0.38
+              ]
+            },
+            {
+              "id": "crystal-two",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                1.5,
+                0.55,
+                2.4
+              ],
+              "scale": [
+                0.38,
+                0.6,
+                0.38
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 15912.40000000596,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      }
+    },
+    "catalogEntities": 3,
+    "proceduralEntities": 11,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "flagshipStory": {
+    "status": "running",
+    "generationBudget": 3,
+    "visualReview": "pending",
+    "phases": {
+      "creation": {
+        "revision": 31
+      }
+    },
+    "generatedModels": {
+      "status": "complete",
+      "writtenHashes": [],
+      "phases": {
+        "created": {
+          "status": "complete",
+          "modelCount": 0,
+          "missingCount": 0,
+          "totalBytes": 0
+        }
+      }
+    }
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 1,
+    "generationStatuses": [
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790322229510,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [],
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "story-created-project.json",
+    "story-created-generated.json",
+    "failure.png"
+  ],
+  "error": "Fresh gameplay did not contact platform bounce-three after bounded support-driven attempts.",
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "movement-during-generation",
+      "creation-win-reset",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  }
+}

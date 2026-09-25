@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 fresh OpenRouter GPT-6 Luna flagship browser attempt: source commit
+`47ea2e68e3da565504838eb6526df8ded915d6fc` was served from an isolated
+loopback Next dev server at `127.0.0.1:3057` with the 4,096-token cap and
+publishing/accounts disabled. The exact-model, origin and cap preflights passed.
+One provider request completed with HTTP 200 and committed the island creation
+(31 operations); no retry or fallback occurred. Fresh gameplay registered
+movement during generation, but the bounded run could not contact moving
+platform `bounce-three`. It stopped before the mushroom and seven-crystal edits,
+undo, export or standalone playback. Publication/cloud were not requested. The
+optimized build compiled but stopped at existing TypeScript errors in
+`tests/android-adb-reverse.test.ts`; the live attempt used the current-source
+dev server. Sanitized mode-0600 evidence is in
+`docs/evidence/provider-e2e/openrouter-flagship-current-20260925/`.
+
 Sep 25 OpenRouter Android publication check: the exact URL pinned by
 `docs/evidence/provider-artifact-publication-openrouter-current-20260925/report.json`
 passed one signed-out Android 15/API 35 midrange AVD Chrome touch run in
