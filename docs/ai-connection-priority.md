@@ -134,3 +134,17 @@ OpenAI or grant Orbsie subscription inference. The
 application inference with a Platform API key. These are positive descriptions
 of different supported flows, not proof that a browser-only subscription client
 can never be offered. Keep the Orbsie HTTPS redirect/entitlement gate open.
+
+September 24 official-doc recheck: OpenAI now documents
+[Sign in with ChatGPT](https://help.openai.com/en/articles/20001410-sign-in-with-chatgpt)
+for participating partners and selected plugins. It shares identity fields
+(name, email and profile picture), while token, billing and other account access
+require separate permissions. The article names initial partners but does not
+establish that Orbsie can register as one or receive subscription-backed model
+inference through this identity flow. The new
+[Codex workload identity federation](https://developers.openai.com/api/docs/guides/workload-identity-federation)
+maps trusted automation to a principal in a managed ChatGPT workspace, is beta
+and requires enablement; it is not a general consumer OAuth callback for Orbsie.
+Keep browser-only authorization and the subscription inference entitlement as
+separate required evidence. Neither mechanism was connected or used for inference
+in this read-only check.

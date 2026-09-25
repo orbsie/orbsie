@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 24 ChatGPT connection feasibility recheck: official OpenAI documentation
+now describes Sign in with ChatGPT for participating partners, but the identity
+flow shares only name/email/profile picture; additional access requires separate
+permission. It does not document Orbsie partner registration or subscription
+inference entitlement. Codex workload identity federation is beta for managed
+ChatGPT workspaces, not a consumer browser OAuth callback. The browser-only
+OAuth/subscription requirement remains open; no login or inference was attempted.
+See `docs/ai-connection-priority.md` for source links. The current computer-use
+inventory exposes no browser tabs, and read-only Gateway credit remains
+negative (`-0.00456495`), so those live acceptance runs did not start.
+
 Sep 25 WebGL navigation fixture closure: source/evidence `fcb1f84` uses a
 stationary platform at the same 12 km saved group/entity position for a
 focused production WebGL SwiftShader run. The original animated crystal
