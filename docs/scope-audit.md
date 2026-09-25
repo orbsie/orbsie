@@ -77,7 +77,9 @@ older rows below are a historical inventory, not a completion claim.
   mobile bounds and Play/scene preservation at
   `docs/evidence/authoring-review/review-resume-integration-20260924/`.
   Production review is still disabled and no provider call has exercised the
-  new path.
+  new path. The exact saved guest continuation now survives reload for the
+  ledger's 15-minute window (`00160c7`, `2d5aabd`), but signed-in reload loses
+  its cloud baseline and must be fixed before claiming cloud-resume recovery.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

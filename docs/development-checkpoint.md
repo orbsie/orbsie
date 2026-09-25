@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 interrupted-review reload recovery: source `00160c7` persists a
+versioned, key-free continuation record bound to the exact saved local scene
+and the ledger's 15-minute window. A guest browser fixture passed failed
+review → reload → reopen saved world → explicit review-only resume. Focused
+store tests, TypeScript and an optimized build passed. Astra review found that
+an originally selected object can legitimately be removed by generation;
+source `2d5aabd` retains its bounded ID in the persisted request, and 31
+focused tests pass. The signed-in reload fixture exposed a separate gap:
+after local recovery the cloud baseline revision/token is null, so a resumed
+correction PUT lacks the expected base and fails. Do not claim signed-in
+reload recovery until the authoritative cloud baseline is restored and
+verified before another model call. No live provider call ran.
+
 Sep 25 Gateway credit preflight: a read-only GET to the test key's official
 credits endpoint returned HTTP 200 and balance `-0.00456495`; no model calls
 were made. Paid Gateway acceptance remains on hold until the balance is
