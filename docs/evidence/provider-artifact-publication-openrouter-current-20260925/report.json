@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "orbsie.provider-artifact-publication/v1",
+  "status": "passed",
+  "startedAt": "2026-09-25T07:19:31.722Z",
+  "baseOrigin": "https://orbsie.com",
+  "source": {
+    "provider": "openrouter",
+    "originModel": "openai/gpt-5.6-luna",
+    "path": "docs/evidence/provider-e2e/input-game-union-policy/openrouter/world.zip",
+    "zipSha256": "c1aca064d323d1ceafb434fd7b67669cba07e4da2fb2005b6cb214bf423f561f",
+    "projectId": "3be44077-067b-4177-bf63-ad0ed4cc7a8a",
+    "revision": 8,
+    "digest": "1376f1c06f0b6b26490de37b5e2f1b48ca88d390129be6f4b10e246014946bf6",
+    "projectSha256": "1953b8a4833cf87ccb4ebb8df66bae57c5c5707d2889250abbb4f0889ba5dc47",
+    "models": [
+      {
+        "path": "models/generated/1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa.glb",
+        "sha256": "1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa",
+        "bytes": 24224
+      },
+      {
+        "path": "models/generated/c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6.glb",
+        "sha256": "c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6",
+        "bytes": 38504
+      }
+    ],
+    "projectBytes": 5618,
+    "zipFileCount": 68,
+    "entityIds": [
+      "original-tree",
+      "original-mushroom"
+    ],
+    "gameRuleIds": [
+      "right-score",
+      "up-win",
+      "left-lose"
+    ]
+  },
+  "acceptance": {
+    "runId": "b179047e-7d1f-459f-b62b-b9c85b1f6f94",
+    "sourceProvider": "openrouter",
+    "projectId": "provider-artifact-b179047e-7d1f-459f-b62b-b9c85b1f6f94",
+    "revision": 8
+  },
+  "account": {
+    "status": "created"
+  },
+  "modelUploads": {
+    "status": "uploaded",
+    "count": 2,
+    "models": [
+      {
+        "sha256": "1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa",
+        "bytes": 24224,
+        "status": "uploaded"
+      },
+      {
+        "sha256": "c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6",
+        "bytes": 38504,
+        "status": "uploaded"
+      }
+    ]
+  },
+  "projectSave": {
+    "status": "saved_and_verified",
+    "revision": 8,
+    "snapshotVerified": true
+  },
+  "publication": {
+    "status": "ready",
+    "revision": 8,
+    "deploymentId": "dpl_G5GDfWhGQd5FvKqtj7RWemAqrrLj",
+    "deploymentUrl": "https://orb-b25d01a145ee31de1d51-kqx33i43j-grappeggias-projects.vercel.app",
+    "vercelProjectId": "prj_erFx690HIR1VIThOLBtdE9U4YJ8A",
+    "initialState": "INITIALIZING",
+    "polls": 2,
+    "lastState": "READY",
+    "servedRevision": 8,
+    "readyState": "READY"
+  },
+  "publicArtifacts": {
+    "status": "verified",
+    "projectId": "provider-artifact-b179047e-7d1f-459f-b62b-b9c85b1f6f94",
+    "revision": 8,
+    "entityIds": [
+      "original-tree",
+      "original-mushroom"
+    ],
+    "gameRuleIds": [
+      "right-score",
+      "up-win",
+      "left-lose"
+    ],
+    "snapshotMatched": true,
+    "runtimeJS": {
+      "local": {
+        "bytes": 1944408,
+        "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+      },
+      "served": {
+        "bytes": 1944408,
+        "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+      }
+    },
+    "runtimeCSS": {
+      "local": {
+        "bytes": 6236,
+        "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+      },
+      "served": {
+        "bytes": 6236,
+        "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+      }
+    },
+    "generatedModels": [
+      {
+        "path": "models/generated/1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa.glb",
+        "bytes": 24224,
+        "sha256": "1f2fc9d5ff56de1d1f96faab2bb54ec26a039bf385b1d5198e67e503278efbfa"
+      },
+      {
+        "path": "models/generated/c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6.glb",
+        "bytes": 38504,
+        "sha256": "c329cc9451019733667d92e93400e49d178ed5f3f04009febf4fe999e0e826a6"
+      }
+    ],
+    "generatedManifestMatched": true
+  },
+  "browser": {
+    "modes": [
+      {
+        "name": "desktop-keyboard",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "touch": false,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-desktop.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      },
+      {
+        "name": "portrait-touch",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "touch": true,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-portrait-touch.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      },
+      {
+        "name": "landscape-touch",
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "touch": true,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-landscape-touch.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      }
+    ],
+    "status": "passed",
+    "modeCount": 3
+  },
+  "stages": {
+    "preflight": {
+      "status": "passed"
+    },
+    "account": {
+      "status": "passed"
+    },
+    "modelUploads": {
+      "status": "passed"
+    },
+    "projectSave": {
+      "status": "passed"
+    },
+    "publishSubmission": {
+      "status": "passed"
+    },
+    "publicationReady": {
+      "status": "passed"
+    },
+    "publicArtifacts": {
+      "status": "passed"
+    },
+    "browser": {
+      "status": "passed"
+    }
+  },
+  "currentRuntime": {
+    "js": {
+      "bytes": 1944408,
+      "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+    },
+    "css": {
+      "bytes": 6236,
+      "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+    }
+  },
+  "finishedAt": "2026-09-25T07:19:55.522Z"
+}

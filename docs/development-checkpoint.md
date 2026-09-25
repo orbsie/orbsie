@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 25 OpenRouter-origin current-runtime publication: one live isolated
+publication of the retained `openai/gpt-5.6-luna` input-game ZIP passed. The
+production save/readback, two generated-model uploads, Vercel deployment,
+public project/model/runtime hash checks, and signed-out desktop keyboard plus
+portrait/landscape touch-emulated score, win, loss, and Restart checks passed
+with zero provider, external, or page-error requests. Screenshots were visually
+reviewed; this simple input-game fixture is functional evidence, not the
+flagship visual-quality bar. The source ZIP is older provider-origin data, so
+this does not prove fresh GPT-6 OpenRouter generation or physical Android play.
+Evidence: `docs/evidence/provider-artifact-publication-openrouter-current-20260925/`.
+
 Sep 25 provider artifact publication handoff: `verify-provider-artifact-publication.mjs`
 now selects either the pinned Gateway or OpenRouter input-game ZIP through
 `ORBSIE_PUBLICATION_SOURCE` (Gateway default). ZIP, project JSON, and canonical
