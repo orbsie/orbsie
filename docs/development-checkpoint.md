@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 25 Android published-player touch follow-up: the same immutable OpenRouter
+Vercel URL loaded directly in Chrome 124 on the Android 15/API 35 midrange AVD.
+The score and controls appeared, but the game canvas stayed visually blank
+through a right hold and Jump tap; Score remained 0. Restart produced no visible
+change, so its reset effect is unverified. No in-game compatibility switch was
+visible. Combined touch, score increase and portal win/loss were not verified.
+The emulator log reported its host OpenGL backend as SwiftShader/software after
+a GPU warning; the published page's canvas context type was not established, so
+the blank canvas is not attributed to an Orbsie renderer path.
+This retests the prior artifact associated with `b34dad2`, not a fresh current
+publication. No login, consent, terms acceptance or model call occurred. See
+`docs/evidence/android-published-touch-20260925/`.
+
 Sep 25 fresh Android distance diagnosis: a 120-entity readiness-only run passed
 at 100 m, while two 120-entity runs at 5000 m lost the page before
 `fixture.ready()`. Diagnostic 1-entity runs varied by boot: at 5000 m the page

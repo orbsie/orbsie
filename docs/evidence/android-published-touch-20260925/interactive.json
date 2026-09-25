@@ -1,0 +1,115 @@
+{
+  "status": "partial-shell-loaded-gameplay-unverified",
+  "observedAtUtc": "2026-09-25T06:38:10Z",
+  "publishedUrl": "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app/",
+  "artifact": {
+    "immutable": true,
+    "priorEvidenceSourceCommit": "b34dad2",
+    "freshCurrentSourcePublication": false,
+    "repoHeadAtTest": "154a6c4f434241328171553abe803cac5843b3c3"
+  },
+  "device": {
+    "avd": "droidlm_api35_midrange",
+    "android": "15",
+    "apiLevel": 35,
+    "chrome": "124.0.6367.219",
+    "emulatorMemoryMiB": 3072,
+    "emulatorCores": 2,
+    "emulatorSerial": "emulator-5556",
+    "physicalDevice": false
+  },
+  "method": "ADB Chrome URL intent and touchscreen input with screencap; Playwright CDP attached read-only after page load",
+  "rendererEnvironment": {
+    "overrideSet": false,
+    "emulatorHostGraphicsBackend": "Startup log reported OpenGL ES 3.0 SwiftShader 4.0.0.1 after a host GPU warning and automatic software-rendering selection.",
+    "publishedPageContextType": "not established",
+    "attribution": "The blank canvas is an observation only; no Orbsie renderer fallback or product cause is inferred."
+  },
+  "runtimeObservation": {
+    "title": "Orbsie world",
+    "viewportCssPixels": [412, 786],
+    "devicePixelRatio": 2.625,
+    "canvasCssPixels": [412, 786],
+    "visibleTextAfterRestart": "◉ orbsie\nA pocketful of sunshine\n↻ Restart\nScore: 0\nUse the controls below to move and jump\n↑\n←\n↓\n→\n↗",
+    "visibleControls": ["Restart", "Forward", "Left", "Back", "Right", "Jump"],
+    "compatibilitySwitchVisible": false,
+    "resourceOriginsAtReadOnlySample": [
+      "https://orb-bbaa3dbf2b42919c6e31-lf6nlij8j-grappeggias-projects.vercel.app"
+    ]
+  },
+  "steps": [
+    {
+      "action": "first URL intent",
+      "observed": "Chrome opened the published page directly. Screenshot shows the game's 'Opening your little world...' transition; no onboarding, login, terms or consent screen appeared.",
+      "screenshot": "01-first-intent.png"
+    },
+    {
+      "action": "wait 8 seconds for page readiness",
+      "observed": "The page displayed Score: 0 and all movement, Jump and Restart controls. The full-screen canvas area appeared as a uniform pale background with no visible player or world geometry.",
+      "screenshot": "02-ready.png"
+    },
+    {
+      "action": "hold Right at physical pixels (516,2200) for 1500 ms",
+      "observed": "ADB swipe completed. Score stayed at 0; no player or world movement was visible in the canvas, so movement could not be confirmed.",
+      "screenshot": "03-after-right.png"
+    },
+    {
+      "action": "tap Jump at physical pixels (970,2200)",
+      "observed": "ADB tap completed. Score stayed at 0; no visible jump response could be confirmed because the canvas remained blank.",
+      "screenshot": "04-after-jump.png"
+    },
+    {
+      "action": "tap Restart at physical pixels (918,390)",
+      "observed": "ADB tap completed. The post-Restart screenshot hash is identical to the post-Jump screenshot; visible state and Score: 0 did not change, so a reset effect is unverified.",
+      "screenshot": "05-after-restart.png"
+    }
+  ],
+  "notVerified": [
+    "score increase or crystal collection",
+    "visible player movement or jump",
+    "simultaneous movement and Jump; the built-in ADB input command exposes single-pointer events",
+    "portal traversal, win or loss; no visible world geometry was available to target",
+    "Restart reset semantics",
+    "physical-device behavior, renderer choice, frame time or heap use"
+  ],
+  "interactionLimits": {
+    "loginAttempted": false,
+    "termsAccepted": false,
+    "privacyOrConsentChoiceChanged": false,
+    "modelCalls": 0,
+    "publishedArtifactModified": false,
+    "softwareRendererForced": false
+  },
+  "screenshots": [
+    {
+      "file": "01-first-intent.png",
+      "size": [1080, 2400],
+      "bytes": 502395,
+      "sha256": "77922041d6fee6979097e84be682e9af2582c49e56fe898747cc0ff5d996d275"
+    },
+    {
+      "file": "02-ready.png",
+      "size": [1080, 2400],
+      "bytes": 510429,
+      "sha256": "8fd6d75d4d9b596e91326d19ec1b1ad54cdae5a2e73fa0d6ad9c25cf8ef7d7fc"
+    },
+    {
+      "file": "03-after-right.png",
+      "size": [1080, 2400],
+      "bytes": 510267,
+      "sha256": "ad4743219aedbb51530a6148a1907c3b78068abf1aa41e46ea2c3ad4d37cbe0c"
+    },
+    {
+      "file": "04-after-jump.png",
+      "size": [1080, 2400],
+      "bytes": 510635,
+      "sha256": "f0fea60cfdc3bb515ccfd36a1d404c965b48c4d2908816f7158eca053d856c3e"
+    },
+    {
+      "file": "05-after-restart.png",
+      "size": [1080, 2400],
+      "bytes": 510635,
+      "sha256": "f0fea60cfdc3bb515ccfd36a1d404c965b48c4d2908816f7158eca053d856c3e"
+    }
+  ]
+}
