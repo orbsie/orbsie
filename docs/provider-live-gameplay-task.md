@@ -1,15 +1,19 @@
 # Same-world live gameplay acceptance
 
 Creation traversal and Play focus are implemented and locally validated (a553f02,
-bf654aa). Restart/replay focus is the current single-worker task. Route timing,
-seven/undo traversal and fresh publication gameplay remain pending. This document
-is an acceptance contract, not a claim of a complete live provider pass.
+bf654aa). The current non-seeded `runFlagshipStory` invokes real gameplay for
+creation, the seven-crystal edit, and the undone five-crystal world; seeded
+continuations remain structural. The exported standalone and fresh signed-out
+publication phases still lack gameplay traversal, and no complete live-provider
+journey has passed. This document is an acceptance contract, not a claim of a
+complete live provider pass.
 
 ## Source findings
 
-`runFlagshipStory` in scripts/provider-browser-e2e.mjs traverses creation and
-verifies UI selection, edits and undo structurally. It explicitly reports that
-seven-crystal and restored-five phases only check objective state.
+`runFlagshipStory` in scripts/provider-browser-e2e.mjs now calls
+`runFreshFlagshipGameplay` for each of the creation, seven-crystal and
+restored-five phases on a non-seeded run. The saved-resume branch still checks
+the latter two structurally and records gameplay as not run.
 `scripts/verify-saved-bounce-route.mjs` uses fixed saved ZIP hashes/IDs and real
 keyboard steering with rendered Three.js telemetry. It is useful prior evidence,
 not proof for a new provider-created project. `verify-winning-traversal.mjs`
