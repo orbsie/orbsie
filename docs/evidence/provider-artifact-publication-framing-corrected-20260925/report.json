@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "orbsie.provider-artifact-publication/v1",
+  "status": "passed",
+  "startedAt": "2026-09-25T02:13:16.696Z",
+  "baseOrigin": "https://orbsie.com",
+  "source": {
+    "path": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "digest": "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618",
+    "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    "models": [
+      {
+        "path": "models/generated/0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e.glb",
+        "sha256": "0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e",
+        "bytes": 40352
+      },
+      {
+        "path": "models/generated/68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a.glb",
+        "sha256": "68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a",
+        "bytes": 34208
+      }
+    ],
+    "projectBytes": 7545,
+    "zipFileCount": 71,
+    "entityIds": [
+      "original-tree",
+      "original-mushroom"
+    ],
+    "gameRuleIds": [
+      "right-score",
+      "up-win",
+      "left-lose"
+    ]
+  },
+  "acceptance": {
+    "runId": "e9904bf8-a9c9-45d1-a01d-6e6ee384ba57",
+    "projectId": "provider-artifact-e9904bf8-a9c9-45d1-a01d-6e6ee384ba57",
+    "revision": 9
+  },
+  "account": {
+    "status": "created"
+  },
+  "modelUploads": {
+    "status": "uploaded",
+    "count": 2,
+    "models": [
+      {
+        "sha256": "0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e",
+        "bytes": 40352,
+        "status": "uploaded"
+      },
+      {
+        "sha256": "68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a",
+        "bytes": 34208,
+        "status": "uploaded"
+      }
+    ]
+  },
+  "projectSave": {
+    "status": "saved_and_verified",
+    "revision": 9,
+    "snapshotVerified": true
+  },
+  "publication": {
+    "status": "ready",
+    "revision": 9,
+    "deploymentId": "dpl_APkHhX78svV8GnjBzmCcTjDz1ito",
+    "deploymentUrl": "https://orb-1ac45d0e2e7da2db7f45-ms8v1d285-grappeggias-projects.vercel.app",
+    "vercelProjectId": "prj_peVzbHWSToc5YVWyxgKAUjvI1vlm",
+    "initialState": "INITIALIZING",
+    "polls": 2,
+    "lastState": "READY",
+    "servedRevision": 9,
+    "readyState": "READY"
+  },
+  "publicArtifacts": {
+    "status": "verified",
+    "projectId": "provider-artifact-e9904bf8-a9c9-45d1-a01d-6e6ee384ba57",
+    "revision": 9,
+    "entityIds": [
+      "original-tree",
+      "original-mushroom"
+    ],
+    "gameRuleIds": [
+      "right-score",
+      "up-win",
+      "left-lose"
+    ],
+    "snapshotMatched": true,
+    "runtimeJS": {
+      "local": {
+        "bytes": 1944408,
+        "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+      },
+      "served": {
+        "bytes": 1944408,
+        "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+      }
+    },
+    "runtimeCSS": {
+      "local": {
+        "bytes": 6222,
+        "sha256": "2753ee819e34f3b5a51bd1a12f2f9086ea54f82d9cb407bae09152b62bef238c"
+      },
+      "served": {
+        "bytes": 6222,
+        "sha256": "2753ee819e34f3b5a51bd1a12f2f9086ea54f82d9cb407bae09152b62bef238c"
+      }
+    },
+    "generatedModels": [
+      {
+        "path": "models/generated/0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e.glb",
+        "bytes": 40352,
+        "sha256": "0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e"
+      },
+      {
+        "path": "models/generated/68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a.glb",
+        "bytes": 34208,
+        "sha256": "68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a"
+      }
+    ],
+    "generatedManifestMatched": true
+  },
+  "browser": {
+    "modes": [
+      {
+        "name": "desktop-keyboard",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "touch": false,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-desktop.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      },
+      {
+        "name": "portrait-touch",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "touch": true,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-portrait-touch.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      },
+      {
+        "name": "landscape-touch",
+        "viewport": {
+          "width": 844,
+          "height": 390
+        },
+        "touch": true,
+        "status": "passed",
+        "generationRequests": 0,
+        "externalRequests": 0,
+        "pageErrors": 0,
+        "cookies": 0,
+        "screenshot": "signed-out-game-landscape-touch.png",
+        "httpStatus": 200,
+        "ready": true,
+        "canvas": true,
+        "scoreAfterRight": 7,
+        "win": true,
+        "loss": true,
+        "restart": true
+      }
+    ],
+    "status": "passed",
+    "modeCount": 3
+  },
+  "stages": {
+    "preflight": {
+      "status": "passed"
+    },
+    "account": {
+      "status": "passed"
+    },
+    "modelUploads": {
+      "status": "passed"
+    },
+    "projectSave": {
+      "status": "passed"
+    },
+    "publishSubmission": {
+      "status": "passed"
+    },
+    "publicationReady": {
+      "status": "passed"
+    },
+    "publicArtifacts": {
+      "status": "passed"
+    },
+    "browser": {
+      "status": "passed"
+    }
+  },
+  "currentRuntime": {
+    "js": {
+      "bytes": 1944408,
+      "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+    },
+    "css": {
+      "bytes": 6222,
+      "sha256": "2753ee819e34f3b5a51bd1a12f2f9086ea54f82d9cb407bae09152b62bef238c"
+    }
+  },
+  "finishedAt": "2026-09-25T02:13:38.748Z"
+}

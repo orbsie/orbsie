@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "orbsie.provider-artifact-publication/v1",
+  "status": "failed",
+  "startedAt": "2026-09-25T02:11:37.553Z",
+  "baseOrigin": "https://orbsie.com",
+  "source": {
+    "path": "docs/evidence/provider-e2e/gateway-reload-recovery/gateway/world.zip",
+    "projectId": "4a5d7783-c7fd-44e0-bf19-864bab9f9b08",
+    "revision": 9,
+    "digest": "1bf290c0ff72cd4d9412e94f6dbb41fa07d36d6cdae4995ad58216a35829b618",
+    "projectSha256": "dca4cd48fcdce89b8a26cc305ae461d3f1d34bad36708224917d52f950e57105",
+    "models": [
+      {
+        "path": "models/generated/0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e.glb",
+        "sha256": "0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e",
+        "bytes": 40352
+      },
+      {
+        "path": "models/generated/68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a.glb",
+        "sha256": "68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a",
+        "bytes": 34208
+      }
+    ],
+    "projectBytes": 7545,
+    "zipFileCount": 71,
+    "entityIds": [
+      "original-tree",
+      "original-mushroom"
+    ],
+    "gameRuleIds": [
+      "right-score",
+      "up-win",
+      "left-lose"
+    ]
+  },
+  "acceptance": {
+    "runId": "9c13255a-b084-418c-8779-decc21e681da",
+    "projectId": "provider-artifact-9c13255a-b084-418c-8779-decc21e681da",
+    "revision": 9
+  },
+  "account": {
+    "status": "created"
+  },
+  "modelUploads": {
+    "status": "uploaded",
+    "count": 2,
+    "models": [
+      {
+        "sha256": "0fa6c0b2b20e4102e2b5a0ea81562f86420ef70d8f1e72b468ecd6267a25506e",
+        "bytes": 40352,
+        "status": "uploaded"
+      },
+      {
+        "sha256": "68058b58f0b66f994248858d4cab20a49f33662aa2afd2f54834b5d2ef6fe04a",
+        "bytes": 34208,
+        "status": "uploaded"
+      }
+    ]
+  },
+  "projectSave": {
+    "status": "saved_and_verified",
+    "revision": 9,
+    "snapshotVerified": true
+  },
+  "publication": {
+    "status": "ready",
+    "revision": 9,
+    "deploymentId": "dpl_kLNDRDDHgxGR1AWUsgsmdcx9T83E",
+    "deploymentUrl": "https://orb-186c460ab08611bba89d-ch4h2o7ft-grappeggias-projects.vercel.app",
+    "vercelProjectId": "prj_m9KdTeXIqwIzs0M0Lp9MBTrTkxnd",
+    "initialState": "INITIALIZING",
+    "polls": 2,
+    "lastState": "READY",
+    "servedRevision": 9,
+    "readyState": "READY"
+  },
+  "publicArtifacts": {
+    "status": "not_run"
+  },
+  "browser": {
+    "status": "not_run",
+    "modes": []
+  },
+  "stages": {
+    "preflight": {
+      "status": "passed"
+    },
+    "account": {
+      "status": "passed"
+    },
+    "modelUploads": {
+      "status": "passed"
+    },
+    "projectSave": {
+      "status": "passed"
+    },
+    "publishSubmission": {
+      "status": "passed"
+    },
+    "publicationReady": {
+      "status": "passed"
+    },
+    "publicArtifacts": {
+      "status": "failed",
+      "failureCode": "public-runtime-js-mismatch"
+    },
+    "browser": {
+      "status": "not_run"
+    }
+  },
+  "currentRuntime": {
+    "js": {
+      "bytes": 1944408,
+      "sha256": "4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179"
+    },
+    "css": {
+      "bytes": 6222,
+      "sha256": "2753ee819e34f3b5a51bd1a12f2f9086ea54f82d9cb407bae09152b62bef238c"
+    }
+  },
+  "failedStage": "publicArtifacts",
+  "finishedAt": "2026-09-25T02:11:50.512Z"
+}

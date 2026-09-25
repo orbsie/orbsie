@@ -1,5 +1,33 @@
 # Development checkpoint
 
+Sep 25 portrait play framing release: source `a6295cf` makes the temporary
+play-camera minimum scale with viewport aspect in both WebGL and Canvas2D,
+including WebGL residency selection, while preserving authored navigation.
+The compatibility graphics notice moves above touch controls instead of
+covering the scene. The optimized build, 41 focused navigation/software tests,
+and local portrait/landscape touch fixture passed. Production deployment
+`https://orbsie-nglpuf7ix-grappeggias-projects.vercel.app` was aliased to
+`https://orbsie.com/`; served player JS/CSS exactly match local hashes
+`4767933f3f96337cfd7cdb0673918ce0fbc653b2ed64cfe79742e8765d5f1179`
+and `2753ee819e34f3b5a51bd1a12f2f9086ea54f82d9cb407bae09152b62bef238c`.
+An initial fresh publication reached Ready but correctly failed the runtime
+byte check because production still served the prior version. After the
+release, a second fresh no-model-call publication passed exact runtime,
+snapshot and generated-model hashes plus signed-out desktop/portrait/landscape
+gameplay at
+`https://orb-1ac45d0e2e7da2db7f45-ms8v1d285-grappeggias-projects.vercel.app`.
+The same public deployment passed Android 15 emulator Chrome touch score 7,
+restart, win and loss with forced Canvas2D, zero cookies, generation/external
+requests or page errors. Astra inspected ready and scored screenshots: the
+tree and mushroom are fully in frame and the notice no longer covers them.
+Evidence: `docs/evidence/player-touch-layout/portrait-framing-20260925/`,
+`docs/evidence/provider-artifact-publication-framing-20260925/` (failed
+version gate),
+`docs/evidence/provider-artifact-publication-framing-corrected-20260925/`,
+and `docs/evidence/android-gateway-publication/portrait-framing-20260925/`.
+This does not establish model-authored visual delight or physical-device
+performance. No live model call ran.
+
 Sep 25 exact-publication Android acceptance: `scripts/verify-android-gateway-publication.mjs`
 loaded the immutable Gateway-authored deployment below on an Android 15
 midrange-profile emulator (Chrome 124, 412×786 CSS viewport), forced Canvas2D

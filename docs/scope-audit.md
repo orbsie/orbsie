@@ -6,6 +6,15 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- Source `a6295cf` is deployed to `https://orbsie.com/` and a fresh
+  Gateway-authored saved artifact was independently published with exact
+  current-runtime and model hashes. Signed-out desktop and touch browser
+  gameplay plus Android 15 emulator Chrome Canvas2D touch score/restart/win/loss
+  pass. Portrait play framing now keeps both models in view and places the
+  compatibility notice above touch controls. Evidence:
+  `docs/evidence/provider-artifact-publication-framing-corrected-20260925/`
+  and `docs/evidence/android-gateway-publication/portrait-framing-20260925/`.
+  Model-authored visual quality and physical mobile remain open.
 - The exact immutable Gateway-authored deployment passed Android 15 emulator
   Chrome touch score, restart, win and loss under forced Canvas2D fallback with
   no credentials or generation requests. Screenshot review found clipped tree
