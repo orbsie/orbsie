@@ -427,6 +427,94 @@ export function gameplayPlatformSurfaceHeight(
 }
 
 /**
+ * Capture a bounded pair bracketing a downward crossing of estimated platform top.
+ */
+export function detectDescendingPlatformSurfaceCrossing(
+  previous,
+  current,
+  target,
+) {
+  const validFrame = (frame) =>
+    Array.isArray(frame?.player?.position) &&
+    frame.player.position.length === 3 &&
+    frame.player.position.every(Number.isFinite) &&
+    Array.isArray(frame?.platform?.position) &&
+    frame.platform.position.length === 3 &&
+    frame.platform.position.every(Number.isFinite) &&
+    Array.isArray(frame?.platform?.scale) &&
+    frame.platform.scale.length === 3 &&
+    frame.platform.scale.every((value) => Number.isFinite(value) && value > 0);
+  if (!target || !validFrame(previous) || !validFrame(current)) return null;
+  if (
+    !Number.isFinite(previous.player?.velocityY) ||
+    !Number.isFinite(current.player?.velocityY) ||
+    current.player.velocityY > 0
+  )
+    return null;
+
+  const estimatedTopY = (frame) =>
+    gameplayPlatformSurfaceHeight(
+      { ...target, scale: frame.platform.scale },
+      frame.platform.position,
+    );
+  const previousTopY = estimatedTopY(previous);
+  const currentTopY = estimatedTopY(current);
+  if (
+    !Number.isFinite(previousTopY) ||
+    !Number.isFinite(currentTopY)
+  )
+    return null;
+  if (
+    previous.player.position[1] <= previousTopY ||
+    current.player.position[1] > currentTopY
+  )
+    return null;
+
+  const insideEstimatedFootprint = (frame) => {
+    const player = frame.player.position;
+    const platform = frame.platform.position;
+    const scale = frame.platform.scale;
+    return (
+      Math.abs(player[0] - platform[0]) <= 0.55 * scale[0] &&
+      Math.abs(player[2] - platform[2]) <= 0.55 * scale[2]
+    );
+  };
+  const counterChanged = (before, after) =>
+    Number.isSafeInteger(before) && Number.isSafeInteger(after)
+      ? before !== after
+      : null;
+
+  return {
+    kind: "descending-estimated-platform-top-crossing",
+    estimateOnly: true,
+    footprint: {
+      model: "procedural-xz-half-extents-0.55-times-scale",
+      authoritativeContact: false,
+    },
+    previous: {
+      observation: previous,
+      estimatedTopY: previousTopY,
+      insideEstimatedFootprint: insideEstimatedFootprint(previous),
+    },
+    current: {
+      observation: current,
+      estimatedTopY: currentTopY,
+      insideEstimatedFootprint: insideEstimatedFootprint(current),
+    },
+    contactCountersChanged: {
+      platform: counterChanged(
+        previous.platformContactCount,
+        current.platformContactCount,
+      ),
+      bounce: counterChanged(
+        previous.bounceContactCount,
+        current.bounceContactCount,
+      ),
+    },
+  };
+}
+
+/**
  * Select one transition action from the current support and jump phase.
  * `jumping` means a jump edge has already been sent for this target; a stable
  * support then means the attempt recovered and may be retried, never that a

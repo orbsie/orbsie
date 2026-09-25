@@ -30,6 +30,7 @@ import {
   chooseGameplayJumpKeys,
   chooseGameplayPlatformAction,
   chooseGameplaySteeringKeys,
+  detectDescendingPlatformSurfaceCrossing,
   generationStreamIsOpen,
   gameplaySupportId,
   observePlatformContact,
@@ -1135,6 +1136,56 @@ function safePlatformTraversalObservation(observation, allowedIds) {
   };
 }
 
+function safePlatformSurfaceCrossing(crossing, allowedIds) {
+  if (
+    crossing?.kind !== "descending-estimated-platform-top-crossing" ||
+    crossing.estimateOnly !== true ||
+    crossing.footprint?.model !==
+      "procedural-xz-half-extents-0.55-times-scale" ||
+    crossing.footprint?.authoritativeContact !== false
+  )
+    return null;
+  const safeSide = (side) => {
+    const observation = safePlatformTraversalObservation(
+      side?.observation,
+      allowedIds,
+    );
+    const estimatedTopY = safeGameplayNumber(side?.estimatedTopY);
+    if (!observation || estimatedTopY === null) return null;
+    return {
+      observation,
+      estimatedTopY,
+      insideEstimatedFootprint:
+        typeof side.insideEstimatedFootprint === "boolean"
+          ? side.insideEstimatedFootprint
+          : null,
+    };
+  };
+  const previous = safeSide(crossing.previous);
+  const current = safeSide(crossing.current);
+  if (!previous || !current) return null;
+  return {
+    kind: "descending-estimated-platform-top-crossing",
+    estimateOnly: true,
+    footprint: {
+      model: "procedural-xz-half-extents-0.55-times-scale",
+      authoritativeContact: false,
+    },
+    previous,
+    current,
+    contactCountersChanged: {
+      platform:
+        typeof crossing.contactCountersChanged?.platform === "boolean"
+          ? crossing.contactCountersChanged.platform
+          : null,
+      bounce:
+        typeof crossing.contactCountersChanged?.bounce === "boolean"
+          ? crossing.contactCountersChanged.bounce
+          : null,
+    },
+  };
+}
+
 function safeGameplayAttempt(value) {
   if (Number.isSafeInteger(value) && value >= 0 && value <= 2) return value;
   const recovery = typeof value === "string" && /^recovery-([0-2])$/.exec(value);
@@ -1172,6 +1223,10 @@ function safePlatformJumpEvidence(attempts, platformId, allowedIds) {
               )
           : [],
         apex: safePlatformTraversalObservation(attempt.apex, allowedIds),
+        surfaceCrossing: safePlatformSurfaceCrossing(
+          attempt.surfaceCrossing,
+          allowedIds,
+        ),
         landing: safePlatformTraversalObservation(attempt.landing, allowedIds),
         contact: safePlatformTraversalObservation(attempt.contact, allowedIds),
         recovery: safePlatformTraversalObservation(
@@ -5288,10 +5343,16 @@ export async function runFreshFlagshipGameplay(
     }
     return null;
   };
-  const recordJumpSample = (phase, observation) => {
+  const recordJumpSample = (phase, observation, target) => {
     const sample = compactPlatformObservation(observation, phase.id);
     if (!sample) return;
     const previousSample = phase.samples.at(-1) ?? phase.before;
+    if (!phase.surfaceCrossing)
+      phase.surfaceCrossing = detectDescendingPlatformSurfaceCrossing(
+        previousSample,
+        sample,
+        target,
+      );
     phase.samples = retainFreshGameplayJumpSample(phase.samples, sample);
     if (
       !phase.apex &&
@@ -5442,6 +5503,7 @@ export async function runFreshFlagshipGameplay(
         inputKeys: [],
         samples: [],
         apex: null,
+        surfaceCrossing: null,
         landing: null,
         contact: null,
         recovery: null,
@@ -5457,7 +5519,7 @@ export async function runFreshFlagshipGameplay(
         last = await read();
         if (!last)
           throw new Error(`No observation while approaching ${target.id}.`);
-        recordJumpSample(phase, last);
+        recordJumpSample(phase, last, target);
         const live = last.entities.find((entity) => entity.id === target.id);
         if (!live)
           throw new Error(
@@ -5494,7 +5556,7 @@ export async function runFreshFlagshipGameplay(
             phase.recovery = compactPlatformObservation(previous, target.id);
             return { observation: previous ?? last, contacted: false };
           }
-          recordJumpSample(phase, launch);
+          recordJumpSample(phase, launch, target);
           await setKeys(
             chooseGameplaySteeringKeys(
               launch.player.position,

@@ -27,6 +27,7 @@ import {
   verifyFreshPublicationArtifacts,
   verifyStandalone,
 } from "../scripts/provider-browser-e2e.mjs";
+import { detectDescendingPlatformSurfaceCrossing } from "../scripts/lib/fresh-flagship-gameplay.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
   resumeCheckpoint: {
@@ -495,6 +496,32 @@ describe("flagship provider story contract", () => {
       bounceContactCount: -1,
       rawProviderText: "must not be copied",
     });
+    const crossingTarget = {
+      id: "entity-0",
+      position: [0, 0.5, 0],
+      scale: [1, 0.25, 1],
+      geometry: { kind: "platform" },
+    };
+    const crossing = detectDescendingPlatformSurfaceCrossing(
+      {
+        ...compactAttemptObservation("entity-0", 100),
+        player: { position: [0, 1.2, 0], velocityY: 0.2, groundedOn: null },
+        platform: { position: [0, 0.5, 0], scale: [1, 0.25, 1] },
+        platformContactCount: 0,
+        bounceContactCount: 0,
+      },
+      {
+        ...compactAttemptObservation("entity-0", 150),
+        player: { position: [0.6, 0.9, 0], velocityY: -0.2, groundedOn: null },
+        platform: { position: [0, 0.5, 0], scale: [1, 0.25, 1] },
+        platformContactCount: 1,
+        bounceContactCount: 0,
+      },
+      crossingTarget,
+    );
+    expect(crossing).not.toBeNull();
+    crossing.rawProviderText = "private crossing provider output";
+    crossing.previous.observation.rawProviderText = "private previous text";
     const thrown = new Error(initialReport.error) as Error & {
       freshGameplayEvidence: Record<string, any>;
     };
@@ -545,6 +572,7 @@ describe("flagship provider story contract", () => {
           landing: compactAttemptObservation(`entity-${index}`, 40),
           contact: compactAttemptObservation(`entity-${index}`, 50),
           recovery: compactAttemptObservation(`entity-${index}`, 60),
+          surfaceCrossing: attempt === 2 ? crossing : null,
           rawProviderText: "must be omitted",
         })),
       })),
@@ -631,6 +659,25 @@ describe("flagship provider story contract", () => {
         bounceContactCount: null,
       });
       expect(
+        evidence.platformEvidence[0].jumpEvidence[0].surfaceCrossing,
+      ).toMatchObject({
+        kind: "descending-estimated-platform-top-crossing",
+        estimateOnly: true,
+        footprint: {
+          model: "procedural-xz-half-extents-0.55-times-scale",
+          authoritativeContact: false,
+        },
+        previous: {
+          estimatedTopY: 1.05,
+          insideEstimatedFootprint: true,
+        },
+        current: {
+          estimatedTopY: 1.05,
+          insideEstimatedFootprint: false,
+        },
+        contactCountersChanged: { platform: true, bounce: false },
+      });
+      expect(
         evidence.platformEvidence[0].jumpEvidence[0].inputKeys.every(
           (keys: string[]) => keys.join("") === "d",
         ),
@@ -649,6 +696,10 @@ describe("flagship provider story contract", () => {
       );
       expect(JSON.stringify(report)).not.toContain("secret-provider-token");
       expect(JSON.stringify(report)).not.toContain("must not be copied");
+      expect(JSON.stringify(report)).not.toContain(
+        "private crossing provider output",
+      );
+      expect(JSON.stringify(report)).not.toContain("private previous text");
     }
   });
 

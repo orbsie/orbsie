@@ -6,6 +6,7 @@ import {
   chooseGameplayJumpKeys,
   chooseGameplayPlatformAction,
   chooseGameplaySteeringKeys,
+  detectDescendingPlatformSurfaceCrossing,
   enterFreshGameplayLayoutMode,
   generationStreamIsOpen,
   gameplayJumpPhase,
@@ -76,6 +77,55 @@ describe("fresh flagship gameplay driver", () => {
     expect(samples.map((sample) => sample.index)).toEqual([
       0, 1, 2, 3, 22, 23, 24, 25, 26, 27, 28, 29,
     ]);
+  });
+
+  it("brackets descending estimated surface crossings", () => {
+    const target = {
+      id: "platform-c",
+      position: [0, 0.5, 0],
+      scale: [2, 0.5, 3],
+      geometry: { kind: "platform" },
+    };
+    const previous = {
+      atMs: 100,
+      player: { position: [0.4, 1.3, 0.5], velocityY: 0.2 },
+      platform: { position: [0, 0.5, 0], scale: [2, 0.5, 3] },
+      platformContactCount: 0,
+      bounceContactCount: 0,
+    };
+    const current = {
+      atMs: 150,
+      player: { position: [0.8, 1.1, 1.8], velocityY: -0.4 },
+      platform: { position: [0.1, 0.5, 0.1], scale: [2, 0.5, 3] },
+      platformContactCount: 1,
+      bounceContactCount: 0,
+    };
+
+    expect(
+      detectDescendingPlatformSurfaceCrossing(previous, current, target),
+    ).toMatchObject({
+      kind: "descending-estimated-platform-top-crossing",
+      estimateOnly: true,
+      footprint: {
+        model: "procedural-xz-half-extents-0.55-times-scale",
+        authoritativeContact: false,
+      },
+      previous: {
+        estimatedTopY: 1.18,
+        insideEstimatedFootprint: true,
+      },
+      current: {
+        estimatedTopY: 1.18,
+        insideEstimatedFootprint: false,
+      },
+      contactCountersChanged: { platform: true, bounce: false },
+    });
+    expect(
+      detectDescendingPlatformSurfaceCrossing(previous, {
+        ...current,
+        player: { ...current.player, position: [0.8, 1.2, 1.8] },
+      }, target),
+    ).toBeNull();
   });
 
   it("binds dynamic target IDs and layout to the current project", () => {
