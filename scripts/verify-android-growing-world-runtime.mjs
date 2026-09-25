@@ -172,7 +172,16 @@ function compactError(error, limit = 240) {
 function collectAndroidProcessDiagnostic(report) {
   const diagnostic = { collectedAt: new Date().toISOString() };
   try {
-    const logcat = adb("logcat", "-d", "-t", "1200", "-v", "brief");
+    const logcat = adb(
+      "logcat",
+      "-b",
+      "all",
+      "-d",
+      "-t",
+      "3000",
+      "-v",
+      "brief",
+    );
     const chromeSignal = /com\.android\.chrome|org\.chromium|chromium|chrome/i;
     const failureSignal =
       /crash|fatal|renderer|killed|died|oom|low.?memory|lmkd|\banr\b|am_anr|am_crash|am_kill/i;
@@ -181,13 +190,15 @@ function collectAndroidProcessDiagnostic(report) {
       .filter((line) => {
         if (!failureSignal.test(line)) return false;
         if (chromeSignal.test(line)) return true;
-        return /lmkd|low.?memory|am_anr|am_kill/i.test(line);
+        return /ActivityManager|lmkd|low.?memory|am_anr|am_crash|am_kill/i.test(
+          line,
+        );
       })
       .slice(-30)
       .map(redactDiagnosticLine);
     diagnostic.logcat = {
       source:
-        "fresh AVD logcat ring buffer; filtered Chrome/renderer/low-memory/ANR lines only",
+        "fresh AVD logcat ring buffers; filtered Chrome/ActivityManager/renderer/low-memory/ANR lines only",
       matchedLineCount: relevantLines.length,
       lines: relevantLines,
     };
@@ -196,6 +207,34 @@ function collectAndroidProcessDiagnostic(report) {
       error instanceof Error
         ? error.message.slice(0, 200)
         : "logcat unavailable";
+  }
+  try {
+    const exitInfo = adb(
+      "shell",
+      "dumpsys",
+      "activity",
+      "exit-info",
+      "com.android.chrome",
+    );
+    const exitInfoLines = exitInfo
+      .split(/\r?\n/)
+      .filter((line) =>
+        /Historical Process Exit|ApplicationExitInfo|^\s*#\d+:|timestamp=|pid=|process=|reason=|subreason=|status=|pss=|rss=|description=/i.test(
+          line,
+        ),
+      )
+      .slice(0, 120)
+      .map(redactDiagnosticLine);
+    diagnostic.processExitInfo = {
+      source: "dumpsys activity exit-info com.android.chrome",
+      matchedLineCount: exitInfoLines.length,
+      lines: exitInfoLines,
+    };
+  } catch (error) {
+    diagnostic.processExitInfoError =
+      error instanceof Error
+        ? error.message.slice(0, 200)
+        : "exit info unavailable";
   }
   try {
     diagnostic.chromePid = adb("shell", "pidof", "com.android.chrome") || null;
@@ -1554,7 +1593,7 @@ try {
       `Mode: ${report.fixture.mode}. Device: ${report.device?.avd ?? AVD}, Android ${report.device?.androidRelease ?? "not reached"} (API ${report.device?.androidApi ?? "unknown"}), Chrome ${report.device?.chromeVersion ?? "not reached"}. Renderer requested: ${CONTROL_PAGE ? "none; static HTML control page" : "direct SoftwareWorld Canvas2D"}. Provider calls: 0; external requests: ${report.externalRequests.length}.\n\n` +
       `${report.comparisonAssessment ? `${report.comparisonAssessment}\n\n` : ""}` +
       `${CONTROL_PAGE ? `The control mode permits one static HTML navigation after CDP attachment; this run attempted ${report.controlNavigationAttempts ?? 0}. The page contains no fixture bundle, script, canvas, or SoftwareWorld. ` : READINESS_ONLY ? "This is a scene-readiness-only run; it performs no travel gesture and records no rAF or heap result. The page CDP session and Performance domain are created only after fixture.ready(). " : "The JSON includes page/browser lifecycle times, local response timing, travel readiness, rAF percentiles and CDP heap metrics when reached. "}` +
-      `The JSON also includes lifecycle timing, screenshots when captured, and only filtered/redacted Chrome renderer, low-memory, or ANR logcat lines plus Chrome process state. This emulator diagnostic does not establish physical-device behavior or application acceptance. Screenshots captured: ${report.screenshots.length ? report.screenshots.join(", ") : "none"}. See [report.json](./report.json).\n`,
+      `The JSON also includes lifecycle timing, screenshots when captured, filtered/redacted Chrome and ActivityManager lines from all AVD log buffers, Android process-exit records, and current Chrome process state. This emulator diagnostic does not establish physical-device behavior or application acceptance. Screenshots captured: ${report.screenshots.length ? report.screenshots.join(", ") : "none"}. See [report.json](./report.json).\n`,
   );
   console.log(
     JSON.stringify({

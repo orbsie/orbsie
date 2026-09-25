@@ -1,0 +1,380 @@
+{
+  "status": "failed",
+  "currentStage": "software-scene-readiness-sample",
+  "runId": "2026-09-25T06-21-29-328Z",
+  "sourceCommit": "810825ed516ac270704d6049056ab9224d017b4c",
+  "harnessSourceSha256": "ce67b67acfd2cec7b9b8a7e093008a0593a0c57baaf360e395bc339936715c8a",
+  "scope": "Readiness-only diagnostic with 1 fixture entity at 5000 m; no travel cycles",
+  "fixture": {
+    "mode": "1-entity scene-readiness diagnostic with post-ready page CDP session",
+    "entityCount": 1,
+    "entitySelection": "first 1 entities from the default home cluster, selected through a diagnostic-only in-memory fixture transform",
+    "additionalCluster": "none; default home and distant clusters only",
+    "rendererQuery": "renderer=software",
+    "initialCameraDistance": 5000
+  },
+  "pageCdpSessionCreatedAfterFixtureReady": true,
+  "timings": {
+    "navigationStartedElapsedMs": 31140,
+    "domContentLoadedElapsedMs": 32370,
+    "fixtureReadyElapsedMs": 34308,
+    "pageCdpSessionCreatedElapsedMs": 34357,
+    "performanceDomainEnabledElapsedMs": 34363,
+    "failureElapsedMs": 35108
+  },
+  "lifecycleEvents": [
+    {
+      "event": "avd-process-started",
+      "at": "2026-09-25T06:21:29.782Z",
+      "elapsedMs": 454,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "android-boot-completed",
+      "at": "2026-09-25T06:21:53.456Z",
+      "elapsedMs": 24128,
+      "detail": {
+        "avd": "droidlm_api35_midrange"
+      }
+    },
+    {
+      "event": "avd-ready",
+      "at": "2026-09-25T06:21:54.001Z",
+      "elapsedMs": 24673,
+      "detail": {
+        "androidApi": "35",
+        "chromeVersion": "124.0.6367.219"
+      }
+    },
+    {
+      "event": "chrome-cdp-ready",
+      "at": "2026-09-25T06:21:59.929Z",
+      "elapsedMs": 30601,
+      "detail": {
+        "browser": "Chrome/124.0.6367.219"
+      }
+    },
+    {
+      "event": "page-created-and-instrumented",
+      "at": "2026-09-25T06:22:00.443Z",
+      "elapsedMs": 31115
+    },
+    {
+      "event": "main-frame-navigated",
+      "at": "2026-09-25T06:22:01.030Z",
+      "elapsedMs": 31702,
+      "detail": {
+        "urlPath": "/"
+      }
+    },
+    {
+      "event": "dom-content-loaded",
+      "at": "2026-09-25T06:22:01.698Z",
+      "elapsedMs": 32370,
+      "detail": {
+        "httpStatus": 200
+      }
+    },
+    {
+      "event": "early-screenshot-captured",
+      "at": "2026-09-25T06:22:03.525Z",
+      "elapsedMs": 34197
+    },
+    {
+      "event": "fixture-ready",
+      "at": "2026-09-25T06:22:03.636Z",
+      "elapsedMs": 34308
+    },
+    {
+      "event": "page-cdp-session-created-after-fixture-ready",
+      "at": "2026-09-25T06:22:03.685Z",
+      "elapsedMs": 34357
+    },
+    {
+      "event": "page-closed",
+      "at": "2026-09-25T06:22:04.436Z",
+      "elapsedMs": 35108,
+      "detail": {
+        "initiatedByHarnessCleanup": false
+      }
+    },
+    {
+      "event": "probe-failed",
+      "at": "2026-09-25T06:22:04.436Z",
+      "elapsedMs": 35108,
+      "detail": {
+        "error": "page.evaluate: Target page, context or browser has been closed"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-started",
+      "at": "2026-09-25T06:22:04.437Z",
+      "elapsedMs": 35109,
+      "detail": {
+        "failureStage": "software-scene-readiness-sample"
+      }
+    },
+    {
+      "event": "android-failure-diagnostics-finished",
+      "at": "2026-09-25T06:22:04.743Z",
+      "elapsedMs": 35415,
+      "detail": {
+        "matchedLogcatLines": 1
+      }
+    },
+    {
+      "event": "harness-cleanup-started",
+      "at": "2026-09-25T06:22:04.743Z",
+      "elapsedMs": 35415
+    },
+    {
+      "event": "context-closed",
+      "at": "2026-09-25T06:22:04.899Z",
+      "elapsedMs": 35571,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    },
+    {
+      "event": "browser-disconnected",
+      "at": "2026-09-25T06:22:04.899Z",
+      "elapsedMs": 35571,
+      "detail": {
+        "initiatedByHarnessCleanup": true
+      }
+    }
+  ],
+  "httpResponses": [
+    {
+      "path": "/",
+      "status": 200,
+      "elapsedMs": 31641
+    },
+    {
+      "path": "/fixture.js",
+      "status": 200,
+      "elapsedMs": 31776
+    }
+  ],
+  "adbReverseBindRetries": [],
+  "failedRequests": [],
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "heap": {
+    "supported": null,
+    "samples": [],
+    "performanceDomainEnabled": true
+  },
+  "cycles": [],
+  "screenshots": [
+    "early-domcontentloaded.png"
+  ],
+  "limitations": [
+    "This is an Android 15 emulator run, not physical-device certification.",
+    "SoftwareWorld renders through Canvas2D; this run does not measure WebGL, native GPU behavior, or physical-device graphics performance.",
+    "Frame intervals are from the emulated Chrome viewport and do not establish 60 fps.",
+    "SoftwareWorld has no WebGL particle-formation animation; no-replay evidence checks that project identity/revision and ready review state persist across reentry.",
+    "CDP JavaScript heap values are tab-level samples and can vary with garbage collection.",
+    "The diagnostic run failed before completion; see lifecycle, timing, process-state, and filtered logcat records for evidence and any remaining uncertainty."
+  ],
+  "device": {
+    "id": "emulator-5556",
+    "avd": "droidlm_api35_midrange",
+    "androidRelease": "15",
+    "androidApi": "35",
+    "buildId": "AE3A.240806.043",
+    "buildFingerprint": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "manufacturer": "Google",
+    "model": "sdk_gphone64_x86_64",
+    "product": "sdk_gphone64_x86_64",
+    "cpuAbi": "x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome; not a physical device",
+    "emulatorStartedByHarness": true
+  },
+  "androidChromeCDP": {
+    "browser": "Chrome/124.0.6367.219",
+    "protocolVersion": "1.3",
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+  },
+  "cookiesBefore": 0,
+  "pageTimingAtDomContentLoaded": {
+    "documentReadyState": "complete",
+    "initStartedAtMs": 528.7000000000007,
+    "lifecycle": [
+      {
+        "event": "document-start",
+        "at": 528.7000000000007
+      },
+      {
+        "event": "dom-content-loaded",
+        "at": 1216.4000000000015
+      },
+      {
+        "event": "load",
+        "at": 1218
+      }
+    ],
+    "navigation": {
+      "responseStartMs": 64.5,
+      "responseEndMs": 64.80000000000291,
+      "domInteractiveMs": 559.3000000000029,
+      "domContentLoadedEventEndMs": 1216.9000000000015,
+      "loadEventEndMs": 1218,
+      "transferSizeBytes": 853
+    },
+    "resources": [
+      {
+        "path": "/fixture.js",
+        "durationMs": 332.7000000000007,
+        "responseEndMs": 828.4000000000015,
+        "transferSizeBytes": 4395147
+      }
+    ]
+  },
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+    "viewport": {
+      "width": 412,
+      "height": 786
+    },
+    "devicePixelRatio": 2.625,
+    "maxTouchPoints": 5,
+    "hardwareConcurrency": 2,
+    "deviceMemoryGiB": 2,
+    "renderer": "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
+    "fixtureNavigation": {
+      "target": [
+        -600,
+        0,
+        0
+      ],
+      "heading": 0,
+      "distance": 5000
+    }
+  },
+  "renderer": "direct SoftwareWorld Canvas2D; zero WebGL context attempts",
+  "viewport": {
+    "width": 412,
+    "height": 786
+  },
+  "failureStage": "software-scene-readiness-sample",
+  "error": "page.evaluate: Target page, context or browser has been closed",
+  "failurePageSnapshot": {
+    "unavailable": "page target was already closed"
+  },
+  "androidProcessDiagnostic": {
+    "collectedAt": "2026-09-25T06:22:04.437Z",
+    "logcat": {
+      "source": "fresh AVD logcat ring buffers; filtered Chrome/ActivityManager/renderer/low-memory/ANR lines only",
+      "matchedLineCount": 1,
+      "lines": [
+        "I/am_kill ( 554): [0,2290,com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1,0,isolated not needed,164900]"
+      ]
+    },
+    "processExitInfo": {
+      "source": "dumpsys activity exit-info com.android.chrome",
+      "matchedLineCount": 70,
+      "lines": [
+        " Historical Process Exit for uid=0",
+        " ApplicationExitInfo #0:",
+        " timestamp=2026-09-24 00:55:58.424 pid=6591 realUid=90041 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:41 reason=1 (EXIT_SELF) subreason=0 (UNKNOWN) status=0",
+        " importance=100 pss=0.00 rss=0.00 description=null state=empty trace=null",
+        " Historical Process Exit for uid=10145",
+        " ApplicationExitInfo #0:",
+        " timestamp=2026-09-24 23:22:04.641 pid=2412 realUid=90002 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:2 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #1:",
+        " timestamp=2026-09-24 23:22:04.555 pid=2290 realUid=90001 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:1 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #2:",
+        " timestamp=2026-09-24 23:21:58.709 pid=1974 realUid=90000 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #3:",
+        " timestamp=2026-09-24 03:05:40.483 pid=7778 realUid=90064 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:64 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #4:",
+        " timestamp=2026-09-24 02:38:51.131 pid=7630 realUid=90063 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:63 reason=1 (EXIT_SELF) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #5:",
+        " timestamp=2026-09-24 02:38:15.611 pid=7583 realUid=90062 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:62 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #6:",
+        " timestamp=2026-09-24 02:36:30.986 pid=7552 realUid=90061 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:61 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #7:",
+        " timestamp=2026-09-24 02:35:09.386 pid=7503 realUid=90060 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:60 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #8:",
+        " timestamp=2026-09-24 02:33:49.753 pid=7478 realUid=90059 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:59 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #9:",
+        " timestamp=2026-09-24 02:33:23.050 pid=7458 realUid=90058 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:58 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #10:",
+        " timestamp=2026-09-24 02:31:37.348 pid=7431 realUid=90057 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:57 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #11:",
+        " timestamp=2026-09-24 02:26:00.215 pid=7392 realUid=90056 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:56 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #12:",
+        " timestamp=2026-09-24 02:21:09.435 pid=7360 realUid=90055 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:55 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #13:",
+        " timestamp=2026-09-24 02:20:38.963 pid=7326 realUid=90054 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:54 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #14:",
+        " timestamp=2026-09-24 02:19:31.068 pid=7301 realUid=90053 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:53 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null",
+        " ApplicationExitInfo #15:",
+        " timestamp=2026-09-24 02:16:22.676 pid=7277 realUid=90052 packageUid=10145 definingUid=10145 user=0",
+        " process=com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:52 reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0",
+        " importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null"
+      ]
+    },
+    "chromePid": "1632",
+    "chromeProcesses": [
+      "u0_a145 1632 356 32986284 323084 0 0 S com.android.chrome",
+      "u0_a145 1876 356 32398024 93024 0 0 S com.android.chrome_zygote",
+      "u0_a145 2010 356 33291388 209388 0 0 S com.android.chrome:privileged_process0"
+    ]
+  },
+  "comparisonAssessment": "The 1-entity fixture lost its page after ready while a Chrome sandboxed Chromium child process died; this run does not identify why the process exited.",
+  "cdpSessionDetachAcknowledged": false,
+  "cleanup": {
+    "cdpSessionDetached": true,
+    "browserTabClosed": true,
+    "cdpConnectionClosed": true,
+    "cdpForwardRemoved": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryFilesRemoved": true,
+    "emulatorStopped": true
+  },
+  "finishedAt": "2026-09-25T06:22:06.036Z"
+}

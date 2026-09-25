@@ -1,18 +1,17 @@
 # Development checkpoint
 
-Sep 25 fresh Android distance comparison: the normal 120-entity fixture reached
-scene readiness at 100 m on a fresh Android 15/Chrome 124 emulator, with no
-console/page errors or provider calls. The same 120-entity fixture lost the page
-before `fixture.ready()` at 5000 m both in the full four-cycle mode and in
-readiness-only mode; HTTP 200 and DOMContentLoaded occurred first. This makes
-the travel loop an unlikely trigger but does not yet prove a camera/rendering
-root cause, because the emulator/browser environment can vary. One filtered
-lowmemorykiller line in the 5000 m readiness report is insufficient to classify
-the loss as OOM. No traversal or frame/heap result was collected. Luna is
-investigating the distance-specific failure without weakening acceptance.
-Evidence: `docs/evidence/android-growing-world-runtime/120-entity-distance-100-readiness-2026-09-25T06-14-28-661Z/`,
-`docs/evidence/android-growing-world-runtime/120-entity-baseline-2026-09-25T06-15-33-469Z/`,
-`docs/evidence/android-growing-world-runtime/120-entity-distance-5000-readiness-2026-09-25T06-16-52-089Z/`.
+Sep 25 fresh Android distance diagnosis: a 120-entity readiness-only run passed
+at 100 m, while two 120-entity runs at 5000 m lost the page before
+`fixture.ready()`. Diagnostic 1-entity runs varied by boot: at 5000 m the page
+reached `fixture.ready()` before closing during its first state sample; at 100 m
+navigation aborted before DOMContentLoaded. ActivityManager and retained process
+exit records identify Chrome sandbox child exits, including one marked
+`ISOLATED NOT NEEDED`; none proves that a child exit caused the page closure or
+that OOM occurred. The different failure stages across distances make a
+distance-only root cause unproven. No travel cycle or frame/heap acceptance was
+obtained, and normal 120/160 acceptance is unchanged. See
+`docs/evidence/android-growing-world-runtime/diagnostic-distance-comparison-20260925.md`
+and the linked per-run reports.
 Gateway credits read-only GET still returned HTTP 200 and balance
 `-0.00456495`; no paid Gateway inference ran. Computer use currently reports
 zero browser surfaces, so signed-in ChatGPT acceptance remains unavailable.
