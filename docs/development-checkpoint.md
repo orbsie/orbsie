@@ -1,5 +1,36 @@
 # Development checkpoint
 
+Sep 25 OpenRouter GPT-6 Luna flagship live attempt on clean source
+`13921945204565298c9385ed748776a15c8f8144`: origin, exact-model, and 4,096
+cap preflights passed; reasoning was low, tier default, key scope local-only,
+generation budget three, and cloud/publication disabled. Exactly one generation
+request returned HTTP 200 and completed normally. Creation passed at revision
+29 with 13 ready entities (five collectibles, three bounce platforms, one
+portal, four static objects), eight game rules, and three movement paths. The
+immediate creation-gameplay gate then failed on bounce-three after 62
+observations: score, contacts, and collections remained zero; no win or reset
+occurred. No edit, undo, export, standalone, cloud, or publication phase ran;
+there was no retry or fallback. The sanitized report, project, and screenshots
+are in `docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/`.
+The saved project has chat messages stripped while keeping its scene, game,
+entities, and revision; its SHA-256 is
+`a7b8964167a6df97e1154124be5eb4f02a5ce8669ed6a0d048a8ae7405903b47`.
+
+The saved project's player spawn is `[0,0,5]`. Bounce-platform centers/scales
+are bounce-one `[0,0.7,0]` / `[1.5,1,1.5]`, bounce-two `[0,1.5,-3]` /
+`[1.5,1,1.5]`, and bounce-three `[0,2.3,-6]` / `[1.5,1,1.5]`; their paths
+keep Y/Z fixed and use X waypoints `[0,1,0]`, `[0,-1,0]`, and `[0,1,0]`.
+`storyPlatforms()` sorts by X then Z ascending,
+so this equal-X layout made the harness try bounce-three first, then bounce-two,
+then bounce-one, despite the spawn being nearest bounce-one. Telemetry records
+three bounce-three attempts, all with zero grounded/bounce contacts; their apex
+Y values were 1.428, 1.428, and 1.476 while the platform center was Y=2.3.
+From the spawn Z=5, the platforms are respectively 5 m, 8 m, and 11 m away on
+the horizontal Z axis.
+The surface-crossing pair is null, so no exact crossing position is claimed.
+This identifies a driver target-order mismatch; bounce-one/two traversal and a
+full create/edit journey remain untested. No physics conclusion is drawn.
+
 Sep 25 stream-budget prevention: generation prompts now explicitly reserve the
 final model-authored command for `commit_revision` and prioritize a minimal
 complete scene over optional decoration when output space is tight. Server
