@@ -1,0 +1,766 @@
+{
+  "passed": true,
+  "runId": "2026-09-25T03-31-13-411Z",
+  "scope": "160 ready entities; six repeated outer-cluster travel and home reentry cycles",
+  "entities": 160,
+  "residentCap": 48,
+  "cycleCount": 6,
+  "selectedId": "outer-visible-00",
+  "warmup": {
+    "outer": {
+      "travel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "renderer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      }
+    },
+    "home": {
+      "travel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "renderer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      }
+    },
+    "explanation": "The outer cluster was visited once so its first formation completes before any measured return-to-home no-replay assertion."
+  },
+  "cycles": [
+    {
+      "cycle": 1,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 41739004,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 93985992,
+      "noFormationReplayOnReturn": true
+    },
+    {
+      "cycle": 2,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 67339580,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 40745708,
+      "noFormationReplayOnReturn": true
+    },
+    {
+      "cycle": 3,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 81742744,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 128865264,
+      "noFormationReplayOnReturn": true
+    },
+    {
+      "cycle": 4,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 63774388,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 112359812,
+      "noFormationReplayOnReturn": true
+    },
+    {
+      "cycle": 5,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 63807772,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 67762980,
+      "noFormationReplayOnReturn": true
+    },
+    {
+      "cycle": 6,
+      "outboundTravel": {
+        "targetX": 1000,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "outer": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 30
+        }
+      },
+      "outerHeap": 109581608,
+      "returnTravel": {
+        "targetX": -600,
+        "frameDistance": 2676.818830372212,
+        "zoomSteps": 15
+      },
+      "homeReentry": {
+        "projectEntityCount": 160,
+        "fullFormationCount": 48,
+        "proxyGroupCount": 112,
+        "formationMeshCount": 48,
+        "visibleFormationMeshCount": 48,
+        "particleMeshCount": 48,
+        "activeParticleTransitionCount": 0,
+        "selectedId": "outer-visible-00",
+        "selectedFullRingCount": 1,
+        "selectedIsFull": true,
+        "resources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        },
+        "selector": {
+          "readyCount": 160,
+          "residentCount": 48,
+          "placeholderCount": 112,
+          "selectedReason": "resident-selected",
+          "visibleMainCount": 50
+        }
+      },
+      "homeHeap": 77848296,
+      "noFormationReplayOnReturn": true
+    }
+  ],
+  "providerCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "limitations": [
+    "WebGL measurements use Chromium SwiftShader in a headless browser; they do not represent native GPU performance.",
+    "Frame intervals describe this container and software renderer, not a 60 fps or physical-device guarantee.",
+    "Browser JS heap values are CDP Performance metrics for this tab and may vary with garbage collection.",
+    "The software path is a browser canvas fixture, not a physical mobile device."
+  ],
+  "assumptions": [
+    "The opt-in fixture appends 40 outer-cluster entities (30 visible and 10 nearby) to the unchanged 120-entity default scene.",
+    "One warm traversal forms both home and outer residents before the six measured return checks.",
+    "Settled WebGL resource growth tolerance over the warm home baseline is +8 geometries, +2 textures, and +2 programs."
+  ],
+  "runtime": {
+    "browser": {
+      "name": "Chromium",
+      "version": "153.0.8010.12"
+    },
+    "node": "v22.22.0",
+    "platform": "linux 6.8.0-142-generic",
+    "architecture": "x64",
+    "hardware": {
+      "cpuModel": "AMD EPYC 9124 16-Core Processor",
+      "logicalCpuCount": 32,
+      "hostVisibleMemoryGiB": 62.47
+    },
+    "browserPage": {
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+      "hardwareConcurrency": 32,
+      "deviceMemoryGiB": 32,
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "devicePixelRatio": 1,
+      "renderer": "webgl"
+    }
+  },
+  "webgl": {
+    "renderer": "webgl",
+    "cycles": [
+      {
+        "cycle": 1,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      },
+      {
+        "cycle": 2,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      },
+      {
+        "cycle": 3,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      },
+      {
+        "cycle": 4,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      },
+      {
+        "cycle": 5,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      },
+      {
+        "cycle": 6,
+        "outerResources": {
+          "geometries": 180,
+          "textures": 5,
+          "programs": 7
+        },
+        "homeResources": {
+          "geometries": 184,
+          "textures": 5,
+          "programs": 7
+        }
+      }
+    ],
+    "heap": {
+      "supported": true,
+      "samples": [
+        {
+          "phase": "warm-baseline",
+          "jsHeapUsedBytes": 61959688,
+          "jsHeapTotalBytes": 120877056,
+          "taskDurationSeconds": 0.000013
+        },
+        {
+          "cycle": 1,
+          "phase": "outer",
+          "jsHeapUsedBytes": 41739004,
+          "jsHeapTotalBytes": 136867840,
+          "taskDurationSeconds": 0.730735
+        },
+        {
+          "cycle": 1,
+          "phase": "home",
+          "jsHeapUsedBytes": 93985992,
+          "jsHeapTotalBytes": 137129984,
+          "taskDurationSeconds": 1.414435
+        },
+        {
+          "cycle": 2,
+          "phase": "outer",
+          "jsHeapUsedBytes": 67339580,
+          "jsHeapTotalBytes": 146567168,
+          "taskDurationSeconds": 1.99407
+        },
+        {
+          "cycle": 2,
+          "phase": "home",
+          "jsHeapUsedBytes": 40745708,
+          "jsHeapTotalBytes": 152858624,
+          "taskDurationSeconds": 2.651777
+        },
+        {
+          "cycle": 3,
+          "phase": "outer",
+          "jsHeapUsedBytes": 81742744,
+          "jsHeapTotalBytes": 152858624,
+          "taskDurationSeconds": 3.34444
+        },
+        {
+          "cycle": 3,
+          "phase": "home",
+          "jsHeapUsedBytes": 128865264,
+          "jsHeapTotalBytes": 174354432,
+          "taskDurationSeconds": 4.029049
+        },
+        {
+          "cycle": 4,
+          "phase": "outer",
+          "jsHeapUsedBytes": 63774388,
+          "jsHeapTotalBytes": 163344384,
+          "taskDurationSeconds": 4.598493
+        },
+        {
+          "cycle": 4,
+          "phase": "home",
+          "jsHeapUsedBytes": 112359812,
+          "jsHeapTotalBytes": 167276544,
+          "taskDurationSeconds": 5.225124
+        },
+        {
+          "cycle": 5,
+          "phase": "outer",
+          "jsHeapUsedBytes": 63807772,
+          "jsHeapTotalBytes": 160460800,
+          "taskDurationSeconds": 5.85182
+        },
+        {
+          "cycle": 5,
+          "phase": "home",
+          "jsHeapUsedBytes": 67762980,
+          "jsHeapTotalBytes": 134508544,
+          "taskDurationSeconds": 6.53334
+        },
+        {
+          "cycle": 6,
+          "phase": "outer",
+          "jsHeapUsedBytes": 109581608,
+          "jsHeapTotalBytes": 159936512,
+          "taskDurationSeconds": 7.113832
+        },
+        {
+          "cycle": 6,
+          "phase": "home",
+          "jsHeapUsedBytes": 77848296,
+          "jsHeapTotalBytes": 152072192,
+          "taskDurationSeconds": 7.710201
+        }
+      ]
+    },
+    "rendererDetails": {
+      "contextVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "debugRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    "frameIntervals": {
+      "unit": "milliseconds between requestAnimationFrame callbacks",
+      "sampleCount": 708,
+      "p50": 16.700000000000728,
+      "p95": 50,
+      "p99": 66.60000000000036,
+      "max": 83.40000000000146
+    },
+    "resourceStability": {
+      "baseline": {
+        "geometries": 184,
+        "textures": 5,
+        "programs": 7
+      },
+      "maximum": {
+        "geometries": 184,
+        "textures": 5,
+        "programs": 7
+      },
+      "maximumGrowth": {
+        "geometries": 0,
+        "textures": 0,
+        "programs": 0
+      },
+      "tolerance": {
+        "geometries": 8,
+        "textures": 2,
+        "programs": 2
+      }
+    },
+    "warmBaselineResources": {
+      "geometries": 184,
+      "textures": 5,
+      "programs": 7
+    }
+  },
+  "software": {
+    "renderer": "direct SoftwareWorld canvas path",
+    "entityCount": 160,
+    "outer": {
+      "targetX": 1000,
+      "review": {
+        "fixtureReady": true,
+        "mounted": true,
+        "transitionSettled": true,
+        "renderedRevision": 0,
+        "errors": []
+      },
+      "paint": {
+        "frames": 4,
+        "proxyArcCount": 0
+      },
+      "selector": {
+        "readyCount": 160,
+        "residentCount": 48,
+        "placeholderCount": 112,
+        "selectedReason": "resident-selected",
+        "selectedIsResident": true,
+        "visibleMainCount": 30
+      }
+    },
+    "homeReentry": {
+      "targetX": -600,
+      "review": {
+        "fixtureReady": true,
+        "mounted": true,
+        "transitionSettled": true,
+        "renderedRevision": 0,
+        "errors": []
+      },
+      "paint": {
+        "frames": 2,
+        "proxyArcCount": 3
+      },
+      "selector": {
+        "readyCount": 160,
+        "residentCount": 48,
+        "placeholderCount": 112,
+        "selectedReason": "resident-selected",
+        "selectedIsResident": true,
+        "visibleMainCount": 50
+      }
+    }
+  },
+  "evidenceDirectory": "docs/evidence/growing-world-runtime/160-entity-swiftshader-2026-09-25T03-31-13-411Z"
+}

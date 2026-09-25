@@ -27,6 +27,7 @@ const COLUMN_COUNT = 10;
 const ROW_COUNT = 5;
 const LOCAL_SPACING = 0.72;
 const CLUSTER_CENTERS = { home: -600, distant: 600 } as const;
+const GROWING_WORLD_CENTER_X = 1000;
 const LOCAL_Z_CENTER = -4;
 
 function colorFor(index: number): string {
@@ -67,8 +68,13 @@ function makeEntity(
   };
 }
 
-function visibleCluster(prefix: string, centerX: number, indexOffset: number) {
-  return Array.from({ length: COLUMN_COUNT * ROW_COUNT }, (_, index) => {
+function visibleCluster(
+  prefix: string,
+  centerX: number,
+  indexOffset: number,
+  count = COLUMN_COUNT * ROW_COUNT,
+) {
+  return Array.from({ length: count }, (_, index) => {
     const column = index % COLUMN_COUNT;
     const row = Math.floor(index / COLUMN_COUNT);
     return makeEntity(
@@ -93,12 +99,21 @@ function nearbyCluster(prefix: string, centerX: number, indexOffset: number) {
   );
 }
 
-const entities = [
+const baseEntities = [
   ...visibleCluster("home", CLUSTER_CENTERS.home, 0),
   ...nearbyCluster("home", CLUSTER_CENTERS.home, 50),
   ...visibleCluster("distant", CLUSTER_CENTERS.distant, 60),
   ...nearbyCluster("distant", CLUSTER_CENTERS.distant, 110),
 ];
+const growingWorldEnabled =
+  new URLSearchParams(location.search).get("entities") === "160";
+const growingWorldEntities = growingWorldEnabled
+  ? [
+      ...visibleCluster("outer", GROWING_WORLD_CENTER_X, 120, 30),
+      ...nearbyCluster("outer", GROWING_WORLD_CENTER_X, 150),
+    ]
+  : [];
+const entities = [...baseEntities, ...growingWorldEntities];
 const fixtureProject = {
   ...blankProject(),
   title: "Formation residency browser fixture",
@@ -248,6 +263,8 @@ function readWebGLScene() {
   const selectedFullIds = new Set<string>();
   let formationMeshCount = 0;
   let particleMeshCount = 0;
+  let visibleFormationMeshCount = 0;
+  let activeParticleTransitionCount = 0;
   let fullGroupCount = 0;
   let proxyGroupCount = 0;
   let selectedFullRingCount = 0;
@@ -264,13 +281,16 @@ function readWebGLScene() {
       ) {
         hasFormation = true;
         formationMeshCount += 1;
+        if (child.visible) visibleFormationMeshCount += 1;
       }
       if (
         child.isPoints &&
         child.material?.customProgramCacheKey?.() ===
           "orbsie-formation-particles-v1"
-      )
+      ) {
         particleMeshCount += 1;
+        if (child.visible) activeParticleTransitionCount += 1;
+      }
     });
     const id = mapScenePosition(object.position);
     if (hasFormation) {
@@ -305,6 +325,8 @@ function readWebGLScene() {
     proxyIds: [...proxyIds].sort(),
     formationMeshCount,
     particleMeshCount,
+    visibleFormationMeshCount,
+    activeParticleTransitionCount,
     resources: {
       geometries: state.gl.info.memory.geometries,
       textures: state.gl.info.memory.textures,
@@ -326,7 +348,7 @@ function installWebGLFixture() {
         sample.available &&
         navButton !== null &&
         !navButton.disabled &&
-        sample.projectEntityCount === 120
+        sample.projectEntityCount === entities.length
       );
     },
     renderer: readWebGLScene,
@@ -406,6 +428,7 @@ function installWebGLFixture() {
         command,
       );
       return {
+        entityCount: entities.length,
         start: { x: rect.left + startX, y: rect.top + startY },
         end: { x: rect.left + endX, y: rect.top + startY },
         expectedNavigation: cloneNavigation(predictedNavigation),
@@ -447,6 +470,7 @@ function SoftwareFixtureHost() {
         const source = (window as any).__orbsieSceneReviewFixture?.software;
         return source?.read() ?? null;
       },
+      entityCount: () => entities.length,
       focus(targetX: number) {
         const current = navigationRef.current;
         dispatchNavigation({
