@@ -1,0 +1,301 @@
+{
+  "passed": true,
+  "scope": "deterministic browser authoring review loop with real canvas capture",
+  "liveModelCalls": 0,
+  "renderers": {},
+  "secondCorrection": {},
+  "partialReview": {},
+  "failedReview": {},
+  "signedInJournal": {
+    "localOnlyDraft": {
+      "conflict": false,
+      "resumeAfterFailure": false,
+      "staleCloudDuringResume": false,
+      "localOnlySavedDraft": true,
+      "exactCloudResume": false,
+      "requests": [
+        "initial",
+        "review",
+        "review",
+        "final-review"
+      ],
+      "reviewedRevisions": [
+        5,
+        8,
+        10
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 2,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "put",
+          "count": 2,
+          "revision": 5,
+          "baseRevision": 2,
+          "baseSnapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        {
+          "kind": "put",
+          "count": 3,
+          "revision": 8,
+          "baseRevision": 5,
+          "baseSnapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "snapshotToken": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 2,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "get-latest",
+          "revision": 5,
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        {
+          "kind": "get-latest",
+          "revision": 8,
+          "snapshotToken": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "recoveredFinalScene": {
+        "projectRevision": 10,
+        "sky": "#88ccff",
+        "lanternColor": "#91b977",
+        "generationRunId": "bda0bbb0-0eaa-4ba8-98df-2be7c7aad022",
+        "generationRunState": "complete"
+      },
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "1a1adb8f-59df-4ddd-abbd-049f16162cec",
+          "projectRevision": 2
+        },
+        {
+          "kind": "start",
+          "runId": "2fbea87b-4a45-4ea0-b12b-49f840c2ae78",
+          "projectRevision": 5
+        },
+        {
+          "kind": "start",
+          "runId": "bda0bbb0-0eaa-4ba8-98df-2be7c7aad022",
+          "projectRevision": 8
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "1a1adb8f-59df-4ddd-abbd-049f16162cec",
+          "projectRevision": 2,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "2fbea87b-4a45-4ea0-b12b-49f840c2ae78",
+          "projectRevision": 5,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "bda0bbb0-0eaa-4ba8-98df-2be7c7aad022",
+          "projectRevision": 8,
+          "sequences": [
+            1,
+            2
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "1a1adb8f-59df-4ddd-abbd-049f16162cec",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "1a1adb8f-59df-4ddd-abbd-049f16162cec",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "1a1adb8f-59df-4ddd-abbd-049f16162cec",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "2fbea87b-4a45-4ea0-b12b-49f840c2ae78",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "2fbea87b-4a45-4ea0-b12b-49f840c2ae78",
+          "sequence": 2,
+          "command": "set_material"
+        },
+        {
+          "runId": "2fbea87b-4a45-4ea0-b12b-49f840c2ae78",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "bda0bbb0-0eaa-4ba8-98df-2be7c7aad022",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "bda0bbb0-0eaa-4ba8-98df-2be7c7aad022",
+          "sequence": 2,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "exactSnapshotResume": {
+      "conflict": false,
+      "resumeAfterFailure": true,
+      "staleCloudDuringResume": false,
+      "localOnlySavedDraft": false,
+      "exactCloudResume": true,
+      "requests": [
+        "initial",
+        "review",
+        "review-start",
+        "review",
+        "final-review"
+      ],
+      "reviewedRevisions": [
+        3,
+        3,
+        3,
+        5
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 0,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "put",
+          "count": 2,
+          "revision": 3,
+          "baseRevision": 3,
+          "baseSnapshotToken": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 3,
+          "snapshotToken": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        }
+      ],
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "e08d7e95-7419-4c17-89f7-269beef97791",
+          "projectRevision": 0
+        },
+        {
+          "kind": "start",
+          "runId": "f6510bcf-ce18-4c12-ab7b-31b1c10fd870",
+          "projectRevision": 3
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "e08d7e95-7419-4c17-89f7-269beef97791",
+          "projectRevision": 0,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "f6510bcf-ce18-4c12-ab7b-31b1c10fd870",
+          "projectRevision": 3,
+          "sequences": [
+            1,
+            2
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "e08d7e95-7419-4c17-89f7-269beef97791",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "e08d7e95-7419-4c17-89f7-269beef97791",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "e08d7e95-7419-4c17-89f7-269beef97791",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "f6510bcf-ce18-4c12-ab7b-31b1c10fd870",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "f6510bcf-ce18-4c12-ab7b-31b1c10fd870",
+          "sequence": 2,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,655 @@
+{
+  "passed": true,
+  "scope": "deterministic browser authoring review loop with real canvas capture",
+  "liveModelCalls": 0,
+  "renderers": {
+    "webgl": {
+      "renderer": "webgl",
+      "finalVerdict": "accept",
+      "requestKinds": [
+        "initial",
+        "review",
+        "final-review"
+      ],
+      "initialRevision": 3,
+      "correctedRevision": 6,
+      "requestScopes": [
+        "visual+structural",
+        "visual+structural"
+      ],
+      "captureBytes": [
+        57874,
+        61958
+      ],
+      "captureDigests": [
+        "dc2b93d528f9d3e00bd93c9ff31d0d06875ffaf194ec690491d69276f09623e4",
+        "a4040135aed60252c77254e6c5ac76ffa6c93a8c61a0ddc132cb26cd304844cd"
+      ],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "unexpectedRequests": []
+    },
+    "software": {
+      "renderer": "software",
+      "finalVerdict": "accept",
+      "requestKinds": [
+        "initial",
+        "review",
+        "final-review"
+      ],
+      "initialRevision": 3,
+      "correctedRevision": 6,
+      "requestScopes": [
+        "visual+structural",
+        "visual+structural"
+      ],
+      "captureBytes": [
+        58398,
+        65918
+      ],
+      "captureDigests": [
+        "d3bbd6959a9cc843f31fad56572f65398b10ad480fa7b539af89d79d97738843",
+        "7174d620f5d9c0cd9f371f6dd75f509f63e2230f6c56764b76afddc861138f3d"
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "unexpectedRequests": []
+    }
+  },
+  "secondCorrection": {
+    "software": {
+      "renderer": "software",
+      "finalVerdict": "accept",
+      "requestKinds": [
+        "initial",
+        "review",
+        "review",
+        "final-review"
+      ],
+      "initialRevision": 3,
+      "correctedRevision": 8,
+      "requestScopes": [
+        "visual+structural",
+        "visual+structural",
+        "visual+structural"
+      ],
+      "captureBytes": [
+        58974,
+        65886,
+        65742
+      ],
+      "captureDigests": [
+        "976aa2745dd03000afe74d75408ca79c8b1f916968187c02613a41666d68c208",
+        "354c404626c348a1bff9e2c96db38b097aa8bec1cac70b6c9375ac0ee132553f",
+        "200922166abffd834d3e3cee8679159d7dbe5f356bc2225adbc62f5b1f1078af"
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "unexpectedRequests": []
+    }
+  },
+  "partialReview": {
+    "software": {
+      "renderer": "software",
+      "finalVerdict": "revise",
+      "requestKinds": [
+        "initial",
+        "review",
+        "final-review"
+      ],
+      "initialRevision": 3,
+      "correctedRevision": 6,
+      "requestScopes": [
+        "visual+structural",
+        "visual+structural"
+      ],
+      "captureBytes": [
+        58486,
+        66090
+      ],
+      "captureDigests": [
+        "d26bb55ee7355089899e1e64ebd04175726133fe19db7f793ec2fa769f91ecdf",
+        "fa48a65fa9a0ce255004a7866cc5726d1ca62a2f96015494e31de7a3805b00ad"
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "unexpectedRequests": []
+    }
+  },
+  "failedReview": {
+    "draft": {
+      "renderer": "software",
+      "savedRevision": 3,
+      "requestKinds": [
+        "initial",
+        "review"
+      ],
+      "draftedPrompt": "Continue improving the saved scene based on the original request: Build a lantern",
+      "extraRequestsAfterDraft": 0,
+      "continuationHiddenAfterRevisionChange": true
+    },
+    "resume": {
+      "renderer": "software",
+      "mode": "resume",
+      "projectId": "44540e00-992a-4012-8a78-bffe7f87ac7b",
+      "revision": 3,
+      "entityIds": [
+        "lantern"
+      ],
+      "requestKinds": [
+        "initial",
+        "review",
+        "review-start",
+        "review"
+      ],
+      "creationRequests": 1,
+      "resumedStarts": 1,
+      "userPromptCount": 1,
+      "playPreserved": true
+    },
+    "resumeStartRetry": {
+      "renderer": "software",
+      "mode": "resume-start-retry",
+      "projectId": "6fdfa764-590d-48d4-b557-5b573726b6ff",
+      "revision": 3,
+      "entityIds": [
+        "lantern"
+      ],
+      "requestKinds": [
+        "initial",
+        "review",
+        "review-start",
+        "review-start",
+        "review"
+      ],
+      "creationRequests": 1,
+      "resumedStarts": 2,
+      "userPromptCount": 1,
+      "playPreserved": true
+    }
+  },
+  "signedInJournal": {
+    "success": {
+      "conflict": false,
+      "resumeAfterFailure": false,
+      "staleCloudDuringResume": false,
+      "localOnlySavedDraft": false,
+      "exactCloudResume": false,
+      "requests": [
+        "initial",
+        "review",
+        "review",
+        "final-review"
+      ],
+      "reviewedRevisions": [
+        3,
+        6,
+        8
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 0,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "put",
+          "count": 2,
+          "revision": 3,
+          "baseRevision": 0,
+          "baseSnapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        {
+          "kind": "put",
+          "count": 3,
+          "revision": 6,
+          "baseRevision": 3,
+          "baseSnapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "snapshotToken": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 0,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "get-latest",
+          "revision": 3,
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        {
+          "kind": "get-latest",
+          "revision": 6,
+          "snapshotToken": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "recoveredFinalScene": {
+        "projectRevision": 8,
+        "sky": "#88ccff",
+        "lanternColor": "#ff4b9e",
+        "generationRunId": "a10a56a9-aa49-46b6-9f5d-8ead3dc2dfca",
+        "generationRunState": "complete"
+      },
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "354a81bd-f70b-4e2a-b5d2-6401b61f34f8",
+          "projectRevision": 0
+        },
+        {
+          "kind": "start",
+          "runId": "b8f40d64-a7d9-4a25-be43-49b508b22afa",
+          "projectRevision": 3
+        },
+        {
+          "kind": "start",
+          "runId": "a10a56a9-aa49-46b6-9f5d-8ead3dc2dfca",
+          "projectRevision": 6
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "354a81bd-f70b-4e2a-b5d2-6401b61f34f8",
+          "projectRevision": 0,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "b8f40d64-a7d9-4a25-be43-49b508b22afa",
+          "projectRevision": 3,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "a10a56a9-aa49-46b6-9f5d-8ead3dc2dfca",
+          "projectRevision": 6,
+          "sequences": [
+            1,
+            2
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "354a81bd-f70b-4e2a-b5d2-6401b61f34f8",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "354a81bd-f70b-4e2a-b5d2-6401b61f34f8",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "354a81bd-f70b-4e2a-b5d2-6401b61f34f8",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "b8f40d64-a7d9-4a25-be43-49b508b22afa",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "b8f40d64-a7d9-4a25-be43-49b508b22afa",
+          "sequence": 2,
+          "command": "set_material"
+        },
+        {
+          "runId": "b8f40d64-a7d9-4a25-be43-49b508b22afa",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "a10a56a9-aa49-46b6-9f5d-8ead3dc2dfca",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "a10a56a9-aa49-46b6-9f5d-8ead3dc2dfca",
+          "sequence": 2,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "conflict": {
+      "conflict": true,
+      "resumeAfterFailure": false,
+      "staleCloudDuringResume": false,
+      "localOnlySavedDraft": false,
+      "exactCloudResume": false,
+      "requests": [
+        "initial",
+        "review"
+      ],
+      "reviewedRevisions": [
+        3
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 0,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 1,
+          "snapshotToken": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      ],
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "8604fe04-8dbd-4f4b-a9dc-b9b25c5ca951",
+          "projectRevision": 0
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "8604fe04-8dbd-4f4b-a9dc-b9b25c5ca951",
+          "projectRevision": 0,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "8604fe04-8dbd-4f4b-a9dc-b9b25c5ca951",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "8604fe04-8dbd-4f4b-a9dc-b9b25c5ca951",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "8604fe04-8dbd-4f4b-a9dc-b9b25c5ca951",
+          "sequence": 3,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "resumedReview": {
+      "conflict": false,
+      "resumeAfterFailure": true,
+      "staleCloudDuringResume": false,
+      "localOnlySavedDraft": false,
+      "exactCloudResume": false,
+      "requests": [
+        "initial",
+        "review",
+        "review-start",
+        "review",
+        "final-review"
+      ],
+      "reviewedRevisions": [
+        3,
+        3,
+        3,
+        5
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 0,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "kind": "put",
+          "count": 2,
+          "revision": 3,
+          "baseRevision": 0,
+          "baseSnapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "snapshotToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 0,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "550a740f-d658-4f19-9783-b729ee8eb9e1",
+          "projectRevision": 0
+        },
+        {
+          "kind": "start",
+          "runId": "6695955f-d2bc-456b-8b19-b3994992cdce",
+          "projectRevision": 3
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "550a740f-d658-4f19-9783-b729ee8eb9e1",
+          "projectRevision": 0,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "runId": "6695955f-d2bc-456b-8b19-b3994992cdce",
+          "projectRevision": 3,
+          "sequences": [
+            1,
+            2
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "550a740f-d658-4f19-9783-b729ee8eb9e1",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "550a740f-d658-4f19-9783-b729ee8eb9e1",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "550a740f-d658-4f19-9783-b729ee8eb9e1",
+          "sequence": 3,
+          "command": "commit_revision"
+        },
+        {
+          "runId": "6695955f-d2bc-456b-8b19-b3994992cdce",
+          "sequence": 1,
+          "command": "set_environment"
+        },
+        {
+          "runId": "6695955f-d2bc-456b-8b19-b3994992cdce",
+          "sequence": 2,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "staleResume": {
+      "conflict": false,
+      "resumeAfterFailure": true,
+      "staleCloudDuringResume": true,
+      "localOnlySavedDraft": false,
+      "exactCloudResume": false,
+      "requests": [
+        "initial",
+        "review"
+      ],
+      "reviewedRevisions": [
+        3
+      ],
+      "cloudPuts": [
+        {
+          "kind": "put",
+          "count": 1,
+          "revision": 0,
+          "baseRevision": null,
+          "baseSnapshotToken": null,
+          "snapshotToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "cloudReads": [
+        {
+          "kind": "get-latest",
+          "revision": 1,
+          "snapshotToken": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      ],
+      "generationStarts": [
+        {
+          "kind": "start",
+          "runId": "bdade192-5d02-4f4e-b5ef-82fa96ec186d",
+          "projectRevision": 0
+        }
+      ],
+      "journalSegments": [
+        {
+          "runId": "bdade192-5d02-4f4e-b5ef-82fa96ec186d",
+          "projectRevision": 0,
+          "sequences": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "generationAppends": [
+        {
+          "runId": "bdade192-5d02-4f4e-b5ef-82fa96ec186d",
+          "sequence": 1,
+          "command": "reserve_entity"
+        },
+        {
+          "runId": "bdade192-5d02-4f4e-b5ef-82fa96ec186d",
+          "sequence": 2,
+          "command": "set_geometry"
+        },
+        {
+          "runId": "bdade192-5d02-4f4e-b5ef-82fa96ec186d",
+          "sequence": 3,
+          "command": "commit_revision"
+        }
+      ],
+      "pageErrors": [
+        "THREE.WebGLRenderer: Error creating WebGL context.",
+        "THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "consoleErrors": [
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context."
+      ],
+      "requestFailures": [
+        {
+          "url": "http://localhost:3047/api/generate",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  }
+}

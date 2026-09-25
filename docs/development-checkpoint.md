@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 25 signed-in review reload recovery: source `de4dece` restores and
+validates the authoritative cloud snapshot before a paid review-only start;
+source `457a2ba` also permits an existing local-only draft to create its first
+cloud row and an exact remote snapshot to resume without an unnecessary
+journal lookup. The refreshed player artifacts are in `87f04ba`. Astra
+reviewed both corrections. The optimized build and deterministic browser
+review matrix passed, including guest reload/reopen/resume, signed-in reload
+and correction journaling, stale-cloud rejection before another model request,
+WebGL/Canvas2D, mobile bounds and Play preservation. A separate focused run
+passed local-only draft and exact-snapshot resume. Evidence:
+`docs/evidence/authoring-review/review-reload-cloud-integration-20260925/`
+and `docs/evidence/authoring-review/review-signed-in-baseline-regressions-20260925/`.
+The fixture made zero live model calls. Production review remains disabled;
+live provider and owner-session acceptance remain open.
+
 Sep 25 interrupted-review reload recovery: source `00160c7` persists a
 versioned, key-free continuation record bound to the exact saved local scene
 and the ledger's 15-minute window. A guest browser fixture passed failed

@@ -1,6 +1,6 @@
 # Orbsie full scope audit
 
-## Current reconciliation — 2026-09-24
+## Current reconciliation — 2026-09-25
 
 The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
@@ -78,8 +78,14 @@ older rows below are a historical inventory, not a completion claim.
   `docs/evidence/authoring-review/review-resume-integration-20260924/`.
   Production review is still disabled and no provider call has exercised the
   new path. The exact saved guest continuation now survives reload for the
-  ledger's 15-minute window (`00160c7`, `2d5aabd`), but signed-in reload loses
-  its cloud baseline and must be fixed before claiming cloud-resume recovery.
+  ledger's 15-minute window (`00160c7`, `2d5aabd`). Signed-in reload now
+  restores and checks the authoritative cloud baseline before paying for a
+  review-only continuation (`de4dece`, `457a2ba`); deterministic browser
+  fixtures passed resumed correction, stale-cloud rejection, local-only draft
+  and exact-snapshot cases. See
+  `docs/evidence/authoring-review/review-reload-cloud-integration-20260925/`
+  and `docs/evidence/authoring-review/review-signed-in-baseline-regressions-20260925/`.
+  Live provider and production-enabled acceptance remain open.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in
