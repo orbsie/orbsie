@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 25 current OpenRouter input-game acceptance: the first bounded local
+browser run returned HTTP 403 before reaching OpenRouter because the browser
+origin differed from `BETTER_AUTH_URL`. Astra traced this to `checkOrigin`;
+the valid key and Luna catalog entry were independently confirmed by read-only
+provider endpoints. Source `scripts/provider-browser-e2e.mjs` now sends an
+invalid-body, no-model-call origin preflight and requires HTTP 400 before
+connecting a public API-key/free provider. A corrected local run with exact
+server/browser/auth origins passed one Luna creation and one Luna edit at the
+4,096-token cap, both HTTP 200, with no retry or fallback. It created two
+refined generated objects and a three-rule input game; selection, targeted
+material edit, game rules, local reload, ZIP export and signed-out standalone
+keyboard gameplay passed. Astra visually reviewed the retained image: the
+tree and mushroom are simple shapes, so this is functional, not delightful
+model-quality acceptance. No cloud save or publication was requested. Sanitized
+evidence: `docs/evidence/provider-e2e/openrouter-current-20260925/` and
+`docs/evidence/provider-e2e/openrouter-origin-corrected-20260925/`. The two
+focused harness suites pass 12/12, Node syntax and diff checks pass. Gateway
+credit remains negative and ChatGPT owner authorization is not connected.
+
 Sep 25 owner-visible ChatGPT challenge: after the owner permitted displaying
 the URL and code, production created a fresh isolated guest session and issued
 one official OpenAI device challenge. Its URL and one-time code were shown in

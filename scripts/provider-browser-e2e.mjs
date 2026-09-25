@@ -73,6 +73,7 @@ const PROVIDERS = new Set([
   "chatgpt-local",
   HOSTED_PROVIDER,
 ]);
+const PUBLIC_GENERATION_PROVIDERS = new Set(["openrouter", "gateway", "free"]);
 const KEY_SCOPES = new Set(["local-only", "cloud-authorized"]);
 const DEFAULT_PROMPT =
   "Build a tiny island with one tree and one crystal. Keep it simple and commit the world.";
@@ -131,6 +132,87 @@ class HarnessBlockedError extends Error {
     super(message);
     this.name = "HarnessBlockedError";
   }
+}
+
+export async function probePublicGenerateOrigin(apiRequest, baseOrigin) {
+  let response;
+  try {
+    response = await apiRequest.post(
+      new URL("/api/generate", baseOrigin).href,
+      {
+        data: {},
+        headers: { Origin: baseOrigin },
+        maxRedirects: 0,
+        timeout: 10000,
+      },
+    );
+  } catch {
+    return {
+      status: "blocked",
+      method: "POST",
+      path: "/api/generate",
+      expectedStatus: 400,
+      httpStatus: null,
+      requestCount: 1,
+      responseBodyRetained: false,
+      error:
+        "Generate origin preflight could not reach the local endpoint; check that ORBSIE_TEST_URL matches the server origin. Provider setup was blocked.",
+    };
+  }
+
+  const httpStatus = response.status();
+  try {
+    await response.dispose();
+  } catch {
+    return {
+      status: "blocked",
+      method: "POST",
+      path: "/api/generate",
+      expectedStatus: 400,
+      httpStatus,
+      requestCount: 1,
+      responseBodyRetained: false,
+      error:
+        "Generate origin preflight response could not be discarded safely; provider setup was blocked.",
+    };
+  }
+
+  if (httpStatus === 400)
+    return {
+      status: "passed",
+      method: "POST",
+      path: "/api/generate",
+      expectedStatus: 400,
+      httpStatus,
+      requestCount: 1,
+      responseBodyRetained: false,
+    };
+
+  return {
+    status: "blocked",
+    method: "POST",
+    path: "/api/generate",
+    expectedStatus: 400,
+    httpStatus,
+    requestCount: 1,
+    responseBodyRetained: false,
+    error:
+      httpStatus === 403
+        ? "Generate origin preflight was rejected (HTTP 403). ORBSIE_TEST_URL, the app server origin, and BETTER_AUTH_URL must match exactly, including hostname and port; provider setup was blocked."
+        : `Generate origin preflight expected HTTP 400 from schema rejection, received HTTP ${httpStatus}; provider setup was blocked. Check the server origin and API configuration.`,
+  };
+}
+
+async function requirePublicGenerateOrigin(page, config, report) {
+  if (!PUBLIC_GENERATION_PROVIDERS.has(config.provider)) return;
+  if (report.originPreflight?.status === "passed") return;
+  const result = await probePublicGenerateOrigin(
+    page.context().request,
+    config.baseOrigin,
+  );
+  report.originPreflight = result;
+  if (result.status !== "passed")
+    throw new HarnessBlockedError(result.error);
 }
 
 function isBlockedError(error) {
@@ -2141,6 +2223,19 @@ export function emptyReport(config, provenance) {
     outputTokenCap:
       config.provider === HOSTED_PROVIDER ? null : config.outputCap,
     generationBudget: config.generationBudget,
+    ...(PUBLIC_GENERATION_PROVIDERS.has(config.provider)
+      ? {
+          originPreflight: {
+            status: "not-started",
+            method: "POST",
+            path: "/api/generate",
+            expectedStatus: 400,
+            httpStatus: null,
+            requestCount: 0,
+            responseBodyRetained: false,
+          },
+        }
+      : {}),
     ...(config.provider === HOSTED_PROVIDER
       ? {
           reusedConsent: false,
@@ -2993,6 +3088,7 @@ async function setupOutputCap(page, config) {
 }
 
 async function setupFreeTrial(page, config, report) {
+  await requirePublicGenerateOrigin(page, config, report);
   const trial = await page.evaluate(async () => {
     const response = await fetch("/api/trial", {
       cache: "no-store",
@@ -3071,6 +3167,7 @@ async function recordFreeTrialFailure(page, report, info, beforeProject) {
 }
 
 async function configureApiProvider(page, config, report, info, evidenceDir) {
+  await requirePublicGenerateOrigin(page, config, report);
   const button = page
     .getByRole("button", { name: "Connections", exact: true })
     .first();

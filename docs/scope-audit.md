@@ -6,6 +6,15 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- A current local OpenRouter Luna input-game run passed two real calls at the
+  4,096-token cap: original tree and mushroom geometry, exact input rules,
+  targeted edit, reload, export, and signed-out standalone keyboard play. An
+  origin preflight now catches a mismatched local `BETTER_AUTH_URL` before any
+  model request. Evidence:
+  `docs/evidence/provider-e2e/openrouter-origin-corrected-20260925/`.
+  The retained visual is simple and does not certify the requested delight;
+  cloud publication, physical mobile, Gateway and ChatGPT acceptance remain
+  open.
 - `https://orbsie.com/` is serving deployment
   `dpl_H73dfGFRGszuuy9LFMVdymEvU4vc` at this reconciliation. Read-only
   root, robots, sitemap, config and exact player runtime/source hash checks

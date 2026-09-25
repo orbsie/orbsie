@@ -1,0 +1,157 @@
+{
+  "checkedAt": "2026-09-25T01:46:46.228Z",
+  "provenance": {
+    "checkedAt": "2026-09-25T01:46:46.228Z",
+    "harness": {
+      "checkoutSHA": "7a9f485c1ccd54bb27ee2dcfba4650c4d94ca82a",
+      "dirty": true,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": null,
+      "status": "unrecorded"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "targetOrigin": "http://127.0.0.1:3284",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 2,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 6,
+    "firstReservationMs": 4279,
+    "seedObserved": true,
+    "catalogEntities": 0,
+    "proceduralEntities": 0,
+    "generatedEntities": 2
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790300813201,
+        "path": "/api/generate"
+      },
+      {
+        "request": 2,
+        "atMs": 1790300821925,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png"
+  ],
+  "inputGame": {
+    "status": "passed",
+    "entityCount": 2,
+    "treeAndMushroom": true,
+    "refinedGeometry": true,
+    "exactRuleCount": true,
+    "rightAdds7": true,
+    "upWins": true,
+    "leftLoses": true,
+    "noTimersOrCollectionScoring": true,
+    "preservedAcrossEdit": true,
+    "preservedAcrossReload": true,
+    "preservedInZip": true
+  },
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 3464.4000000059605,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": {
+      "ready": true,
+      "rightAdds7": true,
+      "heldRightDeduplicated": true,
+      "upWins": true,
+      "restartResetsScore": true,
+      "leftLoses": true
+    }
+  },
+  "followOn": {
+    "projectId": "b8f28645-f977-438c-a611-872afa02995f",
+    "revision": 8
+  },
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "movement-during-generation",
+      "creation-win-reset",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  },
+  "evidenceSanitization": {
+    "status": "sanitized",
+    "omitted": [
+      "intermediate-seed.png",
+      "edit.png",
+      "share.png",
+      "world.zip",
+      "standalone-input-ready.png",
+      "standalone-input-right.png",
+      "standalone-input-win.png",
+      "standalone-input-loss.png",
+      "standalone-playback.png"
+    ],
+    "reason": "Artifacts containing prompt or conversation text were omitted from retained evidence."
+  }
+}
