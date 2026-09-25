@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
@@ -25,14 +25,45 @@ const BOOT_TIMEOUT_MS = 180_000;
 const CHROME_CDP_TIMEOUT_MS = 30_000;
 const LOWER_COST_BASELINE = process.argv.includes("--baseline-120");
 const READINESS_ONLY = process.argv.includes("--readiness-only");
-const ENTITY_COUNT = LOWER_COST_BASELINE ? 120 : 160;
+const diagnosticEntityFlags = process.argv.filter((argument) =>
+  argument.startsWith("--diagnostic-entities="),
+);
+const diagnosticEntityFlag = diagnosticEntityFlags[0];
+assert(
+  diagnosticEntityFlags.length <= 1,
+  "Specify one diagnostic entity count.",
+);
+const diagnosticEntityMatch = diagnosticEntityFlag?.match(
+  /^--diagnostic-entities=(\d+)$/,
+);
+const requestedDiagnosticEntityCount = diagnosticEntityMatch
+  ? Number(diagnosticEntityMatch[1])
+  : null;
+assert(
+  !diagnosticEntityFlag ||
+    (Number.isInteger(requestedDiagnosticEntityCount) &&
+      requestedDiagnosticEntityCount >= 1 &&
+      requestedDiagnosticEntityCount < 120),
+  "Diagnostic entity count must be an integer from 1 through 119.",
+);
+assert(
+  !diagnosticEntityFlag || (LOWER_COST_BASELINE && READINESS_ONLY),
+  "--diagnostic-entities requires --baseline-120 --readiness-only.",
+);
+const ENTITY_COUNT =
+  requestedDiagnosticEntityCount ?? (LOWER_COST_BASELINE ? 120 : 160);
+const ENTITY_LABEL = ENTITY_COUNT === 1 ? "entity" : "entities";
 const RESIDENT_CAP = 48;
+const EXPECTED_RESIDENT_COUNT = Math.min(ENTITY_COUNT, RESIDENT_CAP);
+const EXPECTED_PROXY_COUNT = Math.max(0, ENTITY_COUNT - RESIDENT_CAP);
 const CYCLE_COUNT = 4;
 const HOME_X = -600;
 const DISTANT_X = 600;
-const SELECTED_ID = LOWER_COST_BASELINE
-  ? "distant-visible-00"
-  : "outer-visible-00";
+const SELECTED_ID = requestedDiagnosticEntityCount
+  ? "home-visible-00"
+  : LOWER_COST_BASELINE
+    ? "distant-visible-00"
+    : "outer-visible-00";
 const distanceFlag = process.argv.find((argument) =>
   argument.startsWith("--diagnostic-distance="),
 );
@@ -71,9 +102,12 @@ const MIME_TYPES = {
 };
 const RUN_ID = new Date().toISOString().replace(/[:.]/g, "-");
 const RUN_STARTED_AT = Date.now();
+const HARNESS_SOURCE_SHA256 = createHash("sha256")
+  .update(await readFile(fileURLToPath(import.meta.url)))
+  .digest("hex");
 const EVIDENCE_PREFIX = LOWER_COST_BASELINE
   ? READINESS_ONLY
-    ? `120-entity-distance-${CAMERA_DISTANCE}-readiness`
+    ? `${ENTITY_COUNT}-entity-distance-${CAMERA_DISTANCE}-readiness`
     : "120-entity-baseline"
   : "160-entity";
 const EVIDENCE_DIRECTORY = join(
@@ -122,7 +156,7 @@ function compactError(error, limit = 240) {
     .slice(0, limit);
 }
 
-function collectAndroidFailureDiagnostic(report) {
+function collectAndroidProcessDiagnostic(report) {
   const diagnostic = { collectedAt: new Date().toISOString() };
   try {
     const logcat = adb("logcat", "-d", "-t", "1200", "-v", "brief");
@@ -168,7 +202,7 @@ function collectAndroidFailureDiagnostic(report) {
         ? error.message.slice(0, 200)
         : "process state unavailable";
   }
-  report.androidFailureDiagnostic = diagnostic;
+  report.androidProcessDiagnostic = diagnostic;
 }
 
 function listDevices() {
@@ -254,6 +288,53 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
       "X-Content-Type-Options": "nosniff",
     });
     response.end(request.method === "HEAD" ? undefined : bytes);
+  });
+}
+
+async function buildFixtureBundle(outfile) {
+  const fixturePath = join(
+    REPO_ROOT,
+    "scripts/formation-residency-browser-fixture.tsx",
+  );
+  const commonOptions = {
+    bundle: true,
+    platform: "browser",
+    format: "esm",
+    jsx: "automatic",
+    outfile,
+    define: { "process.env.NODE_ENV": '"production"' },
+  };
+
+  if (requestedDiagnosticEntityCount === null) {
+    await build({ entryPoints: [fixturePath], ...commonOptions });
+    return;
+  }
+
+  const fixtureMarker =
+    "const entities = [...baseEntities, ...growingWorldEntities];";
+  const originalSource = await readFile(fixturePath, "utf8");
+  assert.equal(
+    originalSource.split(fixtureMarker).length - 1,
+    1,
+    "The fixture entity declaration changed; refusing an unsafe diagnostic transform.",
+  );
+  const diagnosticSource = originalSource.replace(
+    fixtureMarker,
+    `const completeFixtureEntities = [...baseEntities, ...growingWorldEntities];
+const diagnosticEntityCount = Number(new URLSearchParams(location.search).get("diagnosticEntities"));
+if (!Number.isInteger(diagnosticEntityCount) || diagnosticEntityCount < 1 || diagnosticEntityCount >= 120) {
+  throw new Error("Invalid diagnostic entity count.");
+}
+const entities = completeFixtureEntities.slice(0, diagnosticEntityCount);`,
+  );
+  await build({
+    stdin: {
+      contents: diagnosticSource,
+      loader: "tsx",
+      resolveDir: dirname(fixturePath),
+      sourcefile: fixturePath,
+    },
+    ...commonOptions,
   });
 }
 
@@ -603,11 +684,8 @@ function assertSoftwareSample(sample, targetX) {
   assert.ok(Math.abs(sample.navigation.target[0] - targetX) < 10);
   assert.ok(sample.paint.frames > 0);
   assert.equal(sample.selector.readyCount, ENTITY_COUNT);
-  assert.equal(sample.selector.residentCount, RESIDENT_CAP);
-  assert.equal(
-    sample.selector.softwareProxyIds.length,
-    ENTITY_COUNT - RESIDENT_CAP,
-  );
+  assert.equal(sample.selector.residentCount, EXPECTED_RESIDENT_COUNT);
+  assert.equal(sample.selector.softwareProxyIds.length, EXPECTED_PROXY_COUNT);
   assert.equal(sample.selector.selectedReason, "resident-selected");
   assert.ok(sample.selector.softwareResidentIds.includes(SELECTED_ID));
 }
@@ -637,18 +715,24 @@ const report = {
   sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim(),
+  harnessSourceSha256: HARNESS_SOURCE_SHA256,
   scope: LOWER_COST_BASELINE
     ? READINESS_ONLY
-      ? `Readiness-only diagnostic with ${ENTITY_COUNT} default fixture entities at ${CAMERA_DISTANCE} m; no travel cycles`
+      ? `Readiness-only diagnostic with ${ENTITY_COUNT} fixture ${ENTITY_LABEL} at ${CAMERA_DISTANCE} m; no travel cycles`
       : `Lower-cost baseline with ${ENTITY_COUNT} default fixture entities, ${CYCLE_COUNT} Android touch travel/reentry cycles`
     : `${ENTITY_COUNT} ready entities, ${CYCLE_COUNT} Android touch travel/reentry cycles, direct SoftwareWorld path`,
   fixture: {
     mode: LOWER_COST_BASELINE
       ? READINESS_ONLY
-        ? "default 120-entity scene-readiness diagnostic with post-ready page CDP session"
+        ? requestedDiagnosticEntityCount
+          ? `${ENTITY_COUNT}-entity scene-readiness diagnostic with post-ready page CDP session`
+          : "default 120-entity scene-readiness diagnostic with post-ready page CDP session"
         : "default 120-entity fixture diagnostic baseline"
       : "160-entity growing-world acceptance",
     entityCount: ENTITY_COUNT,
+    entitySelection: requestedDiagnosticEntityCount
+      ? `first ${ENTITY_COUNT} entities from the default home cluster, selected through a diagnostic-only in-memory fixture transform`
+      : "default fixture entity set",
     additionalCluster: LOWER_COST_BASELINE
       ? "none; default home and distant clusters only"
       : "40 entities at X=1000 m (30 visible and 10 nearby), enabled by entities=160",
@@ -700,17 +784,7 @@ try {
     join(tmpdir(), "orbsie-android-growing-world-"),
   );
   const bundlePath = join(temporaryDirectory, "fixture.js");
-  await build({
-    entryPoints: [
-      join(REPO_ROOT, "scripts/formation-residency-browser-fixture.tsx"),
-    ],
-    bundle: true,
-    platform: "browser",
-    format: "esm",
-    jsx: "automatic",
-    outfile: bundlePath,
-    define: { "process.env.NODE_ENV": '"production"' },
-  });
+  await buildFixtureBundle(bundlePath);
   const bundle = await readFile(bundlePath);
 
   report.currentStage = "emulator-boot";
@@ -828,7 +902,11 @@ try {
     renderer: "software",
     distance: String(CAMERA_DISTANCE),
   });
-  if (!LOWER_COST_BASELINE) fixtureQuery.set("entities", "160");
+  if (requestedDiagnosticEntityCount !== null) {
+    fixtureQuery.set("diagnosticEntities", String(ENTITY_COUNT));
+  } else if (!LOWER_COST_BASELINE) {
+    fixtureQuery.set("entities", "160");
+  }
   report.timings.navigationStartedElapsedMs = Date.now() - RUN_STARTED_AT;
   const response = await page.goto(`${artifactOrigin}/?${fixtureQuery}`, {
     waitUntil: "domcontentloaded",
@@ -1101,10 +1179,17 @@ try {
         noProviderOrExternalRequests: true,
         noPageOrConsoleErrors: true,
       };
+  recordLifecycleEvent(report, "android-process-diagnostics-started");
+  collectAndroidProcessDiagnostic(report);
+  recordLifecycleEvent(report, "android-process-diagnostics-finished", {
+    matchedLogcatLines:
+      report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? null,
+  });
   report.status = "passed";
   if (READINESS_ONLY) {
-    report.comparisonAssessment =
-      "With the same 120-entity, 100 m fixture settings, this run reached ready after creating the page CDP session and enabling Performance only afterward; the prior run with pre-navigation CDP setup closed before ready. This favors pre-navigation page CDP instrumentation as a possible contributor, but one run does not prove causality. The 1200 m route still needs multiple swipes or a bounded zoom-out/travel/zoom-in sequence; no travel cycles were run here.";
+    report.comparisonAssessment = requestedDiagnosticEntityCount
+      ? `The ${ENTITY_COUNT}-entity diagnostic fixture reached scene readiness at ${CAMERA_DISTANCE} m. It used a diagnostic-only fixture transform and did not exercise the 120- or 160-entity acceptance scene; no travel cycles were run.`
+      : "With the same 120-entity, 100 m fixture settings, this run reached ready after creating the page CDP session and enabling Performance only afterward; the prior run with pre-navigation CDP setup closed before ready. This favors pre-navigation page CDP instrumentation as a possible contributor, but one run does not prove causality. The 1200 m route still needs multiple swipes or a bounded zoom-out/travel/zoom-in sequence; no travel cycles were run here.";
   }
   report.currentStage = "complete";
 } catch (error) {
@@ -1164,20 +1249,20 @@ try {
   recordLifecycleEvent(report, "android-failure-diagnostics-started", {
     failureStage: report.failureStage,
   });
-  collectAndroidFailureDiagnostic(report);
+  collectAndroidProcessDiagnostic(report);
   if (READINESS_ONLY) {
     const rendererDeathLine =
-      report.androidFailureDiagnostic?.logcat?.lines?.find((line) =>
+      report.androidProcessDiagnostic?.logcat?.lines?.find((line) =>
         /sandboxed_process|SandboxedProcessService|renderer.*died/i.test(line),
       ) ?? null;
     report.comparisonAssessment = !report.pageCdpSessionCreatedAfterFixtureReady
-      ? `The page target closed before fixture.ready(); this run never created the page CDP session or enabled Performance. Moving that instrumentation after readiness therefore did not prevent the failure, so pre-navigation page CDP setup is not necessary to reproduce it. ${rendererDeathLine ? "Logcat again identifies a dying Chrome sandboxed Chromium child process, but does not establish why it exited." : "The failure cause remains uncertain across the emulator/Chrome environment and fixture."}`
+      ? `The ${ENTITY_COUNT}-entity page target closed before fixture.ready(); this run never created the page CDP session or enabled Performance. ${rendererDeathLine ? "Filtered logcat identifies a Chrome sandboxed Chromium child process death, but does not establish why it exited." : "Filtered logs do not identify the failure cause; the emulator/Chrome environment and fixture remain possible contributors."}`
       : rendererDeathLine
-        ? "The 120-entity fixture lost its page after ready while a Chrome sandboxed Chromium child process died; this run does not identify why the process exited."
-        : "The 120-entity fixture lost its page after ready; the failure cause remains uncertain across the emulator/Chrome environment and fixture.";
+        ? `The ${ENTITY_COUNT}-entity fixture lost its page after ready while a Chrome sandboxed Chromium child process died; this run does not identify why the process exited.`
+        : `The ${ENTITY_COUNT}-entity fixture lost its page after ready; filtered logs do not identify the failure cause.`;
   } else if (LOWER_COST_BASELINE) {
     const lowMemoryLine =
-      report.androidFailureDiagnostic?.logcat?.lines?.some((line) =>
+      report.androidProcessDiagnostic?.logcat?.lines?.some((line) =>
         /low.?memory|lmkd/i.test(line),
       ) ?? false;
     report.comparisonAssessment =
@@ -1188,7 +1273,7 @@ try {
   }
   recordLifecycleEvent(report, "android-failure-diagnostics-finished", {
     matchedLogcatLines:
-      report.androidFailureDiagnostic?.logcat?.matchedLineCount ?? null,
+      report.androidProcessDiagnostic?.logcat?.matchedLineCount ?? null,
   });
   process.exitCode = 1;
 } finally {
@@ -1296,7 +1381,7 @@ try {
       `Result: **${report.status}**. ${report.scope}.\n\n` +
       `Mode: ${report.fixture.mode}. Device: ${report.device?.avd ?? AVD}, Android ${report.device?.androidRelease ?? "not reached"} (API ${report.device?.androidApi ?? "unknown"}), Chrome ${report.device?.chromeVersion ?? "not reached"}. Renderer requested: direct SoftwareWorld Canvas2D. Provider calls: 0; external requests: ${report.externalRequests.length}.\n\n` +
       `${report.comparisonAssessment ? `${report.comparisonAssessment}\n\n` : ""}` +
-      `${READINESS_ONLY ? "This is a scene-readiness-only run; it intentionally performs no 1200 m travel gesture and records no rAF or heap result. The page CDP session and Performance domain are created only after fixture.ready(). " : "The JSON includes page/browser lifecycle times, local response timing, travel readiness, rAF percentiles and CDP heap metrics when reached. "}` +
+      `${READINESS_ONLY ? "This is a scene-readiness-only run; it performs no travel gesture and records no rAF or heap result. The page CDP session and Performance domain are created only after fixture.ready(). " : "The JSON includes page/browser lifecycle times, local response timing, travel readiness, rAF percentiles and CDP heap metrics when reached. "}` +
       `The JSON also includes early/failure screenshots when captured, and only filtered/redacted Chrome renderer, low-memory, or ANR logcat lines plus Chrome process state. This emulator run does not establish physical-device behavior, native GPU performance, visual quality or 60 fps. Screenshots captured: ${report.screenshots.length ? report.screenshots.join(", ") : "none"}. See [report.json](./report.json).\n`,
   );
   console.log(
