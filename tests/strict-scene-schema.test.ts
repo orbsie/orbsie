@@ -107,6 +107,23 @@ describe("strict scene wire schema", () => {
     });
   });
 
+  it("round-trips a required set_label command and rejects extra wire fields", () => {
+    const command = { type: "set_label", id: "tree", label: "Mushroom" };
+    const schema = strictSceneCommandJSONSchemaForCapabilities(false, true);
+    expect(JSON.stringify(schema)).toContain('"set_label"');
+    expect(decodeStrictSceneCommand(command, false, true)).toEqual(command);
+    expect(parseModelCommandForProcessing(command, false, true)).toEqual(
+      command,
+    );
+    expect(() =>
+      decodeStrictSceneCommand(
+        { ...command, assetPolicy: { present: false } },
+        false,
+        true,
+      ),
+    ).toThrow();
+  });
+
   it("preserves omitted versus explicit null for nullable parentId", () => {
     const omitted = decodeStrictSceneCommand(reserveWire(), false, true);
     expect(omitted).toMatchObject({ type: "reserve_entity" });

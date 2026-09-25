@@ -51,6 +51,7 @@ describe("browser generation diagnostics", () => {
     clock += 25;
     diagnostic.noteOutputBytes(18);
     diagnostic.noteCommand("set_geometry");
+    diagnostic.noteCommand("set_label");
     diagnostic.commit(7);
     clock += 30;
     diagnostic.terminal({ reason: "completed" });
@@ -71,8 +72,8 @@ describe("browser generation diagnostics", () => {
       renderer: "software",
       inputBytes: 12,
       outputBytes: 18,
-      commandCount: 1,
-      commandCounts: { set_geometry: 1 },
+      commandCount: 2,
+      commandCounts: { set_geometry: 1, set_label: 1 },
       initialRevision: 4,
       lastCommittedRevision: 7,
       terminal: { reason: "completed" },

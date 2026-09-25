@@ -9,6 +9,7 @@ import {
   commandSchema,
   committed,
   MAX_SCENE_POSITION,
+  modelCommandSchemaForCapabilities,
   projectSchema,
   type Command,
   type Cursor,
@@ -49,6 +50,106 @@ describe("scene protocol", () => {
 
   it("generates JSON Schema for the command protocol", () => {
     expect(() => z.toJSONSchema(commandSchema)).not.toThrow();
+  });
+
+  it("updates only an existing entity label while preserving its references", () => {
+    const { project: empty, cursor, op } = setup();
+    const originalEntity = {
+      id: "tree",
+      label: "Friendly tree",
+      position: [1, 2, 3],
+      scale: [2, 3, 4],
+      rotation: [0, 0.5, 0],
+      color: "#00aa00",
+      geometry: { kind: "custom", detail: "refined" },
+      behavior: { type: "bounce" },
+      assetPolicy: "new-only",
+      stage: "ready",
+    } as const;
+    const unrelatedEntity = {
+      ...originalEntity,
+      id: "pond",
+      label: "Blue pond",
+      position: [4, 0, -2],
+      geometry: { kind: "pond", detail: "refined" },
+      behavior: { type: "static" },
+      assetPolicy: "catalog-allowed",
+    } as const;
+    const game = {
+      variables: [],
+      rules: [
+        {
+          id: "tree-win",
+          trigger: { type: "collision", entityId: "tree" },
+          actions: [{ type: "win" }],
+        },
+      ],
+    } as const;
+    const project = projectSchema.parse({
+      ...empty,
+      revision: 4,
+      entities: [originalEntity, unrelatedEntity],
+      game,
+    });
+    const command = {
+      type: "set_label",
+      id: "tree",
+      label: "Mushroom",
+    } as const;
+    const result = applyOperation(
+      project,
+      {
+        ...op,
+        sequence: cursor.sequence + 1,
+        baseRevision: project.revision,
+        command,
+      },
+      cursor,
+    );
+
+    expect(commandSchema.parse(command)).toEqual(command);
+    expect(
+      modelCommandSchemaForCapabilities(false, false).parse(command),
+    ).toEqual(command);
+    expect(result.project.entities).toEqual([
+      { ...originalEntity, label: "Mushroom" },
+      unrelatedEntity,
+    ]);
+    expect(result.project.game).toEqual(project.game);
+    expect(result.project.revision).toBe(5);
+  });
+
+  it("rejects invalid set_label values and updates to missing entities", () => {
+    const modelSchema = modelCommandSchemaForCapabilities(false, false);
+    for (const label of ["", " \t\n", "x".repeat(101)]) {
+      expect(
+        commandSchema.safeParse({ type: "set_label", id: "tree", label })
+          .success,
+      ).toBe(false);
+      expect(
+        modelSchema.safeParse({ type: "set_label", id: "tree", label }).success,
+      ).toBe(false);
+    }
+    const extraField = {
+      type: "set_label",
+      id: "tree",
+      label: "Tree",
+      color: "#ffffff",
+    };
+    expect(commandSchema.safeParse(extraField).success).toBe(false);
+    expect(modelSchema.safeParse(extraField).success).toBe(false);
+
+    const { project, cursor, op } = setup();
+    expect(() =>
+      applyOperation(
+        project,
+        {
+          ...op,
+          command: { type: "set_label", id: "missing", label: "Mushroom" },
+        },
+        cursor,
+      ),
+    ).toThrow("That object no longer exists.");
   });
 
   it("accepts known catalog geometry and rejects unknown IDs or URLs", () => {

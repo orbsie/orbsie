@@ -41,6 +41,11 @@ export const scenePosition = z.tuple([
   z.number().finite().min(-MAX_SCENE_POSITION).max(MAX_SCENE_POSITION),
 ]);
 export const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const entityLabelSchema = z.string().max(100);
+const nonBlankEntityLabelSchema = entityLabelSchema.regex(
+  /\S/,
+  "Entity labels cannot be blank.",
+);
 const partTransformSchema = z.object({
   position: vector,
   scale: vector,
@@ -195,7 +200,7 @@ export const behaviorSchema = z.object({
 });
 export const entitySchema = z.object({
   id: z.string().regex(/^[\w-]{1,80}$/),
-  label: z.string().max(100),
+  label: entityLabelSchema,
   position: scenePosition,
   scale: vector.default([1, 1, 1]),
   rotation: vector.optional(),
@@ -294,6 +299,13 @@ const setMaterialCommandSchema = z.object({
   color,
   assetPolicy: assetRequestPolicySchema.optional(),
 });
+const setLabelCommandSchema = z
+  .object({
+    type: z.literal("set_label"),
+    id: z.string().regex(/^[\w-]{1,80}$/),
+    label: nonBlankEntityLabelSchema,
+  })
+  .strict();
 const setTransformCommandSchema = z.object({
   type: z.literal("set_transform"),
   id: z.string(),
@@ -366,6 +378,7 @@ export const commandSchema = z.discriminatedUnion("type", [
   reserveEntityCommandSchema(entitySchema),
   setGeometryCommandSchema(geometrySchema),
   setMaterialCommandSchema,
+  setLabelCommandSchema,
   setTransformCommandSchema,
   createGroupCommandSchema,
   removeGroupCommandSchema,
@@ -421,6 +434,7 @@ export function modelCommandSchemaForCapabilities(
     reserveEntity,
     setGeometry,
     setMaterialCommandSchema,
+    setLabelCommandSchema,
     modelSetTransformCommandSchema,
     createGroupCommandSchema,
     removeGroupCommandSchema,
@@ -659,7 +673,11 @@ export function applyOperation(
   } else {
     const existing = entities.find((e) => e.id === c.id);
     if (!existing) throw Error("That object no longer exists.");
-    if (c.type === "remove_entity") {
+    if (c.type === "set_label") {
+      entities = entities.map((entity) =>
+        entity.id === c.id ? { ...entity, label: c.label } : entity,
+      );
+    } else if (c.type === "remove_entity") {
       entities = entities.filter((e) => e.id !== c.id);
     } else {
       if (

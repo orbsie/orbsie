@@ -2295,6 +2295,7 @@ export const useOrb = create<State>((setState, getState) => ({
         command.type === "reserve_entity"
           ? command.entity.id
           : command.type === "set_geometry" ||
+              command.type === "set_label" ||
               command.type === "set_material" ||
               command.type === "set_transform" ||
               command.type === "set_behavior"

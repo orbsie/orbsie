@@ -24,6 +24,7 @@ const commandTypes = [
   "reserve_entity",
   "set_geometry",
   "set_material",
+  "set_label",
   "set_transform",
   "create_group",
   "remove_group",

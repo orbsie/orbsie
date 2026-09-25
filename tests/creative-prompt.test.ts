@@ -59,6 +59,12 @@ describe("creative and playable authoring prompt", () => {
       "never reserve them again or remove/recreate them as an editing shortcut",
     );
     expect(prompt).toContain(
+      "When an edit changes an existing object's identity, use set_label on its existing ID",
+    );
+    expect(prompt).toContain(
+      "for material- or shape-only edits, preserve its current label",
+    );
+    expect(prompt).toContain(
       "Remove only objects the current request asks to remove, respecting game and group references",
     );
   });
