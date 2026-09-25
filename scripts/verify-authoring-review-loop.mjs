@@ -525,8 +525,8 @@ async function runRenderer(
       const resume = page.getByTestId("interrupted-review-resume");
       await expect(continuation).toBeVisible();
       await expect(resume).toBeVisible();
-      await expect(page.locator(".review-continuation-cost")).toContainText(
-        "Free uses one free prompt. Linked providers may make up to three model calls.",
+      await expect(page.locator(".review-continuation-cost")).toHaveText(
+        "Uses one free prompt.",
       );
       await page.screenshot({
         path: `${output}/${evidenceName}-desktop.png`,
@@ -907,7 +907,10 @@ async function runRenderer(
   }
 }
 
-async function runSignedInJournalScenario(conflict) {
+async function runSignedInJournalScenario(
+  conflict,
+  resumeAfterFailure = false,
+) {
   const renderer = "software";
   const browser = await chromium.launch({
     args: ["--no-sandbox", "--disable-gpu"],
@@ -949,6 +952,7 @@ async function runSignedInJournalScenario(conflict) {
   const conflictToken = "c".repeat(64);
   let recovery;
   let clientCorrelation;
+  let resumedClientCorrelation;
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
@@ -1182,17 +1186,55 @@ async function runSignedInJournalScenario(conflict) {
       body: streamBody(),
     });
   });
+  await context.route("**/api/generate/review/start", async (route) => {
+    const body = route.request().postDataJSON();
+    requests.push({ kind: "review-start", body });
+    assert(resumeAfterFailure);
+    assert.equal(body.priorRunId, authoringRunId);
+    assert.equal(body.prompt, requests[0].body.prompt);
+    assert.equal(body.project.id, requests[0].body.project.id);
+    assert.equal(body.provider, "free");
+    resumedClientCorrelation = route.request().headers()[
+      "x-orbsie-client-run-id"
+    ];
+    assert.match(resumedClientCorrelation, /^[0-9a-f-]{36}$/);
+    await route.fulfill({
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+      json: {
+        runId: resumedAuthoringRunId,
+        reviewImageSupported: true,
+      },
+    });
+  });
   await context.route("**/api/generate/review", async (route) => {
     const body = route.request().postDataJSON();
     requests.push({ kind: body.phase, body });
     assert.equal(
       route.request().headers()["x-orbsie-client-run-id"],
-      clientCorrelation,
+      body.runId === authoringRunId
+        ? clientCorrelation
+        : resumedClientCorrelation,
     );
-    assert.equal(body.runId, authoringRunId);
+    assert.equal(
+      body.runId,
+      body.runId === authoringRunId ? authoringRunId : resumedAuthoringRunId,
+    );
     const reviewOrdinal = requests.filter(
       (request) => request.kind === "review",
     ).length;
+    if (resumeAfterFailure && reviewOrdinal === 1) {
+      assert.equal(body.runId, authoringRunId);
+      await route.fulfill({
+        status: 502,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        body: JSON.stringify({ error: "Synthetic review failure." }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       headers: {
@@ -1205,7 +1247,7 @@ async function runSignedInJournalScenario(conflict) {
           body.phase,
           "accept",
           reviewOrdinal,
-          !conflict,
+          !conflict && !resumeAfterFailure,
         ),
       ),
     });
@@ -1222,11 +1264,25 @@ async function runSignedInJournalScenario(conflict) {
       .fill("Build a lantern");
     await page.getByRole("button", { name: "Create", exact: true }).click();
     await expect(page.locator(".authoring-activity-latest p")).toHaveText(
-      conflict
+      conflict || resumeAfterFailure
         ? "Scene saved, but review could not finish."
         : "Scene verified. Changes are applied.",
       { timeout: 15_000 },
     );
+    if (resumeAfterFailure) {
+      assert.equal(requests.length, 2);
+      const resume = page.getByTestId("interrupted-review-resume");
+      await expect(resume).toBeVisible();
+      await expect(page.locator(".review-continuation-cost")).toHaveText(
+        "Uses one free prompt.",
+      );
+      await resume.click();
+      await expect(page.locator(".authoring-activity-latest p")).toHaveText(
+        "Scene verified. Changes are applied.",
+        { timeout: 15_000 },
+      );
+      await expect(resume).toHaveCount(0);
+    }
 
     const puts = cloudEvents.filter((event) => event.kind === "put");
     const latestReads = cloudEvents.filter(
@@ -1234,10 +1290,10 @@ async function runSignedInJournalScenario(conflict) {
     );
     const starts = generationEvents.filter((event) => event.kind === "start");
     const appends = generationEvents.filter((event) => event.kind === "append");
-    assert.equal(puts.length, conflict ? 1 : 3);
-    assert.equal(latestReads.length, conflict ? 1 : 2);
-    assert.equal(starts.length, conflict ? 1 : 3);
-    assert.equal(appends.length, conflict ? 3 : 8);
+    assert.equal(puts.length, conflict ? 1 : resumeAfterFailure ? 2 : 3);
+    assert.equal(latestReads.length, conflict ? 1 : resumeAfterFailure ? 0 : 2);
+    assert.equal(starts.length, conflict ? 1 : resumeAfterFailure ? 2 : 3);
+    assert.equal(appends.length, conflict ? 3 : resumeAfterFailure ? 5 : 8);
     assert.equal(puts[0].baseRevision, null);
     if (conflict) {
       assert.equal(puts[0].baseSnapshotToken, null);
@@ -1246,6 +1302,80 @@ async function runSignedInJournalScenario(conflict) {
       assert.equal(
         appends.some((event) => event.runId === starts[1]?.runId),
         false,
+      );
+    } else if (resumeAfterFailure) {
+      assert.deepEqual(
+        requests.map((request) => request.kind),
+        ["initial", "review", "review-start", "review", "final-review"],
+      );
+      assert.equal(
+        requests.filter((request) => request.kind === "initial").length,
+        1,
+      );
+      assert.equal(requests[0].body.prompt, "Build a lantern");
+      assert.equal(requests[2].body.prompt, requests[0].body.prompt);
+      assert.equal(requests[3].body.prompt, requests[0].body.prompt);
+      assert.equal(requests[2].body.priorRunId, authoringRunId);
+      assert.equal(requests[2].body.project.revision, 3);
+      assert.deepEqual(
+        requests.slice(1).map((request) => request.body.project.revision),
+        [3, 3, 3, 5],
+      );
+      assert.equal(puts.length, 2);
+      assert.equal(puts[1].baseRevision, puts[0].revision);
+      assert.equal(puts[1].baseSnapshotToken, initialToken);
+      assert.equal(puts[1].revision, 3);
+      assert.equal(puts[1].snapshotToken, correctedToken);
+      assert.equal(starts[0].projectRevision, puts[0].revision);
+      assert.equal(starts[1].projectRevision, puts[1].revision);
+      assert.equal(new Set(starts.map((start) => start.runId)).size, 2);
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[0].runId)
+          .map((event) => event.sequence),
+        [1, 2, 3],
+      );
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[1].runId)
+          .map((event) => event.sequence),
+        [1, 2],
+      );
+      assert.deepEqual(
+        appends
+          .filter((event) => event.runId === starts[1].runId)
+          .map((event) => event.command),
+        ["set_environment", "commit_revision"],
+      );
+      const cloudCorrectionBase = state.cloudProject;
+      assert(cloudCorrectionBase);
+      assert.equal(cloudCorrectionBase.revision, puts[1].revision);
+      assert.deepEqual(
+        cloudCorrectionBase.entities.map((entity) => entity.id),
+        ["lantern"],
+      );
+      assert.deepEqual(
+        cloudCorrectionBase.messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.text),
+        ["Build a lantern"],
+      );
+      const cloudCorrectionRun = state.runs.get(starts[1].runId);
+      assert.equal(cloudCorrectionRun.state, "complete");
+      assert.equal(cloudCorrectionRun.checkpoint.revision, 5);
+      assert.equal(cloudCorrectionRun.checkpoint.environment.sky, "#88ccff");
+      assert.deepEqual(
+        cloudCorrectionRun.checkpoint.entities.map((entity) => entity.id),
+        ["lantern"],
+      );
+      const saved = await storageSnapshot(page);
+      assert.equal(saved.project.revision, 5);
+      assert.equal(saved.project.environment.sky, "#88ccff");
+      assert.deepEqual(
+        saved.project.messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.text),
+        ["Build a lantern"],
       );
     } else {
       assert.equal(puts[1].baseRevision, puts[0].revision);
@@ -1343,18 +1473,20 @@ async function runSignedInJournalScenario(conflict) {
     assert.deepEqual(
       pageErrors,
       Array.from(
-        { length: conflict ? 1 : 2 },
+        { length: conflict || resumeAfterFailure ? 1 : 2 },
         () => "THREE.WebGLRenderer: Error creating WebGL context.",
       ),
     );
-    assert.deepEqual(
-      consoleErrors,
-      Array.from(
-        { length: conflict ? 1 : 2 },
-        () =>
-          "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
-      ),
+    const expectedConsoleErrors = Array.from(
+      { length: conflict || resumeAfterFailure ? 1 : 2 },
+      () =>
+        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
     );
+    if (resumeAfterFailure)
+      expectedConsoleErrors.push(
+        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+      );
+    assert.deepEqual(consoleErrors, expectedConsoleErrors);
     assert(
       requestFailures.every(
         (failure) => failure.failure === "net::ERR_ABORTED",
@@ -1362,6 +1494,7 @@ async function runSignedInJournalScenario(conflict) {
     );
     return {
       conflict,
+      resumeAfterFailure,
       requests: requests.map((request) => request.kind),
       reviewedRevisions: requests
         .slice(1)
@@ -1443,6 +1576,11 @@ try {
       false,
       "resume-start-retry",
     );
+  } else if (failureOnly === "signed-in-resume") {
+    report.signedInJournal.resumedReview = await runSignedInJournalScenario(
+      false,
+      true,
+    );
   } else {
     report.renderers.webgl = await runRenderer("webgl");
     report.renderers.software = await runRenderer("software");
@@ -1472,6 +1610,10 @@ try {
     );
     report.signedInJournal.success = await runSignedInJournalScenario(false);
     report.signedInJournal.conflict = await runSignedInJournalScenario(true);
+    report.signedInJournal.resumedReview = await runSignedInJournalScenario(
+      false,
+      true,
+    );
   }
   report.passed = true;
 } finally {

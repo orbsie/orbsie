@@ -2675,8 +2675,16 @@ export default function Orbsie() {
                       Resume review <ArrowUpRight size={12} />
                     </button>
                     <p className="review-continuation-cost">
-                      Free uses one free prompt. Linked providers may make up to
-                      three model calls.
+                      {interruptedReviewContinuation.provider === "free"
+                        ? "Uses one free prompt."
+                        : `Uses up to three model calls through the original ${
+                            interruptedReviewContinuation.provider === "gateway"
+                              ? "AI Gateway"
+                              : interruptedReviewContinuation.provider ===
+                                  "chatgpt-hosted"
+                                ? "ChatGPT"
+                                : "OpenRouter"
+                          } connection.`}
                     </p>
                     <button
                       type="button"
