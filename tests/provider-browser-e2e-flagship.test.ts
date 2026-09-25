@@ -1938,6 +1938,148 @@ describe("flagship provider story contract", () => {
     }
   });
 
+  it("accepts bounded timer paths in the saved OpenRouter rev28 story", () => {
+    const sourceBytes = readFileSync(
+      resolve(
+        "docs/evidence/provider-e2e/openrouter-flagship-live-33b7289-20260925/openrouter/story-created-project.json",
+      ),
+    );
+    expect(createHash("sha256").update(sourceBytes).digest("hex")).toBe(
+      "c2e7a48265891b59246663f79f208d309ee9dbc1fffd93e2f122140bcd005dd7",
+    );
+    const project = JSON.parse(sourceBytes.toString("utf8"));
+    const story = assertFlagshipStoryCreation(project);
+    expect(story.platforms.map((platform: any) => platform.id)).toEqual([
+      "platform-a",
+      "platform-b",
+      "platform-c",
+    ]);
+
+    const findMotionRule = (candidate: any, entityId = "platform-a") =>
+      candidate.game.rules.find((rule: any) =>
+        rule.actions.some(
+          (action: any) =>
+            action.type === "move_path" && action.entityId === entityId,
+        ),
+      );
+    const findMotionPath = (candidate: any, entityId = "platform-a") =>
+      findMotionRule(candidate, entityId).actions.find(
+        (action: any) =>
+          action.type === "move_path" && action.entityId === entityId,
+      );
+    const originalMotionRule = findMotionRule(project);
+    expect(originalMotionRule.trigger).toEqual({
+      type: "timer",
+      seconds: 4,
+      repeat: true,
+    });
+    expect(originalMotionRule.conditions).toEqual([]);
+
+    const acceptedOneShotTimer = structuredClone(project);
+    findMotionRule(acceptedOneShotTimer).trigger.repeat = false;
+    expect(
+      assertFlagshipStoryCreation(acceptedOneShotTimer).platforms,
+    ).toHaveLength(3);
+
+    const acceptedTimerBoundary = structuredClone(project);
+    findMotionRule(acceptedTimerBoundary).trigger.seconds = 5;
+    expect(
+      assertFlagshipStoryCreation(acceptedTimerBoundary).platforms,
+    ).toHaveLength(3);
+
+    const acceptedStartTrigger = structuredClone(project);
+    findMotionRule(acceptedStartTrigger).trigger = { type: "start" };
+    expect(
+      assertFlagshipStoryCreation(acceptedStartTrigger).platforms,
+    ).toHaveLength(3);
+
+    const slowedTimerPath = structuredClone(project);
+    const middleRule = findMotionRule(slowedTimerPath, "platform-b");
+    middleRule.actions.find(
+      (action: any) =>
+        action.type === "move_path" && action.entityId === "platform-b",
+    ).duration += 0.5;
+    const originalCollectRule = slowedTimerPath.game.rules.find(
+      (rule: any) =>
+        rule.trigger?.type === "collect" &&
+        rule.trigger.entityId === "crystal-1",
+    );
+    for (const index of [6, 7]) {
+      const crystal = structuredClone(
+        slowedTimerPath.entities.find((item: any) => item.id === "crystal-1"),
+      );
+      crystal.id = `crystal-${index}`;
+      crystal.label = `Glowing crystal ${index}`;
+      slowedTimerPath.entities.push(crystal);
+      const collectRule = structuredClone(originalCollectRule);
+      collectRule.id = `crystal${index}`;
+      collectRule.trigger.entityId = crystal.id;
+      slowedTimerPath.game.rules.push(collectRule);
+    }
+    const portalRule = slowedTimerPath.game.rules.find((rule: any) =>
+      rule.actions.some((action: any) => action.type === "win"),
+    );
+    portalRule.conditions.find(
+      (condition: any) =>
+        condition.operand?.type === "variable" &&
+        condition.operand.name === "crystals",
+    ).value = 7;
+    const slowdownEvidence = assertFlagshipStoryPlatform(
+      project,
+      slowedTimerPath,
+      "platform-b",
+    );
+    if (!("previousPathDuration" in slowdownEvidence))
+      throw Error("Expected timer path slowdown evidence");
+    expect(slowdownEvidence.previousPathDuration).toBe(4);
+    expect(slowdownEvidence.revisedPathDuration).toBe(4.5);
+
+    const rejectedVariants = [
+      (candidate: any) => {
+        findMotionRule(candidate).trigger.seconds = 0;
+      },
+      (candidate: any) => {
+        findMotionRule(candidate).trigger.seconds = 5.01;
+      },
+      (candidate: any) => {
+        findMotionRule(candidate).trigger.repeat = "often";
+      },
+      (candidate: any) => {
+        findMotionRule(candidate).conditions = [
+          {
+            operand: { type: "score" },
+            comparison: "gte",
+            value: 0,
+          },
+        ];
+      },
+      (candidate: any) => {
+        findMotionRule(candidate).trigger = {
+          type: "collision",
+          entityId: "portal",
+        };
+      },
+      (candidate: any) => {
+        const path = findMotionPath(candidate);
+        path.points = [path.points[0], path.points[0]];
+      },
+      (candidate: any) => {
+        findMotionPath(candidate).duration = 3601;
+      },
+      (candidate: any) => {
+        const path = findMotionPath(candidate);
+        findMotionRule(candidate).actions.push(structuredClone(path));
+      },
+    ];
+    for (const mutate of rejectedVariants) {
+      const invalid = structuredClone(project);
+      mutate(invalid);
+      expect(() => assertFlagshipStoryCreation(invalid)).toThrow(
+        /three moving platforms|conflicting motion writers/,
+      );
+    }
+  });
+
   it("requires a slower path duration and preserves the moving-bounce story rules", () => {
     const before = currentGatewayStory();
     const slowed = addGatewayGoalSevenEdit(before, 1.1);

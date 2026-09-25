@@ -4140,24 +4140,41 @@ function storyPlatformMotionWriters(project, entityId) {
   return writers;
 }
 
-function storyActiveStartPath(project, entityId) {
+const STORY_PLATFORM_TIMER_MAX_SECONDS = 5;
+const STORY_PLATFORM_PATH_MAX_SECONDS = 3600;
+const STORY_PLATFORM_PATH_MAX_POINTS = 16;
+
+function storyActivePlatformPath(project, entityId) {
   const writers = storyPlatformMotionWriters(project, entityId);
   assert(
     writers.length <= 1,
     `Story platform ${entityId} has conflicting motion writers.`,
   );
   const writer = writers[0];
+  const conditions = writer?.rule.conditions;
+  const hasNoConditions =
+    conditions === undefined ||
+    (Array.isArray(conditions) && conditions.length === 0);
+  const trigger = writer?.rule.trigger;
+  const startsImmediately = trigger?.type === "start";
+  const startsOnBoundedTimer =
+    trigger?.type === "timer" &&
+    Number.isFinite(trigger.seconds) &&
+    trigger.seconds > 0 &&
+    trigger.seconds <= STORY_PLATFORM_TIMER_MAX_SECONDS &&
+    (trigger.repeat === undefined || typeof trigger.repeat === "boolean");
   if (
     !writer ||
     writer.action.type !== "move_path" ||
-    writer.rule.trigger?.type !== "start" ||
-    (writer.rule.conditions ?? []).length !== 0
+    !hasNoConditions ||
+    (!startsImmediately && !startsOnBoundedTimer)
   )
     return null;
   const points = writer.action.points;
   const validPoints =
     Array.isArray(points) &&
     points.length >= 2 &&
+    points.length <= STORY_PLATFORM_PATH_MAX_POINTS &&
     points.every(
       (point) =>
         Array.isArray(point) &&
@@ -4171,7 +4188,9 @@ function storyActiveStartPath(project, entityId) {
       return point.some((value, axis) => value !== points[index - 1][axis]);
     });
   const validDuration =
-    Number.isFinite(writer.action.duration) && writer.action.duration > 0;
+    Number.isFinite(writer.action.duration) &&
+    writer.action.duration > 0 &&
+    writer.action.duration <= STORY_PLATFORM_PATH_MAX_SECONDS;
   const validLoop =
     writer.action.loop === undefined || typeof writer.action.loop === "boolean";
   if (!validPoints || !nondegenerate || !validDuration || !validLoop)
@@ -4188,12 +4207,12 @@ function storyPlatforms(project) {
       )
         return false;
         if (entity.behavior?.type === "move") {
-          storyActiveStartPath(project, entity.id);
+          storyActivePlatformPath(project, entity.id);
           return true;
         }
       return (
         entity.behavior?.type === "bounce" &&
-        Boolean(storyActiveStartPath(project, entity.id))
+        Boolean(storyActivePlatformPath(project, entity.id))
       );
     });
   const spawn =
@@ -4839,15 +4858,15 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
   const beforePlatform = beforeMap.get(platformId);
   const afterPlatform = afterMap.get(platformId);
   assert(beforePlatform && afterPlatform, "Story middle platform disappeared.");
-  const beforePath = storyActiveStartPath(before, platformId);
-  const afterPath = storyActiveStartPath(after, platformId);
+  const beforePath = storyActivePlatformPath(before, platformId);
+  const afterPath = storyActivePlatformPath(after, platformId);
   const beforeUsesPath = Boolean(beforePath);
   const beforeSpeed = beforePlatform.behavior?.speed;
   const afterSpeed = afterPlatform.behavior?.speed;
   if (beforeUsesPath) {
     assert(
       beforePath,
-      "Story middle platform had no valid active start path.",
+      "Story middle platform had no valid active movement path.",
     );
     assert.equal(
       afterPlatform.behavior?.type,
@@ -4856,7 +4875,7 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
     );
     assert(
       afterPath,
-      "Story middle platform lost its active start path.",
+      "Story middle platform lost its active movement path.",
     );
     assert(
       afterPath.action.duration > beforePath.action.duration,

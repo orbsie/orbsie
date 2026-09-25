@@ -32,14 +32,30 @@ const OPENROUTER_C245B8E_SOURCE = {
   sha256: "d478be5d83342e9632c91ce417b9b555aa03dab16467114fe15ab43d1d747985",
   assetReferenceCount: 2,
 };
+const OPENROUTER_TIMED_PLATFORM_REV28_SOURCE_PATH =
+  "docs/evidence/provider-e2e/openrouter-flagship-live-33b7289-20260925/openrouter/story-created-project.json";
+const OPENROUTER_TIMED_PLATFORM_REV28_SOURCE = {
+  providerOriginCommit: "33b72896a27e4975c97d4f63b8867799bfaeb581",
+  projectId: "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+  revision: 28,
+  sha256: "c2e7a48265891b59246663f79f208d309ee9dbc1fffd93e2f122140bcd005dd7",
+  assetReferenceCount: 2,
+};
 const args = process.argv.slice(2);
 const replayRevision29 = args.includes("--revision29");
 const replayOpenRouterC245B8e = args.includes("--openrouter-live-c245b8e");
+const replayOpenRouterTimedPlatformsRev28 = args.includes(
+  "--openrouter-timer-rev28",
+);
 const clearanceDiagnostic = args.includes("--clearance-diagnostic");
 const clearancePathDiagnostic = args.includes("--clearance-path-diagnostic");
 assert(
-  !(replayRevision29 && replayOpenRouterC245B8e),
-  "Choose only one pinned revision29 source mode.",
+  [
+    replayRevision29,
+    replayOpenRouterC245B8e,
+    replayOpenRouterTimedPlatformsRev28,
+  ].filter(Boolean).length <= 1,
+  "Choose only one pinned source mode.",
 );
 assert(
   !(clearanceDiagnostic && clearancePathDiagnostic),
@@ -53,15 +69,18 @@ const outputArgs = args.filter(
   (argument) =>
     argument !== "--revision29" &&
     argument !== "--openrouter-live-c245b8e" &&
+    argument !== "--openrouter-timer-rev28" &&
     argument !== "--clearance-diagnostic" &&
     argument !== "--clearance-path-diagnostic",
 );
 assert(outputArgs.length <= 1, "Provide at most one output directory.");
 const sourcePath = replayOpenRouterC245B8e
   ? OPENROUTER_C245B8E_SOURCE_PATH
-  : replayRevision29
-    ? REVISION_29_SOURCE_PATH
-    : DEFAULT_SOURCE_PATH;
+  : replayOpenRouterTimedPlatformsRev28
+    ? OPENROUTER_TIMED_PLATFORM_REV28_SOURCE_PATH
+    : replayRevision29
+      ? REVISION_29_SOURCE_PATH
+      : DEFAULT_SOURCE_PATH;
 const outputPath = resolve(
   outputArgs[0] ??
     (clearancePathDiagnostic
@@ -70,9 +89,11 @@ const outputPath = resolve(
         ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925"
         : replayOpenRouterC245B8e
           ? "docs/evidence/provider-e2e/openrouter-flagship-live-c245b8e-driver-replay-20260925"
-          : replayRevision29
-            ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
-            : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
+          : replayOpenRouterTimedPlatformsRev28
+            ? "docs/evidence/provider-e2e/openrouter-flagship-revision28-timer-platform-replay-20260925"
+            : replayRevision29
+              ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
+              : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const gameplayHarnessBytes = await readFile(
@@ -88,6 +109,16 @@ if (replayOpenRouterC245B8e) {
   assert.equal(project.id, OPENROUTER_C245B8E_SOURCE.projectId);
   assert.equal(project.revision, OPENROUTER_C245B8E_SOURCE.revision);
   assert.equal(sha256(sourceProjectBytes), OPENROUTER_C245B8E_SOURCE.sha256);
+} else if (replayOpenRouterTimedPlatformsRev28) {
+  assert.equal(project.id, OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.projectId);
+  assert.equal(
+    project.revision,
+    OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.revision,
+  );
+  assert.equal(
+    sha256(sourceProjectBytes),
+    OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.sha256,
+  );
 } else if (replayRevision29) {
   assert.equal(project.id, REVISION_29_SOURCE.projectId);
   assert.equal(project.revision, REVISION_29_SOURCE.revision);
@@ -196,6 +227,13 @@ if (replayOpenRouterC245B8e) {
   assert.equal(targetDocumentBytes, sourceProjectBytes);
   assert.equal(targetDocumentSha256, OPENROUTER_C245B8E_SOURCE.sha256);
 }
+if (replayOpenRouterTimedPlatformsRev28) {
+  assert.equal(targetDocumentBytes, sourceProjectBytes);
+  assert.equal(
+    targetDocumentSha256,
+    OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.sha256,
+  );
+}
 assert.equal(
   project.entities.filter((entity) => entity.geometry?.kind === "generated")
     .length,
@@ -204,7 +242,11 @@ assert.equal(
 let platforms;
 let collectibles;
 let portal;
-if (replayRevision29 || replayOpenRouterC245B8e) {
+if (
+  replayRevision29 ||
+  replayOpenRouterC245B8e ||
+  replayOpenRouterTimedPlatformsRev28
+) {
   const story = assertFlagshipStoryCreation(project);
   platforms = story.platforms;
   collectibles = story.collectibles;
@@ -240,12 +282,21 @@ const assetReferences = project.entities
   .map((entity) => ({ entityId: entity.id, assetId: entity.geometry.assetId }));
 assert.equal(
   assetReferences.length,
-  replayRevision29 || replayOpenRouterC245B8e ? 2 : 3,
+  replayRevision29 ||
+    replayOpenRouterC245B8e ||
+    replayOpenRouterTimedPlatformsRev28
+      ? 2
+      : 3,
 );
 if (replayOpenRouterC245B8e)
   assert.equal(
     assetReferences.length,
     OPENROUTER_C245B8E_SOURCE.assetReferenceCount,
+  );
+if (replayOpenRouterTimedPlatformsRev28)
+  assert.equal(
+    assetReferences.length,
+    OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.assetReferenceCount,
   );
 const files = new Map([["/project.json", targetDocumentBytes]]);
 const runtimeEvidence = {};
@@ -280,7 +331,12 @@ const html = Buffer.from(
 files.set("/", html);
 files.set("/favicon.ico", Buffer.alloc(0));
 
-if (clearanceDiagnostic || clearancePathDiagnostic || replayOpenRouterC245B8e)
+if (
+  clearanceDiagnostic ||
+  clearancePathDiagnostic ||
+  replayOpenRouterC245B8e ||
+  replayOpenRouterTimedPlatformsRev28
+)
   await mkdir(outputPath, { mode: 0o700 });
 else await mkdir(outputPath, { recursive: true, mode: 0o700 });
 const localRequests = [];
@@ -348,16 +404,48 @@ const sanitizeDiagnosticText = (value) =>
     .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [redacted]")
     .replace(/\b(?:sk|or)-[A-Za-z0-9_-]{12,}\b/g, "[redacted-key]")
     .slice(0, 300);
+const serializePlatformEvidence = (entries) => {
+  if (!Array.isArray(entries)) return [];
+  const allowedIds = new Set(targets.platforms.map((target) => target.id));
+  const number = (value) =>
+    Number.isFinite(value) && Math.abs(value) <= 10_000_000 ? value : null;
+  const count = (value) =>
+    Number.isSafeInteger(value) && value >= 0 ? Math.min(value, 6000) : null;
+  const vector = (value) => {
+    if (!Array.isArray(value) || value.length !== 3) return null;
+    const safe = value.map(number);
+    return safe.every((component) => component !== null) ? safe : null;
+  };
+  return entries.slice(0, targets.platforms.length).flatMap((entry) => {
+    if (!allowedIds.has(entry?.id)) return [];
+    return [
+      {
+        id: entry.id,
+        behavior: ["move", "bounce"].includes(entry.behavior)
+          ? entry.behavior
+          : null,
+        groundedFrames: count(entry.groundedFrames),
+        bounceFrames: count(entry.bounceFrames),
+        startPosition: vector(entry.startPosition),
+        maximumDisplacement: number(entry.maximumDisplacement),
+      },
+    ];
+  });
+};
 const report = {
   mode: replayOpenRouterC245B8e
     ? "single-static-openrouter-live-c245b8e-source-replay"
-    : clearancePathDiagnostic
-      ? "single-static-revision29-bounce1-anchor-path-clearance-diagnostic"
-      : clearanceDiagnostic
-        ? "single-static-revision29-bounce1-clearance-diagnostic"
-        : "single-static-saved-openrouter-creation-replay",
+    : replayOpenRouterTimedPlatformsRev28
+      ? "single-static-sanitized-openrouter-rev28-timer-platform-replay"
+      : clearancePathDiagnostic
+        ? "single-static-revision29-bounce1-anchor-path-clearance-diagnostic"
+        : clearanceDiagnostic
+          ? "single-static-revision29-bounce1-clearance-diagnostic"
+          : "single-static-saved-openrouter-creation-replay",
   routeSelection:
-    replayRevision29 || replayOpenRouterC245B8e
+    replayRevision29 ||
+    replayOpenRouterC245B8e ||
+    replayOpenRouterTimedPlatformsRev28
       ? "production-spawn-relative-validator"
       : "pinned-revision31-identifiers",
   status: "running",
@@ -370,8 +458,12 @@ const report = {
     sha256: sha256(sourceProjectBytes),
     projectId: project.id,
     revision: project.revision,
-    ...(replayOpenRouterC245B8e
-      ? { providerOriginCommit: OPENROUTER_C245B8E_SOURCE.commit }
+    ...(replayOpenRouterC245B8e || replayOpenRouterTimedPlatformsRev28
+      ? {
+          providerOriginCommit: replayOpenRouterC245B8e
+            ? OPENROUTER_C245B8E_SOURCE.commit
+            : OPENROUTER_TIMED_PLATFORM_REV28_SOURCE.providerOriginCommit,
+        }
       : {}),
   },
   runtime: runtimeEvidence,
@@ -410,12 +502,17 @@ const report = {
     phases: { creation: { revision: project.revision } },
   },
 };
-if (clearanceDiagnostic || clearancePathDiagnostic || replayOpenRouterC245B8e) {
+if (
+  clearanceDiagnostic ||
+  clearancePathDiagnostic ||
+  replayOpenRouterC245B8e ||
+  replayOpenRouterTimedPlatformsRev28
+) {
   report.targetDocument = {
     path: "/project.json",
     bytes: targetDocumentBytes.byteLength,
     sha256: targetDocumentSha256,
-    ...(replayOpenRouterC245B8e
+    ...(replayOpenRouterC245B8e || replayOpenRouterTimedPlatformsRev28
       ? {
           identicalToSource: targetDocumentBytes === sourceProjectBytes,
           mutation: "none",
@@ -549,6 +646,9 @@ try {
             contacts: result.contacts,
             collections: result.collectedIds,
             collectibleTraversalOrder: result.collectibleTraversalOrder,
+            platformEvidence: serializePlatformEvidence(
+              result.platformEvidence,
+            ),
             win: result.win,
             reset: result.reset,
           },

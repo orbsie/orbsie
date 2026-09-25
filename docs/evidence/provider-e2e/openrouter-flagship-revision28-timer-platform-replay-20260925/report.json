@@ -1,0 +1,305 @@
+{
+  "mode": "single-static-sanitized-openrouter-rev28-timer-platform-replay",
+  "routeSelection": "production-spawn-relative-validator",
+  "status": "passed",
+  "repoHead": "c5aeb26e968e59121d33907c735c8491ee8e98a5",
+  "sourceProject": {
+    "path": "docs/evidence/provider-e2e/openrouter-flagship-live-33b7289-20260925/openrouter/story-created-project.json",
+    "bytes": 9648,
+    "sha256": "c2e7a48265891b59246663f79f208d309ee9dbc1fffd93e2f122140bcd005dd7",
+    "projectId": "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+    "revision": 28,
+    "providerOriginCommit": "33b72896a27e4975c97d4f63b8867799bfaeb581"
+  },
+  "runtime": {
+    "runtime.js": {
+      "bytes": 1944525,
+      "sha256": "53d7cc3dcfc5af58340f6a17c3ea34df88fa596367cd40b905a1b3a4ce9479eb"
+    },
+    "runtime.css": {
+      "bytes": 6236,
+      "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+    },
+    "generated-geometry-worker.js": {
+      "bytes": 844831,
+      "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+    },
+    "asset-geometry-worker.js": {
+      "bytes": 427305,
+      "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+    }
+  },
+  "gameplayDriverSources": {
+    "harness": {
+      "path": "scripts/provider-browser-e2e.mjs",
+      "sha256": "07ffe9c904f0dc4967e372f995ca0be12da55463fd264c250ae28d52d35c6984"
+    },
+    "helper": {
+      "path": "scripts/lib/fresh-flagship-gameplay.mjs",
+      "sha256": "c34d0237e2fc27f08367320a2a1f6a2c005fe73b544ceaa1bdd9a267374b4db6"
+    }
+  },
+  "serverPreflight": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "bodyBytes": null
+    },
+    {
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8",
+      "bodyBytes": null
+    }
+  ],
+  "catalogAssets": [
+    {
+      "entityId": "tree-a",
+      "assetId": "kenney.nature.tree-default",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "bytes": 9428,
+      "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+    },
+    {
+      "entityId": "tree-b",
+      "assetId": "kenney.nature.tree-pine-tall-a",
+      "path": "/models/kenney/nature-kit/tree_pineTallA.glb",
+      "bytes": 7200,
+      "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+    }
+  ],
+  "targets": {
+    "platforms": [
+      "platform-a",
+      "platform-b",
+      "platform-c"
+    ],
+    "platformPositions": [
+      {
+        "id": "platform-a",
+        "position": [
+          0,
+          0,
+          -6
+        ]
+      },
+      {
+        "id": "platform-b",
+        "position": [
+          0,
+          0,
+          -9
+        ]
+      },
+      {
+        "id": "platform-c",
+        "position": [
+          0,
+          0,
+          -12
+        ]
+      }
+    ],
+    "collectibles": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5"
+    ],
+    "portal": "portal"
+  },
+  "providerCalls": 0,
+  "cloudCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "localRequests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/runtime.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/project.json",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "method": "GET",
+      "path": "/models/kenney/nature-kit/tree_pineTallA.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary"
+    },
+    {
+      "method": "GET",
+      "path": "/asset-geometry-worker.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    },
+    {
+      "method": "GET",
+      "path": "/asset-geometry-worker.js",
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8"
+    }
+  ],
+  "screenshots": [
+    "scene-ready.png",
+    "portal-win.png",
+    "ui-reset.png",
+    "traversal-final.png"
+  ],
+  "readiness": {
+    "status": "ready",
+    "projectId": "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+    "revision": 28,
+    "renderer": "webgl",
+    "initialPlayerPosition": [
+      0,
+      0.94,
+      5
+    ],
+    "score": "Score: 0"
+  },
+  "flagshipStory": {
+    "status": "passed",
+    "phases": {
+      "creation": {
+        "status": "passed",
+        "revision": 28,
+        "gameplay": {
+          "status": "passed",
+          "projectId": "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+          "revision": 28,
+          "contacts": [
+            "portal"
+          ],
+          "collections": [
+            "crystal-2",
+            "crystal-5",
+            "crystal-4",
+            "crystal-3",
+            "crystal-1"
+          ],
+          "collectibleTraversalOrder": [
+            "crystal-5",
+            "crystal-4",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "win": {
+            "projectId": "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+            "revision": 28,
+            "score": 5,
+            "status": "won",
+            "portalId": "portal"
+          },
+          "reset": {
+            "projectId": "1d946bbc-8164-4ccd-9aec-0c8ee3545b8f",
+            "revision": 28,
+            "control": "↻ Restart",
+            "scoreIds": [],
+            "reset": 1,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "player": {
+              "position": [
+                0,
+                0.94,
+                5
+              ],
+              "velocityY": 0,
+              "groundedOn": "sunny-island",
+              "supportPosition": [
+                0,
+                0,
+                3
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "targetDocument": {
+    "path": "/project.json",
+    "bytes": 9648,
+    "sha256": "c2e7a48265891b59246663f79f208d309ee9dbc1fffd93e2f122140bcd005dd7",
+    "identicalToSource": true,
+    "mutation": "none"
+  },
+  "finishedAt": "2026-09-25T20:55:55.969Z",
+  "platformGateEvidence": {
+    "status": "passed",
+    "basis": "Derived from the successful runFreshFlagshipGameplay return. The success branch runs only after each target platform has contact evidence, each bounce platform has at least one observed bounce frame, and each moving platform meets the 0.05 m maximum-displacement threshold.",
+    "exactCountersAndDisplacementsPersistedByOriginalReplay": false,
+    "exactMetrics": "unavailable; no second traversal was run",
+    "perPlatform": [
+      {
+        "id": "platform-a",
+        "behavior": "bounce",
+        "authoritativeBounceContactObserved": true,
+        "movementObserved": true,
+        "minimumMaximumDisplacementM": 0.05,
+        "exactBounceFrames": null,
+        "exactMaximumDisplacementM": null
+      },
+      {
+        "id": "platform-b",
+        "behavior": "bounce",
+        "authoritativeBounceContactObserved": true,
+        "movementObserved": true,
+        "minimumMaximumDisplacementM": 0.05,
+        "exactBounceFrames": null,
+        "exactMaximumDisplacementM": null
+      },
+      {
+        "id": "platform-c",
+        "behavior": "bounce",
+        "authoritativeBounceContactObserved": true,
+        "movementObserved": true,
+        "minimumMaximumDisplacementM": 0.05,
+        "exactBounceFrames": null,
+        "exactMaximumDisplacementM": null
+      }
+    ],
+    "futureRuns": "The diagnostic script now serializes bounded per-platform grounded/bounce frame counts, start position, and maximum displacement."
+  }
+}
