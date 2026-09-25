@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 looped-path replay: `move_path` with `loop:true` now spends the same
+duration across each listed segment plus a virtual last-to-first segment when
+the path is open; explicitly closed and non-looping paths keep their prior
+timing. Focused game-program/runtime integration tests (19) and typecheck pass,
+and the checked-in player bundle/source were rebuilt. One exact loopback replay
+of saved project revision 31 (project SHA `b6bfb722…1e09`) used player runtime
+SHA `d70d5d1f…7619`, with zero provider/cloud/external requests or page, console,
+and request errors. Authoritative platform and bounce counters each incremented
+on bounce-one, bounce-two, and bounce-three. At bounce-three contact (8,131 ms),
+player center was `(-0.533, 2.100, -3.561)` and platform center
+`(-0.580, 1.550, -3.600)`; counters changed 0→1. The estimated crossing-pair
+field was null because the contact sample landed exactly at the estimated top
+plane. All five crystals were collected (score 5); the run remained `playing`,
+with no portal win or reset, so the traversal report remains failed and makes
+no full-game pass claim. Evidence and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-loop-closure-20260925/`.
+
 Sep 25 surface-crossing replay: one bounded keyboard traversal of saved project
 revision 31 now recorded a compact pair bracketing bounce-three's estimated
 top plane (y=2.10). At 8,222 ms the player was `(0.661, 2.206, -3.576)` and
