@@ -7,7 +7,7 @@ The full `prompt.md` objective remains open. Use
 older rows below are a historical inventory, not a completion claim.
 
 - `https://orbsie.com/` is serving deployment
-  `dpl_45mnfJ6qPud2mnPkbTBAosUEyfN7` at this reconciliation. Read-only
+  `dpl_H73dfGFRGszuuy9LFMVdymEvU4vc` at this reconciliation. Read-only
   root, robots, sitemap, config and exact player runtime/source hash checks
   passed; the prior release's trial
   check passed. The previous crawler

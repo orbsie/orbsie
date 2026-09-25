@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 25 production release: source/evidence through `114e13c` deployed Ready
+as `dpl_H73dfGFRGszuuy9LFMVdymEvU4vc`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-gkg6k3qvn-grappeggias-projects.vercel.app`).
+Read-only root, robots, sitemap and config returned HTTP 200; both review-start
+GET routes returned expected 405. Config reports `authoringReview:false`,
+`chatgptHosted:true`, `chatgptGeneration:true`, accounts and publishing true.
+Deployed player runtime and source exactly match committed bytes (SHA-256
+`25cc0d9d1d704b731e525968100544d2008d00e51192e0b82eb52b27af87e8bb`
+and `db1e21001e710a7241fa67748d12d9eb36293211f6e5c01b0cdf3ca83ff900d1`).
+The release carries disabled review-recovery code; it is not live-provider or
+production-enabled review acceptance.
+
 Sep 25 signed-in review reload recovery: source `de4dece` restores and
 validates the authoritative cloud snapshot before a paid review-only start;
 source `457a2ba` also permits an existing local-only draft to create its first
