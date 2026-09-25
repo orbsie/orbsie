@@ -6,6 +6,16 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- The browser procedural isolation release gate now has an actual production
+  editor fixture, not only isolated evaluator tests. Four intercepted generation
+  requests created an object, rejected a hostile host-API/storage/network probe,
+  bounded an infinite loop with worker termination, and completed a targeted
+  recovery edit and reload under the same entity ID. The temporary browser
+  canary never appeared in the saved project; no external HTTP/WebSocket attempt,
+  provider call or page error occurred. The loop failure took 2,638 ms. Evidence:
+  `docs/evidence/browser-procedural-isolation/`. Source `b0d5d48` adds the
+  repeatable harness; this does not prove a full secret audit or live-provider
+  recovery.
 - The desktop standalone Canvas2D advice now sits below the scene and above
   the footer. Local screenshot/bounds and exact served CSS hash are recorded in
   `docs/evidence/standalone-graphics-advisory-20260925/`; touch overrides remain

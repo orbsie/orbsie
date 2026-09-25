@@ -1,5 +1,25 @@
 # Development checkpoint
 
+Sep 25 browser procedural isolation: source `b0d5d48` adds a production-editor
+fixture with four intercepted `/api/generate` responses and no model calls.
+It created a valid QuickJS/Manifold object, seeded a random synthetic canary in
+ephemeral same-origin storage, then ran hostile source that probed host APIs,
+storage and network. The source reached the worker, made zero external
+HTTP/WebSocket requests and changed neither the saved entity nor revision.
+An infinite loop produced a fresh bounded failure in 2,638 ms and its worker
+was terminated before a valid targeted recovery edit. Source, geometry and
+stable entity ID survived reload without re-evaluating procedural code.
+The reviewer caught and corrected an earlier stale-toast false positive; only
+the final passing report is retained in
+`docs/evidence/browser-procedural-isolation/`. Node syntax, Prettier and diff
+checks pass. Existing worker and editor evidence covers byte/memory/mesh limits,
+cancellation and geometry rejection. This closes the current browser modeling
+isolation contract gate, not a full security audit, live-provider run or
+physical-device test. The prior local Next server had stale chunk references;
+production served the fixture instead. Gateway credit still reads
+`-0.00456495`, so no Gateway inference was started, and computer-use browser
+inventory remains empty.
+
 Sep 25 desktop standalone compatibility notice: source `c369062` positions
 the dismissible Canvas2D advisory 48 px above the viewport bottom, retaining
 the portrait/landscape touch overrides and fatal renderer guidance. A local
