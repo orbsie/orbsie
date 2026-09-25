@@ -6,6 +6,14 @@ The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
 
+- A fresh production account/project published an existing Gateway-authored
+  revision-9 world with two generated GLBs into its own Vercel deployment.
+  Exact public snapshot/model/runtime hashes and signed-out desktop, portrait
+  touch and landscape touch gameplay passed without model calls, cookies or
+  external requests. Evidence:
+  `docs/evidence/provider-artifact-publication-current-20260925/`. This closes
+  the current-runtime baked-publication gate, while fresh Gateway inference,
+  visual quality and physical mobile remain open.
 - A current local OpenRouter Luna input-game run passed two real calls at the
   4,096-token cap: original tree and mushroom geometry, exact input rules,
   targeted edit, reload, export, and signed-out standalone keyboard play. An

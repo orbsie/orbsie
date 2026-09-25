@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 25 current-runtime production publication: a no-model-call run of
+`scripts/verify-provider-artifact-publication.mjs` copied the saved
+Gateway-authored revision-9 world into a new isolated account/project,
+uploaded its two exact generated GLBs, and published a new per-Orb Vercel
+deployment `dpl_H96YU3pFSRdVLxJRhHz7u7eNysr6` at
+`https://orb-847864082049ad60fd35-b4hptmcr5-grappeggias-projects.vercel.app`.
+The saved/public project snapshots and generated-manifest hashes match; served
+player JS/CSS match current local SHA-256
+`25cc0d9d1d704b731e525968100544d2008d00e51192e0b82eb52b27af87e8bb`
+and `76bb712dc7a4e36f80b1668357b07ecc2a379c31d1444b6c5445e839bb6c1026`.
+Signed-out desktop keyboard, portrait touch and landscape touch passed score
+7, restart, win and loss with zero cookies, generation requests, external
+requests or page errors. Astra reviewed report and mobile screenshots.
+Evidence: `docs/evidence/provider-artifact-publication-current-20260925/`.
+This closes current-runtime baked-publication acceptance for an existing
+Gateway-authored artifact, not new Gateway inference or physical mobile.
+
 Sep 25 current OpenRouter input-game acceptance: the first bounded local
 browser run returned HTTP 403 before reaching OpenRouter because the browser
 origin differed from `BETTER_AUTH_URL`. Astra traced this to `checkOrigin`;

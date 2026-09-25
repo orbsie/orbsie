@@ -1,0 +1,1 @@
+Evidence sanitization: credential-file paths were removed from report.json. Visible prompt-preview text in the top page header was masked in all three screenshots. The account email, password, prompt body, and transcript are not retained in this evidence directory. The private acceptance credential remains outside the repository.
