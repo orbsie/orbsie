@@ -75,7 +75,8 @@ import {
   isGenerationReady,
   type GenerationConnection,
 } from "@/lib/generation-connection";
-import { committed } from "@/lib/protocol";
+import { committed, projectSchema, type Project } from "@/lib/protocol";
+import { createSceneBinding } from "@/lib/scene-binding";
 import {
   startOpenRouterOAuth,
   consumeOpenRouterOAuthCallback,
@@ -204,6 +205,26 @@ type CloudProject = {
   public_url?: string | null;
   publication_revision?: number | null;
 };
+type CloudBaseline = { revision: number; snapshotToken: string };
+
+function canonicalizeSnapshot(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalizeSnapshot);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, canonicalizeSnapshot(entry)]),
+    );
+  return value;
+}
+
+function sameSnapshot(left: unknown, right: unknown) {
+  return (
+    JSON.stringify(canonicalizeSnapshot(left)) ===
+    JSON.stringify(canonicalizeSnapshot(right))
+  );
+}
+
 export default function Orbsie() {
   const s = useOrb();
   const [prompt, setPrompt] = useState("");
@@ -633,6 +654,160 @@ export default function Orbsie() {
     const inProject = projectScope.current.capture();
     const generation = accountGeneration.current;
     return () => inProject() && generation === accountGeneration.current;
+  };
+  const resolveCloudJournalBaseline = async (
+    project: Project,
+    accountVersion: number,
+    options: {
+      allowMissing?: boolean;
+      requireJournalRun?: boolean;
+      continuation?: NonNullable<
+        ReturnType<typeof useOrb.getState>["interruptedReviewContinuation"]
+      >;
+    } = {},
+  ): Promise<CloudBaseline | null> => {
+    const stillCurrent = () => {
+      const state = useOrb.getState();
+      return (
+        accountGeneration.current === accountVersion &&
+        state.project.id === project.id &&
+        state.project.revision === project.revision &&
+        (!options.continuation ||
+          state.interruptedReviewContinuation === options.continuation)
+      );
+    };
+    const assertCurrentScene = async (expectedDigest?: string) => {
+      if (!stillCurrent())
+        throw Error(
+          "The account or saved scene changed during cloud recovery.",
+        );
+      let binding: Awaited<ReturnType<typeof createSceneBinding>>;
+      try {
+        binding = await createSceneBinding(
+          committed(useOrb.getState().project),
+        );
+      } catch {
+        throw Error(
+          "The saved scene could not be verified for cloud recovery.",
+        );
+      }
+      if (!stillCurrent())
+        throw Error(
+          "The account or saved scene changed during cloud recovery.",
+        );
+      if (expectedDigest && binding.digest !== expectedDigest)
+        throw Error("The saved scene changed during cloud recovery.");
+      return binding;
+    };
+
+    const localBinding = await assertCurrentScene();
+    const current = useOrb.getState();
+    if (
+      options.allowMissing &&
+      !current.saved &&
+      project.revision === 0 &&
+      project.entities.length === 0 &&
+      project.messages.length === 0
+    ) {
+      await assertCurrentScene(localBinding.digest);
+      return null;
+    }
+    let response: Response;
+    try {
+      response = await fetch(
+        `/api/projects?id=${encodeURIComponent(project.id)}`,
+        {
+          credentials: "same-origin",
+          redirect: "error",
+          cache: "no-store",
+        },
+      );
+    } catch {
+      throw Error("Cloud recovery could not verify the saved world.");
+    }
+    if (!stillCurrent())
+      throw Error("The account or saved scene changed during cloud recovery.");
+    if (response.status === 404 && options.allowMissing) {
+      const current = useOrb.getState();
+      if (
+        !current.saved &&
+        project.revision === 0 &&
+        project.entities.length === 0 &&
+        project.messages.length === 0
+      ) {
+        await assertCurrentScene(localBinding.digest);
+        return null;
+      }
+    }
+    if (response.status === 404)
+      throw Error("The saved world has no available cloud checkpoint.");
+    if (!response.ok)
+      throw Error("Cloud recovery could not verify the saved world.");
+    const data = (await response.json().catch(() => null)) as {
+      project?: {
+        id?: unknown;
+        revision?: unknown;
+        snapshotToken?: unknown;
+        snapshot?: unknown;
+      };
+    } | null;
+    if (!stillCurrent())
+      throw Error("The account or saved scene changed during cloud recovery.");
+    const remote = data?.project;
+    const parsedSnapshot = projectSchema.safeParse(remote?.snapshot);
+    if (
+      !remote ||
+      remote.id !== project.id ||
+      !Number.isInteger(remote.revision) ||
+      typeof remote.snapshotToken !== "string" ||
+      !/^[a-f0-9]{64}$/.test(remote.snapshotToken) ||
+      !parsedSnapshot.success ||
+      parsedSnapshot.data.id !== project.id ||
+      parsedSnapshot.data.revision !== remote.revision
+    )
+      throw Error("Cloud recovery returned an invalid saved-world checkpoint.");
+    const baseline = {
+      revision: remote.revision as number,
+      snapshotToken: remote.snapshotToken,
+    };
+    const savedProject = committed(project);
+    if (
+      !options.requireJournalRun &&
+      sameSnapshot(parsedSnapshot.data, savedProject)
+    ) {
+      await assertCurrentScene(localBinding.digest);
+      return baseline;
+    }
+
+    let run: Awaited<ReturnType<typeof latestCloudGenerationRun>>;
+    try {
+      run = await latestCloudGenerationRun(project.id);
+    } catch {
+      throw Error("The cloud recovery checkpoint could not be verified.");
+    }
+    await assertCurrentScene(localBinding.digest);
+    if (
+      run.state !== "complete" ||
+      run.projectId !== project.id ||
+      run.checkpoint.id !== project.id ||
+      !run.cloudBaselineCurrent ||
+      run.baseRevision !== baseline.revision
+    )
+      throw Error(
+        "A newer cloud save exists or the recovery checkpoint is no longer current. Open the latest account world before continuing.",
+      );
+    let checkpointBinding: Awaited<ReturnType<typeof createSceneBinding>>;
+    try {
+      checkpointBinding = await createSceneBinding(run.checkpoint);
+    } catch {
+      throw Error("The cloud recovery checkpoint could not be verified.");
+    }
+    const latestLocalBinding = await assertCurrentScene(localBinding.digest);
+    if (checkpointBinding.digest !== latestLocalBinding.digest)
+      throw Error(
+        "The saved scene no longer matches its cloud recovery checkpoint. Open the latest account world before continuing.",
+      );
+    return baseline;
   };
   const clearAccountState = () => {
     providerSessionController.current?.abort();
@@ -1705,7 +1880,10 @@ export default function Orbsie() {
   const createGenerationJournal = (
     originProjectId: string,
     accountVersion: number,
+    baselineOverride?: CloudBaseline | null,
   ) => {
+    const originBaseline =
+      baselineOverride === undefined ? cloudVersion : baselineOverride;
     let lastJournalRunId: string | undefined;
     let lastJournalAcknowledgement:
       { revision: number; snapshotToken: string } | undefined;
@@ -1730,10 +1908,12 @@ export default function Orbsie() {
                 "Generation account changed before cloud recovery could start.",
               );
             let baseRevision =
-              project.id === originProjectId ? cloudRevision : null;
+              project.id === originProjectId
+                ? (originBaseline?.revision ?? null)
+                : null;
             let baseSnapshotToken =
               project.id === originProjectId
-                ? (cloudVersion?.snapshotToken ?? null)
+                ? (originBaseline?.snapshotToken ?? null)
                 : null;
             if (lastJournalRunId && lastJournalRunId !== runId) {
               const latestResponse = await fetch(
@@ -1899,11 +2079,8 @@ export default function Orbsie() {
         ...selectedConnection,
         authoringReview: reviewOptIn,
       };
-      submittedPrompt.current = instruction;
-      setPrompt("");
       const accountVersion = accountGeneration.current;
       const originProjectId = current.project.id;
-      const journal = createGenerationJournal(originProjectId, accountVersion);
       const requestProject = useOrb.getState().project;
       const selectedCandidate =
         selectedOverride !== undefined
@@ -1917,6 +2094,47 @@ export default function Orbsie() {
         )
           ? selectedCandidate
           : undefined;
+      let baselineOverride: CloudBaseline | null | undefined;
+      if (user && selectedConnection.authoringReview) {
+        try {
+          baselineOverride = await resolveCloudJournalBaseline(
+            requestProject,
+            accountVersion,
+            { allowMissing: true },
+          );
+        } catch (error) {
+          if (originalWorld() && sequence === submission.current.sequence) {
+            setCloudBaseline(null);
+            useOrb.getState().set({
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Cloud recovery could not verify the saved world.",
+            });
+          }
+          return;
+        }
+        if (
+          !originalWorld() ||
+          sequence !== submission.current.sequence ||
+          connectionVersion.current !== selectedConnectionVersion ||
+          rendererAvailabilityRef.current !== "ready" ||
+          (!retrying && textarea.current?.value !== text)
+        )
+          return;
+        setCloudBaseline(
+          baselineOverride
+            ? { projectId: originProjectId, value: baselineOverride }
+            : null,
+        );
+      }
+      submittedPrompt.current = instruction;
+      setPrompt("");
+      const journal = createGenerationJournal(
+        originProjectId,
+        accountVersion,
+        baselineOverride,
+      );
       useOrb.getState().set({ selected: selectedId });
       const retryFeedback =
         retrying && current.generationRecovery?.projectId === originProjectId
@@ -2121,6 +2339,7 @@ export default function Orbsie() {
 
     submission.current.checking = true;
     const sequence = ++submission.current.sequence;
+    let accountVersion: number | undefined;
     try {
       let resumeConnection: Connection;
       if (continuation.provider === "free") {
@@ -2154,12 +2373,42 @@ export default function Orbsie() {
         resumeConnection = { ...connection, renderer: rendererMode };
       }
       current.set({ error: "", notice: "" });
-      const accountVersion = accountGeneration.current;
+      accountVersion = accountGeneration.current;
+      let baselineOverride: CloudBaseline | null | undefined;
+      if (user) {
+        baselineOverride = await resolveCloudJournalBaseline(
+          current.project,
+          accountVersion,
+          { requireJournalRun: true, continuation },
+        );
+        if (!baselineOverride)
+          throw Error("The saved review's cloud checkpoint is unavailable.");
+        setCloudBaseline({
+          projectId: current.project.id,
+          value: baselineOverride,
+        });
+      }
       const journal = createGenerationJournal(
         current.project.id,
         accountVersion,
+        baselineOverride,
       );
       await current.resumeInterruptedReview(resumeConnection, journal);
+    } catch (error) {
+      const latest = useOrb.getState();
+      if (
+        accountVersion !== undefined &&
+        accountGeneration.current === accountVersion &&
+        latest.project.id === current.project.id &&
+        latest.project.revision === current.project.revision &&
+        latest.interruptedReviewContinuation === continuation
+      )
+        latest.set({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Cloud recovery could not verify the saved review.",
+        });
     } finally {
       if (continuation.provider === "free") await refreshTrial();
       if (submission.current.sequence === sequence)

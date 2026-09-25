@@ -929,6 +929,7 @@ async function runRenderer(
 async function runSignedInJournalScenario(
   conflict,
   resumeAfterFailure = false,
+  staleCloudDuringResume = false,
 ) {
   const renderer = "software";
   const browser = await chromium.launch({
@@ -1035,14 +1036,15 @@ async function runSignedInJournalScenario(
         });
         return;
       }
-      assert.equal(id, state.cloudProject?.id);
       if (!state.cloudProject) {
+        cloudEvents.push({ kind: "get-missing", projectId: id });
         await route.fulfill({
           status: 404,
           json: { error: "World not found." },
         });
         return;
       }
+      assert.equal(id, state.cloudProject.id);
       if (conflict && !state.conflictRead) {
         state.conflictRead = true;
         const concurrent = {
@@ -1295,12 +1297,37 @@ async function runSignedInJournalScenario(
       await expect(page.locator(".review-continuation-cost")).toHaveText(
         "Uses one free prompt.",
       );
+      if (staleCloudDuringResume) {
+        assert(state.cloudProject);
+        state.cloudProject = {
+          ...state.cloudProject,
+          revision: state.cloudProject.revision + 1,
+        };
+        state.cloudToken = conflictToken;
+      }
+      await page.reload();
+      await expect(page.locator("canvas")).toBeVisible();
+      await page
+        .getByRole("button", { name: "Continue your saved world" })
+        .click();
+      await expect(resume).toBeVisible();
       await resume.click();
-      await expect(page.locator(".authoring-activity-latest p")).toHaveText(
-        "Scene verified. Changes are applied.",
-        { timeout: 15_000 },
-      );
-      await expect(resume).toHaveCount(0);
+      if (staleCloudDuringResume) {
+        await expect(page.locator(".toast.error")).toContainText(
+          "newer cloud save exists",
+          { timeout: 10_000 },
+        );
+        assert.deepEqual(
+          requests.map((request) => request.kind),
+          ["initial", "review"],
+        );
+      } else {
+        await expect(page.locator(".authoring-activity-latest p")).toHaveText(
+          "Scene verified. Changes are applied.",
+          { timeout: 15_000 },
+        );
+        await expect(resume).toHaveCount(0);
+      }
     }
 
     const puts = cloudEvents.filter((event) => event.kind === "put");
@@ -1309,10 +1336,31 @@ async function runSignedInJournalScenario(
     );
     const starts = generationEvents.filter((event) => event.kind === "start");
     const appends = generationEvents.filter((event) => event.kind === "append");
-    assert.equal(puts.length, conflict ? 1 : resumeAfterFailure ? 2 : 3);
-    assert.equal(latestReads.length, conflict ? 1 : resumeAfterFailure ? 0 : 2);
-    assert.equal(starts.length, conflict ? 1 : resumeAfterFailure ? 2 : 3);
-    assert.equal(appends.length, conflict ? 3 : resumeAfterFailure ? 5 : 8);
+    assert.equal(
+      puts.length,
+      conflict || (resumeAfterFailure && staleCloudDuringResume)
+        ? 1
+        : resumeAfterFailure
+          ? 2
+          : 3,
+    );
+    assert.equal(latestReads.length, conflict ? 1 : resumeAfterFailure ? 1 : 2);
+    assert.equal(
+      starts.length,
+      conflict || (resumeAfterFailure && staleCloudDuringResume)
+        ? 1
+        : resumeAfterFailure
+          ? 2
+          : 3,
+    );
+    assert.equal(
+      appends.length,
+      conflict || (resumeAfterFailure && staleCloudDuringResume)
+        ? 3
+        : resumeAfterFailure
+          ? 5
+          : 8,
+    );
     assert.equal(puts[0].baseRevision, null);
     if (conflict) {
       assert.equal(puts[0].baseSnapshotToken, null);
@@ -1322,6 +1370,21 @@ async function runSignedInJournalScenario(
         appends.some((event) => event.runId === starts[1]?.runId),
         false,
       );
+    } else if (resumeAfterFailure && staleCloudDuringResume) {
+      assert.deepEqual(
+        requests.map((request) => request.kind),
+        ["initial", "review"],
+      );
+      assert.equal(puts[0].baseSnapshotToken, null);
+      assert.equal(latestReads[0].revision, puts[0].revision + 1);
+      assert.deepEqual(
+        generationEvents
+          .filter((event) => event.kind === "read")
+          .map((event) => event.by),
+        ["project"],
+      );
+      assert.equal(starts.length, 1);
+      assert.equal(appends.length, 3);
     } else if (resumeAfterFailure) {
       assert.deepEqual(
         requests.map((request) => request.kind),
@@ -1365,6 +1428,12 @@ async function runSignedInJournalScenario(
           .filter((event) => event.runId === starts[1].runId)
           .map((event) => event.command),
         ["set_environment", "commit_revision"],
+      );
+      assert.deepEqual(
+        generationEvents
+          .filter((event) => event.kind === "read")
+          .map((event) => event.by),
+        ["project"],
       );
       const cloudCorrectionBase = state.cloudProject;
       assert(cloudCorrectionBase);
@@ -1492,19 +1561,21 @@ async function runSignedInJournalScenario(
     assert.deepEqual(
       pageErrors,
       Array.from(
-        { length: conflict || resumeAfterFailure ? 1 : 2 },
+        { length: conflict ? 1 : resumeAfterFailure ? 2 : 2 },
         () => "THREE.WebGLRenderer: Error creating WebGL context.",
       ),
     );
-    const expectedConsoleErrors = Array.from(
-      { length: conflict || resumeAfterFailure ? 1 : 2 },
-      () =>
-        "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.",
-    );
-    if (resumeAfterFailure)
-      expectedConsoleErrors.push(
-        "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
-      );
+    const rendererConsoleError =
+      "THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.";
+    const expectedConsoleErrors = conflict
+      ? [rendererConsoleError]
+      : resumeAfterFailure
+        ? [
+            rendererConsoleError,
+            "Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+            rendererConsoleError,
+          ]
+        : [rendererConsoleError, rendererConsoleError];
     assert.deepEqual(consoleErrors, expectedConsoleErrors);
     assert(
       requestFailures.every(
@@ -1514,6 +1585,7 @@ async function runSignedInJournalScenario(
     return {
       conflict,
       resumeAfterFailure,
+      staleCloudDuringResume,
       requests: requests.map((request) => request.kind),
       reviewedRevisions: requests
         .slice(1)
@@ -1596,8 +1668,15 @@ try {
       "resume-start-retry",
     );
   } else if (failureOnly === "signed-in-resume") {
+    report.signedInJournal.success = await runSignedInJournalScenario(false);
+    report.signedInJournal.conflict = await runSignedInJournalScenario(true);
     report.signedInJournal.resumedReview = await runSignedInJournalScenario(
       false,
+      true,
+    );
+    report.signedInJournal.staleResume = await runSignedInJournalScenario(
+      false,
+      true,
       true,
     );
   } else {
@@ -1631,6 +1710,11 @@ try {
     report.signedInJournal.conflict = await runSignedInJournalScenario(true);
     report.signedInJournal.resumedReview = await runSignedInJournalScenario(
       false,
+      true,
+    );
+    report.signedInJournal.staleResume = await runSignedInJournalScenario(
+      false,
+      true,
       true,
     );
   }
