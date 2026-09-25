@@ -2478,3 +2478,65 @@ kbd {
     transition: none;
   }
 }
+
+@media (max-width: 650px) and (orientation: portrait) {
+  .is-workspace:not(.is-public) .graphics-error.is-advisory {
+    top: 136px;
+    left: 12px;
+    width: min(240px, calc(100% - 150px));
+    transform: none;
+    padding: 8px 10px;
+  }
+  .is-workspace:not(.is-public) .graphics-guidance.is-advisory {
+    gap: 6px;
+  }
+  .is-workspace:not(.is-public) .toast {
+    top: 190px;
+    right: auto;
+    bottom: auto;
+    left: 12px;
+    width: min(240px, calc(100% - 150px));
+    max-height: calc(100dvh - max(43dvh, 270px) - 270px);
+    overflow: auto;
+    transform: none;
+    font-size: 10px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .is-workspace:not(.is-public) .world-navigation-controls {
+    top: 96px;
+    right: auto;
+    bottom: auto;
+    left: 10px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    transform: none;
+  }
+  .is-workspace:not(.is-public) .world-navigation-controls > button {
+    width: 76px;
+    min-height: 44px;
+  }
+  .is-workspace:not(.is-public) .graphics-error.is-advisory {
+    top: 96px;
+    right: auto;
+    left: 104px;
+    width: min(360px, calc(50% - 65px));
+    max-height: calc(100dvh - 292px);
+    overflow: auto;
+    transform: none;
+    padding: 8px 10px;
+  }
+  .is-workspace:not(.is-public) .toast {
+    top: 96px;
+    right: 12px;
+    bottom: auto;
+    left: auto;
+    width: min(360px, calc(50% - 65px));
+    max-height: calc(100dvh - 292px);
+    overflow: auto;
+    transform: none;
+    font-size: 10px;
+  }
+}
