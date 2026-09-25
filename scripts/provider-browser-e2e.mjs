@@ -986,6 +986,254 @@ function sanitizedError(error, config) {
   );
 }
 
+const FRESH_GAMEPLAY_FAILURE_PHASES = new Set(["creation", "goal7", "undo"]);
+const SAFE_GAMEPLAY_KEYS = new Set(["a", "d", "s", "w", " "]);
+const SAFE_GAMEPLAY_REASONS = new Set([
+  "movement-check",
+  "movement-release",
+  "collect-settle",
+  "collect-steer",
+  "collect-jump",
+  "collect-jump-release",
+  "collect-unreachable",
+  "portal-settle",
+  "portal-steer",
+  "portal-jump",
+  "portal-jump-release",
+  "portal-unreachable",
+  "platform-contact-release",
+  "platform-recovery-release",
+  "platform-jump-start",
+  "platform-jump-no-response-release",
+  "platform-jump-release",
+  "platform-jumping",
+  "platform-airborne",
+  "platform-steering",
+  "platform-attempt-timeout",
+]);
+
+function safeGameplayNumber(value, integer = false) {
+  return Number.isFinite(value) &&
+    Math.abs(value) <= 10_000_000 &&
+    (!integer || Number.isSafeInteger(value))
+    ? value
+    : null;
+}
+
+function safeGameplayCount(value, maximum = 6000) {
+  const count = safeGameplayNumber(value, true);
+  return count !== null && count >= 0 ? Math.min(count, maximum) : null;
+}
+
+function safeGameplayId(value, allowedIds) {
+  return typeof value === "string" &&
+    value.length <= 128 &&
+    /^[A-Za-z0-9_.:-]+$/.test(value) &&
+    (!allowedIds || allowedIds.has(value))
+    ? value
+    : null;
+}
+
+function safeGameplayVector(value) {
+  if (!Array.isArray(value) || value.length !== 3) return null;
+  const result = value.map((component) => safeGameplayNumber(component));
+  return result.every((component) => component !== null) ? result : null;
+}
+
+function safeGameplayIdList(values, allowedIds) {
+  if (!Array.isArray(values)) return [];
+  return [
+    ...new Set(
+      values
+        .slice(0, 64)
+        .map((value) => safeGameplayId(value, allowedIds))
+        .filter(Boolean),
+    ),
+  ].slice(0, 32);
+}
+
+function safeGameplayObservation(observation, projectId, revision, allowedIds) {
+  if (
+    !observation ||
+    observation.projectId !== projectId ||
+    observation.revision !== revision
+  )
+    return null;
+  const entities = Array.isArray(observation.entities)
+    ? observation.entities.slice(0, 32).flatMap((entity) => {
+        const id = safeGameplayId(entity?.id, allowedIds);
+        const position = safeGameplayVector(entity?.position);
+        const scale = safeGameplayVector(entity?.scale);
+        return id && position && scale ? [{ id, position, scale }] : [];
+      })
+    : [];
+  const groundedOn =
+    observation.player?.groundedOn === "ground"
+      ? "ground"
+      : safeGameplayId(observation.player?.groundedOn, allowedIds);
+  return {
+    projectId,
+    revision,
+    atMs: safeGameplayNumber(observation.atMs),
+    renderer: ["webgl", "software"].includes(observation.renderer)
+      ? observation.renderer
+      : null,
+    player: {
+      position: safeGameplayVector(observation.player?.position),
+      velocityY: safeGameplayNumber(observation.player?.velocityY),
+      groundedOn,
+    },
+    entities,
+    contacts: safeGameplayIdList(observation.contacts, allowedIds),
+    collected: safeGameplayIdList(observation.collected, allowedIds),
+    scoreIds: safeGameplayIdList(observation.scoreIds, allowedIds),
+    gameScore: safeGameplayNumber(observation.gameScore),
+    status: ["playing", "won", "lost"].includes(observation.status)
+      ? observation.status
+      : null,
+    won: typeof observation.won === "boolean" ? observation.won : null,
+    lost: typeof observation.lost === "boolean" ? observation.lost : null,
+    reset: safeGameplayCount(observation.reset),
+    sessionGeneration: safeGameplayCount(observation.sessionGeneration),
+  };
+}
+
+/** Record failed traversal with bounded gameplay fields bound to its revision. */
+export function recordFreshFlagshipGameplayFailure(
+  report,
+  phase,
+  project,
+  error,
+) {
+  assert(
+    FRESH_GAMEPLAY_FAILURE_PHASES.has(phase),
+    `Unsupported fresh flagship gameplay phase: ${phase}`,
+  );
+  const projectId = safeGameplayId(project?.id);
+  const revision =
+    Number.isSafeInteger(project?.revision) && project.revision >= 0
+      ? project.revision
+      : null;
+  const allowedIds = new Set(
+    (Array.isArray(project?.entities) ? project.entities.slice(0, 1000) : [])
+      .map((entity) => safeGameplayId(entity?.id))
+      .filter(Boolean),
+  );
+  const raw = error?.freshGameplayEvidence;
+  const portalWin = raw?.portalWin;
+  const movement = raw?.movement;
+  const inputTrace = Array.isArray(raw?.inputTrace)
+    ? raw.inputTrace.slice(-20).flatMap((entry) => {
+        if (!entry || !SAFE_GAMEPLAY_REASONS.has(entry.reason)) return [];
+        return [
+          {
+            atMs: safeGameplayNumber(entry.atMs),
+            keys: Array.isArray(entry.keys)
+              ? entry.keys
+                  .slice(0, 5)
+                  .filter((key) => SAFE_GAMEPLAY_KEYS.has(key))
+              : [],
+            reason: entry.reason,
+          },
+        ];
+      })
+    : [];
+  const platformEvidence = Array.isArray(raw?.platformEvidence)
+    ? raw.platformEvidence.slice(0, 32).flatMap((platform) => {
+        const id = safeGameplayId(platform?.id, allowedIds);
+        return id
+          ? [
+              {
+                id,
+                behavior: ["move", "bounce"].includes(platform.behavior)
+                  ? platform.behavior
+                  : null,
+                groundedFrames: safeGameplayCount(platform.groundedFrames),
+                bounceFrames: safeGameplayCount(platform.bounceFrames),
+                startPosition: safeGameplayVector(platform.startPosition),
+                maximumDisplacement: safeGameplayNumber(
+                  platform.maximumDisplacement,
+                ),
+              },
+            ]
+          : [];
+      })
+    : [];
+  const gameplay = {
+    status: "failed",
+    projectId,
+    revision,
+    failureEvidence: {
+      source: "fresh-gameplay-traversal",
+      phase,
+      projectId,
+      revision,
+      observationCount: safeGameplayCount(raw?.observationCount),
+      lastObservation: safeGameplayObservation(
+        raw?.lastObservation,
+        projectId,
+        revision,
+        allowedIds,
+      ),
+      inputTrace,
+      movement: movement
+        ? {
+            distance: safeGameplayNumber(movement.distance),
+            before: safeGameplayObservation(
+              movement.before,
+              projectId,
+              revision,
+              allowedIds,
+            ),
+            after: safeGameplayObservation(
+              movement.after,
+              projectId,
+              revision,
+              allowedIds,
+            ),
+          }
+        : null,
+      contacts: safeGameplayIdList(raw?.contacts, allowedIds),
+      collections: safeGameplayIdList(raw?.collections, allowedIds),
+      scoreIds: safeGameplayIdList(raw?.scoreIds, allowedIds),
+      score: safeGameplayNumber(raw?.score),
+      portalWin:
+        portalWin?.projectId === projectId && portalWin?.revision === revision
+          ? {
+              projectId,
+              revision,
+              status: ["playing", "won", "lost"].includes(portalWin.status)
+                ? portalWin.status
+                : null,
+              won: typeof portalWin.won === "boolean" ? portalWin.won : null,
+              portalId: safeGameplayId(portalWin.portalId, allowedIds),
+            }
+          : null,
+      restart: {
+        attempted: raw?.restart?.attempted === true,
+        resetCounter: safeGameplayCount(raw?.restart?.resetCounter),
+      },
+      platformEvidence,
+    },
+  };
+  const story = report.flagshipStory ?? {};
+  const phases = story.phases ?? {};
+  report.flagshipStory = {
+    ...story,
+    status: "failed",
+    phases: {
+      ...phases,
+      [phase]: {
+        ...(phases[phase] ?? {}),
+        status: "failed",
+        revision,
+        gameplay,
+      },
+    },
+  };
+  return gameplay;
+}
+
 export function trialRemainingFromHeaders(headers) {
   const value =
     typeof headers?.get === "function"
@@ -5588,6 +5836,19 @@ async function runFlagshipStory(
   const assistantMessageBaseline =
     options.assistantMessageBaseline ??
     created.messages.filter((message) => message.role === "assistant").length;
+  const runGameplayPhase = async (phase, project, story, gameplayOptions) => {
+    try {
+      return await runFreshFlagshipGameplay(
+        page,
+        project,
+        story,
+        gameplayOptions,
+      );
+    } catch (error) {
+      recordFreshFlagshipGameplayFailure(report, phase, project, error);
+      throw error;
+    }
+  };
   if (options.seeded) {
     report.flagshipStory = {
       ...(report.flagshipStory ?? {}),
@@ -5635,8 +5896,8 @@ async function runFlagshipStory(
       reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
     };
   } else {
-    const creationGameplay = await runFreshFlagshipGameplay(
-      page,
+    const creationGameplay = await runGameplayPhase(
+      "creation",
       created,
       initialStory,
       {
@@ -5756,8 +6017,8 @@ async function runFlagshipStory(
     reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
   };
   if (!options.seeded) {
-    goal7Gameplay = await runFreshFlagshipGameplay(
-      page,
+    goal7Gameplay = await runGameplayPhase(
+      "goal7",
       goal7,
       freshGameplayStoryForProject(goal7, 7, "Story goal-7 edit"),
       {
@@ -5830,8 +6091,8 @@ async function runFlagshipStory(
     reason: "saved-checkpoint-resume-is-not-fresh-world-evidence",
   };
   if (!options.seeded) {
-    undoGameplay = await runFreshFlagshipGameplay(
-      page,
+    undoGameplay = await runGameplayPhase(
+      "undo",
       undone,
       freshGameplayStoryForProject(undone, 5, "Story undo"),
       {

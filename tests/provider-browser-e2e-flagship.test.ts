@@ -21,6 +21,7 @@ import {
   persistFlagshipStoryPhase,
   readConfiguration,
   readFlagshipResumeCheckpoint,
+  recordFreshFlagshipGameplayFailure,
   flagshipResumeExecutionMode,
   runProjectFollowOnPhases,
   verifyFreshPublicationArtifacts,
@@ -443,6 +444,140 @@ function publicationFixture({
 }
 
 describe("flagship provider story contract", () => {
+  it("records thrown traversal evidence as a bounded phase failure", () => {
+    const project = {
+      id: "story-project-1",
+      revision: 42,
+      entities: Array.from({ length: 40 }, (_, index) => ({
+        id: `entity-${index}`,
+      })),
+    };
+    const observation = {
+      projectId: project.id,
+      revision: project.revision,
+      atMs: 1250,
+      renderer: "software",
+      player: { position: [1, 2, 3], velocityY: 0.5, groundedOn: "entity-1" },
+      entities: project.entities.map((entity, index) => ({
+        ...entity,
+        position: [index, 0, index + 1],
+        scale: [1, 1, 1],
+        label: "private provider response",
+      })),
+      contacts: ["entity-1"],
+      collected: [],
+      scoreIds: [],
+      gameScore: 0,
+      status: "playing",
+      won: false,
+      lost: false,
+      reset: 0,
+      sessionGeneration: 1,
+    };
+    const initialReport: any = {
+      error: "Fresh gameplay did not contact platform bounce-three.",
+      flagshipStory: {
+        status: "running",
+        phases: { creation: { revision: 42 } },
+      },
+    };
+    const thrown = new Error(initialReport.error) as Error & {
+      freshGameplayEvidence: Record<string, any>;
+    };
+    thrown.freshGameplayEvidence = {
+      observationCount: 6100,
+      lastObservation: observation,
+      inputTrace: Array.from({ length: 30 }, (_, index) => ({
+        atMs: index * 10,
+        keys: ["d", "secret-provider-token"],
+        reason: index === 0 ? "provider raw response" : "platform-jump-start",
+      })),
+      movement: { distance: 0.5, before: observation, after: observation },
+      contacts: ["entity-1", "provider raw response"],
+      collections: [],
+      scoreIds: [],
+      score: 0,
+      portalWin: null,
+      restart: { attempted: false, control: "provider raw response" },
+      platformEvidence: Array.from({ length: 40 }, (_, index) => ({
+        id: `entity-${index}`,
+        behavior: "bounce",
+        groundedFrames: 1,
+        bounceFrames: 0,
+        startPosition: [index, 0, 0],
+        maximumDisplacement: 0.2,
+        jumpEvidence: [{ rawProviderText: "must be omitted" }],
+      })),
+      rawProviderText: "must not be copied",
+      apiKey: "must not be copied",
+    };
+
+    for (const [phase, revision] of [
+      ["creation", 42],
+      ["goal7", 43],
+      ["undo", 44],
+    ] as const) {
+      const report: any = structuredClone(initialReport);
+      const phaseObservation = { ...observation, revision };
+      const phaseError = new Error(thrown.message) as Error & {
+        freshGameplayEvidence: Record<string, any>;
+      };
+      phaseError.freshGameplayEvidence = {
+        ...thrown.freshGameplayEvidence,
+        lastObservation: phaseObservation,
+        movement: {
+          distance: 0.5,
+          before: phaseObservation,
+          after: phaseObservation,
+        },
+      };
+      recordFreshFlagshipGameplayFailure(
+        report,
+        phase,
+        { ...project, revision },
+        phaseError,
+      );
+
+      expect(report.error).toBe(initialReport.error);
+      expect(report.flagshipStory.status).toBe("failed");
+      expect(report.flagshipStory.phases[phase]).toMatchObject({
+        status: "failed",
+        revision,
+        gameplay: {
+          status: "failed",
+          projectId: project.id,
+          revision,
+          failureEvidence: {
+            phase,
+            projectId: project.id,
+            revision,
+            observationCount: 6000,
+            lastObservation: { revision, entities: expect.any(Array) },
+          },
+        },
+      });
+      const evidence =
+        report.flagshipStory.phases[phase].gameplay.failureEvidence;
+      expect(evidence.lastObservation.entities).toHaveLength(32);
+      expect(evidence.inputTrace).toHaveLength(20);
+      expect(evidence.platformEvidence).toHaveLength(32);
+      expect(
+        evidence.inputTrace.every(
+          (entry: any) =>
+            entry.reason === "platform-jump-start" &&
+            entry.keys.every((key: string) =>
+              ["a", "d", "s", "w", " "].includes(key),
+            ),
+        ),
+      ).toBe(true);
+      expect(JSON.stringify(report)).not.toContain(
+        "private provider response",
+      );
+      expect(JSON.stringify(report)).not.toContain("secret-provider-token");
+      expect(JSON.stringify(report)).not.toContain("must not be copied");
+    }
+  });
+
   it("keeps an unreachable current-runtime ZIP route incomplete", async () => {
     const sourceArchiveRelative =
       "docs/evidence/provider-e2e/gateway-flagship-offline-continuation/gateway/world.zip";
