@@ -1,5 +1,11 @@
 # Development checkpoint
 
+Sep 25 Gateway credit preflight: a read-only GET to the test key's official
+credits endpoint returned HTTP 200 and balance `-0.00456495`; no model calls
+were made. Paid Gateway acceptance remains on hold until the balance is
+positive. Sanitized evidence:
+`docs/evidence/gateway-credit-check-20260925/report.json`.
+
 Sep 24 review-resume release: source through `19c825d` deployed Ready as
 `dpl_45mnfJ6qPud2mnPkbTBAosUEyfN7`, aliased to `https://orbsie.com/`
 (immutable `https://orbsie-bspsrutaq-grappeggias-projects.vercel.app`).
