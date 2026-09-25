@@ -70,8 +70,14 @@ older rows below are a historical inventory, not a completion claim.
   generation. The hosted admitted-failure marker is now present (`1f0936c`,
   six route tests). An exact, untouched review-start child can now be returned
   after a lost start response without a second free claim (`7343d1f`, 31
-  admission and 13 PostgreSQL ledger tests). The editor action remains
-  required before this is user-facing. No provider call has exercised the path.
+  admission and 13 PostgreSQL ledger tests). The editor now exposes explicit
+  **Resume review** with provider-specific cost and retains the draft fallback
+  (`e38f09f`, `5fc62eb`). The full deterministic browser fixture passed
+  local free resume, lost-start retry, signed-in cloud-journaled correction,
+  mobile bounds and Play/scene preservation at
+  `docs/evidence/authoring-review/review-resume-integration-20260924/`.
+  Production review is still disabled and no provider call has exercised the
+  new path.
 - A fresh hosted ChatGPT device challenge shown to the owner expired without
   a grant; its private session was cancelled and removed. The production UI
   now opens the official sign-in tab on direct connection clicks, verified in

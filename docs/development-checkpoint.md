@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 24 explicit interrupted-review UI integration: sources `e38f09f` and
+`5fc62eb` add **Resume review** beside the existing **Continue improving**
+draft action. The former uses the saved failed run, original provider/model
+binding, and the store's review-only path; it never resends `/api/generate` or
+duplicates the user prompt. Free fallback resumes with its original free
+connection even when an unconfigured provider remains in the selector, and
+its balance is refreshed after an attempt. The control shows the relevant
+provider cost and signed-in corrections reuse the existing cloud journal.
+Astra reviewed both diffs. The full deterministic browser review-loop matrix
+passed against the optimized production build, including WebGL and Canvas2D
+success cases, partial/final review, two corrections, failed-review drafting,
+explicit resume, lost-start-response retry, cloud conflict, and a signed-in
+resumed correction segment. The resume fixture kept one create request, one
+user prompt, stable entity IDs, saved revision and Play; the signed-in segment
+recorded a cloud snapshot and ordered correction run. Desktop and 390x844
+screenshots passed visual review, with no unexpected external requests.
+Evidence: `docs/evidence/authoring-review/review-resume-integration-20260924/`.
+TypeScript, Prettier, diff checks and optimized build pass; regenerated player
+artifacts are in `8e4381f`. This is deterministic browser evidence, not a
+live provider acceptance or production-enabled review release. A lost model
+review response still has an unknown outcome and no automatic replay.
+
 Sep 24 second owner-visible ChatGPT device challenge: after the owner said the
 code and URL could be shown here, a new official device code and URL were
 posted in chat. Read-only Orbsie status remained pending/disconnected until
@@ -32,8 +54,8 @@ correction journal. Astra reviewed the diff and corrected a post-admission
 capability-change cost leak in `45e3dff`: the resumed review now uses the
 catalog's actual image support, falling back to structural scope when needed.
 The focused store/connection suites pass (35 tests before the follow-up;
-30 store tests after), TypeScript and Prettier pass. The editor has no action
-to call this method yet. Lost start/review responses still have unknown
+30 store tests after), TypeScript and Prettier pass. The editor action was
+subsequently added above. Lost start/review responses initially had unknown
 admission outcome; no hidden retry occurs. A repeated explicit start is now
 idempotent under the conditions above. Source `1f0936c` adds the same
 allowlisted admitted-failure marker to hosted ChatGPT review responses as the
