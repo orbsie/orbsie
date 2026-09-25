@@ -12,9 +12,16 @@ ideal apex of 1.62 m, landing center 1.64 m, and signed clearance -0.02 m.
 This is only a vertical advisory: it neither rejects nor mutates a scene, and
 review instructions require checking alternate supports and routes. The same
 bounded observation is included in API and hosted review inputs, and generation
-guidance asks for a 0.2 m direct-jump margin. Five focused suites pass (90
-tests) and typecheck passes. No provider/model call ran; gameplay simulation
-semantics are unchanged, so checked-in player bundles were not rebuilt.
+guidance asks for a 0.2 m direct-jump margin. For the default ground-center
+Y=0.42 and scaleY=1, the safe landing-center limit is 1.42 m and the platform
+anchor limit is y<=0.48 m. The player source snapshot and runtime bundle were
+regenerated with `scripts/build-player.mjs`; a second run produced identical
+hashes with esbuild 0.28.2 (`runtime.js` 53d7cc3d…, `source.json`
+863e3ae4…). The previous source snapshot contained a different
+`src/lib/gameplay.ts`; the broad runtime diff is reproducible minifier
+identifier renumbering after that source change, not toolchain drift.
+Simulation thresholds remain unchanged. Five focused suites pass (90 tests)
+and typecheck passes. No provider/model call ran.
 
 Sep 25 OpenRouter GPT-6 Luna flagship live attempt on clean source
 `13921945204565298c9385ed748776a15c8f8144`: origin, exact-model, and 4,096

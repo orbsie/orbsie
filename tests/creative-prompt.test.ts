@@ -117,6 +117,8 @@ describe("creative and playable authoring prompt", () => {
       expect(prompt).toContain(
         "at least 0.2 meters below the ideal ground-jump apex",
       );
+      expect(prompt).toContain("landing-center limit at 1.42 meters");
+      expect(prompt).toContain("entity.position.y must be at most 0.48 meters");
       expect(prompt).toContain("Aim for at most 16 custom parts per object");
       expect(prompt).toContain(
         "custom-parts geometry schema hard limit is 32 parts per object",
