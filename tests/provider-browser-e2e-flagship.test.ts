@@ -520,8 +520,10 @@ describe("flagship provider story contract", () => {
       crossingTarget,
     );
     expect(crossing).not.toBeNull();
-    crossing.rawProviderText = "private crossing provider output";
-    crossing.previous.observation.rawProviderText = "private previous text";
+    if (!crossing) throw new Error("Expected crossing evidence in fixture.");
+    const unsafeCrossing = structuredClone(crossing) as Record<string, any>;
+    unsafeCrossing.rawProviderText = "private crossing provider output";
+    unsafeCrossing.previous.observation.rawProviderText = "private previous text";
     const thrown = new Error(initialReport.error) as Error & {
       freshGameplayEvidence: Record<string, any>;
     };
@@ -572,7 +574,7 @@ describe("flagship provider story contract", () => {
           landing: compactAttemptObservation(`entity-${index}`, 40),
           contact: compactAttemptObservation(`entity-${index}`, 50),
           recovery: compactAttemptObservation(`entity-${index}`, 60),
-          surfaceCrossing: attempt === 2 ? crossing : null,
+          surfaceCrossing: attempt === 2 ? unsafeCrossing : null,
           rawProviderText: "must be omitted",
         })),
       })),
