@@ -1,0 +1,216 @@
+{
+  "status": "passed",
+  "scope": "A bounded production Chromium WebGL SwiftShader diagnostic creates the deterministic 12 km grouped marker with stationary platform geometry to avoid crystal animation, then checks zoom buttons, pan, wheel zoom, north reset, overlay isolation, and saved selection/position. Canvas2D and mobile lanes are not rerun.",
+  "runMode": "webgl-only",
+  "sourceCommit": "52a4d959e0a18d76ecfcf716ca4d25a676d906cc",
+  "appUrl": "https://orbsie.com",
+  "providerCalls": 0,
+  "fixture": {
+    "ids": {
+      "group": "navigation-fixture-group-12km",
+      "entity": "navigation-fixture-marker-12km"
+    },
+    "groupPosition": [
+      12000,
+      0,
+      0
+    ],
+    "entityPosition": [
+      0,
+      1,
+      0
+    ],
+    "geometry": {
+      "kind": "platform",
+      "detail": "refined"
+    }
+  },
+  "renderers": {
+    "desktop-webgl-swiftshader": {
+      "renderer": "desktop-webgl-swiftshader",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "generationRequests": 1,
+      "checks": {
+        "fixtureReadyAndSelected": true,
+        "visibleZoomButtons": {
+          "original": "Zoom in, currently 600%",
+          "out": "Zoom in, currently 480%",
+          "returned": "Zoom in, currently 600%"
+        },
+        "mouseBackgroundPan": {
+          "distancePixels": 70,
+          "before": {
+            "pixels": 42328,
+            "minimumPixels": 100,
+            "sampleRegion": "full canvas",
+            "pixelSignature": "G>200, B>200, B-R>10, G-R>15, R<230",
+            "centroid": {
+              "x": 639.9238092988093,
+              "y": 529.4686732186732
+            },
+            "bounds": {
+              "minX": 476,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 599
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            },
+            "component": "all matches"
+          },
+          "after": {
+            "pixels": 44481,
+            "minimumPixels": 100,
+            "sampleRegion": "full canvas",
+            "pixelSignature": "G>200, B>200, B-R>10, G-R>15, R<230",
+            "centroid": {
+              "x": 706.1296508621658,
+              "y": 552.0577100334974
+            },
+            "bounds": {
+              "minX": 542,
+              "minY": 36,
+              "maxX": 1235,
+              "maxY": 623
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            },
+            "component": "all matches"
+          }
+        },
+        "mouseWheelZoom": {
+          "from": "Zoom in, currently 600%",
+          "to": "Zoom in, currently 453%"
+        },
+        "postWheelMarkerVisible": {
+          "pixels": 23948,
+          "minimumPixels": 25,
+          "sampleRegion": "center 30% x 60% of canvas",
+          "pixelSignature": "G>200, B>200, B-R>10, G-R>15, R<230",
+          "centroid": {
+            "x": 688.1782612326708,
+            "y": 524.3595289794555
+          },
+          "bounds": {
+            "minX": 569,
+            "minY": 380,
+            "maxX": 812,
+            "maxY": 577
+          },
+          "imageSize": {
+            "width": 1280,
+            "height": 900
+          },
+          "component": "largest 8-connected color component"
+        },
+        "compassNorthReset": {
+          "fromHeading": 28,
+          "toHeading": 0,
+          "preservedZoom": "Zoom in, currently 453%",
+          "markerVisible": {
+            "pixels": 23948,
+            "minimumPixels": 25,
+            "sampleRegion": "center 30% x 60% of canvas",
+            "pixelSignature": "G>200, B>200, B-R>10, G-R>15, R<230",
+            "centroid": {
+              "x": 688.1782612326708,
+              "y": 524.3595289794555
+            },
+            "bounds": {
+              "minX": 569,
+              "minY": 380,
+              "maxX": 812,
+              "maxY": 577
+            },
+            "imageSize": {
+              "width": 1280,
+              "height": 900
+            },
+            "component": "largest 8-connected color component"
+          },
+          "targetPreservationEvidence": "Supported by the pure-state north_reset test in tests/world-navigation.test.ts; browser target is not directly measured."
+        },
+        "chatOverlayNavigationUnchanged": true,
+        "chatOverlayDoesNotNavigate": {
+          "distancePixels": 0,
+          "tolerancePixels": 6
+        },
+        "controlOverlayDoesNotNavigate": {
+          "distancePixels": 0,
+          "tolerancePixels": 6
+        },
+        "selectedIdAndSavedPositionStable": true,
+        "noPageOrConsoleErrors": true
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "expectedFallbackDiagnostics": [],
+      "blockedExternalOrigins": [],
+      "unexpectedApiPaths": [],
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "screenshotInitial": "desktop-webgl-swiftshader-initial.png",
+      "selectionBefore": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [
+          12000,
+          0,
+          0
+        ],
+        "entityPosition": [
+          0,
+          1,
+          0
+        ]
+      },
+      "screenshots": {
+        "afterWheel": "desktop-webgl-swiftshader-after-wheel.png",
+        "northReset": "desktop-webgl-swiftshader-north-reset.png"
+      },
+      "selectionAfter": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [
+          12000,
+          0,
+          0
+        ],
+        "entityPosition": [
+          0,
+          1,
+          0
+        ]
+      }
+    }
+  },
+  "blockedExternalOrigins": [],
+  "unexpectedApiPaths": [],
+  "assumptions": [
+    "The browser intercepts /api/generate and returns a deterministic fixture; no provider inference runs.",
+    "WebGL is Chromium SwiftShader. The fallback lane forces WebGL context creation to fail and uses the editor's Canvas2D path.",
+    "The stationary-platform color mask was calibrated offline against the prior static diagnostic screenshot, separately from this production run."
+  ],
+  "markerMaskCalibration": {
+    "screenshot": "run-20260924-webgl-static-diagnostic/desktop-webgl-swiftshader-initial.png",
+    "signature": "G>200, B>200, B-R>10, G-R>15, R<230",
+    "matchingPixels": 42328,
+    "centroid": {
+      "x": 639.9238,
+      "y": 529.4687
+    }
+  },
+  "limitations": [
+    "WebGL is Chromium SwiftShader software rendering; this is not native GPU evidence.",
+    "The marker pixel threshold is reduced to 25 only for the post-wheel state; initial and pre-wheel checks retain the 100-pixel requirement.",
+    "The browser checks reset heading, retained zoom, marker visibility, and overlay isolation; saved/world target preservation is supported by the pure-state test in tests/world-navigation.test.ts and is not directly measured by this browser run.",
+    "Canvas2D and mobile lanes are preserved from the previous evidence and are not rerun in this targeted follow-up.",
+    "Browser input events and screenshots establish behavior only for this production Chromium run."
+  ]
+}

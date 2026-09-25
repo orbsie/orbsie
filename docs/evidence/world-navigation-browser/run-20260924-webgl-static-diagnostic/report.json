@@ -1,0 +1,96 @@
+{
+  "status": "partial/failed",
+  "scope": "A bounded production Chromium WebGL SwiftShader diagnostic creates the deterministic 12 km grouped marker with stationary platform geometry to avoid crystal animation, then checks zoom buttons, pan, wheel zoom, north reset, overlay isolation, and saved selection/position. Canvas2D and mobile lanes are not rerun.",
+  "runMode": "webgl-only",
+  "sourceCommit": "52a4d959e0a18d76ecfcf716ca4d25a676d906cc",
+  "appUrl": "https://orbsie.com",
+  "providerCalls": 0,
+  "fixture": {
+    "ids": {
+      "group": "navigation-fixture-group-12km",
+      "entity": "navigation-fixture-marker-12km"
+    },
+    "groupPosition": [
+      12000,
+      0,
+      0
+    ],
+    "entityPosition": [
+      0,
+      1,
+      0
+    ],
+    "geometry": {
+      "kind": "platform",
+      "detail": "refined"
+    }
+  },
+  "renderers": {
+    "desktop-webgl-swiftshader": {
+      "renderer": "desktop-webgl-swiftshader",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "generationRequests": 1,
+      "checks": {
+        "fixtureReadyAndSelected": true,
+        "visibleZoomButtons": {
+          "original": "Zoom in, currently 600%",
+          "out": "Zoom in, currently 480%",
+          "returned": "Zoom in, currently 600%"
+        }
+      },
+      "pageErrors": [],
+      "consoleErrors": [],
+      "expectedFallbackDiagnostics": [],
+      "blockedExternalOrigins": [],
+      "unexpectedApiPaths": [],
+      "actualRenderer": "WebGL / Chromium SwiftShader",
+      "screenshotInitial": "desktop-webgl-swiftshader-initial.png",
+      "selectionBefore": {
+        "selectedLabel": "Navigation fixture marker",
+        "selectedId": "navigation-fixture-marker-12km",
+        "groupPosition": [
+          12000,
+          0,
+          0
+        ],
+        "entityPosition": [
+          0,
+          1,
+          0
+        ]
+      },
+      "failure": "AssertionError: fixture marker pixel signature found 39 pixels; minimum 100",
+      "notReachedChecks": [
+        "background pan",
+        "wheel zoom",
+        "post-wheel marker visibility",
+        "north reset heading/zoom/visibility",
+        "chat overlay isolation",
+        "navigation control overlay isolation",
+        "final selected ID and saved group/entity positions"
+      ],
+      "failedCheck": {
+        "check": "initial marker visibility threshold",
+        "observedPixels": 39,
+        "minimumPixels": 100
+      }
+    }
+  },
+  "blockedExternalOrigins": [],
+  "unexpectedApiPaths": [],
+  "assumptions": [
+    "The browser intercepts /api/generate and returns a deterministic fixture; no provider inference runs.",
+    "WebGL is Chromium SwiftShader. The fallback lane forces WebGL context creation to fail and uses the editor's Canvas2D path."
+  ],
+  "limitations": [
+    "WebGL is Chromium SwiftShader software rendering; this is not native GPU evidence.",
+    "The marker pixel threshold is reduced to 25 only for the post-wheel state; initial and pre-wheel checks retain the 100-pixel requirement.",
+    "The browser checks reset heading, retained zoom, marker visibility, and overlay isolation; saved/world target preservation is supported by the pure-state test in tests/world-navigation.test.ts and is not directly measured by this browser run.",
+    "Canvas2D and mobile lanes are preserved from the previous evidence and are not rerun in this targeted follow-up.",
+    "Browser input events and screenshots establish behavior only for this production Chromium run.",
+    "The stationary platform produced only 39 pixels at the initial 100-pixel signature gate. The run stopped before overlay measurements, so it does not distinguish animation from an actual input leak. Only the initial screenshot was captured."
+  ]
+}
