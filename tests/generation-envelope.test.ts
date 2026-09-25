@@ -508,6 +508,28 @@ describe("structured generation envelopes", () => {
     );
   });
 
+  it("does not invent a commit after a complete structured envelope and normal stop", async () => {
+    const command = { type: "set_environment", sky: "#123456" };
+    const fetcher = vi.fn(async () =>
+      responseFor(JSON.stringify({ commands: [command] }), "stop"),
+    );
+    vi.stubGlobal("fetch", fetcher);
+
+    const records = await recordsOf(
+      await generateCommands(generationOptions("json-object")),
+    );
+    expect(records[0]).toEqual(command);
+    expect(records[1]).toMatchObject({
+      error: "Generation ended before committing this turn.",
+      failure: "clean-eof-without-commit",
+      code: "INVALID_SCENE_PROTOCOL",
+      diagnostic: { operation: 1, finishReason: "stop" },
+    });
+    expect(records.some((record) => record.type === "commit_revision")).toBe(
+      false,
+    );
+  });
+
   it("does not commit on a non-success terminal finish reason", async () => {
     const envelope = JSON.stringify({ commands: [reservation, commit] });
     const fetcher = vi.fn(async () => responseFor(envelope, "content_filter"));
@@ -703,6 +725,12 @@ describe("structured generation envelopes", () => {
       "compare the replacement's transformed physical dimensions with the existing object's bounds",
     );
     const prompt = systemPromptForCapabilities(false, false);
+    expect(prompt).toContain(
+      "The final command must be one model-issued commit_revision; reserve enough output budget for it.",
+    );
+    expect(prompt).toContain(
+      "Satisfy the request with the smallest complete set of scene commands",
+    );
     expect(prompt).toContain(
       'keep the entity behavior.type as "bounce" and use a game-program move_path action on that same entity',
     );

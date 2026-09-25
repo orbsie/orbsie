@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 25 stream-budget prevention: generation prompts now explicitly reserve the
+final model-authored command for `commit_revision` and prioritize a minimal
+complete scene over optional decoration when output space is tight. Server
+semantics remain unchanged: clean EOF after a normal `stop` without the model's
+commit still fails as `clean-eof-without-commit`; no commit is synthesized and
+no retry is started. Focused tests assert both the prompt instruction and the
+structured clean-stop failure. This is prospective prevention only; no live
+model call ran, and it does not establish that the earlier provider stream
+would have followed the instruction. See the sanitized one-call failure at
+`docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925/`.
+
 Sep 25 fresh OpenRouter GPT-6 Luna flagship attempt on source commit
 `cb0e3d44ea9f40038b4820bac5d6031f7138f36d`: the isolated loopback server,
 matching-origin probe, 4,096-token cap, and exact `openai/gpt-6-luna` catalog
