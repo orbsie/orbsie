@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 25 bounded platform-clearance advisory: the server derives one direct
+ground-jump estimate to the nearest ready, root-level, unrotated built-in
+traversal platform (`bounce` or `move`), excluding static ground/island
+support. It compares authored base positions and estimates vertical clearance
+only; horizontal motion, steering, and actual contact are not modeled. It
+reuses the gameplay contact surface and physics constants; missing or
+unsupported transforms and vertical platform motion return a skipped,
+inconclusive result. The saved revision29 scene selects `bounce-1`, with an
+ideal apex of 1.62 m, landing center 1.64 m, and signed clearance -0.02 m.
+This is only a vertical advisory: it neither rejects nor mutates a scene, and
+review instructions require checking alternate supports and routes. The same
+bounded observation is included in API and hosted review inputs, and generation
+guidance asks for a 0.2 m direct-jump margin. Five focused suites pass (90
+tests) and typecheck passes. No provider/model call ran; gameplay simulation
+semantics are unchanged, so checked-in player bundles were not rebuilt.
+
 Sep 25 OpenRouter GPT-6 Luna flagship live attempt on clean source
 `13921945204565298c9385ed748776a15c8f8144`: origin, exact-model, and 4,096
 cap preflights passed; reasoning was low, tier default, key scope local-only,

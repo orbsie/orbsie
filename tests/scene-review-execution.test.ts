@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { evaluateBrowserProceduralSource } from "../src/lib/browser-procedural-evaluator";
 import { hashBrowserProceduralSource } from "../src/lib/browser-procedural";
 import {
@@ -17,6 +19,15 @@ import {
 
 const png =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+const savedRevision29 = JSON.parse(
+  readFileSync(
+    resolve(
+      "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json",
+    ),
+    "utf8",
+  ),
+) as Project;
 
 function capabilities(overrides: Partial<ModelCapabilities> = {}) {
   const capability = { supported: true as const, source: "catalog" as const };
@@ -142,6 +153,79 @@ describe("executeSceneReview", () => {
       expect(body.messages[0].content).toContain("Phase: review");
       expect(body.messages[0].content).toContain("RESULT SCHEMA v1");
       expect(body.messages[0].content).toContain("CORRECTION COMMAND SCHEMA");
+    },
+  );
+
+  it.each(["openrouter", "chatgpt"] as const)(
+    "includes the bounded server-derived platform advisory in %s review input",
+    async (provider) => {
+      const project = structuredClone(savedRevision29);
+      const review = reviewFor(project);
+      let reviewData = "";
+      let instructions = "";
+      const fetchMock =
+        provider === "openrouter"
+          ? vi
+              .spyOn(globalThis, "fetch")
+              .mockResolvedValue(providerResponse(review))
+          : undefined;
+      const generate = vi.fn(
+        async (request: {
+          input: string;
+          instructions: string;
+          onText: (value: string) => void;
+        }) => {
+          reviewData = request.input;
+          instructions = request.instructions;
+          request.onText(JSON.stringify(review));
+        },
+      );
+      await executeSceneReview(
+        inputFor(
+          project,
+          provider === "chatgpt"
+            ? {
+                provider,
+                key: undefined,
+                hostedGenerator: {
+                  generate,
+                } as unknown as HostedSceneReviewGenerator,
+              }
+            : {},
+        ),
+      );
+
+      if (provider === "openrouter") {
+        const body = JSON.parse(String(fetchMock!.mock.calls[0][1]?.body));
+        reviewData = String(body.messages[1].content).replace(
+          /^REVIEW CONTENT JSON: /,
+          "",
+        );
+        instructions = body.messages[0].content as string;
+      }
+      const data = JSON.parse(reviewData);
+      expect(data.directGroundJumpObservation).toMatchObject({
+        version: 1,
+        status: "observed",
+        entityId: "bounce-1",
+        landingCenter: [0, 1.64, 0],
+        idealApexY: 1.62,
+        signedClearance: -0.02,
+        scope:
+          "direct-ground-jump-to-nearest-ready-root-unrotated-built-in-traversal-platform",
+      });
+      expect(reviewData.length).toBeLessThan(256 * 1024);
+      expect(instructions).toContain("bounded server-derived advisory");
+      expect(instructions).toContain(
+        "static ground/island platforms are excluded",
+      );
+      expect(instructions).toContain(
+        "does not model horizontal motion, steering, or contact",
+      );
+      expect(instructions).toContain(
+        "alternate supports, intermediate platforms",
+      );
+      expect(instructions).toContain("A skipped observation is inconclusive");
     },
   );
 

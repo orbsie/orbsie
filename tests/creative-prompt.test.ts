@@ -39,8 +39,10 @@ describe("creative and playable authoring prompt", () => {
       "currentUserIntentAndPreservation",
       "artisticIntent",
       "playableExperience",
+      "builtInPlatformClearance",
       "stagedAuthoring",
       "supportedCapabilitiesAndOutput",
+      "completionBudget",
     ]);
 
     const prompt = systemPromptForCapabilities();
@@ -109,6 +111,12 @@ describe("creative and playable authoring prompt", () => {
         'keep the entity behavior.type as "bounce" and use a game-program move_path action on that same entity',
       );
       expect(prompt).toContain("JUMP_SPEED 6 and gravity 15 (ideal rise 1.2");
+      expect(prompt).toContain(
+        'geometry.kind is "platform", gameplay uses a top surface at entity.position.y + 0.52 * entity.scale.y',
+      );
+      expect(prompt).toContain(
+        "at least 0.2 meters below the ideal ground-jump apex",
+      );
       expect(prompt).toContain("Aim for at most 16 custom parts per object");
       expect(prompt).toContain(
         "custom-parts geometry schema hard limit is 32 parts per object",

@@ -87,11 +87,12 @@ export function gameplayEntityForVisualState(
   return { ...entity, stage: "seed" };
 }
 
-const GROUND_CENTER_Y = 0.42;
-const PLAYER_HALF_HEIGHT = 0.42;
+export const GROUND_CENTER_Y = 0.42;
+export const PLAYER_HALF_HEIGHT = 0.42;
 const MOVE_SPEED = 4;
-const JUMP_SPEED = 6;
-const GRAVITY = 15;
+export const JUMP_SPEED = 6;
+export const GRAVITY = 15;
+export const GROUND_SUPPORT_TOLERANCE = 0.04;
 const DEFAULT_PLAYER_START: Vec3 = [0, 0.5, 5];
 const FAR_CONTENT_START_THRESHOLD = 32;
 const FAR_CONTENT_START_OFFSET = 5;
@@ -184,6 +185,14 @@ function platformTop(
     halfZ: Math.abs(entity.scale[2]) * 0.55,
     bounce: entity.behavior?.type === "bounce",
   };
+}
+
+/** Return the same untransformed support plane used by gameplay contacts. */
+export function gameplayPlatformContactSurface(
+  entity: Entity,
+  position: Vec3 = movingEntityPosition(entity, 0),
+) {
+  return platformTop(entity, 0, position);
 }
 
 function isInsidePlatform(
@@ -595,7 +604,7 @@ export function stepGameplay(
   const jumpForSweep = Boolean(
     input.jump &&
     ((support && supportedBeforeDisplacement) ||
-      position[1] <= GROUND_CENTER_Y + 0.04),
+      position[1] <= GROUND_CENTER_Y + GROUND_SUPPORT_TOLERANCE),
   );
   let sweepVelocityY = jumpForSweep ? JUMP_SPEED : state.velocityY;
   sweepVelocityY -= GRAVITY * dt;
@@ -629,7 +638,8 @@ export function stepGameplay(
     : undefined;
   let supportTop = supportedAfterDisplacement ? state.supportTop : undefined;
   const wasSupported =
-    supportedAfterDisplacement || position[1] <= GROUND_CENTER_Y + 0.04;
+    supportedAfterDisplacement ||
+    position[1] <= GROUND_CENTER_Y + GROUND_SUPPORT_TOLERANCE;
   if (input.jump && wasSupported) {
     velocityY = JUMP_SPEED;
     groundedOn = undefined;
