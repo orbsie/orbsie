@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 25 the fresh gameplay driver now steers toward the nearest point inside a
+0.12 m inset of an unparented built-in platform footprint, recomputing from the
+live platform position throughout approach and after jump release. Yaw-only
+rotation is handled in local X/Z coordinates; nested, pitched, or unsupported
+geometry keeps the existing center aim. Contact counters remain the only
+landing evidence. Focused gameplay tests pass (27) and typecheck passes.
+
+One loopback-only keyboard replay used the pinned revision29 scene with its
+existing clone-only bounce-1 anchor/path lowering (source hash
+`a7b89641…05903b47`, served document hash `ee19cde6…d7e4ed3`) and the checked-in
+runtime (`53d7cc3d…9479eb`). The target preflights and both local assets passed.
+The driver recorded one grounded and one bounce contact on bounce-1, then
+failed on bounce-2: the descending crossing bracket was at player Z=-1.676 to
+-1.830 while the platform center was Z=-3 (near footprint edge=-2.175); both
+samples were outside and contact counters stayed zero. Bounce-3 and collection
+were not reached; no pickups, score, win, or reset occurred. Provider, cloud,
+and external requests, browser errors, and request failures were zero. This is
+a modified-scene diagnostic, not provider acceptance; no setup failure occurred.
+Report and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-nearside-landing-replay-20260925/`.
+
 Sep 25 the fresh gameplay driver now prioritizes collectibles at or above the
 last live platform anchor height, then sorts by full 3D distance with original
 order as the deterministic tie-break. This preserves high pickups while bounce

@@ -26,6 +26,7 @@ import {
 import {
   FRESH_GAMEPLAY_LIMITS,
   buildFreshGameplayTargets,
+  chooseGameplayPlatformLandingPoint,
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
   chooseGameplayPlatformAction,
@@ -5585,9 +5586,15 @@ export async function runFreshFlagshipGameplay(
           await setKeys([], "platform-contact-release");
           return { observation: last, contacted: true };
         }
+        const landingPoint = chooseGameplayPlatformLandingPoint(
+          last.player.position,
+          { ...target, position: [...live.position] },
+          live.position,
+        );
+        const steeringPosition = landingPoint ?? live.position;
         const action = chooseGameplayPlatformAction({
           observation: last,
-          target: { ...target, position: [...live.position] },
+          target: { ...target, position: steeringPosition },
           jumping,
         });
         if (action.phase === "recovered") {
@@ -5606,10 +5613,18 @@ export async function runFreshFlagshipGameplay(
             return { observation: previous ?? last, contacted: false };
           }
           recordJumpSample(phase, launch, target);
+          const launchPlatform =
+            (launch.entities ?? []).find((entity) => entity.id === target.id) ??
+            live;
+          const launchLandingPoint = chooseGameplayPlatformLandingPoint(
+            launch.player.position,
+            { ...target, position: [...launchPlatform.position] },
+            launchPlatform.position,
+          );
           await setKeys(
             chooseGameplaySteeringKeys(
               launch.player.position,
-              live.position,
+              launchLandingPoint ?? launchPlatform.position,
             ),
             "platform-jump-release",
           );

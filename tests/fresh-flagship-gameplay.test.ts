@@ -5,6 +5,7 @@ import {
   buildFreshGameplayTargets,
   chooseGameplayKeys,
   chooseGameplayJumpKeys,
+  chooseGameplayPlatformLandingPoint,
   chooseGameplayPlatformAction,
   chooseGameplaySteeringKeys,
   detectDescendingPlatformSurfaceCrossing,
@@ -160,10 +161,103 @@ describe("fresh flagship gameplay driver", () => {
       contactCountersChanged: { platform: true, bounce: false },
     });
     expect(
-      detectDescendingPlatformSurfaceCrossing(previous, {
-        ...current,
-        player: { ...current.player, position: [0.8, 1.2, 1.8] },
-      }, target),
+      detectDescendingPlatformSurfaceCrossing(
+        previous,
+        {
+          ...current,
+          player: { ...current.player, position: [0.8, 1.2, 1.8] },
+        },
+        target,
+      ),
+    ).toBeNull();
+  });
+
+  it("steers the pinned rev29 descending crossing onto the safe near side", () => {
+    const saved = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/openrouter-flagship-gpt6-luna-live-20260925-recheck/openrouter/story-created-project.json",
+        "utf8",
+      ),
+    );
+    const report = JSON.parse(
+      readFileSync(
+        "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-collectible-priority-replay-20260925/report.json",
+        "utf8",
+      ),
+    );
+    const platform = saved.entities.find(
+      (entity: any) => entity.id === "bounce-3",
+    );
+    const crossing =
+      report.flagshipStory.phases.creation.gameplay.failureEvidence.platformEvidence.find(
+        (entry: any) => entry.id === platform.id,
+      ).jumpEvidence[0].surfaceCrossing;
+    const observation = crossing.current.observation;
+    const target = chooseGameplayPlatformLandingPoint(
+      observation.player.position,
+      platform,
+      observation.platform.position,
+    );
+
+    expect(crossing.previous.observation.player.position).toEqual([
+      0.5050940018087818, 3.2815786000259473, -4.961438377508168,
+    ]);
+    expect(observation.player.position[2]).toBeCloseTo(-5.114966318305735);
+    expect(crossing.current.insideEstimatedFootprint).toBe(false);
+    expect(target?.[0]).toBeCloseTo(observation.player.position[0]);
+    expect(target?.[2]).toBeCloseTo(-5.295);
+    expect(target?.[2]).toBeLessThan(observation.player.position[2]);
+    expect(
+      Math.abs(target![0] - observation.platform.position[0]),
+    ).toBeLessThanOrEqual(0.55 * platform.scale[0] - 0.12);
+    expect(
+      Math.abs(target![2] - observation.platform.position[2]),
+    ).toBeLessThanOrEqual(0.55 * platform.scale[2] - 0.12);
+  });
+
+  it("clamps to a rotated platform's near side and preserves safe inside aims", () => {
+    const rotatedPlatform = {
+      id: "turned-platform",
+      geometry: { kind: "platform" },
+      position: [10, 1, 20],
+      scale: [2, 1, 4],
+      rotation: [0, Math.PI / 2, 0],
+    };
+    const rotatedAim = chooseGameplayPlatformLandingPoint(
+      [12.5, 2, 20],
+      rotatedPlatform,
+      rotatedPlatform.position,
+    );
+    expect(rotatedAim?.[0]).toBeCloseTo(12.08);
+    expect(rotatedAim?.[2]).toBeCloseTo(20);
+
+    const platform = {
+      ...rotatedPlatform,
+      position: [0, 1, 0],
+      scale: [1, 1, 2],
+      rotation: [0, 0, 0],
+    };
+    const outsideAim = chooseGameplayPlatformLandingPoint(
+      [100, 2, -100],
+      platform,
+      platform.position,
+    );
+    expect(outsideAim?.[0]).toBeCloseTo(0.43);
+    expect(outsideAim?.[2]).toBeCloseTo(-0.98);
+
+    const insideAim = chooseGameplayPlatformLandingPoint(
+      [0.2, 2, 0.4],
+      platform,
+      platform.position,
+    );
+    expect(insideAim?.[0]).toBeCloseTo(0.2);
+    expect(insideAim?.[2]).toBeCloseTo(0.4);
+    expect(
+      chooseGameplayPlatformLandingPoint(
+        [0, 0, 0],
+        { ...platform, geometry: { kind: "asset" } },
+        platform.position,
+      ),
     ).toBeNull();
   });
 

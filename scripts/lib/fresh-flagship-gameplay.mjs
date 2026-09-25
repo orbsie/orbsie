@@ -6,6 +6,7 @@ export const FRESH_GAMEPLAY_LIMITS = Object.freeze({
   movementMinDistance: 0.12,
   targetDistance: 0.44,
   centeringDistance: 0.22,
+  platformLandingSafetyMargin: 0.12,
   maxSteeringStepsPerTarget: 240,
   steeringStepMs: 70,
   jumpFeedbackStepMs: 50,
@@ -297,6 +298,11 @@ export function buildFreshGameplayTargets(
       behavior: current.behavior?.type ?? null,
       position: finitePosition(current.position, `${label} ${current.id}`),
       scale: finitePosition(current.scale, `${label} ${current.id} scale`),
+      rotation: finitePosition(
+        current.rotation ?? [0, 0, 0],
+        `${label} ${current.id} rotation`,
+      ),
+      parentId: current.parentId ?? null,
       geometry: current.geometry,
     };
   };
@@ -340,7 +346,7 @@ export function buildFreshGameplayTargets(
 }
 
 /**
- * Collect pickups at or above the final support plane before descending ones,
+ * Collect pickups at or above the final support anchor height before descending ones,
  * then minimize 3D travel distance within each group. This preserves elevated
  * pickups while bounce height is available; original order breaks exact ties.
  */
@@ -371,6 +377,60 @@ export function orderFreshGameplayCollectiblesFromSupport(
         a.index - b.index,
     )
     .map(({ target }) => target);
+}
+
+/**
+ * Aim for the nearest point inside a safe inset of an unparented built-in
+ * platform. The returned point is steering guidance only; runtime contacts
+ * remain authoritative. Unsupported transforms use the existing center aim.
+ */
+export function chooseGameplayPlatformLandingPoint(
+  playerPosition,
+  target,
+  livePlatformPosition = target?.position,
+  safetyMargin = FRESH_GAMEPLAY_LIMITS.platformLandingSafetyMargin,
+) {
+  if (
+    !target ||
+    target.parentId ||
+    target.geometry?.kind !== "platform" ||
+    !Number.isFinite(safetyMargin) ||
+    safetyMargin < 0
+  )
+    return null;
+  const rotation = target.rotation ?? [0, 0, 0];
+  if (
+    !Array.isArray(rotation) ||
+    rotation.length !== 3 ||
+    !rotation.every(Number.isFinite) ||
+    Math.abs(rotation[0]) > 1e-8 ||
+    Math.abs(rotation[2]) > 1e-8
+  )
+    return null;
+  const player = finitePosition(playerPosition, "player");
+  const center = finitePosition(livePlatformPosition, "live platform");
+  const scale = finitePosition(target.scale, "platform scale");
+  if (scale[0] <= 0 || scale[2] <= 0) return null;
+
+  const halfX = 0.55 * scale[0];
+  const halfZ = 0.55 * scale[2];
+  const safeHalfX = Math.max(0, halfX - Math.min(safetyMargin, halfX));
+  const safeHalfZ = Math.max(0, halfZ - Math.min(safetyMargin, halfZ));
+  const yaw = rotation[1];
+  const cosine = Math.cos(yaw);
+  const sine = Math.sin(yaw);
+  const worldX = player[0] - center[0];
+  const worldZ = player[2] - center[2];
+  const localX = cosine * worldX - sine * worldZ;
+  const localZ = sine * worldX + cosine * worldZ;
+  const clampedX = Math.max(-safeHalfX, Math.min(safeHalfX, localX));
+  const clampedZ = Math.max(-safeHalfZ, Math.min(safeHalfZ, localZ));
+
+  return [
+    center[0] + cosine * clampedX + sine * clampedZ,
+    center[1],
+    center[2] - sine * clampedX + cosine * clampedZ,
+  ];
 }
 
 /** Choose camera-relative real inputs for the currently observed target. */
@@ -493,10 +553,7 @@ export function detectDescendingPlatformSurfaceCrossing(
     );
   const previousTopY = estimatedTopY(previous);
   const currentTopY = estimatedTopY(current);
-  if (
-    !Number.isFinite(previousTopY) ||
-    !Number.isFinite(currentTopY)
-  )
+  if (!Number.isFinite(previousTopY) || !Number.isFinite(currentTopY))
     return null;
   if (
     previous.player.position[1] <= previousTopY ||
