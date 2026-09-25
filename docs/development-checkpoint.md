@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 25 one loopback-only Chromium keyboard replay of the pinned revision29
+scene used `--clearance-path-diagnostic`, a clone-only mutation that changed
+`bounce-1.position[1]` and all three Y values in its sole `move_path` from 0.7
+to 0.4. The provider-origin source hash remains
+`a7b89641…05903b47`; the served clone hash is
+`ee19cde6…d7e4ed3`, and the report lists each changed JSON path. Runtime
+telemetry observed bounce-1 at Y=0.4. All three platforms recorded one
+grounded and one bounce contact frame; the route collected four of five
+crystals, score remained 0, and there was no portal win or reset. The bounded
+traversal therefore failed; this diagnostic does not establish provider
+acceptance. Provider, cloud, and external requests, page/console errors, and
+request failures were zero. Report and screenshots:
+`docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-diagnostic-20260925/`.
+
 Sep 25 one loopback-only bounce-one clearance diagnostic (`--revision29
 --clearance-diagnostic`) used the pinned revision29 project
 (`a7b89641…05903b47`) and an in-memory clone changing only

@@ -26,19 +26,34 @@ const REVISION_29_SOURCE = {
 const args = process.argv.slice(2);
 const replayRevision29 = args.includes("--revision29");
 const clearanceDiagnostic = args.includes("--clearance-diagnostic");
-assert(!clearanceDiagnostic || replayRevision29, "--clearance-diagnostic requires --revision29.");
-const outputArgs = args.filter((argument) => argument !== "--revision29" && argument !== "--clearance-diagnostic");
+const clearancePathDiagnostic = args.includes("--clearance-path-diagnostic");
+assert(
+  !(clearanceDiagnostic && clearancePathDiagnostic),
+  "Choose only one clearance diagnostic mode.",
+);
+assert(
+  !(clearanceDiagnostic || clearancePathDiagnostic) || replayRevision29,
+  "Clearance diagnostic modes require --revision29.",
+);
+const outputArgs = args.filter(
+  (argument) =>
+    argument !== "--revision29" &&
+    argument !== "--clearance-diagnostic" &&
+    argument !== "--clearance-path-diagnostic",
+);
 assert(outputArgs.length <= 1, "Provide at most one output directory.");
 const sourcePath = replayRevision29
   ? REVISION_29_SOURCE_PATH
   : DEFAULT_SOURCE_PATH;
 const outputPath = resolve(
   outputArgs[0] ??
-    (clearanceDiagnostic
-      ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925"
-      : replayRevision29
-        ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
-        : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
+    (clearancePathDiagnostic
+      ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-anchor-path-diagnostic-20260925"
+      : clearanceDiagnostic
+        ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-bounce1-clearance-diagnostic-20260925"
+        : replayRevision29
+          ? "docs/evidence/provider-e2e/openrouter-flagship-revision29-route-replay-20260925"
+          : "docs/evidence/provider-e2e/openrouter-flagship-current-runtime-replay-20260925"),
 );
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const sourceProjectBytes = await readFile(resolve(sourcePath));
@@ -53,35 +68,101 @@ if (replayRevision29) {
   assert.equal(project.revision, 31);
 }
 let diagnosticMutation = null;
-if (clearanceDiagnostic) {
+if (clearanceDiagnostic || clearancePathDiagnostic) {
   const bounceOne = project.entities.find((entity) => entity.id === "bounce-1");
   assert(bounceOne, "Pinned revision29 project is missing bounce-1.");
   assert.equal(bounceOne.stage, "ready");
   assert.equal(bounceOne.geometry?.kind, "platform");
   assert.equal(bounceOne.behavior?.type, "bounce");
   assert.equal(bounceOne.position[1], 0.7);
-  bounceOne.position[1] = 0.4;
-  const bounceOnePaths = (project.game?.rules ?? []).flatMap((rule) => rule.actions)
-    .filter((action) => action.type === "move_path" && action.entityId === "bounce-1");
+  const bounceOnePaths = [];
+  for (const [ruleIndex, rule] of (project.game?.rules ?? []).entries()) {
+    for (const [actionIndex, action] of rule.actions.entries()) {
+      if (action.type === "move_path" && action.entityId === "bounce-1")
+        bounceOnePaths.push({ ruleIndex, actionIndex, action });
+    }
+  }
   assert.equal(bounceOnePaths.length, 1);
-  const bounceOnePath = bounceOnePaths[0];
-  diagnosticMutation = {
-    entityId: "bounce-1",
-    field: "position[1]",
-    sourceValue: 0.7,
-    diagnosticValue: 0.4,
-    unchangedMovePath: {
-      startPosition: [...bounceOnePath.points[0]],
-      pointYValues: bounceOnePath.points.map((point) => point[1]),
-    },
-  };
-  const restoredProject = structuredClone(project);
-  restoredProject.entities.find((entity) => entity.id === "bounce-1").position[1] = diagnosticMutation.sourceValue;
-  assert.deepEqual(restoredProject, sourceProject, "Clearance diagnostic must change only bounce-1 position[1].");
+  const { ruleIndex, actionIndex, action: bounceOnePath } = bounceOnePaths[0];
+  if (clearanceDiagnostic) {
+    bounceOne.position[1] = 0.4;
+    diagnosticMutation = {
+      entityId: "bounce-1",
+      field: "position[1]",
+      sourceValue: 0.7,
+      diagnosticValue: 0.4,
+      unchangedMovePath: {
+        startPosition: [...bounceOnePath.points[0]],
+        pointYValues: bounceOnePath.points.map((point) => point[1]),
+      },
+    };
+    const restoredProject = structuredClone(project);
+    restoredProject.entities.find(
+      (entity) => entity.id === "bounce-1",
+    ).position[1] = diagnosticMutation.sourceValue;
+    assert.deepEqual(
+      restoredProject,
+      sourceProject,
+      "Clearance diagnostic must change only bounce-1 position[1].",
+    );
+  } else {
+    assert(bounceOnePath.points.length > 0);
+    const sourcePointYValues = bounceOnePath.points.map((point) => {
+      assert.equal(point[1], 0.7);
+      return point[1];
+    });
+    const sourcePathStartPosition = [...bounceOnePath.points[0]];
+    const changes = [
+      {
+        path: "entities[bounce-1].position[1]",
+        sourceValue: bounceOne.position[1],
+        diagnosticValue: 0.4,
+      },
+    ];
+    bounceOne.position[1] = 0.4;
+    for (const [pointIndex, point] of bounceOnePath.points.entries()) {
+      changes.push({
+        path: `game.rules[${ruleIndex}].actions[${actionIndex}].points[${pointIndex}][1]`,
+        sourceValue: point[1],
+        diagnosticValue: 0.4,
+      });
+      point[1] = 0.4;
+    }
+    diagnosticMutation = {
+      entityId: "bounce-1",
+      changes,
+      movePath: {
+        ruleIndex,
+        actionIndex,
+        sourceStartPosition: sourcePathStartPosition,
+        diagnosticStartPosition: [...bounceOnePath.points[0]],
+        sourcePointYValues,
+        diagnosticPointYValues: bounceOnePath.points.map((point) => point[1]),
+      },
+    };
+    const restoredProject = structuredClone(project);
+    restoredProject.entities.find(
+      (entity) => entity.id === "bounce-1",
+    ).position[1] = 0.7;
+    const restoredPath =
+      restoredProject.game.rules[ruleIndex].actions[actionIndex];
+    sourcePointYValues.forEach((value, index) => {
+      restoredPath.points[index][1] = value;
+    });
+    assert.deepEqual(
+      restoredProject,
+      sourceProject,
+      "Path diagnostic must change only bounce-1 anchor and path Y coordinates.",
+    );
+  }
 }
-const targetDocumentBytes = clearanceDiagnostic ? Buffer.from(JSON.stringify(project)) : sourceProjectBytes;
+const targetDocumentBytes =
+  clearanceDiagnostic || clearancePathDiagnostic
+    ? Buffer.from(JSON.stringify(project))
+    : sourceProjectBytes;
 const targetDocumentSha256 = sha256(targetDocumentBytes);
-if (clearanceDiagnostic) assert.notEqual(targetDocumentSha256, sha256(sourceProjectBytes));
+if (clearanceDiagnostic || clearancePathDiagnostic)
+  assert.notEqual(targetDocumentSha256, sha256(sourceProjectBytes));
 assert.equal(
   project.entities.filter((entity) => entity.geometry?.kind === "generated")
     .length,
@@ -102,8 +183,7 @@ if (replayRevision29) {
     return entity;
   });
   collectibles = project.entities.filter(
-    (entity) =>
-      entity.stage === "ready" && entity.behavior?.type === "collect",
+    (entity) => entity.stage === "ready" && entity.behavior?.type === "collect",
   );
   const portals = project.entities.filter(
     (entity) => entity.stage === "ready" && entity.behavior?.type === "portal",
@@ -146,7 +226,12 @@ for (const reference of assetReferences) {
   assert.equal(bytes.byteLength, asset.sizeBytes);
   assert.equal(sha256(bytes), asset.sha256);
   files.set(asset.path, bytes);
-  assets.push({ ...reference, path: asset.path, bytes: bytes.byteLength, sha256: sha256(bytes) });
+  assets.push({
+    ...reference,
+    path: asset.path,
+    bytes: bytes.byteLength,
+    sha256: sha256(bytes),
+  });
 }
 const html = Buffer.from(
   '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="./runtime.css"></head><body><div id="root"></div><script type="module" src="./runtime.js"></script></body></html>',
@@ -154,7 +239,8 @@ const html = Buffer.from(
 files.set("/", html);
 files.set("/favicon.ico", Buffer.alloc(0));
 
-if (clearanceDiagnostic) await mkdir(outputPath, { mode: 0o700 });
+if (clearanceDiagnostic || clearancePathDiagnostic)
+  await mkdir(outputPath, { mode: 0o700 });
 else await mkdir(outputPath, { recursive: true, mode: 0o700 });
 const localRequests = [];
 const contentTypeForPath = (path) => {
@@ -222,14 +308,18 @@ const sanitizeDiagnosticText = (value) =>
     .replace(/\b(?:sk|or)-[A-Za-z0-9_-]{12,}\b/g, "[redacted-key]")
     .slice(0, 300);
 const report = {
-  mode: clearanceDiagnostic
-    ? "single-static-revision29-bounce1-clearance-diagnostic"
-    : "single-static-saved-openrouter-creation-replay",
+  mode: clearancePathDiagnostic
+    ? "single-static-revision29-bounce1-anchor-path-clearance-diagnostic"
+    : clearanceDiagnostic
+      ? "single-static-revision29-bounce1-clearance-diagnostic"
+      : "single-static-saved-openrouter-creation-replay",
   routeSelection: replayRevision29
     ? "production-spawn-relative-validator"
     : "pinned-revision31-identifiers",
   status: "running",
-  repoHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+  repoHead: execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim(),
   sourceProject: {
     path: sourcePath,
     bytes: sourceProjectBytes.byteLength,
@@ -263,7 +353,7 @@ const report = {
     phases: { creation: { revision: project.revision } },
   },
 };
-if (clearanceDiagnostic) {
+if (clearanceDiagnostic || clearancePathDiagnostic) {
   report.targetDocument = {
     path: "/project.json",
     bytes: targetDocumentBytes.byteLength,
@@ -336,7 +426,10 @@ try {
         score: document.querySelector(".score")?.textContent ?? null,
       };
     });
-    await page.screenshot({ path: join(outputPath, "scene-ready.png"), fullPage: true });
+    await page.screenshot({
+      path: join(outputPath, "scene-ready.png"),
+      fullPage: true,
+    });
     report.screenshots.push("scene-ready.png");
   } catch {
     report.readiness = { status: "not-ready" };
@@ -350,17 +443,26 @@ try {
       expectedCollectibleCount: 5,
       expectedRevision: project.revision,
       onWin: async () => {
-        await page.screenshot({ path: join(outputPath, "portal-win.png"), fullPage: true });
+        await page.screenshot({
+          path: join(outputPath, "portal-win.png"),
+          fullPage: true,
+        });
         report.screenshots.push("portal-win.png");
       },
       onReset: async () => {
-        await page.screenshot({ path: join(outputPath, "ui-reset.png"), fullPage: true });
+        await page.screenshot({
+          path: join(outputPath, "ui-reset.png"),
+          fullPage: true,
+        });
         report.screenshots.push("ui-reset.png");
       },
     });
     assert.equal(result.projectId, project.id);
     assert.equal(result.revision, project.revision);
-    assert.deepEqual([...result.collectedIds].sort(), targets.collectibles.map((entity) => entity.id).sort());
+    assert.deepEqual(
+      [...result.collectedIds].sort(),
+      targets.collectibles.map((entity) => entity.id).sort(),
+    );
     assert.equal(result.contacts.includes(targets.portal.id), true);
     assert.equal(result.win?.status, "won");
     assert.equal(result.win?.score, 5);
@@ -391,7 +493,9 @@ try {
   } catch (error) {
     recordFreshFlagshipGameplayFailure(report, "creation", project, error);
     const message = String(error?.message ?? "");
-    const directTarget = /did not contact platform ([A-Za-z0-9_.:-]+)/.exec(message)?.[1];
+    const directTarget = /did not contact platform ([A-Za-z0-9_.:-]+)/.exec(
+      message,
+    )?.[1];
     const recovery =
       /could not recover reachable support ([A-Za-z0-9_.:-]+) before retrying ([A-Za-z0-9_.:-]+)/.exec(
         message,
@@ -417,28 +521,46 @@ try {
     report.status = "traversal-failed";
   }
   try {
-    await page.screenshot({ path: join(outputPath, "traversal-final.png"), fullPage: true });
+    await page.screenshot({
+      path: join(outputPath, "traversal-final.png"),
+      fullPage: true,
+    });
     report.screenshots.push("traversal-final.png");
   } catch {}
 
-  const evidence = report.flagshipStory.phases.creation.gameplay?.failureEvidence;
+  const evidence =
+    report.flagshipStory.phases.creation.gameplay?.failureEvidence;
   const last = evidence?.lastObservation;
   const movement = evidence?.movement?.distance > 0.12;
-  const third = evidence?.platformEvidence?.find((item) => item.id === "bounce-three");
-  const bounceOneEvidence = evidence?.platformEvidence?.find((item) => item.id === "bounce-1");
+  const third = evidence?.platformEvidence?.find(
+    (item) => item.id === "bounce-three",
+  );
+  const bounceOneEvidence = evidence?.platformEvidence?.find(
+    (item) => item.id === "bounce-1",
+  );
   const bounceOneObservedYValues = [
     ...(bounceOneEvidence?.jumpEvidence ?? []).flatMap((attempt) =>
       (attempt.samples ?? []).map((sample) => sample.platform?.position?.[1]),
     ),
-  ].filter(Number.isFinite).filter((value, index, values) => values.indexOf(value) === index).sort((a, b) => a - b);
-  if (clearanceDiagnostic) {
+  ]
+    .filter(Number.isFinite)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .sort((a, b) => a - b);
+  if (clearanceDiagnostic || clearancePathDiagnostic) {
     report.diagnosticResult = {
       observedBounceOnePlatformYValues: bounceOneObservedYValues,
-      observedContactFrames: (bounceOneEvidence?.groundedFrames ?? 0) + (bounceOneEvidence?.bounceFrames ?? 0),
+      observedContactFrames:
+        (bounceOneEvidence?.groundedFrames ?? 0) +
+        (bounceOneEvidence?.bounceFrames ?? 0),
       score: last?.gameScore ?? null,
       won: last?.won ?? null,
       reset: last?.reset ?? null,
     };
+    if (clearancePathDiagnostic) {
+      report.diagnosticResult.targetPlatformY = 0.4;
+      report.diagnosticResult.targetPlatformYObserved =
+        bounceOneObservedYValues.includes(0.4);
+    }
   }
   const runtimeResponded =
     report.readiness?.status === "ready" &&
@@ -450,12 +572,15 @@ try {
   if (report.status !== "passed") {
     if (
       clearanceDiagnostic &&
-      diagnosticMutation.unchangedMovePath.pointYValues.every((value) => value === diagnosticMutation.sourceValue) &&
+      diagnosticMutation.unchangedMovePath.pointYValues.every(
+        (value) => value === diagnosticMutation.sourceValue,
+      ) &&
       bounceOneObservedYValues.includes(diagnosticMutation.sourceValue)
     ) {
       report.diagnosis = {
         category: "diagnostic-anchor-overridden-by-authored-path",
-        basis: "The anchor-only mutation was retained in the served document, but the unchanged move_path starts bounce-1 at its original Y and all path points keep Y constant there. Browser telemetry likewise observed bounce-1 at the original Y. This traversal did not test the lowered landing plane, and route versus driver uncertainty remains.",
+        basis:
+          "The anchor-only mutation was retained in the served document, but the unchanged move_path starts bounce-1 at its original Y and all path points keep Y constant there. Browser telemetry likewise observed bounce-1 at the original Y. This traversal did not test the lowered landing plane, and route versus driver uncertainty remains.",
         observedBounceOnePlatformYValues: bounceOneObservedYValues,
         routeOutcome: report.status,
       };
@@ -464,20 +589,29 @@ try {
       report.errorCode = { code: "standalone-shell-served-as-download" };
       report.diagnosis = {
         category: "replay-driver-setup-failure",
-        basis: "Chromium treated the static standalone shell as a download before the player runtime loaded.",
+        basis:
+          "Chromium treated the static standalone shell as a download before the player runtime loaded.",
       };
     } else if (
       report.pageErrors.length > 0 ||
-      localRequests.some((request) => request.status >= 400 && request.path !== "/favicon.ico")
+      localRequests.some(
+        (request) => request.status >= 400 && request.path !== "/favicon.ico",
+      )
     ) {
       report.diagnosis = {
         category: "runtime-or-static-asset-failure",
-        basis: "The local player reported an error or requested a missing runtime asset.",
+        basis:
+          "The local player reported an error or requested a missing runtime asset.",
       };
-    } else if (runtimeResponded && movement && third?.maximumDisplacement >= 0.05) {
+    } else if (
+      runtimeResponded &&
+      movement &&
+      third?.maximumDisplacement >= 0.05
+    ) {
       report.diagnosis = {
         category: "driver-uncertainty",
-        basis: "The exact saved revision accepted keyboard movement and bounce-three moved, so this single failed traversal does not establish that the authored route is unreachable.",
+        basis:
+          "The exact saved revision accepted keyboard movement and bounce-three moved, so this single failed traversal does not establish that the authored route is unreachable.",
         targetId: report.errorCode?.targetId ?? null,
         keyboardMovementDistance: evidence.movement.distance,
         bounceThreeMaximumDisplacement: third.maximumDisplacement,
@@ -485,7 +619,8 @@ try {
     } else {
       report.diagnosis = {
         category: "runtime-route-or-driver-unresolved",
-        basis: "The bounded attempt lacked enough matching runtime and movement evidence to distinguish route failure from driver uncertainty.",
+        basis:
+          "The bounded attempt lacked enough matching runtime and movement evidence to distinguish route failure from driver uncertainty.",
         revisionBoundObservation: Boolean(runtimeResponded),
         keyboardMovementObserved: Boolean(movement),
         bounceThreeMaximumDisplacement: third?.maximumDisplacement ?? null,
@@ -496,7 +631,9 @@ try {
   report.status = "runtime-or-static-asset-failure";
   report.diagnosis = {
     category: "runtime-or-static-asset-failure",
-    detail: sanitizeDiagnosticText(error?.message ?? "local replay setup failed"),
+    detail: sanitizeDiagnosticText(
+      error?.message ?? "local replay setup failed",
+    ),
   };
 } finally {
   await context?.close().catch(() => undefined);
@@ -511,4 +648,10 @@ await writeFile(
   `${JSON.stringify(report, null, 2)}\n`,
   { encoding: "utf8", mode: 0o600 },
 );
-console.log(JSON.stringify({ status: report.status, diagnosis: report.diagnosis, outputPath }, null, 2));
+console.log(
+  JSON.stringify(
+    { status: report.status, diagnosis: report.diagnosis, outputPath },
+    null,
+    2,
+  ),
+);
