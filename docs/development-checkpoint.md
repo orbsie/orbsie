@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 25 Android growing-world low-count diagnosis: `aa00c71` adds a
+diagnostic-only 1..119 entity count to the Android SoftwareWorld harness;
+normal 120/160 acceptance fixtures are unchanged. Fresh owned Android 15 /
+Chrome 124 runs at 100 m both lost the page before scene readiness. The
+one-entity run aborted navigation before DOMContentLoaded and its filtered
+logcat showed two sandboxed Chrome child deaths. The 40-entity run loaded the
+page and unchanged 4,395,147-byte bundle, then lost the page during readiness;
+filtered logcat showed one sandboxed child death. Chrome's main process
+remained. This weakens an entity-count-only explanation but does not identify
+the crash cause or prove OOM. No travel, frame, heap or readiness acceptance
+was obtained. Astra reviewed the diff and reports; syntax/format/diff and
+report-consistency checks passed. Owned emulator/ADB mappings were removed;
+`adb devices -l` is empty. Evidence:
+`docs/evidence/android-growing-world-runtime/diagnostic-count-comparison-20260925.md`
+and its two linked reports.
+
 Sep 24 ChatGPT connection feasibility recheck: official OpenAI documentation
 now describes Sign in with ChatGPT for participating partners, but the identity
 flow shares only name/email/profile picture; additional access requires separate
