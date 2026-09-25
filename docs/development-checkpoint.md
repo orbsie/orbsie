@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 24 review-resume release: source through `19c825d` deployed Ready as
+`dpl_45mnfJ6qPud2mnPkbTBAosUEyfN7`, aliased to `https://orbsie.com/`
+(immutable `https://orbsie-bspsrutaq-grappeggias-projects.vercel.app`).
+Read-only root, robots and sitemap returned HTTP 200; the public and hosted
+review-start routes returned expected GET 405. `/api/config` reports
+`authoringReview:false`, `chatgptHosted:true`, `chatgptGeneration:true`.
+Deployed player `runtime.js` and `source.json` exactly match the committed
+bytes (SHA-256 `9d0bf6f2e5c443677002335a71f582ed3eea71ad6536cd4be48d4b5aabc8b7bf`
+and `d462222e679a34e160fed4d903adc866eed3ca87dec6c1bc7c0a5e26da9c77fc`).
+No live provider call or production-enabled review acceptance ran. The local
+optimized build and full deterministic browser matrix passed before deploy.
+
 Sep 24 explicit interrupted-review UI integration: sources `e38f09f` and
 `5fc62eb` add **Resume review** beside the existing **Continue improving**
 draft action. The former uses the saved failed run, original provider/model
