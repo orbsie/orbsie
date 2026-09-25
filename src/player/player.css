@@ -241,6 +241,10 @@ main.touch-layout footer {
   min-width: 0;
   padding: 10px 14px;
 }
+main.touch-layout .graphics-player-error:has(.is-advisory) {
+  top: auto;
+  bottom: calc(118px + var(--player-safe-bottom));
+}
 .software-world {
   position: absolute;
   inset: 0;

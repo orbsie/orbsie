@@ -2,6 +2,10 @@ import { MAX_SCENE_POSITION } from "./protocol";
 
 export type WorldNavigationVec3 = readonly [number, number, number];
 export type WorldNavigationVec2 = readonly [number, number];
+export type WorldNavigationViewportSize = Readonly<{
+  width: number;
+  height: number;
+}>;
 
 /** World-space axis-aligned bounds for one committed entity. */
 export type WorldNavigationBounds = Readonly<{
@@ -61,6 +65,30 @@ const WORLD_NAVIGATION_MIN_FAR_PLANE = 250;
 export const WORLD_NAVIGATION_DEFAULT_DISTANCE = 24;
 export const WORLD_NAVIGATION_PLAY_MIN_DISTANCE = 12;
 const FRAME_MARGIN = 1.1;
+
+/** Keep the play camera's horizontal framing at least as wide as a square view. */
+export function worldNavigationPlayMinimumDistance(
+  viewport?: WorldNavigationViewportSize,
+): number {
+  if (
+    !viewport ||
+    !Number.isFinite(viewport.width) ||
+    viewport.width <= 0 ||
+    !Number.isFinite(viewport.height) ||
+    viewport.height <= 0
+  )
+    return WORLD_NAVIGATION_PLAY_MIN_DISTANCE;
+  const portraitScale = viewport.height / viewport.width;
+  if (!Number.isFinite(portraitScale))
+    return WORLD_NAVIGATION_PLAY_MIN_DISTANCE;
+  return Math.min(
+    WORLD_NAVIGATION_LIMITS.maxDistance,
+    Math.max(
+      WORLD_NAVIGATION_PLAY_MIN_DISTANCE,
+      WORLD_NAVIGATION_PLAY_MIN_DISTANCE * portraitScale,
+    ),
+  );
+}
 
 function clamp(value: number, low: number, high: number) {
   return Math.max(low, Math.min(high, value));
@@ -163,6 +191,7 @@ export function worldNavigationCameraPose(
 export function worldNavigationFollowState(
   savedNavigation: WorldNavigationState,
   playerPosition: WorldNavigationVec3,
+  viewport?: WorldNavigationViewportSize,
 ): WorldNavigationState {
   const saved = createWorldNavigationState(savedNavigation);
   const positionIsFinite =
@@ -172,7 +201,10 @@ export function worldNavigationFollowState(
   return {
     ...saved,
     target: positionIsFinite ? boundedTarget(playerPosition) : saved.target,
-    distance: Math.max(saved.distance, WORLD_NAVIGATION_PLAY_MIN_DISTANCE),
+    distance: Math.max(
+      saved.distance,
+      worldNavigationPlayMinimumDistance(viewport),
+    ),
   };
 }
 

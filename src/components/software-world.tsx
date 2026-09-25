@@ -2647,6 +2647,10 @@ export default function SoftwareWorld({
           ? worldNavigationFollowState(
               savedNavigation,
               playerRef.current.position,
+              {
+                width: canvas.clientWidth,
+                height: canvas.clientHeight,
+              },
             )
           : savedNavigation;
         const target = currentPhase === "landing" ? 0 : 1;

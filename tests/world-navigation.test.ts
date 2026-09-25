@@ -12,6 +12,7 @@ import {
   worldNavigationFarPlane,
   worldNavigationFollowState,
   worldNavigationLandingLookTarget,
+  worldNavigationPlayMinimumDistance,
   worldNavigationProjectState,
   WORLD_NAVIGATION_LIMITS,
   WORLD_NAVIGATION_PLAY_MIN_DISTANCE,
@@ -165,6 +166,41 @@ describe("shared world navigation", () => {
     );
     expect(savedNavigation.distance).toBe(WORLD_NAVIGATION_LIMITS.minDistance);
     expect(JSON.stringify(savedNavigation)).toBe(savedSnapshot);
+  });
+
+  it("widens the temporary play minimum for portrait viewports only", () => {
+    const savedNavigation = createWorldNavigationState({ distance: 4 });
+    const portraitViewport = { width: 412, height: 786 };
+    const portraitMinimum = (12 * 786) / 412;
+
+    expect(worldNavigationPlayMinimumDistance(portraitViewport)).toBeCloseTo(
+      portraitMinimum,
+    );
+    expect(
+      worldNavigationFollowState(savedNavigation, [0, 0.5, 5], portraitViewport)
+        .distance,
+    ).toBeCloseTo(portraitMinimum);
+    expect(
+      worldNavigationPlayMinimumDistance({ width: 844, height: 390 }),
+    ).toBe(WORLD_NAVIGATION_PLAY_MIN_DISTANCE);
+    expect(
+      worldNavigationFollowState(savedNavigation, [0, 0.5, 5], {
+        width: 844,
+        height: 390,
+      }).distance,
+    ).toBe(WORLD_NAVIGATION_PLAY_MIN_DISTANCE);
+  });
+
+  it("defaults invalid viewport dimensions to the shared play minimum", () => {
+    for (const viewport of [
+      undefined,
+      { width: 0, height: 786 },
+      { width: 412, height: Number.NaN },
+      { width: Number.POSITIVE_INFINITY, height: 786 },
+    ])
+      expect(worldNavigationPlayMinimumDistance(viewport)).toBe(
+        WORLD_NAVIGATION_PLAY_MIN_DISTANCE,
+      );
   });
 
   it("keeps invalid player coordinates from corrupting the saved view", () => {

@@ -2065,8 +2065,12 @@ function Scene({
   });
   const residencyFocus = playing ? playbackResidencyFocus : navigation.target;
   const residencyNavigation = useMemo(
-    () => worldNavigationFollowState(navigation, residencyFocus),
-    [navigation, residencyFocus],
+    () =>
+      worldNavigationFollowState(navigation, residencyFocus, {
+        width: size.width,
+        height: size.height,
+      }),
+    [navigation, residencyFocus, size.height, size.width],
   );
   const allEntityIds = useMemo(
     () => new Set(entities.map((entity) => entity.id)),
@@ -2670,7 +2674,10 @@ function Scene({
       snapshot.progress >= 1 &&
       initialized.current;
     const activeNavigation = playViewActive
-      ? worldNavigationFollowState(navigation, playerPositionRef.current)
+      ? worldNavigationFollowState(navigation, playerPositionRef.current, {
+          width: size.width,
+          height: size.height,
+        })
       : navigation;
     if (playViewActive) {
       const terrainCell = worldTerrainChunkKeyAt(
