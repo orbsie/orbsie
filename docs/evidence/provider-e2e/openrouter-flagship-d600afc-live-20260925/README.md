@@ -1,0 +1,7 @@
+# Sanitized fresh flagship attempt
+
+Source: `d600afc87bded70837b2e9a423ee3289382b82e2`. One loopback-only production browser run used OpenRouter `openai/gpt-6-luna`, low reasoning, default tier, local-only key scope, a 4,096 output-token cap, and a three-request maximum. The isolated server had no database, accounts, publication credentials, cloud recovery, or publishing enabled. Quota was 37% immediately before the run.
+
+The creation call and creation gameplay passed: revision 29, 29 commands, three authoritative bounce-platform traversals, five collected crystals, score 5, portal win, and restart to playing with score 0/reset 1. The second request applied a mushroom edit at revision 32, then failed the supported-mushroom evidence check. The selected-target assertion had passed; the target geometry changed from `tree` to `custom`, with no supported mushroom geometry kind, mushroom label, or catalog tag. A pink form is visible in the retained scene crop, but visual appearance alone did not satisfy the structural gate. The harness stopped there: no third/platform edit, undo, export, standalone, or publication phase was attempted. Two generation requests returned HTTP 200; no retry or fallback was observed.
+
+`openrouter.json` records the sanitized phase and gameplay evidence. Saved project snapshots have conversation messages removed and titles normalized. Screenshots show only the pre-key model selection or the rendered scene; prompt/chat screenshots were omitted or cropped. No API key or raw conversation text is retained.
