@@ -1,0 +1,7 @@
+# Revision 9 touch gameplay on Android Chrome
+
+The signed-out OpenRouter share for project `d33a530a-1cd8-4943-a7ae-28d11538ad87`, revision 9, passed on the initialized Android 15 non-Play AVD clone `droidlm_api35_orbsie_signedout_clone_20260927` (`emulator-5560`) with Chrome 124. Preflight found Chrome on `about:blank`, zero Android accounts, and zero cookies for the share and deployment origins; no terms or account setup was accepted. See [preflight.json](preflight.json) and [chrome-preflight.png](chrome-preflight.png).
+
+The harness verified the served revision-9 project and both catalog GLBs against the checked-in fixtures. It held the visible **Forward** touch control for 1,000 ms, then measured the gameplay-area screenshots before and after release. 67,191 pixels changed (4.25%), above the 128-pixel and 0.008% response thresholds. The island and tree visibly shifted within the camera view in [scene-before-touch.png](scene-before-touch.png) and [scene-after-touch.png](scene-after-touch.png); this check makes no score or win claim. The full result, including zero cookies after navigation, zero provider/generation/editor/external requests, and no page or console errors, is in [report.json](report.json).
+
+Automatic renderer selection used the Canvas2D compatibility renderer on this emulator. The run made no model calls. The AVD used SwiftShader graphics; its initialized clone profile was used without accepting new setup prompts.

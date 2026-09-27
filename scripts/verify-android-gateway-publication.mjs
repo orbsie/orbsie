@@ -226,7 +226,7 @@ assert(/^[A-Za-z0-9_.:-]{1,80}$/.test(device), "Invalid Android device ID.");
 const evidenceRoot = resolve(`docs/evidence/android-${provider}-publication`);
 const defaultEvidenceDirectory =
   provider === "openrouter"
-    ? "docs/evidence/android-openrouter-publication/current-runtime-20260925"
+    ? "docs/evidence/android-openrouter-publication/revision-9-clean-avd-20260927/touch-controls-gameplay-20260927"
     : "docs/evidence/android-gateway-publication/current-runtime";
 const evidenceDir = resolve(
   process.env.ORBSIE_ANDROID_PUBLICATION_EVIDENCE ?? defaultEvidenceDirectory,
@@ -296,6 +296,121 @@ async function tap(page, session, name) {
     touchPoints: [],
   });
   touchActions.push(String(name));
+}
+
+async function pressControl(page, session, game, name, holdMs) {
+  const button = game.getByRole("button", { name, exact: true });
+  await expect(button).toBeVisible();
+  const box = await button.boundingBox();
+  assert(box && box.width > 0 && box.height > 0, `Missing ${name} control.`);
+  const point = {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
+    id: 1,
+  };
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [point],
+  });
+  try {
+    await page.waitForTimeout(holdMs);
+  } finally {
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+  }
+  touchActions.push(`${name} held for ${holdMs}ms`);
+  return {
+    point: { x: Math.round(point.x), y: Math.round(point.y) },
+    holdMs,
+  };
+}
+
+async function compareScreenshotPixels(before, after) {
+  const { default: sharp } = await import("sharp");
+  const [left, right] = await Promise.all([
+    sharp(before).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(after).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ]);
+  assert.equal(left.info.width, right.info.width);
+  assert.equal(left.info.height, right.info.height);
+  assert.equal(left.info.channels, 4);
+  assert.equal(right.info.channels, 4);
+  const changedPixelDelta = 14;
+  let changedPixels = 0;
+  let totalRgbDelta = 0;
+  const pixels = left.info.width * left.info.height;
+  for (let offset = 0; offset < left.data.length; offset += 4) {
+    const red = Math.abs(left.data[offset] - right.data[offset]);
+    const green = Math.abs(left.data[offset + 1] - right.data[offset + 1]);
+    const blue = Math.abs(left.data[offset + 2] - right.data[offset + 2]);
+    if (Math.max(red, green, blue) >= changedPixelDelta) changedPixels++;
+    totalRgbDelta += red + green + blue;
+  }
+  const changedPixelRatio = changedPixels / pixels;
+  return {
+    width: left.info.width,
+    height: left.info.height,
+    changedPixelDelta,
+    changedPixels,
+    changedPixelRatio,
+    meanAbsoluteRgbDelta: totalRgbDelta / (pixels * 3),
+    responseThreshold: {
+      minimumChangedPixels: 128,
+      minimumChangedPixelRatio: 0.00008,
+    },
+    responseObserved: changedPixels >= 128 && changedPixelRatio >= 0.00008,
+  };
+}
+
+async function gameplayScreenshotClip(page, gameFrame) {
+  const [frameLayout, iframeBox] = await Promise.all([
+    gameFrame.evaluate(() => {
+      const bounds = (selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height,
+        };
+      };
+      return {
+        width: innerWidth,
+        height: innerHeight,
+        main: bounds("main"),
+        header: bounds("header"),
+        controls: bounds(".controls"),
+      };
+    }),
+    page.locator("iframe").boundingBox(),
+  ]);
+  assert(
+    frameLayout.main && frameLayout.header && frameLayout.controls && iframeBox,
+  );
+  const frameTop = Math.max(
+    frameLayout.main.y,
+    frameLayout.header.y + frameLayout.header.height + 8,
+  );
+  const frameBottom = Math.min(
+    frameLayout.main.y + frameLayout.main.height,
+    frameLayout.controls.y - 8,
+  );
+  assert(
+    frameBottom - frameTop >= 100,
+    "Visible gameplay area is too small to compare touch response.",
+  );
+  const scaleX = iframeBox.width / frameLayout.width;
+  const scaleY = iframeBox.height / frameLayout.height;
+  return {
+    x: iframeBox.x + frameLayout.main.x * scaleX,
+    y: iframeBox.y + frameTop * scaleY,
+    width: frameLayout.main.width * scaleX,
+    height: (frameBottom - frameTop) * scaleY,
+  };
 }
 
 await mkdir(evidenceDir, { recursive: true });
@@ -707,57 +822,39 @@ try {
     );
     await page.waitForTimeout(10_000);
     await page.screenshot({ path: `${evidenceDir}/assets-rendered.png` });
-    const canvas = game.locator("canvas:visible").first();
-    const canvasBefore = await canvas.screenshot({
+    const gameplayClip = await gameplayScreenshotClip(page, gameFrame);
+    const canvasBefore = await page.screenshot({
       path: `${evidenceDir}/scene-before-touch.png`,
+      clip: gameplayClip,
     });
-    const box = await canvas.boundingBox();
-    assert(box && box.width > 0 && box.height > 0);
-    const start = {
-      x: box.x + box.width * 0.92,
-      y: box.y + box.height * 0.45,
-      id: 1,
-    };
-    const end = { ...start, x: start.x - Math.min(112, box.width * 0.35) };
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [start],
-    });
-    for (let step = 1; step <= 4; step++) {
-      await session.send("Input.dispatchTouchEvent", {
-        type: "touchMove",
-        touchPoints: [
-          {
-            ...start,
-            x: start.x + ((end.x - start.x) * step) / 4,
-            y: start.y + ((end.y - start.y) * step) / 4,
-          },
-        ],
-      });
-      await page.waitForTimeout(80);
-    }
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchEnd",
-      touchPoints: [],
-    });
-    touchActions.push("one-finger canvas drag to pan the world camera");
-    await page.waitForTimeout(500);
-    const canvasAfter = await canvas.screenshot({
+    const controlPress = await pressControl(
+      page,
+      session,
+      game,
+      "Forward",
+      1_000,
+    );
+    await page.waitForTimeout(250);
+    const canvasAfter = await page.screenshot({
       path: `${evidenceDir}/scene-after-touch.png`,
+      clip: gameplayClip,
     });
-    report.touchInput.drag = {
-      start: { x: Math.round(start.x), y: Math.round(start.y) },
-      end: { x: Math.round(end.x), y: Math.round(end.y) },
+    const visualDifference = await compareScreenshotPixels(
+      canvasBefore,
+      canvasAfter,
+    );
+    report.touchInput.gameplayControl = {
+      control: "Forward",
+      point: controlPress.point,
+      holdMs: controlPress.holdMs,
+      screenshotClip: gameplayClip,
       canvasBeforeSha256: sha256(canvasBefore),
       canvasAfterSha256: sha256(canvasAfter),
-      renderedCanvasChanged: sha256(canvasBefore) !== sha256(canvasAfter),
+      visualDifference,
+      responseObserved: visualDifference.responseObserved,
     };
-    assert(
-      report.touchInput.drag.renderedCanvasChanged,
-      "Touch drag did not change the rendered canvas.",
-    );
     await expect(game.locator('main[data-ready="true"]')).toBeVisible();
-    report.checks.touchCameraMovement = true;
+    report.checks.touchGameplayMovement = visualDifference.responseObserved;
     await page.screenshot({ path: `${evidenceDir}/touched.png` });
     await Promise.all(responseTasks);
   } else {
@@ -786,6 +883,11 @@ try {
   assert.deepEqual(report.externalRequests, []);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
+  if (provider === "openrouter")
+    assert(
+      report.checks.touchGameplayMovement,
+      "Forward touch control produced no observable gameplay frame change.",
+    );
   report.status = "passed";
 } catch (error) {
   report.status = "failed";

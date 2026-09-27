@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "purpose": "Verify initialized Chrome is signed out and on about:blank before opening the pinned public share.",
+  "device": {
+    "avd": "droidlm_api35_orbsie_signedout_clone_20260927",
+    "deviceId": "emulator-5560",
+    "androidRelease": "15",
+    "androidAccountCount": 0,
+    "chrome": "124.0.6367.219"
+  },
+  "chromeBeforeNavigation": {
+    "cdpEndpoint": "http://127.0.0.1:9232",
+    "activeTabUrl": "about:blank",
+    "browserContexts": 1,
+    "exposedContextPages": 1,
+    "shareOriginCookieCount": 0,
+    "deploymentOriginCookieCount": 0,
+    "navigationToTargetPerformed": false,
+    "legalTermsAccepted": false,
+    "accountStateChanged": false,
+    "screenshot": "chrome-preflight.png",
+    "screenshotBytes": 60468,
+    "screenshotSha256": "bfff3ceeb5050d4a0070cf7339c7ff533875f2a5466f89ad59d36d06c53b5e39"
+  }
+}
