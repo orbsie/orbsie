@@ -1699,13 +1699,16 @@ function sha256(bytes) {
 function publicationProjectComparable(project) {
   if (!project || typeof project !== "object") return null;
   const { messages: _messages, ...rest } = project;
-  return rest;
+  // Projects cross JSON boundaries in both exported ZIPs and publications.
+  // Match that wire representation so own properties with `undefined` values
+  // (which JSON omits) do not make an unchanged world look different.
+  return JSON.parse(JSON.stringify(rest));
 }
 
 /**
  * Verify the signed-out publication against the exact project that reached
- * the follow-on phases. Publication intentionally strips chat messages, so
- * those are the only fields omitted from the structural comparison.
+ * the follow-on phases. Chat messages are intentionally excluded, and the
+ * remaining project is compared using its JSON wire representation.
  */
 export function assertPublicationProjectMatches(
   actual,

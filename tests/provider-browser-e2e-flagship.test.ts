@@ -1760,6 +1760,38 @@ describe("flagship provider story contract", () => {
     expect(() =>
       assertPublicationProjectMatches(wrongProject, expected),
     ).toThrow(/changed the project identity/);
+
+    const wrongRevision = structuredClone(published);
+    wrongRevision.revision += 1;
+    expect(() =>
+      assertPublicationProjectMatches(wrongRevision, expected),
+    ).toThrow(/changed the project revision/);
+  });
+
+  it("matches the exported JSON shape when undefined entity fields are omitted", () => {
+    const expected: any = initialProject();
+    expected.entities[0].assetPolicy = "new-only";
+    expected.entities[1].assetPolicy = undefined;
+    expected.entities[2].assetPolicy = undefined;
+
+    const exported = JSON.parse(JSON.stringify(expected));
+
+    expect(exported.entities[0].assetPolicy).toBe("new-only");
+    expect(Object.hasOwn(exported.entities[1], "assetPolicy")).toBe(false);
+    expect(Object.hasOwn(exported.entities[2], "assetPolicy")).toBe(false);
+    expect(assertPublicationProjectMatches(exported, expected)).toBe(exported);
+  });
+
+  it("still rejects explicit asset policy content changes after JSON normalization", () => {
+    const expected: any = initialProject();
+    expected.entities[0].assetPolicy = "new-only";
+    expected.entities[1].assetPolicy = undefined;
+    const exported = JSON.parse(JSON.stringify(expected));
+    exported.entities[0].assetPolicy = "existing-only";
+
+    expect(() => assertPublicationProjectMatches(exported, expected)).toThrow(
+      /changed the published world content/,
+    );
   });
 
   it("keeps the signed-in app wrapper separate from the published deployment iframe", () => {
