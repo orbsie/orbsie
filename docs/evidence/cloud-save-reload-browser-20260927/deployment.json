@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-27T23:43:00Z",
+  "sourceCommit": "c9c7369",
+  "deploymentId": "dpl_y9Srao3nYCRBicCQt4DkBKnTHTcr",
+  "deploymentStatus": "READY",
+  "productionAlias": "https://orbsie.com",
+  "readOnlySmoke": {
+    "chromeLandingRenderedWithCompatibilityGraphics": true,
+    "accountsEnabled": true,
+    "publishingEnabled": true,
+    "trialEnabled": true,
+    "trialRemainingForTestEgress": 1,
+    "robotsHttpStatus": 200,
+    "previouslyPublishedFlagshipProjectHttpStatus": 200
+  },
+  "modelCalls": 0,
+  "limits": "The signed-in cloud reload/save fixture ran against the local production build and synthetic account; no post-deployment signed-in browser save was performed."
+}

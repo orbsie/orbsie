@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 27 cloud-save fix release: clean source `c9c7369` deployed as Vercel
+`dpl_y9Srao3nYCRBicCQt4DkBKnTHTcr` (READY) and aliased to
+`https://orbsie.com`. Owner Chrome main page rendered with compatibility
+graphics; public config still has accounts/publishing and hosted ChatGPT flags,
+free trial is enabled with one prompt remaining for this test egress, robots
+returned 200, and the previously published flagship project remains 200. No
+model call or production account write occurred during this release smoke.
+The signed-in save fixture passed on the local production build connected to
+the same synthetic account/database, not on the deployed alias. Evidence:
+`docs/evidence/cloud-save-reload-browser-20260927/deployment.json`.
+
 Sep 27 integration of the cloud-save reload fix: a rebuilt loopback production
 app and synthetic signed-in browser context passed local revision 42 reopening
 after reload, cloud revision 35 verification, ordinary UI Save HTTP 200, exact
