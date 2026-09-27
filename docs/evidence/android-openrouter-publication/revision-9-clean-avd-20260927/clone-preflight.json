@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "avd": "droidlm_api35_orbsie_signedout_clone_20260927",
+  "device": "emulator-5560",
+  "chrome": "124.0.6367.219",
+  "androidAccountCount": 0,
+  "restoredChromeTabCount": 1,
+  "restoredExactSharePageBeforeTest": false,
+  "restoredPinnedDeploymentPageBeforeTest": false,
+  "shareCookiesBefore": 1,
+  "pinnedDeploymentCookiesBefore": 0,
+  "shareCookiesRemovedInClone": 1,
+  "shareCookiesAfter": 0,
+  "pinnedDeploymentCookiesAfter": 0,
+  "currentTabBeforeHarness": "about:blank",
+  "targetNavigationsPerformed": 0,
+  "originalAvdModified": false,
+  "accountStateChanged": false
+}

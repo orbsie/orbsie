@@ -1,0 +1,11 @@
+# OpenRouter revision 9 Android Chrome check
+
+The signed-out Android Chrome check reached the pinned public revision-9 publication and verified its project snapshot and catalog assets. The rendered island, tree, and crystal are visible in the captured scene. The check is partial because camera movement was not established.
+
+The first clean Android 15/API 35 non-Play AVD stopped at Chrome's first-run Terms of Service screen. No terms or data-sharing choices were accepted. A separate copy of the already-initialized API 35 AVD was then used, leaving the original AVD untouched. The clone had no Android accounts. Its one `orbsie.com` cookie was removed only in that clone; both the share and pinned deployment origins had zero cookies before navigation. See [first-run-terms-block.json](first-run-terms-block.json) and [clone-preflight.json](clone-preflight.json).
+
+The single harness run is in [initialized-profile-clone/report.json](initialized-profile-clone/report.json). It fetched project `d33a530a-1cd8-4943-a7ae-28d11538ad87` revision 9 from the pinned deployment, matched the checked-in world snapshot, and received HTTP 200 for both GLBs with exact byte and SHA-256 matches. The page became ready in Android Chrome's Canvas2D compatibility renderer; the capture shows the island, tree, and crystal. The run recorded no generation requests, editor/provider requests, external requests, page errors, or console errors.
+
+The run ended as `failed` because the touch canvas before/after hashes were identical. Review of the captured viewport shows that the recorded start point (`x=379`, `y=684` CSS pixels) landed on the bottom-right jump control, so this does not establish camera-pan behavior. The harness now starts the drag at 45% of canvas height, above that control, but this adjustment was not exercised because only one harness run was authorized. Touch camera movement remains unverified. The unchanged before/after captures and complete-page rendered capture are retained alongside the report.
+
+No model calls were made. The browser was not asked to accept legal terms, and no existing profile, account, or original AVD state was changed. The clone emulator was shut down after evidence collection.

@@ -1,0 +1,7 @@
+# Single Android Chrome harness run
+
+This report uses `droidlm_api35_orbsie_signedout_clone_20260927` (`emulator-5560`), a separate userdata copy of the initialized API 35 AVD. Chrome 124 was already through first-run; the clone had no Android accounts. Preflight removed the sole `orbsie.com` cookie from the clone only and verified zero cookies for both the public share and pinned deployment origins before opening the share URL. The original AVD was not modified.
+
+The signed-out share returned HTTP 200 and embedded the pinned revision-9 deployment. `project.json` matched the sanitized revision snapshot. Both referenced GLBs returned HTTP 200 and matched the checked-in bytes exactly. The page rendered in Canvas2D compatibility mode, with the island, tree, and crystal visible in [assets-rendered.png](assets-rendered.png). The request trace has no generation, editor/provider, or external requests, and no page or console errors.
+
+The harness status is `failed` because the touch drag did not change the canvas. The recorded starting point is visibly on the jump control; this run cannot establish world-camera movement. See the manually reviewed `evidenceReview` field in [report.json](report.json). The harness start point was moved to 45% canvas height after this run, without a rerun. `scene-before-touch.png` and `scene-after-touch.png` are byte-identical captures. Post-navigation cookie count was not recorded because the assertion stopped the run before its final checks.
