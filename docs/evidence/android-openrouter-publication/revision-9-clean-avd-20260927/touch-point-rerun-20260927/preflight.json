@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "purpose": "Pre-navigation signed-out preflight for the one targeted touch-probe rerun.",
+  "sourcePublication": {
+    "report": "docs/evidence/provider-e2e/openrouter-continuous-publication-20260927/publication.json",
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "deploymentId": "dpl_FG77PmZsFdNxMeT98jsSN7Ua6MKN",
+    "shareUrl": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "deploymentUrl": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app"
+  },
+  "device": {
+    "avd": "droidlm_api35_orbsie_signedout_clone_20260927",
+    "avdPath": "/home/marcos/.android/avd/droidlm_api35_orbsie_signedout_clone_20260927.avd",
+    "deviceId": "emulator-5560",
+    "emulatorVersion": "37.1.11.0",
+    "androidRelease": "15",
+    "androidAccountCount": 0,
+    "chrome": "124.0.6367.219",
+    "physicalDevice": false,
+    "originalAvdModified": false
+  },
+  "chromeBeforeNavigation": {
+    "cdpReady": true,
+    "cdpEndpoint": "http://127.0.0.1:9232",
+    "activeTabUrl": "about:blank",
+    "browserContexts": 1,
+    "exposedContextPages": 1,
+    "shareOriginCookieCount": 0,
+    "deploymentOriginCookieCount": 0,
+    "navigationToTargetPerformed": false,
+    "termsAccepted": false,
+    "accountStateChanged": false,
+    "cookieStateChanged": false,
+    "screenshot": "chrome-preflight.png",
+    "screenshotBytes": 37683,
+    "screenshotSha256": "9d612310d268a2bcbf607357a16152948320268ed670e33ef238712052e5381f"
+  },
+  "preflightMethod": "Attached through forwarded Android Chrome CDP, inspected cookies scoped to the exact share and pinned deployment origins, and confirmed the exposed active tab remained about:blank before launching the harness."
+}

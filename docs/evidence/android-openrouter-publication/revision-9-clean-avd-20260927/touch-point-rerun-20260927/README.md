@@ -1,0 +1,9 @@
+# Targeted Android Chrome touch rerun
+
+This is the single rerun requested after the first touch probe began on the jump control. It uses the separate initialized API 35 clone `droidlm_api35_orbsie_signedout_clone_20260927` (`emulator-5560`), with Chrome 124 and no Android accounts. Before the harness ran, CDP showed Chrome on `about:blank` and zero cookies for `https://orbsie.com` and the pinned deployment origin. The full Chrome preflight screenshot and its hash are recorded in `preflight.json`. No terms, account, or original profile state was changed.
+
+The signed-out share page became ready and matched revision 9's sanitized project snapshot. `project.json` and both GLBs returned HTTP 200; the rock response matched 7,552 checked-in bytes (`6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25`), and the tree response matched 9,428 bytes (`562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d`). The pink island, teal tree, and cyan crystal are visible in [assets-rendered.png](assets-rendered.png).
+
+The adjusted one-finger drag started at `(379, 386)` and ended at `(267, 386)` CSS pixels, in clear canvas below the island and above the control overlay. The canvas before and after hashes are identical, and the run ended at `Touch drag did not change the rendered canvas.` No additional input variants were tried. This is a real no-response result for the tested gesture and suggests an interaction or input-routing gap; the evidence cannot distinguish those causes. See the manual `evidenceReview` in [report.json](report.json), [scene-before-touch.png](scene-before-touch.png), and [scene-after-touch.png](scene-after-touch.png).
+
+The report contains no generation, editor/provider, or external requests, and no page or console errors. Post-navigation cookies were not recorded because the touch assertion stopped the harness before its final checks. No model calls were made. The clone emulator was shut down after this run.

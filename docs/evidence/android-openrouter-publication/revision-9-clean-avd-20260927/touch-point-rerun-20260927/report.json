@@ -1,0 +1,335 @@
+{
+  "status": "failed",
+  "sourceCommit": "4b1ad40d45fcb471916c1fa32b7ad6a3d4aad65f",
+  "publication": {
+    "path": "docs/evidence/provider-e2e/openrouter-continuous-publication-20260927/publication.json",
+    "provider": "openrouter",
+    "pinned": true,
+    "model": "openai/gpt-6-luna",
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "digest": null,
+    "exportedProjectSha256": "e777f4bb17c3eaf76824fe18b2e9ba119a10ba8e5dce38cebea78c030d269a36",
+    "deploymentId": "dpl_FG77PmZsFdNxMeT98jsSN7Ua6MKN",
+    "deploymentUrl": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+    "signedOutShareUrl": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "signedOutIframeOrigin": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+    "expectedCatalogAssets": [
+      {
+        "assetId": "kenney.nature.rock-large-a",
+        "path": "/models/kenney/nature-kit/rock_largeA.glb",
+        "localPath": "public/models/kenney/nature-kit/rock_largeA.glb",
+        "bytes": 7552,
+        "sha256": "6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25"
+      },
+      {
+        "assetId": "kenney.nature.tree-default",
+        "path": "/models/kenney/nature-kit/tree_default.glb",
+        "localPath": "public/models/kenney/nature-kit/tree_default.glb",
+        "bytes": 9428,
+        "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+      }
+    ]
+  },
+  "deploymentUrl": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+  "publicUrl": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87",
+  "assetResponses": [
+    {
+      "origin": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+      "path": "/project.json",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 934,
+      "sha256": "e103dffead3e9f1885978400d1a2f010e39aad388f57549108bb4956cdcfbbdc",
+      "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+      "revision": 9,
+      "expectedWorldMatch": true
+    },
+    {
+      "origin": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+      "path": "/models/kenney/nature-kit/rock_largeA.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary",
+      "bytes": 7552,
+      "sha256": "6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25",
+      "assetId": "kenney.nature.rock-large-a",
+      "expectedSha256": "6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25",
+      "exactBytesMatch": true
+    },
+    {
+      "origin": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+      "path": "/models/kenney/nature-kit/tree_default.glb",
+      "status": 200,
+      "contentType": "model/gltf-binary",
+      "bytes": 9428,
+      "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d",
+      "assetId": "kenney.nature.tree-default",
+      "expectedSha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d",
+      "exactBytesMatch": true
+    }
+  ],
+  "device": {
+    "id": "emulator-5560",
+    "android": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chrome": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome",
+    "physicalDevice": false
+  },
+  "renderer": {
+    "mode": "auto",
+    "selection": "automatic",
+    "actual": "Canvas2D",
+    "contexts": [
+      {
+        "requested": "webgl2",
+        "actual": "webgl2",
+        "forcedUnavailable": false,
+        "canvasId": null,
+        "canvasClass": "",
+        "vendor": "Google Inc. (Google (Google Inc.))",
+        "renderer": "ANGLE (Google (Google Inc.), Android Emulator OpenGL ES Translator (Google SwiftShader), OpenGL ES 3.0)"
+      },
+      {
+        "requested": "2d",
+        "actual": "2d",
+        "forcedUnavailable": false,
+        "canvasId": null,
+        "canvasClass": ""
+      }
+    ],
+    "activeEvidence": "Visible .software-world and successful 2d context."
+  },
+  "touchInput": {
+    "method": "Chrome DevTools Protocol Input.dispatchTouchEvent",
+    "actions": ["one-finger canvas drag to pan the world camera"],
+    "drag": {
+      "start": {
+        "x": 379,
+        "y": 386
+      },
+      "end": {
+        "x": 267,
+        "y": 386
+      },
+      "canvasBeforeSha256": "9caaccb2510ea0aa5e5d0503fb18a3c0d221ad2ce993d5d130a36d6226f80145",
+      "canvasAfterSha256": "9caaccb2510ea0aa5e5d0503fb18a3c0d221ad2ce993d5d130a36d6226f80145",
+      "renderedCanvasChanged": false
+    }
+  },
+  "providerCalls": 0,
+  "requests": [
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87",
+      "resourceType": "document",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/3sr5t0apunn6n.css",
+      "resourceType": "stylesheet",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/25kvgcvbp6c14.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/fonts/fonts.css",
+      "resourceType": "stylesheet",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/04b6blhial_2u.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/0j5a_qkw23a8h.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/3peubl9ttlgvx.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/",
+      "resourceType": "document",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/turbopack-0zmk-0rfb9sv9.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/2corl6wyj4669.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/1kp1o4kqi1096.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/fonts/dm-sans-latin-wght-normal.woff2",
+      "resourceType": "font",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/fonts/manrope-latin-wght-normal.woff2",
+      "resourceType": "font",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/runtime.css",
+      "resourceType": "stylesheet",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/runtime.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/00la667nv2a5b.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/0js0yn009a32e.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orbsie.com/_next/static/immutable/chunks/3f4fc2q2x6j8t.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/project.json",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/models/kenney/nature-kit/rock_largeA.glb",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/models/kenney/nature-kit/tree_default.glb",
+      "resourceType": "fetch",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/asset-geometry-worker.js",
+      "resourceType": "script",
+      "blocked": false
+    },
+    {
+      "method": "GET",
+      "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app/asset-geometry-worker.js",
+      "resourceType": "script",
+      "blocked": false
+    }
+  ],
+  "generationRequests": [],
+  "editorProviderRequests": [],
+  "externalRequests": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "expectedWebglInitializationErrors": 0,
+  "checks": {
+    "ready": true,
+    "exactRevision": true,
+    "exactCatalogAssets": [
+      {
+        "assetId": "kenney.nature.rock-large-a",
+        "path": "/models/kenney/nature-kit/rock_largeA.glb",
+        "bytes": 7552,
+        "sha256": "6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25",
+        "responseStatus": 200
+      },
+      {
+        "assetId": "kenney.nature.tree-default",
+        "path": "/models/kenney/nature-kit/tree_default.glb",
+        "bytes": 9428,
+        "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d",
+        "responseStatus": 200
+      }
+    ]
+  },
+  "cookiesBefore": 0,
+  "viewport": {
+    "width": 412,
+    "height": 728,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false
+  },
+  "error": "Touch drag did not change the rendered canvas.",
+  "finishedAt": "2026-09-27T18:57:02.909Z",
+  "evidenceReview": {
+    "visualScene": {
+      "status": "observed",
+      "fullPageCapture": "assets-rendered.png",
+      "observation": "The public revision-9 page is ready and the pink island, teal tree, and cyan crystal are visible in the Canvas2D compatibility renderer."
+    },
+    "touchCameraMovement": {
+      "status": "no_visible_response",
+      "probeStartWasAdjusted": true,
+      "startAndEndCssPixels": {
+        "x": 379,
+        "y": 386
+      },
+      "endCssPixels": {
+        "x": 267,
+        "y": 386
+      },
+      "captureReview": "The adjusted drag runs across visibly unobstructed world canvas below the island and above the on-screen controls in scene-before-touch.png.",
+      "beforeAfterCanvasHashesMatch": true,
+      "interpretation": "No camera response was observed for this drag. This is consistent with a product interaction gap or touch event-routing issue; these captures alone do not distinguish the cause.",
+      "additionalInputVariantsTried": false
+    },
+    "postNavigationCookies": "Not recorded because the harness stopped at the touch assertion. The independent preflight and harness pre-navigation check both recorded zero cookies for the share and pinned deployment origins."
+  }
+}
