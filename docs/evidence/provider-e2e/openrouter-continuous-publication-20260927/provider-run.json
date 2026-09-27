@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "sourceCommit": "483ce32fb9d5075e35f671262854156f322e946c",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "maxOutputTokensPerCall": 4096,
+  "maxGenerationRequests": 2,
+  "generationRequests": 2,
+  "generationHttpStatuses": [
+    200,
+    200
+  ],
+  "retriesOrFallbacks": false,
+  "blockedExternalRequests": 0,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": "passed",
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "project": {
+    "id": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "entityCount": 3,
+    "entities": [
+      {
+        "id": "tiny-island",
+        "label": "Tiny Island",
+        "stage": "ready",
+        "color": "#ff44aa",
+        "geometryKind": "asset",
+        "behavior": null
+      },
+      {
+        "id": "island-tree",
+        "label": "Island Tree",
+        "stage": "ready",
+        "color": "#378c72",
+        "geometryKind": "asset",
+        "behavior": null
+      },
+      {
+        "id": "island-crystal",
+        "label": "Island Crystal",
+        "stage": "ready",
+        "color": "#79e7e5",
+        "geometryKind": "crystal",
+        "behavior": null
+      }
+    ],
+    "sourceZipSha256": "92479c7692c21e4e7c9e1de4fe83f117f18e934b47cf3e91f0b46744b998dfe4",
+    "sourceProjectSha256": "e777f4bb17c3eaf76824fe18b2e9ba119a10ba8e5dce38cebea78c030d269a36",
+    "sanitizedProjectSha256": "ed4af2205760f8224ab781b1fb42def3da6a5794f25fbec456dc639b98a271f9"
+  },
+  "cloudSave": {
+    "status": "passed",
+    "revision": 9,
+    "phases": [
+      "latest-journal-complete",
+      "account-ui-recovery-complete",
+      "recovered-indexeddb-verified",
+      "cloud-save-200-same-revision",
+      "fresh-cookie-only-context-cloud-open",
+      "fresh-indexeddb-verified"
+    ]
+  },
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "signedOutProductionPublication": "passed"
+}

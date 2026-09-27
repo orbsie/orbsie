@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "scope": "Publish the exact OpenRouter loopback cloud Orb through authenticated production API; OpenRouter key remains local.",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "generationRequests": 2,
+  "generationStatuses": [
+    200,
+    200
+  ],
+  "cloud": {
+    "authenticatedProductionLookup": "passed",
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "exportedProjectSha256": "e777f4bb17c3eaf76824fe18b2e9ba119a10ba8e5dce38cebea78c030d269a36",
+    "snapshotTokenPresent": true
+  },
+  "publication": {
+    "submitStatus": 200,
+    "state": "READY",
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "vercelProjectId": "prj_KChEB1bvrcQMmCCw5sGv344bYGcY",
+    "deploymentId": "dpl_FG77PmZsFdNxMeT98jsSN7Ua6MKN",
+    "deploymentUrl": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+    "servedRevision": 9,
+    "url": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87"
+  },
+  "signedOut": {
+    "status": 200,
+    "url": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "iframeOrigin": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+    "zeroCookiesAtStart": true,
+    "canvasVisible": true,
+    "ready": true,
+    "editorProviderRequests": 0,
+    "blockedExternalRequests": 0,
+    "pageErrorCount": 0,
+    "screenshot": "signed-out-playback.png"
+  },
+  "productionSignInStatus": 200,
+  "publicSnapshot": {
+    "status": 200,
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9,
+    "exactWorldContentIgnoringConversation": true
+  }
+}

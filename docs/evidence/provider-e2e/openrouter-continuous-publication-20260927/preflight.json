@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "sourceCommit": "483ce32fb9d5075e35f671262854156f322e946c",
+  "productionBuild": "passed",
+  "database": {
+    "connected": true,
+    "accountTablePresent": true,
+    "sessionTablePresent": true,
+    "orbTablePresent": true
+  },
+  "loopbackProductionServer": {
+    "origin": "http://127.0.0.1:3053",
+    "accounts": true,
+    "serverOutputCapTokens": 4096,
+    "exactOpenRouterModelCatalogMatch": true,
+    "invalidGenerateOriginProbeHttpStatus": 400
+  },
+  "freshAccount": {
+    "created": true,
+    "privateCloudStateMode": "0600",
+    "sameUserAuthenticatedOnLoopbackAndProduction": true
+  },
+  "productionPublisher": {
+    "accountCapability": true,
+    "configAccounts": true,
+    "configPublishing": true,
+    "ownerRouteAuthenticated": true
+  },
+  "localPublisher": "not-configured; live publish used the authenticated production app after loopback cloud save",
+  "initialCapGuard": {
+    "generationCalls": 0,
+    "cause": "server defaulted to 10000; loopback server restarted with ORBSIE_GENERATION_MAX_TOKENS=4096 before provider run"
+  },
+  "openrouterKeySentToProduction": false
+}

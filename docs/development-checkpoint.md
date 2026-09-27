@@ -1,5 +1,24 @@
 # Development checkpoint
 
+Sep 27 one fresh local-only OpenRouter `openai/gpt-6-luna` creation and
+selected-object material edit passed on the loopback production build with low
+reasoning, default tier, 4,096 output tokens per call, and exactly two HTTP 200
+generation requests (no retry/fallback). Cloud save/reopen, local recovery,
+export, and standalone playback passed at revision 9 for project
+`d33a530a-1cd8-4943-a7ae-28d11538ad87`. The authenticated production app
+published that same cloud revision to the existing Vercel Orb project; the
+deployment reached READY at
+`https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app`.
+Signed-out `https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87` returned
+the exact revision-9 public snapshot and a ready playable canvas with zero
+editor/provider requests or page errors. The OpenRouter key remained local.
+The initial run guard refused before inference because the server defaulted to
+10,000 tokens; restarting with the authorized 4,096 cap made no model call,
+then the single bounded provider run passed. Sanitized evidence (report,
+preflight, conversation-free project snapshot, publication report, and signed-
+out screenshot; source ZIP omitted) is in
+`docs/evidence/provider-e2e/openrouter-continuous-publication-20260927/`.
+
 Sep27 one live `orbsie.com` publication of the pinned OpenRouter GPT-6 Luna
 revision-42 export passed from a fresh test account. The harness cloned the
 source to Orb `pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20`, saved and
