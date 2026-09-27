@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-09-27",
+  "mode": "zero-model-call retained-export offline continuation",
+  "sourceLiveRun": "openrouter-flagship-continuous-publication-20260927-retry-after-preflight/sanitized-summary.json",
+  "sourceZipSha256": "ac020b19017583ab5237f855e32fd419062bf736dcb2d368ba9e69f6e348de1a",
+  "sourceRevision": 42,
+  "validation": "verifyStandalone using the unmodified exported world.zip and the original fresh gameplay phase bindings",
+  "result": {
+    "standalone": "passed",
+    "gameplay": "passed",
+    "projectIdMatchedFreshRun": true,
+    "revisionMatchedFreshUndo": true,
+    "collectiblesCollected": 5,
+    "blockedExternalRequests": 0,
+    "pageErrors": 0,
+    "winAndResetScreenshotsRetainedPrivately": true
+  },
+  "limitation": "This is an offline continuation after the original live harness stopped at export comparison; cloud save and signed-out publication were not exercised."
+}
