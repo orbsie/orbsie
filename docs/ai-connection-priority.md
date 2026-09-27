@@ -27,9 +27,10 @@ Browser-only is a firm requirement. A supported hosted subscription integration 
   completed the key exchange: Orbsie displayed “OpenRouter connected,”
   Balanced selected Luna, and the saved `princess in a castle` draft returned.
   The OpenRouter key was not copied to files or chat. This proves the live
-  authorization and exchange can work, but the ordinary redirect remains
-  broken until the callback fix is deployed and rerun end to end; no model
-  inference was performed with this OAuth-issued key.
+  authorization and exchange can work. The markerless callback fix is now
+  deployed on `https://orbsie.com`, and synthetic production success,
+  cancellation, and race suites pass. An unmodified live redirect and model
+  inference with this OAuth-issued key remain unverified.
 - OpenRouter PKCE and Settings callback originally shipped in 1ec0591. Ten core tests and a simulated browser redirect/callback passed before the real callback-shape mismatch above was observed.
 - Live Luna OpenRouter model creation, material edit, reload and standalone export passed (7ec1bad). This used the existing API key, not an OAuth-issued credential.
 - OAuth blocked-storage, cancellation and pending-control fixes are reviewed and deployed, along with unsent composer prompt preservation (57218cd). Simulated production success and cancellation passed; existing-world selection recovery passed on production aaa0d0d: success and cancellation preserve both entities, revision 9, selected object and prompt, and clear pending OAuth drafts without persisting the provider key. These checks do not prove real provider consent.

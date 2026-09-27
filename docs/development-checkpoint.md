@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 27 the OpenRouter markerless callback fix, cancellation draft recovery,
+orphan-query cleanup, and blocked-storage message are deployed on production
+`https://orbsie.com` as Vercel deployment `dpl_DDSc8qGDaLtC8sLHeZdfQfcTgGKn`
+(READY). The local production build passed. Three synthetic Chromium suites
+against the promoted production alias passed: OAuth success restored the prompt
+and exchanged exactly once, success/cancellation preserved a saved world and
+selection with zero cancellation exchanges, and blocked-storage/reload races
+scrubbed callbacks without extra exchanges. These suites intercepted OpenRouter
+and made zero live provider/model calls. The owner's prior real OAuth consent
+returned a markerless code; manually adding the missing marker allowed the
+single live code exchange, showed “OpenRouter connected,” selected Balanced
+Luna, and restored `princess in a castle`. That live flow preceded this release;
+a fresh unmodified live OAuth redirect and OAuth-key inference remain unverified.
+The production free trial endpoint still reports `enabled:false`.
+
 Sep 27 OpenRouter OAuth accepts OpenRouter's observed markerless root return
 when the same tab still has its pending PKCE transaction. Callback origin,
 path, state, and single code-or-error response are validated; the transaction
