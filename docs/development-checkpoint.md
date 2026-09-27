@@ -1,5 +1,15 @@
 # Development checkpoint
 
+Sep 27 signed-out Android Chrome validation for OpenRouter project
+`d33a530a-1cd8-4943-a7ae-28d11538ad87` revision 9 stopped before navigation.
+The existing Android Chrome profile had one cookie for `orbsie.com` and none
+for the pinned Vercel origin; Playwright could not create an isolated browser
+context, and the Chrome incognito path surfaced a sync-consent screen. The
+profile was left intact. No public page, asset, or provider/auth endpoint was
+requested; rendered assets, screenshot, and touch response remain unverified
+on Android. This is an environment block, not a failed publication result.
+Evidence: `docs/evidence/android-openrouter-continuous-publication-20260927/`.
+
 Sep 27 one fresh local-only OpenRouter `openai/gpt-6-luna` creation and
 selected-object material edit passed on the loopback production build with low
 reasoning, default tier, 4,096 output tokens per call, and exactly two HTTP 200

@@ -1,0 +1,59 @@
+{
+  "status": "blocked",
+  "sourceCommit": "6eed92ec0edd7dae93885a7852769ac2ce984ed5",
+  "scope": "Signed-out Android Chrome validation of the pinned OpenRouter revision-9 public Orb.",
+  "sourcePublication": {
+    "report": "docs/evidence/provider-e2e/openrouter-continuous-publication-20260927/publication.json",
+    "provider": "openrouter",
+    "model": "openai/gpt-6-luna",
+    "projectId": "d33a530a-1cd8-4943-a7ae-28d11538ad87",
+    "revision": 9
+  },
+  "deployment": {
+    "url": "https://orb-e1fab578a6fcded5a5e7-r7kfjhhxi-grappeggias-projects.vercel.app",
+    "shareUrl": "https://orbsie.com/o/d33a530a-1cd8-4943-a7ae-28d11538ad87"
+  },
+  "device": {
+    "id": "emulator-5554",
+    "androidRelease": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "1080x2400",
+    "density": 420,
+    "chrome": "124.0.6367.219",
+    "physicalDevice": false
+  },
+  "blocker": {
+    "defaultProfileCookies": {
+      "shareOrigin": 1,
+      "deploymentOrigin": 0
+    },
+    "isolatedContextCreation": "failed",
+    "isolatedContextError": "Target.createBrowserContext failed.",
+    "chromeUiDuringIncognitoAttempt": "sync-consent screen",
+    "existingCookiesCleared": false,
+    "possibleBlankTabAdded": true,
+    "details": "The Android Chrome profile already had one orbsie.com cookie. CDP could not create an isolated BrowserContext; the normal Chrome incognito route surfaced a sync-consent screen, so validation stopped before public navigation."
+  },
+  "observedWork": {
+    "cdpConnected": true,
+    "publicPageLoads": 0,
+    "harnessSiteRequests": 0
+  },
+  "unverified": {
+    "authProviderCalls": "not reached",
+    "externalBlockedRequests": "not reached",
+    "pageErrors": "not observed",
+    "consoleErrors": "not observed",
+    "requestFailures": "not observed",
+    "catalogAssetsStatus": "not checked",
+    "catalogAssetPaths": [
+      "/models/kenney/nature-kit/rock_largeA.glb",
+      "/models/kenney/nature-kit/tree_default.glb"
+    ],
+    "renderedTreeAndIslandStatus": "not observed",
+    "androidScreenshotStatus": "not captured",
+    "touchGameplayOrCameraMovementStatus": "not tested"
+  },
+  "screenshots": [],
+  "finishedAt": "2026-09-27T16:59:16.912Z"
+}
