@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-27T16:21:04.405688+00:00",
+  "shareUrl": "https://orbsie.com/o/pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+  "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-en8sbxfen-grappeggias-projects.vercel.app",
+  "status": 200,
+  "checks": {
+    "http200": true,
+    "finalTitlePresent": true,
+    "latestDeploymentLinked": true,
+    "makeYourOwnPresent": true
+  }
+}
