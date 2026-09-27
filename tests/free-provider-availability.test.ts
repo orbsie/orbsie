@@ -47,7 +47,7 @@ it("allows a positive balance and caches concurrent and recent checks", async ()
 it.each([
   ["zero", { balance: 0 }],
   ["negative", { balance: -0.0045 }],
-  ["unreadable", { balance: "0.25" }],
+  ["whitespace", { balance: " 0.25" }],
   ["missing", { credits: 0.25 }],
 ])("fails closed for a %s balance response", async (_name, body) => {
   setKey();
@@ -57,6 +57,68 @@ it.each([
 
   expect(await available()).toBe(false);
 });
+
+it.each([
+  ["positive", "0.25", true, "available"],
+  ["zero", "0", false, "nonpositive_balance"],
+  ["negative", "-0.0045", false, "nonpositive_balance"],
+])(
+  "handles a %s decimal-string balance without logging its value",
+  async (_name, balance, expected, reason) => {
+    setKey();
+    const diagnostics: unknown[] = [];
+    const available = createFreeProviderAvailability({
+      fetcher: vi.fn(async () => Response.json({ balance })),
+      logger: (event) => diagnostics.push(event),
+    });
+
+    expect(await available()).toBe(expected);
+    expect(diagnostics).toEqual([
+      { event: "free_provider_credits_probe", reason },
+    ]);
+    expect(JSON.stringify(diagnostics)).not.toContain(balance);
+  },
+);
+
+it.each([
+  ["empty", ""],
+  ["leading whitespace", " 0.25"],
+  ["trailing whitespace", "0.25 "],
+  ["plus sign", "+0.25"],
+  ["leading decimal point", ".25"],
+  ["trailing decimal point", "1."],
+  ["leading zero", "00.25"],
+  ["exponent notation", "1e3"],
+  ["NaN", "NaN"],
+  ["infinity", "Infinity"],
+  ["invalid text", "not-a-number"],
+  ["nonfinite decimal", "9".repeat(309)],
+  ["overlength decimal", "9".repeat(513)],
+])(
+  "fails closed for a %s balance string without logging its value",
+  async (_name, balance) => {
+    setKey();
+    const diagnostics: unknown[] = [];
+    const available = createFreeProviderAvailability({
+      fetcher: vi.fn(async () => Response.json({ balance })),
+      logger: (event) => diagnostics.push(event),
+    });
+
+    expect(await available()).toBe(false);
+    expect(diagnostics).toEqual([
+      {
+        event: "free_provider_credits_probe",
+        reason: "malformed_credits_body",
+        schema: {
+          jsonKind: "object",
+          keys: ["balance"],
+          balanceKind: "string",
+        },
+      },
+    ]);
+    if (balance) expect(JSON.stringify(diagnostics)).not.toContain(balance);
+  },
+);
 
 it("fails closed on an unreadable or rejected credit request", async () => {
   setKey();

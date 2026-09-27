@@ -44,7 +44,11 @@ type ProbeResult = {
 
 const MAX_SCHEMA_KEYS_PER_OBJECT = 8;
 const MAX_SCHEMA_KEY_LENGTH = 32;
+const MAX_BALANCE_STRING_LENGTH = 512;
 const ASCII_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const DECIMAL_BALANCE = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
+
+type ParsedBalance = { valid: true; value: number } | { valid: false };
 
 function diagnostic(
   reason: DiagnosticReason,
@@ -124,6 +128,25 @@ function creditsBodySchema(value: unknown): CreditsBodySchema {
     }
   }
   return schema;
+}
+
+function parseCreditsBalance(value: unknown): ParsedBalance {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? { valid: true, value } : { valid: false };
+  }
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > MAX_BALANCE_STRING_LENGTH ||
+    !DECIMAL_BALANCE.test(value)
+  ) {
+    return { valid: false };
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed)
+    ? { valid: true, value: parsed }
+    : { valid: false };
 }
 
 export function createFreeProviderAvailability(
@@ -235,8 +258,10 @@ async function checkCredits(
         ),
       };
     }
-    const balance = (body as { balance?: unknown }).balance;
-    if (typeof balance !== "number" || !Number.isFinite(balance)) {
+    const parsedBalance = parseCreditsBalance(
+      (body as { balance?: unknown }).balance,
+    );
+    if (!parsedBalance.valid) {
       return {
         available: false,
         diagnostic: diagnostic(
@@ -246,7 +271,7 @@ async function checkCredits(
         ),
       };
     }
-    if (balance <= 0) {
+    if (parsedBalance.value <= 0) {
       return {
         available: false,
         diagnostic: diagnostic("nonpositive_balance"),
