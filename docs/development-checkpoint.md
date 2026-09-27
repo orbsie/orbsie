@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep27 production alias `https://orbsie.com` was updated to deployment
+`DwtS2YspB6NrtzbstLzmQz1UctnA` (source `a1008eb`). A fresh read-only
+`/api/trial` response is `{enabled:false,remaining:0,limit:3}`, consistent with
+the free provider being unavailable. In the owner's restored Chrome session,
+the failed draft `princess in a castle` remains in the prompt field, the old
+connection dialog says the free provider could not complete the request, and
+the refreshed entry point offers `Connect provider`. The pasted
+`sudo python3 .../accelerate-4tb-peer.py --run` line is not an Orbsie error and
+does not appear in this repository; the owner was asked for its exact screen
+location. Chrome also has a signed-in ChatGPT Pro tab. Clicking Orbsie's
+`Connect ChatGPT` reached OpenAI's account-selection and then `Sign in to Codex
+with ChatGPT` consent for the owner's account; authorization is awaiting the
+owner's specific confirmation, so subscription generation is not yet verified.
+
 Sep27 free trial availability now checks `GET /v1/credits` with only the
 configured `AI_GATEWAY_API_KEY_FREE` before `/api/trial` advertises prompts and
 before `/api/generate` model preflight or quota admission. Only a successful
