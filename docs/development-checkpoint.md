@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 27 one fresh anonymous production free-mode browser run on
+`https://orbsie.com` passed the standard tiny-island create, selected-object
+material edit, local recovery, export and standalone readiness checks at
+revision 9. It used exactly two `openai/gpt-6-luna` requests (both HTTP 200),
+low reasoning, default tier and a 4,096-token ceiling per request, with no
+fallback or generation-budget violation. Trial response headers recorded the
+allowance moving 3→2→1; no separate final `/api/trial` refresh was performed.
+Standalone playback had zero page errors and blocked external requests. No
+publication or flagship gameplay traversal was requested; the harness's
+flagship journey field remains incomplete outside this run's scope. Codex quota
+was 97% remaining before the run. Raw evidence remains in the mode-0700 local
+cache; sanitized summary:
+`docs/evidence/provider-e2e/free-trial-production-luna-create-edit-20260927/report.json`.
+
 Later Sep 27 funding check: the same private Vercel AI Gateway test key's
 read-only `/v1/credits` response now has a positive balance. Production
 `https://orbsie.com/api/trial` reports `enabled:true,remaining:3,limit:3` for

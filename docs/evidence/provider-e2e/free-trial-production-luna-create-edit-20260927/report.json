@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-27T22:38:35.471Z",
+  "status": "passed",
+  "scope": "fresh-anonymous-production-free-mode-create-edit-export-standalone",
+  "targetOrigin": "https://orbsie.com",
+  "provider": "free",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "outputTokenCeilingPerRequest": 4096,
+  "generation": {
+    "configuredMaximum": 2,
+    "requests": 2,
+    "httpStatuses": [200, 200],
+    "fallbackUsed": false,
+    "budgetViolations": 0,
+    "blockedExternalRequests": 0
+  },
+  "trialAllowance": {
+    "limit": 3,
+    "remainingBefore": 3,
+    "remainingAfterEachGenerationResponse": [2, 1],
+    "lastObservedRemaining": 1,
+    "finalReadbackPerformed": false,
+    "remainingSource": "generation response X-Orbsie-Trial-Remaining headers"
+  },
+  "creation": {
+    "status": "passed",
+    "catalogEntities": 2,
+    "proceduralEntities": 1,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedObjectPreserved": true
+  },
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": {
+    "status": "passed",
+    "projectRevision": 9,
+    "readyObservedUpperBoundMs": 4008.2,
+    "pageErrors": 0,
+    "blockedExternalRequests": 0
+  },
+  "publication": "not-requested",
+  "flagshipJourneyAcceptance": {
+    "status": "incomplete",
+    "scope": "not requested for this standard two-call create/edit run"
+  },
+  "rawEvidence": "Report, ZIP, and screenshots remain in the mode-0700 local provider-test cache; they are not committed."
+}
