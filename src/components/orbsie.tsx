@@ -72,6 +72,12 @@ import {
 } from "@/lib/cloud-generation-journal";
 import { uploadCloudGeneratedModels } from "@/lib/cloud-generated-models";
 import {
+  createCloudSaveAcknowledgement,
+  prepareCloudSaveContinuation,
+  readCloudSaveAcknowledgement,
+  writeCloudSaveAcknowledgement,
+} from "@/lib/cloud-save-continuation";
+import {
   isGenerationReady,
   type GenerationConnection,
 } from "@/lib/generation-connection";
@@ -208,6 +214,17 @@ type CloudProject = {
   publication_revision?: number | null;
 };
 type CloudBaseline = { revision: number; snapshotToken: string };
+type AccountUser = { id: string; name: string };
+
+function parseAccountUser(value: unknown): AccountUser | null {
+  if (!value || typeof value !== "object") return null;
+  const user = value as Record<string, unknown>;
+  return typeof user.id === "string" &&
+    user.id.length > 0 &&
+    typeof user.name === "string"
+    ? { id: user.id, name: user.name }
+    : null;
+}
 
 function canonicalizeSnapshot(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalizeSnapshot);
@@ -652,7 +669,7 @@ export default function Orbsie() {
   const modelCatalogRequest = useRef<AbortController | null>(null);
   const [storageUsage, setStorageUsage] = useState("");
   const [resetArmed, setResetArmed] = useState(false);
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<AccountUser | null>(null);
   const providerSession = useRef<Promise<ProviderSessionUser> | null>(null);
   const providerSessionController = useRef<AbortController | null>(null);
   const [cloudBaseline, setCloudBaseline] = useState<ProjectValue<{
@@ -705,8 +722,35 @@ export default function Orbsie() {
     const generation = accountGeneration.current;
     return () => inProject() && generation === accountGeneration.current;
   };
+  const rememberCloudBaseline = async (
+    project: Project,
+    accountId: string,
+    revision: number,
+    snapshotToken: string,
+    isCurrent: () => boolean,
+  ) => {
+    const value = { revision, snapshotToken };
+    if (!isCurrent()) return false;
+    setCloudBaseline({ projectId: project.id, value });
+    try {
+      const acknowledgement = await createCloudSaveAcknowledgement(
+        project,
+        accountId,
+        revision,
+        snapshotToken,
+      );
+      if (!isCurrent()) return false;
+      writeCloudSaveAcknowledgement(window.localStorage, acknowledgement);
+    } catch {
+      // The in-memory baseline remains usable for this session. If browser
+      // storage or hashing is unavailable, a later reload must prove ancestry
+      // from its own evidence or keep the local draft in conflict.
+    }
+    return isCurrent();
+  };
   const resolveCloudJournalBaseline = async (
     project: Project,
+    accountId: string,
     accountVersion: number,
     options: {
       allowMissing?: boolean;
@@ -814,6 +858,13 @@ export default function Orbsie() {
     const savedProject = committed(project);
     if (sameSnapshot(parsedSnapshot.data, savedProject)) {
       await assertCurrentScene(localBinding.digest);
+      await rememberCloudBaseline(
+        parsedSnapshot.data,
+        accountId,
+        baseline.revision,
+        baseline.snapshotToken,
+        stillCurrent,
+      );
       return baseline;
     }
 
@@ -845,6 +896,13 @@ export default function Orbsie() {
       throw Error(
         "The saved scene no longer matches its cloud recovery checkpoint. Open the latest account world before continuing.",
       );
+    await rememberCloudBaseline(
+      parsedSnapshot.data,
+      accountId,
+      baseline.revision,
+      baseline.snapshotToken,
+      stillCurrent,
+    );
     return baseline;
   };
   const clearAccountState = () => {
@@ -1267,10 +1325,8 @@ export default function Orbsie() {
             setChatGPTRestoreStatus("reconnect");
             return;
           }
-          if (
-            typeof data.user !== "object" ||
-            typeof (data.user as { name?: unknown }).name !== "string"
-          ) {
+          const sessionUser = parseAccountUser(data.user);
+          if (!sessionUser) {
             recordStartupDiagnostic({
               stage: "session",
               outcome: "transient",
@@ -1287,8 +1343,8 @@ export default function Orbsie() {
             tier: preference.tier,
             durationMs: performance.now() - startedAt,
           });
-          setUser(data.user);
-          void refreshCloud();
+          setUser(sessionUser);
+          void refreshCloud(sessionUser.id);
           setChatGPTStartupNeedsSession(false);
           beginChatGPTStartupRestore(
             preference,
@@ -1669,30 +1725,40 @@ export default function Orbsie() {
     window.addEventListener("resize", refresh);
     return () => window.removeEventListener("resize", refresh);
   }, [scrollChatToLatest]);
-  const refreshCloud = async () => {
+  const refreshCloud = async (accountId = user?.id) => {
+    if (!accountId) return;
     const isCurrent = captureCloudRequest();
-    const projectId = useOrb.getState().project.id;
-    const response = await fetch("/api/projects");
-    if (!response.ok) return;
-    const data = await response.json();
-    if (!isCurrent()) return;
-    setCloudProjects(data.projects ?? []);
-    const current = data.projects?.find(
-      (project: CloudProject) => project.id === useOrb.getState().project.id,
-    );
-    if (
-      current &&
-      JSON.stringify(current.snapshot) ===
-        JSON.stringify(committed(useOrb.getState().project))
-    )
-      setCloudBaseline({
-        projectId,
-        value: {
-          revision: current.revision,
-          snapshotToken: current.snapshotToken,
-        },
+    try {
+      const response = await fetch("/api/projects", {
+        credentials: "same-origin",
+        cache: "no-store",
+        redirect: "error",
       });
-    else setCloudBaseline(null);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!isCurrent()) return;
+      setCloudProjects(data.projects ?? []);
+      const currentProject = useOrb.getState().project;
+      const current = data.projects?.find(
+        (project: CloudProject) => project.id === currentProject.id,
+      );
+      if (
+        current &&
+        sameSnapshot(current.snapshot, committed(currentProject)) &&
+        current.revision === currentProject.revision &&
+        typeof current.snapshotToken === "string"
+      ) {
+        await rememberCloudBaseline(
+          current.snapshot,
+          accountId,
+          current.revision,
+          current.snapshotToken,
+          isCurrent,
+        );
+      } else if (isCurrent()) setCloudBaseline(null);
+    } catch {
+      // Account listing is advisory; Save verifies its base just in time.
+    }
   };
   useEffect(() => {
     const initialAccountGeneration = accountGeneration.current;
@@ -1797,7 +1863,7 @@ export default function Orbsie() {
                 (!startupPreference || startupStillCurrent())
               ) {
                 setUser(sessionUser);
-                void refreshCloud();
+                void refreshCloud(sessionUser.id);
               }
             })
             .catch(() => {
@@ -2006,13 +2072,13 @@ export default function Orbsie() {
                   "Cloud recovery could not save the starting world.",
               );
             }
-            setCloudBaseline({
-              projectId: project.id,
-              value: {
-                revision: result.revision,
-                snapshotToken: result.snapshotToken,
-              },
-            });
+            await rememberCloudBaseline(
+              project,
+              user.id,
+              result.revision,
+              result.snapshotToken,
+              current,
+            );
             lastJournalAcknowledgement = {
               revision: result.revision,
               snapshotToken: result.snapshotToken,
@@ -2137,6 +2203,7 @@ export default function Orbsie() {
         try {
           baselineOverride = await resolveCloudJournalBaseline(
             requestProject,
+            user.id,
             accountVersion,
             { allowMissing: true },
           );
@@ -2416,6 +2483,7 @@ export default function Orbsie() {
       if (user) {
         baselineOverride = await resolveCloudJournalBaseline(
           current.project,
+          user.id,
           accountVersion,
           { continuation },
         );
@@ -2549,13 +2617,14 @@ export default function Orbsie() {
         return;
       }
       if (!isCurrent()) return;
-      setCloudBaseline({
-        projectId,
-        value: {
-          revision: data.project.revision,
-          snapshotToken: data.project.snapshotToken,
-        },
-      });
+      if (user)
+        await rememberCloudBaseline(
+          data.project.snapshot,
+          user.id,
+          data.project.revision,
+          data.project.snapshotToken,
+          isCurrent,
+        );
       setModal(null);
       const recoveryInput = recoveredGenerationInput(run);
       setPrompt(recoveryInput.prompt);
@@ -2578,41 +2647,165 @@ export default function Orbsie() {
     }
   };
   const cloudSave = async () => {
-    const projectId = s.project.id;
     const isCurrent = captureCloudRequest();
+    const accountId = user?.id;
+    const accountVersion = accountGeneration.current;
+    const originalProject = useOrb.getState().project;
+    let saveProject = originalProject;
+    const projectId = originalProject.id;
+    const remainsSameProject = (expected: Project) =>
+      isCurrent() &&
+      accountVersion === accountGeneration.current &&
+      useOrb.getState().project.id === expected.id &&
+      sameSnapshot(committed(useOrb.getState().project), committed(expected));
     setBusy(true);
     try {
-      if (!(await uploadCloudGeneratedModels(s.project, isCurrent))) return;
-      const response = await fetch("/api/projects", {
+      if (!accountId) throw Error("Sign in before saving to your account.");
+      let baseline: CloudBaseline | null = null;
+      let storedAcknowledgement: ReturnType<
+        typeof readCloudSaveAcknowledgement
+      > = null;
+      try {
+        storedAcknowledgement = readCloudSaveAcknowledgement(
+          window.localStorage,
+          accountId,
+          projectId,
+        );
+      } catch {
+        // A denied browser-storage read simply removes the receipt-based path;
+        // the fetched snapshot and active local history still get checked.
+      }
+      const cloudReadResponse = await fetch(
+        `/api/projects?id=${encodeURIComponent(projectId)}`,
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+          redirect: "error",
+        },
+      );
+      if (!remainsSameProject(originalProject)) return;
+      let continuationError =
+        "Could not verify the cloud checkpoint. Your local draft remains on this device; export it or open the account copy before continuing.";
+      if (cloudReadResponse.status === 404) {
+        if (cloudVersion || storedAcknowledgement) {
+          setCloudBaseline(null);
+          throw Error(
+            "The previously saved cloud copy is no longer available. Your local draft remains on this device; export it before continuing.",
+          );
+        }
+      } else {
+        const data = (await cloudReadResponse.json().catch(() => null)) as {
+          project?: unknown;
+          error?: unknown;
+        } | null;
+        if (!remainsSameProject(originalProject)) return;
+        if (!cloudReadResponse.ok || !data?.project)
+          throw Error(
+            typeof data?.error === "string"
+              ? data.error
+              : "Could not read the saved cloud copy. Your local draft remains on this device.",
+          );
+        const remote = data.project as CloudProject;
+        const currentState = useOrb.getState();
+        const historyResult = await currentState.readHistoryFor(
+          committed(originalProject),
+        );
+        if (!remainsSameProject(originalProject)) return;
+        const history = historyResult?.history ?? currentState.history;
+        const prepared = await prepareCloudSaveContinuation({
+          accountId,
+          project: committed(originalProject),
+          history,
+          acknowledgement: storedAcknowledgement,
+          remote,
+        });
+        if (!remainsSameProject(originalProject)) return;
+        if (prepared.status === "blocked") {
+          const safeRemoteSnapshot = projectSchema.safeParse(remote.snapshot);
+          if (
+            safeRemoteSnapshot.success &&
+            remote.id === projectId &&
+            Number.isInteger(remote.revision) &&
+            typeof remote.snapshotToken === "string"
+          )
+            setConflict(remote);
+          setCloudBaseline(null);
+          continuationError =
+            prepared.reason === "cloud-version-changed"
+              ? "The cloud copy changed since this device's saved checkpoint. Your local draft remains on this device; open the cloud copy or export your draft before continuing."
+              : prepared.reason === "transcript-order-unproven"
+                ? "The local and cloud conversation histories cannot be safely joined. Your local draft remains on this device; open the cloud copy or export your draft before continuing."
+                : "The local draft has no verified cloud ancestor. Your local draft remains on this device; open the cloud copy or export your draft before continuing.";
+          throw Error(continuationError);
+        }
+        baseline = prepared.baseline;
+        saveProject = prepared.project;
+        if (prepared.messagesMerged) {
+          const latestState = useOrb.getState();
+          latestState.set({ project: saveProject, error: "" });
+          await useOrb.getState().save();
+          if (!remainsSameProject(saveProject)) return;
+          const persistedState = useOrb.getState();
+          if (
+            persistedState.readOnly ||
+            !persistedState.saved ||
+            persistedState.error
+          )
+            throw Error(
+              "The merged account conversation could not be saved on this device. Your local draft remains open; retry after resolving local storage access.",
+            );
+          saveProject = useOrb.getState().project;
+        }
+      }
+      if (!remainsSameProject(saveProject)) return;
+      if (
+        !(await uploadCloudGeneratedModels(saveProject, () =>
+          remainsSameProject(saveProject),
+        ))
+      )
+        return;
+      const saveResponse = await fetch("/api/projects", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          project: s.project,
-          baseRevision: cloudRevision,
-          baseSnapshotToken: cloudVersion?.snapshotToken ?? null,
+          project: saveProject,
+          baseRevision: baseline?.revision ?? null,
+          baseSnapshotToken: baseline?.snapshotToken ?? null,
         }),
       });
-      const data = await response.json();
-      if (!isCurrent()) return;
-      if (response.status === 409 && data.conflict) {
+      const data = await saveResponse.json().catch(() => ({}));
+      if (!remainsSameProject(saveProject)) return;
+      if (saveResponse.status === 409 && data.conflict) {
         setConflict(data.conflict);
         throw Error(data.error);
       }
-      if (!response.ok) throw Error(data.error);
-      setCloudBaseline({
-        projectId,
-        value: { revision: data.revision, snapshotToken: data.snapshotToken },
-      });
+      if (!saveResponse.ok) throw Error(data.error);
+      if (
+        !Number.isSafeInteger(data.revision) ||
+        data.revision !== saveProject.revision ||
+        typeof data.snapshotToken !== "string" ||
+        !/^[a-f0-9]{64}$/.test(data.snapshotToken)
+      )
+        throw Error(
+          "The cloud save completed, but its acknowledgement could not be verified. Reload the account copy before publishing.",
+        );
+      await rememberCloudBaseline(
+        saveProject,
+        accountId,
+        data.revision,
+        data.snapshotToken,
+        isCurrent,
+      );
       setConflict(null);
-      await refreshCloud();
-      if (!isCurrent()) return;
+      await refreshCloud(accountId);
+      if (!remainsSameProject(saveProject)) return;
       s.set({
         notice: data.archivePending
           ? "Saved to your account. The backup archive will be retried later."
           : "Saved to your account.",
       });
     } catch (e) {
-      if (isCurrent())
+      if (isCurrent() && accountId)
         s.set({ error: e instanceof Error ? e.message : "Cloud save failed." });
     } finally {
       if (isCurrent()) setBusy(false);
@@ -2685,9 +2878,11 @@ export default function Orbsie() {
       );
       const data = await response.json();
       if (!response.ok) throw Error(data.message ?? "Sign-in failed.");
+      const accountUser = parseAccountUser(data.user);
+      if (!accountUser) throw Error("Sign-in returned an invalid account.");
       clearAccountState();
-      setUser(data.user);
-      await refreshCloud();
+      setUser(accountUser);
+      await refreshCloud(accountUser.id);
       setPassword("");
       setModal(null);
     } catch (e) {
@@ -3914,20 +4109,24 @@ export default function Orbsie() {
                         const isCurrent = captureCloudRequest();
                         void s
                           .loadCloud(cloud.snapshot, isCurrent)
-                          .then((opened) => {
+                          .then(async (opened) => {
                             if (
                               !opened ||
                               generation !== accountGeneration.current ||
                               useOrb.getState().project.id !== cloud.id
                             )
                               return;
-                            setCloudBaseline({
-                              projectId: cloud.id,
-                              value: {
-                                revision: cloud.revision,
-                                snapshotToken: cloud.snapshotToken,
-                              },
-                            });
+                            const openedCurrent = () =>
+                              generation === accountGeneration.current &&
+                              useOrb.getState().project.id === cloud.id;
+                            if (user)
+                              await rememberCloudBaseline(
+                                cloud.snapshot,
+                                user.id,
+                                cloud.revision,
+                                cloud.snapshotToken,
+                                openedCurrent,
+                              );
                             setConflict(null);
                             setModal(null);
                           })
@@ -3984,8 +4183,9 @@ export default function Orbsie() {
                   )}
                   {conflict && (
                     <div className="setup-note" role="alert">
-                      A newer cloud copy exists at revision {conflict.revision}.
-                      Your local copy remains on this device.
+                      The cloud copy at revision {conflict.revision} could not
+                      be used as a verified base. Your local draft remains on
+                      this device.
                       <button
                         className="text-button"
                         onClick={() => {
@@ -3993,20 +4193,24 @@ export default function Orbsie() {
                           const isCurrent = captureCloudRequest();
                           void s
                             .loadCloud(conflict.snapshot, isCurrent)
-                            .then((opened) => {
+                            .then(async (opened) => {
                               if (
                                 !opened ||
                                 generation !== accountGeneration.current ||
                                 useOrb.getState().project.id !== conflict.id
                               )
                                 return;
-                              setCloudBaseline({
-                                projectId: conflict.id,
-                                value: {
-                                  revision: conflict.revision,
-                                  snapshotToken: conflict.snapshotToken,
-                                },
-                              });
+                              const openedCurrent = () =>
+                                generation === accountGeneration.current &&
+                                useOrb.getState().project.id === conflict.id;
+                              if (user)
+                                await rememberCloudBaseline(
+                                  conflict.snapshot,
+                                  user.id,
+                                  conflict.revision,
+                                  conflict.snapshotToken,
+                                  openedCurrent,
+                                );
                               setConflict(null);
                               setModal(null);
                             })

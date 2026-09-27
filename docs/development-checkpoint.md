@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 27 cloud-save reload recovery: Save now fetches the owned cloud row just
+before writing, verifies its canonical snapshot token, and accepts a prior
+base only when an account/project-scoped acknowledgement or the active local
+past history proves ancestry. It merges local/cloud transcripts only when one
+is a prefix of the other, persists any merged messages locally before one
+server-CAS PUT, and retains the local draft with an open-cloud/export path when
+proof is missing or the histories diverge. Server conflict checks are
+unchanged. Focused helper and project-route coverage passes (15 tests), as does
+TypeScript typecheck. No live model or browser journey was run; the remaining
+acceptance gap is exercising reload/reopen/Save and a real competing update in
+a signed-in synthetic browser fixture. Legacy drafts without a receipt can
+continue only when active past history proves the cloud revision; redo or
+unordered history cannot establish ancestry.
+
 Sep 27 one fresh Gateway BYOK browser journey passed the standard tiny-island
 create, selected-object material edit, local recovery, export, and standalone
 readiness checks against the loopback production build at
