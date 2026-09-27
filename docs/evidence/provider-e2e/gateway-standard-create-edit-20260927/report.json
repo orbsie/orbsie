@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-27T22:53:25Z",
+  "status": "passed",
+  "scope": "fresh-loopback-gateway-standard-create-edit-recovery-export-standalone",
+  "targetOrigin": "http://127.0.0.1:3055",
+  "provider": "gateway",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputTokenCeilingPerRequest": 4096,
+  "generation": {
+    "configuredMaximum": 2,
+    "requests": 2,
+    "httpStatuses": [200, 200],
+    "fallbackUsed": false,
+    "budgetViolations": 0,
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "harnessPreflight": {
+    "initialLauncher": "stopped before execution because of a local Node import error; no credential read and zero model calls",
+    "correctedRunInvocations": 1,
+    "automaticRetries": 0,
+    "generationRouteGuard": {
+      "requestCount": 1,
+      "httpStatus": 400,
+      "expectedHttpStatus": 400,
+      "countedAsModelCall": false
+    }
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 7
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedObjectPreserved": true
+  },
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": {
+    "status": "passed",
+    "projectRevision": 9,
+    "readyObservedUpperBoundMs": 3058.9,
+    "pageErrors": 0,
+    "blockedExternalRequests": 0
+  },
+  "flagshipJourneyAcceptance": {
+    "status": "incomplete",
+    "scope": "not requested for this standard two-call create/edit run"
+  },
+  "publication": "not-requested",
+  "cloudRecovery": "not-requested",
+  "accountWrites": "not-requested; the run used a fresh anonymous browser context",
+  "codexQuotaBeforeRunRemainingPercent": 97,
+  "rawEvidence": "Raw report, log, ZIP, and screenshots remain under a mode-0700 local cache directory and are not committed."
+}

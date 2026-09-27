@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 27 one fresh Gateway BYOK browser journey passed the standard tiny-island
+create, selected-object material edit, local recovery, export, and standalone
+readiness checks against the loopback production build at
+`http://127.0.0.1:3055`. Exactly two `openai/gpt-6-luna` generation requests
+returned HTTP 200 with low reasoning, default tier, a 4,096-token ceiling,
+and no fallback, retries, budget violations, or blocked external requests.
+Standalone playback had zero page errors. The route-guard probe returned its
+expected HTTP 400 and is not counted as a model call. The initial launcher
+preflight stopped locally before credential read; the corrected harness ran
+once. Publication, cloud recovery, and account writes were not requested, so
+this result does not address the separate cloud-baseline reload/save 409 gap
+documented in `docs/cloud-save-reload-contract.md`. Codex quota was 97%
+remaining before the run. Raw evidence remains in the mode-0700 local cache;
+the sanitized summary is
+`docs/evidence/provider-e2e/gateway-standard-create-edit-20260927/report.json`.
+
 Sep 27 one fresh anonymous production free-mode browser run on
 `https://orbsie.com` passed the standard tiny-island create, selected-object
 material edit, local recovery, export and standalone readiness checks at
