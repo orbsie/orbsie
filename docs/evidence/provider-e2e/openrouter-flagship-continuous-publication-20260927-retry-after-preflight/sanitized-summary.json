@@ -1,0 +1,134 @@
+{
+  "checkedAt": "2026-09-27T20:53:54.806Z",
+  "outcome": "incomplete",
+  "failure": {
+    "phase": "export",
+    "classification": "export-content-mismatch",
+    "detail": "Exported project changed the published world content.",
+    "comparison": {
+      "check": "assertPublicationProjectMatches(zip.project, recovered, \"Exported project\")",
+      "callSite": "scripts/provider-browser-e2e.mjs:10389-10393",
+      "comparator": "scripts/provider-browser-e2e.mjs:1710-1728",
+      "expected": "The refreshed in-memory project retained two entity assetPolicy properties with value undefined.",
+      "observed": "The parsed world.zip project omitted those two undefined-valued properties; a separate explicit assetPolicy value of new-only matched.",
+      "comparisonType": "strict deep equality after JSON export/import"
+    }
+  },
+  "provenance": {
+    "harnessCheckoutSHA": "700240a6f23aeeda4475dae772f8e2c20b07052e",
+    "harnessWasDirty": false,
+    "applicationSourceCommit": "d6eba42416fc77bdef10cdfd79f24dcda9e322fb",
+    "applicationSourceStatus": "operator-supplied-unverified"
+  },
+  "run": {
+    "provider": "openrouter",
+    "model": "openai/gpt-6-luna",
+    "reasoning": "low",
+    "serviceTier": "default",
+    "keyScope": "local-only",
+    "outputTokenCap": 4096,
+    "generationBudget": 3,
+    "generationRequests": 3,
+    "generationHttpStatuses": [
+      200,
+      200,
+      200
+    ],
+    "fallbackUsed": false,
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0
+  },
+  "story": {
+    "status": "passed",
+    "scope": "fresh-gameplay-and-persistence",
+    "sameFreshProjectAcrossGameplayPhases": true,
+    "phases": {
+      "creation": {
+        "status": "passed",
+        "revision": 30,
+        "gameplay": {
+          "boundToSameFreshProject": true,
+          "revisionMatchesPhase": true,
+          "expectedCollectibles": 5,
+          "collected": 5,
+          "movementObserved": true,
+          "platforms": 3,
+          "movingPlatformsObserved": 3,
+          "bouncyPlatformContacts": 3,
+          "portalWin": true,
+          "winScore": 5,
+          "reset": {
+            "status": "playing",
+            "score": 0,
+            "lifecycleAdvanced": true,
+            "revisionMatches": true
+          }
+        }
+      },
+      "mushroom": {
+        "status": "passed",
+        "revision": 35
+      },
+      "goal7": {
+        "status": "passed",
+        "revision": 41,
+        "gameplay": {
+          "boundToSameFreshProject": true,
+          "revisionMatchesPhase": true,
+          "expectedCollectibles": 7,
+          "collected": 7,
+          "movementObserved": true,
+          "platforms": 3,
+          "movingPlatformsObserved": 3,
+          "bouncyPlatformContacts": 3,
+          "portalWin": true,
+          "winScore": 7,
+          "reset": {
+            "status": "playing",
+            "score": 0,
+            "lifecycleAdvanced": true,
+            "revisionMatches": true
+          }
+        }
+      },
+      "undo": {
+        "status": "passed",
+        "revision": 42,
+        "gameplay": {
+          "boundToSameFreshProject": true,
+          "revisionMatchesPhase": true,
+          "expectedCollectibles": 5,
+          "collected": 5,
+          "movementObserved": true,
+          "platforms": 3,
+          "movingPlatformsObserved": 3,
+          "bouncyPlatformContacts": 3,
+          "portalWin": true,
+          "winScore": 5,
+          "reset": {
+            "status": "playing",
+            "score": 0,
+            "lifecycleAdvanced": true,
+            "revisionMatches": true
+          }
+        }
+      }
+    }
+  },
+  "followOn": {
+    "export": "failed-content-mismatch",
+    "standalonePlayback": "not-reached",
+    "cloudSave": "not-reached",
+    "publication": "not-reached",
+    "signedOutIframeGameplay": "not-reached",
+    "acceptance": "incomplete"
+  },
+  "retainedOfflineArtifact": {
+    "artifact": "openrouter/world.zip",
+    "bytes": 1143322,
+    "localMode": "0600",
+    "exportedZipWasParsedByHarness": true,
+    "canSupplyZeroModelCallOfflineStandaloneReplayAfterComparerFix": true,
+    "replayPerformed": false
+  }
+}
