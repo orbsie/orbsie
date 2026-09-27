@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { chromium } from "@playwright/test";
 import {
   browserContextViewportOptions,
   emptyReport,
@@ -113,6 +114,83 @@ describe("provider browser E2E viewport mode", () => {
       },
     });
   });
+
+  it("keeps touch player controls visible after a CDP touch and screenshot", async () => {
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const context = await browser.newContext(
+        browserContextViewportOptions("mobile", { width: 1280, height: 800 }),
+      );
+      try {
+        const page = await context.newPage();
+        await page.setContent(`
+          <style>
+            main { min-height: 100vh; }
+            .controls { display: none; }
+            main.touch-layout .controls { display: flex; gap: 8px; }
+            button { width: 45px; height: 45px; }
+          </style>
+          <main>
+            <div class="controls"><button aria-label="Right" type="button">→</button></div>
+            <output></output>
+          </main>
+          <script>
+            const updateTouchLayout = () => {
+              const active = matchMedia("(any-pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+              document.querySelector("main").classList.toggle("touch-layout", active);
+            };
+            updateTouchLayout();
+            matchMedia("(any-pointer: coarse)").addEventListener("change", updateTouchLayout);
+            document.querySelector("button").addEventListener("pointerdown", () => {
+              document.querySelector("output").textContent = "pressed";
+            });
+          </script>
+        `);
+        const control = page.getByRole("button", { name: "Right" });
+        expect(await control.isVisible()).toBe(true);
+        const box = await control.boundingBox();
+        expect(box).not.toBeNull();
+
+        const cdp = await context.newCDPSession(page);
+        try {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchStart",
+            touchPoints: [
+              {
+                id: 1,
+                x: box!.x + box!.width / 2,
+                y: box!.y + box!.height / 2,
+              },
+            ],
+          });
+          expect(await page.locator("output").textContent()).toBe("pressed");
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchEnd",
+            touchPoints: [],
+          });
+        } finally {
+          await cdp.detach().catch(() => undefined);
+        }
+
+        await page.screenshot({ type: "png" });
+        expect(await control.isVisible()).toBe(true);
+        expect(await page.locator("main").getAttribute("class")).toContain(
+          "touch-layout",
+        );
+        expect(
+          await page.evaluate(
+            () =>
+              window.matchMedia("(any-pointer: coarse)").matches ||
+              navigator.maxTouchPoints > 0,
+          ),
+        ).toBe(true);
+      } finally {
+        await context.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  }, 15000);
 
   it("keeps mobile mode scoped to the ordinary fresh OpenRouter journey", () => {
     validApiKeyConfiguration("mobile");

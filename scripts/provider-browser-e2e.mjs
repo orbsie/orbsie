@@ -326,21 +326,45 @@ async function recordMobileReachable(page, locator, label, report) {
   report[`${label}Reachable`] = true;
 }
 
-async function verifyMobileStandaloneTouch(page, mobileReport) {
+async function assertMobileTouchControlsReachable(page, stage) {
   const controls = ["Forward", "Left", "Back", "Right", "Jump"];
+  const touchState = await page.evaluate(() => ({
+    coarsePointer: window.matchMedia("(any-pointer: coarse)").matches,
+    maxTouchPoints: navigator.maxTouchPoints,
+    touchLayout:
+      document.querySelector("main")?.classList.contains("touch-layout") ??
+      false,
+  }));
+  assert(
+    touchState.touchLayout &&
+      (touchState.coarsePointer || touchState.maxTouchPoints > 0),
+    `Mobile touch layout stopped being active ${stage}: ${JSON.stringify(touchState)}.`,
+  );
+  const boxes = {};
+  for (const label of controls) {
+    boxes[label] = await assertMobileElementReachable(
+      page,
+      page.getByRole("button", { name: label, exact: true }),
+      `${label} touch control ${stage}`,
+    );
+  }
+  return { ...touchState, controls: boxes };
+}
+
+async function verifyMobileStandaloneTouch(page, mobileReport) {
   const layout = mobileReport.standalone;
   layout.name = "standalone player";
   await assertMobilePageHasNoHorizontalOverflow(page, layout);
-  const controlBoxes = {};
-  for (const label of controls) {
-    controlBoxes[label] = await assertMobileElementReachable(
-      page,
-      page.getByRole("button", { name: label, exact: true }),
-      `${label} touch control`,
-    );
-  }
+  const controlState = await assertMobileTouchControlsReachable(
+    page,
+    "before touch",
+  );
   layout.movementControlReachable = true;
-  layout.touchControls = controlBoxes;
+  layout.touchControls = controlState.controls;
+  layout.touchInputState = {
+    coarsePointer: controlState.coarsePointer,
+    maxTouchPoints: controlState.maxTouchPoints,
+  };
 
   const observationEpoch = await page.evaluate(() => performance.now());
   await expect
@@ -359,10 +383,6 @@ async function verifyMobileStandaloneTouch(page, mobileReport) {
   );
 
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Emulation.setTouchEmulationEnabled", {
-    enabled: true,
-    maxTouchPoints: 1,
-  });
   const touchInput = createTraversalTouchInput({
     cdp,
     touchPoint: async (_key, id) => {
@@ -398,6 +418,8 @@ async function verifyMobileStandaloneTouch(page, mobileReport) {
     await touchInput.releaseAll().catch(() => undefined);
     await cdp.detach().catch(() => undefined);
   }
+  await assertMobileTouchControlsReachable(page, "after touch");
+  layout.touchControlsRemainReachableAfterTouch = true;
   const movementDistance = Math.hypot(
     after.player.position[0] - before.player.position[0],
     after.player.position[2] - before.player.position[2],
@@ -2845,6 +2867,8 @@ export function emptyReport(config, provenance) {
               horizontalOverflow: null,
               movementControlReachable: false,
               touchMovementObserved: false,
+              touchControlsRemainReachableAfterTouch: false,
+              touchControlsRemainReachableAtCapture: false,
             },
           },
         }
@@ -7806,6 +7830,19 @@ export async function verifyStandalone(
       [],
       "Standalone playback made an editor/provider request.",
     );
+    if (config.viewportMode === "mobile") {
+      await assertMobilePageHasNoHorizontalOverflow(
+        page,
+        report.mobileLayout.standalone,
+      );
+      const captureState = await assertMobileTouchControlsReachable(
+        page,
+        "at screenshot capture",
+      );
+      report.mobileLayout.standalone.touchControlsAtCapture =
+        captureState.controls;
+      report.mobileLayout.standalone.touchControlsRemainReachableAtCapture = true;
+    }
     await page.screenshot({
       path: join(evidenceDir, "standalone-playback.png"),
     });

@@ -1,0 +1,149 @@
+{
+  "source": "retained corrected live-run export ZIP; replayed offline",
+  "projectRevision": 9,
+  "providerRequests": 0,
+  "editorRequests": 0,
+  "blockedExternalRequests": 0,
+  "deviceEmulation": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true
+  },
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 6959.89999999851,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  },
+  "mobileLayout": {
+    "status": "passed",
+    "horizontalOverflow": false,
+    "movementControlReachable": true,
+    "touchMovementObserved": true,
+    "touchControlsRemainReachableAfterTouch": true,
+    "touchControlsRemainReachableAtCapture": true,
+    "name": "standalone player",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "touchControls": {
+      "Forward": {
+        "x": 20,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Left": {
+        "x": 71,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Back": {
+        "x": 122,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Right": {
+        "x": 173,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Jump": {
+        "x": 325,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      }
+    },
+    "touchInputState": {
+      "coarsePointer": true,
+      "maxTouchPoints": 1
+    },
+    "touchMovement": {
+      "input": "CDP Input.dispatchTouchEvent",
+      "control": "Right",
+      "movementDistance": 1.3116,
+      "before": [
+        0,
+        0.42,
+        5
+      ],
+      "after": [
+        1.151,
+        0.42,
+        4.3712
+      ]
+    },
+    "touchControlsAtCapture": {
+      "Forward": {
+        "x": 20,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Left": {
+        "x": 71,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Back": {
+        "x": 122,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Right": {
+        "x": 173,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      },
+      "Jump": {
+        "x": 325,
+        "y": 769,
+        "width": 45,
+        "height": 45
+      }
+    }
+  },
+  "evidence": [
+    "standalone-playback.png"
+  ],
+  "runDate": "2026-09-27",
+  "purpose": "offline standalone-only replay of the prior live export, after removing the redundant CDP touch-emulation override",
+  "providerGenerationRequests": 0,
+  "editorApiRequests": 0,
+  "externalRequestsBlocked": 0,
+  "capture": {
+    "image": "standalone-playback.png",
+    "pixelSize": {
+      "width": 780,
+      "height": 1688
+    },
+    "cssViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "order": [
+      "Right touch gesture",
+      "touch release and CDP detach",
+      "2 second settle",
+      "touch-control state/bounds check",
+      "screenshot"
+    ]
+  },
+  "limitations": [
+    "Chromium mobile emulation only; no physical-device claim.",
+    "The default scene has no authored win/score rules; only observed player movement is asserted."
+  ]
+}
