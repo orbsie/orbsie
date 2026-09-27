@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 27 read-only follow-up in the owner's existing Chrome tab after the earlier
+OpenRouter OAuth exchange: Orbsie displayed `OpenRouter · Balanced`, `AI key
+added`, `Generation complete. Changes are applied`, and five ready castle,
+princess, tree, pine, and garden entities for the retained `princess in a
+castle` prompt. A production `/api/generate` observability record at
+2026-09-27T17:17:12Z shows an HTTP 200 OpenRouter
+`openai/gpt-6-luna` first byte on the deployment then serving Orbsie. The
+browser scene was visually recognizable in compatibility graphics. This is
+strong evidence that the OAuth-connected browser subsequently generated an
+Orb, but the log alone does not attest to the key's issuance source, final
+commit, or output-token request cap. It also does not verify a fresh
+unmodified OAuth redirect after the callback fix. No new inference ran in this
+follow-up; the owner tab was left connected.
+
 Sep 27 free-mode production diagnosis: `AI_GATEWAY_API_KEY_FREE` is configured,
 but `https://orbsie.com/api/trial` reports `enabled:false`. Added transition-only,
 secret-safe credits-probe diagnostics (`4911d63`); the first production probe
