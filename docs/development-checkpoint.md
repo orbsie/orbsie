@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 27 the exported-artifact publication harness now accepts a missing
+generated-model manifest only when the project references no generated models;
+referenced generated models still require valid manifest provenance. The
+optional revision-2 republish can target an explicit entity ID and color while
+the existing `crystal-accept` / `#ff8f6b` default remains intact. Prepare-only
+passed for the pinned OpenRouter GPT-6 Luna ZIP (SHA-256
+`7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a`, revision
+42, 14 entities): no generated uploads, two planned cloud saves, and the
+`crystal-1` material change from `#56eaff` to `#ff8f6b`. Focused publication
+tests (33) and typecheck pass; no live publication or model calls were made.
+Signed-out publication and replacement behavior remain live-unverified.
+
 Sep27 Android flagship replay rerun supersedes the partial replay note below.
 The exact pinned OpenRouter GPT-6 Luna `world.zip` (SHA-256
 `7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a`) passed

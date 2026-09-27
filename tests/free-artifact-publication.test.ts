@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, it } from "vitest";
+import { unzipSync, zipSync } from "fflate";
 import {
   artifactMutationPlan,
   loadFreeArtifact,
@@ -8,6 +12,8 @@ import {
 } from "../scripts/lib/free-artifact-publication.mjs";
 
 const ZIP = "docs/evidence/provider-e2e/free-strawberry-current/free/world.zip";
+const FLAGSHIP_ZIP =
+  "docs/evidence/provider-e2e/openrouter-flagship-set-label-live-20260925/openrouter/world.zip";
 
 function sha256(bytes: Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -46,6 +52,41 @@ it("loads the mixed export and makes an explicit new publication clone", async (
     inferenceCalls: 0,
     republishSubmissions: 0,
   });
+});
+
+it("loads the pinned flagship export without a generated manifest when no generated model is referenced", async () => {
+  const artifact = await loadFreeArtifact(FLAGSHIP_ZIP, {
+    projectId: "pub-free-flagship-clone",
+  });
+
+  expect(artifact.sourceZipSha256).toBe(
+    "7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a",
+  );
+  expect(artifact.sourceProject.revision).toBe(42);
+  expect(artifact.sourceProject.entities).toHaveLength(14);
+  expect(artifact.generatedModels).toHaveLength(0);
+  expect(artifact.expectedFiles.map(({ file }) => file)).not.toContain(
+    "models/generated/manifest.json",
+  );
+  expect(artifactMutationPlan(artifact)).toMatchObject({
+    generatedModelUploads: 0,
+    inferenceCalls: 0,
+  });
+});
+
+it("still requires the generated manifest when the project references generated models", async () => {
+  const files = unzipSync(new Uint8Array(await readFile(ZIP)));
+  delete files["models/generated/manifest.json"];
+  const tempDir = await mkdtemp(join(tmpdir(), "orbsie-publication-artifact-"));
+  const zipPath = join(tempDir, "world.zip");
+  try {
+    await writeFile(zipPath, zipSync(files));
+    await expect(
+      loadFreeArtifact(zipPath, { projectId: "pub-free-missing-manifest" }),
+    ).rejects.toThrow("missing models/generated/manifest.json");
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 });
 
 it("uploads each unique generated model before the cloud project save", async () => {

@@ -8,6 +8,10 @@ const PENDING_PUBLICATION_STATES = new Set([
 ]);
 const MAX_TERMINAL_REPLACEMENT_POLLS = 120;
 const MAX_TERMINAL_REPLACEMENT_POLL_DELAY_MS = 60_000;
+const DEFAULT_MATERIAL_MUTATION = {
+  entityId: "crystal-accept",
+  color: "#ff8f6b",
+};
 
 export class PublicationAcceptanceError extends Error {
   constructor(message, options = {}) {
@@ -30,18 +34,35 @@ export function assertLivePublicationOptIn(env = process.env) {
     );
 }
 
-export function republishWorld(world) {
+function normalizeMaterialMutation(materialMutation) {
+  if (
+    materialMutation !== undefined &&
+    (!materialMutation || typeof materialMutation !== "object")
+  )
+    throw new TypeError("A publication material mutation must be an object.");
+  const entityId =
+    materialMutation?.entityId ?? DEFAULT_MATERIAL_MUTATION.entityId;
+  const color = materialMutation?.color ?? DEFAULT_MATERIAL_MUTATION.color;
+  if (typeof entityId !== "string" || entityId.length === 0)
+    throw new TypeError(
+      "A publication material mutation requires an entity ID.",
+    );
+  if (typeof color !== "string" || color.length === 0)
+    throw new TypeError("A publication material mutation requires a color.");
+  return { entityId, color };
+}
+
+export function republishWorld(world, materialMutation) {
+  const { entityId, color } = normalizeMaterialMutation(materialMutation);
   const revised = structuredClone(world);
   revised.revision = 2;
   revised.title = "A tiny island to share — Sunset crystal garden";
-  const crystal = revised.entities?.find(
-    (entity) => entity.id === "crystal-accept",
-  );
+  const crystal = revised.entities?.find((entity) => entity.id === entityId);
   if (!crystal)
     throw new PublicationAcceptanceError(
-      "The publication fixture is missing crystal-accept for the revision-2 material change.",
+      `The publication fixture is missing ${entityId} for the revision-2 material change.`,
     );
-  crystal.color = "#ff8f6b";
+  crystal.color = color;
   return revised;
 }
 
@@ -264,18 +285,35 @@ async function publicSnapshot(transport, url, label) {
   return snapshot;
 }
 
-function assertSnapshotMatches(snapshot, expected, label) {
+function assertSnapshotMatches(
+  snapshot,
+  expected,
+  label,
+  materialEntityId = "crystal-accept",
+  requireMaterialEntity = false,
+) {
   assert.equal(snapshot.revision, expected.revision, `${label} revision`);
   assert.equal(snapshot.title, expected.title, `${label} title`);
-  const expectedMaterial = expected.entities?.find(
-    (entity) => entity.id === "crystal-accept",
-  )?.color;
-  if (expectedMaterial !== undefined) {
-    const actualMaterial = snapshot.entities?.find(
-      (entity) => entity.id === "crystal-accept",
-    )?.color;
-    assert.equal(actualMaterial, expectedMaterial, `${label} material`);
-  }
+  const expectedEntity = expected.entities?.find(
+    (entity) => entity.id === materialEntityId,
+  );
+  if (!expectedEntity && !requireMaterialEntity) return;
+  assert.ok(
+    expectedEntity,
+    `${label} expected entity ${materialEntityId} for material verification`,
+  );
+  const actualEntity = snapshot.entities?.find(
+    (entity) => entity.id === materialEntityId,
+  );
+  assert.ok(
+    actualEntity,
+    `${label} snapshot is missing entity ${materialEntityId}`,
+  );
+  assert.equal(
+    actualEntity.color,
+    expectedEntity.color,
+    `${label} entity ${materialEntityId} material`,
+  );
 }
 
 async function signedOutRelease(
@@ -284,6 +322,8 @@ async function signedOutRelease(
   expected,
   label,
   recordStep,
+  materialEntityId = "crystal-accept",
+  requireMaterialEntity = false,
 ) {
   const pageResult = await transport.publicGet(
     release.deploymentUrl,
@@ -309,11 +349,18 @@ async function signedOutRelease(
       revision: snapshot.revision,
       title: snapshot.title,
       materialColor: snapshot.entities?.find(
-        (entity) => entity.id === "crystal-accept",
+        (entity) => entity.id === materialEntityId,
       )?.color,
+      materialEntityId,
     },
   });
-  assertSnapshotMatches(snapshot, expected, label);
+  assertSnapshotMatches(
+    snapshot,
+    expected,
+    label,
+    materialEntityId,
+    requireMaterialEntity,
+  );
   return {
     pageStatus: responseStatus(pageResult),
     browser: browserEvidence(browserResult),
@@ -350,7 +397,9 @@ export async function runTerminalReplacementAcceptance({
       "Terminal replacement acceptance requires an injected signed-out browser transport.",
     );
   if (typeof cookies !== "string" || cookies.length === 0)
-    throw new TypeError("Terminal replacement acceptance requires session cookies.");
+    throw new TypeError(
+      "Terminal replacement acceptance requires session cookies.",
+    );
   if (
     !projectId ||
     !firstWorld?.id ||
@@ -370,20 +419,26 @@ export async function runTerminalReplacementAcceptance({
     maxPolls <= 0 ||
     maxPolls > MAX_TERMINAL_REPLACEMENT_POLLS
   )
-    throw new TypeError("Terminal replacement acceptance requires bounded polls.");
+    throw new TypeError(
+      "Terminal replacement acceptance requires bounded polls.",
+    );
   if (
     !Number.isFinite(pollDelayMs) ||
     pollDelayMs < 0 ||
     pollDelayMs > MAX_TERMINAL_REPLACEMENT_POLL_DELAY_MS
   )
-    throw new TypeError("Terminal replacement acceptance requires a valid poll delay.");
+    throw new TypeError(
+      "Terminal replacement acceptance requires a valid poll delay.",
+    );
 
   const submission =
     secondSubmission?.body && typeof secondSubmission.body === "object"
       ? secondSubmission.body
       : secondSubmission;
   if (!submission || typeof submission !== "object")
-    throw new TypeError("Terminal replacement acceptance requires a second submission mapping.");
+    throw new TypeError(
+      "Terminal replacement acceptance requires a second submission mapping.",
+    );
   if (secondSubmission?.status !== undefined && !responseIsOk(secondSubmission))
     failResponse("publish replacement submission", secondSubmission);
 
@@ -616,6 +671,10 @@ export async function runPublicationAcceptance({
   email,
   password,
   republish = false,
+  materialMutation:
+    configuredMaterialMutation = /** @type {{ entityId: string, color: string } | undefined} */ (
+      undefined
+    ),
   maxPolls = 120,
   pollDelayMs = 5000,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -633,6 +692,11 @@ export async function runPublicationAcceptance({
     );
   if (!world || typeof world !== "object")
     throw new TypeError("A publication world is required.");
+  const materialMutation = normalizeMaterialMutation(
+    configuredMaterialMutation,
+  );
+  const requireMaterialEntity =
+    republish || configuredMaterialMutation !== undefined;
 
   const progress = {
     account: { email },
@@ -753,6 +817,8 @@ export async function runPublicationAcceptance({
     firstWorld,
     "first public release",
     recordStep,
+    materialMutation.entityId,
+    requireMaterialEntity,
   );
 
   const report = {
@@ -779,7 +845,7 @@ export async function runPublicationAcceptance({
     throw new PublicationAcceptanceError(
       "Republish mapping could not be verified: publication responses do not expose the Vercel project identity (expected vercelProjectId).",
     );
-  const secondWorld = republishWorld(firstWorld);
+  const secondWorld = republishWorld(firstWorld, materialMutation);
   progress.world = {
     id: secondWorld.id,
     revision: secondWorld.revision,
@@ -838,6 +904,8 @@ export async function runPublicationAcceptance({
       firstWorld,
       "previous public release after failed republish",
       recordStep,
+      materialMutation.entityId,
+      true,
     );
     await recordStep("failed republish previous-release check", null, {
       failedReplacement: {
@@ -897,6 +965,8 @@ export async function runPublicationAcceptance({
     firstWorld,
     "previous public release during republish",
     recordStep,
+    materialMutation.entityId,
+    true,
   );
   const pendingWindow = {
     observed: true,
@@ -959,14 +1029,17 @@ export async function runPublicationAcceptance({
     secondWorld,
     "final public release",
     recordStep,
+    materialMutation.entityId,
+    true,
   );
   return {
     ...report,
     republish: {
       revision: secondWorld.revision,
       title: secondWorld.title,
+      materialEntityId: materialMutation.entityId,
       materialColor: secondWorld.entities.find(
-        (entity) => entity.id === "crystal-accept",
+        (entity) => entity.id === materialMutation.entityId,
       )?.color,
       projectId: secondWorld.id,
       state: secondSubmittedBody.state,

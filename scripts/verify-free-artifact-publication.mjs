@@ -23,6 +23,32 @@ const ARTIFACT_PATH = process.env.ORBSIE_FREE_ARTIFACT ?? DEFAULT_ARTIFACT;
 const EVIDENCE_DIR =
   process.env.ORBSIE_PUBLICATION_EVIDENCE_DIR ??
   "docs/evidence/publication-free-strawberry";
+const DEFAULT_MATERIAL_MUTATION = {
+  entityId: "crystal-accept",
+  color: "#ff8f6b",
+};
+
+function publicationOptionsFromEnv(env = process.env) {
+  const republish = env.ORBSIE_PUBLICATION_REPUBLISH === "1";
+  const entityId = env.ORBSIE_PUBLICATION_MATERIAL_ENTITY_ID;
+  const color = env.ORBSIE_PUBLICATION_MATERIAL_COLOR;
+  if ((entityId === undefined) !== (color === undefined))
+    throw new Error(
+      "ORBSIE_PUBLICATION_MATERIAL_ENTITY_ID and ORBSIE_PUBLICATION_MATERIAL_COLOR must be set together.",
+    );
+  if (entityId !== undefined && (!entityId.length || !color.length))
+    throw new Error("The publication material mutation must be nonempty.");
+  if (entityId !== undefined && !republish)
+    throw new Error(
+      "Set ORBSIE_PUBLICATION_REPUBLISH=1 to use a material mutation.",
+    );
+  return {
+    republish,
+    ...(entityId === undefined
+      ? {}
+      : { materialMutation: { entityId, color } }),
+  };
+}
 
 function origin(value) {
   try {
@@ -172,11 +198,13 @@ async function publicGetBytes(fetchImpl, url, label) {
 export async function prepareFreeArtifactPublication({
   artifactPath = ARTIFACT_PATH,
   projectId,
+  republish = false,
+  materialMutation,
 } = {}) {
   const artifact = await loadFreeArtifact(artifactPath, { projectId });
   return {
     artifact,
-    plan: artifactMutationPlan(artifact),
+    plan: artifactMutationPlan(artifact, { republish }),
     source: {
       zipPath: artifactPath,
       sourceZipSha256: artifact.sourceZipSha256,
@@ -184,6 +212,14 @@ export async function prepareFreeArtifactPublication({
       sourceRevision: artifact.sourceProject.revision,
       publicationProjectId: artifact.publicationProject.id,
       publicationRevision: artifact.expectedProject.revision,
+      ...(republish
+        ? {
+            republishMaterialMutation: {
+              ...DEFAULT_MATERIAL_MUTATION,
+              ...materialMutation,
+            },
+          }
+        : {}),
       expectedReferencedFiles: artifact.expectedFiles.map(
         ({ file, kind, bytes, sha256 }) => ({
           file,
@@ -204,12 +240,16 @@ export async function runFreeArtifactPublication({
     `orbsie-free-publication-${Date.now()}@example.com`,
   password,
   projectId,
+  republish = false,
+  materialMutation,
   fetchImpl = fetch,
 } = {}) {
   assertLivePublicationOptIn();
   const prepared = await prepareFreeArtifactPublication({
     artifactPath,
     projectId,
+    republish,
+    materialMutation,
   });
   const artifact = prepared.artifact;
   const report = {
@@ -263,15 +303,18 @@ export async function runFreeArtifactPublication({
       world: artifact.publicationProject,
       email,
       password,
+      republish,
+      materialMutation,
       onProgress: async (progress) => {
         report.progress = progress;
-        for (const step of progress.steps) {
-          if (step.step === "sign-up") report.mutations.accountSignup = 1;
-          if (step.step === "cloud save revision 1")
-            report.mutations.cloudProjectSaves = 1;
-          if (step.step === "publish revision 1")
-            report.mutations.publicationSubmissions = 1;
-        }
+        if (progress.steps.some((step) => step.step === "sign-up"))
+          report.mutations.accountSignup = 1;
+        report.mutations.cloudProjectSaves = progress.steps.filter((step) =>
+          /^cloud save revision \d+$/.test(step.step),
+        ).length;
+        report.mutations.publicationSubmissions = progress.steps.filter(
+          (step) => /^publish revision \d+$/.test(step.step),
+        ).length;
         await update();
       },
     });
@@ -320,8 +363,9 @@ export async function runFreeArtifactPublication({
 }
 
 async function main() {
+  const publicationOptions = publicationOptionsFromEnv();
   if (process.env.ORBSIE_LIVE_E2E !== "1") {
-    const prepared = await prepareFreeArtifactPublication();
+    const prepared = await prepareFreeArtifactPublication(publicationOptions);
     console.log(
       JSON.stringify(
         {
@@ -342,7 +386,10 @@ async function main() {
       "ORBSIE_TEST_ACCOUNT_PASSWORD_FILE is required for live execution.",
     );
   const password = await passwordFromFile(passwordFile);
-  const report = await runFreeArtifactPublication({ password });
+  const report = await runFreeArtifactPublication({
+    password,
+    ...publicationOptions,
+  });
   console.log(JSON.stringify(report, null, 2));
 }
 

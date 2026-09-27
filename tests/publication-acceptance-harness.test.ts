@@ -45,6 +45,7 @@ type FixtureOptions = {
   browserErrors?: string[];
   secondPostState?: string;
   secondPostStatus?: number;
+  secondSnapshotMaterialOverride?: { entityId: string; color: string };
 };
 
 function result(body: unknown, status = 200, cookies?: string) {
@@ -56,7 +57,11 @@ function result(body: unknown, status = 200, cookies?: string) {
   };
 }
 
-function fixtureTransport(options: FixtureOptions = {}) {
+function fixtureTransport(
+  options: FixtureOptions = {},
+  fixtureWorld = world,
+  materialMutation?: { entityId: string; color: string },
+) {
   const requests: Array<{
     path: string;
     init: Record<string, unknown>;
@@ -65,9 +70,9 @@ function fixtureTransport(options: FixtureOptions = {}) {
   const publicRequests: string[] = [];
   let firstPolls = 0;
   let secondPolls = 0;
-  let firstSnapshot = structuredClone(world);
+  let firstSnapshot = structuredClone(fixtureWorld);
   firstSnapshot.revision = 1;
-  let secondSnapshot = republishWorld(firstSnapshot);
+  let secondSnapshot = republishWorld(firstSnapshot, materialMutation);
   const transport = {
     requests,
     publicRequests,
@@ -107,7 +112,7 @@ function fixtureTransport(options: FixtureOptions = {}) {
               ? "VERIFYING"
               : (options.secondPostState ?? "BUILDING"),
           servedRevision: revision === 1 ? null : 1,
-          url: `/o/${world.id}`,
+          url: `/o/${fixtureWorld.id}`,
           deploymentUrl: `https://deployment-${revision}.vercel.app`,
           deploymentId: `deployment-${revision}`,
           vercelProjectId:
@@ -117,7 +122,7 @@ function fixtureTransport(options: FixtureOptions = {}) {
         };
         if (options.omitProjectId || options.genericProjectId)
           delete publication.vercelProjectId;
-        if (options.genericProjectId) publication.projectId = world.id;
+        if (options.genericProjectId) publication.projectId = fixtureWorld.id;
         return result(publication);
       }
       if (path.startsWith("/api/publish?")) {
@@ -137,26 +142,26 @@ function fixtureTransport(options: FixtureOptions = {}) {
             const status: Record<string, unknown> = {
               state: "READY",
               servedRevision: 1,
-              url: `/o/${world.id}`,
+              url: `/o/${fixtureWorld.id}`,
               deploymentUrl: "https://deployment-1.vercel.app",
               vercelProjectId: "project-1",
             };
             if (options.omitProjectId || options.genericProjectId)
               delete status.vercelProjectId;
-            if (options.genericProjectId) status.projectId = world.id;
+            if (options.genericProjectId) status.projectId = fixtureWorld.id;
             return result(status);
           }
           if (secondPolls++ === 0) {
             const status: Record<string, unknown> = {
               state: "BUILDING",
               servedRevision: 1,
-              url: `/o/${world.id}`,
+              url: `/o/${fixtureWorld.id}`,
               deploymentUrl: "https://deployment-2.vercel.app",
               vercelProjectId: options.secondGetProjectId ?? "project-1",
             };
             if (options.omitProjectId || options.genericProjectId)
               delete status.vercelProjectId;
-            if (options.genericProjectId) status.projectId = world.id;
+            if (options.genericProjectId) status.projectId = fixtureWorld.id;
             return result(status);
           }
           if (options.secondPollError)
@@ -167,13 +172,13 @@ function fixtureTransport(options: FixtureOptions = {}) {
           const status: Record<string, unknown> = {
             state: "READY",
             servedRevision: 2,
-            url: `/o/${world.id}`,
+            url: `/o/${fixtureWorld.id}`,
             deploymentUrl: "https://deployment-2.vercel.app",
             vercelProjectId: options.secondGetProjectId ?? "project-1",
           };
           if (options.omitProjectId || options.genericProjectId)
             delete status.vercelProjectId;
-          if (options.genericProjectId) status.projectId = world.id;
+          if (options.genericProjectId) status.projectId = fixtureWorld.id;
           return result(status);
         }
         throw new Error(`unexpected status path: ${path}`);
@@ -183,9 +188,20 @@ function fixtureTransport(options: FixtureOptions = {}) {
     publicGet: async (url: string) => {
       publicRequests.push(url);
       if (url.endsWith("/project.json")) {
-        const snapshot = url.includes("deployment-1")
-          ? firstSnapshot
-          : secondSnapshot;
+        const snapshot = structuredClone(
+          url.includes("deployment-1") ? firstSnapshot : secondSnapshot,
+        );
+        if (
+          !url.includes("deployment-1") &&
+          options.secondSnapshotMaterialOverride
+        ) {
+          const entity = snapshot.entities.find(
+            (candidate: { id: string }) =>
+              candidate.id === options.secondSnapshotMaterialOverride?.entityId,
+          );
+          if (entity)
+            entity.color = options.secondSnapshotMaterialOverride.color;
+        }
         return result(JSON.stringify(snapshot));
       }
       return { status: 200, text: "<main></main>" };
@@ -545,6 +561,97 @@ it("saves revision 2 with CAS, retains the queued release, and verifies the fina
       title: "A tiny island to share — Sunset crystal garden",
     },
   });
+});
+
+it("republishes an explicitly selected material and checks that same entity in signed-out snapshots", async () => {
+  const materialMutation = { entityId: "crystal-1", color: "#ff8f6b" };
+  const worldWithCrystal1 = structuredClone(world);
+  worldWithCrystal1.entities.push({
+    ...structuredClone(world.entities[0]),
+    id: "crystal-1",
+    color: "#56eaff",
+  });
+  const transport = fixtureTransport({}, worldWithCrystal1, materialMutation);
+  const report = await runPublicationAcceptance({
+    transport,
+    world: worldWithCrystal1,
+    email: "fixture@example.test",
+    password: "fixture-password",
+    republish: true,
+    materialMutation,
+    pollDelayMs: 0,
+    sleep: async () => undefined,
+  });
+
+  expect(report.first.signedOutSnapshot.entities).toContainEqual(
+    expect.objectContaining({ id: "crystal-1", color: "#56eaff" }),
+  );
+  expect(report.republish).toMatchObject({
+    materialEntityId: "crystal-1",
+    materialColor: "#ff8f6b",
+    pendingWindow: {
+      previousRelease: {
+        snapshot: {
+          revision: 1,
+          entities: expect.arrayContaining([
+            expect.objectContaining({ id: "crystal-1", color: "#56eaff" }),
+          ]),
+        },
+      },
+    },
+    finalSnapshot: {
+      revision: 2,
+      entities: expect.arrayContaining([
+        expect.objectContaining({ id: "crystal-1", color: "#ff8f6b" }),
+      ]),
+    },
+  });
+  const saves = transport.requests.filter(
+    (entry) => entry.path === "/api/projects",
+  );
+  const revision2 = JSON.parse(String(saves[1].init.body));
+  expect(
+    revision2.project.entities.find(
+      (entity: { id: string }) => entity.id === "crystal-1",
+    ).color,
+  ).toBe("#ff8f6b");
+  expect(
+    worldWithCrystal1.entities.find((entity) => entity.id === "crystal-1")
+      ?.color,
+  ).toBe("#56eaff");
+});
+
+it("rejects a signed-out replacement snapshot with the wrong selected material", async () => {
+  const materialMutation = { entityId: "crystal-1", color: "#ff8f6b" };
+  const worldWithCrystal1 = structuredClone(world);
+  worldWithCrystal1.entities.push({
+    ...structuredClone(world.entities[0]),
+    id: "crystal-1",
+    color: "#56eaff",
+  });
+  const transport = fixtureTransport(
+    {
+      secondSnapshotMaterialOverride: {
+        entityId: "crystal-1",
+        color: "#56eaff",
+      },
+    },
+    worldWithCrystal1,
+    materialMutation,
+  );
+
+  await expect(
+    runPublicationAcceptance({
+      transport,
+      world: worldWithCrystal1,
+      email: "fixture@example.test",
+      password: "fixture-password",
+      republish: true,
+      materialMutation,
+      pollDelayMs: 0,
+      sleep: async () => undefined,
+    }),
+  ).rejects.toThrow("final public release entity crystal-1 material");
 });
 
 it("checks the previous release after a failed replacement without polling or retrying", async () => {

@@ -109,12 +109,14 @@ export async function loadFreeArtifact(
   const files = unzipSync(zipBytes);
   const sourceProject = parseJSON(files, PROJECT_FILE, PROJECT_FILE);
   const usedAssets = parseJSON(files, USED_ASSETS_FILE, USED_ASSETS_FILE);
-  const generatedManifest = parseJSON(
-    files,
-    GENERATED_MANIFEST_FILE,
-    GENERATED_MANIFEST_FILE,
-  );
   validateProject(sourceProject);
+  const referencedModels = referencedGeneratedMetadata(sourceProject);
+  const hasGeneratedManifest = files[GENERATED_MANIFEST_FILE] !== undefined;
+  const generatedManifest = hasGeneratedManifest
+    ? parseJSON(files, GENERATED_MANIFEST_FILE, GENERATED_MANIFEST_FILE)
+    : null;
+  if (!hasGeneratedManifest && referencedModels.size > 0)
+    throw new Error(`The artifact is missing ${GENERATED_MANIFEST_FILE}.`);
   if (typeof projectId !== "string" || projectId.length === 0)
     throw new Error("A publication project identity is required.");
   if (projectId === sourceProject.id)
@@ -124,8 +126,10 @@ export async function loadFreeArtifact(
   if (!Array.isArray(usedAssets.assets) || !Array.isArray(usedAssets.sources))
     throw new Error("The artifact catalog provenance is incomplete.");
   if (
-    generatedManifest.version !== 1 ||
-    !Array.isArray(generatedManifest.models)
+    hasGeneratedManifest &&
+    (!generatedManifest ||
+      generatedManifest.version !== 1 ||
+      !Array.isArray(generatedManifest.models))
   )
     throw new Error("The artifact generated-model manifest is invalid.");
 
@@ -177,9 +181,8 @@ export async function loadFreeArtifact(
     addExpected({ ...license, kind: "catalog-license", assetId });
   }
 
-  const referencedModels = referencedGeneratedMetadata(sourceProject);
   const modelsByHash = new Map(
-    generatedManifest.models.map((model) => [model.sha256, model]),
+    (generatedManifest?.models ?? []).map((model) => [model.sha256, model]),
   );
   const generatedModels = [];
   for (const [hash, metadata] of referencedModels) {
@@ -370,13 +373,13 @@ export async function verifyFreeArtifactPublicFiles(
   };
 }
 
-export function artifactMutationPlan(artifact) {
+export function artifactMutationPlan(artifact, { republish = false } = {}) {
   return {
     accountSignup: 1,
     generatedModelUploads: artifact.generatedModels.length,
-    cloudProjectSaves: 1,
+    cloudProjectSaves: republish ? 2 : 1,
     publicationSubmissions: 1,
     inferenceCalls: 0,
-    republishSubmissions: 0,
+    republishSubmissions: republish ? 1 : 0,
   };
 }
