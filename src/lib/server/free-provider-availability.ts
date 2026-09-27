@@ -19,10 +19,22 @@ type DiagnosticReason =
   | "fetch_error"
   | "available";
 
+type JsonKind =
+  "array" | "boolean" | "null" | "number" | "object" | "string" | "unreadable";
+
+type CreditsBodySchema = {
+  jsonKind: JsonKind;
+  keys?: string[];
+  balanceKind?: JsonKind;
+  dataKeys?: string[];
+  creditsKeys?: string[];
+};
+
 type AvailabilityDiagnostic = {
   event: "free_provider_credits_probe";
   reason: DiagnosticReason;
   status?: number;
+  schema?: CreditsBodySchema;
 };
 
 type ProbeResult = {
@@ -30,17 +42,88 @@ type ProbeResult = {
   diagnostic: AvailabilityDiagnostic;
 };
 
-function diagnostic(reason: DiagnosticReason, status?: number) {
-  return status === undefined
-    ? ({
-        event: "free_provider_credits_probe",
-        reason,
-      } satisfies AvailabilityDiagnostic)
-    : ({
-        event: "free_provider_credits_probe",
-        reason,
-        status,
-      } satisfies AvailabilityDiagnostic);
+const MAX_SCHEMA_KEYS_PER_OBJECT = 8;
+const MAX_SCHEMA_KEY_LENGTH = 32;
+const ASCII_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function diagnostic(
+  reason: DiagnosticReason,
+  status?: number,
+  schema?: CreditsBodySchema,
+): AvailabilityDiagnostic {
+  return {
+    event: "free_provider_credits_probe",
+    reason,
+    ...(status === undefined ? {} : { status }),
+    ...(schema === undefined ? {} : { schema }),
+  };
+}
+
+function jsonKind(value: unknown): JsonKind {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  switch (typeof value) {
+    case "boolean":
+      return "boolean";
+    case "number":
+      return "number";
+    case "object":
+      return "object";
+    case "string":
+      return "string";
+    default:
+      return "unreadable";
+  }
+}
+
+function boundedIdentifierKeys(value: unknown): string[] | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+
+  try {
+    return Object.keys(value)
+      .filter((key) => ASCII_IDENTIFIER.test(key))
+      .slice(0, MAX_SCHEMA_KEYS_PER_OBJECT)
+      .map((key) => key.slice(0, MAX_SCHEMA_KEY_LENGTH));
+  } catch {
+    return undefined;
+  }
+}
+
+function safeHasOwn(value: unknown, key: string): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  try {
+    return Object.hasOwn(value, key);
+  } catch {
+    return false;
+  }
+}
+
+function safeProperty(value: unknown, key: string): unknown {
+  if (!safeHasOwn(value, key)) return undefined;
+  try {
+    return (value as Record<string, unknown>)[key];
+  } catch {
+    return undefined;
+  }
+}
+
+function creditsBodySchema(value: unknown): CreditsBodySchema {
+  const kind = jsonKind(value);
+  if (kind !== "object") return { jsonKind: kind };
+
+  const keys = boundedIdentifierKeys(value) ?? [];
+  const schema: CreditsBodySchema = { jsonKind: kind, keys };
+  if (safeHasOwn(value, "balance")) {
+    schema.balanceKind = jsonKind(safeProperty(value, "balance"));
+  }
+  for (const name of ["data", "credits"] as const) {
+    const nestedKeys = boundedIdentifierKeys(safeProperty(value, name));
+    if (nestedKeys !== undefined) {
+      schema[name === "data" ? "dataKeys" : "creditsKeys"] = nestedKeys;
+    }
+  }
+  return schema;
 }
 
 export function createFreeProviderAvailability(
@@ -62,7 +145,11 @@ export function createFreeProviderAvailability(
 
   function logDiagnostic(event: AvailabilityDiagnostic) {
     // Log only changes in probe state so repeated requests do not flood logs.
-    const signature = `${event.reason}:${event.status ?? ""}`;
+    const schemaSignature =
+      event.reason === "malformed_credits_body"
+        ? JSON.stringify(event.schema)
+        : "";
+    const signature = `${event.reason}:${event.status ?? ""}:${schemaSignature}`;
     if (signature === lastLoggedDiagnostic) return;
     lastLoggedDiagnostic = signature;
     try {
@@ -133,20 +220,30 @@ async function checkCredits(
     } catch {
       return {
         available: false,
-        diagnostic: diagnostic("malformed_credits_body"),
+        diagnostic: diagnostic("malformed_credits_body", undefined, {
+          jsonKind: "unreadable",
+        }),
       };
     }
     if (typeof body !== "object" || body === null || !("balance" in body)) {
       return {
         available: false,
-        diagnostic: diagnostic("malformed_credits_body"),
+        diagnostic: diagnostic(
+          "malformed_credits_body",
+          undefined,
+          creditsBodySchema(body),
+        ),
       };
     }
     const balance = (body as { balance?: unknown }).balance;
     if (typeof balance !== "number" || !Number.isFinite(balance)) {
       return {
         available: false,
-        diagnostic: diagnostic("malformed_credits_body"),
+        diagnostic: diagnostic(
+          "malformed_credits_body",
+          undefined,
+          creditsBodySchema(body),
+        ),
       };
     }
     if (balance <= 0) {

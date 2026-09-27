@@ -80,7 +80,11 @@ it("fails closed on an unreadable or rejected credit request", async () => {
   expect(await rejected()).toBe(false);
   expect(await denied()).toBe(false);
   expect(diagnostics).toEqual([
-    { event: "free_provider_credits_probe", reason: "malformed_credits_body" },
+    {
+      event: "free_provider_credits_probe",
+      reason: "malformed_credits_body",
+      schema: { jsonKind: "unreadable" },
+    },
     { event: "free_provider_credits_probe", reason: "fetch_error" },
     {
       event: "free_provider_credits_probe",
@@ -89,6 +93,152 @@ it("fails closed on an unreadable or rejected credit request", async () => {
     },
   ]);
 });
+
+it("bounds malformed body schema keys and never logs body values", async () => {
+  setKey();
+  const diagnostics: unknown[] = [];
+  const longIdentifier = "x".repeat(40);
+  const data = Object.fromEntries(
+    Array.from({ length: 10 }, (_, index) => [
+      `nested${index}`,
+      `value${index}`,
+    ]),
+  );
+  const credits = Object.fromEntries(
+    Array.from({ length: 10 }, (_, index) => [
+      `credit${index}`,
+      `value${index}`,
+    ]),
+  );
+  const available = createFreeProviderAvailability({
+    fetcher: vi.fn(async () =>
+      Response.json({
+        balance: "PRIVATE_BALANCE_VALUE",
+        data: { ...data, "user-input": "PRIVATE_USER_VALUE" },
+        credits: { ...credits, token: "PRIVATE_TOKEN_VALUE" },
+        "bad-key": "PRIVATE_IGNORED_VALUE",
+        [longIdentifier]: "PRIVATE_LONG_KEY_VALUE",
+        ...Object.fromEntries(
+          Array.from({ length: 10 }, (_, index) => [
+            `field${index}`,
+            `PRIVATE_FIELD_VALUE_${index}`,
+          ]),
+        ),
+      }),
+    ),
+    logger: (event) => diagnostics.push(event),
+  });
+
+  expect(await available()).toBe(false);
+  expect(diagnostics).toEqual([
+    {
+      event: "free_provider_credits_probe",
+      reason: "malformed_credits_body",
+      schema: {
+        jsonKind: "object",
+        balanceKind: "string",
+        keys: [
+          "balance",
+          "data",
+          "credits",
+          "x".repeat(32),
+          "field0",
+          "field1",
+          "field2",
+          "field3",
+        ],
+        dataKeys: [
+          "nested0",
+          "nested1",
+          "nested2",
+          "nested3",
+          "nested4",
+          "nested5",
+          "nested6",
+          "nested7",
+        ],
+        creditsKeys: [
+          "credit0",
+          "credit1",
+          "credit2",
+          "credit3",
+          "credit4",
+          "credit5",
+          "credit6",
+          "credit7",
+        ],
+      },
+    },
+  ]);
+  const serializedDiagnostics = JSON.stringify(diagnostics);
+  for (const secret of [
+    "PRIVATE_BALANCE_VALUE",
+    "PRIVATE_USER_VALUE",
+    "PRIVATE_TOKEN_VALUE",
+    "PRIVATE_IGNORED_VALUE",
+    "PRIVATE_LONG_KEY_VALUE",
+    "PRIVATE_FIELD_VALUE_0",
+    "private-synthetic-shared-key",
+  ]) {
+    expect(serializedDiagnostics).not.toContain(secret);
+  }
+});
+
+it.each([
+  ["string", "PRIVATE_BALANCE_VALUE"],
+  ["null", null],
+  ["object", { PRIVATE_OBJECT_KEY: "PRIVATE_OBJECT_VALUE" }],
+])(
+  "reports malformed balance fields by %s kind only",
+  async (kind, balance) => {
+    setKey();
+    const diagnostics: unknown[] = [];
+    const available = createFreeProviderAvailability({
+      fetcher: vi.fn(async () => Response.json({ balance })),
+      logger: (event) => diagnostics.push(event),
+    });
+
+    expect(await available()).toBe(false);
+    expect(diagnostics).toEqual([
+      {
+        event: "free_provider_credits_probe",
+        reason: "malformed_credits_body",
+        schema: {
+          jsonKind: "object",
+          keys: ["balance"],
+          balanceKind: kind,
+        },
+      },
+    ]);
+    expect(JSON.stringify(diagnostics)).not.toContain("PRIVATE_");
+  },
+);
+
+it.each([
+  ["array", ["PRIVATE_ARRAY_VALUE"]],
+  ["null", null],
+  ["string", "PRIVATE_TOP_LEVEL_VALUE"],
+])(
+  "reports only the top-level %s kind for non-object JSON",
+  async (kind, body) => {
+    setKey();
+    const diagnostics: unknown[] = [];
+    const available = createFreeProviderAvailability({
+      fetcher: vi.fn(async () => Response.json(body)),
+      logger: (event) => diagnostics.push(event),
+    });
+
+    expect(await available()).toBe(false);
+    expect(diagnostics).toEqual([
+      {
+        event: "free_provider_credits_probe",
+        reason: "malformed_credits_body",
+        schema: { jsonKind: kind },
+      },
+    ]);
+    expect(JSON.stringify(diagnostics)).not.toContain("PRIVATE_");
+  },
+);
 
 it("logs missing keys once per state transition without calling the provider", async () => {
   vi.stubEnv("AI_GATEWAY_API_KEY_FREE", "");
