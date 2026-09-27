@@ -1,0 +1,219 @@
+{
+  "checkedAt": "2026-09-27T19:54:22.829Z",
+  "provenance": {
+    "checkedAt": "2026-09-27T19:54:22.829Z",
+    "harness": {
+      "checkoutSHA": "4efb1bac00a2348570a204d63efc690f604916f3",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": "e51434b",
+      "status": "operator-supplied-unverified"
+    }
+  },
+  "provider": "openrouter",
+  "mode": "live-browser",
+  "deviceEmulation": {
+    "mode": "mobile",
+    "editor": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 2,
+      "isMobile": true,
+      "hasTouch": true
+    },
+    "standalone": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 2,
+      "isMobile": true,
+      "hasTouch": true
+    }
+  },
+  "mobileLayout": {
+    "editor": {
+      "status": "passed",
+      "horizontalOverflow": false,
+      "connectionButtonReachable": true,
+      "connectionReachable": true,
+      "promptReachable": true,
+      "editPromptReachable": true,
+      "name": "editor",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    "standalone": {
+      "status": "passed",
+      "horizontalOverflow": false,
+      "movementControlReachable": true,
+      "touchMovementObserved": true,
+      "name": "standalone player",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "touchControls": {
+        "Forward": {
+          "x": 20,
+          "y": 769,
+          "width": 45,
+          "height": 45
+        },
+        "Left": {
+          "x": 71,
+          "y": 769,
+          "width": 45,
+          "height": 45
+        },
+        "Back": {
+          "x": 122,
+          "y": 769,
+          "width": 45,
+          "height": 45
+        },
+        "Right": {
+          "x": 173,
+          "y": 769,
+          "width": 45,
+          "height": 45
+        },
+        "Jump": {
+          "x": 325,
+          "y": 769,
+          "width": 45,
+          "height": 45
+        }
+      },
+      "touchMovement": {
+        "input": "CDP Input.dispatchTouchEvent",
+        "control": "Right",
+        "movementDistance": 0.64,
+        "before": [
+          0,
+          0.42,
+          5
+        ],
+        "after": [
+          0.5617,
+          0.42,
+          4.6932
+        ]
+      }
+    }
+  },
+  "targetOrigin": "http://127.0.0.1:3054",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 2,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 7,
+    "firstReservationMs": 3200,
+    "seedObserved": true,
+    "catalogEntities": 1,
+    "proceduralEntities": 2,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "passed",
+    "type": "material",
+    "selectedIdPreserved": true
+  },
+  "freeTrial": null,
+  "localRecovery": "passed",
+  "export": "passed",
+  "standalonePlayback": "passed",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 2,
+    "generationStatuses": [
+      200,
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790538867043,
+        "path": "/api/generate"
+      },
+      {
+        "request": 2,
+        "atMs": 1790538872224,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [],
+    "blockedExternalRequests": 0,
+    "blockedExternalOrigins": [],
+    "generationBudgetViolations": [],
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "openrouter/connection-model.png",
+    "openrouter/intermediate-seed.png",
+    "openrouter/edit.png",
+    "openrouter/share.png",
+    "openrouter/standalone-playback.png"
+  ],
+  "standalone": {
+    "status": "passed",
+    "readyObservedMs": 2980.900000002235,
+    "blockedExternalRequests": 0,
+    "pageErrors": [],
+    "inputGame": null
+  },
+  "followOn": {
+    "projectId": "9400e68a-eb44-4f24-aedc-2e9d49b979db",
+    "revision": 9
+  },
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "movement-during-generation",
+      "creation-win-reset",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  }
+}
