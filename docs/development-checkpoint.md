@@ -7,7 +7,10 @@ attempted. The production `/api/trial` endpoint still reports
 Computer use can now inspect the owner's existing Chrome profile: one Orbsie
 tab has an OpenRouter-connected completed castle draft, while a separate
 `Connect ChatGPT` attempt reached OpenAI's `Sign in to Codex with ChatGPT`
-consent page and was left pending specific owner approval. The current official
+consent page. The owner approved that specific Continue action, but before it
+was clicked the tab advanced to a separate Codex CLI device-code challenge.
+No code or grant was submitted, and Orbsie still showed ChatGPT disconnected.
+The current official
 App Server guide still documents a localhost managed browser callback rather
 than an Orbsie HTTPS subscription OAuth callback; see
 `docs/ai-connection-priority.md`. `adb devices -l` lists no physical Android

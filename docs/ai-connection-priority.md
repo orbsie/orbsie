@@ -168,6 +168,10 @@ docs do not establish an Orbsie HTTPS OAuth redirect or subscription inference
 entitlement. In the owner's existing Chrome profile, the production Orbsie
 `Connect ChatGPT` action did open the official OpenAI account selector and then
 the `Sign in to Codex with ChatGPT` consent screen for the existing account.
-The consent action was left untouched pending specific owner approval. This
-observes a working entry to the existing hosted flow, not a connected session,
-generation, or the required browser-only redirect integration.
+The owner approved Continue for that specific consent screen. Before the agent
+clicked it, the same tab had advanced to OpenAI's separate nine-character
+Codex CLI device-code page. No code was entered and no grant was completed;
+Orbsie still displayed `ChatGPT is not connected`. The device-code screen is
+the implemented hosted flow, not evidence of the requested direct Orbsie HTTPS
+OAuth redirect or subscription inference. The unfinished page was left for
+owner handoff without copying its credential-bearing URL or code.
