@@ -1,5 +1,26 @@
 # Development checkpoint
 
+Sep 27 fresh OpenRouter flagship live milestone: one corrected preflight and
+then exactly three `openai/gpt-6-luna` requests (HTTP 200, low reasoning,
+default tier, 4,096 output-token cap, no fallback) created the five-crystal
+island, revised a selected tree to a pink mushroom, changed the objective to
+seven crystals, and restored five crystals through the UI Undo on the same
+project. Browser gameplay passed at creation revision 30, seven-crystal
+revision 41, and undo revision 42: movement, all collectibles, three moving
+platform and bounce contacts, portal win, and reset. The original journey
+stopped at export comparison because two in-memory `assetPolicy: undefined`
+fields were omitted by correct JSON export. The harness comparison now uses
+the JSON wire shape (`b86b847`, 54 focused tests and typecheck passed). A
+zero-model-call replay of the retained revision-42 ZIP then passed standalone
+gameplay, five collections, win/reset, no page errors, and no external
+requests (`c0e3924`). This replay is separate from the live browser session;
+cloud save and signed-out publication are still pending. The committed
+sanitized summaries are in
+`docs/evidence/provider-e2e/openrouter-flagship-continuous-publication-20260927-retry-after-preflight/`;
+raw artifacts and account state are mode-0600 files under a mode-0700 local
+cache, not in Git. Visual review finds the scene recognizable and playable but
+still simple; visual delight needs a separate pass.
+
 Sep 27 read-only external gate check: the private Gateway test key's `/v1/credits`
 request returned HTTP 200 with a negative balance; no Gateway inference was
 attempted. The production `/api/trial` endpoint still reports
