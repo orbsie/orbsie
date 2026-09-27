@@ -10,6 +10,7 @@ import {
   verifyFreeArtifactPublicFiles,
   withFreeArtifactGeneratedUploads,
 } from "../scripts/lib/free-artifact-publication.mjs";
+import { prepareFreeArtifactPublication } from "../scripts/verify-free-artifact-publication.mjs";
 
 const ZIP = "docs/evidence/provider-e2e/free-strawberry-current/free/world.zip";
 const FLAGSHIP_ZIP =
@@ -87,6 +88,22 @@ it("still requires the generated manifest when the project references generated 
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+it("rejects an invalid republish material before any live publication call", async () => {
+  const options = { artifactPath: FLAGSHIP_ZIP, republish: true };
+  await expect(
+    prepareFreeArtifactPublication({
+      ...options,
+      materialMutation: { entityId: "missing-entity", color: "#ff8f6b" },
+    }),
+  ).rejects.toThrow("missing republish target missing-entity");
+  await expect(
+    prepareFreeArtifactPublication({
+      ...options,
+      materialMutation: { entityId: "crystal-1", color: "#56eaff" },
+    }),
+  ).rejects.toThrow("republish material must change");
 });
 
 it("uploads each unique generated model before the cloud project save", async () => {

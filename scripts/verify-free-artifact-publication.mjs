@@ -195,6 +195,9 @@ async function publicGetBytes(fetchImpl, url, label) {
   };
 }
 
+/**
+ * @param {{ artifactPath?: string, projectId?: string, republish?: boolean, materialMutation?: { entityId: string, color: string } }} [options]
+ */
 export async function prepareFreeArtifactPublication({
   artifactPath = ARTIFACT_PATH,
   projectId,
@@ -202,6 +205,20 @@ export async function prepareFreeArtifactPublication({
   materialMutation,
 } = {}) {
   const artifact = await loadFreeArtifact(artifactPath, { projectId });
+  const republishMaterialMutation = republish
+    ? { ...DEFAULT_MATERIAL_MUTATION, ...materialMutation }
+    : null;
+  if (republishMaterialMutation) {
+    const target = artifact.publicationProject.entities.find(
+      (entity) => entity.id === republishMaterialMutation.entityId,
+    );
+    if (!target)
+      throw new Error(
+        `The artifact is missing republish target ${republishMaterialMutation.entityId}.`,
+      );
+    if (target.color === republishMaterialMutation.color)
+      throw new Error("The republish material must change the target color.");
+  }
   return {
     artifact,
     plan: artifactMutationPlan(artifact, { republish }),
@@ -212,14 +229,7 @@ export async function prepareFreeArtifactPublication({
       sourceRevision: artifact.sourceProject.revision,
       publicationProjectId: artifact.publicationProject.id,
       publicationRevision: artifact.expectedProject.revision,
-      ...(republish
-        ? {
-            republishMaterialMutation: {
-              ...DEFAULT_MATERIAL_MUTATION,
-              ...materialMutation,
-            },
-          }
-        : {}),
+      ...(republishMaterialMutation ? { republishMaterialMutation } : {}),
       expectedReferencedFiles: artifact.expectedFiles.map(
         ({ file, kind, bytes, sha256 }) => ({
           file,
