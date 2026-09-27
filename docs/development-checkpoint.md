@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep27 Android flagship replay rerun supersedes the partial replay note below.
+The exact pinned OpenRouter GPT-6 Luna `world.zip` (SHA-256
+`7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a`) passed
+once on the Android 15/API 35 `droidlm_api35_midrange` emulator with Chrome
+124.0.6367.219, forced Canvas2D, and the ZIP's archived runtime served
+byte-for-byte unchanged. The touch replay recorded bounce contacts and movement
+on all three platforms, collected all five crystals, and won through the portal
+at score 5. Tapping “Play again” returned to playing at score 0; the harness
+confirmed a fresh gameplay observation newer than the win observation and an
+advanced reset lifecycle. Provider calls, external requests, request failures,
+and page errors were zero. WebGL and physical-device behavior remain untested.
+Evidence: `docs/evidence/android-openrouter-flagship-20260927/fresh-android-api35-touch-replay/`.
+
 Sep27 production alias `https://orbsie.com` was updated to deployment
 `DwtS2YspB6NrtzbstLzmQz1UctnA` (source `a1008eb`). A fresh read-only
 `/api/trial` response is `{enabled:false,remaining:0,limit:3}`, consistent with

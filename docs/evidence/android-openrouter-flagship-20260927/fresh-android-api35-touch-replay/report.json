@@ -1,0 +1,201 @@
+{
+  "status": "passed",
+  "startedAt": "2026-09-27T15:58:59.766Z",
+  "sourceCommit": "321ebea83437d38fc8835c7de90b7c904af34b34",
+  "source": {
+    "fixtureZipSha256": "7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a",
+    "projectSha256": "b5aabe90e5667f39082f681d07d7ad452ae649aa550ee0dece17bebf1d79247a",
+    "projectId": "f7db190b-34fb-497e-bdee-92adeec85584",
+    "revision": 42,
+    "entityCount": 14,
+    "generatedModelCount": 0,
+    "catalogAssetIds": [
+      "kenney.nature.tree-default",
+      "kenney.nature.tree-pine-tall-a"
+    ],
+    "story": {
+      "platformIds": [
+        "bounce-1",
+        "bounce-2",
+        "bounce-3"
+      ],
+      "collectibleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "portalId": "portal"
+    },
+    "sourceBytesUnchanged": true
+  },
+  "currentPlayerFiles": {},
+  "device": {
+    "id": "emulator-5554",
+    "androidRelease": "15",
+    "model": "sdk_gphone64_x86_64",
+    "size": "Physical size: 1080x2400",
+    "density": "Physical density: 420",
+    "chromeVersion": "124.0.6367.219",
+    "evidenceClass": "Android emulator Chrome",
+    "physicalDeviceProof": false
+  },
+  "rendererMode": "canvas2d",
+  "renderer": "Canvas2D forced by rejecting WebGL context requests",
+  "rendererDetails": {},
+  "webglAcceptance": "not evaluated in forced-fallback mode",
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "expectedWebglInitializationErrors": 1,
+  "runtimeMode": "exact-exported-zip",
+  "flagshipGameplay": {
+    "status": "passed",
+    "inputMode": "touch",
+    "surface": "standalone-player",
+    "collectedIds": [
+      "crystal-1",
+      "crystal-2",
+      "crystal-3",
+      "crystal-4",
+      "crystal-5"
+    ],
+    "collectionCount": 5,
+    "score": 5,
+    "statusAtWin": "won",
+    "portalId": "portal",
+    "contacts": [
+      "portal"
+    ],
+    "platforms": [
+      {
+        "id": "bounce-1",
+        "behavior": "bounce",
+        "groundedFrames": 2,
+        "bounceFrames": 2,
+        "maximumDisplacement": 1.1826208183521894
+      },
+      {
+        "id": "bounce-2",
+        "behavior": "bounce",
+        "groundedFrames": 3,
+        "bounceFrames": 3,
+        "maximumDisplacement": 1.28393680919273
+      },
+      {
+        "id": "bounce-3",
+        "behavior": "bounce",
+        "groundedFrames": 2,
+        "bounceFrames": 2,
+        "maximumDisplacement": 1.3578506103397356
+      }
+    ],
+    "reset": {
+      "score": 0,
+      "status": "playing",
+      "lifecycleAdvanced": true
+    }
+  },
+  "touchRestart": {
+    "status": "passed",
+    "control": "Play again",
+    "scoreBefore": 5,
+    "scoreAfter": 0,
+    "resetAdvanced": true,
+    "stateAfter": "playing",
+    "uiResetObserved": true,
+    "freshGameplayObservation": true
+  },
+  "checks": {
+    "canvas2dFallback": true,
+    "viewport": true,
+    "ready": true,
+    "touchGameplay": true,
+    "touchInput": true,
+    "portalWin": true,
+    "touchRestart": true
+  },
+  "runtimeProvenance": {
+    "currentRuntime": {
+      "runtime.js": {
+        "bytes": 1944804,
+        "sha256": "bf42e405c8cd18d4c90e7c93f396bcd1ada5cdf6eada455a89314a3b03a69833"
+      },
+      "runtime.css": {
+        "bytes": 6236,
+        "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+      },
+      "generated-geometry-worker.js": {
+        "bytes": 844831,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+      },
+      "asset-geometry-worker.js": {
+        "bytes": 427305,
+        "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+      }
+    },
+    "archivedRuntime": {
+      "runtime.js": {
+        "bytes": 1944804,
+        "sha256": "bf42e405c8cd18d4c90e7c93f396bcd1ada5cdf6eada455a89314a3b03a69833"
+      },
+      "runtime.css": {
+        "bytes": 6236,
+        "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e"
+      },
+      "generated-geometry-worker.js": {
+        "bytes": 844831,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a"
+      },
+      "asset-geometry-worker.js": {
+        "bytes": 427305,
+        "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772"
+      }
+    },
+    "servedRuntime": {
+      "runtime.js": {
+        "bytes": 1944804,
+        "sha256": "bf42e405c8cd18d4c90e7c93f396bcd1ada5cdf6eada455a89314a3b03a69833",
+        "matchesExported": true
+      },
+      "runtime.css": {
+        "bytes": 6236,
+        "sha256": "b937627d2f7032caa4d33f93e71274a69e75c6aa11859c2d1f0f3bd6eccccc8e",
+        "matchesExported": true
+      },
+      "generated-geometry-worker.js": {
+        "bytes": 844831,
+        "sha256": "141a9792af6d5fb3b46da25b49e23f034c640fd7885bf401790a0e73fd88142a",
+        "matchesExported": true
+      },
+      "asset-geometry-worker.js": {
+        "bytes": 427305,
+        "sha256": "8d1115f8c8370dc3f0cf8550aabbd6f5e4b6ce2e90b5b4f06041cdaf33b33772",
+        "matchesExported": true
+      }
+    },
+    "runtimeMode": "exported"
+  },
+  "cookiesBefore": 0,
+  "blockedWebglRequests": 3,
+  "viewport": {
+    "width": 412,
+    "height": 786,
+    "dpr": 2.625,
+    "touchPoints": 5,
+    "horizontalOverflow": false,
+    "verticalOverflow": false
+  },
+  "cookiesAfter": 0,
+  "cleanup": {
+    "newTabClosed": true,
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryArtifactRemoved": true
+  },
+  "finishedAt": "2026-09-27T15:59:33.810Z"
+}
