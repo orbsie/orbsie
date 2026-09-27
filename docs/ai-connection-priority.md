@@ -20,7 +20,17 @@ Browser-only is a firm requirement. A supported hosted subscription integration 
 
 ## Current evidence and immediate gaps
 
-- OpenRouter PKCE and Settings callback shipped in 1ec0591 and are deployed. Ten core tests and a simulated browser redirect/callback passed; real OAuth consent remains unverified because regular Chrome is unavailable to computer use.
+- On Sep 27, real OpenRouter authorization in the owner's Chrome returned to
+  Orbsie with a single code and matching state but without the optional
+  `orbsie_oauth` callback marker. The deployed handler ignored that return.
+  A one-time in-browser retry of the same callback with its marker restored
+  completed the key exchange: Orbsie displayed “OpenRouter connected,”
+  Balanced selected Luna, and the saved `princess in a castle` draft returned.
+  The OpenRouter key was not copied to files or chat. This proves the live
+  authorization and exchange can work, but the ordinary redirect remains
+  broken until the callback fix is deployed and rerun end to end; no model
+  inference was performed with this OAuth-issued key.
+- OpenRouter PKCE and Settings callback originally shipped in 1ec0591. Ten core tests and a simulated browser redirect/callback passed before the real callback-shape mismatch above was observed.
 - Live Luna OpenRouter model creation, material edit, reload and standalone export passed (7ec1bad). This used the existing API key, not an OAuth-issued credential.
 - OAuth blocked-storage, cancellation and pending-control fixes are reviewed and deployed, along with unsent composer prompt preservation (57218cd). Simulated production success and cancellation passed; existing-world selection recovery passed on production aaa0d0d: success and cancellation preserve both entities, revision 9, selected object and prompt, and clear pending OAuth drafts without persisting the provider key. These checks do not prove real provider consent.
 - Gateway funded live acceptance and browser-only ChatGPT subscription authorization remain unresolved. No local-install workaround satisfies the owner constraint.
