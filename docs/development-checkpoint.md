@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 27 the fresh publication harness now traverses the validated signed-out
+player inside its exact iframe: desktop keyboard focus/input stays in that
+frame, gameplay observations must match the current project/revision and five
+crystal set, and reports retain win/restart or bounded failure evidence. A
+browser-backed replay of the retained revision-42 export passed movement, all
+three bounce contacts, five collections, portal win, and UI restart from a
+cross-origin iframe served on a second loopback port, with zero external or
+editor/provider requests. Ordinary publication still reports deployment READY
+without running flagship gameplay. A failed or missing flagship traversal
+retains failure evidence, blocks the configured run, and records deployment
+READY separately. Missing and stale gameplay bindings are rejected. Focused
+tests and typecheck pass; no live provider call or publish was run, so a fresh
+provider-created publication journey remains unverified.
+
 Sep 27 corrected mobile-emulated OpenRouter journey passed on the loopback
 production build. The fresh `openai/gpt-6-luna` create and selected-object edit
 used exactly two HTTP 200 model calls with low reasoning, default tier, and a

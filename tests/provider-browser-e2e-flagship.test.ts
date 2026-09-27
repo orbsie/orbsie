@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { strFromU8, unzipSync, zipSync } from "fflate";
-import { chromium } from "@playwright/test";
+import { chromium, type BrowserContext } from "@playwright/test";
 import {
+  assertPublishedGameplayBinding,
   assertFlagshipStoryCreation,
   assertFlagshipStoryAssetReferences,
   assertFlagshipStoryGoalSeven,
@@ -16,6 +18,8 @@ import {
   assertPublicationProjectMatches,
   buildGeneratedModelEvidence,
   captureCurrentTargetArtifacts,
+  createPublishedGameplayPageAdapter,
+  publishedPlaybackReport,
   extractZip,
   installTrafficGuard,
   persistFlagshipStoryPhase,
@@ -24,6 +28,7 @@ import {
   recordFreshFlagshipGameplayFailure,
   flagshipResumeExecutionMode,
   runProjectFollowOnPhases,
+  runFreshFlagshipGameplay,
   verifyFreshPublicationArtifacts,
   verifyStandalone,
 } from "../scripts/provider-browser-e2e.mjs";
@@ -347,6 +352,110 @@ const PUBLICATION_ARTIFACTS = [
   "generated-geometry-worker.js",
   "asset-geometry-worker.js",
 ];
+const RETAINED_FLAGSHIP_ZIP =
+  "docs/evidence/provider-e2e/openrouter-flagship-set-label-live-20260925/openrouter/world.zip";
+
+async function serveRetainedFlagshipZipInIframe() {
+  const source = resolve(RETAINED_FLAGSHIP_ZIP);
+  const archive = unzipSync(new Uint8Array(readFileSync(source)));
+  const project = JSON.parse(strFromU8(archive["project.json"]));
+  const story = {
+    platforms: ["bounce-1", "bounce-2", "bounce-3"].map((id) => {
+      const platform = project.entities.find((entity: any) => entity.id === id);
+      if (!platform) throw new Error(`Retained flagship ZIP is missing ${id}.`);
+      return platform;
+    }),
+    collectibles: project.entities.filter(
+      (entity: any) =>
+        entity.stage === "ready" && entity.behavior?.type === "collect",
+    ),
+    portal: project.entities.find(
+      (entity: any) =>
+        entity.stage === "ready" && entity.behavior?.type === "portal",
+    ),
+  };
+  const playerServer = createServer((request, response) => {
+    const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+    const relativePath = pathname.slice(1);
+    if (relativePath.split("/").includes("..")) {
+      response.writeHead(403).end();
+      return;
+    }
+    const bytes = archive[relativePath];
+    if (!bytes) {
+      response.writeHead(404).end();
+      return;
+    }
+    const contentType = relativePath.endsWith(".js")
+      ? "text/javascript"
+      : relativePath.endsWith(".css")
+        ? "text/css"
+        : relativePath.endsWith(".json")
+          ? "application/json"
+          : relativePath.endsWith(".html")
+            ? "text/html"
+            : "application/octet-stream";
+    response.writeHead(200, { "Content-Type": contentType });
+    response.end(bytes);
+  });
+  const listenLoopback = (server: ReturnType<typeof createServer>) =>
+    new Promise<string>((resolveListen, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", () => {
+        server.off("error", reject);
+        const address = server.address();
+        if (!address || typeof address === "string") {
+          reject(new Error("Could not start the retained ZIP fixture server."));
+          return;
+        }
+        resolveListen(`http://127.0.0.1:${address.port}`);
+      });
+    });
+  const closeServer = (server: ReturnType<typeof createServer>) =>
+    new Promise<void>((resolveClose, reject) =>
+      server.close((error) => (error ? reject(error) : resolveClose())),
+    );
+  let playerOrigin: string;
+  let wrapperServer: ReturnType<typeof createServer> | undefined;
+  let wrapperOrigin: string;
+  try {
+    playerOrigin = await listenLoopback(playerServer);
+    wrapperServer = createServer((request, response) => {
+      const pathname = new URL(
+        request.url ?? "/",
+        "http://127.0.0.1",
+      ).pathname;
+      if (pathname !== "/wrapper.html") {
+        response.writeHead(404).end();
+        return;
+      }
+      response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      response.end(
+        `<!doctype html><html><body style="margin:0"><iframe title="Published player" src="${playerOrigin}/index.html" style="width:1280px;height:800px;border:0"></iframe></body></html>`,
+      );
+    });
+    wrapperOrigin = await listenLoopback(wrapperServer);
+  } catch (error) {
+    if (wrapperServer?.listening) await closeServer(wrapperServer);
+    if (playerServer.listening) await closeServer(playerServer);
+    throw error;
+  }
+  if (!wrapperServer || !wrapperOrigin)
+    throw new Error("Could not start the retained wrapper fixture server.");
+  const retainedWrapperServer = wrapperServer;
+  return {
+    wrapperOrigin,
+    playerOrigin,
+    project,
+    story,
+    close: async () => {
+      await Promise.all([
+        closeServer(retainedWrapperServer),
+        closeServer(playerServer),
+      ]);
+    },
+  };
+}
 
 function publicationFixture({
   project = initialProject(),
@@ -1676,6 +1785,236 @@ describe("flagship provider story contract", () => {
       }),
     ).toThrow(/wrapper changed the approved app origin/);
   });
+
+  it("requires published gameplay to be present and bound to the current revision", () => {
+    const project = { id: "published-world", revision: 42 };
+    const targets = {
+      platforms: ["platform-1", "platform-2", "platform-3"].map((id) => ({
+        id,
+      })),
+      collectibles: [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5",
+      ].map((id) => ({ id })),
+      portal: { id: "portal" },
+    };
+    const gameplay: any = {
+      status: "passed",
+      projectId: project.id,
+      revision: project.revision,
+      expectedCollectibleIds: targets.collectibles.map(({ id }) => id),
+      collectedIds: targets.collectibles.map(({ id }) => id),
+      won: true,
+      score: 5,
+      contacts: [targets.portal.id],
+      platformEvidence: targets.platforms.map(({ id }) => ({
+        id,
+        behavior: "bounce",
+        groundedFrames: 0,
+        bounceFrames: 1,
+        maximumDisplacement: 0.1,
+      })),
+      win: {
+        projectId: project.id,
+        revision: project.revision,
+        status: "won",
+        score: 5,
+      },
+      reset: {
+        projectId: project.id,
+        revision: project.revision,
+        status: "playing",
+        score: 0,
+        lifecycleAdvanced: true,
+      },
+    };
+    expect(assertPublishedGameplayBinding(gameplay, project, targets)).toBe(
+      gameplay,
+    );
+    expect(() =>
+      assertPublishedGameplayBinding(undefined, project, targets),
+    ).toThrow(/missing or did not pass/);
+    expect(() =>
+      assertPublishedGameplayBinding(
+        { ...gameplay, revision: project.revision - 1 },
+        project,
+        targets,
+      ),
+    ).toThrow(/stale project revision/);
+    expect(() =>
+      assertPublishedGameplayBinding(
+        {
+          ...gameplay,
+          reset: { ...gameplay.reset, revision: project.revision - 1 },
+        },
+        project,
+        targets,
+      ),
+    ).toThrow(/reset observed a stale project revision/);
+  });
+
+  it("keeps ordinary publication READY without flagship gameplay", () => {
+    const project = { id: "ordinary-world", revision: 12 };
+    const report = publishedPlaybackReport({
+      flagshipStory: false,
+      project,
+      revision: project.revision,
+      artifactEvidence: { manifest: { projectId: project.id, revision: 12 } },
+    });
+    expect(report).toMatchObject({
+      mode: "real",
+      status: "READY",
+      projectId: project.id,
+      revision: project.revision,
+      editorProviderRequests: 0,
+      signedOut: true,
+    });
+    expect(report).not.toHaveProperty("gameplay");
+    expect(() =>
+      publishedPlaybackReport({
+        flagshipStory: false,
+        project,
+        revision: project.revision,
+        artifactEvidence: {},
+        apiRequests: ["/api/generate"],
+      }),
+    ).toThrow(/editor\/provider request/);
+  });
+
+  it("blocks a failed flagship traversal while retaining deployment readiness", () => {
+    const project = { id: "flagship-world", revision: 42 };
+    const gameplay = {
+      status: "failed",
+      projectId: project.id,
+      revision: project.revision,
+      failureEvidence: { collections: ["crystal-1"] },
+    };
+    expect(
+      publishedPlaybackReport({
+        flagshipStory: true,
+        project,
+        revision: project.revision,
+        artifactEvidence: { manifest: { projectId: project.id, revision: 42 } },
+        gameplay,
+      }),
+    ).toMatchObject({
+      mode: "blocked",
+      status: "published-gameplay-failed",
+      deploymentStatus: "READY",
+      projectId: project.id,
+      revision: project.revision,
+      gameplay,
+    });
+  });
+
+  it(
+    "plays the retained five-crystal flagship world through a keyboard-focused iframe",
+    async () => {
+      const fixture = await serveRetainedFlagshipZipInIframe();
+      let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+      let context: BrowserContext | undefined;
+      try {
+        browser = await chromium.launch({
+          headless: true,
+          args: [
+            "--no-sandbox",
+            "--use-gl=angle",
+            "--use-angle=swiftshader",
+            "--enable-unsafe-swiftshader",
+          ],
+        });
+        context = await browser.newContext({
+          viewport: { width: 1280, height: 800 },
+        });
+        await context.addInitScript(() => {
+          const testWindow = window as Window & {
+            __ORBSIE_GAMEPLAY_READ_REQUESTED__?: boolean;
+          };
+          testWindow.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+        });
+        const page = await context.newPage();
+        const requests: string[] = [];
+        page.on("request", (request) => requests.push(request.url()));
+        await page.goto(`${fixture.wrapperOrigin}/wrapper.html`, {
+          waitUntil: "domcontentloaded",
+        });
+        const iframe = page.locator("iframe");
+        await iframe.waitFor({ state: "visible", timeout: 30000 });
+        const iframeElement = await iframe.elementHandle();
+        if (!iframeElement)
+          throw new Error("Published fixture iframe is missing.");
+        const frame = await iframeElement.contentFrame();
+        if (!frame) throw new Error("Published fixture iframe has no document.");
+        expect(frame.url()).toBe(`${fixture.playerOrigin}/index.html`);
+        expect(new URL(frame.url()).origin).toBe(fixture.playerOrigin);
+        expect(new URL(page.url()).origin).toBe(fixture.wrapperOrigin);
+        expect(fixture.playerOrigin).not.toBe(fixture.wrapperOrigin);
+        await frame
+          .locator("main[data-ready=true]")
+          .waitFor({ state: "visible", timeout: 30000 });
+
+        const gameplayPage = createPublishedGameplayPageAdapter(frame, page);
+        const gameplay = await runFreshFlagshipGameplay(
+          gameplayPage,
+          fixture.project,
+          fixture.story,
+          {
+            surface: "standalone",
+            inputMode: "keyboard",
+            expectedCollectibleCount: 5,
+            expectedRevision: fixture.project.revision,
+          },
+        );
+        const bound = assertPublishedGameplayBinding(
+          gameplay,
+          fixture.project,
+          fixture.story,
+        );
+        expect(bound.movement.distance).toBeGreaterThan(0.12);
+        expect(bound.collectedIds).toHaveLength(5);
+        expect(bound.contacts).toContain(fixture.story.portal.id);
+        expect(bound.win.score).toBe(5);
+        expect(bound.reset).toMatchObject({
+          score: 0,
+          status: "playing",
+          lifecycleAdvanced: true,
+        });
+        expect(
+          bound.platformEvidence.filter(
+            (platform: any) => platform.behavior === "bounce",
+          ),
+        ).toHaveLength(3);
+        expect(
+          bound.platformEvidence.every(
+            (platform: any) =>
+              platform.bounceFrames > 0 && platform.maximumDisplacement >= 0.05,
+          ),
+        ).toBe(true);
+        const allowedOrigins = new Set([
+          fixture.wrapperOrigin,
+          fixture.playerOrigin,
+        ]);
+        expect(
+          requests.filter((url) => !allowedOrigins.has(new URL(url).origin)),
+        ).toEqual([]);
+        expect(
+          requests.filter((url) =>
+            ["/api/", "/generate", "/health"].some((path) =>
+              new URL(url).pathname.startsWith(path),
+            ),
+          ),
+        ).toEqual([]);
+      } finally {
+        await context?.close().catch(() => undefined);
+        await browser?.close().catch(() => undefined);
+        await fixture.close();
+      }
+    },
+    180_000,
+  );
 
   it("accepts fresh runtime and geometry worker bytes independently of the manifest", async () => {
     const expected = initialProject();

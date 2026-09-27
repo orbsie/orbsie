@@ -4622,6 +4622,141 @@ function freshGameplayStoryForProject(
   return { platforms, collectibles, portal: portals[0] };
 }
 
+export function assertPublishedGameplayBinding(gameplay, project, targets) {
+  assert(
+    gameplay && gameplay.status === "passed",
+    "Published gameplay is missing or did not pass.",
+  );
+  assert.equal(
+    gameplay.projectId,
+    project?.id,
+    "Published gameplay changed the project identity.",
+  );
+  assert.equal(
+    gameplay.revision,
+    project?.revision,
+    "Published gameplay observed a stale project revision.",
+  );
+  const expectedIds = targets?.collectibles?.map((target) => target.id);
+  assert(
+    Array.isArray(expectedIds) && expectedIds.length === 5,
+    "Published gameplay must have five crystal targets.",
+  );
+  assert.deepEqual(
+    gameplay.expectedCollectibleIds,
+    expectedIds,
+    "Published gameplay changed the expected crystal set.",
+  );
+  assert.deepEqual(
+    [...(gameplay.collectedIds ?? [])].sort(),
+    [...expectedIds].sort(),
+    "Published gameplay did not collect every expected crystal.",
+  );
+  assert.equal(gameplay.won, true);
+  assert.equal(gameplay.score, 5);
+  assert.equal(gameplay.win?.projectId, project.id);
+  assert.equal(gameplay.win?.revision, project.revision);
+  assert.equal(gameplay.win?.status, "won");
+  assert.equal(gameplay.win?.score, 5);
+  assert(
+    Array.isArray(gameplay.contacts) &&
+      gameplay.contacts.includes(targets.portal?.id),
+    "Published gameplay has no portal contact evidence.",
+  );
+  const platforms = gameplay.platformEvidence;
+  const expectedPlatformIds = targets.platforms?.map((target) => target.id);
+  assert(
+    Array.isArray(platforms) &&
+      Array.isArray(expectedPlatformIds) &&
+      expectedPlatformIds.length === 3,
+    "Published gameplay has no three-platform traversal evidence.",
+  );
+  assert.deepEqual(
+    platforms.map((platform) => platform.id).sort(),
+    [...expectedPlatformIds].sort(),
+    "Published gameplay changed the platform target set.",
+  );
+  assert(
+    platforms.every(
+      (platform) =>
+        (platform.groundedFrames > 0 || platform.bounceFrames > 0) &&
+        Number.isFinite(platform.maximumDisplacement) &&
+        platform.maximumDisplacement >= 0.05 &&
+        (platform.behavior !== "bounce" || platform.bounceFrames > 0),
+    ) && platforms.some((platform) => platform.behavior === "bounce"),
+    "Published gameplay did not prove moving and bouncy platform contacts.",
+  );
+  assert.equal(
+    gameplay.reset?.projectId,
+    project.id,
+    "Published gameplay reset changed the project identity.",
+  );
+  assert.equal(
+    gameplay.reset?.revision,
+    project.revision,
+    "Published gameplay reset observed a stale project revision.",
+  );
+  assert.equal(gameplay.reset?.status, "playing");
+  assert.equal(gameplay.reset?.score, 0);
+  assert.equal(gameplay.reset?.lifecycleAdvanced, true);
+  return gameplay;
+}
+
+/**
+ * Keep ordinary publication deployment checks independent from the optional
+ * full flagship gameplay acceptance.
+ * @param {{flagshipStory: boolean, project: any, revision: number, artifactEvidence: any, apiRequests?: string[], blockedExternalRequests?: number, blockedExternalOrigins?: string[], gameplay?: any}} options
+ */
+export function publishedPlaybackReport({
+  flagshipStory,
+  project,
+  revision,
+  artifactEvidence,
+  apiRequests = [],
+  blockedExternalRequests = 0,
+  blockedExternalOrigins = [],
+  gameplay = undefined,
+}) {
+  const editorProviderRequests = apiRequests.length;
+  if (!flagshipStory) {
+    assert.deepEqual(
+      apiRequests,
+      [],
+      "Signed-out playback made an editor/provider request.",
+    );
+    return {
+      mode: "real",
+      status: "READY",
+      projectId: project.id,
+      revision,
+      artifactEvidence,
+      signedOut: true,
+      editorProviderRequests,
+    };
+  }
+
+  const trafficViolation =
+    editorProviderRequests > 0 || blockedExternalRequests > 0;
+  const gameplayPassed = gameplay?.status === "passed";
+  return {
+    mode: trafficViolation || !gameplayPassed ? "blocked" : "real",
+    status: trafficViolation
+      ? "published-playback-traffic-violation"
+      : gameplayPassed
+        ? "READY"
+        : "published-gameplay-failed",
+    deploymentStatus: "READY",
+    projectId: project.id,
+    revision,
+    artifactEvidence,
+    signedOut: true,
+    editorProviderRequests,
+    blockedExternalRequests,
+    blockedExternalOrigins: blockedExternalOrigins.slice(0, 8),
+    gameplay,
+  };
+}
+
 function storyEntityMap(project) {
   return new Map(project.entities.map((entity) => [entity.id, entity]));
 }
@@ -5422,6 +5557,51 @@ async function focusGameplaySurface(page) {
   )
     await surface.focus();
   await expect(surface).toBeFocused();
+}
+
+/**
+ * Keep DOM and telemetry work inside the published player frame while using
+ * the owning browser page's keyboard transport for real desktop input.
+ */
+export function createPublishedGameplayPageAdapter(frame, keyboardPage) {
+  assert(
+    frame && typeof frame.evaluate === "function",
+    "Published gameplay iframe is unavailable.",
+  );
+  assert(
+    keyboardPage?.keyboard && typeof keyboardPage.keyboard.down === "function",
+    "Published gameplay keyboard transport is unavailable.",
+  );
+  const assertFrameFocused = async () => {
+    const focused = await frame.evaluate(
+      () =>
+        document.hasFocus() &&
+        document.activeElement?.getAttribute("aria-label") ===
+          "Gameplay area",
+    );
+    assert(
+      focused,
+      "Published keyboard input lost focus inside the gameplay iframe.",
+    );
+  };
+  return {
+    locator: (...args) => frame.locator(...args),
+    getByRole: (...args) => frame.getByRole(...args),
+    getByText: (...args) => frame.getByText(...args),
+    evaluate: (...args) => frame.evaluate(...args),
+    waitForTimeout: (...args) => frame.waitForTimeout(...args),
+    keyboard: {
+      down: async (...args) => {
+        await assertFrameFocused();
+        return keyboardPage.keyboard.down(...args);
+      },
+      up: (...args) => keyboardPage.keyboard.up(...args),
+      press: async (...args) => {
+        await assertFrameFocused();
+        return keyboardPage.keyboard.press(...args);
+      },
+    },
+  };
 }
 
 async function createFlagshipGameplayInput(
@@ -8988,6 +9168,11 @@ async function runPublication(
     interceptedGeneration: false,
   };
   await installTrafficGuard(publicContext, config, approvedOrigins, publicInfo);
+  if (config.flagshipStory)
+    await publicContext.addInitScript(() => {
+      // The read-only bridge returns copied gameplay values and is opt-in.
+      window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+    });
   const publicPage = await publicContext.newPage();
   const publicApiRequests = [];
   let publishedRevision;
@@ -9018,18 +9203,32 @@ async function runPublication(
   });
   const iframe = publicPage.locator("iframe");
   await expect(iframe).toBeVisible({ timeout: 60000 });
+  await expect(iframe).toHaveCount(1);
   const iframeSrc = await iframe.getAttribute("src");
   assert(iframeSrc, "Published playback iframe has no source.");
-  assertPublicationPlaybackOrigins({
+  const playbackOrigins = assertPublicationPlaybackOrigins({
     wrapperUrl: publishedUrl.href,
     appOrigin: config.baseOrigin,
     deploymentUrl: publishBody.deploymentUrl,
     iframeUrl: iframeSrc,
     approvedOrigins,
   });
-  await expect(publicPage.frameLocator("iframe").locator("canvas")).toBeVisible(
-    { timeout: 60000 },
-  );
+  const iframeElement = await iframe.elementHandle();
+  assert(iframeElement, "Published playback iframe element disappeared.");
+  await expect
+    .poll(
+      async () => {
+        const frame = await iframeElement.contentFrame();
+        return frame?.url() === playbackOrigins.iframe.href;
+      },
+      { timeout: 60000 },
+    )
+    .toBe(true);
+  const publishedFrame = await iframeElement.contentFrame();
+  assert(publishedFrame, "Published playback iframe did not load a document.");
+  await expect(publishedFrame.locator("canvas")).toBeVisible({
+    timeout: 60000,
+  });
   if (publishedProjectMalformed) {
     report.publication = {
       mode: "blocked",
@@ -9069,26 +9268,105 @@ async function runPublication(
     await publicContext.close();
     return;
   }
-  assert.deepEqual(
-    publicApiRequests,
-    [],
-    "Signed-out playback made an editor/provider request.",
-  );
+  if (!config.flagshipStory) {
+    await publicPage.screenshot({
+      path: join(evidenceDir, "signed-out-playback.png"),
+      fullPage: true,
+    });
+    report.evidence.push("signed-out-playback.png");
+    report.publication = publishedPlaybackReport({
+      flagshipStory: false,
+      project: expectedProject,
+      revision: expectedRevision,
+      artifactEvidence,
+      apiRequests: publicApiRequests,
+    });
+    await publicContext.close();
+    return;
+  }
+
+  let publishedTargets;
+  let gameplay;
+  let traversalResult;
+  try {
+    publishedTargets = freshGameplayStoryForProject(
+      expectedProject,
+      5,
+      "Fresh flagship signed-out publication",
+    );
+    const publishedGameplayPage = createPublishedGameplayPageAdapter(
+      publishedFrame,
+      publicPage,
+    );
+    traversalResult = await runFreshFlagshipGameplay(
+      publishedGameplayPage,
+      expectedProject,
+      publishedTargets,
+      {
+        surface: "standalone",
+        inputMode: "keyboard",
+        expectedCollectibleCount: 5,
+        expectedRevision,
+        onWin: async () => {
+          await publicPage.screenshot({
+            path: join(evidenceDir, "published-gameplay-win.png"),
+            fullPage: true,
+          });
+          report.evidence.push("published-gameplay-win.png");
+        },
+        onReset: async () => {
+          await publicPage.screenshot({
+            path: join(evidenceDir, "published-gameplay-reset.png"),
+            fullPage: true,
+          });
+          report.evidence.push("published-gameplay-reset.png");
+        },
+      },
+    );
+    gameplay = {
+      ...assertPublishedGameplayBinding(
+        traversalResult,
+        expectedProject,
+        publishedTargets,
+      ),
+      surface: "published-player-iframe",
+      iframeOrigin: playbackOrigins.iframe.origin,
+      iframePath: playbackOrigins.iframe.pathname,
+    };
+  } catch (error) {
+    gameplay = {
+      status: "failed",
+      projectId: expectedProject.id,
+      revision: expectedRevision,
+      expectedCollectibleIds:
+        publishedTargets?.collectibles?.map((collectible) => collectible.id) ??
+        [],
+      expectedCollectibleCount: 5,
+      inputMode: "keyboard",
+      surface: "published-player-iframe",
+      iframeOrigin: playbackOrigins.iframe.origin,
+      iframePath: playbackOrigins.iframe.pathname,
+      error: sanitizeMessage(error?.message ?? error, config),
+      failureEvidence:
+        error?.freshGameplayEvidence ?? traversalResult ?? null,
+    };
+  }
   await publicPage.screenshot({
     path: join(evidenceDir, "signed-out-playback.png"),
     fullPage: true,
   });
   report.evidence.push("signed-out-playback.png");
-  await publicContext.close();
-  report.publication = {
-    mode: "real",
-    status: "READY",
-    projectId: expectedProject.id,
+  report.publication = publishedPlaybackReport({
+    flagshipStory: true,
+    project: expectedProject,
     revision: expectedRevision,
     artifactEvidence,
-    signedOut: true,
-    editorProviderRequests: publicApiRequests.length,
-  };
+    apiRequests: publicApiRequests,
+    blockedExternalRequests: publicInfo.blockedExternalRequests,
+    blockedExternalOrigins: [...publicInfo.blockedExternalOrigins],
+    gameplay,
+  });
+  await publicContext.close();
 }
 
 function assertFollowOnProject(value, expected, phase) {
