@@ -1,5 +1,17 @@
 # Development checkpoint
 
+Sep 27 integration of the cloud-save reload fix: a rebuilt loopback production
+app and synthetic signed-in browser context passed local revision 42 reopening
+after reload, cloud revision 35 verification, ordinary UI Save HTTP 200, exact
+scene/transcript preservation, then a competing cloud update blocked before a
+second PUT while the local draft remained unchanged. Zero generation requests
+and browser page errors. `npm run build` passed. The first fixture attempt
+stopped before Save on an outdated account-button name; the corrected fixture
+passed on one fresh synthetic project. The script and sanitized evidence are
+`scripts/verify-cloud-save-reload.mjs` and
+`docs/evidence/cloud-save-reload-browser-20260927/report.json`. This is a
+synthetic-account integration check, not a fresh owner-session provider journey.
+
 Sep 27 cloud-save reload recovery: Save now fetches the owned cloud row just
 before writing, verifies its canonical snapshot token, and accepts a prior
 base only when an account/project-scoped acknowledgement or the active local
@@ -8,9 +20,9 @@ is a prefix of the other, persists any merged messages locally before one
 server-CAS PUT, and retains the local draft with an open-cloud/export path when
 proof is missing or the histories diverge. Server conflict checks are
 unchanged. Focused helper and project-route coverage passes (15 tests), as does
-TypeScript typecheck. No live model or browser journey was run; the remaining
-acceptance gap is exercising reload/reopen/Save and a real competing update in
-a signed-in synthetic browser fixture. Legacy drafts without a receipt can
+TypeScript typecheck. At this implementation checkpoint no live model or
+browser journey had run; the synthetic signed-in fixture above now covers
+reload/reopen/Save and a competing update. Legacy drafts without a receipt can
 continue only when active past history proves the cloud revision; redo or
 unordered history cannot establish ancestry.
 

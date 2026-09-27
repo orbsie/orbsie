@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-27T23:34:34.518Z",
+  "status": "passed",
+  "scope": "synthetic-signed-in-reload-save-and-competing-cloud-update",
+  "targetOrigin": "http://127.0.0.1:3055",
+  "generationRequests": 0,
+  "firstSaveStatus": 200,
+  "remoteRevisionAfterSave": 42,
+  "transcriptPreserved": true,
+  "scenePreserved": true,
+  "competingUpdateBlockedBeforePut": true,
+  "localDraftPreserved": true,
+  "pageErrors": []
+}
