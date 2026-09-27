@@ -124,6 +124,53 @@ const INTERRUPTED_RECOVERY_PROVIDERS = new Set([
   HOSTED_PROVIDER,
 ]);
 const INTERRUPTED_GENERATION_BUDGET = 3;
+const TEST_VIEWPORTS = Object.freeze({
+  desktop: Object.freeze({ width: 1440, height: 1000 }),
+  standaloneDesktop: Object.freeze({ width: 1280, height: 800 }),
+  mobile: Object.freeze({ width: 390, height: 844 }),
+});
+const MOBILE_DEVICE_SCALE_FACTOR = 2;
+
+export function parseTestViewportMode(value) {
+  if (value === undefined) return "desktop";
+  if (value === "mobile") return "mobile";
+  throw new HarnessConfigurationError(
+    "ORBSIE_TEST_VIEWPORT must be mobile when set; the default is desktop.",
+  );
+}
+
+export function browserContextViewportOptions(mode, desktopViewport) {
+  if (mode === "mobile")
+    return {
+      viewport: { ...TEST_VIEWPORTS.mobile },
+      deviceScaleFactor: MOBILE_DEVICE_SCALE_FACTOR,
+      isMobile: true,
+      hasTouch: true,
+    };
+  return { viewport: { ...desktopViewport } };
+}
+
+function deviceEmulationReport(mode) {
+  const contextReport = (desktopViewport) =>
+    mode === "mobile"
+      ? {
+          viewport: { ...TEST_VIEWPORTS.mobile },
+          deviceScaleFactor: MOBILE_DEVICE_SCALE_FACTOR,
+          isMobile: true,
+          hasTouch: true,
+        }
+      : {
+          viewport: { ...desktopViewport },
+          deviceScaleFactor: 1,
+          isMobile: false,
+          hasTouch: false,
+        };
+  return {
+    mode,
+    editor: contextReport(TEST_VIEWPORTS.desktop),
+    standalone: contextReport(TEST_VIEWPORTS.standaloneDesktop),
+  };
+}
 
 class HarnessConfigurationError extends Error {
   constructor(message) {
@@ -227,6 +274,145 @@ function isBlockedError(error) {
   );
 }
 
+async function assertMobilePageHasNoHorizontalOverflow(page, surfaceReport) {
+  const metrics = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+    documentWidth: document.documentElement.scrollWidth,
+    bodyWidth:
+      document.body?.scrollWidth ?? document.documentElement.scrollWidth,
+  }));
+  const horizontalOverflow =
+    metrics.documentWidth > metrics.viewportWidth ||
+    metrics.bodyWidth > metrics.viewportWidth;
+  surfaceReport.horizontalOverflow = horizontalOverflow;
+  surfaceReport.viewport = {
+    width: metrics.viewportWidth,
+    height: metrics.viewportHeight,
+  };
+  assert.equal(
+    horizontalOverflow,
+    false,
+    `Mobile ${surfaceReport.name ?? "page"} has horizontal overflow: ${JSON.stringify(metrics)}.`,
+  );
+}
+
+async function assertMobileElementReachable(page, locator, label) {
+  await expect(locator).toBeVisible({ timeout: 30000 });
+  await locator.scrollIntoViewIfNeeded();
+  const box = await locator.boundingBox();
+  assert(box, `Mobile ${label} has no visible browser box.`);
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  assert(
+    box.x >= 0 &&
+      box.y >= 0 &&
+      box.x + box.width <= viewport.width + 1 &&
+      box.y + box.height <= viewport.height + 1,
+    `Mobile ${label} is outside the viewport: ${JSON.stringify({ box, viewport })}.`,
+  );
+  return {
+    x: Math.round(box.x),
+    y: Math.round(box.y),
+    width: Math.round(box.width),
+    height: Math.round(box.height),
+  };
+}
+
+async function recordMobileReachable(page, locator, label, report) {
+  await assertMobileElementReachable(page, locator, label);
+  report[`${label}Reachable`] = true;
+}
+
+async function verifyMobileStandaloneTouch(page, mobileReport) {
+  const controls = ["Forward", "Left", "Back", "Right", "Jump"];
+  const layout = mobileReport.standalone;
+  layout.name = "standalone player";
+  await assertMobilePageHasNoHorizontalOverflow(page, layout);
+  const controlBoxes = {};
+  for (const label of controls) {
+    controlBoxes[label] = await assertMobileElementReachable(
+      page,
+      page.getByRole("button", { name: label, exact: true }),
+      `${label} touch control`,
+    );
+  }
+  layout.movementControlReachable = true;
+  layout.touchControls = controlBoxes;
+
+  const observationEpoch = await page.evaluate(() => performance.now());
+  await expect
+    .poll(
+      async () => {
+        const observation = await readGameplayObservation(page);
+        return Boolean(observation && observation.atMs > observationEpoch);
+      },
+      { timeout: 30000 },
+    )
+    .toBe(true);
+  const before = await readGameplayObservation(page);
+  assert(
+    before?.player?.position,
+    "Mobile standalone exposed no player position.",
+  );
+
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", {
+    enabled: true,
+    maxTouchPoints: 1,
+  });
+  const touchInput = createTraversalTouchInput({
+    cdp,
+    touchPoint: async (_key, id) => {
+      const box = await page
+        .getByRole("button", { name: "Right", exact: true })
+        .boundingBox();
+      if (!box)
+        throw new Error("Mobile Right touch control is not measurable.");
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2, id };
+    },
+  });
+  let after;
+  try {
+    await touchInput.setKeys(["d"]);
+    await page.waitForTimeout(300);
+    await expect
+      .poll(
+        async () => {
+          after = await readGameplayObservation(page);
+          if (!after?.player?.position || after.atMs <= before.atMs)
+            return false;
+          return (
+            Math.hypot(
+              after.player.position[0] - before.player.position[0],
+              after.player.position[2] - before.player.position[2],
+            ) >= 0.02
+          );
+        },
+        { timeout: 5000 },
+      )
+      .toBe(true);
+  } finally {
+    await touchInput.releaseAll().catch(() => undefined);
+    await cdp.detach().catch(() => undefined);
+  }
+  const movementDistance = Math.hypot(
+    after.player.position[0] - before.player.position[0],
+    after.player.position[2] - before.player.position[2],
+  );
+  layout.touchMovementObserved = true;
+  layout.touchMovement = {
+    input: "CDP Input.dispatchTouchEvent",
+    control: "Right",
+    movementDistance: Number(movementDistance.toFixed(4)),
+    before: before.player.position.map((value) => Number(value.toFixed(4))),
+    after: after.player.position.map((value) => Number(value.toFixed(4))),
+  };
+  layout.status = "passed";
+}
+
 export function flagshipResumeExecutionMode(config) {
   if (!config.flagshipResume) return "fresh";
   if (config.flagshipResumeOffline) return "offline";
@@ -254,6 +440,7 @@ function parseArgs(argv) {
           `Hosted ChatGPT additionally requires ORBSIE_ACCOUNT_STORAGE_STATE=<private-mode-0600-state>, an exact HTTPS ORBSIE_TEST_URL, and ORBSIE_CHATGPT_TEST_LIMITS=${HOSTED_TEST_LIMITS} (or ${HOSTED_FLAGSHIP_TEST_LIMITS} for the fresh flagship story or interrupted recovery) after explicit owner approval of the actual bounds; ORBSIE_OUTPUT_CAP_TOKENS must be unset.`,
           "",
           "Set ORBSIE_REQUIRE_BROWSER_MODEL=1 for browser-manifold creation; add ORBSIE_REQUIRE_REVOLUTION=1 and ORBSIE_REQUIRE_GEOMETRY_EDIT=1 for a trusted revolve edit.",
+          "Set ORBSIE_TEST_VIEWPORT=mobile to emulate a 390x844 phone at DPR 2 with isMobile and hasTouch enabled; desktop is the default.",
           "Add --publication or ORBSIE_VERIFY_CLOUD_RECOVERY=1 (and ORBSIE_CLOUD_TEST_STATE) only for an explicitly authorized real cloud check.",
           "Add ORBSIE_VERIFY_INTERRUPTED_RECOVERY=1 only with ORBSIE_VERIFY_CLOUD_RECOVERY=1, ORBSIE_INTERRUPTED_GENERATION_BUDGET=3, and an explicitly supported provider.",
           "Set ORBSIE_INTERRUPTION_METHOD=reload for the page-reload interruption variant; stop is the default.",
@@ -311,6 +498,9 @@ export function readConfiguration(argv) {
     );
 
   const args = parseArgs(argv);
+  const viewportMode = parseTestViewportMode(
+    process.env.ORBSIE_TEST_VIEWPORT,
+  );
   const provider = args.provider;
   if (!PROVIDERS.has(provider))
     throw new HarnessConfigurationError(
@@ -589,6 +779,7 @@ export function readConfiguration(argv) {
 
   const config = {
     provider,
+    viewportMode,
     applicationSource,
     baseOrigin: baseURL.origin,
     keyScope,
@@ -652,6 +843,29 @@ export function readConfiguration(argv) {
     requireGeometryEdit: process.env.ORBSIE_REQUIRE_GEOMETRY_EDIT === "1",
     requireProcedural: process.env.ORBSIE_REQUIRE_PROCEDURAL === "1",
   };
+
+  if (
+    viewportMode === "mobile" &&
+    (provider !== "openrouter" ||
+      flagshipStory ||
+      mushroomReplacement ||
+      flagshipResume ||
+      config.publication ||
+      config.cloudRecovery ||
+      config.interruptedRecovery ||
+      config.requireNewOnly ||
+      config.requireBrowserModel ||
+      config.requireExtrusion ||
+      config.requireInputGame ||
+      config.requireRevolution ||
+      config.requireGeometryEdit ||
+      config.requireProcedural ||
+      process.env.ORBSIE_BUILDER_URL !== undefined ||
+      process.env.ORBSIE_BUILDER_TOKEN !== undefined)
+  )
+    throw new HarnessConfigurationError(
+      "ORBSIE_TEST_VIEWPORT=mobile is supported only for the ordinary fresh OpenRouter create/edit/export journey.",
+    );
 
   if (flagshipResume) {
     const checkpointPath = process.env.ORBSIE_FLAGSHIP_RESUME_CHECKPOINT;
@@ -2614,6 +2828,27 @@ export function emptyReport(config, provenance) {
     provenance: reportProvenance,
     provider: config.provider,
     mode: REPORT_MODE,
+    deviceEmulation: deviceEmulationReport(config.viewportMode ?? "desktop"),
+    ...(config.viewportMode === "mobile"
+      ? {
+          mobileLayout: {
+            editor: {
+              status: "not-checked",
+              horizontalOverflow: null,
+              connectionButtonReachable: false,
+              connectionReachable: false,
+              promptReachable: false,
+              editPromptReachable: false,
+            },
+            standalone: {
+              status: "not-checked",
+              horizontalOverflow: null,
+              movementControlReachable: false,
+              touchMovementObserved: false,
+            },
+          },
+        }
+      : {}),
     targetOrigin: config.baseOrigin,
     model: config.expectedModel,
     reasoning: "low",
@@ -3572,6 +3807,13 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
     .getByRole("button", { name: "Connections", exact: true })
     .first();
   await expect(button).toBeVisible({ timeout: 30000 });
+  if (config.viewportMode === "mobile") {
+    const layout = report.mobileLayout.editor;
+    layout.name = "editor";
+    await assertMobilePageHasNoHorizontalOverflow(page, layout);
+    await assertMobileElementReachable(page, button, "Connections button");
+    layout.connectionButtonReachable = true;
+  }
   const catalogResponse = page.waitForResponse(
     (response) => {
       const url = new URL(response.url());
@@ -3584,9 +3826,15 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
     { timeout: 30000 },
   );
   await button.click();
-  await page
-    .getByLabel("Provider", { exact: true })
-    .selectOption(config.provider);
+  if (config.viewportMode === "mobile")
+    await assertMobilePageHasNoHorizontalOverflow(
+      page,
+      report.mobileLayout.editor,
+    );
+  const providerSelect = page.getByLabel("Provider", { exact: true });
+  if (config.viewportMode === "mobile")
+    await assertMobileElementReachable(page, providerSelect, "Provider selector");
+  await providerSelect.selectOption(config.provider);
   const response = await catalogResponse;
   if (!response.ok())
     throw new HarnessBlockedError(
@@ -3616,6 +3864,21 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
   });
   const keyInput = page.getByLabel("API key", { exact: true });
   await keyInput.fill(config.key);
+  if (config.viewportMode === "mobile") {
+    await assertMobilePageHasNoHorizontalOverflow(
+      page,
+      report.mobileLayout.editor,
+    );
+    await assertMobileElementReachable(page, keyInput, "API key field");
+    await assertMobileElementReachable(
+      page,
+      page.getByRole("button", {
+        name: "Continue with this connection",
+        exact: true,
+      }),
+      "Continue with this connection button",
+    );
+  }
   await expect(
     page.getByRole("button", {
       name: "Continue with this connection",
@@ -3631,6 +3894,8 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
   await assertNoStoredKey(page, config);
   report.evidence.push("connection-model.png");
   info.catalogModel = config.expectedModel;
+  if (config.viewportMode === "mobile")
+    report.mobileLayout.editor.connectionReachable = true;
 }
 
 function companionLink(config) {
@@ -7326,11 +7591,17 @@ export async function verifyStandalone(
     // Exported games must stand alone: even the originating editor is external.
     const approved = new Set([served.origin]);
     context = await browser.newContext({
-      viewport: { width: 1280, height: 800 },
+      ...browserContextViewportOptions(config.viewportMode, {
+        ...TEST_VIEWPORTS.standaloneDesktop,
+      }),
       reducedMotion: "reduce",
     });
     await installTrafficGuard(context, config, approved, info);
     const page = await context.newPage();
+    if (config.viewportMode === "mobile")
+      await page.addInitScript(() => {
+        window.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+      });
     if (standaloneGameplayEligible) {
       const phaseGameplay = [
         freshStory.phases?.creation?.gameplay,
@@ -7417,6 +7688,8 @@ export async function verifyStandalone(
     await expect(page.locator("main[data-ready=true]")).toBeVisible({
       timeout: 30000,
     });
+    if (config.viewportMode === "mobile")
+      await verifyMobileStandaloneTouch(page, report.mobileLayout);
     // Observation includes navigation and the preceding assertions; this is an
     // upper bound on readiness, not an exact first-frame performance metric.
     standaloneReport.readyObservedMs = await page.evaluate(() =>
@@ -8944,7 +9217,9 @@ async function run(config, report = emptyReport(config)) {
     ],
   });
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 1000 },
+    ...browserContextViewportOptions(config.viewportMode, {
+      ...TEST_VIEWPORTS.desktop,
+    }),
     ...(storageState ? { storageState } : {}),
   });
   await context.addInitScript(() => {
@@ -9105,6 +9380,13 @@ async function run(config, report = emptyReport(config)) {
         { timeout: 30000 },
       );
       await expect(prompt).toBeVisible({ timeout: 30000 });
+      if (config.viewportMode === "mobile") {
+        const layout = report.mobileLayout.editor;
+        layout.name = "editor";
+        await assertMobilePageHasNoHorizontalOverflow(page, layout);
+        await recordMobileReachable(page, prompt, "prompt", layout);
+        layout.status = "in-progress";
+      }
       await prompt.fill(config.prompt);
       await expect(prompt).toHaveValue(config.prompt);
       await page.getByRole("button", { name: "Create", exact: true }).click();
@@ -9409,6 +9691,11 @@ async function run(config, report = emptyReport(config)) {
       targetBefore.label,
     );
     const editInput = page.locator("#prompt");
+    if (config.viewportMode === "mobile") {
+      const layout = report.mobileLayout.editor;
+      await assertMobilePageHasNoHorizontalOverflow(page, layout);
+      await recordMobileReachable(page, editInput, "editPrompt", layout);
+    }
     await editInput.fill(config.editPrompt);
     await expect(
       page.getByRole("button", { name: "Change this", exact: true }),
@@ -9685,6 +9972,8 @@ async function run(config, report = emptyReport(config)) {
       type: config.requireGeometryEdit ? "geometry" : "material",
       selectedIdPreserved: true,
     };
+    if (config.viewportMode === "mobile")
+      report.mobileLayout.editor.status = "passed";
       }
     } else {
       projectAfterEdit = await runFlagshipStory(
