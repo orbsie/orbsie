@@ -178,6 +178,39 @@ const strictGeneratedRevolve = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("structured generation envelopes", () => {
+  it("includes custom-part contact guidance in every capability and format branch", () => {
+    const formats = [
+      "ndjson",
+      "json-object",
+      "json-schema",
+      "json-schema-strict",
+    ] as const;
+    const capabilities = [
+      [false, false],
+      [true, false],
+      [false, true],
+      [true, true],
+    ] as const;
+
+    for (const [localModeling, browserModeling] of capabilities) {
+      for (const format of formats) {
+        const prompt = systemPromptForCapabilities(
+          localModeling,
+          browserModeling,
+          format,
+        );
+        expect(prompt).toContain("Custom-part geometry is part-local");
+        expect(prompt).toContain("Lathe profile heights are part-local Y");
+        expect(prompt).toContain("camera-facing outer/upper surface");
+        expect(prompt).toContain("Preserve intentional floating gaps");
+        expect(prompt).toContain(
+          "Explicit new-only policy prohibits catalog reuse",
+        );
+        expect(prompt).toContain('behavior.type as "bounce"');
+      }
+    }
+  });
+
   it("requests JSON object output and removes NDJSON-only prompt guidance", async () => {
     const fetcher = vi.fn(async () =>
       responseFor(JSON.stringify({ commands: [commit] })),

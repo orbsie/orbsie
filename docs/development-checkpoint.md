@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 27 shared generation prompt now states that custom-part coordinates compose
+through part, entity, and parent transforms, gives a small lathe-profile contact
+example, and directs intended attachments to transformed support contact and
+camera-visible surfaces. Floating gaps and embedded forms remain valid when
+intended. The shared prompt grows by 393 ASCII characters/bytes in every
+capability and output-format combination. Prompt-branch and hosted-adapter
+coverage passes (40 tests) with TypeScript typecheck. No live model evaluation
+ran, and this prompt contract change does not establish visual acceptance.
+
 Sep 27 cloud-save fix release: clean source `c9c7369` deployed as Vercel
 `dpl_y9Srao3nYCRBicCQt4DkBKnTHTcr` (READY) and aliased to
 `https://orbsie.com`. Owner Chrome main page rendered with compatibility

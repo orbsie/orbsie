@@ -57,6 +57,9 @@ describe("hosted ChatGPT scene stream", () => {
     expect((await reader.read()).done).toBe(true);
     const input = generator.generate.mock.calls[0][0];
     expect(JSON.parse(input.input).localModeling).toBe(false);
+    expect(input.instructions).toContain(
+      "Lathe profile heights are part-local Y",
+    );
     expect(input.model).toBe("gpt-5.6-luna");
   });
   it("records completed hosted generation before local cleanup", async () => {
