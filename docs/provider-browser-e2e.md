@@ -61,14 +61,19 @@ cap. Hosted runs use `ORBSIE_CHATGPT_TEST_LIMITS=3-calls-180s-512kib` rather tha
 claiming a provider output-token or spending guarantee. Standard creation/edit
 remains two calls. Keep end-user model choices separate from Luna-only test policy.
 
-Fresh story creation now exercises real movement while generation remains open,
+Fresh story creation exercises real movement while generation remains open,
 three moving-platform contacts with a bounce, five collections, portal win and
-UI reset. Local deterministic WebGL and software gameplay evidence is reviewed in
-`docs/evidence/fresh-flagship-gameplay-review/report.json`; software layout is separately verified by the touch-emulated UI-only run at
-`docs/evidence/software-transition-layout-run18-coarse/report.json`. Physical-device
-verification remains open. This fixture evidence is not live-provider acceptance. Seven-crystal
-and original-undo phases still require full traversal integration, as does fresh
-signed-out publication; their structural checks alone do not close those gates.
+UI reset. The seven-crystal edit, original Undo, and exported standalone phases
+also have actual traversal checks; the Sep 25 fresh OpenRouter three-call run
+passed those phases in
+`docs/evidence/provider-e2e/openrouter-flagship-set-label-live-20260925/`.
+Signed-out publication now uses the exact validated player iframe for the same
+five-crystal gameplay traversal. A cross-origin offline replay passes, but a
+fresh provider-created world has not yet passed that publication phase in one
+continuous journey. Physical-device verification remains open. Earlier local
+WebGL/software fixtures in `docs/evidence/fresh-flagship-gameplay-review/` and
+`docs/evidence/software-transition-layout-run18-coarse/` are separate from
+live-provider acceptance.
 
 For Gateway BYOK runs, the harness prefers `AI_GATEWAY_TEST_KEY` and accepts
 `AI_GATEWAY_API_KEY` as a backwards-compatible fallback. It never reads

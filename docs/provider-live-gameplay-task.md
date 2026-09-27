@@ -3,10 +3,12 @@
 Creation traversal and Play focus are implemented and locally validated (a553f02,
 bf654aa). The current non-seeded `runFlagshipStory` invokes real gameplay for
 creation, the seven-crystal edit, and the undone five-crystal world; seeded
-continuations remain structural. The exported standalone and fresh signed-out
-publication phases still lack gameplay traversal, and no complete live-provider
-journey has passed. This document is an acceptance contract, not a claim of a
-complete live provider pass.
+continuations remain structural. Exported standalone traversal passed in a
+fresh three-call OpenRouter run on Sep 25. Signed-out published traversal is
+now wired in the harness and passed a cross-origin offline replay, but a
+continuous fresh provider-to-publication journey remains unverified. This
+document is an acceptance contract, not a claim of a complete live provider
+pass.
 
 ## Source findings
 
