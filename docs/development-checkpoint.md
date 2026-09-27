@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 27 retry of signed-out Android Chrome validation for OpenRouter project
+`d33a530a-1cd8-4943-a7ae-28d11538ad87` revision 9 stopped before Android or
+Chrome became available. The separate `droidlm_api35_play_midrange` emulator
+exited with status 139 during normal startup after gfxstream initialization and
+repeated libunwind bad-FDE diagnostics; ADB remained empty. No workaround or
+retry was attempted. Cookie and consent state could not be checked, and no
+public page was loaded. This is an emulator startup block, not a publication
+result. Evidence: `docs/evidence/android-openrouter-clean-publication-20260927/`.
+
 Sep 27 signed-out Android Chrome validation for OpenRouter project
 `d33a530a-1cd8-4943-a7ae-28d11538ad87` revision 9 stopped before navigation.
 The existing Android Chrome profile had one cookie for `orbsie.com` and none
