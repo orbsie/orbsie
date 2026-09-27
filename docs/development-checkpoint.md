@@ -1,5 +1,21 @@
 # Development checkpoint
 
+Sep 27 free-mode production diagnosis: `AI_GATEWAY_API_KEY_FREE` is configured,
+but `https://orbsie.com/api/trial` reports `enabled:false`. Added transition-only,
+secret-safe credits-probe diagnostics (`4911d63`); the first production probe
+returned HTTP 2xx with a JSON `balance` **string**, which the old numeric-only
+parser rejected. Added bounded response-shape diagnostics (`ff9f957`) and a
+strict decimal-string balance parser (`9162040`). Each change passed focused
+tests and typecheck; the Vercel deployments built and reached READY. The final
+production deployment `dpl_DVwpF91bAKLGryVtCtGTGgB8N58W` is aliased to
+`https://orbsie.com`; its read-only trial probe logs `nonpositive_balance` and
+still returns `enabled:false`. No free or paid model inference ran. Free prompts
+require a positive Gateway balance or another authorized funded provider key;
+no credit purchase or credential replacement was made. `/v1/credits` remains
+undocumented in the inspected official Vercel AI Gateway docs, so this check
+must continue to be treated as an availability signal, not proof that a
+positive balance guarantees a generation request will succeed.
+
 Sep 27 the OpenRouter markerless callback fix, cancellation draft recovery,
 orphan-query cleanup, and blocked-storage message are deployed on production
 `https://orbsie.com` as Vercel deployment `dpl_DDSc8qGDaLtC8sLHeZdfQfcTgGKn`
