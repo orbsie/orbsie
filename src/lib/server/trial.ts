@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import type { PoolClient } from "pg";
 import { database, HttpError } from "./auth";
+import { freeProviderAvailable } from "./free-provider-availability";
 
 export const FREE_MODEL = "openai/gpt-6-luna";
 export const TRIAL_LIMIT = 3;
@@ -12,6 +13,16 @@ export function trialEnabled() {
     process.env.DATABASE_URL &&
     process.env.BETTER_AUTH_SECRET
   );
+}
+export async function trialProviderAvailable() {
+  return trialEnabled() && (await freeProviderAvailable());
+}
+export const FREE_PROVIDER_UNAVAILABLE_MESSAGE =
+  "Free generation is temporarily unavailable. Connect your provider to continue.";
+export class FreeProviderUnavailable extends HttpError {
+  constructor() {
+    super(503, FREE_PROVIDER_UNAVAILABLE_MESSAGE);
+  }
 }
 function digest(value: string) {
   return createHmac("sha256", process.env.BETTER_AUTH_SECRET!)

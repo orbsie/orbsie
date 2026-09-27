@@ -16,10 +16,13 @@ import {
 } from "@/lib/server/auth";
 import {
   trialEnabled,
+  trialProviderAvailable,
   trialIdentity,
   claimTrial,
   refundTrial,
   TrialExhausted,
+  FreeProviderUnavailable,
+  FREE_PROVIDER_UNAVAILABLE_MESSAGE,
   FREE_MODEL,
   type TrialIdentity,
 } from "@/lib/server/trial";
@@ -162,6 +165,8 @@ export async function POST(request: Request) {
           413,
           "Connect your provider to keep building this larger world.",
         );
+      if (!(await trialProviderAvailable()))
+        throw new FreeProviderUnavailable();
       const model = await requireGenerationModel(
         "gateway",
         FREE_MODEL,
@@ -318,6 +323,16 @@ export async function POST(request: Request) {
     routeFailure(e);
     if (e instanceof GenerationFormatConfigError)
       return respond(apiError(new HttpError(500, e.message)));
+    if (e instanceof FreeProviderUnavailable)
+      return respond(
+        Response.json(
+          {
+            error: FREE_PROVIDER_UNAVAILABLE_MESSAGE,
+            code: "FREE_PROVIDER_UNAVAILABLE",
+          },
+          { status: e.status, headers: { "Cache-Control": "no-store" } },
+        ),
+      );
     if (e instanceof TrialExhausted)
       return respond(
         Response.json(

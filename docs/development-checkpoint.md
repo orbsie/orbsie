@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep27 free trial availability now checks `GET /v1/credits` with only the
+configured `AI_GATEWAY_API_KEY_FREE` before `/api/trial` advertises prompts and
+before `/api/generate` model preflight or quota admission. Only a successful
+response with a finite positive numeric `balance` admits free use. The
+server-side check times out at 2.5s and uses 10s per-process cache/single-flight
+coalescing; unreadable, zero, negative, and network-failed results fail closed
+with `FREE_PROVIDER_UNAVAILABLE`. The existing HTTP402 refund remains as a
+race/insufficient-budget fallback. Focused synthetic checks (19 tests),
+typecheck, and production build pass; no live model calls. The credits endpoint
+and response shape are undocumented, and this balance may not reflect a
+key-specific or model-specific budget, so a positive result cannot prevent all
+upstream HTTP402 responses.
+
 Sep 25 one fresh loopback OpenRouter flagship run on clean source `21f24cd7ead590579eedccad6dd8e19250c301c1` passed creation (revision 30), keyboard gameplay (five crystals, score 5, portal win, restart), a selected-tree-to-mushroom edit (revision 35; ID `tree-a` remained stable and its label became “Giant Pink Mushroom”), the seven-crystal goal edit (revision 41 and a 7/7 win), undo (revision 42, restoring 5/5), export, and standalone keyboard playback (5/5, score 5, win, restart to score 0). It used `openai/gpt-6-luna`, low reasoning/default tier, local-only credentials, 4,096 output-token cap, and exactly three generation requests (all HTTP 200); quota was 37% before the run, with no retry/fallback, cloud recovery, external requests, or publication. The top-level strict journey acceptance remains `incomplete` only for signed-out publication artifacts and published-win restart, which were not requested. Visual review remains pending. The saved label result supports same-entity identity editing, but this harness report does not preserve a raw command trace to prove the exact wire command. Sanitized report, scene-only screenshots, project snapshots, and export are in `docs/evidence/provider-e2e/openrouter-flagship-set-label-live-20260925/`.
 
 Sep 25 the model command protocol now includes a strict `set_label` update for existing entities with a nonblank label bounded by the entity's 100-character limit. Applying it changes only the label, preserving the stable entity ID, geometry, transforms, behavior, asset policy, game references, and unrelated scene state; store scene updates and client command diagnostics include it. The authoring prompt reserves this command for identity changes and keeps labels unchanged for material- or shape-only edits. Focused protocol, strict-wire, prompt, and diagnostic tests and typecheck pass; no provider calls.

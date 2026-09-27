@@ -11,6 +11,8 @@ const quota = vi.hoisted(() => ({
   claim: vi.fn(async () => 2),
   refund: vi.fn(async () => 3),
   identity: vi.fn(() => ({ cookie: "synthetic-cookie", buckets: [] })),
+  providerAvailable: vi.fn(async () => true),
+  remaining: vi.fn(async () => 2),
   authoringConfigured: vi.fn(() => false),
   admitAuthoring: vi.fn(),
 }));
@@ -23,6 +25,8 @@ vi.mock(
 vi.mock("@/lib/server/trial", async () => ({
   ...(await import("../src/lib/server/trial")),
   trialIdentity: quota.identity,
+  trialProviderAvailable: quota.providerAvailable,
+  trialRemaining: quota.remaining,
   claimTrial: quota.claim,
   refundTrial: quota.refund,
 }));
@@ -32,6 +36,7 @@ vi.mock("@/lib/server/authoring-run-admission", async () => ({
   admitInitialAuthoringRun: quota.admitAuthoring,
 }));
 import { POST } from "../src/app/api/generate/route";
+import { GET as getTrial } from "../src/app/api/trial/route";
 import { TrialExhausted } from "../src/lib/server/trial";
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -39,6 +44,8 @@ afterEach(() => {
   vi.clearAllMocks();
   quota.claim.mockResolvedValue(2);
   quota.refund.mockResolvedValue(3);
+  quota.providerAvailable.mockResolvedValue(true);
+  quota.remaining.mockResolvedValue(2);
   quota.authoringConfigured.mockReturnValue(false);
 });
 function request(extra = {}) {
@@ -150,6 +157,47 @@ it("fails closed before upstream calls when the private credential is unavailabl
   expect((await POST(req)).status).toBe(503);
   expect(upstream).not.toHaveBeenCalled();
   expect(quota.claim).not.toHaveBeenCalled();
+});
+
+it("does not admit free generation when the shared provider has no credits", async () => {
+  quota.providerAvailable.mockResolvedValueOnce(false);
+  const { requireGenerationModel } =
+    await import("../src/lib/server/model-preflight");
+  const upstream = vi.fn();
+  vi.stubGlobal("fetch", upstream);
+
+  const response = await POST(request());
+
+  expect(response.status).toBe(503);
+  expect(await response.json()).toEqual({
+    error:
+      "Free generation is temporarily unavailable. Connect your provider to continue.",
+    code: "FREE_PROVIDER_UNAVAILABLE",
+  });
+  expect(quota.providerAvailable).toHaveBeenCalledOnce();
+  expect(vi.mocked(requireGenerationModel)).not.toHaveBeenCalled();
+  expect(quota.claim).not.toHaveBeenCalled();
+  expect(upstream).not.toHaveBeenCalled();
+});
+
+it("does not advertise free prompts when the shared provider has no credits", async () => {
+  quota.providerAvailable.mockResolvedValueOnce(false);
+  vi.stubEnv("AI_GATEWAY_API_KEY_FREE", "private-synthetic-shared-key");
+  vi.stubEnv("DATABASE_URL", "synthetic");
+  vi.stubEnv("BETTER_AUTH_SECRET", "synthetic");
+  vi.stubEnv("BETTER_AUTH_URL", "https://orbsie.test");
+
+  const response = await getTrial(new Request("https://orbsie.test/api/trial"));
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({
+    enabled: false,
+    remaining: 0,
+    limit: 3,
+  });
+  expect(quota.providerAvailable).toHaveBeenCalledOnce();
+  expect(quota.remaining).not.toHaveBeenCalled();
+  expect(response.headers.get("Set-Cookie")).toBeNull();
 });
 
 it("rejects oversized selection metadata before quota admission or inference", async () => {

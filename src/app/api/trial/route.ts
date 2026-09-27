@@ -1,6 +1,7 @@
 import { apiError, HttpError } from "@/lib/server/auth";
 import {
   trialEnabled,
+  trialProviderAvailable,
   trialIdentity,
   trialRemaining,
   TRIAL_LIMIT,
@@ -16,6 +17,11 @@ export async function GET(request: Request) {
     )
       throw new HttpError(403, "Open Orbsie to use free prompts.");
     if (!trialEnabled())
+      return Response.json(
+        { enabled: false, remaining: 0, limit: TRIAL_LIMIT },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    if (!(await trialProviderAvailable()))
       return Response.json(
         { enabled: false, remaining: 0, limit: TRIAL_LIMIT },
         { headers: { "Cache-Control": "no-store" } },
