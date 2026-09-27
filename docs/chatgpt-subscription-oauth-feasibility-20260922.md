@@ -20,6 +20,15 @@ workspace enablement, and does not register a browser OAuth client for an
 Orbsie user's personal subscription. The missing HTTPS callback and
 subscription inference grant remain an external feasibility gate.
 
+Rechecked the [official Codex App Server authentication documentation](https://learn.chatgpt.com/docs/app-server#3-log-in-with-chatgpt-browser-flow)
+on 2026-09-27. The documented browser flow still returns a `localhost`
+callback hosted by App Server, and the documented device flow still requires a
+verification URL and user code. In the owner's restored Chrome session, being
+signed in to ChatGPT did not itself connect Orbsie: Orbsie's device challenge
+remained pending and later expired without a completed authorization. This is
+live UI evidence of the interim flow's extra step, not proof that the requested
+direct HTTPS callback is supported.
+
 ## What is documented
 
 - The Codex App Server `account/login/start` browser flow returns an `authUrl`
