@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 27 signed-out Android Chrome acceptance for the published OpenRouter
+revision-9 island is now passed for the applicable touch gameplay interaction
+(`29fbe7a`). The earlier one-finger camera-drag assertion was invalid for a
+published player: `World` intentionally reserves canvas navigation for editing
+and exposes separate play controls. The revised harness held Forward for one
+second in the Android 15 initialized non-Play AVD clone; before/after gameplay
+captures visibly shifted the island and tree, with 67,191 changed pixels
+(4.25%). It served the exact revision-9 project and two catalog GLBs; cookies,
+provider/generation/editor/external requests, page errors and console errors
+were zero. The run used SwiftShader with automatic Canvas2D compatibility
+graphics, not physical-device or hardware-WebGL evidence. This small island
+has no authored score/win objective, so it does not replace the separate
+flagship gameplay acceptance. Evidence:
+`docs/evidence/android-openrouter-publication/revision-9-clean-avd-20260927/touch-controls-gameplay-20260927/`.
+
 Sep 27 read-only follow-up in the owner's existing Chrome tab after the earlier
 OpenRouter OAuth exchange: Orbsie displayed `OpenRouter · Balanced`, `AI key
 added`, `Generation complete. Changes are applied`, and five ready castle,
