@@ -7,10 +7,12 @@ is consumed once, callback parameters are stripped before exchange, and a
 state-matched prompt draft is restored for both success and cancellation.
 Markerful callbacks remain supported. Bare `?state=` or `?code=` navigation is
 ignored, while a full markerless callback without a pending transaction is
-scrubbed without opening a provider error. Focused OAuth/draft tests (26),
-typecheck, and source formatting pass. Synthetic Chromium success/cancellation
-checks pass for both prompt-only and saved-world/selection recovery; bare and
-orphaned query checks also pass. No provider/model calls were made. Deployed
+scrubbed without opening a provider error. If pending-transaction storage is
+blocked for a markerless callback, the URL is scrubbed and the storage message
+appears without exchange. Focused OAuth/draft tests (26), typecheck, and source
+formatting pass. Synthetic Chromium success/cancellation checks pass for both
+prompt-only and saved-world/selection recovery; bare, orphaned, and blocked-
+storage query checks also pass. No provider/model calls were made. Deployed
 browser verification remains for root integration.
 
 Sep 27 retry of signed-out Android Chrome validation for OpenRouter project

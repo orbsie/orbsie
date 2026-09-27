@@ -410,6 +410,7 @@ export default function Orbsie() {
     const version = connectionVersion.current;
     const callbackUrl = new URL(location.href);
     let pendingForCallback: string | null = null;
+    let callbackStorageBlocked = false;
     let callbackDisposition = classifyOpenRouterOAuthCallback(
       callbackUrl,
       false,
@@ -419,11 +420,14 @@ export default function Orbsie() {
         pendingForCallback = sessionStorage.getItem(OAUTH_PENDING_KEY);
       } catch {
         pendingForCallback = null;
+        callbackStorageBlocked = true;
       }
-      callbackDisposition = classifyOpenRouterOAuthCallback(
-        callbackUrl,
-        Boolean(pendingForCallback),
-      );
+      callbackDisposition = callbackStorageBlocked
+        ? "process"
+        : classifyOpenRouterOAuthCallback(
+            callbackUrl,
+            Boolean(pendingForCallback),
+          );
     }
     if (!oauthCompletion.current && callbackDisposition !== "ignore") {
       const original = callbackUrl.href;
@@ -446,15 +450,17 @@ export default function Orbsie() {
         // can exchange it twice, even after a reload or Strict Mode rehearsal.
         let pending: string | null = pendingForCallback;
         let draft: string | null = null;
-        let storageBlocked = false;
-        try {
-          if (pending === null)
-            pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
-          sessionStorage.removeItem(OAUTH_PENDING_KEY);
-          draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
-          sessionStorage.removeItem(OAUTH_DRAFT_KEY);
-        } catch {
-          storageBlocked = true;
+        let storageBlocked = callbackStorageBlocked;
+        if (!storageBlocked) {
+          try {
+            if (pending === null)
+              pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
+            sessionStorage.removeItem(OAUTH_PENDING_KEY);
+            draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
+            sessionStorage.removeItem(OAUTH_DRAFT_KEY);
+          } catch {
+            storageBlocked = true;
+          }
         }
 
         let callback: ReturnType<typeof consumeOpenRouterOAuthCallback> | null =

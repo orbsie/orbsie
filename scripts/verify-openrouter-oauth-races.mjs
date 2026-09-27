@@ -86,7 +86,7 @@ const browser = await chromium.launch({
 });
 try {
   const blockedContext = await browser.newContext();
-  installRoutes(blockedContext);
+  const blockedRoutes = installRoutes(blockedContext);
   await blockedContext.addInitScript(() => {
     const original = Storage.prototype.getItem;
     Object.defineProperty(Storage.prototype, "getItem", {
@@ -101,9 +101,7 @@ try {
   const blockedPage = await blockedContext.newPage();
   const blockedErrors = [];
   blockedPage.on("pageerror", (error) => blockedErrors.push(error.message));
-  await blockedPage.goto(
-    `${base}/?orbsie_oauth=openrouter&state=fixture&code=fixture`,
-  );
+  await blockedPage.goto(`${base}/?state=fixture&code=fixture`);
   await expect(
     blockedPage.getByText(
       "OpenRouter sign-in needs browser storage. Enable site storage and try again.",
@@ -111,6 +109,7 @@ try {
     ),
   ).toBeVisible();
   expect(new URL(blockedPage.url()).search).toBe("");
+  expect(blockedRoutes.stats.exchangeStarted).toBe(0);
   expect(blockedErrors).toEqual([]);
   await blockedContext.close();
 
