@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "runType": "offline-cas-assisted-continuation-not-original-live-browser-session",
+  "checkedAt": "2026-09-27T22:16:54.973Z",
+  "status": "incomplete",
+  "source": {
+    "provider": "openrouter",
+    "model": "openai/gpt-6-luna",
+    "calls": 3,
+    "statuses": [
+      200,
+      200,
+      200
+    ],
+    "fallbackUsed": false,
+    "scope": "fresh-gameplay-and-persistence",
+    "projectRevision": 42,
+    "phases": {
+      "creation": 30,
+      "mushroom": 35,
+      "goal7": 41,
+      "undo": 42
+    },
+    "zipSha256": "ac020b19017583ab5237f855e32fd419062bf736dcb2d368ba9e69f6e348de1a",
+    "sourceReportSha256": "152c8c3c95d76650707920023217476eb69cbdded351c150dc46777a93a716d7",
+    "ancestorProjectSha256": "35104001d202d2542c8cc0dda6386bcf5f6f22638f42cfd84b7721fb6efbade1"
+  },
+  "localTarget": {
+    "accounts": true,
+    "publishing": true,
+    "generationMaxTokens": 4096
+  },
+  "continuation": {
+    "mode": "direct-cloud-cas-then-ui-publication",
+    "ancestorRevision": 35,
+    "ancestorMessageCount": 4,
+    "cloudMessageCount": 5,
+    "messagesPreserved": true,
+    "directCloudCASave": {
+      "mode": "real-cas-assisted-continuation",
+      "status": "READY",
+      "httpStatus": 200,
+      "revision": 42,
+      "revisionMatched": true,
+      "snapshotTokenReturned": true,
+      "conflictPresent": false,
+      "baseRevision": 35,
+      "generationRequestsAtWrite": 0,
+      "verifiedRevision": 42,
+      "postWriteVerification": "passed",
+      "messagesPreserved": true
+    },
+    "cloudBaselineOpenedInUI": false,
+    "publicationSaveUsedCloudBaseline": false,
+    "failurePhase": "cloud-baseline-open-in-ui"
+  },
+  "cloudSave": {
+    "status": "not-started"
+  },
+  "signedInTraffic": {
+    "generationAttempts": 0,
+    "blockedGenerationAttempts": 0
+  },
+  "deployment": {
+    "mode": "real",
+    "status": "not-started",
+    "httpStatus": null,
+    "deploymentUrl": null
+  },
+  "signedOutPlayback": {
+    "status": "not-started",
+    "mode": "real",
+    "deploymentStatus": null,
+    "revision": null,
+    "signedOut": false,
+    "trafficStatus": "not-run",
+    "gameplay": null,
+    "editorProviderRequests": null,
+    "generationAttempts": null,
+    "blockedGenerationAttempts": null,
+    "blockedExternalRequests": null
+  },
+  "limitations": [
+    "This is a zero-model-call CAS-assisted offline continuation; it does not prove uninterrupted browser continuity from the live authoring session."
+  ]
+}

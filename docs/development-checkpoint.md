@@ -8,6 +8,23 @@ it does not yet prove a free-mode generation or complete Gateway create/edit
 run. The owner authorized bounded live Gateway tests after funding, using
 Luna only and no automatic retries.
 
+Sep 27 the retained OpenRouter flagship revision-42 cloud continuation passed
+after one direct CAS-assisted recovery save from the verified revision-35
+ancestor. The first browser stopped before UI save/publish because its account
+list still held the startup revision-35 row; no publish request was sent. A
+separate zero-direct-CAS resume reloaded once, verified the same project and
+revision-42 retained snapshot with all five cloud messages, opened that cloud
+row in Orbsie, then completed the normal UI cloud save (HTTP 200, revision
+42), real Vercel deployment (READY), and signed-out published iframe gameplay.
+Five crystals, all three moving/bouncy platform contacts, portal win at score
+5, and UI restart to score 0 passed; generation, editor/provider, and external
+request counts were zero. The continuation used the retained artifact and
+made no new model call; it is separate from the original live authoring browser
+session. Its initial incomplete report and successful resume summary are
+`docs/evidence/provider-e2e/openrouter-flagship-cas-assisted-publication-20260927/report.json`
+and
+`docs/evidence/provider-e2e/openrouter-flagship-cas-assisted-zero-write-resume-20260927/report.json`.
+
 Sep 27 fresh OpenRouter flagship live milestone: one corrected preflight and
 then exactly three `openai/gpt-6-luna` requests (HTTP 200, low reasoning,
 default tier, 4,096 output-token cap, no fallback) created the five-crystal

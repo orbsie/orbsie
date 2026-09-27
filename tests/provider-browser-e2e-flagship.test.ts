@@ -16,6 +16,7 @@ import {
   assertFlagshipStoryPlatform,
   assertPublicationPlaybackOrigins,
   assertPublicationProjectMatches,
+  assertPublicationWorldContentMatches,
   buildGeneratedModelEvidence,
   captureCurrentTargetArtifacts,
   createPublishedGameplayPageAdapter,
@@ -34,6 +35,8 @@ import {
 } from "../scripts/provider-browser-e2e.mjs";
 import {
   summarizePublication,
+  prepareCASContinuationProject,
+  prepareExistingCASContinuationProject,
   validateRetainedLiveReport,
 } from "../scripts/replay-retained-publication.mjs";
 import { detectDescendingPlatformSurfaceCrossing } from "../scripts/lib/fresh-flagship-gameplay.mjs";
@@ -1736,6 +1739,115 @@ describe("flagship provider story contract", () => {
     expect(summary.signedOutPlayback.blockedExternalRequests).toBeNull();
   });
 
+  it("builds a revision-42 CAS candidate while preserving the full cloud transcript", () => {
+    const ancestor: any = initialProject();
+    ancestor.revision = 35;
+    ancestor.messages = Array.from({ length: 4 }, (_, index) => ({
+      role: index % 2 ? "assistant" : "user",
+      content: `ancestor-${index}`,
+    }));
+    const cloudSnapshot = structuredClone(ancestor);
+    cloudSnapshot.messages.push({ role: "assistant", content: "cloud-tail" });
+    const retainedProject = structuredClone(ancestor);
+    retainedProject.revision = 42;
+    retainedProject.messages = [];
+
+    const result = prepareCASContinuationProject({
+      ancestor,
+      cloudRecord: {
+        id: ancestor.id,
+        revision: 35,
+        snapshot: cloudSnapshot,
+        snapshotToken: "a".repeat(64),
+      },
+      retainedProject,
+    });
+    expect(result).toMatchObject({
+      baseRevision: 35,
+      ancestorRevision: 35,
+      ancestorMessageCount: 4,
+      cloudMessageCount: 5,
+      project: { id: ancestor.id, revision: 42 },
+    });
+    expect(result.project.messages).toEqual(cloudSnapshot.messages);
+  });
+
+  it("rejects CAS preparation when cloud revision or transcript ancestry changed", () => {
+    const ancestor: any = initialProject();
+    ancestor.revision = 35;
+    ancestor.messages = Array.from({ length: 4 }, (_, index) => ({
+      role: index % 2 ? "assistant" : "user",
+      content: `ancestor-${index}`,
+    }));
+    const retainedProject = structuredClone(ancestor);
+    retainedProject.revision = 42;
+    retainedProject.messages = [];
+    const cloudRecord = {
+      id: ancestor.id,
+      revision: 35,
+      snapshot: structuredClone(ancestor),
+      snapshotToken: "b".repeat(64),
+    };
+    cloudRecord.snapshot.messages.push({ role: "assistant", content: "tail" });
+
+    expect(() =>
+      prepareCASContinuationProject({
+        ancestor,
+        cloudRecord: { ...cloudRecord, revision: 36 },
+        retainedProject,
+      }),
+    ).toThrow(/Cloud project revision differs/);
+    cloudRecord.snapshot.messages[0].content = "replaced-prefix";
+    expect(() =>
+      prepareCASContinuationProject({ ancestor, cloudRecord, retainedProject }),
+    ).toThrow(/does not preserve the captured ancestor prefix/);
+  });
+
+  it("verifies a previously CAS-saved revision 42 without preparing another write", () => {
+    const ancestor: any = initialProject();
+    ancestor.revision = 35;
+    ancestor.messages = Array.from({ length: 4 }, (_, index) => ({
+      role: index % 2 ? "assistant" : "user",
+      content: `ancestor-${index}`,
+    }));
+    const retainedProject: any = structuredClone(ancestor);
+    retainedProject.revision = 42;
+    retainedProject.messages = [];
+    const snapshot = structuredClone(retainedProject);
+    snapshot.messages = [
+      ...structuredClone(ancestor.messages),
+      { role: "assistant", content: "preserved-cloud-tail" },
+    ];
+    const result = prepareExistingCASContinuationProject({
+      ancestor,
+      cloudRecord: {
+        id: retainedProject.id,
+        revision: 42,
+        snapshot,
+        snapshotToken: "c".repeat(64),
+      },
+      retainedProject,
+    });
+    expect(result).toMatchObject({
+      baseRevision: 42,
+      cloudMessageCount: 5,
+      project: { id: retainedProject.id, revision: 42 },
+    });
+    expect(result.project.messages).toEqual(snapshot.messages);
+    expect(() =>
+      prepareExistingCASContinuationProject({
+        ancestor,
+        cloudRecord: {
+          id: retainedProject.id,
+          revision: 43,
+          snapshot: { ...snapshot, revision: 43 },
+          snapshotToken: "d".repeat(64),
+        },
+        retainedProject,
+      }),
+    ).toThrow(/Existing CAS cloud revision mismatch/);
+  });
+
   it("keeps the ordinary story budget and rejects resume for another provider", () => {
     gatewayStoryEnvironment();
     expect(readConfiguration(["--provider", "gateway"]).generationBudget).toBe(
@@ -1929,6 +2041,28 @@ describe("flagship provider story contract", () => {
     expect(() =>
       assertPublicationProjectMatches(wrongRevision, expected),
     ).toThrow(/changed the project revision/);
+  });
+
+  it("matches cloud and retained world content across revisions but rejects edits", () => {
+    const ancestor: any = initialProject();
+    ancestor.id = "same-project";
+    ancestor.revision = 35;
+    ancestor.messages = [
+      { role: "user", content: "ancestor" },
+      { role: "assistant", content: "assistant" },
+    ];
+    const retained = structuredClone(ancestor);
+    retained.revision = 42;
+    retained.messages = [];
+    expect(assertPublicationWorldContentMatches(retained, ancestor)).toBe(
+      retained,
+    );
+
+    const changedWorld = structuredClone(retained);
+    changedWorld.entities[0].color = "#000000";
+    expect(() =>
+      assertPublicationWorldContentMatches(changedWorld, ancestor),
+    ).toThrow(/changed the world content/);
   });
 
   it("matches the exported JSON shape when undefined entity fields are omitted", () => {

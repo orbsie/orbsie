@@ -1706,6 +1706,34 @@ function publicationProjectComparable(project) {
 }
 
 /**
+ * Compare the world content across revisions while ignoring project identity,
+ * revision and transcript metadata. Callers must verify those bindings
+ * separately when appropriate.
+ */
+export function assertPublicationWorldContentMatches(
+  actual,
+  expected,
+  label = "Project world",
+) {
+  assert(
+    actual && typeof actual === "object" &&
+      expected && typeof expected === "object",
+    `${label} is missing or malformed.`,
+  );
+  const comparable = (project) => {
+    const { id: _id, revision: _revision, messages: _messages, ...world } =
+      project;
+    return JSON.parse(JSON.stringify(world));
+  };
+  assert.deepEqual(
+    comparable(actual),
+    comparable(expected),
+    `${label} changed the world content.`,
+  );
+  return actual;
+}
+
+/**
  * Verify the signed-out publication against the exact project that reached
  * the follow-on phases. Chat messages are intentionally excluded, and the
  * remaining project is compared using its JSON wire representation.

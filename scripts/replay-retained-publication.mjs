@@ -5,10 +5,12 @@ import { lstat, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import {
   assertFlagshipStoryCreation,
   assertPublicationArtifactRecordsMatch,
+  assertPublicationProjectMatches,
+  assertPublicationWorldContentMatches,
   captureCurrentTargetArtifacts,
   emptyReport,
   installTrafficGuard,
@@ -17,6 +19,7 @@ import {
   runPublication,
   seedFlagshipProject,
 } from "./provider-browser-e2e.mjs";
+import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PRIVATE_ROOT = resolve(homedir(), ".cache/orbsie/provider-tests");
@@ -47,15 +50,25 @@ function parseOptions(argv) {
     "--raw-report",
     "--zip",
     "--zip-sha256",
+    "--ancestor-project",
+    "--ancestor-sha256",
     "--storage-state",
     "--app-url",
     "--evidence-dir",
     "--summary",
   ];
+  const allowed = new Set([...expected, "--resume-existing-cas"]);
   assert.deepEqual(
-    [...values.keys()].sort(),
+    [...values.keys()].filter((key) => expected.includes(key)).sort(),
     [...expected].sort(),
     `Required options: ${expected.join(", ")}`,
+  );
+  for (const key of values.keys())
+    assert(allowed.has(key), `Unexpected argument: ${key}`);
+  assert(
+    !values.has("--resume-existing-cas") ||
+      values.get("--resume-existing-cas") === "1",
+    "--resume-existing-cas must be set to 1.",
   );
   return Object.fromEntries(
     [...values].map(([key, value]) => [
@@ -121,8 +134,8 @@ export function validateRetainedLiveReport(
       1 &&
       report.creation.gameplayDuringGeneration.generationResponsesAtMovement ===
         1 &&
-      report.creation.gameplayDuringGeneration.generationStreamOpenAtMovement ===
-        true &&
+      report.creation.gameplayDuringGeneration
+        .generationStreamOpenAtMovement === true &&
       report.creation.gameplayDuringGeneration
         .generationStreamOpenAfterMovement === true &&
       report.creation.gameplayDuringGeneration.movementDistance > 0.1 &&
@@ -283,10 +296,7 @@ export function validateRetainedLiveReport(
     assert.equal(before?.revision, phase.revision);
     assert.equal(after?.revision, phase.revision);
     assert(
-      hasPlayerMovement(
-        before?.player?.position,
-        after?.player?.position,
-      ) &&
+      hasPlayerMovement(before?.player?.position, after?.player?.position) &&
         gameplay.movement.distance > 0.1,
       `Source ${key} lacks bound player movement evidence.`,
     );
@@ -321,6 +331,213 @@ function deepEqualSorted(left, right) {
   );
 }
 
+export function prepareCASContinuationProject({
+  ancestor,
+  cloudRecord,
+  retainedProject,
+}) {
+  assert.equal(
+    ancestor?.revision,
+    35,
+    "Captured mushroom ancestor revision mismatch.",
+  );
+  assert.equal(
+    retainedProject?.revision,
+    42,
+    "Retained ZIP revision mismatch.",
+  );
+  assert.equal(
+    ancestor?.id,
+    retainedProject?.id,
+    "Ancestor and ZIP project IDs differ.",
+  );
+  assert.equal(
+    cloudRecord?.id,
+    ancestor.id,
+    "Cloud project ID differs from the ancestor.",
+  );
+  assert.equal(
+    cloudRecord?.revision,
+    ancestor.revision,
+    "Cloud project revision differs from the ancestor.",
+  );
+  assert.match(
+    cloudRecord?.snapshotToken ?? "",
+    SHA256_PATTERN,
+    "Cloud ancestor has no valid snapshot token.",
+  );
+  assertPublicationProjectMatches(
+    cloudRecord?.snapshot,
+    ancestor,
+    "Cloud mushroom ancestor",
+  );
+  assertPublicationWorldContentMatches(
+    retainedProject,
+    ancestor,
+    "Retained ZIP ancestor comparison",
+  );
+  assert.equal(
+    retainedProject.messages?.length,
+    0,
+    "Retained ZIP must have no messages.",
+  );
+  assert(
+    Array.isArray(ancestor.messages),
+    "Captured ancestor transcript is malformed.",
+  );
+  assert(
+    Array.isArray(cloudRecord.snapshot.messages),
+    "Cloud transcript is malformed.",
+  );
+  assert.equal(
+    ancestor.messages.length,
+    4,
+    "Captured ancestor transcript length mismatch.",
+  );
+  assert.equal(
+    cloudRecord.snapshot.messages.length,
+    5,
+    "Cloud transcript length mismatch.",
+  );
+  assert.deepEqual(
+    cloudRecord.snapshot.messages.slice(0, ancestor.messages.length),
+    ancestor.messages,
+    "Cloud transcript does not preserve the captured ancestor prefix.",
+  );
+  const project = {
+    ...retainedProject,
+    messages: structuredClone(cloudRecord.snapshot.messages),
+  };
+  assert.equal(project.revision, 42);
+  assert.equal(project.messages.length, cloudRecord.snapshot.messages.length);
+  return {
+    project,
+    baseRevision: cloudRecord.revision,
+    baseSnapshotToken: cloudRecord.snapshotToken,
+    ancestorRevision: ancestor.revision,
+    ancestorMessageCount: ancestor.messages.length,
+    cloudMessageCount: cloudRecord.snapshot.messages.length,
+  };
+}
+
+export function prepareExistingCASContinuationProject({
+  ancestor,
+  cloudRecord,
+  retainedProject,
+}) {
+  assert.equal(
+    ancestor?.revision,
+    35,
+    "Captured mushroom ancestor revision mismatch.",
+  );
+  assert.equal(
+    retainedProject?.revision,
+    42,
+    "Retained ZIP revision mismatch.",
+  );
+  assert.equal(
+    ancestor?.id,
+    retainedProject?.id,
+    "Ancestor and ZIP project IDs differ.",
+  );
+  assert.equal(
+    cloudRecord?.id,
+    ancestor.id,
+    "Cloud project ID differs from the ancestor.",
+  );
+  assert.equal(
+    cloudRecord?.revision,
+    42,
+    "Existing CAS cloud revision mismatch.",
+  );
+  assert.match(
+    cloudRecord?.snapshotToken ?? "",
+    SHA256_PATTERN,
+    "Existing CAS cloud snapshot token is missing.",
+  );
+  assertPublicationProjectMatches(
+    cloudRecord?.snapshot,
+    retainedProject,
+    "Existing CAS cloud snapshot",
+  );
+  assert.equal(
+    retainedProject.messages?.length,
+    0,
+    "Retained ZIP must have no messages.",
+  );
+  assert(
+    Array.isArray(ancestor.messages),
+    "Captured ancestor transcript is malformed.",
+  );
+  assert(
+    Array.isArray(cloudRecord.snapshot.messages),
+    "Cloud transcript is malformed.",
+  );
+  assert.equal(
+    ancestor.messages.length,
+    4,
+    "Captured ancestor transcript length mismatch.",
+  );
+  assert.equal(
+    cloudRecord.snapshot.messages.length,
+    5,
+    "Cloud transcript length mismatch.",
+  );
+  assert.deepEqual(
+    cloudRecord.snapshot.messages.slice(0, ancestor.messages.length),
+    ancestor.messages,
+    "Cloud transcript does not preserve the captured ancestor prefix.",
+  );
+  return {
+    project: {
+      ...retainedProject,
+      messages: structuredClone(cloudRecord.snapshot.messages),
+    },
+    baseRevision: cloudRecord.revision,
+    baseSnapshotToken: cloudRecord.snapshotToken,
+    ancestorRevision: ancestor.revision,
+    ancestorMessageCount: ancestor.messages.length,
+    cloudMessageCount: cloudRecord.snapshot.messages.length,
+  };
+}
+
+async function openCloudBaselineInUI(page, project) {
+  await page
+    .getByRole("button", { name: "Close dialog", exact: true })
+    .click()
+    .catch(() => undefined);
+  const account = page.getByRole("button", {
+    name: "Your account and cloud worlds",
+    exact: true,
+  });
+  await expect(account).toBeVisible({ timeout: 30000 });
+  await account.click();
+  const escapedTitle = project.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const cloudCopy = page.getByRole("button", {
+    name: new RegExp(
+      `${escapedTitle}[\\s\\S]*Revision ${project.revision} · Cloud`,
+    ),
+  });
+  await expect(cloudCopy).toBeVisible({ timeout: 30000 });
+  await cloudCopy.click();
+  await expect(page.locator(".workspace-heading h2")).toContainText(
+    project.title,
+    { timeout: 30000 },
+  );
+  const opened = await storageSnapshot(page);
+  assertPublicationProjectMatches(
+    opened.project,
+    project,
+    "UI-opened cloud baseline",
+  );
+  assert.deepEqual(
+    opened.project.messages,
+    project.messages,
+    "UI-opened cloud baseline changed the preserved transcript.",
+  );
+  return true;
+}
+
 function hasPlayerMovement(before, after) {
   return (
     Array.isArray(before) &&
@@ -336,12 +553,18 @@ function hasPlayerMovement(before, after) {
 function helpText() {
   return `Usage: node scripts/replay-retained-publication.mjs \\
   --raw-report PRIVATE.json --zip PRIVATE.zip --zip-sha256 SHA256 \\
+  --ancestor-project PRIVATE.json --ancestor-sha256 SHA256 \\
   --storage-state PRIVATE.json --app-url http://127.0.0.1:3055 \\
-  --evidence-dir PRIVATE-NEW-CACHE-DIR --summary docs/evidence/.../report.json
+  --evidence-dir PRIVATE-NEW-CACHE-DIR --summary docs/evidence/.../report.json \\
+  [--resume-existing-cas 1]
 
-Run from the repository root. This performs one real cloud save/publish using
-only the retained ZIP and account state. Both same-origin generation routes
-are aborted and counted. It never loads provider credentials or calls models.
+Run from the repository root. By default, this compares the captured ancestor
+with the current cloud snapshot, preserves its message tail in one CAS save,
+then opens that baseline in Orbsie and performs one UI cloud save/publish. With
+--resume-existing-cas 1, it verifies an existing revision-42 snapshot and
+skips the direct CAS write. It never loads provider credentials or calls
+models; both same-origin generation routes are aborted and counted. A failed
+CAS or publish is not retried.
 `;
 }
 
@@ -441,15 +664,20 @@ async function appPreflight(appOrigin) {
   return { accounts: true, publishing: true, generationMaxTokens: 4096 };
 }
 
-export function summarizePublication(report, liveBinding) {
+export function summarizePublication(report, liveBinding, continuation = {}) {
   const deployment = report.publicationDeployment ?? { status: "not-started" };
   const publication = report.publication ?? { status: "not-started" };
   const gameplay = publication.gameplay;
   return {
     schemaVersion: 1,
-    runType: "offline-continuation-not-original-live-browser-session",
+    runType: report.zeroCASResume
+      ? "offline-zero-CAS-resume-from-revision42-not-original-live-browser-session"
+      : "offline-cas-assisted-continuation-not-original-live-browser-session",
     checkedAt: new Date().toISOString(),
     status:
+      ["READY", "verified"].includes(report.directCloudCASave?.status) &&
+      continuation.cloudBaselineOpenedInUI === true &&
+      continuation.publicationSaveUsedCloudBaseline === true &&
       report.cloudSave?.status === "READY" &&
       deployment.status === "READY" &&
       publication.status === "READY" &&
@@ -464,6 +692,20 @@ export function summarizePublication(report, liveBinding) {
         : "incomplete",
     source: liveBinding,
     localTarget: report.localTarget ?? null,
+    continuation: {
+      mode: report.zeroCASResume
+        ? "zero-direct-cas-resume-from-revision42"
+        : "direct-cloud-cas-then-ui-publication",
+      ancestorRevision: continuation.ancestorRevision ?? null,
+      ancestorMessageCount: continuation.ancestorMessageCount ?? null,
+      cloudMessageCount: continuation.cloudMessageCount ?? null,
+      messagesPreserved: continuation.messagesPreserved === true,
+      directCloudCASave: report.directCloudCASave ?? { status: "not-started" },
+      cloudBaselineOpenedInUI: continuation.cloudBaselineOpenedInUI === true,
+      publicationSaveUsedCloudBaseline:
+        continuation.publicationSaveUsedCloudBaseline === true,
+      failurePhase: report.continuationFailurePhase ?? null,
+    },
     cloudSave: report.cloudSave ?? { status: "not-started" },
     signedInTraffic: {
       generationAttempts: report.signedInGenerationRequests?.length ?? null,
@@ -520,17 +762,75 @@ export function summarizePublication(report, liveBinding) {
         : null,
       editorProviderRequests:
         report.publicationTraffic?.editorProviderRequests ?? null,
-      generationAttempts:
-        report.publicationTraffic?.generationRequests ?? null,
+      generationAttempts: report.publicationTraffic?.generationRequests ?? null,
       blockedGenerationAttempts:
         report.publicationTraffic?.blockedGenerationRequests ?? null,
       blockedExternalRequests:
         report.publicationTraffic?.blockedExternalRequests ?? null,
     },
     limitations: [
-      "This is a zero-model-call offline continuation; it does not prove uninterrupted browser continuity from the live authoring session.",
+      "This is a zero-model-call CAS-assisted offline continuation; it does not prove uninterrupted browser continuity from the live authoring session.",
     ],
   };
+}
+
+async function getCloudProject(page, projectId) {
+  return page.evaluate(async (id) => {
+    const response = await fetch(`/api/projects?id=${encodeURIComponent(id)}`, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    let body = {};
+    try {
+      body = await response.json();
+    } catch {
+      // Status and required project shape below report malformed responses.
+    }
+    return {
+      status: response.status,
+      project: body?.project ?? null,
+      snapshotToken:
+        typeof body?.project?.snapshotToken === "string"
+          ? body.project.snapshotToken
+          : null,
+    };
+  }, projectId);
+}
+
+async function putCloudProject(page, project, baseRevision, baseSnapshotToken) {
+  return page.evaluate(
+    async ({
+      project: candidate,
+      baseRevision: revision,
+      baseSnapshotToken: token,
+    }) => {
+      const response = await fetch("/api/projects", {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project: candidate,
+          baseRevision: revision,
+          baseSnapshotToken: token,
+        }),
+      });
+      let body = {};
+      try {
+        body = await response.json();
+      } catch {
+        // The caller records no response body or token.
+      }
+      return {
+        status: response.status,
+        revision: Number.isSafeInteger(body?.revision) ? body.revision : null,
+        snapshotTokenPresent:
+          typeof body?.snapshotToken === "string" &&
+          /^[a-f0-9]{64}$/.test(body.snapshotToken),
+        conflictPresent: Boolean(body?.conflict),
+      };
+    },
+    { project, baseRevision, baseSnapshotToken },
+  );
 }
 
 export async function replayRetainedPublication(options) {
@@ -550,14 +850,27 @@ export async function replayRetainedPublication(options) {
     options.storagestate,
     "Synthetic account state",
   );
+  const ancestorPath = await assertPrivateFile(
+    options.ancestorproject,
+    "Captured mushroom ancestor project",
+  );
   const evidenceDir = await requireFreshEvidenceDirectory(options.evidencedir);
-  const [zipBytes, sourceReport, storageEnvelope] = await Promise.all([
-    readFile(zipPath),
-    readPrivateJSON(reportPath, "Retained source report"),
-    readPrivateJSON(storageStatePath, "Synthetic account state"),
-  ]);
+  const [zipBytes, sourceReport, storageEnvelope, ancestorBytes] =
+    await Promise.all([
+      readFile(zipPath),
+      readPrivateJSON(reportPath, "Retained source report"),
+      readPrivateJSON(storageStatePath, "Synthetic account state"),
+      readFile(ancestorPath),
+    ]);
   const actualZipSha256 = digest(zipBytes);
   const liveBindingHash = digest(await readFile(reportPath));
+  const actualAncestorSha256 = digest(ancestorBytes);
+  assert.equal(
+    actualAncestorSha256,
+    options.ancestorsha256,
+    "Captured mushroom ancestor hash mismatch.",
+  );
+  const ancestor = JSON.parse(ancestorBytes.toString("utf8"));
   const state = validateStorageState(storageEnvelope);
   const parsed = parseExportedZipBytes(zipBytes, {}, 42);
   const liveBinding = validateRetainedLiveReport(
@@ -567,6 +880,32 @@ export async function replayRetainedPublication(options) {
     options.zipsha256,
   );
   liveBinding.sourceReportSha256 = liveBindingHash;
+  assert.equal(
+    ancestor.revision,
+    35,
+    "Captured mushroom ancestor revision mismatch.",
+  );
+  assert.equal(
+    ancestor.id,
+    parsed.project.id,
+    "Ancestor and ZIP project IDs differ.",
+  );
+  assertPublicationWorldContentMatches(
+    parsed.project,
+    ancestor,
+    "Retained ZIP ancestor comparison",
+  );
+  assert.equal(
+    parsed.project.messages?.length,
+    0,
+    "Retained ZIP must have no messages.",
+  );
+  assert.equal(
+    ancestor.messages?.length,
+    4,
+    "Captured ancestor transcript length mismatch.",
+  );
+  liveBinding.ancestorProjectSha256 = actualAncestorSha256;
   const target = await appPreflight(appOrigin);
   const targetArtifacts = await captureCurrentTargetArtifacts({
     appOrigin,
@@ -620,6 +959,15 @@ export async function replayRetainedPublication(options) {
   let context;
   let page;
   const actualGenerationRequests = [];
+  const continuation = {
+    ancestorRevision: ancestor.revision,
+    ancestorMessageCount: ancestor.messages.length,
+    cloudMessageCount: null,
+    messagesPreserved: false,
+    cloudBaselineOpenedInUI: false,
+    publicationSaveUsedCloudBaseline: false,
+  };
+  let phase = "browser-setup";
   try {
     context = await browser.newContext({
       viewport: { width: 1280, height: 800 },
@@ -637,8 +985,184 @@ export async function replayRetainedPublication(options) {
         actualGenerationRequests.push(url.pathname);
     });
     await page.goto(appOrigin, { waitUntil: "domcontentloaded" });
-    await seedFlagshipProject(page, parsed.project, []);
-    await openFlagshipResumeProject(page, parsed.project);
+    phase = "initial-cloud-read";
+    const initialCloud = await getCloudProject(page, parsed.project.id);
+    assert.equal(initialCloud.status, 200, "Authenticated cloud GET failed.");
+    const resumeExistingCAS = options.resumeexistingcas === "1";
+    let candidate = resumeExistingCAS
+      ? prepareExistingCASContinuationProject({
+          ancestor,
+          cloudRecord: initialCloud.project,
+          retainedProject: parsed.project,
+        })
+      : prepareCASContinuationProject({
+          ancestor,
+          cloudRecord: initialCloud.project,
+          retainedProject: parsed.project,
+        });
+    if (resumeExistingCAS) {
+      report.zeroCASResume = true;
+      report.directCloudCASave = {
+        mode: "verified-existing-revision42-no-direct-cas-write",
+        status: "verified",
+        writePerformed: false,
+        revision: initialCloud.project.revision,
+        snapshotMatchedRetainedZip: true,
+        snapshotTokenPresent: Boolean(initialCloud.snapshotToken),
+      };
+    }
+    continuation.cloudMessageCount = candidate.cloudMessageCount;
+    continuation.messagesPreserved =
+      candidate.project.messages.length === candidate.cloudMessageCount;
+    const expectedCloudMessages = structuredClone(candidate.project.messages);
+    phase = "local-candidate-open";
+    await seedFlagshipProject(page, candidate.project, []);
+    let verifiedCloud;
+    if (resumeExistingCAS) {
+      // seedFlagshipProject reloads once after writing the exact local draft.
+      // This makes the Orbsie account list fetch the current revision-42 row.
+      phase = "revision42-reload-verification";
+      const refreshedCloud = await getCloudProject(page, candidate.project.id);
+      assert.equal(refreshedCloud.status, 200, "Post-reload cloud GET failed.");
+      candidate = prepareExistingCASContinuationProject({
+        ancestor,
+        cloudRecord: refreshedCloud.project,
+        retainedProject: parsed.project,
+      });
+      assert.deepEqual(
+        candidate.project.messages,
+        expectedCloudMessages,
+        "Revision-42 cloud messages changed after reload.",
+      );
+      assert.match(
+        refreshedCloud.snapshotToken ?? "",
+        SHA256_PATTERN,
+        "Post-reload cloud snapshot token is missing.",
+      );
+      verifiedCloud = refreshedCloud;
+      report.directCloudCASave.postReloadVerification = "passed";
+      report.directCloudCASave.verifiedRevision =
+        refreshedCloud.project.revision;
+      report.directCloudCASave.snapshotMatchedAfterReload = true;
+      await openFlagshipResumeProject(page, candidate.project);
+    } else {
+      await openFlagshipResumeProject(page, candidate.project);
+      phase = "cloud-cas-preflight";
+      // Refresh the server-issued token immediately before the single CAS. Any
+      // intervening cloud write will fail the CAS; the write is never retried.
+      const currentCloud = await getCloudProject(page, candidate.project.id);
+      assert.equal(currentCloud.status, 200, "Cloud CAS preflight GET failed.");
+      candidate = prepareCASContinuationProject({
+        ancestor,
+        cloudRecord: currentCloud.project,
+        retainedProject: parsed.project,
+      });
+      phase = "cloud-cas-write";
+      const casResult = await putCloudProject(
+        page,
+        candidate.project,
+        candidate.baseRevision,
+        candidate.baseSnapshotToken,
+      );
+      report.directCloudCASave = {
+        mode: "real-cas-assisted-continuation",
+        status:
+          casResult.status === 200 && casResult.revision === 42
+            ? "READY"
+            : "failed",
+        writePerformed: true,
+        httpStatus: casResult.status,
+        revision: casResult.revision,
+        revisionMatched: casResult.revision === 42,
+        snapshotTokenReturned: casResult.snapshotTokenPresent,
+        conflictPresent: casResult.conflictPresent,
+        baseRevision: candidate.baseRevision,
+        generationRequestsAtWrite: actualGenerationRequests.length,
+      };
+      assert.equal(
+        report.directCloudCASave.status,
+        "READY",
+        `Single cloud CAS write failed with HTTP ${casResult.status}; it will not be retried.`,
+      );
+      assert.equal(
+        report.directCloudCASave.snapshotTokenReturned,
+        true,
+        "Cloud CAS response did not return the new snapshot token.",
+      );
+      phase = "cloud-cas-verify";
+      const postCASCloud = await getCloudProject(page, candidate.project.id);
+      assert.equal(postCASCloud.status, 200, "Post-CAS cloud GET failed.");
+      assert.equal(postCASCloud.project?.revision, 42);
+      const savedCandidate = prepareExistingCASContinuationProject({
+        ancestor,
+        cloudRecord: postCASCloud.project,
+        retainedProject: parsed.project,
+      });
+      assert.deepEqual(
+        savedCandidate.project.messages,
+        candidate.project.messages,
+      );
+      candidate = savedCandidate;
+      verifiedCloud = postCASCloud;
+      report.directCloudCASave.verifiedRevision = postCASCloud.project.revision;
+      report.directCloudCASave.postWriteVerification = "passed";
+      report.directCloudCASave.messagesPreserved = true;
+
+      // The app populated its in-memory cloud list at the old revision before
+      // this direct CAS. Reload once so UI selection sees the committed row.
+      phase = "cloud-baseline-refresh";
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await openFlagshipResumeProject(page, candidate.project);
+      const refreshedCloud = await getCloudProject(page, candidate.project.id);
+      assert.equal(refreshedCloud.status, 200, "Post-reload cloud GET failed.");
+      const refreshedCandidate = prepareExistingCASContinuationProject({
+        ancestor,
+        cloudRecord: refreshedCloud.project,
+        retainedProject: parsed.project,
+      });
+      assert.deepEqual(refreshedCandidate.project, candidate.project);
+      candidate = refreshedCandidate;
+      verifiedCloud = refreshedCloud;
+      report.directCloudCASave.postReloadVerification = "passed";
+      report.directCloudCASave.snapshotMatchedAfterReload = true;
+    }
+    phase = "cloud-baseline-open-in-ui";
+    await openCloudBaselineInUI(page, candidate.project);
+    continuation.cloudBaselineOpenedInUI = true;
+    const publicationSaveRequests = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (
+        url.origin !== appOrigin ||
+        url.pathname !== "/api/projects" ||
+        request.method() !== "PUT"
+      )
+        return;
+      let body = {};
+      try {
+        body = request.postDataJSON();
+      } catch {
+        body = {};
+      }
+      let projectMatches = false;
+      try {
+        assertPublicationProjectMatches(
+          body.project,
+          candidate.project,
+          "Publication UI cloud save",
+        );
+        projectMatches = true;
+      } catch {
+        // A bounded boolean below preserves the mismatch without raw payloads.
+      }
+      publicationSaveRequests.push({
+        projectMatches,
+        baseRevision: body.baseRevision ?? null,
+        baseSnapshotTokenMatches:
+          body.baseSnapshotToken === verifiedCloud.snapshotToken,
+      });
+    });
+    phase = "ui-publication-save-and-publish";
     assert.deepEqual(
       actualGenerationRequests,
       [],
@@ -654,12 +1178,22 @@ export async function replayRetainedPublication(options) {
       config,
       report,
       approvedOrigins,
-      parsed.project.revision,
+      candidate.project.revision,
       evidenceDir,
-      parsed.project,
+      candidate.project,
       parsed.publicationArtifacts,
       targetArtifacts,
     );
+    continuation.publicationSaveUsedCloudBaseline =
+      publicationSaveRequests.length === 1 &&
+      publicationSaveRequests[0].projectMatches &&
+      publicationSaveRequests[0].baseRevision === 42 &&
+      publicationSaveRequests[0].baseSnapshotTokenMatches;
+    report.publicationCloudBaseline = {
+      openedInUI: continuation.cloudBaselineOpenedInUI,
+      saveRequestCount: publicationSaveRequests.length,
+      saveUsedRevision42Token: continuation.publicationSaveUsedCloudBaseline,
+    };
     report.signedInGenerationRequests = actualGenerationRequests;
     report.signedInBlockedGenerationRequests =
       evidence.blockedGenerationRequests;
@@ -674,6 +1208,7 @@ export async function replayRetainedPublication(options) {
       };
     }
   } catch {
+    report.continuationFailurePhase = phase;
     report.offlineContinuationFailure = "offline-publication-replay-failed";
   } finally {
     report.signedInGenerationRequests ??= actualGenerationRequests;
@@ -682,7 +1217,7 @@ export async function replayRetainedPublication(options) {
     if (context) await context.close().catch(() => undefined);
     await browser.close().catch(() => undefined);
   }
-  const summary = summarizePublication(report, liveBinding);
+  const summary = summarizePublication(report, liveBinding, continuation);
   await mkdir(dirname(summaryPath), { recursive: true });
   await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, {
     encoding: "utf8",
