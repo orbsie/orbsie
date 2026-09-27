@@ -1,5 +1,13 @@
 # Development checkpoint
 
+Later Sep 27 funding check: the same private Vercel AI Gateway test key's
+read-only `/v1/credits` response now has a positive balance. Production
+`https://orbsie.com/api/trial` reports `enabled:true,remaining:3,limit:3` for
+a fresh visitor. This removes the prior unfunded-provider availability gate;
+it does not yet prove a free-mode generation or complete Gateway create/edit
+run. The owner authorized bounded live Gateway tests after funding, using
+Luna only and no automatic retries.
+
 Sep 27 fresh OpenRouter flagship live milestone: one corrected preflight and
 then exactly three `openai/gpt-6-luna` requests (HTTP 200, low reasoning,
 default tier, 4,096 output-token cap, no fallback) created the five-crystal
