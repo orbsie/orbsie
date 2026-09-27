@@ -29,6 +29,8 @@ export type OpenRouterOAuthCallback = {
   transaction: OpenRouterOAuthTransaction;
 };
 
+export type OpenRouterOAuthCallbackDisposition = "process" | "strip" | "ignore";
+
 type CryptoSource = Pick<Crypto, "getRandomValues" | "subtle">;
 
 function oauthFailure(message: string): OpenRouterOAuthError {
@@ -185,11 +187,30 @@ export async function startOpenRouterOAuth(
   };
 }
 
-export function consumeOpenRouterOAuthCallback(
+/** Classify callback-shaped URLs before the client decides whether to show UI. */
+export function classifyOpenRouterOAuthCallback(
+  input: string | URL,
+  hasPendingTransaction: boolean,
+): OpenRouterOAuthCallbackDisposition {
+  let callback: URL;
+  try {
+    callback = new URL(input.toString());
+  } catch {
+    return "ignore";
+  }
+  if (callback.searchParams.has("orbsie_oauth")) return "process";
+  const hasState = callback.searchParams.has("state");
+  const hasResponse =
+    callback.searchParams.has("code") || callback.searchParams.has("error");
+  if (!hasState || !hasResponse) return "ignore";
+  return hasPendingTransaction ? "process" : "strip";
+}
+
+function validateCallbackState(
   input: string | URL,
   transaction: OpenRouterOAuthTransaction,
-  now = Date.now(),
-): OpenRouterOAuthCallback {
+  now: number,
+): URL {
   const expected = validateTransaction(transaction, now);
   let callback: URL;
   try {
@@ -209,6 +230,25 @@ export function consumeOpenRouterOAuthCallback(
       (markers.length !== 1 || markers[0] !== "openrouter"))
   )
     throw oauthFailure("The OpenRouter callback did not match this sign-in.");
+  return callback;
+}
+
+/** Validate the callback's transaction binding without requiring success. */
+export function validateOpenRouterOAuthCallbackState(
+  input: string | URL,
+  transaction: OpenRouterOAuthTransaction,
+  now = Date.now(),
+): string {
+  validateCallbackState(input, transaction, now);
+  return transaction.state;
+}
+
+export function consumeOpenRouterOAuthCallback(
+  input: string | URL,
+  transaction: OpenRouterOAuthTransaction,
+  now = Date.now(),
+): OpenRouterOAuthCallback {
+  const callback = validateCallbackState(input, transaction, now);
 
   const codes = callback.searchParams.getAll("code");
   const errors = callback.searchParams.getAll("error");

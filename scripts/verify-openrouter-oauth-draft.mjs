@@ -85,6 +85,7 @@ function installRoutes(context, { cancelled }) {
       callback.searchParams.set("error", "access_denied");
       callback.searchParams.set("error_description", "User cancelled");
     } else callback.searchParams.set("code", "fixture-authorization-code");
+    callback.searchParams.delete("orbsie_oauth");
     await route.fulfill({
       status: 302,
       headers: { location: callback.href },
@@ -184,7 +185,9 @@ async function selectAndDraft(page) {
 
 async function startOAuth(page) {
   await page.getByRole("button", { name: "Connections", exact: true }).click();
-  await expect(page.getByText(/No installation is required/)).toBeVisible();
+  await expect(
+    page.getByText(/ChatGPT connection is unavailable here/),
+  ).toBeVisible();
   await expect(page.getByLabel("Local Blender connection link")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Connect with OpenRouter", exact: true })

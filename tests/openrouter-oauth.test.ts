@@ -1,13 +1,16 @@
 import { expect, it, vi } from "vitest";
 import {
+  classifyOpenRouterOAuthCallback,
   consumeOpenRouterOAuthCallback,
   createOpenRouterCodeChallenge,
   exchangeOpenRouterCode,
   OPENROUTER_OAUTH_TTL_MS,
   startOpenRouterOAuth,
+  validateOpenRouterOAuthCallbackState,
   type OpenRouterOAuthCallback,
   type OpenRouterOAuthTransaction,
 } from "../src/lib/openrouter-oauth";
+import { decodeOAuthDraft, encodeOAuthDraft } from "../src/lib/oauth-draft";
 
 const origin = "https://orbsie.test";
 
@@ -102,6 +105,62 @@ it("accepts the markerful callback URL for compatibility", async () => {
       now + 1,
     ),
   ).toMatchObject({ code: "code-123" });
+});
+
+it("restores a matching draft for a canceled callback without accepting a code", async () => {
+  const now = 1_700_000_000_000;
+  const transactionValue = await transaction(now);
+  const callback = callbackUrl(transactionValue);
+  callback.searchParams.delete("code");
+  callback.searchParams.set("error", "access_denied");
+  callback.searchParams.set("error_description", "User canceled sign-in");
+  const draft = {
+    version: 1 as const,
+    state: transactionValue.state,
+    createdAt: now,
+    prompt: "princess in a castle",
+    projectId: "local-world",
+    selectedId: "tree-1",
+  };
+
+  const callbackState = validateOpenRouterOAuthCallbackState(
+    callback,
+    transactionValue,
+    now + 1,
+  );
+  expect(
+    decodeOAuthDraft(encodeOAuthDraft(draft), callbackState, now + 1),
+  ).toEqual(draft);
+  expect(() =>
+    consumeOpenRouterOAuthCallback(callback, transactionValue, now + 1),
+  ).toThrow("canceled");
+});
+
+it.each([
+  ["state only", "?state=fixture", false, "ignore"],
+  ["code only", "?code=fixture", false, "ignore"],
+  [
+    "markerless response without a pending transaction",
+    "?state=fixture&code=fixture",
+    false,
+    "strip",
+  ],
+  [
+    "markerless response with a pending transaction",
+    "?state=fixture&code=fixture",
+    true,
+    "process",
+  ],
+  [
+    "marked callback without a pending transaction",
+    "?orbsie_oauth=openrouter",
+    false,
+    "process",
+  ],
+])("classifies %s", (_name, query, hasPending, expected) => {
+  expect(
+    classifyOpenRouterOAuthCallback(new URL(query, origin), hasPending),
+  ).toBe(expected);
 });
 
 it.each([

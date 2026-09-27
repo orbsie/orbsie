@@ -78,9 +78,11 @@ import {
 import { committed, projectSchema, type Project } from "@/lib/protocol";
 import { createSceneBinding } from "@/lib/scene-binding";
 import {
+  classifyOpenRouterOAuthCallback,
   startOpenRouterOAuth,
   consumeOpenRouterOAuthCallback,
   exchangeOpenRouterCode,
+  validateOpenRouterOAuthCallbackState,
 } from "@/lib/openrouter-oauth";
 import {
   encodeOAuthDraft,
@@ -407,14 +409,23 @@ export default function Orbsie() {
     const effectInstance = ++oauthEffectInstance.current;
     const version = connectionVersion.current;
     const callbackUrl = new URL(location.href);
-    const hasOAuthCallbackParams = [
-      "orbsie_oauth",
-      "state",
-      "code",
-      "error",
-    ].some((key) => callbackUrl.searchParams.has(key));
-    if (!oauthCompletion.current && hasOAuthCallbackParams) {
-      // Strip OAuth response values before validating or exchanging them.
+    let pendingForCallback: string | null = null;
+    let callbackDisposition = classifyOpenRouterOAuthCallback(
+      callbackUrl,
+      false,
+    );
+    if (callbackDisposition === "strip") {
+      try {
+        pendingForCallback = sessionStorage.getItem(OAUTH_PENDING_KEY);
+      } catch {
+        pendingForCallback = null;
+      }
+      callbackDisposition = classifyOpenRouterOAuthCallback(
+        callbackUrl,
+        Boolean(pendingForCallback),
+      );
+    }
+    if (!oauthCompletion.current && callbackDisposition !== "ignore") {
       const original = callbackUrl.href;
       for (const key of [
         "orbsie_oauth",
@@ -430,52 +441,65 @@ export default function Orbsie() {
         callbackUrl.pathname + callbackUrl.search + callbackUrl.hash,
       );
 
-      // Consume the same-tab transaction before validation so no callback can
-      // exchange it twice, including after a reload or Strict Mode rehearsal.
-      let pending: string | null = null;
-      let draft: string | null = null;
-      let storageBlocked = false;
-      try {
-        pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
-        sessionStorage.removeItem(OAUTH_PENDING_KEY);
-        draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
-        sessionStorage.removeItem(OAUTH_DRAFT_KEY);
-      } catch {
-        storageBlocked = true;
-      }
-
-      let callback: ReturnType<typeof consumeOpenRouterOAuthCallback> | null =
-        null;
-      let callbackError: unknown;
-      if (!storageBlocked) {
+      if (callbackDisposition === "process") {
+        // Consume the same-tab transaction before validation so no callback
+        // can exchange it twice, even after a reload or Strict Mode rehearsal.
+        let pending: string | null = pendingForCallback;
+        let draft: string | null = null;
+        let storageBlocked = false;
         try {
-          if (!pending) throw Error("Missing sign-in attempt.");
-          callback = consumeOpenRouterOAuthCallback(
-            original,
-            JSON.parse(pending),
-          );
-          oauthDraft.current = decodeOAuthDraft(
-            draft,
-            callback.transaction.state,
-          );
-          if (oauthDraft.current) setPrompt(oauthDraft.current.prompt);
-        } catch (error) {
-          callbackError = error;
+          if (pending === null)
+            pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
+          sessionStorage.removeItem(OAUTH_PENDING_KEY);
+          draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
+          sessionStorage.removeItem(OAUTH_DRAFT_KEY);
+        } catch {
+          storageBlocked = true;
         }
-      }
-      if (storageBlocked)
-        oauthCompletion.current = Promise.reject(Error(OAUTH_STORAGE_MESSAGE));
-      else {
-        const controller = new AbortController();
-        oauthController.current = controller;
-        oauthCompletion.current = Promise.resolve().then(() => {
-          if (callbackError) throw callbackError;
-          if (!callback) throw Error("Missing sign-in attempt.");
-          return exchangeOpenRouterCode({
-            callback,
-            signal: controller.signal,
+
+        let callback: ReturnType<typeof consumeOpenRouterOAuthCallback> | null =
+          null;
+        let callbackError: unknown;
+        if (!storageBlocked) {
+          let transaction:
+            Parameters<typeof consumeOpenRouterOAuthCallback>[1] | null = null;
+          try {
+            if (!pending) throw Error("Missing sign-in attempt.");
+            transaction = JSON.parse(pending);
+          } catch (error) {
+            callbackError = error;
+          }
+          if (transaction) {
+            try {
+              validateOpenRouterOAuthCallbackState(original, transaction);
+              oauthDraft.current = decodeOAuthDraft(draft, transaction.state);
+              if (oauthDraft.current) setPrompt(oauthDraft.current.prompt);
+            } catch {
+              // Invalid or mismatched callbacks must not restore another draft.
+            }
+            try {
+              callback = consumeOpenRouterOAuthCallback(original, transaction);
+            } catch (error) {
+              callbackError = error;
+            }
+          }
+        }
+        if (storageBlocked)
+          oauthCompletion.current = Promise.reject(
+            Error(OAUTH_STORAGE_MESSAGE),
+          );
+        else {
+          const controller = new AbortController();
+          oauthController.current = controller;
+          oauthCompletion.current = Promise.resolve().then(() => {
+            if (callbackError) throw callbackError;
+            if (!callback) throw Error("Missing sign-in attempt.");
+            return exchangeOpenRouterCode({
+              callback,
+              signal: controller.signal,
+            });
           });
-        });
+        }
       }
     }
     if (oauthCompletion.current) {
