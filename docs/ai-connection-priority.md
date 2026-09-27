@@ -159,3 +159,15 @@ and requires enablement; it is not a general consumer OAuth callback for Orbsie.
 Keep browser-only authorization and the subscription inference entitlement as
 separate required evidence. Neither mechanism was connected or used for inference
 in this read-only check.
+
+September 27 check: the current official [App Server authentication guide](https://learn.chatgpt.com/docs/app-server#3-log-in-with-chatgpt-browser-flow)
+still shows an `http://localhost:<port>/auth/callback` managed browser flow;
+its [external-token mode](https://learn.chatgpt.com/docs/app-server#3c-log-in-with-externally-managed-chatgpt-tokens-chatgptauthtokens)
+still requires a host that already owns the user's ChatGPT authorization. These
+docs do not establish an Orbsie HTTPS OAuth redirect or subscription inference
+entitlement. In the owner's existing Chrome profile, the production Orbsie
+`Connect ChatGPT` action did open the official OpenAI account selector and then
+the `Sign in to Codex with ChatGPT` consent screen for the existing account.
+The consent action was left untouched pending specific owner approval. This
+observes a working entry to the existing hosted flow, not a connected session,
+generation, or the required browser-only redirect integration.

@@ -1,5 +1,18 @@
 # Development checkpoint
 
+Sep 27 read-only external gate check: the private Gateway test key's `/v1/credits`
+request returned HTTP 200 with a negative balance; no Gateway inference was
+attempted. The production `/api/trial` endpoint still reports
+`enabled:false,remaining:0,limit:3`, so free prompts remain unavailable.
+Computer use can now inspect the owner's existing Chrome profile: one Orbsie
+tab has an OpenRouter-connected completed castle draft, while a separate
+`Connect ChatGPT` attempt reached OpenAI's `Sign in to Codex with ChatGPT`
+consent page and was left pending specific owner approval. The current official
+App Server guide still documents a localhost managed browser callback rather
+than an Orbsie HTTPS subscription OAuth callback; see
+`docs/ai-connection-priority.md`. `adb devices -l` lists no physical Android
+device. These checks made zero model calls and did not change account grants.
+
 Sep 27 the fresh publication harness now traverses the validated signed-out
 player inside its exact iframe: desktop keyboard focus/input stays in that
 frame, gameplay observations must match the current project/revision and five
