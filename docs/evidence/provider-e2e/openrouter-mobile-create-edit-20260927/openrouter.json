@@ -103,9 +103,7 @@
     "blockedExternalRequests": 0,
     "interceptedGeneration": false
   },
-  "evidence": [
-    "failure.png"
-  ],
+  "evidence": [],
   "error": "Generate origin preflight was rejected (HTTP 403). ORBSIE_TEST_URL, the app server origin, and BETTER_AUTH_URL must match exactly, including hostname and port; provider setup was blocked.",
   "flagshipJourneyAcceptance": {
     "version": 1,
