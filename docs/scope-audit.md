@@ -1,10 +1,24 @@
 # Orbsie full scope audit
 
-## Current reconciliation — 2026-09-25
+## Current reconciliation — 2026-09-27
 
 The full `prompt.md` objective remains open. Use
 `docs/development-checkpoint.md` for the latest source and acceptance evidence;
 older rows below are a historical inventory, not a completion claim.
+
+- A fresh local-only OpenRouter GPT-6 Luna create/edit run used exactly two
+  HTTP 200 model calls at the 4,096-token cap. It saved revision 9 to cloud,
+  reopened it, exported it, and published that same project through the
+  authenticated production app. Signed-out public snapshot and player loading
+  passed. The first screenshot preceded catalog asset loading; a later desktop
+  check saw the island and tree after both GLBs returned HTTP 200. Evidence:
+  `docs/evidence/provider-e2e/openrouter-continuous-publication-20260927/`.
+  This closes a small-scene OpenRouter create/edit-to-publication path; it does
+  not prove fresh game-win publication, ChatGPT subscription auth, funded
+  Gateway inference, physical mobile, or delightful visual quality.
+- Production `/api/trial` currently returns `enabled:false` because free
+  provider availability fails closed. The retained “princess in a castle”
+  draft therefore offers provider connection rather than free generation.
 
 - A stationary 12 km platform fixture now passes production WebGL SwiftShader
   zoom, pan, wheel, north reset, chat/control overlay isolation and exact
