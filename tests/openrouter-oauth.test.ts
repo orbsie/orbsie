@@ -81,11 +81,44 @@ it("consumes a matching callback and binds it to the transaction", async () => {
   expect(consumed.transaction).toBe(transactionValue);
 });
 
+it("accepts OpenRouter's markerless root callback for its pending transaction", async () => {
+  const now = 1_700_000_000_000;
+  const transactionValue = await transaction(now);
+  const callback = callbackUrl(transactionValue);
+  callback.searchParams.delete("orbsie_oauth");
+
+  expect(
+    consumeOpenRouterOAuthCallback(callback, transactionValue, now + 1),
+  ).toEqual({ code: "code-123", transaction: transactionValue });
+});
+
+it("accepts the markerful callback URL for compatibility", async () => {
+  const now = 1_700_000_000_000;
+  const transactionValue = await transaction(now);
+  expect(
+    consumeOpenRouterOAuthCallback(
+      callbackUrl(transactionValue),
+      transactionValue,
+      now + 1,
+    ),
+  ).toMatchObject({ code: "code-123" });
+});
+
 it.each([
   ["missing code", (url: URL) => url.searchParams.delete("code")],
   [
     "mismatched state",
     (url: URL) => url.searchParams.set("state", "x".repeat(43)),
+  ],
+  ["duplicate state", (url: URL) => url.searchParams.append("state", "other")],
+  ["duplicate code", (url: URL) => url.searchParams.append("code", "other")],
+  [
+    "unexpected callback marker",
+    (url: URL) => url.searchParams.set("orbsie_oauth", "other"),
+  ],
+  [
+    "duplicate callback marker",
+    (url: URL) => url.searchParams.append("orbsie_oauth", "openrouter"),
   ],
   ["wrong origin", (url: URL) => url],
 ])("rejects %s callback", async (name, mutate) => {
@@ -95,6 +128,32 @@ it.each([
   if (name === "wrong origin") {
     url.hostname = "other.test";
   } else mutate(url);
+  expect(() =>
+    consumeOpenRouterOAuthCallback(url, transactionValue, now + 1),
+  ).toThrow();
+});
+
+it("accepts a single provider error without treating it as a code", async () => {
+  const now = 1_700_000_000_000;
+  const transactionValue = await transaction(now);
+  const url = callbackUrl(transactionValue);
+  url.searchParams.delete("code");
+  url.searchParams.set("error", "access_denied");
+  expect(() =>
+    consumeOpenRouterOAuthCallback(url, transactionValue, now + 1),
+  ).toThrow("canceled");
+
+  url.searchParams.append("error", "server_error");
+  expect(() =>
+    consumeOpenRouterOAuthCallback(url, transactionValue, now + 1),
+  ).toThrow();
+});
+
+it("rejects callbacks that contain both a code and an error", async () => {
+  const now = 1_700_000_000_000;
+  const transactionValue = await transaction(now);
+  const url = callbackUrl(transactionValue);
+  url.searchParams.set("error", "access_denied");
   expect(() =>
     consumeOpenRouterOAuthCallback(url, transactionValue, now + 1),
   ).toThrow();

@@ -105,11 +105,20 @@ function validateTransaction(
   } catch {
     throw oauthFailure("The OpenRouter sign-in attempt is invalid.");
   }
+  let callbackOrigin: string;
+  try {
+    callbackOrigin = normalizedOrigin(callback.origin);
+  } catch {
+    throw oauthFailure("The OpenRouter sign-in attempt is invalid.");
+  }
   if (
-    !["https:", "http:"].includes(callback.protocol) ||
-    callback.origin === "null" ||
+    callbackOrigin !== callback.origin ||
+    callback.username !== "" ||
+    callback.password !== "" ||
     callback.pathname !== "/" ||
+    callback.searchParams.getAll("orbsie_oauth").length !== 1 ||
     callback.searchParams.get("orbsie_oauth") !== "openrouter" ||
+    callback.searchParams.getAll("state").length !== 1 ||
     callback.searchParams.get("state") !== transaction.state
   )
     throw oauthFailure("The OpenRouter sign-in attempt is invalid.");
@@ -188,19 +197,26 @@ export function consumeOpenRouterOAuthCallback(
   } catch {
     throw oauthFailure("The OpenRouter callback is invalid.");
   }
+  const markers = callback.searchParams.getAll("orbsie_oauth");
   if (
     callback.origin !== expected.origin ||
+    callback.username !== "" ||
+    callback.password !== "" ||
     callback.pathname !== expected.pathname ||
-    callback.searchParams.get("orbsie_oauth") !== "openrouter" ||
+    callback.searchParams.getAll("state").length !== 1 ||
     callback.searchParams.get("state") !== transaction.state ||
-    callback.searchParams.getAll("state").length !== 1
+    (markers.length > 0 &&
+      (markers.length !== 1 || markers[0] !== "openrouter"))
   )
     throw oauthFailure("The OpenRouter callback did not match this sign-in.");
-  if (callback.searchParams.has("error"))
+
+  const codes = callback.searchParams.getAll("code");
+  const errors = callback.searchParams.getAll("error");
+  if (codes.length === 0 && errors.length === 1)
     throw oauthFailure("OpenRouter sign-in was canceled.");
-  if (callback.searchParams.getAll("code").length !== 1)
+  if (codes.length !== 1 || errors.length !== 0)
     throw oauthFailure("OpenRouter did not return an authorization code.");
-  return { code: checkedCode(callback.searchParams.get("code")), transaction };
+  return { code: checkedCode(codes[0]), transaction };
 }
 
 async function boundedText(response: Response): Promise<string> {

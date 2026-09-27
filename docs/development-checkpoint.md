@@ -1,5 +1,14 @@
 # Development checkpoint
 
+Sep 27 OpenRouter OAuth now accepts OpenRouter's observed markerless root
+return when the same tab still has its pending PKCE transaction. Callback
+origin, path, state, and single code-or-error response are validated; the
+transaction is consumed once, callback parameters are stripped before exchange,
+and the saved prompt draft is restored on a valid return. Markerful callbacks
+remain supported. Synthetic OAuth tests (18), typecheck, and source formatting
+pass; no provider/model calls were made. The deployed browser callback remains
+for root integration verification.
+
 Sep 27 retry of signed-out Android Chrome validation for OpenRouter project
 `d33a530a-1cd8-4943-a7ae-28d11538ad87` revision 9 stopped before Android or
 Chrome became available. The separate `droidlm_api35_play_midrange` emulator

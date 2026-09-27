@@ -407,26 +407,15 @@ export default function Orbsie() {
     const effectInstance = ++oauthEffectInstance.current;
     const version = connectionVersion.current;
     const callbackUrl = new URL(location.href);
-    if (
-      !oauthCompletion.current &&
-      callbackUrl.searchParams.get("orbsie_oauth") === "openrouter"
-    ) {
-      // Consume synchronously so Strict Mode and reload cannot exchange twice.
-      let pending: string | null = null;
-      let storageBlocked = false;
-      try {
-        pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
-        sessionStorage.removeItem(OAUTH_PENDING_KEY);
-        const draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
-        sessionStorage.removeItem(OAUTH_DRAFT_KEY);
-        oauthDraft.current = decodeOAuthDraft(
-          draft,
-          callbackUrl.searchParams.get("state") ?? "",
-        );
-        if (oauthDraft.current) setPrompt(oauthDraft.current.prompt);
-      } catch {
-        storageBlocked = true;
-      }
+    const hasOAuthCallbackParams = [
+      "orbsie_oauth",
+      "state",
+      "code",
+      "error",
+    ].some((key) => callbackUrl.searchParams.has(key));
+    if (!oauthCompletion.current && hasOAuthCallbackParams) {
+      // Strip OAuth response values before validating or exchanging them.
+      const original = callbackUrl.href;
       for (const key of [
         "orbsie_oauth",
         "state",
@@ -435,24 +424,55 @@ export default function Orbsie() {
         "error_description",
       ])
         callbackUrl.searchParams.delete(key);
-      const original = location.href;
       history.replaceState(
         history.state,
         "",
         callbackUrl.pathname + callbackUrl.search + callbackUrl.hash,
       );
+
+      // Consume the same-tab transaction before validation so no callback can
+      // exchange it twice, including after a reload or Strict Mode rehearsal.
+      let pending: string | null = null;
+      let draft: string | null = null;
+      let storageBlocked = false;
+      try {
+        pending = sessionStorage.getItem(OAUTH_PENDING_KEY);
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        draft = sessionStorage.getItem(OAUTH_DRAFT_KEY);
+        sessionStorage.removeItem(OAUTH_DRAFT_KEY);
+      } catch {
+        storageBlocked = true;
+      }
+
+      let callback: ReturnType<typeof consumeOpenRouterOAuthCallback> | null =
+        null;
+      let callbackError: unknown;
+      if (!storageBlocked) {
+        try {
+          if (!pending) throw Error("Missing sign-in attempt.");
+          callback = consumeOpenRouterOAuthCallback(
+            original,
+            JSON.parse(pending),
+          );
+          oauthDraft.current = decodeOAuthDraft(
+            draft,
+            callback.transaction.state,
+          );
+          if (oauthDraft.current) setPrompt(oauthDraft.current.prompt);
+        } catch (error) {
+          callbackError = error;
+        }
+      }
       if (storageBlocked)
         oauthCompletion.current = Promise.reject(Error(OAUTH_STORAGE_MESSAGE));
       else {
         const controller = new AbortController();
         oauthController.current = controller;
         oauthCompletion.current = Promise.resolve().then(() => {
-          if (!pending) throw Error("Missing sign-in attempt.");
+          if (callbackError) throw callbackError;
+          if (!callback) throw Error("Missing sign-in attempt.");
           return exchangeOpenRouterCode({
-            callback: consumeOpenRouterOAuthCallback(
-              original,
-              JSON.parse(pending),
-            ),
+            callback,
             signal: controller.signal,
           });
         });
