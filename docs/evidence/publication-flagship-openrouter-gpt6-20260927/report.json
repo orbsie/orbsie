@@ -1,0 +1,1425 @@
+{
+  "status": "passed",
+  "base": "https://orbsie.com",
+  "startedAt": "2026-09-27T16:14:48.655Z",
+  "account": {
+    "email": "orbsie-free-publication-1790525688578@example.com"
+  },
+  "harness": {
+    "commit": "3393a786fdceb91bd4ed92a5298a55411c053dda",
+    "dirty": false
+  },
+  "source": {
+    "zipPath": "docs/evidence/provider-e2e/openrouter-flagship-set-label-live-20260925/openrouter/world.zip",
+    "sourceZipSha256": "7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a",
+    "sourceProjectId": "f7db190b-34fb-497e-bdee-92adeec85584",
+    "sourceRevision": 42,
+    "publicationProjectId": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+    "publicationRevision": 1,
+    "republishMaterialMutation": {
+      "entityId": "crystal-1",
+      "color": "#ff8f6b"
+    },
+    "expectedReferencedFiles": [
+      {
+        "file": "assets/catalog/used-assets.json",
+        "kind": "catalog-provenance",
+        "bytes": 4565,
+        "sha256": "c8675348f308c920213166cbbe695cf0e1ef0749a2cd68f9da1b270ec0fd30a2"
+      },
+      {
+        "file": "models/kenney/nature-kit/tree_default.glb",
+        "kind": "catalog-glb",
+        "bytes": 9428,
+        "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+      },
+      {
+        "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+        "kind": "catalog-license",
+        "bytes": 611,
+        "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+      },
+      {
+        "file": "models/kenney/nature-kit/tree_pineTallA.glb",
+        "kind": "catalog-glb",
+        "bytes": 7200,
+        "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+      }
+    ]
+  },
+  "plan": {
+    "accountSignup": 1,
+    "generatedModelUploads": 0,
+    "cloudProjectSaves": 2,
+    "publicationSubmissions": 1,
+    "inferenceCalls": 0,
+    "republishSubmissions": 1
+  },
+  "mutations": {
+    "accountSignup": 1,
+    "generatedModelUploads": 0,
+    "generatedModelHashes": [],
+    "cloudProjectSaves": 2,
+    "publicationSubmissions": 2
+  },
+  "progress": {
+    "account": {
+      "email": "orbsie-free-publication-1790525688578@example.com"
+    },
+    "world": {
+      "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+      "revision": 2,
+      "title": "A tiny island to share — Sunset crystal garden"
+    },
+    "steps": [
+      {
+        "step": "start"
+      },
+      {
+        "step": "sign-up",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "cloud save revision 1",
+        "status": 200,
+        "ok": true,
+        "revision": 1,
+        "world": {
+          "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+          "revision": 1,
+          "title": "Sanitized saved scene"
+        }
+      },
+      {
+        "step": "publish revision 1",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_BKyrktfU6gS8dpmv6DJtrrvyBbk4",
+        "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-n0yzsawjz-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W",
+        "world": {
+          "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+          "revision": 1,
+          "title": "Sanitized saved scene"
+        }
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "deploymentId": "dpl_BKyrktfU6gS8dpmv6DJtrrvyBbk4",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W"
+      },
+      {
+        "step": "publish revision 1 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 1,
+        "deploymentId": "dpl_BKyrktfU6gS8dpmv6DJtrrvyBbk4",
+        "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-n0yzsawjz-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W"
+      },
+      {
+        "step": "first public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "first public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "first public release snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "Sanitized saved scene",
+          "materialColor": "#56eaff",
+          "materialEntityId": "crystal-1"
+        }
+      },
+      {
+        "step": "cloud save revision 2",
+        "status": 200,
+        "ok": true,
+        "revision": 2,
+        "world": {
+          "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      },
+      {
+        "step": "publish revision 2",
+        "status": 200,
+        "ok": true,
+        "state": "INITIALIZING",
+        "servedRevision": 1,
+        "deploymentId": "dpl_9vFU4QqpWzgsKUVj92Ffv3rL3KG1",
+        "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-en8sbxfen-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W",
+        "world": {
+          "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden"
+        }
+      },
+      {
+        "step": "previous public release during republish page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "previous public release during republish browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "previous public release during republish snapshot",
+        "snapshot": {
+          "revision": 1,
+          "title": "Sanitized saved scene",
+          "materialColor": "#56eaff",
+          "materialEntityId": "crystal-1"
+        }
+      },
+      {
+        "step": "republish pending-window observed",
+        "pendingWindow": {
+          "observed": true,
+          "state": "INITIALIZING",
+          "servedRevision": 1,
+          "previousRelease": {
+            "deploymentId": "dpl_BKyrktfU6gS8dpmv6DJtrrvyBbk4",
+            "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-n0yzsawjz-grappeggias-projects.vercel.app",
+            "browser": {
+              "status": 200,
+              "ready": true,
+              "canvas": true,
+              "pageErrorCount": 0
+            },
+            "snapshot": {
+              "version": 1,
+              "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+              "title": "Sanitized saved scene",
+              "seed": 42,
+              "revision": 1,
+              "entities": [
+                {
+                  "id": "island",
+                  "label": "Sunny Little Island",
+                  "position": [
+                    0,
+                    -0.35,
+                    0
+                  ],
+                  "scale": [
+                    9,
+                    1.3,
+                    9
+                  ],
+                  "color": "#c8a76a",
+                  "geometry": {
+                    "kind": "rock",
+                    "detail": "refined"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "pond",
+                  "label": "Shimmering Pond",
+                  "position": [
+                    -3,
+                    0.03,
+                    1
+                  ],
+                  "scale": [
+                    2.8,
+                    0.3,
+                    2
+                  ],
+                  "color": "#53c9d0",
+                  "geometry": {
+                    "kind": "pond",
+                    "detail": "refined"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "tree-a",
+                  "label": "Giant Pink Mushroom",
+                  "position": [
+                    -5,
+                    0,
+                    3
+                  ],
+                  "scale": [
+                    7,
+                    9,
+                    7
+                  ],
+                  "color": "#f06ab8",
+                  "geometry": {
+                    "kind": "mushroom",
+                    "detail": "refined",
+                    "tint": "#f06ab8"
+                  },
+                  "assetPolicy": "catalog-allowed",
+                  "stage": "ready"
+                },
+                {
+                  "id": "tree-b",
+                  "label": "Friendly Tree",
+                  "position": [
+                    4,
+                    0,
+                    -3
+                  ],
+                  "scale": [
+                    1.6,
+                    1.6,
+                    1.6
+                  ],
+                  "color": "#6ead60",
+                  "geometry": {
+                    "kind": "asset",
+                    "assetId": "kenney.nature.tree-default",
+                    "detail": "refined"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "tree-c",
+                  "label": "Friendly Pine",
+                  "position": [
+                    5,
+                    0,
+                    3
+                  ],
+                  "scale": [
+                    1.5,
+                    1.5,
+                    1.5
+                  ],
+                  "color": "#6ead60",
+                  "geometry": {
+                    "kind": "asset",
+                    "assetId": "kenney.nature.tree-pine-tall-a",
+                    "detail": "refined"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-1",
+                  "label": "Glowing Crystal",
+                  "position": [
+                    -1,
+                    0.6,
+                    4
+                  ],
+                  "scale": [
+                    0.55,
+                    0.8,
+                    0.55
+                  ],
+                  "color": "#56eaff",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-2",
+                  "label": "Glowing Crystal",
+                  "position": [
+                    2,
+                    0.6,
+                    2
+                  ],
+                  "scale": [
+                    0.55,
+                    0.8,
+                    0.55
+                  ],
+                  "color": "#ff7afa",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-3",
+                  "label": "Glowing Crystal",
+                  "position": [
+                    -2,
+                    0.6,
+                    -1
+                  ],
+                  "scale": [
+                    0.55,
+                    0.8,
+                    0.55
+                  ],
+                  "color": "#ffe65a",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-4",
+                  "label": "Glowing Crystal",
+                  "position": [
+                    2,
+                    0.6,
+                    -4
+                  ],
+                  "scale": [
+                    0.55,
+                    0.8,
+                    0.55
+                  ],
+                  "color": "#76ff9c",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "crystal-5",
+                  "label": "Glowing Crystal",
+                  "position": [
+                    -1,
+                    0.6,
+                    -7
+                  ],
+                  "scale": [
+                    0.55,
+                    0.8,
+                    0.55
+                  ],
+                  "color": "#ffae58",
+                  "geometry": {
+                    "kind": "crystal",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "collect"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "bounce-1",
+                  "label": "Moving Bounce Platform",
+                  "position": [
+                    0,
+                    -0.35,
+                    2
+                  ],
+                  "scale": [
+                    2,
+                    0.7,
+                    1.7
+                  ],
+                  "color": "#7edb73",
+                  "geometry": {
+                    "kind": "platform",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "bounce"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "bounce-2",
+                  "label": "Moving Bounce Platform",
+                  "position": [
+                    0,
+                    -0.35,
+                    -2
+                  ],
+                  "scale": [
+                    2,
+                    0.7,
+                    1.7
+                  ],
+                  "color": "#7edb73",
+                  "geometry": {
+                    "kind": "platform",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "bounce"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "bounce-3",
+                  "label": "Moving Bounce Platform",
+                  "position": [
+                    0,
+                    -0.35,
+                    -6
+                  ],
+                  "scale": [
+                    2,
+                    0.7,
+                    1.7
+                  ],
+                  "color": "#7edb73",
+                  "geometry": {
+                    "kind": "platform",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "bounce"
+                  },
+                  "stage": "ready"
+                },
+                {
+                  "id": "portal",
+                  "label": "Crystal Portal",
+                  "position": [
+                    0,
+                    0,
+                    -10
+                  ],
+                  "scale": [
+                    2,
+                    2.4,
+                    0.5
+                  ],
+                  "color": "#ae79ff",
+                  "geometry": {
+                    "kind": "arch",
+                    "detail": "refined"
+                  },
+                  "behavior": {
+                    "type": "portal"
+                  },
+                  "stage": "ready"
+                }
+              ],
+              "environment": {
+                "sky": "#dceee9",
+                "ground": "#91b977",
+                "water": "#59bdbb"
+              },
+              "game": {
+                "spawn": [
+                  0,
+                  0.42,
+                  5
+                ],
+                "variables": [
+                  {
+                    "name": "crystals",
+                    "initial": 0
+                  }
+                ],
+                "rules": [
+                  {
+                    "id": "move-one",
+                    "trigger": {
+                      "type": "start"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "move_path",
+                        "entityId": "bounce-1",
+                        "points": [
+                          [
+                            0,
+                            -0.35,
+                            2
+                          ],
+                          [
+                            1.5,
+                            -0.35,
+                            1
+                          ],
+                          [
+                            0,
+                            -0.35,
+                            2
+                          ]
+                        ],
+                        "duration": 5,
+                        "loop": true
+                      }
+                    ]
+                  },
+                  {
+                    "id": "move-two",
+                    "trigger": {
+                      "type": "start"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "move_path",
+                        "entityId": "bounce-2",
+                        "points": [
+                          [
+                            0,
+                            -0.35,
+                            -2
+                          ],
+                          [
+                            -1.5,
+                            -0.35,
+                            -3
+                          ],
+                          [
+                            0,
+                            -0.35,
+                            -2
+                          ]
+                        ],
+                        "duration": 6,
+                        "loop": true
+                      }
+                    ]
+                  },
+                  {
+                    "id": "move-three",
+                    "trigger": {
+                      "type": "start"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "move_path",
+                        "entityId": "bounce-3",
+                        "points": [
+                          [
+                            0,
+                            -0.35,
+                            -6
+                          ],
+                          [
+                            1.5,
+                            -0.35,
+                            -7
+                          ],
+                          [
+                            0,
+                            -0.35,
+                            -6
+                          ]
+                        ],
+                        "duration": 7,
+                        "loop": true
+                      }
+                    ]
+                  },
+                  {
+                    "id": "collect-one",
+                    "trigger": {
+                      "type": "collect",
+                      "entityId": "crystal-1"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "add_variable",
+                        "name": "crystals",
+                        "amount": 1
+                      },
+                      {
+                        "type": "add_score",
+                        "amount": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "collect-two",
+                    "trigger": {
+                      "type": "collect",
+                      "entityId": "crystal-2"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "add_variable",
+                        "name": "crystals",
+                        "amount": 1
+                      },
+                      {
+                        "type": "add_score",
+                        "amount": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "collect-three",
+                    "trigger": {
+                      "type": "collect",
+                      "entityId": "crystal-3"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "add_variable",
+                        "name": "crystals",
+                        "amount": 1
+                      },
+                      {
+                        "type": "add_score",
+                        "amount": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "collect-four",
+                    "trigger": {
+                      "type": "collect",
+                      "entityId": "crystal-4"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "add_variable",
+                        "name": "crystals",
+                        "amount": 1
+                      },
+                      {
+                        "type": "add_score",
+                        "amount": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "collect-five",
+                    "trigger": {
+                      "type": "collect",
+                      "entityId": "crystal-5"
+                    },
+                    "conditions": [],
+                    "actions": [
+                      {
+                        "type": "add_variable",
+                        "name": "crystals",
+                        "amount": 1
+                      },
+                      {
+                        "type": "add_score",
+                        "amount": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "finish",
+                    "trigger": {
+                      "type": "collision",
+                      "entityId": "portal"
+                    },
+                    "conditions": [
+                      {
+                        "operand": {
+                          "type": "variable",
+                          "name": "crystals"
+                        },
+                        "comparison": "gte",
+                        "value": 5
+                      }
+                    ],
+                    "actions": [
+                      {
+                        "type": "win"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "messages": []
+            }
+          }
+        }
+      },
+      {
+        "step": "publish revision 2 status",
+        "status": 200,
+        "ok": true,
+        "state": "BUILDING",
+        "servedRevision": 1,
+        "deploymentId": "dpl_9vFU4QqpWzgsKUVj92Ffv3rL3KG1",
+        "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-n0yzsawjz-grappeggias-projects.vercel.app",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W"
+      },
+      {
+        "step": "publish revision 2 status",
+        "status": 200,
+        "ok": true,
+        "state": "READY",
+        "servedRevision": 2,
+        "deploymentId": "dpl_9vFU4QqpWzgsKUVj92Ffv3rL3KG1",
+        "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-en8sbxfen-grappeggias-projects.vercel.app",
+        "url": "/o/pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+        "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W"
+      },
+      {
+        "step": "final public release page",
+        "status": 200,
+        "ok": true
+      },
+      {
+        "step": "final public release browser",
+        "browser": {
+          "status": 200,
+          "ready": true,
+          "canvas": true,
+          "pageErrorCount": 0
+        }
+      },
+      {
+        "step": "final public release snapshot",
+        "snapshot": {
+          "revision": 2,
+          "title": "A tiny island to share — Sunset crystal garden",
+          "materialColor": "#ff8f6b",
+          "materialEntityId": "crystal-1"
+        }
+      }
+    ],
+    "last": {
+      "step": "final public release snapshot",
+      "snapshot": {
+        "revision": 2,
+        "title": "A tiny island to share — Sunset crystal garden",
+        "materialColor": "#ff8f6b",
+        "materialEntityId": "crystal-1"
+      }
+    }
+  },
+  "checks": {
+    "signup": "passed",
+    "generatedModelUploads": 0,
+    "cloudSave": {
+      "revision": 1
+    },
+    "publicationSubmitted": {
+      "deploymentId": "dpl_BKyrktfU6gS8dpmv6DJtrrvyBbk4",
+      "deploymentUrl": "https://orb-6d7c4d2b7a0130aecdf4-n0yzsawjz-grappeggias-projects.vercel.app",
+      "vercelProjectId": "prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W"
+    },
+    "signedOut": {
+      "version": 1,
+      "id": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+      "title": "Sanitized saved scene",
+      "seed": 42,
+      "revision": 1,
+      "entities": [
+        {
+          "id": "island",
+          "label": "Sunny Little Island",
+          "position": [
+            0,
+            -0.35,
+            0
+          ],
+          "scale": [
+            9,
+            1.3,
+            9
+          ],
+          "color": "#c8a76a",
+          "geometry": {
+            "kind": "rock",
+            "detail": "refined"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "pond",
+          "label": "Shimmering Pond",
+          "position": [
+            -3,
+            0.03,
+            1
+          ],
+          "scale": [
+            2.8,
+            0.3,
+            2
+          ],
+          "color": "#53c9d0",
+          "geometry": {
+            "kind": "pond",
+            "detail": "refined"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "tree-a",
+          "label": "Giant Pink Mushroom",
+          "position": [
+            -5,
+            0,
+            3
+          ],
+          "scale": [
+            7,
+            9,
+            7
+          ],
+          "color": "#f06ab8",
+          "geometry": {
+            "kind": "mushroom",
+            "detail": "refined",
+            "tint": "#f06ab8"
+          },
+          "assetPolicy": "catalog-allowed",
+          "stage": "ready"
+        },
+        {
+          "id": "tree-b",
+          "label": "Friendly Tree",
+          "position": [
+            4,
+            0,
+            -3
+          ],
+          "scale": [
+            1.6,
+            1.6,
+            1.6
+          ],
+          "color": "#6ead60",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.tree-default",
+            "detail": "refined"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "tree-c",
+          "label": "Friendly Pine",
+          "position": [
+            5,
+            0,
+            3
+          ],
+          "scale": [
+            1.5,
+            1.5,
+            1.5
+          ],
+          "color": "#6ead60",
+          "geometry": {
+            "kind": "asset",
+            "assetId": "kenney.nature.tree-pine-tall-a",
+            "detail": "refined"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-1",
+          "label": "Glowing Crystal",
+          "position": [
+            -1,
+            0.6,
+            4
+          ],
+          "scale": [
+            0.55,
+            0.8,
+            0.55
+          ],
+          "color": "#56eaff",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-2",
+          "label": "Glowing Crystal",
+          "position": [
+            2,
+            0.6,
+            2
+          ],
+          "scale": [
+            0.55,
+            0.8,
+            0.55
+          ],
+          "color": "#ff7afa",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-3",
+          "label": "Glowing Crystal",
+          "position": [
+            -2,
+            0.6,
+            -1
+          ],
+          "scale": [
+            0.55,
+            0.8,
+            0.55
+          ],
+          "color": "#ffe65a",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-4",
+          "label": "Glowing Crystal",
+          "position": [
+            2,
+            0.6,
+            -4
+          ],
+          "scale": [
+            0.55,
+            0.8,
+            0.55
+          ],
+          "color": "#76ff9c",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "crystal-5",
+          "label": "Glowing Crystal",
+          "position": [
+            -1,
+            0.6,
+            -7
+          ],
+          "scale": [
+            0.55,
+            0.8,
+            0.55
+          ],
+          "color": "#ffae58",
+          "geometry": {
+            "kind": "crystal",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "collect"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "bounce-1",
+          "label": "Moving Bounce Platform",
+          "position": [
+            0,
+            -0.35,
+            2
+          ],
+          "scale": [
+            2,
+            0.7,
+            1.7
+          ],
+          "color": "#7edb73",
+          "geometry": {
+            "kind": "platform",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "bounce"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "bounce-2",
+          "label": "Moving Bounce Platform",
+          "position": [
+            0,
+            -0.35,
+            -2
+          ],
+          "scale": [
+            2,
+            0.7,
+            1.7
+          ],
+          "color": "#7edb73",
+          "geometry": {
+            "kind": "platform",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "bounce"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "bounce-3",
+          "label": "Moving Bounce Platform",
+          "position": [
+            0,
+            -0.35,
+            -6
+          ],
+          "scale": [
+            2,
+            0.7,
+            1.7
+          ],
+          "color": "#7edb73",
+          "geometry": {
+            "kind": "platform",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "bounce"
+          },
+          "stage": "ready"
+        },
+        {
+          "id": "portal",
+          "label": "Crystal Portal",
+          "position": [
+            0,
+            0,
+            -10
+          ],
+          "scale": [
+            2,
+            2.4,
+            0.5
+          ],
+          "color": "#ae79ff",
+          "geometry": {
+            "kind": "arch",
+            "detail": "refined"
+          },
+          "behavior": {
+            "type": "portal"
+          },
+          "stage": "ready"
+        }
+      ],
+      "environment": {
+        "sky": "#dceee9",
+        "ground": "#91b977",
+        "water": "#59bdbb"
+      },
+      "game": {
+        "spawn": [
+          0,
+          0.42,
+          5
+        ],
+        "variables": [
+          {
+            "name": "crystals",
+            "initial": 0
+          }
+        ],
+        "rules": [
+          {
+            "id": "move-one",
+            "trigger": {
+              "type": "start"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "move_path",
+                "entityId": "bounce-1",
+                "points": [
+                  [
+                    0,
+                    -0.35,
+                    2
+                  ],
+                  [
+                    1.5,
+                    -0.35,
+                    1
+                  ],
+                  [
+                    0,
+                    -0.35,
+                    2
+                  ]
+                ],
+                "duration": 5,
+                "loop": true
+              }
+            ]
+          },
+          {
+            "id": "move-two",
+            "trigger": {
+              "type": "start"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "move_path",
+                "entityId": "bounce-2",
+                "points": [
+                  [
+                    0,
+                    -0.35,
+                    -2
+                  ],
+                  [
+                    -1.5,
+                    -0.35,
+                    -3
+                  ],
+                  [
+                    0,
+                    -0.35,
+                    -2
+                  ]
+                ],
+                "duration": 6,
+                "loop": true
+              }
+            ]
+          },
+          {
+            "id": "move-three",
+            "trigger": {
+              "type": "start"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "move_path",
+                "entityId": "bounce-3",
+                "points": [
+                  [
+                    0,
+                    -0.35,
+                    -6
+                  ],
+                  [
+                    1.5,
+                    -0.35,
+                    -7
+                  ],
+                  [
+                    0,
+                    -0.35,
+                    -6
+                  ]
+                ],
+                "duration": 7,
+                "loop": true
+              }
+            ]
+          },
+          {
+            "id": "collect-one",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-1"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-two",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-2"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-three",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-3"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-four",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-4"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "collect-five",
+            "trigger": {
+              "type": "collect",
+              "entityId": "crystal-5"
+            },
+            "conditions": [],
+            "actions": [
+              {
+                "type": "add_variable",
+                "name": "crystals",
+                "amount": 1
+              },
+              {
+                "type": "add_score",
+                "amount": 1
+              }
+            ]
+          },
+          {
+            "id": "finish",
+            "trigger": {
+              "type": "collision",
+              "entityId": "portal"
+            },
+            "conditions": [
+              {
+                "operand": {
+                  "type": "variable",
+                  "name": "crystals"
+                },
+                "comparison": "gte",
+                "value": 5
+              }
+            ],
+            "actions": [
+              {
+                "type": "win"
+              }
+            ]
+          }
+        ]
+      },
+      "messages": []
+    },
+    "artifact": {
+      "projectId": "pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20",
+      "revision": 1,
+      "files": [
+        {
+          "file": "assets/catalog/used-assets.json",
+          "kind": "catalog-provenance",
+          "bytes": 4565,
+          "sha256": "c8675348f308c920213166cbbe695cf0e1ef0749a2cd68f9da1b270ec0fd30a2"
+        },
+        {
+          "file": "models/kenney/nature-kit/tree_default.glb",
+          "kind": "catalog-glb",
+          "bytes": 9428,
+          "sha256": "562d29638c902de3c7bee465d3a53bb77117efbc392ae04ed894faf6b5dc691d"
+        },
+        {
+          "file": "assets/catalog/licenses/kenney-nature-kit-License.txt",
+          "kind": "catalog-license",
+          "bytes": 611,
+          "sha256": "cb96b75e3560ac78d7a53ce6f083f4cdb5c53faea6141b62d63458dcfe1e4b9d"
+        },
+        {
+          "file": "models/kenney/nature-kit/tree_pineTallA.glb",
+          "kind": "catalog-glb",
+          "bytes": 7200,
+          "sha256": "e0a56eb196d8a64ba86c7304d607136e17e6f9ad748dffcf86bd53b18b91b196"
+        }
+      ]
+    }
+  },
+  "finishedAt": "2026-09-27T16:15:17.252Z"
+}

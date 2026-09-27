@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep27 one live `orbsie.com` publication of the pinned OpenRouter GPT-6 Luna
+revision-42 export passed from a fresh test account. The harness cloned the
+source to Orb `pub-free-75a021f2-969d-4a61-8e6a-dbc4a51eeb20`, saved and
+published revision 1, verified its signed-out page/browser/snapshot plus exact
+referenced catalog asset and license bytes, then changed only `crystal-1`'s
+material and saved/published revision 2 to the same Vercel project
+`prj_BC1Us91OLtO3hSxwxeeLIfFMKG1W`. The first release remained served while
+revision 2 built; final deployment
+`https://orb-6d7c4d2b7a0130aecdf4-en8sbxfen-grappeggias-projects.vercel.app`
+was READY and the stable `/o/{id}` sharing page linked to it. A separate
+signed-out published-player traversal passed on desktop keyboard and 390×844
+emulated mobile touch: portal contact before collecting did not win, score
+reached 5, portal win appeared, and restart reset score to 0. The browser made
+zero inference, external, or mutating requests and recorded no page errors.
+This proves publication and gameplay for the saved artifact, not a fresh
+provider run through publication or physical-device play. Evidence:
+`docs/evidence/publication-flagship-openrouter-gpt6-20260927/`.
+
 Sep 27 the exported-artifact publication harness now accepts a missing
 generated-model manifest only when the project references no generated models;
 referenced generated models still require valid manifest provenance. The
@@ -9,8 +27,8 @@ passed for the pinned OpenRouter GPT-6 Luna ZIP (SHA-256
 `7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a`, revision
 42, 14 entities): no generated uploads, two planned cloud saves, and the
 `crystal-1` material change from `#56eaff` to `#ff8f6b`. Focused publication
-tests (33) and typecheck pass; no live publication or model calls were made.
-Signed-out publication and replacement behavior remain live-unverified.
+tests (34) and typecheck pass; no model calls were made.
+That prepare-only checkpoint preceded the live publication pass above.
 
 Sep27 Android flagship replay rerun supersedes the partial replay note below.
 The exact pinned OpenRouter GPT-6 Luna `world.zip` (SHA-256
