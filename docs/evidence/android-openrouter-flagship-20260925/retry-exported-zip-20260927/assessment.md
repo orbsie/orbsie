@@ -1,0 +1,7 @@
+# Android OpenRouter flagship exact ZIP: partial run
+
+The single rerun served the reviewed ZIP unchanged (SHA-256 `7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a`) and confirmed every served player runtime file matched the ZIP. On Android 15 Chrome 124, the page became ready, Canvas2D fallback worked, and the viewport had no overflow. The gameplay driver observed bounce contact on all three moving platforms, collected all five crystals, and recorded a portal win at score 5.
+
+The driver then tapped **Play again**. `failure.png` shows the win overlay gone and the score reset to 0. The run stopped because the wrapper read the frame-published gameplay snapshot immediately after the DOM reset and failed to confirm a new observation; the report therefore leaves `touchRestart` unconfirmed. Its `collectible-objective-incomplete` code is misleading: the saved pre-restart driver state has all five `scoreIds`, `won: true`, score 5, and portal contact, while the error message identifies the restart observation check.
+
+The wrapper now waits up to five seconds for an observation newer than the win frame before accepting the touch restart, and classifies that failure separately. This code change was not rerun, so no complete Android gameplay pass is claimed. The run made zero provider calls or external requests. This is emulator evidence with Canvas2D forced; it does not test a physical Android device or WebGL.

@@ -3311,6 +3311,17 @@ Emulator removed/stopped; ADB physical devices absent on lastcheck. Terms consen
 for specific USJuly30,2026 Google terms granted, noaccount/reportingoff. Shared
 3040/3096 servers left untouched. Synthetic Postgres container stopped/removed.
 
+Sep27 exact OpenRouter flagship ZIP Android replay (SHA256
+7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a) served the
+archived runtime unchanged on API35/Chrome124. Readiness, Canvas2D fallback,
+viewport, three moving-platform bounce contacts, five crystal collections, and
+score5 portal win passed. Play again visibly returned to score0, but the single
+run failed before fresh post-restart frame state was confirmed; report code
+mislabels this as an incomplete collectible objective. Wrapper now waits for a
+new frame; this fix was not rerun, so acceptance remains partial. Zero provider
+or external requests; emulator evidence only, with WebGL untested. See
+`docs/evidence/android-openrouter-flagship-20260925/retry-exported-zip-20260927/`.
+
 OpenRouter .env.openrouter.local0600; Gateway private
 /home/marcos/.cache/orbsie/provider-tests/gateway.env0600. No secret in reports.
 Root local servers10522 terminal0 and98456 terminal130 intentionally stopped.

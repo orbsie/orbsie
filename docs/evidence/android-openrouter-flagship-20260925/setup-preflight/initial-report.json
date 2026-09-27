@@ -1,0 +1,63 @@
+{
+  "status": "failed",
+  "startedAt": "2026-09-25T22:30:53.267Z",
+  "sourceCommit": "85e04d8173d703c42f11579b47db4bd27c253324",
+  "source": {
+    "fixtureZipSha256": "7630cb95236386713f84c5fc40559273e37fec18b204ea242c6c8ba8f595978a",
+    "projectSha256": "b5aabe90e5667f39082f681d07d7ad452ae649aa550ee0dece17bebf1d79247a",
+    "projectId": "f7db190b-34fb-497e-bdee-92adeec85584",
+    "revision": 42,
+    "entityCount": 14,
+    "generatedModelCount": 0,
+    "catalogAssetIds": [
+      "kenney.nature.tree-default",
+      "kenney.nature.tree-pine-tall-a"
+    ],
+    "story": {
+      "platformIds": [
+        "bounce-1",
+        "bounce-2",
+        "bounce-3"
+      ],
+      "collectibleIds": [
+        "crystal-1",
+        "crystal-2",
+        "crystal-3",
+        "crystal-4",
+        "crystal-5"
+      ],
+      "portalId": "portal"
+    },
+    "sourceBytesUnchanged": true
+  },
+  "currentPlayerFiles": {},
+  "device": {},
+  "rendererMode": "canvas2d",
+  "renderer": "pending runtime detection",
+  "rendererDetails": {},
+  "webglAcceptance": "not evaluated",
+  "providerCalls": 0,
+  "generationRequests": [],
+  "externalRequests": [],
+  "unexpectedLocalRequests": [],
+  "failedResponses": [],
+  "pageErrors": [],
+  "expectedWebglInitializationErrors": 0,
+  "runtimeMode": "exact-exported-zip",
+  "flagshipGameplay": {
+    "status": "failed",
+    "failureCode": "driver-check-failed"
+  },
+  "touchRestart": {
+    "status": "not-started"
+  },
+  "checks": {},
+  "failurePhase": "preflight",
+  "errorCode": "flagship-source-preflight-failed",
+  "cleanup": {
+    "adbReverseRemoved": true,
+    "localServerClosed": true,
+    "temporaryArtifactRemoved": true
+  },
+  "finishedAt": "2026-09-25T22:30:53.388Z"
+}
