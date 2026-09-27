@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 27 corrected mobile-emulated OpenRouter journey passed on the loopback
+production build. The fresh `openai/gpt-6-luna` create and selected-object edit
+used exactly two HTTP 200 model calls with low reasoning, default tier, and a
+4,096 output-token cap per call; there was no retry or fallback. Local recovery,
+export, standalone playback, editor reachability, and a real Chromium touch
+gesture moving the player 0.64 world units passed at 390×844/DPR 2 with no
+horizontal overflow. The initial preflight stopped at HTTP 403 before any
+model call because `BETTER_AUTH_URL` did not match the loopback origin; matching
+the origin resolved it. The live screenshot lost the touch controls after a
+redundant CDP touch-emulation override was detached. A separate zero-model-call
+offline replay of the retained export after removing that override confirmed
+all five controls stayed visible and in bounds through touch release and
+screenshot capture; Right moved the player 1.3116 units, and the screenshot was
+visually reviewed. The live and offline results do not establish physical
+Android performance, a scored/winning game, cloud publication, or a Gateway or
+ChatGPT provider run. Evidence:
+`docs/evidence/provider-e2e/openrouter-mobile-create-edit-corrected-20260927/`
+and
+`docs/evidence/provider-e2e/openrouter-mobile-standalone-offline-recheck-20260927/`.
+Harness and focused regression commits: `63ed7e9`, `b272e1a`; live evidence:
+`be45390`. Focused tests passed 8/8 after the harness correction.
+
 Sep 27 signed-out Android Chrome acceptance for the published OpenRouter
 revision-9 island is now passed for the applicable touch gameplay interaction
 (`29fbe7a`). The earlier one-finger camera-drag assertion was invalid for a
