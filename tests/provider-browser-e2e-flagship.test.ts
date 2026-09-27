@@ -32,6 +32,10 @@ import {
   verifyFreshPublicationArtifacts,
   verifyStandalone,
 } from "../scripts/provider-browser-e2e.mjs";
+import {
+  summarizePublication,
+  validateRetainedLiveReport,
+} from "../scripts/replay-retained-publication.mjs";
 import { detectDescendingPlatformSurfaceCrossing } from "../scripts/lib/fresh-flagship-gameplay.mjs";
 
 type ResumeConfig = ReturnType<typeof readConfiguration> & {
@@ -289,6 +293,108 @@ function initialProject() {
         },
       ),
     ],
+  };
+}
+
+function validRetainedLiveReport(project: any) {
+  const ids = project.entities
+    .filter((item: any) => item.behavior?.type === "collect")
+    .map((item: any) => item.id)
+    .sort();
+  const platformIds = project.entities
+    .filter((item: any) => item.geometry?.kind === "platform")
+    .map((item: any) => item.id)
+    .sort();
+  const projectId = project.id;
+  const gameplay = (revision: number, expectedIds = ids) => ({
+    status: "passed",
+    projectId,
+    revision,
+    expectedCollectibleIds: expectedIds,
+    collectedIds: [...expectedIds].reverse(),
+    won: true,
+    score: expectedIds.length,
+    win: {
+      projectId,
+      revision,
+      status: "won",
+      score: expectedIds.length,
+      portalId: "portal",
+    },
+    reset: {
+      projectId,
+      revision,
+      status: "playing",
+      score: 0,
+      lifecycleAdvanced: true,
+    },
+    contacts: ["portal"],
+    platformEvidence: platformIds.map((id: string) => ({
+      id,
+      behavior: "bounce",
+      groundedFrames: 1,
+      bounceFrames: 1,
+      maximumDisplacement: 0.5,
+    })),
+    movement: {
+      distance: 0.5,
+      before: { projectId, revision, player: { position: [0, 0, 0] } },
+      after: { projectId, revision, player: { position: [0.5, 0, 0] } },
+    },
+  });
+  const goalSevenIds = [...ids, "crystal-6", "crystal-7"];
+  const phases = {
+    creation: { revision: 30, gameplay: gameplay(30) },
+    mushroom: { status: "passed", revision: 35, targetId: "tree-a" },
+    goal7: { status: "passed", revision: 41, gameplay: gameplay(41, goalSevenIds) },
+    undo: { status: "passed", revision: 42, gameplay: gameplay(42) },
+  };
+  return {
+    provider: "openrouter",
+    model: "openai/gpt-6-luna",
+    reasoning: "low",
+    serviceTier: "default",
+    outputCapTokens: 4096,
+    generationBudget: 3,
+    traffic: {
+      generationRequests: 3,
+      generationStatuses: [200, 200, 200],
+      interceptedGeneration: false,
+    },
+    fallbackUsed: false,
+    creation: {
+      status: "passed",
+      gameplayDuringGeneration: {
+        status: "passed",
+        generationRequestsAtMovement: 1,
+        generationResponsesAtMovement: 1,
+        generationStreamOpenAtMovement: true,
+        generationStreamOpenAfterMovement: true,
+        movementDistance: 0.5,
+        projectId: project.id,
+        revisionBefore: 2,
+        revisionAfter: 3,
+        before: {
+          projectId: project.id,
+          revision: 2,
+          player: { position: [0, 0, 0] },
+        },
+        after: {
+          projectId: project.id,
+          revision: 3,
+          player: { position: [0.5, 0, 0] },
+        },
+      },
+    },
+    edit: { status: "passed", type: "flagship-story", selectedIdPreserved: true },
+    flagshipStory: {
+      status: "passed",
+      scope: "fresh-gameplay-and-persistence",
+      generationBudget: 3,
+      phases,
+    },
+    export: "blocked",
+    error: "Exported project changed the published world content.",
   };
 }
 
@@ -1534,7 +1640,8 @@ describe("flagship provider story contract", () => {
     }
   });
 
-  it("aborts any offline API generation before route continuation", async () => {
+  it("aborts both generation routes and records offline replay attempts", async () => {
+    const blockedGenerationRequests: Array<{ method: string; path: string }> = [];
     const handlers: Array<(route: any) => Promise<void>> = [];
     await installTrafficGuard(
       {
@@ -1546,31 +1653,87 @@ describe("flagship provider story contract", () => {
         },
       } as any,
       {
-        provider: "gateway",
+        provider: "openrouter",
         baseOrigin: "http://127.0.0.1:3018",
-        flagshipResume: true,
-        flagshipResumeOffline: true,
         generationBudget: 0,
       } as any,
       new Set(["http://127.0.0.1:3018"]),
-      { generationBudgetViolations: [] },
+      { blockGenerationRequests: true, blockedGenerationRequests },
     );
-    let continued = false;
-    let aborted: string | undefined;
-    await handlers[0]({
-      request: () => ({
-        url: () => "http://127.0.0.1:3018/api/generate",
-        method: () => "POST",
-      }),
-      abort: async (reason: string) => {
-        aborted = reason;
-      },
-      continue: async () => {
-        continued = true;
-      },
+    for (const [path, method] of [
+      ["/api/generate", "POST"],
+      ["/api/chatgpt/generate", "POST"],
+    ]) {
+      let continued = false;
+      let aborted: string | undefined;
+      await handlers[0]({
+        request: () => ({
+          url: () => `http://127.0.0.1:3018${path}`,
+          method: () => method,
+        }),
+        abort: async (reason: string) => {
+          aborted = reason;
+        },
+        continue: async () => {
+          continued = true;
+        },
+      });
+      expect(aborted).toBe("blockedbyclient");
+      expect(continued).toBe(false);
+    }
+    expect(blockedGenerationRequests).toEqual([
+      { method: "POST", path: "/api/generate" },
+      { method: "POST", path: "/api/chatgpt/generate" },
+    ]);
+  });
+
+  it("binds offline publication replay to the retained OpenRouter phases and ZIP revision", () => {
+    const project = initialProject();
+    project.revision = 42;
+    const report = validRetainedLiveReport(project);
+    const hash = "a".repeat(64);
+    expect(validateRetainedLiveReport(report, project, hash, hash)).toMatchObject({
+      provider: "openrouter",
+      model: "openai/gpt-6-luna",
+      calls: 3,
+      projectRevision: 42,
+      phases: { creation: 30, mushroom: 35, goal7: 41, undo: 42 },
     });
-    expect(aborted).toBe("blockedbyclient");
-    expect(continued).toBe(false);
+
+    expect(() =>
+      validateRetainedLiveReport(report, project, "b".repeat(64), hash),
+    ).toThrow(/ZIP hash mismatch/);
+    const staleUndo = structuredClone(report);
+    staleUndo.flagshipStory.phases.undo.gameplay.revision = 41;
+    expect(() =>
+      validateRetainedLiveReport(staleUndo, project, hash, hash),
+    ).toThrow(/gameplay revision mismatch/);
+    const missingGameplay = structuredClone(report);
+    missingGameplay.flagshipStory.phases.goal7.gameplay.status = "not-run";
+    expect(() =>
+      validateRetainedLiveReport(missingGameplay, project, hash, hash),
+    ).toThrow(/Source goal7 gameplay did not pass/);
+  });
+
+  it("keeps unpublished signed-out traffic marked not-run after a cloud conflict", () => {
+    const summary = summarizePublication(
+      {
+        cloudSave: { mode: "real", status: "failed", httpStatus: 409 },
+        publicationDeployment: { mode: "real", status: "not-started" },
+        publication: { mode: "blocked", status: "cloud-save-conflict" },
+        signedInGenerationRequests: [],
+        signedInBlockedGenerationRequests: [],
+      },
+      { projectRevision: 42 },
+    );
+    expect(summary.status).toBe("incomplete");
+    expect(summary.signedInTraffic).toEqual({
+      generationAttempts: 0,
+      blockedGenerationAttempts: 0,
+    });
+    expect(summary.signedOutPlayback.trafficStatus).toBe("not-run");
+    expect(summary.signedOutPlayback.generationAttempts).toBeNull();
+    expect(summary.signedOutPlayback.blockedExternalRequests).toBeNull();
   });
 
   it("keeps the ordinary story budget and rejects resume for another provider", () => {

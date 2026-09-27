@@ -14,8 +14,14 @@ the JSON wire shape (`b86b847`, 54 focused tests and typecheck passed). A
 zero-model-call replay of the retained revision-42 ZIP then passed standalone
 gameplay, five collections, win/reset, no page errors, and no external
 requests (`c0e3924`). This replay is separate from the live browser session;
-cloud save and signed-out publication are still pending. The committed
-sanitized summaries are in
+the later cloud-publication continuation validated the retained ZIP and
+current player bytes but stopped at cloud save HTTP 409: a read-only account
+check found the same project at revision 35 with different snapshot content,
+while the retained ZIP is revision 42.
+Deployment and signed-out published gameplay were not reached, and the replay
+was not retried. Its incomplete sanitized report is
+`docs/evidence/provider-e2e/openrouter-flagship-offline-publication-replay-20260927/report.json`.
+The earlier committed sanitized summaries are in
 `docs/evidence/provider-e2e/openrouter-flagship-continuous-publication-20260927-retry-after-preflight/`;
 raw artifacts and account state are mode-0600 files under a mode-0700 local
 cache, not in Git. Visual review finds the scene recognizable and playable but

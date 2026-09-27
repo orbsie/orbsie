@@ -1872,7 +1872,7 @@ async function fetchAnonymousPublicationArtifact(
   return readBoundedPublicationResponse(response, path);
 }
 
-function assertPublicationArtifactRecordsMatch(
+export function assertPublicationArtifactRecordsMatch(
   actual,
   expected,
   reason = "fresh-export-target-mismatch",
@@ -3035,6 +3035,21 @@ export async function installTrafficGuard(
 ) {
   await context.route("**/*", async (route) => {
     const requestURL = new URL(route.request().url());
+    if (
+      info.blockGenerationRequests === true &&
+      requestURL.origin === config.baseOrigin &&
+      ["/api/generate", "/api/chatgpt/generate"].includes(
+        requestURL.pathname,
+      )
+    ) {
+      info.blockedGenerationRequests ||= [];
+      info.blockedGenerationRequests.push({
+        method: route.request().method(),
+        path: requestURL.pathname,
+      });
+      await route.abort("blockedbyclient");
+      return;
+    }
     const isApiGeneration =
       requestURL.origin === config.baseOrigin &&
       requestURL.pathname === "/api/generate" &&
@@ -6982,7 +6997,7 @@ async function putIndexedDBValue(page, key, value) {
   );
 }
 
-async function seedFlagshipProject(page, project, models, history = []) {
+export async function seedFlagshipProject(page, project, models, history = []) {
   await putIndexedDBValue(page, "orbsie-draft", {
     project,
     history,
@@ -7022,7 +7037,7 @@ async function seedFlagshipOfflineResume(page, artifacts) {
     });
 }
 
-async function openFlagshipResumeProject(page, project) {
+export async function openFlagshipResumeProject(page, project) {
   const continueButton = page.getByRole("button", {
     name: "Continue your saved world",
     exact: true,
@@ -7612,21 +7627,7 @@ async function runFlagshipResumeOffline(
   return report;
 }
 
-export async function extractZip(
-  download,
-  config,
-  expectedRevision,
-  evidenceDir,
-  artifactName = "world.zip",
-) {
-  assert(
-    /^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(artifactName),
-    "Export evidence filename must be a simple ZIP filename.",
-  );
-  const tempDir = await mkdtemp(join(tmpdir(), "orbsie-provider-e2e-"));
-  const zipPath = join(tempDir, "world.zip");
-  await download.saveAs(zipPath);
-  const bytes = await readFile(zipPath);
+export function parseExportedZipBytes(bytes, config = {}, expectedRevision) {
   const files = unzipSync(new Uint8Array(bytes));
   const names = Object.keys(files);
   const required = [
@@ -7664,22 +7665,41 @@ export async function extractZip(
     "ZIP project contains provider/session data.",
   );
   assert(
-    !(config.key ?? config.companionToken) ||
-      !joined.includes(config.key ?? config.companionToken),
+    !(config?.key ?? config?.companionToken) ||
+      !joined.includes(config?.key ?? config?.companionToken),
     "Provider key appeared in the exported ZIP.",
   );
   assert(
-    !config.builderToken || !joined.includes(config.builderToken),
+    !config?.builderToken || !joined.includes(config.builderToken),
     "Builder capability appeared in exported ZIP.",
   );
-  await writeFile(join(evidenceDir, artifactName), bytes, { mode: 0o600 });
   const publicationArtifacts = Object.fromEntries(
     PUBLICATION_ARTIFACT_PATHS.map((path) => [
       path,
       { bytes: files[path].byteLength, sha256: sha256(files[path]) },
     ]),
   );
-  return { tempDir, names, project, publicationArtifacts };
+  return { names, project, publicationArtifacts };
+}
+
+export async function extractZip(
+  download,
+  config,
+  expectedRevision,
+  evidenceDir,
+  artifactName = "world.zip",
+) {
+  assert(
+    /^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(artifactName),
+    "Export evidence filename must be a simple ZIP filename.",
+  );
+  const tempDir = await mkdtemp(join(tmpdir(), "orbsie-provider-e2e-"));
+  const zipPath = join(tempDir, "world.zip");
+  await download.saveAs(zipPath);
+  const bytes = await readFile(zipPath);
+  const parsed = parseExportedZipBytes(bytes, config, expectedRevision);
+  await writeFile(join(evidenceDir, artifactName), bytes, { mode: 0o600 });
+  return { tempDir, ...parsed };
 }
 
 async function serveStaticDirectory(directory) {
@@ -8961,7 +8981,7 @@ async function verifyCloudRecovery(
   report.cloudRecovery.runId = latestRun.id;
 }
 
-async function runPublication(
+export async function runPublication(
   page,
   browser,
   config,
@@ -8974,6 +8994,8 @@ async function runPublication(
   targetArtifacts,
 ) {
   if (!config.publication) return;
+  report.cloudSave = { mode: "real", status: "not-started" };
+  report.publicationDeployment = { mode: "real", status: "not-started" };
   if (!expectedProject || !expectedArtifacts || !targetArtifacts) {
     report.publication = {
       mode: "blocked",
@@ -8999,6 +9021,11 @@ async function runPublication(
     exact: true,
   });
   if (!(await save.isVisible().catch(() => false))) {
+    report.cloudSave = {
+      mode: "real",
+      status: "blocked",
+      reason: "cloud-account-unavailable",
+    };
     report.publication = {
       mode: "blocked",
       status: "cloud-account-unavailable",
@@ -9031,6 +9058,7 @@ async function runPublication(
     },
     { timeout: 30000 },
   );
+  report.cloudSave = { mode: "real", status: "saving" };
   await save.click();
   const saveRequest = await saveRequestPromise;
   try {
@@ -9041,6 +9069,11 @@ async function runPublication(
       "Cloud save project",
     );
   } catch {
+    report.cloudSave = {
+      mode: "real",
+      status: "blocked",
+      reason: "cloud-save-project-mismatch",
+    };
     report.publication = {
       mode: "blocked",
       status: "cloud-save-project-mismatch",
@@ -9058,6 +9091,20 @@ async function runPublication(
   } catch {
     // The status below remains the source of truth; no body is recorded.
   }
+  const cloudSaveRevisionMatched = saveBody.revision === expectedRevision;
+  report.cloudSave = {
+    mode: "real",
+    status:
+      saveResponse.ok() && cloudSaveRevisionMatched
+        ? "READY"
+        : saveResponse.status() === 401 || saveResponse.status() === 403
+          ? "blocked"
+          : "failed",
+    httpStatus: saveResponse.status(),
+    revision: Number.isInteger(saveBody.revision) ? saveBody.revision : null,
+    revisionMatched: cloudSaveRevisionMatched,
+    ...(saveResponse.status() === 409 ? { reason: "cloud-save-conflict" } : {}),
+  };
   if (saveResponse.status() === 403 || saveResponse.status() === 401) {
     report.publication = {
       mode: "blocked",
@@ -9072,7 +9119,10 @@ async function runPublication(
   if (!saveResponse.ok() || saveBody.revision !== expectedRevision) {
     report.publication = {
       mode: "blocked",
-      status: "cloud-save-revision-mismatch",
+      status:
+        saveResponse.status() === 409
+          ? "cloud-save-conflict"
+          : "cloud-save-revision-mismatch",
     };
     await page
       .getByRole("button", { name: "Close dialog", exact: true })
@@ -9107,10 +9157,20 @@ async function runPublication(
     // No raw provider/cloud response is written to evidence.
   }
   if (publishResponse.status() === 403) {
+    report.publicationDeployment = {
+      mode: "real",
+      status: "blocked",
+      httpStatus: publishResponse.status(),
+    };
     report.publication = { mode: "blocked", status: "publication-http-403" };
     return;
   }
   if (!publishResponse.ok()) {
+    report.publicationDeployment = {
+      mode: "real",
+      status: "failed",
+      httpStatus: publishResponse.status(),
+    };
     report.publication = {
       mode: "blocked",
       status: `publication-http-${publishResponse.status()}`,
@@ -9118,6 +9178,11 @@ async function runPublication(
     return;
   }
   if (typeof publishBody.deploymentUrl !== "string") {
+    report.publicationDeployment = {
+      mode: "real",
+      status: "failed",
+      httpStatus: publishResponse.status(),
+    };
     report.publication = {
       mode: "blocked",
       status: "publication-deployment-unavailable",
@@ -9127,12 +9192,23 @@ async function runPublication(
   try {
     approvedOrigins.add(new URL(publishBody.deploymentUrl).origin);
   } catch {
+    report.publicationDeployment = {
+      mode: "real",
+      status: "blocked",
+      httpStatus: publishResponse.status(),
+    };
     report.publication = {
       mode: "blocked",
       status: "published-artifact-origin-invalid",
     };
     return;
   }
+  report.publicationDeployment = {
+    mode: "real",
+    status: "building",
+    httpStatus: publishResponse.status(),
+    deploymentUrl: publishBody.deploymentUrl,
+  };
   const readyLink = page.getByRole("link", {
     name: "Open published Orb",
     exact: true,
@@ -9140,12 +9216,14 @@ async function runPublication(
   try {
     await expect(readyLink).toBeVisible({ timeout: 180000 });
   } catch {
+    report.publicationDeployment.status = "failed";
     report.publication = {
       mode: "blocked",
       status: "publication-did-not-reach-ready",
     };
     return;
   }
+  report.publicationDeployment.status = "READY";
   const href = await readyLink.getAttribute("href");
   assert(
     href && !href.includes("#"),
@@ -9165,7 +9243,9 @@ async function runPublication(
     viewport: { width: 1280, height: 800 },
   });
   const publicInfo = {
-    generationRequests: 0,
+    generationRequests: [],
+    blockedGenerationRequests: [],
+    blockGenerationRequests: true,
     blockedExternalRequests: 0,
     blockedExternalOrigins: new Set(),
     interceptedGeneration: false,
@@ -9181,8 +9261,31 @@ async function runPublication(
   let publishedRevision;
   let publishedProject;
   let publishedProjectMalformed = false;
+  const capturePublicTraffic = () => {
+    report.publicationTraffic.generationRequests = [
+      ...publicInfo.generationRequests,
+    ];
+    report.publicationTraffic.blockedGenerationRequests = [
+      ...publicInfo.blockedGenerationRequests,
+    ];
+    report.publicationTraffic.editorProviderRequests = [...publicApiRequests];
+    report.publicationTraffic.blockedExternalRequests =
+      publicInfo.blockedExternalRequests;
+    report.publicationTraffic.blockedExternalOrigins = [
+      ...publicInfo.blockedExternalOrigins,
+    ].slice(0, 8);
+  };
+  report.publicationTraffic = {
+    generationRequests: publicInfo.generationRequests,
+    blockedGenerationRequests: publicInfo.blockedGenerationRequests,
+    editorProviderRequests: publicApiRequests,
+    blockedExternalRequests: 0,
+    blockedExternalOrigins: [],
+  };
   publicPage.on("request", (request) => {
     const path = new URL(request.url()).pathname;
+    if (["/api/generate", "/api/chatgpt/generate"].includes(path))
+      publicInfo.generationRequests.push(path);
     if (path.startsWith("/api/") || path === "/generate" || path === "/health")
       publicApiRequests.push(path);
   });
@@ -9233,6 +9336,7 @@ async function runPublication(
     timeout: 60000,
   });
   if (publishedProjectMalformed) {
+    capturePublicTraffic();
     report.publication = {
       mode: "blocked",
       status: "published-project-mismatch",
@@ -9260,6 +9364,7 @@ async function runPublication(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    capturePublicTraffic();
     report.publication = {
       mode: "blocked",
       status:
@@ -9284,6 +9389,7 @@ async function runPublication(
       artifactEvidence,
       apiRequests: publicApiRequests,
     });
+    capturePublicTraffic();
     await publicContext.close();
     return;
   }
@@ -9369,6 +9475,7 @@ async function runPublication(
     blockedExternalOrigins: [...publicInfo.blockedExternalOrigins],
     gameplay,
   });
+  capturePublicTraffic();
   await publicContext.close();
 }
 
