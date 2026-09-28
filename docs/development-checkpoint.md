@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 27 the review instruction now reassesses the complete current scene on
+every pass, uses user-stated constraints rather than inferred exact material
+or detail counts, prioritizes the dominant requested form and surface over
+minor accents, and preserves intentional walkways and floating details. Its
+final verdict treats three visible instances as potentially satisfying an
+unspecified "several" while honoring explicit counts and requiring contact
+only for details meant to attach. Focused provider-instruction tests passed
+(30), along with TypeScript typecheck, Prettier and diff checks. This is
+instruction-construction evidence only; no live model call or deployment has
+validated the new guidance, and authoring review remains off in production.
+
 Sep 27 one isolated OpenRouter authoring-review test completed the full
 four-call budget on source `6256d43`: initial creation and three visual+
 structural reviews all returned HTTP 200 with exact `openai/gpt-6-luna`,
