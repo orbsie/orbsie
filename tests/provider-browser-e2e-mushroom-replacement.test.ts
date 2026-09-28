@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
@@ -165,6 +166,56 @@ describe("bounded mushroom replacement acceptance", () => {
     expect(result.structuralStatus).toBe("passed");
     expect(result.backendEligibility).toBe("passed");
     expect(result.manualVisualQuality).toBe("pending");
+  });
+
+  it("uses renderer XYZ Euler composition for rotated nonuniform custom bounds", () => {
+    const position: [number, number, number] = [0, 1.1, 0];
+    const scale: [number, number, number] = [3, 1.5, 0.6];
+    const rotation: [number, number, number] = [0.7, 0.4, 0.6];
+    const rotatedCustom = {
+      kind: "custom",
+      detail: "refined",
+      parts: [
+        {
+          shape: "box",
+          position,
+          scale,
+          rotation,
+          color: "#ed79c4",
+        },
+        {
+          shape: "sphere",
+          position,
+          scale: [0.1, 0.1, 0.1],
+          rotation: [0, 0, 0],
+          color: "#fff1df",
+        },
+      ],
+    };
+    const { before, after } = projectPair(rotatedCustom);
+    after.entities[0].color = "#55b7a9";
+    const result = assertMushroomReplacement(before, after, "tree-1");
+
+    const partTransform = new THREE.Matrix4().compose(
+      new THREE.Vector3(...position),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)),
+      new THREE.Vector3(...scale),
+    );
+    const localBounds = new THREE.Box3(
+      new THREE.Vector3(-0.5, -0.5, -0.5),
+      new THREE.Vector3(0.5, 0.5, 0.5),
+    ).applyMatrix4(partTransform);
+    const entityScale = after.entities[0].scale;
+    const expectedSize = [
+      localBounds.max.x - localBounds.min.x,
+      localBounds.max.y - localBounds.min.y,
+      localBounds.max.z - localBounds.min.z,
+    ].map((size, axis) => size * Math.abs(entityScale[axis]));
+    const actualSize = result.dimensions.after;
+    if (!actualSize) throw new Error("Custom part bounds were not observed.");
+
+    for (let axis = 0; axis < 3; axis++)
+      expect(actualSize[axis]).toBeCloseTo(expectedSize[axis], 10);
   });
 
   it("honors nonpink global tint and requires multipart backend evidence beyond a label", () => {

@@ -17,11 +17,12 @@ so they do not contact. Visual acceptance remains unmet. The authoring prompt
 now gives the unit-cylinder/lathe contact formulas and retains intentional
 floating forms. Mushroom-replacement harness checks now honor global tint over
 part colors and admit ready labeled custom multipart geometry with computed
-part bounds; they report structural/backend status separately from pending
-manual visual quality. Focused generation and harness tests plus typecheck
-pass. The shared authoring prompt grew by 57 ASCII bytes in every capability
-and output-format branch. No model call or deployment occurred. Sanitized
-report:
+part bounds using the renderer's exact Three.js matrix/Euler transform; a
+multi-axis rotated nonuniform-scale fixture checks each resulting dimension.
+They report structural/backend status separately from pending manual visual
+quality. Focused generation and harness tests plus typecheck pass. The shared
+authoring prompt grew by 57 ASCII bytes in every capability and output-format
+branch. No model call or deployment occurred. Sanitized report:
 `docs/evidence/provider-e2e/mushroom-contact-post-diagnostics-20260927/report.json`.
 
 Sep 27 precommit generation activity now uses preview wording for new objects,

@@ -70,6 +70,7 @@ import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { chromium, expect } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
+import * as THREE from "three";
 
 const PROVIDERS = new Set([
   "openrouter",
@@ -4951,31 +4952,19 @@ function customPartLocalBounds(part) {
   const rotation = finiteTriplet(part.rotation, [0, 0, 0]);
   if (!position || !scale || !rotation) return null;
 
-  const [rx, ry, rz] = rotation;
-  const cx = Math.cos(rx);
-  const sx = Math.sin(rx);
-  const cy = Math.cos(ry);
-  const sy = Math.sin(ry);
-  const cz = Math.cos(rz);
-  const sz = Math.sin(rz);
+  const transform = new THREE.Matrix4().compose(
+    new THREE.Vector3(...position),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)),
+    new THREE.Vector3(...scale),
+  );
   const resultMin = [Infinity, Infinity, Infinity];
   const resultMax = [-Infinity, -Infinity, -Infinity];
   for (const x of [min[0], max[0]]) {
     for (const y of [min[1], max[1]]) {
       for (const z of [min[2], max[2]]) {
-        const scaledX = x * scale[0];
-        const scaledY = y * scale[1];
-        const scaledZ = z * scale[2];
-        const rotatedX = scaledX;
-        const rotatedY = scaledY * cx - scaledZ * sx;
-        const rotatedZ = scaledY * sx + scaledZ * cx;
-        const yawX = rotatedX * cy + rotatedZ * sy;
-        const yawZ = -rotatedX * sy + rotatedZ * cy;
-        const world = [
-          yawX * cz - rotatedY * sz + position[0],
-          yawX * sz + rotatedY * cz + position[1],
-          yawZ + position[2],
-        ];
+        const world = new THREE.Vector3(x, y, z)
+          .applyMatrix4(transform)
+          .toArray();
         for (let axis = 0; axis < 3; axis++) {
           resultMin[axis] = Math.min(resultMin[axis], world[axis]);
           resultMax[axis] = Math.max(resultMax[axis], world[axis]);
