@@ -249,17 +249,53 @@ describe("store authoring activity", () => {
     ).toBe(false);
   });
 
-  it("rolls clean EOF without a commit back to the saved scene", async () => {
-    mocks.browserBuild.mockResolvedValue(browserMetadata);
+  it("labels an uncommitted edit as a preview and rolls it back on clean EOF", async () => {
     const before = structuredClone(useOrb.getState().project);
+    const previewCommand = commandSchema.parse({
+      type: "set_label",
+      id: before.entities[0]!.id,
+      label: "Giant pink mushroom",
+    });
+    const finishStream = deferred<void>();
+    const encoder = new TextEncoder();
     vi.stubGlobal(
       "fetch",
-      vi.fn<typeof fetch>(async () =>
-        response(commandsForLantern().slice(0, 2)),
+      vi.fn<typeof fetch>(
+        async () =>
+          new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.enqueue(
+                  encoder.encode(`${JSON.stringify(previewCommand)}\n`),
+                );
+                void finishStream.promise.then(() => controller.close());
+              },
+            }),
+            { headers: { "Content-Type": "application/x-ndjson" } },
+          ),
       ),
     );
 
-    await useOrb.getState().run("Build a lantern", connection);
+    const run = useOrb.getState().run("Edit the selected object", connection);
+    for (let i = 0; i < 25; i++) {
+      if (useOrb.getState().project.revision === before.revision + 1) break;
+      await vi.advanceTimersByTimeAsync(50);
+    }
+    expect(useOrb.getState().project.entities[0]?.label).toBe(
+      "Giant pink mushroom",
+    );
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(
+      useOrb
+        .getState()
+        .authoringActivity.some(
+          (event) =>
+            event.message === "Previewing changes to Giant pink mushroom.",
+        ),
+    ).toBe(true);
+
+    finishStream.resolve();
+    await run;
     const diagnostic = readGenerationDiagnostics().find(
       (entry) => entry.kind === "generation",
     );
@@ -272,6 +308,13 @@ describe("store authoring activity", () => {
     });
     expect(useOrb.getState().project).toEqual(before);
     expect(mocks.db.get("orbsie-draft")).toMatchObject({ project: before });
+    expect(
+      useOrb
+        .getState()
+        .authoringActivity.some((event) =>
+          /Applied a change to Giant pink mushroom/i.test(event.message),
+        ),
+    ).toBe(false);
   });
 
   it("classifies invalid streamed commands as client validation failures", async () => {

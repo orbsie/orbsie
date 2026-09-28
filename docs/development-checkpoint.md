@@ -1,5 +1,12 @@
 # Development checkpoint
 
+Sep 27 precommit generation activity now uses preview wording for new objects,
+geometry, entity edits, world rules, and atmosphere; the committed final-update
+wording is unchanged. A focused stream test holds a selected-object edit open,
+checks the preview trace, then closes without commit and verifies scene rollback.
+Authoring activity tests pass (13) and TypeScript typecheck passes. No model call
+or deployment occurred.
+
 Sep 27 zero-model review of the rejected mushroom edit found the retained
 sanitized run record contains only `INVALID_SCENE_PROTOCOL`, operation 3, zero
 schema issues, and a null finish reason; it does not preserve enough information

@@ -2341,13 +2341,13 @@ export const useOrb = create<State>((setState, getState) => ({
       if (command.type === "reserve_entity")
         publishActivity(
           "applied",
-          `${authoringEntityLabel(command.entity.label)} is taking shape.`,
+          `${authoringEntityLabel(command.entity.label)} is taking shape in the preview.`,
           result.project.revision,
         );
       else if (command.type === "set_geometry")
         publishActivity(
           "applied",
-          `Applied the shape for ${authoringEntityLabel(updatedEntity?.label)}.`,
+          `Previewing the shape for ${authoringEntityLabel(updatedEntity?.label)}.`,
           result.project.revision,
         );
       else if (command.type === "commit_revision")
@@ -2359,19 +2359,19 @@ export const useOrb = create<State>((setState, getState) => ({
       else if (updatedEntity)
         publishActivity(
           "applied",
-          `Applied a change to ${authoringEntityLabel(updatedEntity.label)}.`,
+          `Previewing changes to ${authoringEntityLabel(updatedEntity.label)}.`,
           result.project.revision,
         );
       else if (command.type === "set_game")
         publishActivity(
           "applied",
-          "Applied the world rules.",
+          "Previewing the world rules.",
           result.project.revision,
         );
       else if (command.type === "set_environment")
         publishActivity(
           "applied",
-          "Applied the world atmosphere.",
+          "Previewing the world atmosphere.",
           result.project.revision,
         );
       if (command.type === "reserve_entity")
