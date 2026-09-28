@@ -6,6 +6,7 @@ import { hashBrowserProceduralSource } from "../src/lib/browser-procedural";
 import {
   applyOperation,
   blankProject,
+  type Entity,
   type Project,
 } from "../src/lib/protocol";
 import type { ModelCapabilities } from "../src/lib/model-capabilities";
@@ -228,6 +229,85 @@ describe("executeSceneReview", () => {
       expect(instructions).toContain("A skipped observation is inconclusive");
     },
   );
+
+  it("includes a bounded custom-part contact advisory and attachment guidance", async () => {
+    const project = blankProject();
+    const mushroom: Entity = {
+      id: "mushroom",
+      label: "private label excluded from advisory",
+      position: [0, 0.2, 0],
+      scale: [2, 2, 2],
+      color: "#34765c",
+      stage: "ready",
+      geometry: {
+        kind: "custom",
+        detail: "refined",
+        parts: [
+          {
+            shape: "cylinder",
+            position: [0, 0.38, 0],
+            scale: [0.24, 0.4, 0.24],
+            color: "#fff0df",
+          },
+          {
+            shape: "lathe",
+            position: [0, 0.94, 0],
+            scale: [0.85, 0.48, 0.85],
+            color: "#f274b8",
+            profile: [
+              [0, 0],
+              [0.55, 0],
+              [0.95, 0.1],
+              [1, 0.22],
+              [0.88, 0.34],
+              [0.55, 0.47],
+              [0, 0.48],
+            ],
+          },
+          {
+            shape: "sphere",
+            position: [-0.34, 1.13, 0.47],
+            scale: [0.12, 0.06, 0.12],
+            color: "#fff4e8",
+          },
+        ],
+      },
+    };
+    project.entities = [mushroom];
+    const privatePrompt = "private prompt sentinel";
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(providerResponse(reviewFor(project)));
+
+    await executeSceneReview(
+      inputFor(project, { selected: mushroom.id, prompt: privatePrompt }),
+    );
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    const reviewData = JSON.parse(
+      String(body.messages[1].content).replace(/^REVIEW CONTENT JSON: /, ""),
+    );
+    expect(reviewData.customPartContactObservation.observations).toEqual([
+      {
+        entityId: "mushroom",
+        status: "observed",
+        parts: [
+          { index: 1, shape: "lathe" },
+          { index: 0, shape: "cylinder" },
+        ],
+        gapMeters: 0.72,
+      },
+    ]);
+    expect(
+      JSON.stringify(reviewData.customPartContactObservation),
+    ).not.toContain("private label");
+    expect(
+      JSON.stringify(reviewData.customPartContactObservation),
+    ).not.toContain(privatePrompt);
+    expect(body.messages[0].content).toContain(
+      "If defining parts should attach, repair the measured gap before accepting; intentionally floating forms remain valid.",
+    );
+  });
 
   it("uses the strict schema when advertised and includes a validated image", async () => {
     const project = blankProject();

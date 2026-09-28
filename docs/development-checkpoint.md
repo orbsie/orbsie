@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 27 scene review now receives a bounded server-derived custom-part contact
+observation for up to three ready, root-level custom multipart entities, with
+the selected entity first. It compares Y bounds for the two largest supported
+parts by scaled primitive volume after part and entity scale; lathe volume is
+estimated from profile frustum segments. Supported zero-rotation pairs report a
+rounded nonnegative gap, while parented/rotated or otherwise unsupported cases
+are inconclusive. The advisory includes IDs, part indices/shapes, status, and
+gap only, does not mutate or reject a scene, and tells review to verify user
+intent/image, repair intended attachments, and preserve intentional floating.
+Focused tests cover the retained 0.72 m cap/stem gap, touching bounds,
+prioritization, the three-entity limit, label omission, and unsupported
+transforms. Scene-review plus helper tests pass (36), TypeScript typecheck and
+Prettier checks pass. No model call or deployment occurred. Axis-aligned Y bounds
+are a limited advisory and zero gap does not prove surface contact.
+
 Sep 27 post-formula mushroom quality run used one fresh Gateway browser
 invocation: exactly two `openai/gpt-6-luna` low/default generation requests,
 both HTTP 200, with a 4096-token cap, no retry/fallback, and no blocked external
