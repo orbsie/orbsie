@@ -344,7 +344,7 @@ describe("post-review visual evidence", () => {
 
       expect(evidence).toMatchObject({
         status: "complete",
-        settleDelayMs: 1000,
+        settleDelayMs: 5000,
         editor: {
           readiness: "ready",
           captureStatus: "captured",
@@ -360,7 +360,7 @@ describe("post-review visual evidence", () => {
           bytes: 4,
         },
       });
-      expect(settleDelays).toEqual([1000, 1000]);
+      expect(settleDelays).toEqual([5000, 5000]);
       expect(canvas.screenshot).toHaveBeenCalledTimes(2);
       expect((await readdir(directory)).sort()).toEqual([
         "post-review-edit-canvas.png",
