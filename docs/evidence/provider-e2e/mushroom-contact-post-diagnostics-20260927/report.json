@@ -77,18 +77,36 @@
     "editorCapture": "failure.png",
     "seedCapture": "intermediate-seed.png",
     "sceneState": "completed-and-saved-revision-9",
-    "captureIsInProgressPreview": false,
+    "formationAnimationSettledAtCapture": "unknown",
     "editorZoomPercent": 363,
     "objectFraming": "The island and full mushroom-shaped assembly fit inside the editor viewport.",
-    "appearance": "The editor capture reads as a cyan/blue, flecked canopy over a pink trunk, rather than a clearly pink mushroom. The pale details are visible but read as a particle-like cloud.",
-    "recipeRenderMismatch": "The lathe cap part is pink in the saved recipe, but the rendered canopy appears cyan/blue.",
+    "appearance": "The immediate post-generation editor capture has a cyan/blue, flecked canopy over a pink trunk and resembles an unsettled particle formation. Its color is not reliable evidence of the stable material.",
+    "recipeRenderMismatch": "The saved cap part is pink; the immediate capture appears cyan/blue, but a settled replay rendered the cap pink.",
     "playerScreenshot": false,
-    "visualAcceptance": "not-established"
+    "visualAcceptance": "not-established-from-this-capture"
   },
-  "harnessLimitation": "The pink-material assertion checks entity color or geometry tint and did not inspect the pink custom-part color. The saved capture independently shows the canopy rendered cyan/blue.",
+  "stableZeroModelReplay": {
+    "source": "retained-revision-9-sanitized-snapshot",
+    "mode": "local-synthetic-IndexedDB-draft",
+    "editorSettleDelaySeconds": 10,
+    "playerSettleDelaySeconds": 5,
+    "generationRequests": 0,
+    "blockedExternalRequests": 0,
+    "pageErrors": 0,
+    "reopenedRevision": 9,
+    "reopenedEntityCount": 2,
+    "editorCapture": "editor-stable.png",
+    "playerCapture": "player-stable.png",
+    "capturesRetainedPrivately": true,
+    "appearance": "After settling, the cap renders pink above a pale stem. The four pale detail parts are not visible as spots from either captured camera view. The cyan-colored opening around the stem/cap junction is consistent with the measured 0.55 m vertical separation.",
+    "framing": "The complete mushroom assembly fits in both captured views.",
+    "visualAcceptance": "not-met"
+  },
+  "harnessLimitation": "The pink-material assertion checks entity color or geometry tint and does not inspect the pink custom-part color. The immediate screenshot's cyan appearance was transient or otherwise unsettled; a zero-generation local replay rendered the cap pink.",
   "limitations": [
     "The run stopped after the saved edit, before local recovery, export, or standalone playback.",
     "No protocol error occurred, so there is no allowlisted protocol subreason or failing model operation to report.",
-    "Exact transformed contact is geometrically continuous, but visual material and overall mushroom legibility did not meet the requested appearance in the editor capture."
+    "The transformed stem top is 0.55 m below the cap underside, so the parts do not make contact.",
+    "The settled local replay confirms a pink cap, but the requested pale spots are not visible in the editor or player view. The overall visual acceptance criteria remain unmet."
   ]
 }

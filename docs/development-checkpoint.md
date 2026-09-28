@@ -5,14 +5,15 @@ HTTP 200, with no retries or fallback. Creation passed and the edited project
 was saved at revision 9; the harness then stopped at its pink-material check,
 with no protocol diagnostic. The check missed the pink custom cap-part color;
 the saved geometry has no global tint, so its teal entity fallback color does
-not override that explicit part color. Still, the editor screenshot renders a
-cyan/blue canopy above a pink trunk with pale flecks, rather than a clearly
-pink mushroom. Applying the renderer's unit-height cylinder transform gives a
-stem top at world Y=2.42 m and a cap underside at Y=2.97 m, leaving a 0.55 m
-gap. The capture shows the completed, locally saved revision 9, not an
-in-progress preview. The full object fits the editor viewport; no standalone
-player capture exists. Visual acceptance remains unestablished. Sanitized
-report:
+not override that explicit part color. The initial editor capture's cyan/blue
+flecked canopy was taken after save, but whether its formation animation had
+settled is unknown. A zero-generation local replay reopened revision 9, waited
+10 seconds, then captured editor and Play views with zero generation requests,
+external requests, or page errors. Both show a pink cap and the complete
+assembly within frame; the pale details do not read as visible spots. Renderer
+transforms put the stem top at world Y=2.42 m and cap underside at Y=2.97 m,
+leaving a 0.55 m gap, so they do not contact. Visual acceptance remains unmet.
+Sanitized report:
 `docs/evidence/provider-e2e/mushroom-contact-post-diagnostics-20260927/report.json`.
 
 Sep 27 precommit generation activity now uses preview wording for new objects,
