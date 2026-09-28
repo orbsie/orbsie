@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 27 one live authoring-review run against loopback source `ab3a1a1` used
+`openai/gpt-6-luna`, low/default, 4096 output cap, with a three-call maximum and
+no retries/fallback. Creation returned HTTP 200 and saved revision 6; the first
+visual+structural review returned HTTP 200, verdict revise, and correction
+binding revision 8. The verifier blocked the next review request before the
+server because the sequence required four-call approval; only two provider
+calls were made, and no final review ran. The private first-review finding
+cited a 0.03 m separation, but the browser verifier does not retain the
+server-to-provider request body, so the numeric value cannot be attributed
+directly to `customPartContactObservation`. The post-correction editor capture
+appears to show the pink cap touching its pale stem, with five small pale raised
+details in a row; it was not captured after a controlled settle delay, and no
+player/standalone view or post-correction transform metrics were retained.
+Visual quality remains unverified. No external requests or page errors; no
+deployment. Raw images/findings remain private. Sanitized report:
+`docs/evidence/provider-e2e/authoring-review-contact-gap-20260927/report.json`.
+
 Sep 27 scene review now receives a bounded server-derived custom-part contact
 observation for up to three ready, root-level custom multipart entities, with
 the selected entity first. It compares Y bounds for the two largest supported

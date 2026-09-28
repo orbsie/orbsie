@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "outcome": "failed",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 3,
+  "actualLiveCalls": 2,
+  "blockedCalls": 1,
+  "originPreflight": {
+    "status": 400,
+    "inferenceCalls": 0
+  },
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "review-blocked-before-server"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "method": "POST",
+      "status": 200,
+      "requestId": "8bba8df5-a63a-48af-92ed-0666df0ac18d",
+      "clientRunId": "7be2f9f5-b919-4e1a-981e-38bfade6048b",
+      "authoringRunId": "52cf4a87-5acb-4598-b221-3034005de579",
+      "requestedAuthoringRunId": null,
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "cameraViewPresent": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "remainingCalls": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "method": "POST",
+      "status": 200,
+      "requestId": "0671eeba-75c5-4cde-83cd-e215159081f8",
+      "clientRunId": "7be2f9f5-b919-4e1a-981e-38bfade6048b",
+      "authoringRunId": "52cf4a87-5acb-4598-b221-3034005de579",
+      "requestedAuthoringRunId": "52cf4a87-5acb-4598-b221-3034005de579",
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "projectRevision": 6,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "reviewRevision": 6,
+      "reviewImageProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "reviewImageRevision": 6,
+      "structuralObservationProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "structuralObservationRevision": 6,
+      "cameraViewPresent": true,
+      "responseBindingRevision": 8,
+      "responseBindingDigest": "1793225b1e18037bb9a89d429d9d9af7465de8ac212bc8df40d51e206cf22359",
+      "verdict": "revise",
+      "remainingCalls": 2,
+      "blocked": false,
+      "reviewImageEvidence": {
+        "width": 768,
+        "height": 610,
+        "byteLength": 82655,
+        "sha256": "7939d5c681bbdbc735e2a1f43f1df5a11668fe910cca050e6a683dbffb6c2a85",
+        "fileWritten": true
+      }
+    },
+    {
+      "ordinal": 3,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "method": "POST",
+      "status": null,
+      "requestId": null,
+      "clientRunId": "7be2f9f5-b919-4e1a-981e-38bfade6048b",
+      "authoringRunId": "52cf4a87-5acb-4598-b221-3034005de579",
+      "requestedAuthoringRunId": "52cf4a87-5acb-4598-b221-3034005de579",
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "projectRevision": 8,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "reviewRevision": 8,
+      "reviewImageProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "reviewImageRevision": 8,
+      "structuralObservationProjectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "structuralObservationRevision": 8,
+      "cameraViewPresent": true,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "remainingCalls": null,
+      "blocked": true,
+      "guardCode": "four-call-budget-approval-required"
+    }
+  ],
+  "reviewAttempts": [
+    {
+      "ordinal": 1,
+      "phase": "review",
+      "requestId": "0671eeba-75c5-4cde-83cd-e215159081f8",
+      "scope": "visual+structural",
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "reviewedRevision": 6,
+      "bindingRevision": 8,
+      "bindingDigest": "1793225b1e18037bb9a89d429d9d9af7465de8ac212bc8df40d51e206cf22359",
+      "verdict": "revise",
+      "remainingCalls": 2,
+      "issueCount": 2
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "ordinal": 1,
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+    "reviewedRevision": 6,
+    "reviewImageRevision": 6,
+    "structuralObservationRevision": 6,
+    "bindingRevision": 8,
+    "bindingDigest": "1793225b1e18037bb9a89d429d9d9af7465de8ac212bc8df40d51e206cf22359",
+    "verdict": "revise",
+    "remainingCalls": 2,
+    "issueCount": 2
+  },
+  "secondReview": null,
+  "finalReview": null,
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "e0ef1fd620fd879fac4fbebf7c3e3a818899f6fae6ecf2e2ff37b2fdf45dffaf",
+      "bytes": 230966,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "e0ef1fd620fd879fac4fbebf7c3e3a818899f6fae6ecf2e2ff37b2fdf45dffaf",
+      "privateBytes": 230966
+    },
+    {
+      "label": "review-failed",
+      "sha256": "4a166931422623c98deee890022e15d9f5ce431ca3b1b4cdd62ec9594d8097a2",
+      "bytes": 121492,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "1a1ee70ff04e0a7e9b6f828b2d03188f348cac3d4a796e38fe5731b3581e9fe5",
+      "privateBytes": 63743
+    }
+  ],
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "revision": 6,
+      "structure": {
+        "entityCount": 2,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 2,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 2,
+          "asset": 0,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 9,
+        "customPartShapeCounts": {
+          "box": 0,
+          "sphere": 6,
+          "cylinder": 2,
+          "cone": 0,
+          "torus": 0,
+          "lathe": 1,
+          "segment": 0,
+          "absent": 0,
+          "unknown": 0
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 5,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 1,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 2,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 1,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "segment": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 1,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 1,
+          "orange": 6,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 1,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterFailure": {
+      "projectId": "74fb7e5d-f9e6-47d6-90a2-4fb81d93bd5a",
+      "revision": 8
+    }
+  },
+  "requestIds": {
+    "initial": "8bba8df5-a63a-48af-92ed-0666df0ac18d",
+    "review": "0671eeba-75c5-4cde-83cd-e215159081f8",
+    "secondReview": null,
+    "finalReview": null
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 2,
+    "reviewFindingsStatus": "written",
+    "reviewFindingsCount": 1
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 2,
+    "requestFailureDetails": [
+      {
+        "route": "generation",
+        "code": "net::ERR_ABORTED"
+      },
+      {
+        "route": "review",
+        "code": "net::ERR_BLOCKED_BY_CLIENT"
+      }
+    ],
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": false,
+      "reviewIncomplete": false,
+      "reviewPartial": false,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": {
+    "stage": "review",
+    "code": "four-call-budget-approval-required",
+    "errorType": "AcceptanceError"
+  },
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  },
+  "qualityAssessment": {
+    "sourceCommit": "ab3a1a1",
+    "loopbackOrigin": "http://127.0.0.1:3061",
+    "exactModel": "openai/gpt-6-luna",
+    "reasoning": "low",
+    "serviceTier": "default",
+    "outputTokenCap": 4096,
+    "allowedProviderCalls": 3,
+    "actualProviderCalls": 2,
+    "providerStatuses": [
+      200,
+      200
+    ],
+    "retries": 0,
+    "fallbackUsed": false,
+    "blockedExternalRequests": 0,
+    "scenePhases": {
+      "creation": {
+        "status": "passed",
+        "savedRevision": 6
+      },
+      "firstReview": {
+        "status": "completed",
+        "scope": "visual+structural",
+        "reviewedRevision": 6,
+        "verdict": "revise",
+        "issueCount": 2,
+        "correctionBindingRevision": 8
+      },
+      "correctedScene": {
+        "status": "saved",
+        "revision": 8
+      },
+      "secondReview": {
+        "status": "blocked-before-server",
+        "reason": "four-call-budget-approval-required"
+      },
+      "finalReview": {
+        "status": "not-run"
+      },
+      "playerView": {
+        "status": "not-captured"
+      }
+    },
+    "contactAdvisory": {
+      "serverReviewIntegrationPathRan": true,
+      "positiveGapReachedProviderRequest": "not-independently-verified",
+      "privateFirstReviewFindingCitedPositiveSeparationMeters": 0.03,
+      "explanation": "The server review path computes customPartContactObservation for the bound scene. The browser verifier does not retain the server-to-provider request body, so the positive value cannot be independently attributed to that field."
+    },
+    "correctionAndVisualAssessment": {
+      "browserFailureCaptureShowsCorrectedRevision": 8,
+      "editorAppearance": "The pink cap appears to meet the pale stem; five small pale raised details appear in a straight row across the visible cap surface.",
+      "structuralContactAfterCorrection": "not-verified-from-retained-data",
+      "settledCapture": "not-established; the failure screenshot has no controlled settling delay",
+      "playerReadability": "not-assessed; no player or standalone view was captured",
+      "manualVisualAcceptance": "incomplete"
+    },
+    "limitation": "The first review requested another correction-review cycle with two calls remaining. The explicit three-call ceiling blocked its next request before the server; no four-call approval, automatic retry, or further model request was used."
+  }
+}
