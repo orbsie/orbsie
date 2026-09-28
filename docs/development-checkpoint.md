@@ -8,10 +8,13 @@ requests. Creation saved revision 12, the first two reviews returned revise
 and applied correction revisions 15 and 17, and the final verdict-only review
 still returned revise at revision 17. Reload restored that revision. Astra
 inspected the private review images: the pink mushroom and stem are legible,
-but a large white rectangular surface dominates the small supposed grassy
-island; three pale spots are clearly visible. The reviewer repeatedly pursued
+but a large white rectangular surface dominates the requested tiny island;
+three pale spots are clearly visible. The reviewer repeatedly pursued
 an additional spot that was hidden on the far side, while the white surface
-remained. Exact post-correction transforms, controlled settled capture, and
+remained. Its final finding also treated "grassy" as a defining requirement
+although the user only requested an island; that material requirement was
+inferred, not explicit. Exact post-correction transforms, controlled settled
+capture, and
 Play view were not retained, so visual acceptance remains unmet. The exact
 isolated DB was verified, dropped and confirmed absent, and the server stopped.
 Sanitized evidence:
