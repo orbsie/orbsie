@@ -1,5 +1,22 @@
 # Development checkpoint
 
+Sep 27 one isolated OpenRouter authoring-review test completed the full
+four-call budget on source `6256d43`: initial creation and three visual+
+structural reviews all returned HTTP 200 with exact `openai/gpt-6-luna`,
+default tier, 4,096 output-token caps, and no retry/fallback or external
+requests. Creation saved revision 12, the first two reviews returned revise
+and applied correction revisions 15 and 17, and the final verdict-only review
+still returned revise at revision 17. Reload restored that revision. Astra
+inspected the private review images: the pink mushroom and stem are legible,
+but a large white rectangular surface dominates the small supposed grassy
+island; three pale spots are clearly visible. The reviewer repeatedly pursued
+an additional spot that was hidden on the far side, while the white surface
+remained. Exact post-correction transforms, controlled settled capture, and
+Play view were not retained, so visual acceptance remains unmet. The exact
+isolated DB was verified, dropped and confirmed absent, and the server stopped.
+Sanitized evidence:
+`docs/evidence/provider-e2e/authoring-review-contact-gap-four-call-20260927-r2/report.json`.
+
 Sep 27 production deployment `https://orbsie-poa87eqwm-grappeggias-projects.vercel.app`
 completed its Vercel build and was aliased to `https://orbsie.com`. The live
 `/api/config` response reports accounts and publishing enabled, hosted ChatGPT
