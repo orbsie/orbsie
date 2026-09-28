@@ -358,6 +358,9 @@ describe("executeSceneReview", () => {
         "do not invent exact colors, materials, or counts",
       );
       expect(prompt).toContain(
+        "You may still judge overall visual coherence and readability against the request",
+      );
+      expect(prompt).toContain(
         "For an island, assess whether the rendered subject reads as an island in its scene",
       );
       expect(prompt).toContain(
@@ -406,6 +409,19 @@ describe("executeSceneReview", () => {
         expect(prompt).toContain("targeted policy-valid corrections");
       } else {
         expect(prompt).toContain("accept only when no core defect remains");
+        expect(prompt).toContain("the requested visible count is met");
+        expect(prompt).toContain(
+          "show enough visible instances for an unspecified plural without requiring every authored instance",
+        );
+        expect(prompt).toContain(
+          "each visible detail has visible contact with its support",
+        );
+        expect(prompt).toContain(
+          "no defining feature needed to read the requested form is materially occluded",
+        );
+        expect(prompt).toContain(
+          "Occlusion of a surplus repeated instance beyond the requested visible count is not by itself a defect",
+        );
         expect(prompt).toContain("no corrections");
       }
     },
