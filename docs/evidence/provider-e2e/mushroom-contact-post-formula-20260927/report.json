@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-27",
+  "task": "post-formula-mushroom-replacement-quality-evaluation",
+  "result": "mechanical-journey-passed-visual-acceptance-not-met",
+  "harnessInvocations": 1,
+  "provider": "gateway",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "requestedOutputTokensPerCall": 4096,
+  "serverReportedOutputTokenCap": 4096,
+  "generationBudget": 2,
+  "generationRequests": 2,
+  "generationStatuses": [200, 200],
+  "fallbackUsed": false,
+  "generationBudgetViolations": 0,
+  "blockedExternalRequests": 0,
+  "protocolDiagnosticCount": 0,
+  "protocolSubreason": null,
+  "phases": {
+    "tinyIslandCreation": "passed",
+    "selectedTreeEdit": "passed-and-saved",
+    "savedRevision": 9,
+    "mushroomStructuralAssertion": "passed",
+    "localRecovery": "passed",
+    "export": "passed",
+    "standaloneReadyAndPlayback": "passed",
+    "publication": "not-requested"
+  },
+  "structuralEvidence": {
+    "geometry": "custom-multipart",
+    "partCount": 6,
+    "pinkMaterialSource": "custom-part-color",
+    "pinkPartColor": "#f274b8",
+    "globalTintPresent": false,
+    "backendEligibility": "passed",
+    "manualVisualQuality": "pending-inspection"
+  },
+  "stableZeroModelReplay": {
+    "source": "retained-saved-revision-9-snapshot",
+    "mode": "local-IndexedDB-draft",
+    "editorSettleDelaySeconds": 12,
+    "playerSettleDelaySeconds": 8,
+    "generationRequests": 0,
+    "blockedExternalRequests": 0,
+    "pageErrors": 0,
+    "reopenedRevision": 9,
+    "editorCapture": "retained-privately",
+    "playerCapture": "retained-privately"
+  },
+  "geometryInspection": {
+    "entityPosition": [0, 0.2, 0],
+    "entityRotation": [0, 0, 0],
+    "entityScale": [2, 2, 2],
+    "parentTransform": "none",
+    "stem": {
+      "shape": "cylinder",
+      "partPositionY": 0.38,
+      "partScaleY": 0.4,
+      "unitPrimitiveHeight": 1,
+      "worldTopY": 1.36
+    },
+    "cap": {
+      "shape": "lathe",
+      "partPositionY": 0.94,
+      "partScaleY": 0.48,
+      "profileMinimumY": 0,
+      "worldBottomY": 2.08,
+      "partColor": "#f274b8"
+    },
+    "stemToCapVerticalGapMeters": 0.72,
+    "paleDetails": {
+      "count": 4,
+      "shape": "sphere",
+      "partColor": "#fff4e8"
+    }
+  },
+  "visualInspection": {
+    "capColor": "clearly pink in both settled captures",
+    "editorView": "The close, steep editor angle makes the cap and stem appear nearly joined and hides the measured vertical gap. The cap fills much of the viewport.",
+    "playerView": "The cap is visibly floating above the short stem, with a clear air gap; the combined silhouette does not read as an attached mushroom.",
+    "paleDetails": "Several pale raised details are visible. The two prominent front details read as large white domes rather than small, evenly distributed flecks; other details are less visible from these views.",
+    "manualVisualQuality": "not-met"
+  },
+  "limitations": [
+    "This is one Gateway browser journey followed by a separate zero-model local replay, not an uninterrupted deployment or publication test.",
+    "Mechanical structural eligibility and a pink rendered cap do not establish visual acceptance; the transformed stem and cap remain separated by 0.72 m.",
+    "The report does not claim the pale details satisfy the requested spot appearance."
+  ]
+}

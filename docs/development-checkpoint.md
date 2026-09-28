@@ -1,5 +1,23 @@
 # Development checkpoint
 
+Sep 27 post-formula mushroom quality run used one fresh Gateway browser
+invocation: exactly two `openai/gpt-6-luna` low/default generation requests,
+both HTTP 200, with a 4096-token cap, no retry/fallback, and no blocked external
+requests. Tiny-island creation, selected-tree edit, revision-9 save, local
+recovery, export, standalone readiness, and playback passed; publication was not
+requested. The updated structural check passed for six custom parts, including
+the pink part material, with no overriding global tint. A separate zero-model
+IndexedDB replay reopened revision 9 and captured editor and Play views after
+12 and 8 seconds; it made zero generation/external requests and had no page
+errors. The cap renders clearly pink. Exact saved transforms put the unit
+cylinder stem top at world Y=1.36 m and the lathe cap underside at Y=2.08 m, a
+0.72 m gap. The close editor angle masks most of that separation, while the
+player view clearly shows a floating cap over the short stem. Several pale
+details render, but prominent front domes look oversized rather than like small
+scattered spots. Harness structural and playback checks passed; manual visual
+acceptance remains not met. No deployment occurred. Sanitized report:
+`docs/evidence/provider-e2e/mushroom-contact-post-formula-20260927/report.json`.
+
 Sep 27 one post-diagnostics Gateway mushroom run used two Luna requests, both
 HTTP 200, with no retries or fallback. Creation passed and the edited project
 was saved at revision 9; the harness then stopped at its pink-material check,
