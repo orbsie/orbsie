@@ -105,6 +105,40 @@ const browserMushroom = {
   },
 };
 
+const customMultipartMushroom = {
+  kind: "custom",
+  detail: "refined",
+  parts: [
+    {
+      shape: "cylinder",
+      position: [0, 1, 0],
+      scale: [0.55, 2, 0.55],
+      rotation: [0, 0, 0],
+      color: "#fff1df",
+    },
+    {
+      shape: "lathe",
+      position: [0, 2, 0],
+      scale: [2.2, 1.4, 2.2],
+      rotation: [0, 0, 0],
+      profile: [
+        [0, 0],
+        [1.7, 0],
+        [1.6, 0.4],
+        [0, 1],
+      ],
+      color: "#ed79c4",
+    },
+    {
+      shape: "sphere",
+      position: [0.4, 3.1, 0.3],
+      scale: [0.16, 0.08, 0.16],
+      rotation: [0, 0, 0],
+      color: "#fff1df",
+    },
+  ],
+};
+
 describe("bounded mushroom replacement acceptance", () => {
   it.each([
     ["catalog", catalogMushroom],
@@ -114,6 +148,62 @@ describe("bounded mushroom replacement acceptance", () => {
     const result = assertMushroomReplacement(before, after, "tree-1");
     expect(result.physicalSizeExpansion).toBe(true);
     expect(result.dimensions.status).toBe("observed");
+  });
+
+  it("accepts ready pink-part custom geometry and separates structural from visual review", () => {
+    const { before, after } = projectPair(customMultipartMushroom);
+    after.entities[0].color = "#55b7a9";
+
+    const result = assertMushroomReplacement(before, after, "tree-1");
+
+    expect(result.pinkMaterialEvidence).toBe("custom-part-color");
+    expect(result.supportedGeometry).toBe("custom-multipart");
+    expect(result.dimensions).toMatchObject({
+      status: "observed",
+      source: { after: "custom-parts" },
+    });
+    expect(result.structuralStatus).toBe("passed");
+    expect(result.backendEligibility).toBe("passed");
+    expect(result.manualVisualQuality).toBe("pending");
+  });
+
+  it("honors nonpink global tint and requires multipart backend evidence beyond a label", () => {
+    const overridden = projectPair({
+      ...customMultipartMushroom,
+      tint: "#55b7a9",
+    });
+    overridden.after.entities[0].color = "#ff69b4";
+    expect(() =>
+      assertMushroomReplacement(overridden.before, overridden.after, "tree-1"),
+    ).toThrow(/pink material/);
+
+    const onePart = projectPair({
+      ...customMultipartMushroom,
+      parts: [customMultipartMushroom.parts[1]],
+    });
+    expect(() =>
+      assertMushroomReplacement(onePart.before, onePart.after, "tree-1"),
+    ).toThrow(/ready labeled custom multipart geometry/);
+
+    const notReady = projectPair(customMultipartMushroom);
+    notReady.after.entities[0].stage = "seed";
+    expect(() =>
+      assertMushroomReplacement(notReady.before, notReady.after, "tree-1"),
+    ).toThrow(/ready labeled custom multipart geometry/);
+  });
+
+  it("does not treat a mushroom label as pink structural geometry", () => {
+    const labelOnly = projectPair({
+      ...customMultipartMushroom,
+      parts: customMultipartMushroom.parts.map((part) => ({
+        ...part,
+        color: "#55b7a9",
+      })),
+    });
+    labelOnly.after.entities[0].color = "#55b7a9";
+    expect(() =>
+      assertMushroomReplacement(labelOnly.before, labelOnly.after, "tree-1"),
+    ).toThrow(/pink material/);
   });
 
   it("rejects nonpink, nonlarger, and unrelated mutations", () => {

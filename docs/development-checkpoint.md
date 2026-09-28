@@ -9,11 +9,19 @@ not override that explicit part color. The initial editor capture's cyan/blue
 flecked canopy was taken after save, but whether its formation animation had
 settled is unknown. A zero-generation local replay reopened revision 9, waited
 10 seconds, then captured editor and Play views with zero generation requests,
-external requests, or page errors. Both show a pink cap and the complete
-assembly within frame; the pale details do not read as visible spots. Renderer
-transforms put the stem top at world Y=2.42 m and cap underside at Y=2.97 m,
-leaving a 0.55 m gap, so they do not contact. Visual acceptance remains unmet.
-Sanitized report:
+external requests, or page errors. The pink cap fits both views, but the editor
+angle hides most of the stem and the complete joined form is unclear in Play;
+the pale details do not read as visible spots. Renderer transforms put the
+stem top at world Y=2.42 m and cap underside at Y=2.97 m, leaving a 0.55 m gap,
+so they do not contact. Visual acceptance remains unmet. The authoring prompt
+now gives the unit-cylinder/lathe contact formulas and retains intentional
+floating forms. Mushroom-replacement harness checks now honor global tint over
+part colors and admit ready labeled custom multipart geometry with computed
+part bounds; they report structural/backend status separately from pending
+manual visual quality. Focused generation and harness tests plus typecheck
+pass. The shared authoring prompt grew by 57 ASCII bytes in every capability
+and output-format branch. No model call or deployment occurred. Sanitized
+report:
 `docs/evidence/provider-e2e/mushroom-contact-post-diagnostics-20260927/report.json`.
 
 Sep 27 precommit generation activity now uses preview wording for new objects,

@@ -4828,6 +4828,28 @@ function isPink(value) {
   return red >= 160 && blue >= 120 && red > green && blue > green;
 }
 
+function storyPinkMaterialEvidence(entity) {
+  const geometry = entity?.geometry;
+  const proceduralGeometry =
+    geometry?.kind !== "asset" && geometry?.kind !== "generated";
+  if (proceduralGeometry && geometry?.tint != null)
+    return isPink(geometry.tint) ? "global-geometry-tint" : null;
+  if (geometry?.kind !== "custom" && isPink(entity?.color))
+    return "entity-color";
+  if (Array.isArray(geometry?.parts) && geometry.parts.length > 0) {
+    const pinkPart = geometry.parts.find((part) =>
+      isPink(part?.color ?? entity.color),
+    );
+    if (!pinkPart) return null;
+    return isPink(pinkPart.color)
+      ? "custom-part-color"
+      : "entity-color-fallback";
+  }
+  if (isPink(entity?.color)) return "entity-color";
+  if (isPink(geometry?.tint)) return "geometry-tint";
+  return null;
+}
+
 function scaledModelBoundsSize(bounds, scale) {
   if (
     !bounds ||
@@ -4858,7 +4880,126 @@ function storyEntityBounds(entity) {
     if (scaledModelBoundsSize(catalogBounds, [1, 1, 1]))
       return { bounds: catalogBounds, source: "catalog" };
   }
+  const customBounds = customPartsBounds(entity?.geometry);
+  if (scaledModelBoundsSize(customBounds, [1, 1, 1]))
+    return { bounds: customBounds, source: "custom-parts" };
   return { bounds: null, source: "missing" };
+}
+
+function finiteTriplet(value, fallback) {
+  const result = value ?? fallback;
+  return (
+    Array.isArray(result) &&
+    result.length === 3 &&
+    result.every(Number.isFinite)
+  )
+    ? result
+    : null;
+}
+
+function customPartLocalBounds(part) {
+  let min;
+  let max;
+  if (["box", "sphere", "cone", "cylinder", "torus"].includes(part?.shape)) {
+    const extents = {
+      box: [0.5, 0.5, 0.5],
+      sphere: [1, 1, 1],
+      cone: [1, 0.5, 1],
+      cylinder: [1, 0.5, 1],
+      torus: [0.95, 0.95, 0.25],
+    }[part.shape];
+    min = extents.map((extent) => -extent);
+    max = extents;
+  } else if (part?.shape === "lathe") {
+    if (
+      !Array.isArray(part.profile) ||
+      part.profile.length < 2 ||
+      !part.profile.every(
+        (point) =>
+          Array.isArray(point) &&
+          point.length === 2 &&
+          point.every(Number.isFinite) &&
+          point[0] >= 0,
+      )
+    )
+      return null;
+    const radii = part.profile.map(([radius]) => radius);
+    const heights = part.profile.map(([, height]) => height);
+    const radius = Math.max(...radii);
+    min = [-radius, Math.min(...heights), -radius];
+    max = [radius, Math.max(...heights), radius];
+  } else if (part?.shape === "segment") {
+    if (
+      !finiteTriplet(part.from) ||
+      !finiteTriplet(part.to) ||
+      !Number.isFinite(part.radius) ||
+      part.radius <= 0
+    )
+      return null;
+    min = part.from.map((value, axis) =>
+      Math.min(value, part.to[axis]) - part.radius,
+    );
+    max = part.from.map((value, axis) =>
+      Math.max(value, part.to[axis]) + part.radius,
+    );
+  } else {
+    return null;
+  }
+
+  const position = finiteTriplet(part.position, [0, 0, 0]);
+  const scale = finiteTriplet(part.scale, [1, 1, 1]);
+  const rotation = finiteTriplet(part.rotation, [0, 0, 0]);
+  if (!position || !scale || !rotation) return null;
+
+  const [rx, ry, rz] = rotation;
+  const cx = Math.cos(rx);
+  const sx = Math.sin(rx);
+  const cy = Math.cos(ry);
+  const sy = Math.sin(ry);
+  const cz = Math.cos(rz);
+  const sz = Math.sin(rz);
+  const resultMin = [Infinity, Infinity, Infinity];
+  const resultMax = [-Infinity, -Infinity, -Infinity];
+  for (const x of [min[0], max[0]]) {
+    for (const y of [min[1], max[1]]) {
+      for (const z of [min[2], max[2]]) {
+        const scaledX = x * scale[0];
+        const scaledY = y * scale[1];
+        const scaledZ = z * scale[2];
+        const rotatedX = scaledX;
+        const rotatedY = scaledY * cx - scaledZ * sx;
+        const rotatedZ = scaledY * sx + scaledZ * cx;
+        const yawX = rotatedX * cy + rotatedZ * sy;
+        const yawZ = -rotatedX * sy + rotatedZ * cy;
+        const world = [
+          yawX * cz - rotatedY * sz + position[0],
+          yawX * sz + rotatedY * cz + position[1],
+          yawZ + position[2],
+        ];
+        for (let axis = 0; axis < 3; axis++) {
+          resultMin[axis] = Math.min(resultMin[axis], world[axis]);
+          resultMax[axis] = Math.max(resultMax[axis], world[axis]);
+        }
+      }
+    }
+  }
+  if (![...resultMin, ...resultMax].every(Number.isFinite)) return null;
+  return { min: resultMin, max: resultMax };
+}
+
+function customPartsBounds(geometry) {
+  if (geometry?.kind !== "custom" || !Array.isArray(geometry.parts))
+    return null;
+  const parts = geometry.parts.map(customPartLocalBounds);
+  if (parts.length === 0 || parts.some((bounds) => !bounds)) return null;
+  return {
+    min: [0, 1, 2].map((axis) =>
+      Math.min(...parts.map((bounds) => bounds.min[axis])),
+    ),
+    max: [0, 1, 2].map((axis) =>
+      Math.max(...parts.map((bounds) => bounds.max[axis])),
+    ),
+  };
 }
 
 function storyPortalWinRule(rule, portalId) {
@@ -5147,8 +5288,9 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
     before: beforeSize,
     after: afterSize,
   };
+  const pinkMaterialEvidence = storyPinkMaterialEvidence(afterEntity);
   assert(
-    isPink(afterEntity.color) || isPink(afterEntity.geometry?.tint),
+    pinkMaterialEvidence,
     "Story mushroom edit did not produce a pink material.",
   );
   assert.equal(after.entities.length, before.entities.length);
@@ -5161,6 +5303,7 @@ export function assertFlagshipStoryMushroom(before, after, treeId) {
     rawBoundsExpanded: Boolean(rawBoundsExpanded),
     transformedBoundsExpanded: Boolean(transformedBoundsExpanded),
     dimensions,
+    pinkMaterialEvidence,
     sizeVisualReview: "pending",
   };
 }
@@ -5176,9 +5319,15 @@ export function assertMushroomReplacement(before, after, treeId) {
     geometry?.kind === "generated" &&
     geometry.job?.backend === "browser-manifold" &&
     geometry.model?.source === "browser-manifold";
+  const supportedCustomMultipart =
+    geometry?.kind === "custom" &&
+    afterEntity.stage === "ready" &&
+    Array.isArray(geometry.parts) &&
+    geometry.parts.length >= 2 &&
+    check.mushroomEvidence === "supported-kind-mushroom-label";
   assert(
-    supportedCatalog || supportedBrowserModel,
-    "Mushroom replacement must use a catalog mushroom or trusted browser-generated geometry.",
+    supportedCatalog || supportedBrowserModel || supportedCustomMultipart,
+    "Mushroom replacement must use a catalog mushroom, trusted browser-generated geometry, or ready labeled custom multipart geometry.",
   );
   assert.equal(
     check.dimensions.status,
@@ -5211,8 +5360,15 @@ export function assertMushroomReplacement(before, after, treeId) {
   );
   return {
     ...check,
-    supportedGeometry: supportedCatalog ? "catalog" : "browser-generated",
+    supportedGeometry: supportedCatalog
+      ? "catalog"
+      : supportedBrowserModel
+        ? "browser-generated"
+        : "custom-multipart",
     physicalSizeExpansion: check.transformedBoundsExpanded,
+    structuralStatus: "passed",
+    backendEligibility: "passed",
+    manualVisualQuality: "pending",
     sizeVisualReview: "pending",
   };
 }

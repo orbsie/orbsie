@@ -79,7 +79,7 @@
     "sceneState": "completed-and-saved-revision-9",
     "formationAnimationSettledAtCapture": "unknown",
     "editorZoomPercent": 363,
-    "objectFraming": "The island and full mushroom-shaped assembly fit inside the editor viewport.",
+    "objectFraming": "The cap fits the editor viewport; most of the stem is occluded by the cap at this angle.",
     "appearance": "The immediate post-generation editor capture has a cyan/blue, flecked canopy over a pink trunk and resembles an unsettled particle formation. Its color is not reliable evidence of the stable material.",
     "recipeRenderMismatch": "The saved cap part is pink; the immediate capture appears cyan/blue, but a settled replay rendered the cap pink.",
     "playerScreenshot": false,
@@ -99,10 +99,10 @@
     "playerCapture": "player-stable.png",
     "capturesRetainedPrivately": true,
     "appearance": "After settling, the cap renders pink above a pale stem. The four pale detail parts are not visible as spots from either captured camera view. The cyan-colored opening around the stem/cap junction is consistent with the measured 0.55 m vertical separation.",
-    "framing": "The complete mushroom assembly fits in both captured views.",
+    "framing": "The cap fits both views. Most of the stem is hidden behind the cap in the editor view; the Play view reveals the underside and support, but the complete joined form remains visually unclear.",
     "visualAcceptance": "not-met"
   },
-  "harnessLimitation": "The pink-material assertion checks entity color or geometry tint and does not inspect the pink custom-part color. The immediate screenshot's cyan appearance was transient or otherwise unsettled; a zero-generation local replay rendered the cap pink.",
+  "harnessLimitation": "The original live run's pink-material assertion only checked entity color or geometry tint, so it missed pink custom-part colors. The updated harness honors renderer tint precedence, reports multipart backend/structural status separately from manual visual quality, and does not claim visual acceptance from those checks. No live rerun was performed.",
   "limitations": [
     "The run stopped after the saved edit, before local recovery, export, or standalone playback.",
     "No protocol error occurred, so there is no allowlisted protocol subreason or failing model operation to report.",

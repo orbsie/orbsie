@@ -200,7 +200,10 @@ describe("structured generation envelopes", () => {
           format,
         );
         expect(prompt).toContain("Custom-part geometry is part-local");
-        expect(prompt).toContain("Lathe profile heights are part-local Y");
+        expect(prompt).toContain(
+          "unit-height support cylinder top is partY + scaleY/2",
+        );
+        expect(prompt).toContain("lathe bottom is partY + scaleY*minProfileY");
         expect(prompt).toContain("camera-facing outer/upper surface");
         expect(prompt).toContain("Preserve intentional floating gaps");
         expect(prompt).toContain(
