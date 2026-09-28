@@ -414,7 +414,7 @@ describe("executeSceneReview", () => {
           "show enough visible instances for an unspecified plural without requiring every authored instance",
         );
         expect(prompt).toContain(
-          "each visible detail has visible contact with its support",
+          "each visible detail meant to be attached has visible contact with its support",
         );
         expect(prompt).toContain(
           "no defining feature needed to read the requested form is materially occluded",
