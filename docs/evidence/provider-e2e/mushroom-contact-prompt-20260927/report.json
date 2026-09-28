@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-27",
+  "task": "mushroom-replacement-gateway-browser-e2e",
+  "result": "blocked-before-generation",
+  "harnessInvocations": 1,
+  "provider": "gateway",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "requestedOutputTokensPerCall": 4096,
+  "generationBudget": 2,
+  "serverReportedOutputTokenCap": 10000,
+  "preflight": {
+    "status": "blocked",
+    "reason": "Server output cap must exactly match the requested cap.",
+    "generationRequests": 0,
+    "generationStatuses": [],
+    "fallbackUsed": false
+  },
+  "phases": {
+    "creation": "blocked-before-start",
+    "selectedMushroomEdit": "not-started",
+    "recoveryExportStandalone": "not-started",
+    "visualInspection": "not-available"
+  },
+  "visualEvidence": {
+    "beforeRecipeSnapshot": false,
+    "afterRecipeSnapshot": false,
+    "editorScreenshot": false,
+    "playerScreenshot": false,
+    "assessment": "No scene was generated, so contact geometry, camera framing, and visible details could not be evaluated."
+  },
+  "limitations": [
+    "The harness requires /api/config.generationMaxTokens to equal the requested output cap exactly.",
+    "The local app reported 10000 instead of 4096; no retry or model call was made."
+  ]
+}

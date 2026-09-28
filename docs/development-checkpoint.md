@@ -1,5 +1,12 @@
 # Development checkpoint
 
+Sep 27 mushroom-replacement Gateway run stopped at harness preflight: the app's
+`/api/config` reported `generationMaxTokens: 10000`, while this test requires an
+exact 4096-token cap. No provider request was sent; creation/edit and visual
+inspection did not start, so this run provides no visual acceptance evidence.
+Do not retry until the local app advertises the requested cap. Sanitized result:
+`docs/evidence/provider-e2e/mushroom-contact-prompt-20260927/report.json`.
+
 Sep 27 shared generation prompt now states that custom-part coordinates compose
 through part, entity, and parent transforms, gives a small lathe-profile contact
 example, and directs intended attachments to transformed support contact and
