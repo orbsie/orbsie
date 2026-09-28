@@ -351,6 +351,25 @@ describe("executeSceneReview", () => {
       const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
       const prompt = body.messages[0].content as string;
 
+      expect(prompt).toContain(
+        "At every review pass, reassess the whole current scene against the request, current snapshot, and supplied image",
+      );
+      expect(prompt).toContain(
+        "do not invent exact colors, materials, or counts",
+      );
+      expect(prompt).toContain(
+        "For an island, assess whether the rendered subject reads as an island in its scene",
+      );
+      expect(prompt).toContain(
+        "Prioritize the dominant requested form, surfaces, and overall readability over minor accents",
+      );
+      expect(prompt).toContain(
+        "preserving intentional distinct walkways and platforms that fit the request",
+      );
+      expect(prompt).toContain("three visible instances can satisfy 'several'");
+      expect(prompt).toContain(
+        "explicit numeric requests require the requested visible count",
+      );
       expect(prompt).toContain("defining silhouette and relative scale");
       expect(prompt).toContain("attached forms have visible connected support");
       expect(prompt).toContain(
