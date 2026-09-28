@@ -1,5 +1,19 @@
 # Development checkpoint
 
+Sep 27 production deployment `https://orbsie-poa87eqwm-grappeggias-projects.vercel.app`
+completed its Vercel build and was aliased to `https://orbsie.com`. The live
+`/api/config` response reports accounts and publishing enabled, hosted ChatGPT
+generation enabled, and `authoringReview:false`; the experimental review loop
+remains off in production. `/` returned HTTP 200 and the regular Chrome browser
+rendered the landing planet using compatibility graphics without a graphics
+unavailable dialog. The live `/api/trial` response reports
+`enabled:true,remaining:3,limit:3`, so the free-prompt offer is currently
+advertised again; no new free-mode inference was spent in this smoke check.
+This deployment includes the prompt, safe protocol diagnostics, and truthful
+precommit preview wording described below. The isolated review-test server was
+stopped, its exact disposable database was dropped after verifying its name
+and base host, and its one-file private connection directory was removed.
+
 Sep 27 one live authoring-review run against loopback source `ab3a1a1` used
 `openai/gpt-6-luna`, low/default, 4096 output cap, with a three-call maximum and
 no retries/fallback. Creation returned HTTP 200 and saved revision 6; the first
