@@ -1,5 +1,20 @@
 # Development checkpoint
 
+Sep 27 one post-diagnostics Gateway mushroom run used two Luna requests, both
+HTTP 200, with no retries or fallback. Creation passed and the edited project
+was saved at revision 9; the harness then stopped at its pink-material check,
+with no protocol diagnostic. The check missed the pink custom cap-part color;
+the saved geometry has no global tint, so its teal entity fallback color does
+not override that explicit part color. Still, the editor screenshot renders a
+cyan/blue canopy above a pink trunk with pale flecks, rather than a clearly
+pink mushroom. Applying the renderer's unit-height cylinder transform gives a
+stem top at world Y=2.42 m and a cap underside at Y=2.97 m, leaving a 0.55 m
+gap. The capture shows the completed, locally saved revision 9, not an
+in-progress preview. The full object fits the editor viewport; no standalone
+player capture exists. Visual acceptance remains unestablished. Sanitized
+report:
+`docs/evidence/provider-e2e/mushroom-contact-post-diagnostics-20260927/report.json`.
+
 Sep 27 precommit generation activity now uses preview wording for new objects,
 geometry, entity edits, world rules, and atmosphere; the committed final-update
 wording is unchanged. A focused stream test holds a selected-object edit open,

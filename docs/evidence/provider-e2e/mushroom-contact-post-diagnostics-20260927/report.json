@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-27",
+  "task": "mushroom-replacement-gateway-browser-e2e",
+  "result": "generation-saved-visual-acceptance-blocked",
+  "harnessInvocations": 1,
+  "provider": "gateway",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "requestedOutputTokensPerCall": 4096,
+  "serverReportedOutputTokenCap": 4096,
+  "generationBudget": 2,
+  "generationRequests": 2,
+  "generationStatuses": [200, 200],
+  "fallbackUsed": false,
+  "generationBudgetViolations": 0,
+  "blockedExternalRequests": 0,
+  "originPreflight": {
+    "status": "passed",
+    "httpStatus": 400,
+    "responseBodyRetained": false
+  },
+  "phases": {
+    "tinyIslandCreation": "passed",
+    "mushroomGeneration": "completed-and-saved",
+    "savedProjectRevision": 9,
+    "harnessMushroomAssertion": {
+      "status": "blocked-after-save",
+      "reason": "pink-material-check",
+      "protocolDiagnosticCount": 0,
+      "protocolSubreason": null
+    },
+    "localRecoveryExportAndStandalone": "not-started"
+  },
+  "retainedSnapshotComparison": {
+    "beforeRevision": 5,
+    "afterRevision": 9,
+    "beforeEntityCount": 2,
+    "afterEntityCount": 2,
+    "targetEntityIdentityPreserved": true,
+    "editedGeometryKind": "custom",
+    "editedPartCount": 6
+  },
+  "geometryInspection": {
+    "entityWorldPosition": [0, 0.82, 0],
+    "entityRotation": [0, 0, 0],
+    "entityScale": [1, 1, 1],
+    "stem": {
+      "shape": "cylinder",
+      "partPositionY": 1.05,
+      "partScaleY": 1.1,
+      "primitiveHeightBeforeScale": 1,
+      "worldBottomY": 1.32,
+      "worldTopY": 2.42
+    },
+    "cap": {
+      "shape": "lathe",
+      "partPositionY": 2.15,
+      "partScaleY": 1.3,
+      "profileBottomY": 0,
+      "worldBottomY": 2.97,
+      "recipeColor": "#ed79c4"
+    },
+    "stemToCapGapMeters": 0.55,
+    "globalTint": {
+      "present": false,
+      "masksExplicitPinkPartColors": false,
+      "entityColorIsFallbackOnly": true
+    },
+    "visibleDetailParts": {
+      "count": 4,
+      "shape": "sphere",
+      "recipeColor": "#fff1df"
+    }
+  },
+  "visualInspection": {
+    "editorCapture": "failure.png",
+    "seedCapture": "intermediate-seed.png",
+    "sceneState": "completed-and-saved-revision-9",
+    "captureIsInProgressPreview": false,
+    "editorZoomPercent": 363,
+    "objectFraming": "The island and full mushroom-shaped assembly fit inside the editor viewport.",
+    "appearance": "The editor capture reads as a cyan/blue, flecked canopy over a pink trunk, rather than a clearly pink mushroom. The pale details are visible but read as a particle-like cloud.",
+    "recipeRenderMismatch": "The lathe cap part is pink in the saved recipe, but the rendered canopy appears cyan/blue.",
+    "playerScreenshot": false,
+    "visualAcceptance": "not-established"
+  },
+  "harnessLimitation": "The pink-material assertion checks entity color or geometry tint and did not inspect the pink custom-part color. The saved capture independently shows the canopy rendered cyan/blue.",
+  "limitations": [
+    "The run stopped after the saved edit, before local recovery, export, or standalone playback.",
+    "No protocol error occurred, so there is no allowlisted protocol subreason or failing model operation to report.",
+    "Exact transformed contact is geometrically continuous, but visual material and overall mushroom legibility did not meet the requested appearance in the editor capture."
+  ]
+}
