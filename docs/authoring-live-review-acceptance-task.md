@@ -35,11 +35,12 @@ Preserve the owner-approved API limit of 4,096 output tokens per call and the
 Gateway limit of five calls **per test**. A create plus edit with maximum review
 loops can take six calls, so run them as separately bounded tests or stop before
 the cap; do not silently truncate a review and claim success. No blind retries.
-The last observed negative Gateway balance blocks paid inference until the
-account state changes. Check browser-control availability at execution time:
-the current computer-use inventory exposes no Chrome surfaces. A browser
-profile being signed in elsewhere does not prove Orbsie's hosted connection
-or a real model turn. Existing API keys remain local and never enter reports.
+The existing Gateway account was funded and a bounded two-call create/edit
+journey passed on September 27, 2026. Recheck its balance before another paid
+review run. Chrome computer use was available that day; check availability
+again at execution time. A signed-in browser profile alone does not prove
+Orbsie's hosted ChatGPT connection or a real model turn. Existing API keys
+remain local and never enter reports.
 
 After live review acceptance, run the full three-turn flagship gameplay journey
 per provider as specified in `prompt.md` and the existing flagship harness. A
