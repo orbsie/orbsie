@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "outcome": "failed",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 4,
+  "actualLiveCalls": 1,
+  "blockedCalls": 0,
+  "originPreflight": {
+    "status": 400,
+    "inferenceCalls": 0
+  },
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-503"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "method": "POST",
+      "status": 503,
+      "requestId": "67e28ae8-222e-4631-a123-69df666591ae",
+      "clientRunId": "e1263885-2f15-45da-9b7b-ebba2b3573b5",
+      "authoringRunId": null,
+      "requestedAuthoringRunId": null,
+      "projectId": "bdf7f013-d841-4b7b-8b81-42bb4d748ca8",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "cameraViewPresent": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "remainingCalls": null,
+      "blocked": false
+    }
+  ],
+  "reviewAttempts": [],
+  "review": null,
+  "secondReview": null,
+  "finalReview": null,
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "4cf7fd0a4579ffe45fbccd1fb8e861a6b6d3c1583b0bf513ff0628fd3faf14c0",
+      "bytes": 237115,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "4cf7fd0a4579ffe45fbccd1fb8e861a6b6d3c1583b0bf513ff0628fd3faf14c0",
+      "privateBytes": 237115
+    }
+  ],
+  "postReviewEvidence": null,
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null
+  },
+  "requestIds": {
+    "initial": "67e28ae8-222e-4631-a123-69df666591ae",
+    "review": null,
+    "secondReview": null,
+    "finalReview": null
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 1,
+    "reviewFindingsStatus": "written",
+    "reviewFindingsCount": 0
+  },
+  "browserActivity": {
+    "consoleErrors": 1,
+    "pageErrors": 0,
+    "requestFailures": 0,
+    "requestFailureDetails": []
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": {
+    "stage": "initial-generation",
+    "code": "initial-generation-http-failure",
+    "status": 503,
+    "errorType": "AcceptanceError"
+  },
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}
