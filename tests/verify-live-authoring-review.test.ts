@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   authorizeAuthoringReviewCall,
+  capturePostReviewEvidence,
   classifyOwnOriginRequestFailure,
   configuredLiveCallLimit,
   preflightGenerationOrigin,
@@ -133,6 +134,53 @@ function nextReviewRequest({
     responseBindingDigest: null,
     verdict: null,
     remainingCalls: null,
+  };
+}
+
+function postReviewEvidencePage({ failPlayScreenshot = false } = {}) {
+  let currentMode = "Edit";
+  const settleDelays: number[] = [];
+  const canvas: any = {
+    first: () => canvas,
+    isVisible: vi.fn(async () => true),
+    boundingBox: vi.fn(async () => ({ x: 0, y: 0, width: 640, height: 480 })),
+    evaluate: vi.fn(async (callback: (element: any) => unknown) =>
+      callback({ width: 640, height: 480 }),
+    ),
+    screenshot: vi.fn(async () => {
+      if (failPlayScreenshot && currentMode === "Play")
+        throw new Error("private browser detail");
+      return Buffer.from(currentMode);
+    }),
+  };
+  return {
+    settleDelays,
+    canvas,
+    page: {
+      getByRole: vi.fn((_role: string, options: { name: string }) => ({
+        isVisible: vi.fn(async () => true),
+        evaluate: vi.fn(async (callback: (element: any) => unknown) =>
+          callback({
+            classList: {
+              contains: (value: string) =>
+                value === "active" && currentMode === options.name,
+            },
+          }),
+        ),
+        click: vi.fn(async () => {
+          currentMode = options.name;
+        }),
+      })),
+      locator: vi.fn(() => canvas),
+      waitForTimeout: vi.fn(async (delay: number) => {
+        settleDelays.push(delay);
+      }),
+      addStyleTag: vi.fn(async () => ({
+        evaluate: vi.fn(async (callback: (element: any) => unknown) =>
+          callback({ remove: vi.fn() }),
+        ),
+      })),
+    },
   };
 }
 
@@ -284,6 +332,84 @@ describe("live authoring structural summary", () => {
 
   it("returns no summary for a missing or malformed snapshot", () => {
     expect(summarizeProjectStructure(null)).toBeNull();
+  });
+});
+
+describe("post-review visual evidence", () => {
+  it("captures settled editor and Play canvases into fixed private PNG files", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "orbsie-post-review-"));
+    const { page, canvas, settleDelays } = postReviewEvidencePage();
+    try {
+      const evidence = await capturePostReviewEvidence(page, directory);
+
+      expect(evidence).toMatchObject({
+        status: "complete",
+        settleDelayMs: 1000,
+        editor: {
+          readiness: "ready",
+          captureStatus: "captured",
+          privatePngStatus: "written",
+          privatePngWritten: true,
+          bytes: 4,
+        },
+        play: {
+          readiness: "ready",
+          captureStatus: "captured",
+          privatePngStatus: "written",
+          privatePngWritten: true,
+          bytes: 4,
+        },
+      });
+      expect(settleDelays).toEqual([1000, 1000]);
+      expect(canvas.screenshot).toHaveBeenCalledTimes(2);
+      expect((await readdir(directory)).sort()).toEqual([
+        "post-review-edit-canvas.png",
+        "post-review-play-canvas.png",
+      ]);
+      expect(
+        await readFile(join(directory, "post-review-edit-canvas.png")),
+      ).toEqual(Buffer.from("Edit"));
+      expect(
+        await readFile(join(directory, "post-review-play-canvas.png")),
+      ).toEqual(Buffer.from("Play"));
+      for (const filename of await readdir(directory))
+        expect(
+          ((await stat(join(directory, filename))).mode & 0o777).toString(8),
+        ).toBe("600");
+      expect(JSON.stringify(evidence)).not.toContain("private browser detail");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("reports a failed Play capture without changing bounded-incomplete outcome", async () => {
+    const directory = await mkdtemp(
+      join(tmpdir(), "orbsie-post-review-partial-"),
+    );
+    const { page } = postReviewEvidencePage({ failPlayScreenshot: true });
+    const report: { outcome: string; postReviewEvidence?: unknown } = {
+      outcome: "bounded-incomplete",
+    };
+    try {
+      const evidence = await capturePostReviewEvidence(page, directory);
+      report.postReviewEvidence = evidence;
+
+      expect(report.outcome).toBe("bounded-incomplete");
+      expect(evidence).toMatchObject({
+        status: "partial",
+        editor: { captureStatus: "captured", privatePngWritten: true },
+        play: {
+          readiness: "ready",
+          captureStatus: "unavailable",
+          privatePngWritten: false,
+        },
+      });
+      expect(await readdir(directory)).toEqual(["post-review-edit-canvas.png"]);
+      expect(JSON.stringify(report)).not.toContain("private browser detail");
+      expect(JSON.stringify(report)).not.toContain("passed");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });
 

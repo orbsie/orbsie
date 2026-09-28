@@ -35,6 +35,7 @@ const MAX_PROCEDURAL_PARTS_PER_ENTITY = 32;
 const MAX_REVIEW_FINDINGS = 4;
 const MAX_REVIEW_ISSUES = 8;
 const MAX_REVIEW_ISSUE_SUMMARY_LENGTH = 300;
+const POST_REVIEW_SETTLE_DELAY_MS = 1000;
 const MAX_REQUEST_FAILURE_DETAILS = 16;
 const REVIEW_FAILURE_KINDS = new Set([
   "invalid-input",
@@ -1158,6 +1159,91 @@ async function screenshotEvidence(page, label, privateDirectory) {
   };
 }
 
+async function capturePostReviewView(page, mode, privateDirectory) {
+  const filename = `post-review-${mode.toLowerCase()}-canvas.png`;
+  const result = {
+    readiness: "unavailable",
+    captureStatus: "unavailable",
+    privatePngStatus: privateDirectory ? "unavailable" : "disabled",
+    privatePngWritten: false,
+  };
+  try {
+    const modeButton = page.getByRole("button", { name: mode, exact: true });
+    if (!(await modeButton.isVisible())) return result;
+    if (
+      !(await modeButton.evaluate((button) =>
+        button.classList.contains("active"),
+      ))
+    )
+      await modeButton.click({ timeout: 5000 });
+    await page.waitForTimeout(POST_REVIEW_SETTLE_DELAY_MS);
+
+    const modeReady = await modeButton.evaluate((button) =>
+      button.classList.contains("active"),
+    );
+    const canvas = page.locator("canvas").first();
+    const bounds = await canvas.boundingBox();
+    const canvasReady =
+      (await canvas.isVisible()) &&
+      Boolean(bounds?.width && bounds?.height) &&
+      (await canvas.evaluate(
+        (element) => element.width > 0 && element.height > 0,
+      ));
+    if (!modeReady || !canvasReady) return result;
+    result.readiness = "ready";
+
+    const sceneOnlyStyle = await page.addStyleTag({
+      content:
+        "body * { visibility: hidden !important; } canvas { visibility: visible !important; }",
+    });
+    let png;
+    try {
+      png = await canvas.screenshot({
+        animations: "disabled",
+        timeout: 5000,
+      });
+    } finally {
+      await sceneOnlyStyle.evaluate((element) => element.remove());
+    }
+    result.captureStatus = "captured";
+    result.bytes = png.byteLength;
+    result.sha256 = sha256(png);
+
+    if (privateDirectory) {
+      try {
+        await writePrivateScreenshot(privateDirectory, filename, png);
+        result.privatePngStatus = "written";
+        result.privatePngWritten = true;
+      } catch {
+        result.privatePngStatus = "unavailable";
+      }
+    }
+  } catch {
+    // Keep only fixed statuses; browser and filesystem details may be private.
+  }
+  return result;
+}
+
+/**
+ * Capture settled editor and Play canvases without changing the review verdict.
+ * @param {any} page
+ * @param {string | null} [privateDirectory=null]
+ */
+export async function capturePostReviewEvidence(page, privateDirectory = null) {
+  const editor = await capturePostReviewView(page, "Edit", privateDirectory);
+  const play = await capturePostReviewView(page, "Play", privateDirectory);
+  const captures = [editor, play].filter(
+    (view) => view.captureStatus === "captured",
+  ).length;
+  return {
+    status:
+      captures === 2 ? "complete" : captures === 1 ? "partial" : "unavailable",
+    settleDelayMs: POST_REVIEW_SETTLE_DELAY_MS,
+    editor,
+    play,
+  };
+}
+
 async function installActivityHistory(page) {
   await page.evaluate(() => {
     const partialReviewPrefix =
@@ -1265,6 +1351,7 @@ async function main() {
     secondReview: null,
     finalReview: null,
     evidence: [],
+    postReviewEvidence: null,
     storage: {},
     requestIds: {
       initial: null,
@@ -2197,6 +2284,37 @@ async function main() {
         recovered: true,
       };
     }
+
+    let finalScene = null;
+    try {
+      const summary = await readProjectSummary(page, true);
+      if (
+        summary &&
+        summary.projectId === report.storage.afterReload?.projectId &&
+        summary.revision === report.storage.afterReload?.revision
+      )
+        finalScene = summary;
+    } catch {
+      // Keep unavailable scene detail out of the acceptance result.
+    }
+    const postReviewVisuals = await capturePostReviewEvidence(
+      page,
+      privateEvidenceDirectory,
+    );
+    report.postReviewEvidence = {
+      ...postReviewVisuals,
+      finalScene: {
+        status: finalScene ? "recovered" : "unavailable",
+        revision: finalScene
+          ? safeRevision(finalScene.revision)
+          : safeRevision(report.storage.afterReload?.revision),
+        geometry: finalScene?.structure ?? null,
+      },
+    };
+    report.privateEvidence.screenshotsWritten += [
+      postReviewVisuals.editor,
+      postReviewVisuals.play,
+    ].filter((view) => view.privatePngWritten).length;
 
     if (
       report.outcome === "running" ||
