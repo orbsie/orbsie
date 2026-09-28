@@ -1,10 +1,21 @@
 # Development checkpoint
 
+Sep 27 fresh Gateway mushroom-replacement attempt ran after the local cap was
+corrected to 4096. Exactly two generation requests returned HTTP 200 with no
+retry, fallback, budget violation, or blocked external request. Tiny-island
+creation passed; the selected-object edit was rejected as
+`INVALID_SCENE_PROTOCOL` (operation 3), so recovery/export/player never ran.
+Inspected seed and failure screenshots show the original tree and an explicit
+unapplied-change error. Only the pre-edit island/tree snapshot exists; no
+mushroom contact geometry or player framing could be assessed. This is not
+visual acceptance evidence. Sanitized result:
+`docs/evidence/provider-e2e/mushroom-contact-prompt-20260927-cap4096/report.json`.
+
 Sep 27 mushroom-replacement Gateway run stopped at harness preflight: the app's
 `/api/config` reported `generationMaxTokens: 10000`, while this test requires an
 exact 4096-token cap. No provider request was sent; creation/edit and visual
 inspection did not start, so this run provides no visual acceptance evidence.
-Do not retry until the local app advertises the requested cap. Sanitized result:
+That earlier attempt predates the runtime cap correction. Sanitized result:
 `docs/evidence/provider-e2e/mushroom-contact-prompt-20260927/report.json`.
 
 Sep 27 shared generation prompt now states that custom-part coordinates compose

@@ -1,0 +1,59 @@
+{
+  "date": "2026-09-27",
+  "task": "mushroom-replacement-gateway-browser-e2e",
+  "result": "edit-rejected",
+  "harnessInvocations": 1,
+  "provider": "gateway",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "requestedOutputTokensPerCall": 4096,
+  "serverReportedOutputTokenCap": 4096,
+  "generationBudget": 2,
+  "generationRequests": 2,
+  "generationStatuses": [200, 200],
+  "fallbackUsed": false,
+  "generationBudgetViolations": 0,
+  "blockedExternalRequests": 0,
+  "phases": {
+    "tinyIslandCreation": {
+      "status": "passed",
+      "operations": 5,
+      "catalogEntities": 2,
+      "proceduralEntities": 0,
+      "generatedEntities": 0
+    },
+    "selectedMushroomEdit": {
+      "status": "blocked",
+      "reasonCode": "INVALID_SCENE_PROTOCOL",
+      "operation": 3,
+      "issueCount": 0,
+      "finishReason": null
+    },
+    "localRecovery": "blocked",
+    "export": "blocked",
+    "standalonePlayer": "not-started"
+  },
+  "visualInspection": {
+    "inspectedPrivateScreenshots": [
+      "intermediate-seed.png",
+      "failure.png"
+    ],
+    "observed": "The seed image shows the island and original tree. The failure image retains that scene and shows the unapplied-change error.",
+    "preEditSnapshot": {
+      "revision": 5,
+      "entities": 2,
+      "content": "island and original tree"
+    },
+    "postEditSnapshot": false,
+    "editorEditScreenshot": false,
+    "playerScreenshot": false,
+    "contactGeometryAssessment": "not-possible",
+    "cameraFramingAssessment": "not-possible",
+    "visualAcceptance": "not-established"
+  },
+  "limitations": [
+    "The edit did not yield an applicable scene, so cap/stem transformed contact, visible details, and player framing could not be evaluated.",
+    "The harness result is a failure despite both provider responses returning HTTP 200."
+  ]
+}
