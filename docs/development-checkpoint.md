@@ -1,5 +1,16 @@
 # Development checkpoint
 
+Sep 27 zero-model review of the rejected mushroom edit found the retained
+sanitized run record contains only `INVALID_SCENE_PROTOCOL`, operation 3, zero
+schema issues, and a null finish reason; it does not preserve enough information
+to distinguish event or command parsing, policy enforcement, turn completion,
+or command application. The exact cause remains unknown. Generation diagnostics
+now include an allowlisted protocol subreason for those failure stages without
+exposing error text. The
+focused parser/stream suite passes (67 tests) and TypeScript typecheck passes.
+This improves future diagnosis only; it does not repair or visually validate
+the prior model response.
+
 Sep 27 fresh Gateway mushroom-replacement attempt ran after the local cap was
 corrected to 4096. Exactly two generation requests returned HTTP 200 with no
 retry, fallback, budget violation, or blocked external request. Tiny-island

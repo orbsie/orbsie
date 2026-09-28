@@ -20,6 +20,27 @@ export const generationDiagnosticReasons = [
   "duplicate_recipe_node_id",
   "unreachable_recipe_node",
 ] as const;
+export const sceneProtocolSubreasons = [
+  "malformed-provider-event",
+  "strict-schema-rejected",
+  "unsupported-command",
+  "asset-policy-rejected",
+  "modeling-policy-rejected",
+  "command-apply-rejected",
+  "command-after-commit",
+  "provider-incomplete",
+  "no-supported-commands",
+  "missing-commit",
+  "unclassified",
+] as const;
+export type SceneProtocolSubreason = (typeof sceneProtocolSubreasons)[number];
+const knownSceneProtocolSubreasons = new Set<string>(sceneProtocolSubreasons);
+
+function safeSceneProtocolSubreason(value: unknown): SceneProtocolSubreason {
+  return typeof value === "string" && knownSceneProtocolSubreasons.has(value)
+    ? (value as SceneProtocolSubreason)
+    : "unclassified";
+}
 
 export const generationDiagnosticPathKeys = [
   "type",
@@ -217,13 +238,23 @@ export class SceneJSONError extends SyntaxError {
 
 export class SceneProtocolError extends Error {
   readonly finishReason: GenerationFinishReason;
+  readonly protocolSubreason: SceneProtocolSubreason;
   constructor(
     finishReason: GenerationFinishReason,
-    message = "The model returned a scene update that could not be applied.",
+    options: {
+      message?: string;
+      protocolSubreason?: unknown;
+    } = {},
   ) {
-    super(message);
+    super(
+      options.message ??
+        "The model returned a scene update that could not be applied.",
+    );
     this.name = "SceneProtocolError";
     this.finishReason = finishReason;
+    this.protocolSubreason = safeSceneProtocolSubreason(
+      options.protocolSubreason,
+    );
   }
 }
 
@@ -274,6 +305,7 @@ export interface GenerationDiagnostic {
     readonly issues: readonly GenerationDiagnosticIssue[];
     readonly providerStatus?: number | null;
     readonly finishReason?: GenerationFinishReason;
+    readonly protocolSubreason?: SceneProtocolSubreason;
     readonly stage?: ChatGPTGenerationStage;
     readonly reason?: ChatGPTGenerationReason;
     readonly rpcCode?: number;
@@ -450,6 +482,10 @@ function safeSceneDiagnostic(
       source.providerStatus <= 599)
       ? source.providerStatus
       : undefined;
+  const protocolSubreason =
+    source.protocolSubreason === undefined
+      ? undefined
+      : safeSceneProtocolSubreason(source.protocolSubreason);
   return {
     operation,
     issues: safeSceneIssues(source.issues),
@@ -457,6 +493,7 @@ function safeSceneDiagnostic(
     ...(source.finishReason !== undefined
       ? { finishReason: normalizeFinishReason(source.finishReason) }
       : {}),
+    ...(protocolSubreason !== undefined ? { protocolSubreason } : {}),
   };
 }
 
@@ -524,6 +561,7 @@ export function generationDiagnostic(
       diagnostic: {
         operation,
         issues: [],
+        protocolSubreason: safeSceneProtocolSubreason(error.protocolSubreason),
         finishReason: error.finishReason,
       },
     };

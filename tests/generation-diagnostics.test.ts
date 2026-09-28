@@ -5,6 +5,7 @@ import {
   ChatGPTGenerationError,
   generationDiagnostic,
   ProviderStreamError,
+  SceneProtocolError,
 } from "../src/lib/generation-diagnostics";
 import { generateCommands } from "../src/lib/server/generation";
 import { parseBrowserModelRecipe } from "../src/lib/browser-modeling";
@@ -52,6 +53,7 @@ describe("generation diagnostics", () => {
                 reason: "private-reason",
               },
             ],
+            protocolSubreason: "private-protocol-detail" as never,
           },
         },
       },
@@ -62,6 +64,7 @@ describe("generation diagnostics", () => {
       diagnostic: {
         operation: 0,
         issues: [{ code: "custom", path: ["?"] }],
+        protocolSubreason: "unclassified",
         stage: "stream",
         reason: "unknown",
       },
@@ -69,6 +72,40 @@ describe("generation diagnostics", () => {
     expect(JSON.stringify(generationDiagnostic(error))).not.toContain(
       "private",
     );
+  });
+
+  it("preserves only allowlisted protocol subreasons in scene diagnostics", () => {
+    const safe = generationDiagnostic(
+      new SceneProtocolError(null, {
+        protocolSubreason: "command-apply-rejected",
+        message: "private entity details",
+      }),
+      3,
+    );
+    expect(safe?.diagnostic.protocolSubreason).toBe("command-apply-rejected");
+    expect(JSON.stringify(safe)).not.toContain("private entity details");
+
+    const unknown = generationDiagnostic(
+      new SceneProtocolError(null, {
+        protocolSubreason: "private-raw-response" as never,
+      }),
+    );
+    expect(unknown?.diagnostic.protocolSubreason).toBe("unclassified");
+    expect(JSON.stringify(unknown)).not.toContain("private-raw-response");
+
+    const hosted = generationDiagnostic(
+      new ChatGPTGenerationError("stream", "callback-validation", {
+        sceneDiagnostic: {
+          code: "INVALID_SCENE_PROTOCOL",
+          diagnostic: {
+            operation: 3,
+            issues: [],
+            protocolSubreason: "command-apply-rejected",
+          },
+        },
+      }),
+    );
+    expect(hosted?.diagnostic.protocolSubreason).toBe("command-apply-rejected");
   });
 
   it("records a provider stream status without exposing upstream payloads", async () => {
@@ -461,6 +498,7 @@ describe("generation diagnostics", () => {
     expect(record.diagnostic).toEqual({
       operation: 2,
       issues: [],
+      protocolSubreason: "command-apply-rejected",
       finishReason: "stop",
     });
     expect(record.error).toContain("could not be applied");

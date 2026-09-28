@@ -501,7 +501,9 @@ export async function generateCommands({
           );
         } catch (error) {
           if (error instanceof z.ZodError) throw error;
-          throw new SceneProtocolError(finishReason);
+          throw new SceneProtocolError(finishReason, {
+            protocolSubreason: "command-apply-rejected",
+          });
         }
         working = applied.project;
         latestProject = working;
@@ -538,7 +540,9 @@ export async function generateCommands({
             );
           } catch (error) {
             if (error instanceof StrictSceneSchemaError)
-              throw new SceneProtocolError(finishReason);
+              throw new SceneProtocolError(finishReason, {
+                protocolSubreason: "strict-schema-rejected",
+              });
             throw error;
           }
         }
@@ -551,29 +555,33 @@ export async function generateCommands({
           );
         } catch (error) {
           if (error instanceof z.ZodError) throw error;
-          throw new SceneProtocolError(finishReason);
+          throw new SceneProtocolError(finishReason, {
+            protocolSubreason: "unsupported-command",
+          });
         }
         let command: ModelCommand;
         try {
           command = enforceAssetPolicy(working, parsed, assetPolicy);
         } catch (error) {
           if (error instanceof z.ZodError) throw error;
-          throw new SceneProtocolError(finishReason);
+          throw new SceneProtocolError(finishReason, {
+            protocolSubreason: "asset-policy-rejected",
+          });
         }
         try {
           assertModelingCommand(command, localModeling, browserModeling);
         } catch (error) {
           if (error instanceof z.ZodError) throw error;
-          throw new SceneProtocolError(
-            finishReason,
-            error instanceof Error ? error.message : undefined,
-          );
+          throw new SceneProtocolError(finishReason, {
+            message: error instanceof Error ? error.message : undefined,
+            protocolSubreason: "modeling-policy-rejected",
+          });
         }
         if (pendingCommit)
-          throw new SceneProtocolError(
-            finishReason,
-            "No scene commands may follow commit_revision.",
-          );
+          throw new SceneProtocolError(finishReason, {
+            message: "No scene commands may follow commit_revision.",
+            protocolSubreason: "command-after-commit",
+          });
         if (command.type === "commit_revision") {
           pendingCommit = command;
           return;
@@ -591,10 +599,15 @@ export async function generateCommands({
         try {
           event = JSON.parse(text);
         } catch {
-          throw new SceneProtocolError(finishReason);
+          throw new SceneProtocolError(finishReason, {
+            protocolSubreason: "malformed-provider-event",
+          });
         }
         const record = objectRecord(event);
-        if (!record) throw new SceneProtocolError(finishReason);
+        if (!record)
+          throw new SceneProtocolError(finishReason, {
+            protocolSubreason: "malformed-provider-event",
+          });
         const choice = Array.isArray(record.choices)
           ? objectRecord(record.choices[0])
           : undefined;
@@ -666,19 +679,20 @@ export async function generateCommands({
               "The model response ended before the scene was complete. Finished objects are preserved; retry to continue.",
             );
           if (refusalSeen || finishReason !== "stop")
-            throw new SceneProtocolError(
-              finishReason,
-              "The model did not complete this scene update.",
-            );
+            throw new SceneProtocolError(finishReason, {
+              message: "The model did not complete this scene update.",
+              protocolSubreason: "provider-incomplete",
+            });
         } else if (records.trim()) emit(records);
         if (!count) {
           if (finishReason === "length")
             throw new TruncatedSceneStreamError(finishReason);
           missingCommit = true;
-          throw new SceneProtocolError(
-            finishReason,
-            "This model did not return any supported scene commands. Select another model.",
-          );
+          throw new SceneProtocolError(finishReason, {
+            message:
+              "This model did not return any supported scene commands. Select another model.",
+            protocolSubreason: "no-supported-commands",
+          });
         }
         if (!pendingCommit) {
           missingCommit = true;
@@ -686,7 +700,10 @@ export async function generateCommands({
             "Generation ended before committing this turn. Finished objects are preserved; retry to continue.";
           if (finishReason === "length")
             throw new TruncatedSceneStreamError(finishReason, message);
-          throw new SceneProtocolError(finishReason, message);
+          throw new SceneProtocolError(finishReason, {
+            message,
+            protocolSubreason: "missing-commit",
+          });
         }
         if (finishReason && finishReason !== "stop") {
           if (finishReason === "length")
@@ -694,14 +711,17 @@ export async function generateCommands({
               finishReason,
               "The model response ended before the scene was complete. Finished objects are preserved; retry to continue.",
             );
-          throw new SceneProtocolError(
-            finishReason,
-            "The model did not complete this scene update.",
-          );
+          throw new SceneProtocolError(finishReason, {
+            message: "The model did not complete this scene update.",
+            protocolSubreason: "provider-incomplete",
+          });
         }
         const commit = pendingCommit;
         if (!commit)
-          throw new SceneProtocolError(finishReason, "Missing scene commit.");
+          throw new SceneProtocolError(finishReason, {
+            message: "Missing scene commit.",
+            protocolSubreason: "missing-commit",
+          });
         pendingCommit = undefined;
         applyAndEnqueue(commit, true);
         await lifecycleController.complete();

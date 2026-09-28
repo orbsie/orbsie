@@ -34,11 +34,18 @@
     "export": "blocked",
     "standalonePlayer": "not-started"
   },
-  "visualInspection": {
-    "inspectedPrivateScreenshots": [
-      "intermediate-seed.png",
-      "failure.png"
+  "diagnosticReview": {
+    "exactCause": "unknown-from-retained-evidence",
+    "availableFields": [
+      "INVALID_SCENE_PROTOCOL",
+      "operation 3",
+      "zero schema issues",
+      "null finish reason"
     ],
+    "sanitizedRunRecordIncludesProviderCommandOrResponse": false
+  },
+  "visualInspection": {
+    "inspectedPrivateScreenshots": ["intermediate-seed.png", "failure.png"],
     "observed": "The seed image shows the island and original tree. The failure image retains that scene and shows the unapplied-change error.",
     "preEditSnapshot": {
       "revision": 5,

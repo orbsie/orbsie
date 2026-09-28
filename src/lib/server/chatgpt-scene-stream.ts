@@ -154,10 +154,10 @@ export function createChatGPTSceneStream(
           );
           assertModelingCommand(command, false, input.browserModeling);
           if (pendingCommit)
-            throw new SceneProtocolError(
-              null,
-              "No scene commands may follow commit_revision.",
-            );
+            throw new SceneProtocolError(null, {
+              message: "No scene commands may follow commit_revision.",
+              protocolSubreason: "command-after-commit",
+            });
           observation?.noteCommand();
           observation?.noteOutputBytes(encoder.encode(line + "\n").byteLength);
           if (command.type === "commit_revision") {
@@ -213,10 +213,10 @@ export function createChatGPTSceneStream(
           combined.throwIfAborted();
           if (!pendingCommit) {
             missingCommit = true;
-            throw new SceneProtocolError(
-              null,
-              "The model did not finish with a commit_revision.",
-            );
+            throw new SceneProtocolError(null, {
+              message: "The model did not finish with a commit_revision.",
+              protocolSubreason: "missing-commit",
+            });
           }
           const commit = pendingCommit;
           pendingCommit = undefined;
