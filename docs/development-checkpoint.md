@@ -8,6 +8,10 @@ reports `authoringReview:false`. `main` pushed to the public GitHub repo
 (`422e03b..c2aee61`, fast-forward) after a pickaxe scan of all history for
 every local secret value found only non-secret identifiers (GCS bucket,
 Vercel team ID, model name, format override).
+Post-release regression: fresh OpenRouter flagship on a new disposable dev DB
+(`orbsie_diag_20260929_b`) passed creation, mushroom, seven-crystal, Undo,
+export and standalone win/reset in exactly three Luna calls; only publication
+phases were not run. Evidence: `docs/evidence/provider-e2e/openrouter-flagship-20260929/`.
 Held despite approval:
 - Enabling production review: no record shows `scripts/authoring-run-schema.sql`
   (with the Sep 24 three-review constraint) applied to the production DB, and a
