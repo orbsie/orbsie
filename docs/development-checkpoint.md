@@ -74,6 +74,17 @@ accepts such a split under strict conditions. Evidence:
 `docs/evidence/provider-e2e/gateway-flagship-20260929-r2..r4/`; failure
 screenshots are private. Occasional single test failures under host load
 average around 50 did not reproduce on rerun.
+**Gateway flagship run 5 passed every requested phase in one continuous
+session** (`docs/evidence/provider-e2e/gateway-flagship-20260929-r5/`):
+exactly three HTTP 200 `openai/gpt-6-luna` calls at the 4,096 cap, no retries
+or budget violations. Creation (revision 28) with movement during generation,
+five crystals, portal win and reset; selected tree to giant pink mushroom
+(32); middle platform slower plus two crystals with a seven-crystal win and
+reset (38); UI Undo to five crystals with win and reset (39); export; and
+standalone gameplay win and reset. The strict journey is incomplete only for
+the signed-out publication phases, which were not requested (publishing is off
+on the isolated server). Claude viewed the mushroom capture: large pink cap at
+the island edge, route, crystals and portal visible.
 After scoping, OpenRouter run `authoring-review-scoped-scale-four-call-20260929`
 passed in 3 calls (one stem/cap gap correction, then accept). Claude's check:
 legible stem, cap and five spots, but the spots are oversized and lined along
