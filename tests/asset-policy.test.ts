@@ -5,9 +5,11 @@ import {
   enforceAssetPolicy,
 } from "../src/lib/asset-policy";
 import {
+  applyModelOperation,
   applyOperation,
   blankProject,
   type Command,
+  type Project,
 } from "../src/lib/protocol";
 
 function entity(id: string, assetPolicy?: "catalog-allowed" | "new-only") {
@@ -234,6 +236,74 @@ describe("request-scoped asset policy", () => {
         unchangedContext,
       ),
     ).toThrow(/original geometry/);
+  });
+
+  it("defers a premature new-only mark on a catalog object until its replacement", () => {
+    const project = {
+      ...blankProject(),
+      entities: [{ ...entity("tree-a"), geometry: assetGeometry }],
+    };
+    const context = deriveAssetPolicy(
+      "Make this a giant pink mushroom",
+      "tree-a",
+      project,
+    );
+    // Captured Gateway order: transform (marked new-only) before replacement.
+    const transform = enforceAssetPolicy(
+      project,
+      {
+        type: "set_transform",
+        id: "tree-a",
+        position: [-5, 0.05, 3],
+        scale: [4, 4, 4],
+        assetPolicy: "new-only",
+      } as never,
+      context,
+    );
+    expect(transform).not.toHaveProperty("assetPolicy");
+    const runId = crypto.randomUUID();
+    const apply = (
+      current: Project,
+      command: unknown,
+      cursor: { runId: string; sequence: number; seen: Set<string> },
+    ) =>
+      applyModelOperation(
+        current,
+        {
+          version: 1,
+          projectId: current.id,
+          runId,
+          operationId: crypto.randomUUID(),
+          sequence: cursor.sequence + 1,
+          baseRevision: current.revision,
+          command,
+        },
+        cursor,
+      );
+    const first = apply(project, transform, {
+      runId,
+      sequence: 0,
+      seen: new Set(),
+    });
+    const moved = first.project;
+    expect(moved.entities[0]).toMatchObject({
+      scale: [4, 4, 4],
+      geometry: assetGeometry,
+    });
+    const geometry = enforceAssetPolicy(
+      moved,
+      {
+        type: "set_geometry",
+        id: "tree-a",
+        geometry: { kind: "mushroom", detail: "refined" },
+      },
+      context,
+    );
+    const replaced = apply(moved, geometry, first.cursor).project;
+    expect(replaced.entities[0]).toMatchObject({
+      scale: [4, 4, 4],
+      geometry: { kind: "mushroom" },
+    });
   });
 
   it("honors persisted new-only policy even when a model asks to downgrade it", () => {

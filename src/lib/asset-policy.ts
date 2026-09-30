@@ -302,6 +302,21 @@ export function enforceAssetPolicy(
   )
     rejectCatalogAsset(command.id);
 
+  // A model may mark a catalog object new-only in a transform, material or
+  // behavior command sent before its replacement geometry. The protocol only
+  // accepts that mark once the geometry is replaced, so defer it to the
+  // replacing set_geometry; commit still requires that replacement.
+  if (
+    command.type !== "set_geometry" &&
+    suppliedPolicy === "new-only" &&
+    entity?.geometry?.kind === "asset"
+  ) {
+    const { assetPolicy: _deferred, ...deferred } = command as ModelCommand & {
+      assetPolicy?: AssetRequestPolicy;
+    };
+    return deferred as ModelCommand;
+  }
+
   if (targetNewOnly) {
     if (
       command.type === "set_geometry" &&
