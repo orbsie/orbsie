@@ -27,7 +27,7 @@ const coreGuidance = [
   "Reserve only NEW entities FIRST",
   "Finish referenced entities to ready before set_game",
   "Built-in procedural kinds may carry custom parts in the same object",
-  "A lathe custom part uses profile points [radius,height]",
+  "its profile points are [radius,height] revolved about part-local Y",
   "solid (bounded wall collision)",
   "Match distinctive object forms, not just their color",
   "Each command must match the provided command schema",

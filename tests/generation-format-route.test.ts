@@ -18,6 +18,7 @@ vi.mock("@/lib/server/trial", async () => ({
   claimTrial: deps.claim,
   trialIdentity: deps.identity,
   trialEnabled: deps.trialEnabled,
+  trialProviderAvailable: vi.fn(async () => deps.trialEnabled()),
 }));
 
 import { afterEach, expect, it, vi } from "vitest";

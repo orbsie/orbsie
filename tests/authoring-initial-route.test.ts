@@ -20,6 +20,7 @@ vi.mock("@/lib/server/trial", async () => ({
   claimTrial: deps.claim,
   trialIdentity: deps.identity,
   trialEnabled: deps.trialEnabled,
+  trialProviderAvailable: vi.fn(async () => deps.trialEnabled()),
 }));
 vi.mock("@/lib/server/authoring-run-admission", () => ({
   admitInitialAuthoringRun: deps.admit,
