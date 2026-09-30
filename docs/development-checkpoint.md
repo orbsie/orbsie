@@ -1,5 +1,54 @@
 # Development checkpoint
 
+Sep 29 (Claude Code session). The Sep 27 guidance run's pre-inference 503 was
+reproduced with zero inference: `next start` inherits `VERCEL=1` from
+`.env.production.local`, so anonymous admission requires Vercel's forwarded-IP
+header. `scripts/start-isolated-review-server.mjs` now reads only a disposable
+`orbsie_*` `DATABASE_URL` and forces `VERCEL=0`, loopback auth URL, review and
+4,096-token settings (`8ec0844`). The post-reload Edit/Play capture now resumes
+the saved world from the landing pill first (`022c9ca`). Full unit suite was
+red (21 failures from stale lathe-sentence assertions and route tests missing
+the free-provider availability mock); fixed in `cb91926`, now 214 files /
+2,009 tests pass with typecheck and production build. Ordinary test runs no
+longer rewrite tracked standalone fixture evidence (`794210f`;
+`ORBSIE_REFRESH_EVIDENCE=1` refreshes it).
+
+Three bounded OpenRouter `openai/gpt-6-luna` runs (default tier, 4,096 cap, no
+retries, zero external requests), same tiny-island pink-mushroom prompt:
+1. `authoring-review-guidance-four-call-20260929`: 4 calls, bounded-incomplete.
+   New review guidance behaved: it fixed a real 0.17 m cap/stem gap and no
+   longer inferred grass or chased hidden instances, but 4 of 5 spot spheres
+   stayed buried in the lathe cap. The prompt had lost the lathe profile format.
+2. `authoring-review-lathe-surface-four-call-20260929` after `8442634` (profile
+   format plus upper-surface height formula in authoring and review): 4 calls,
+   bounded-incomplete; three spots visible, but a tiny mushroom with hidden stem
+   on a wide island. Edit/Play captures worked.
+3. `authoring-review-subject-scale-four-call-20260929` after `d7703de`
+   (support only modestly wider than subject, exposed stem): **passed** in 2
+   calls, first review accepted. Claude inspected the settled Edit and Play
+   captures: legible pink cap on visible pale stem, five pale spots, small
+   grass-topped island; the two far spots look slightly raised above the rim.
+   The accept path skipped correction, which runs 1-2 exercised.
+Gateway credits read HTTP 200, balance about $19.99 (no inference). The review
+verifier accepts `ORBSIE_PROVIDER=gateway` (`59735d6`). Two bounded Gateway
+Luna runs, same prompt and limits (4 calls each, within the 5-call Gateway cap):
+4. `authoring-review-gateway-four-call-20260929`: bounded-incomplete; the
+   corrections surfaced five spots, but a wide low cap kept hiding the stem
+   through three reviews.
+5. `authoring-review-gateway-hidden-support-four-call-20260929` after the
+   review instruction gained a hidden-support correction strategy (lengthen
+   the support and raise the cap and details together, or narrow the cap):
+   **passed** through the full path. Creation rendered a pink blob sunk in the
+   island; review 1 moved the buried spots onto the cap, review 2 exposed the
+   stem, and the final review accepted. Claude inspected the captures: a clear
+   mushroom with visible stem, cap resting on it, five spots, and a small island.
+This is the first live create, render, inspect, targeted revise, final-check
+pass that needed real corrections, on both OpenRouter (accept-first path) and
+Gateway (two-correction path). Single samples; quality still varies by run. Production
+`authoringReview` remains off; nothing deployed. Private images are under
+`~/.cache/orbsie/authoring-review/*-20260929`. Disposable DB
+`orbsie_diag_20260927_39edc5` is in use for these runs; drop it when done.
+
 Sep 27 the review instruction now reassesses the complete current scene on
 every pass, uses user-stated constraints rather than inferred exact material
 or detail counts, prioritizes the dominant requested form and surface over
