@@ -25,6 +25,19 @@ leafy pointed tops from creation, two corrections separated overlapping berries
 and exposed seeds, and the final review accepted. Claude's check: four distinct
 leafy-topped strawberries with seeds; the berry-to-arm attachment is not clearly
 visible and the seeds are few and large. Not yet deployed.
+Gateway reliability after the foliage change: flagship run 6 passed creation
+and mushroom, then the platform edit failed. A one-call replay of that edit with
+private capture showed a genuinely malformed NDJSON `set_game` line (the model
+closed the last rule and the command but omitted the `]` closing `rules`); per
+the framing task this is not silently repaired. Production's format override
+targets the old `gateway:openai/gpt-5.6-luna` ID, so Gateway `gpt-6-luna` uses
+NDJSON. A local `{"gateway:openai/gpt-6-luna":"json-schema"}` override run failed
+on its first call with `set_game` sent before its referenced entities were
+reserved ("Unknown game-program entity"), so JSON-schema is not a drop-in fix.
+Gateway Luna therefore has occasional model-output failures (about half of
+today's flagship attempts after the new-only fix); the in-app Try again is the
+recovery. Evidence: `gateway-flagship-20260929-r6/`,
+`gateway-flagship-jsonschema-20260929/`; raw streams stay private.
 Held despite approval:
 - Enabling production review: no record shows `scripts/authoring-run-schema.sql`
   (with the Sep 24 three-review constraint) applied to the production DB, and a
