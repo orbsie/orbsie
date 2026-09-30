@@ -15,6 +15,7 @@ import {
   type ModelCommand,
 } from "../protocol";
 import { z } from "zod";
+import { capturePrivateGenerationRejection } from "./private-generation-capture";
 import { isRecommendedModel, openrouterProviderRouting } from "../model-modes";
 import {
   generationDiagnostic,
@@ -501,6 +502,11 @@ export async function generateCommands({
           );
         } catch (error) {
           if (error instanceof z.ZodError) throw error;
+          capturePrivateGenerationRejection({
+            subreason: "command-apply-rejected",
+            text: JSON.stringify(command),
+            error,
+          });
           throw new SceneProtocolError(finishReason, {
             protocolSubreason: "command-apply-rejected",
           });
@@ -529,6 +535,7 @@ export async function generateCommands({
         try {
           input = JSON.parse(line);
         } catch {
+          capturePrivateGenerationRejection({ subreason: "json", text: line });
           throw new SceneJSONError(finishReason);
         }
         if (strictStructuredOutput) {

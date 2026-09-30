@@ -1,5 +1,26 @@
 # Orbsie full scope audit
 
+## Current reconciliation — 2026-09-29
+
+- The model-driven inspect-and-revise loop now has live passes on two
+  providers with `openai/gpt-6-luna` at the 4,096-token cap: OpenRouter
+  accepted a tiny-island mushroom after zero or one correction, and Gateway
+  turned a sunken pink blob into a legible stemmed, spotted mushroom through
+  two targeted corrections and a final accept. Claude inspected every settled
+  Edit/Play capture. Evidence:
+  `docs/evidence/provider-e2e/authoring-review-*-20260929/`. Single samples;
+  quality still varies, hosted ChatGPT review is not live-validated, and
+  production `authoringReview` remains off.
+- First native-GPU desktop frame sample (Quadro RTX 8000 via ANGLE/Vulkan):
+  median 16.7 ms at 60 Hz for the 14-entity fixture, tail matching an
+  empty-page baseline on a loaded host. Evidence:
+  `docs/evidence/render-performance-native-gpu-20260929/`. Not a laptop,
+  larger-scene or mobile certification.
+- Gateway flagship: creation gameplay and the mushroom edit passed; the third
+  edit failed with an unapplicable response (see the checkpoint).
+- Still blocked on external resources: owner ChatGPT consent (no connected
+  Chrome extension in this session) and physical iOS/Android devices.
+
 ## Current reconciliation — 2026-09-27
 
 The full `prompt.md` objective remains open. Use
