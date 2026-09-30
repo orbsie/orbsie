@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   authorizeAuthoringReviewCall,
   capturePostReviewEvidence,
+  configuredProvider,
   classifyOwnOriginRequestFailure,
   configuredLiveCallLimit,
   preflightGenerationOrigin,
@@ -1096,5 +1097,15 @@ describe("live authoring origin preflight", () => {
       code: "loopback-origin-required-for-preflight",
     });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("live review provider selection", () => {
+  it("defaults to OpenRouter and admits only known providers", () => {
+    expect(configuredProvider({})).toBe("openrouter");
+    expect(configuredProvider({ ORBSIE_PROVIDER: "gateway" })).toBe("gateway");
+    expect(() => configuredProvider({ ORBSIE_PROVIDER: "free" })).toThrow(
+      "unsupported-provider",
+    );
   });
 });

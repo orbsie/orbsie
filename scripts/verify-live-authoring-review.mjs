@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Bounded live OpenRouter CREATE acceptance. The browser talks to the real
+// Bounded live OpenRouter or AI Gateway CREATE acceptance. The browser talks to the real
 // local app and server routes; route handling only observes, continues up to
 // the configured authorized calls, and aborts any later generation/review call.
 import { createHash } from "node:crypto";
@@ -24,6 +24,21 @@ import { fileURLToPath } from "node:url";
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const MODEL = "openai/gpt-6-luna";
+const PROVIDERS = {
+  openrouter: { label: "OpenRouter", keyEnv: "OPENROUTER_API_KEY" },
+  gateway: { label: "AI Gateway", keyEnv: "AI_GATEWAY_TEST_KEY" },
+};
+
+/**
+ * Select the live provider; OpenRouter remains the default.
+ * @param {Record<string, string | undefined>} [environment=process.env]
+ */
+export function configuredProvider(environment = process.env) {
+  const value = environment.ORBSIE_PROVIDER ?? "openrouter";
+  if (!Object.hasOwn(PROVIDERS, value))
+    throw new AcceptanceError("configuration", "unsupported-provider");
+  return value;
+}
 const OUTPUT_CAP = 4096;
 const DEFAULT_LIVE_BUDGET = 3;
 const APPROVED_LIVE_BUDGET = 4;
@@ -357,6 +372,7 @@ function requireConfiguration(argv) {
     throw new AcceptanceError("configuration", "default-service-tier-required");
 
   const liveCallLimit = configuredLiveCallLimit(process.env);
+  const provider = configuredProvider(process.env);
 
   const rawURL = process.env.ORBSIE_TEST_URL;
   if (!rawURL)
@@ -402,6 +418,7 @@ function requireConfiguration(argv) {
     outputCap: OUTPUT_CAP,
     serviceTier: "default",
     liveCallLimit,
+    provider,
   };
 }
 
@@ -1355,7 +1372,7 @@ async function main() {
   const report = {
     schemaVersion: 1,
     outcome: "running",
-    provider: "openrouter",
+    provider: config.provider,
     model: config.expectedModel,
     serviceTier: config.serviceTier,
     maxOutputTokens: config.outputCap,
@@ -1502,7 +1519,7 @@ async function main() {
         projectId: validId(payload?.project?.id),
         projectRevision: safeRevision(payload?.project?.revision),
         modelMatched: payload?.model === MODEL,
-        providerMatched: payload?.provider === "openrouter",
+        providerMatched: payload?.provider === config.provider,
         requestedOutputTokens:
           typeof outputTokenValue === "number" &&
           Number.isSafeInteger(outputTokenValue)
@@ -1789,7 +1806,7 @@ async function main() {
         return (
           url.origin === config.baseOrigin &&
           url.pathname === "/api/models" &&
-          url.searchParams.get("provider") === "openrouter"
+          url.searchParams.get("provider") === config.provider
         );
       },
       { timeout: 30000 },
@@ -1797,12 +1814,12 @@ async function main() {
     await connectionButton.click();
     await page
       .getByLabel("Provider", { exact: true })
-      .selectOption("openrouter");
+      .selectOption(config.provider);
     const catalogResponse = await catalogPromise;
     if (!catalogResponse.ok())
       throw new AcceptanceError(
         stage,
-        "openrouter-model-catalog-unavailable",
+        "provider-model-catalog-unavailable",
         catalogResponse.status(),
       );
     const catalog = await catalogResponse.json().catch(() => null);
@@ -1835,9 +1852,9 @@ async function main() {
     report.evidence.push(connectionEvidence);
     if (connectionEvidence.privatePngWritten)
       report.privateEvidence.screenshotsWritten += 1;
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env[PROVIDERS[config.provider].keyEnv];
     if (typeof apiKey !== "string" || apiKey.length < 10)
-      throw new AcceptanceError(stage, "openrouter-key-unavailable");
+      throw new AcceptanceError(stage, "provider-key-unavailable");
     await page.getByLabel("API key", { exact: true }).fill(apiKey);
     await page
       .getByRole("button", {
@@ -1845,7 +1862,9 @@ async function main() {
         exact: true,
       })
       .click();
-    await expect(page.locator(".mode-button")).toContainText("OpenRouter");
+    await expect(page.locator(".mode-button")).toContainText(
+      PROVIDERS[config.provider].label,
+    );
     const keyDigest = sha256(apiKey);
     const connectedStorage = await storageSnapshot(page, keyDigest);
     if (connectedStorage.sensitive)
