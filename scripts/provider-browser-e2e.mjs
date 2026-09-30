@@ -95,9 +95,9 @@ const FLAGSHIP_STORY_MUSHROOM_PROMPT = "Make this a giant pink mushroom";
 const FLAGSHIP_STORY_PLATFORM_PROMPT =
   "Make the middle platform slower and add two more crystals";
 const STORY_CATALOG_ASSETS = new Map(
-  JSON.parse(readFileSync(resolve("assets/catalog/manifest.json"), "utf8")).assets.map(
-    (asset) => [asset.id, asset],
-  ),
+  JSON.parse(
+    readFileSync(resolve("assets/catalog/manifest.json"), "utf8"),
+  ).assets.map((asset) => [asset.id, asset]),
 );
 const STORY_TREE_LABEL_KINDS = new Set(["generated", "custom"]);
 const STORY_MUSHROOM_LABEL_KINDS = new Set(["generated", "custom"]);
@@ -264,8 +264,7 @@ async function requirePublicGenerateOrigin(page, config, report) {
     config.baseOrigin,
   );
   report.originPreflight = result;
-  if (result.status !== "passed")
-    throw new HarnessBlockedError(result.error);
+  if (result.status !== "passed") throw new HarnessBlockedError(result.error);
 }
 
 function isBlockedError(error) {
@@ -521,9 +520,7 @@ export function readConfiguration(argv) {
     );
 
   const args = parseArgs(argv);
-  const viewportMode = parseTestViewportMode(
-    process.env.ORBSIE_TEST_VIEWPORT,
-  );
+  const viewportMode = parseTestViewportMode(process.env.ORBSIE_TEST_VIEWPORT);
   const provider = args.provider;
   if (!PROVIDERS.has(provider))
     throw new HarnessConfigurationError(
@@ -1369,9 +1366,7 @@ function safePlatformTraversalObservation(observation, allowedIds) {
       allowedIds,
     ),
     bounceContactId: safeGameplayId(observation.bounceContactId, allowedIds),
-    platformContactCount: safeGameplayCount(
-      observation.platformContactCount,
-    ),
+    platformContactCount: safeGameplayCount(observation.platformContactCount),
     bounceContactCount: safeGameplayCount(observation.bounceContactCount),
   };
 }
@@ -1428,7 +1423,8 @@ function safePlatformSurfaceCrossing(crossing, allowedIds) {
 
 function safeGameplayAttempt(value) {
   if (Number.isSafeInteger(value) && value >= 0 && value <= 2) return value;
-  const recovery = typeof value === "string" && /^recovery-([0-2])$/.exec(value);
+  const recovery =
+    typeof value === "string" && /^recovery-([0-2])$/.exec(value);
   return recovery ? `recovery-${recovery[1]}` : null;
 }
 
@@ -1442,18 +1438,14 @@ function safePlatformJumpEvidence(attempts, platformId, allowedIds) {
       return [];
     const safeKeys = (keys) =>
       Array.isArray(keys)
-        ? keys
-            .slice(0, 5)
-            .filter((key) => SAFE_GAMEPLAY_KEYS.has(key))
+        ? keys.slice(0, 5).filter((key) => SAFE_GAMEPLAY_KEYS.has(key))
         : [];
     return [
       {
         attempt: safeGameplayAttempt(attempt.attempt),
         before: safePlatformTraversalObservation(attempt.before, allowedIds),
         inputKeys: Array.isArray(attempt.inputKeys)
-          ? attempt.inputKeys
-              .slice(-8)
-              .map((keys) => safeKeys(keys))
+          ? attempt.inputKeys.slice(-8).map((keys) => safeKeys(keys))
           : [],
         samples: Array.isArray(attempt.samples)
           ? attempt.samples
@@ -1717,13 +1709,19 @@ export function assertPublicationWorldContentMatches(
   label = "Project world",
 ) {
   assert(
-    actual && typeof actual === "object" &&
-      expected && typeof expected === "object",
+    actual &&
+      typeof actual === "object" &&
+      expected &&
+      typeof expected === "object",
     `${label} is missing or malformed.`,
   );
   const comparable = (project) => {
-    const { id: _id, revision: _revision, messages: _messages, ...world } =
-      project;
+    const {
+      id: _id,
+      revision: _revision,
+      messages: _messages,
+      ...world
+    } = project;
     return JSON.parse(JSON.stringify(world));
   };
   assert.deepEqual(
@@ -1748,7 +1746,11 @@ export function assertPublicationProjectMatches(
     actual && typeof actual === "object",
     `${label} is missing or malformed.`,
   );
-  assert.equal(actual.id, expected?.id, `${label} changed the project identity.`);
+  assert.equal(
+    actual.id,
+    expected?.id,
+    `${label} changed the project identity.`,
+  );
   assert.equal(
     actual.revision,
     expected?.revision,
@@ -1979,7 +1981,9 @@ export async function verifyFreshPublicationArtifacts({
     manifest.revision !== revision ||
     !Array.isArray(manifest.files)
   )
-    throw new HarnessBlockedError("published-artifact-manifest-identity-mismatch");
+    throw new HarnessBlockedError(
+      "published-artifact-manifest-identity-mismatch",
+    );
   const manifestFiles = new Map(
     manifest.files
       .filter((entry) => entry && typeof entry === "object")
@@ -2001,7 +2005,9 @@ export async function verifyFreshPublicationArtifacts({
       manifestEntry.bytes !== expected.bytes ||
       manifestEntry.sha256 !== expected.sha256
     )
-      throw new HarnessBlockedError(`published-artifact-manifest-mismatch:${path}`);
+      throw new HarnessBlockedError(
+        `published-artifact-manifest-mismatch:${path}`,
+      );
     const bytes = await fetchAnonymousPublicationArtifact(
       origin,
       path,
@@ -2145,7 +2151,10 @@ function readFlagshipCreationCheckpointEvidence(
         typeof path === "string",
       "Flagship creation evidence has mismatched generated-model metadata.",
     );
-    assert(/^generated\/[a-f0-9]{64}\.glb$/.test(path), "Flagship creation evidence contains an unsafe model path.");
+    assert(
+      /^generated\/[a-f0-9]{64}\.glb$/.test(path),
+      "Flagship creation evidence contains an unsafe model path.",
+    );
     const modelPath = resolve(modelsDir, path);
     const modelRelative = relative(modelsDir, modelPath);
     assert(
@@ -2292,7 +2301,8 @@ function readFlagshipCapturedPhaseEvidence(
     seen.add(record.sha256);
     totalBytes += glb.byteLength;
     models.push({
-      id: expected.entityIds.length === 1 ? expected.entityIds[0] : record.sha256,
+      id:
+        expected.entityIds.length === 1 ? expected.entityIds[0] : record.sha256,
       entityIds: expected.entityIds,
       metadata: modelEntity.geometry.model,
       glb: [...glb],
@@ -2337,7 +2347,9 @@ export function readFlagshipResumeCheckpoint(
       ).toString("utf8"),
     );
   } catch {
-    throw Error("Flagship resume checkpoint or evidence report could not be read.");
+    throw Error(
+      "Flagship resume checkpoint or evidence report could not be read.",
+    );
   }
   if (!checkpointShape(project))
     throw Error("Flagship resume checkpoint has an invalid project shape.");
@@ -2466,7 +2478,9 @@ export function readFlagshipResumeCheckpoint(
     !Array.isArray(evidence.models) ||
     evidence.models.length !== 5
   )
-    throw Error("Flagship resume evidence is not bound to the supplied checkpoint.");
+    throw Error(
+      "Flagship resume evidence is not bound to the supplied checkpoint.",
+    );
 
   const sourceModels = new Map(
     project.entities
@@ -2479,7 +2493,9 @@ export function readFlagshipResumeCheckpoint(
       .map((entity) => [entity.id, entity.geometry.model]),
   );
   if (sourceModels.size !== 5)
-    throw Error("Flagship resume checkpoint does not contain five crystal models.");
+    throw Error(
+      "Flagship resume checkpoint does not contain five crystal models.",
+    );
   const seenIds = new Set();
   const models = [];
   for (const record of evidence.models) {
@@ -2496,7 +2512,9 @@ export function readFlagshipResumeCheckpoint(
       expected.bytes !== sourceModel.bytes ||
       typeof path !== "string"
     )
-      throw Error("Flagship resume evidence has mismatched model metadata or path.");
+      throw Error(
+        "Flagship resume evidence has mismatched model metadata or path.",
+      );
     if (!/^generated\/[a-f0-9]{64}\.glb$/.test(path))
       throw Error("Flagship resume evidence contains an unsafe model path.");
     seenIds.add(id);
@@ -2511,7 +2529,10 @@ export function readFlagshipResumeCheckpoint(
       throw Error(`Flagship resume model ${id} could not be read.`);
     }
     const actualHash = sha256(glb);
-    if (glb.byteLength !== sourceModel.bytes || actualHash !== sourceModel.sha256)
+    if (
+      glb.byteLength !== sourceModel.bytes ||
+      actualHash !== sourceModel.sha256
+    )
       throw Error(`Flagship resume model ${id} failed its hash or byte check.`);
     models.push({
       id,
@@ -3067,15 +3088,23 @@ export async function installTrafficGuard(
     if (
       info.blockGenerationRequests === true &&
       requestURL.origin === config.baseOrigin &&
-      ["/api/generate", "/api/chatgpt/generate"].includes(
-        requestURL.pathname,
-      )
+      ["/api/generate", "/api/chatgpt/generate"].includes(requestURL.pathname)
     ) {
       info.blockedGenerationRequests ||= [];
       info.blockedGenerationRequests.push({
         method: route.request().method(),
         path: requestURL.pathname,
       });
+      await route.abort("blockedbyclient");
+      return;
+    }
+    if (
+      requestURL.origin === config.baseOrigin &&
+      REVIEW_ROUTE_PATHS.has(requestURL.pathname) &&
+      route.request().method() === "POST"
+    ) {
+      info.generationBudgetViolations ||= [];
+      info.generationBudgetViolations.push("unbudgeted-authoring-review-call");
       await route.abort("blockedbyclient");
       return;
     }
@@ -3458,7 +3487,11 @@ const MAX_GENERATED_MODEL_EVIDENCE_BYTES = 2 * 1024 * 1024;
 const MAX_GENERATED_MODEL_EVIDENCE_TOTAL_BYTES = 6 * 1024 * 1024;
 const GENERATED_MODEL_EVIDENCE_WAIT_MS = 30000;
 
-async function readStoredGeneratedModelDigest(page, hash, includeBytes = false) {
+async function readStoredGeneratedModelDigest(
+  page,
+  hash,
+  includeBytes = false,
+) {
   return page.evaluate(
     async ({ storageKey, includeBytes: shouldIncludeBytes, maxBytes }) => {
       const record = await new Promise((resolve, reject) => {
@@ -3524,9 +3557,7 @@ function generatedModelBytes(value) {
   if (value instanceof Uint8Array) return value;
   if (
     Array.isArray(value) &&
-    value.every(
-      (byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255,
-    )
+    value.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)
   )
     return Uint8Array.from(value);
   return null;
@@ -3574,7 +3605,13 @@ function generatedModelReferences(project) {
       });
     }
   }
-  return { references: [...byHash].map(([sha256, reference]) => ({ sha256, ...reference })), invalid };
+  return {
+    references: [...byHash].map(([sha256, reference]) => ({
+      sha256,
+      ...reference,
+    })),
+    invalid,
+  };
 }
 
 export function buildGeneratedModelEvidence(project, storedByHash) {
@@ -3639,7 +3676,10 @@ export function buildGeneratedModelEvidence(project, storedByHash) {
       });
       continue;
     }
-    if (totalBytes + bytes.byteLength > MAX_GENERATED_MODEL_EVIDENCE_TOTAL_BYTES) {
+    if (
+      totalBytes + bytes.byteLength >
+      MAX_GENERATED_MODEL_EVIDENCE_TOTAL_BYTES
+    ) {
       missing.push({
         entityIds: reference.entityIds,
         sha256: reference.sha256,
@@ -3904,7 +3944,11 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
     );
   const providerSelect = page.getByLabel("Provider", { exact: true });
   if (config.viewportMode === "mobile")
-    await assertMobileElementReachable(page, providerSelect, "Provider selector");
+    await assertMobileElementReachable(
+      page,
+      providerSelect,
+      "Provider selector",
+    );
   await providerSelect.selectOption(config.provider);
   const response = await catalogResponse;
   if (!response.ok())
@@ -3963,11 +4007,34 @@ async function configureApiProvider(page, config, report, info, evidenceDir) {
     config.provider === "openrouter" ? "OpenRouter" : "AI Gateway",
   );
   await assertNoStoredKey(page, config);
+  await optOutOfAuthoringReview(page, info);
   report.evidence.push("connection-model.png");
   info.catalogModel = config.expectedModel;
   if (config.viewportMode === "mobile")
     report.mobileLayout.editor.connectionReachable = true;
 }
+
+/**
+ * This harness budgets only generation calls. A server with authoring review
+ * enabled would otherwise add up to three review calls per prompt, so opt out
+ * in the UI; the route guard below aborts any review request that still occurs.
+ */
+async function optOutOfAuthoringReview(page, info) {
+  const toggle = page
+    .getByTestId("authoring-review-toggle")
+    .locator('input[type="checkbox"]');
+  if ((await toggle.count()) === 0) return;
+  if (await toggle.first().isChecked()) await toggle.first().uncheck();
+  await expect(toggle.first()).not.toBeChecked();
+  info.authoringReviewOptedOut = true;
+}
+
+const REVIEW_ROUTE_PATHS = new Set([
+  "/api/generate/review",
+  "/api/generate/review/start",
+  "/api/chatgpt/review",
+  "/api/chatgpt/review/start",
+]);
 
 function companionLink(config) {
   const payload = encodeURIComponent(
@@ -4214,10 +4281,10 @@ function assertGenerationRequests(config, info) {
         ? `Expected exactly two live generation requests for the creation-stage flagship continuation, observed ${info.generationRequests}.`
         : `Expected exactly one live generation request for the flagship checkpoint resume, observed ${info.generationRequests}.`
       : config.interruptedRecovery
-      ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
-      : config.flagshipStory
-      ? `Expected exactly three live generation requests (creation, selected mushroom edit, and platform edit), observed ${info.generationRequests}.`
-      : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
+        ? `Expected exactly three live generation requests (interrupted creation, continuation, and edit), observed ${info.generationRequests}.`
+        : config.flagshipStory
+          ? `Expected exactly three live generation requests (creation, selected mushroom edit, and platform edit), observed ${info.generationRequests}.`
+          : `Expected exactly two live generation requests (creation and edit), observed ${info.generationRequests}.`,
   );
   assert.equal(
     info.interceptedGeneration,
@@ -4535,22 +4602,21 @@ function storyActivePlatformPath(project, entityId) {
 }
 
 function storyPlatforms(project) {
-  const candidates = project.entities
-    .filter((entity) => {
-      if (
-        entity.stage !== "ready" ||
-        !/\bplatform\b/.test(storyEntityText(entity))
-      )
-        return false;
-        if (entity.behavior?.type === "move") {
-          storyActivePlatformPath(project, entity.id);
-          return true;
-        }
-      return (
-        entity.behavior?.type === "bounce" &&
-        Boolean(storyActivePlatformPath(project, entity.id))
-      );
-    });
+  const candidates = project.entities.filter((entity) => {
+    if (
+      entity.stage !== "ready" ||
+      !/\bplatform\b/.test(storyEntityText(entity))
+    )
+      return false;
+    if (entity.behavior?.type === "move") {
+      storyActivePlatformPath(project, entity.id);
+      return true;
+    }
+    return (
+      entity.behavior?.type === "bounce" &&
+      Boolean(storyActivePlatformPath(project, entity.id))
+    );
+  });
   const spawn =
     Array.isArray(project.game?.spawn) &&
     project.game.spawn.length === 3 &&
@@ -4565,8 +4631,7 @@ function storyPlatforms(project) {
     candidates.sort(
       (a, b) =>
         distanceSquared(anchor, a.position) -
-          distanceSquared(anchor, b.position) ||
-        a.id.localeCompare(b.id),
+          distanceSquared(anchor, b.position) || a.id.localeCompare(b.id),
     );
     const next = candidates.shift();
     route.push(next);
@@ -4889,11 +4954,9 @@ function storyEntityBounds(entity) {
 
 function finiteTriplet(value, fallback) {
   const result = value ?? fallback;
-  return (
-    Array.isArray(result) &&
+  return Array.isArray(result) &&
     result.length === 3 &&
     result.every(Number.isFinite)
-  )
     ? result
     : null;
 }
@@ -4937,11 +5000,11 @@ function customPartLocalBounds(part) {
       part.radius <= 0
     )
       return null;
-    min = part.from.map((value, axis) =>
-      Math.min(value, part.to[axis]) - part.radius,
+    min = part.from.map(
+      (value, axis) => Math.min(value, part.to[axis]) - part.radius,
     );
-    max = part.from.map((value, axis) =>
-      Math.max(value, part.to[axis]) + part.radius,
+    max = part.from.map(
+      (value, axis) => Math.max(value, part.to[axis]) + part.radius,
     );
   } else {
     return null;
@@ -5488,10 +5551,7 @@ export function assertFlagshipStoryPlatform(before, after, platformId) {
       beforePlatform.behavior?.type,
       "Story middle platform changed its path composition.",
     );
-    assert(
-      afterPath,
-      "Story middle platform lost its active movement path.",
-    );
+    assert(afterPath, "Story middle platform lost its active movement path.");
     assert(
       afterPath.action.duration > beforePath.action.duration,
       "Story middle platform path duration did not increase while staying positive.",
@@ -5767,8 +5827,7 @@ export function createPublishedGameplayPageAdapter(frame, keyboardPage) {
     const focused = await frame.evaluate(
       () =>
         document.hasFocus() &&
-        document.activeElement?.getAttribute("aria-label") ===
-          "Gameplay area",
+        document.activeElement?.getAttribute("aria-label") === "Gameplay area",
     );
     assert(
       focused,
@@ -6025,14 +6084,12 @@ export async function runFreshFlagshipGameplay(
             : null,
           platformContactCount:
             observation.platformContactCounts?.[targetId] ?? 0,
-          bounceContactCount:
-            observation.bounceContactCounts?.[targetId] ?? 0,
+          bounceContactCount: observation.bounceContactCounts?.[targetId] ?? 0,
         }
       : null;
   };
   const waitForJumpResponse = async (before) => {
-    const deadline =
-      Date.now() + FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs;
+    const deadline = Date.now() + FRESH_GAMEPLAY_LIMITS.maxObservationWaitMs;
     let latest = before;
     while (Date.now() < deadline) {
       const remaining = deadline - Date.now();
@@ -6165,9 +6222,7 @@ export async function runFreshFlagshipGameplay(
             if (portalCompleted(last)) return last;
             portalSettled = true;
             if (!last)
-              throw new Error(
-                `No observation while approaching ${target.id}.`,
-              );
+              throw new Error(`No observation while approaching ${target.id}.`);
             const settledTarget = last.entities.find(
               (entity) => entity.id === target.id,
             );
@@ -6180,10 +6235,7 @@ export async function runFreshFlagshipGameplay(
               last.player.position[0] - live.position[0],
               last.player.position[2] - live.position[2],
             );
-          } else if (
-            kind !== "collect" ||
-            last?.scoreIds.includes(target.id)
-          ) {
+          } else if (kind !== "collect" || last?.scoreIds.includes(target.id)) {
             return last;
           }
         }
@@ -6223,10 +6275,7 @@ export async function runFreshFlagshipGameplay(
     const platformApproach = async (
       target,
       attempt,
-      {
-        baselinePlatformContactCount = 0,
-        baselineBounceContactCount = 0,
-      } = {},
+      { baselinePlatformContactCount = 0, baselineBounceContactCount = 0 } = {},
     ) => {
       const evidence = platformEvidence.get(target.id);
       const phase = {
@@ -6264,8 +6313,7 @@ export async function runFreshFlagshipGameplay(
         });
         if (contact.contacted) {
           phase.contact = compactPlatformObservation(last, target.id);
-          if (contact.grounded)
-            phase.landing = phase.contact;
+          if (contact.grounded) phase.landing = phase.contact;
           await setKeys([], "platform-contact-release");
           return { observation: last, contacted: true };
         }
@@ -6831,7 +6879,9 @@ async function runFlagshipStory(
     await page.getByRole("button", { name: "Edit", exact: true }).click();
   }
   if (!(await page.locator(".object-list").isVisible()))
-    await page.getByRole("button", { name: "Show objects", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Show objects", exact: true })
+      .click();
   const treeRow = page
     .locator(".object-list button")
     .filter({ hasText: initialStory.tree.label })
@@ -6865,7 +6915,13 @@ async function runFlagshipStory(
     status: "observed",
     revision: mushroom.revision,
   };
-  await persistFlagshipStoryPhase(report, evidenceDir, "mushroom", mushroom, page);
+  await persistFlagshipStoryPhase(
+    report,
+    evidenceDir,
+    "mushroom",
+    mushroom,
+    page,
+  );
   const mushroomCheck = assertFlagshipStoryMushroom(
     created,
     mushroom,
@@ -7154,7 +7210,8 @@ async function putIndexedDBValue(page, key, value) {
           if (!request.result.objectStoreNames.contains("keyval"))
             request.result.createObjectStore("keyval");
         };
-        request.onerror = () => reject(request.error ?? Error("IndexedDB open failed"));
+        request.onerror = () =>
+          reject(request.error ?? Error("IndexedDB open failed"));
         request.onsuccess = () => {
           const database = request.result;
           const transaction = database.transaction("keyval", "readwrite");
@@ -7319,7 +7376,9 @@ async function runFlagshipResume(
     if (await clearSelection.isVisible().catch(() => false))
       await clearSelection.click();
     await page.locator("#prompt").fill(config.editPrompt);
-    await page.getByRole("button", { name: "Change this", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Change this", exact: true })
+      .click();
     await expect
       .poll(() => info.generationRequests, { timeout: 30000 })
       .toBe(1);
@@ -7428,7 +7487,9 @@ async function runFlagshipResume(
       file: "world-goal-7.zip",
     };
     report.evidence.push("world-goal-7.zip");
-    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click();
     await page.getByRole("button", { name: "Edit", exact: true }).click();
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -7441,7 +7502,10 @@ async function runFlagshipResume(
     );
     report.localRecovery = "passed";
 
-    await page.getByRole("button", { name: "Edit", exact: true }).click().catch(() => undefined);
+    await page
+      .getByRole("button", { name: "Edit", exact: true })
+      .click()
+      .catch(() => undefined);
     await page
       .getByRole("button", { name: "Undo last change", exact: true })
       .click();
@@ -7679,7 +7743,9 @@ async function runFlagshipResumeOffline(
       file: "world-goal-7.zip",
     };
     report.evidence.push("world-goal-7.zip");
-    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Close dialog", exact: true })
+      .click();
 
     await page
       .getByRole("button", { name: "Edit", exact: true })
@@ -8155,10 +8221,7 @@ export async function verifyStandalone(
             expectedRevision: zip.project.revision,
             onWin: async () => {
               await page.screenshot({
-                path: join(
-                  evidenceDir,
-                  "standalone-flagship-gameplay-win.png",
-                ),
+                path: join(evidenceDir, "standalone-flagship-gameplay-win.png"),
                 fullPage: true,
               });
               report.evidence.push("standalone-flagship-gameplay-win.png");
@@ -9629,8 +9692,7 @@ export async function runPublication(
       iframeOrigin: playbackOrigins.iframe.origin,
       iframePath: playbackOrigins.iframe.pathname,
       error: sanitizeMessage(error?.message ?? error, config),
-      failureEvidence:
-        error?.freshGameplayEvidence ?? traversalResult ?? null,
+      failureEvidence: error?.freshGameplayEvidence ?? traversalResult ?? null,
     };
   }
   await publicPage.screenshot({
@@ -9894,10 +9956,7 @@ async function run(config, report = emptyReport(config)) {
     await prepareObserver(page);
     await installGenerationDiagnosticObserver(page);
     if (creationContinuation) {
-      await openFlagshipResumeProject(
-        page,
-        config.resumeCheckpoint.project,
-      );
+      await openFlagshipResumeProject(page, config.resumeCheckpoint.project);
       const seededSnapshot = await storageSnapshot(page);
       assert.deepEqual(
         persistenceJSON(seededSnapshot.project),
@@ -9939,7 +9998,8 @@ async function run(config, report = emptyReport(config)) {
             !["asset", "generated"].includes(entity.geometry.kind),
         ).length,
         generatedEntities: projectAfterCreation.entities.filter(
-          (entity) => entity.geometry?.kind === "generated" && entity.geometry.model,
+          (entity) =>
+            entity.geometry?.kind === "generated" && entity.geometry.model,
         ).length,
       };
       report.flagshipResume = {
@@ -9955,9 +10015,8 @@ async function run(config, report = emptyReport(config)) {
             config.resumeCheckpoint.checkpointPath,
           ),
           sourceSnapshotSha256: config.resumeCheckpoint.sourceSnapshotSha256,
-          assetReferences: assertFlagshipStoryAssetReferences(
-            projectAfterCreation,
-          ),
+          assetReferences:
+            assertFlagshipStoryAssetReferences(projectAfterCreation),
           generatedModels: config.resumeCheckpoint.models.length,
         },
       };
@@ -10064,11 +10123,11 @@ async function run(config, report = emptyReport(config)) {
         : undefined;
       gameplayDuringGeneration?.catch(() => {});
       try {
-      projectAfterCreation = await waitForSavedProject(
-        page,
-        interrupted ? interrupted.checkpoint.revision + 1 : 1,
-        1,
-      );
+        projectAfterCreation = await waitForSavedProject(
+          page,
+          interrupted ? interrupted.checkpoint.revision + 1 : 1,
+          1,
+        );
         if (gameplayDuringGeneration) {
           report.creation.gameplayDuringGeneration =
             await gameplayDuringGeneration;
@@ -10227,351 +10286,353 @@ async function run(config, report = emptyReport(config)) {
           },
         );
       } else {
-    const targetBefore = config.requireBrowserModel
-      ? browserEntities[0]
-      : config.builderURL
-        ? projectAfterCreation.entities.find(
-            (entity) =>
-              entity.geometry?.kind === "generated" && entity.geometry.model,
-          )
-        : projectAfterCreation.entities[0];
-    if (config.requireProcedural) {
-      const authoring = targetBefore?.geometry?.job?.authoring;
-      assert.equal(
-        authoring?.source?.language,
-        "quickjs",
-        "The live model did not produce retained procedural source.",
-      );
-      assert.equal(authoring.source.version, 1);
-      assert.equal(typeof authoring.source.code, "string");
-      assert(authoring.source.code.length > 0);
-      assert.match(authoring.sourceHash, /^[a-f0-9]{64}$/);
-      report.creation.browserProcedural = true;
-    }
-    if (config.requireExtrusion) {
-      assert(
-        targetBefore?.geometry?.job?.backend === "browser-manifold" &&
-          targetBefore.geometry.job.recipe.nodes.some(
-            (node) => node.kind === "extrude",
-          ),
-        "The live model did not produce the required browser extrusion.",
-      );
-      report.creation.browserExtrusion = true;
-    }
-    assert(
-      targetBefore,
-      "The visible object list did not map to a committed entity.",
-    );
-    if (config.requireRevolution) {
-      assert(
-        targetBefore.geometry?.job?.backend === "browser-manifold" &&
-          targetBefore.geometry.job.recipe.nodes.some(
-            (node) => node.kind === "revolve",
-          ),
-        "The selected browser model did not use a revolve recipe.",
-      );
-      report.creation.browserRevolution = true;
-    }
-    if (config.builderURL)
-      assert.equal(
-        targetBefore.geometry?.kind,
-        "generated",
-        "The Blender run did not produce a generated entity for the scoped edit.",
-      );
-    const targetIndex = projectAfterCreation.entities.findIndex(
-      (entity) => entity.id === targetBefore.id,
-    );
-    assert(targetIndex >= 0);
-    const targetRow = page.locator(".object-list button").nth(targetIndex);
-    await expect(targetRow).toHaveCount(1);
-    await targetRow.click();
-    await expect(page.locator(".selection-chip")).toContainText(
-      targetBefore.label,
-    );
-    const editInput = page.locator("#prompt");
-    if (config.viewportMode === "mobile") {
-      const layout = report.mobileLayout.editor;
-      await assertMobilePageHasNoHorizontalOverflow(page, layout);
-      await recordMobileReachable(page, editInput, "editPrompt", layout);
-    }
-    await editInput.fill(config.editPrompt);
-    await expect(
-      page.getByRole("button", { name: "Change this", exact: true }),
-    ).toBeEnabled();
-    await page
-      .getByRole("button", { name: "Change this", exact: true })
-      .click();
-    await expect
-      .poll(() => info.generationRequests, { timeout: 30000 })
-      .toBe(config.generationBudget);
-    assert.equal(
-      info.generationBodies.at(-1)?.selectedId,
-      targetBefore.id,
-      "The edit request did not target the selected entity identity.",
-    );
-    await expect(page.locator(".message.user").last()).toContainText(
-      config.editPrompt.slice(0, 40),
-    );
-    await expect(
-      page.locator(".message.user").last().locator(".entity-chip"),
-    ).toBeVisible();
-    projectAfterEdit = await waitForSavedProject(
-      page,
-      projectAfterCreation.revision + 1,
-      2,
-    );
-    lastGoodProject = projectAfterEdit;
-    if (config.requireBrowserModel)
-        projectAfterEdit = await waitForTrustedBrowserBake(
-          page,
+        const targetBefore = config.requireBrowserModel
+          ? browserEntities[0]
+          : config.builderURL
+            ? projectAfterCreation.entities.find(
+                (entity) =>
+                  entity.geometry?.kind === "generated" &&
+                  entity.geometry.model,
+              )
+            : projectAfterCreation.entities[0];
+        if (config.requireProcedural) {
+          const authoring = targetBefore?.geometry?.job?.authoring;
+          assert.equal(
+            authoring?.source?.language,
+            "quickjs",
+            "The live model did not produce retained procedural source.",
+          );
+          assert.equal(authoring.source.version, 1);
+          assert.equal(typeof authoring.source.code, "string");
+          assert(authoring.source.code.length > 0);
+          assert.match(authoring.sourceHash, /^[a-f0-9]{64}$/);
+          report.creation.browserProcedural = true;
+        }
+        if (config.requireExtrusion) {
+          assert(
+            targetBefore?.geometry?.job?.backend === "browser-manifold" &&
+              targetBefore.geometry.job.recipe.nodes.some(
+                (node) => node.kind === "extrude",
+              ),
+            "The live model did not produce the required browser extrusion.",
+          );
+          report.creation.browserExtrusion = true;
+        }
+        assert(
+          targetBefore,
+          "The visible object list did not map to a committed entity.",
+        );
+        if (config.requireRevolution) {
+          assert(
+            targetBefore.geometry?.job?.backend === "browser-manifold" &&
+              targetBefore.geometry.job.recipe.nodes.some(
+                (node) => node.kind === "revolve",
+              ),
+            "The selected browser model did not use a revolve recipe.",
+          );
+          report.creation.browserRevolution = true;
+        }
+        if (config.builderURL)
+          assert.equal(
+            targetBefore.geometry?.kind,
+            "generated",
+            "The Blender run did not produce a generated entity for the scoped edit.",
+          );
+        const targetIndex = projectAfterCreation.entities.findIndex(
+          (entity) => entity.id === targetBefore.id,
+        );
+        assert(targetIndex >= 0);
+        const targetRow = page.locator(".object-list button").nth(targetIndex);
+        await expect(targetRow).toHaveCount(1);
+        await targetRow.click();
+        await expect(page.locator(".selection-chip")).toContainText(
+          targetBefore.label,
+        );
+        const editInput = page.locator("#prompt");
+        if (config.viewportMode === "mobile") {
+          const layout = report.mobileLayout.editor;
+          await assertMobilePageHasNoHorizontalOverflow(page, layout);
+          await recordMobileReachable(page, editInput, "editPrompt", layout);
+        }
+        await editInput.fill(config.editPrompt);
+        await expect(
+          page.getByRole("button", { name: "Change this", exact: true }),
+        ).toBeEnabled();
+        await page
+          .getByRole("button", { name: "Change this", exact: true })
+          .click();
+        await expect
+          .poll(() => info.generationRequests, { timeout: 30000 })
+          .toBe(config.generationBudget);
+        assert.equal(
+          info.generationBodies.at(-1)?.selectedId,
           targetBefore.id,
+          "The edit request did not target the selected entity identity.",
         );
-    if (config.requireInputGame) {
-      projectAfterEdit = await verifyInputGameBrowserBakes(
-        page,
-        projectAfterEdit,
-      );
-      assert.deepEqual(
-        projectAfterEdit.game,
-        projectAfterCreation.game,
-        "The selected material edit changed the input game program.",
-      );
-      report.inputGame = {
-        status: "passed",
-        ...assertInputGameProject(
-          projectAfterEdit,
-          "Edited project",
-          info.projectValidator,
-        ),
-        preservedAcrossEdit: true,
-      };
-    }
-    assert(
-      projectAfterEdit.messages.filter(
-        (message) => message.role === "assistant",
-      ).length >= 2,
-      "The edit stream did not commit a terminal assistant response.",
-    );
-    if (config.requireNewOnly)
-      assert.equal(
-        projectAfterEdit.entities.filter(
-          (entity) => entity.geometry?.kind === "asset",
-        ).length,
-        0,
-        "The explicit new-only workflow introduced a catalog entity during edit.",
-      );
-    const targetAfter = projectAfterEdit.entities.find(
-      (entity) => entity.id === targetBefore.id,
-    );
-    assert(targetAfter, "The provider edit removed the selected entity.");
-    assert.equal(targetAfter.id, targetBefore.id);
-    if (config.requireGeometryEdit) {
-      assert.equal(targetAfter.geometry?.kind, "generated");
-      assert.equal(
-        targetAfter.geometry?.job?.backend,
-        "browser-manifold",
-        "The geometry edit lost browser-manifold job provenance.",
-      );
-      assert.equal(
-        targetAfter.geometry?.model?.source,
-        "browser-manifold",
-        "The geometry edit lost browser-manifold model provenance.",
-      );
-      assert.equal(
-        targetAfter.geometry?.model?.kernelVersion,
-        targetBefore.geometry?.model?.kernelVersion,
-        "The geometry edit changed the browser kernel provenance.",
-      );
-      const beforeRecipe = targetBefore.geometry?.job?.recipe;
-      const afterRecipe = targetAfter.geometry?.job?.recipe;
+        await expect(page.locator(".message.user").last()).toContainText(
+          config.editPrompt.slice(0, 40),
+        );
+        await expect(
+          page.locator(".message.user").last().locator(".entity-chip"),
+        ).toBeVisible();
+        projectAfterEdit = await waitForSavedProject(
+          page,
+          projectAfterCreation.revision + 1,
+          2,
+        );
+        lastGoodProject = projectAfterEdit;
+        if (config.requireBrowserModel)
+          projectAfterEdit = await waitForTrustedBrowserBake(
+            page,
+            targetBefore.id,
+          );
+        if (config.requireInputGame) {
+          projectAfterEdit = await verifyInputGameBrowserBakes(
+            page,
+            projectAfterEdit,
+          );
+          assert.deepEqual(
+            projectAfterEdit.game,
+            projectAfterCreation.game,
+            "The selected material edit changed the input game program.",
+          );
+          report.inputGame = {
+            status: "passed",
+            ...assertInputGameProject(
+              projectAfterEdit,
+              "Edited project",
+              info.projectValidator,
+            ),
+            preservedAcrossEdit: true,
+          };
+        }
         assert(
-          beforeRecipe && afterRecipe,
-          "The geometry edit lost its recipe.",
+          projectAfterEdit.messages.filter(
+            (message) => message.role === "assistant",
+          ).length >= 2,
+          "The edit stream did not commit a terminal assistant response.",
         );
-      if (config.requireProcedural) {
-        const beforeSource = targetBefore.geometry.job.authoring;
-        const afterSource = targetAfter.geometry.job.authoring;
-        assert.equal(
-          afterSource?.source?.language,
-          "quickjs",
-          "The edit lost procedural source.",
+        if (config.requireNewOnly)
+          assert.equal(
+            projectAfterEdit.entities.filter(
+              (entity) => entity.geometry?.kind === "asset",
+            ).length,
+            0,
+            "The explicit new-only workflow introduced a catalog entity during edit.",
+          );
+        const targetAfter = projectAfterEdit.entities.find(
+          (entity) => entity.id === targetBefore.id,
         );
-        assert.match(afterSource.sourceHash, /^[a-f0-9]{64}$/);
-        assert.notEqual(
-          afterSource.source.code,
-          beforeSource.source.code,
-          "The edit did not revise procedural source.",
+        assert(targetAfter, "The provider edit removed the selected entity.");
+        assert.equal(targetAfter.id, targetBefore.id);
+        if (config.requireGeometryEdit) {
+          assert.equal(targetAfter.geometry?.kind, "generated");
+          assert.equal(
+            targetAfter.geometry?.job?.backend,
+            "browser-manifold",
+            "The geometry edit lost browser-manifold job provenance.",
+          );
+          assert.equal(
+            targetAfter.geometry?.model?.source,
+            "browser-manifold",
+            "The geometry edit lost browser-manifold model provenance.",
+          );
+          assert.equal(
+            targetAfter.geometry?.model?.kernelVersion,
+            targetBefore.geometry?.model?.kernelVersion,
+            "The geometry edit changed the browser kernel provenance.",
+          );
+          const beforeRecipe = targetBefore.geometry?.job?.recipe;
+          const afterRecipe = targetAfter.geometry?.job?.recipe;
+          assert(
+            beforeRecipe && afterRecipe,
+            "The geometry edit lost its recipe.",
+          );
+          if (config.requireProcedural) {
+            const beforeSource = targetBefore.geometry.job.authoring;
+            const afterSource = targetAfter.geometry.job.authoring;
+            assert.equal(
+              afterSource?.source?.language,
+              "quickjs",
+              "The edit lost procedural source.",
+            );
+            assert.match(afterSource.sourceHash, /^[a-f0-9]{64}$/);
+            assert.notEqual(
+              afterSource.source.code,
+              beforeSource.source.code,
+              "The edit did not revise procedural source.",
+            );
+            assert.notEqual(
+              afterSource.sourceHash,
+              beforeSource.sourceHash,
+              "The edit did not change source provenance.",
+            );
+          }
+          assert(
+            afterRecipe.revision > beforeRecipe.revision,
+            "The geometry edit did not increase the recipe revision.",
+          );
+          assert.notEqual(
+            targetAfter.geometry.model?.sha256,
+            targetBefore.geometry?.model?.sha256,
+            "The geometry edit did not change the trusted GLB hash.",
+          );
+          const afterModel = targetAfter.geometry.model;
+          assert(
+            afterModel,
+            "The geometry edit did not produce trusted model metadata.",
+          );
+          const storedAfter = await readStoredGeneratedModelDigest(
+            page,
+            afterModel.sha256,
+          );
+          assert(storedAfter, "The edited trusted browser GLB was not stored.");
+          assert.equal(storedAfter.sha256, afterModel.sha256);
+          assert.equal(storedAfter.bytes, afterModel.bytes);
+          const { geometry: beforeGeometry, ...beforeEntity } = targetBefore;
+          const { geometry: afterGeometry, ...afterEntity } = targetAfter;
+          const {
+            job: beforeJob,
+            model: beforeModel,
+            ...beforeProperties
+          } = beforeGeometry;
+          const {
+            job: afterJob,
+            model: afterMetadata,
+            ...afterProperties
+          } = afterGeometry;
+          assert.deepEqual(
+            afterProperties,
+            beforeProperties,
+            "The recipe edit changed appearance or collision properties.",
+          );
+          assert.deepEqual(
+            afterEntity,
+            beforeEntity,
+            "The geometry edit changed a non-geometry entity field.",
+          );
+          const {
+            job: _beforeJob,
+            model: _beforeModel,
+            ...beforeGeometryProperties
+          } = beforeGeometry ?? {};
+          const {
+            job: _afterJob,
+            model: _afterModel,
+            ...afterGeometryProperties
+          } = afterGeometry ?? {};
+          assert.deepEqual(
+            afterGeometryProperties,
+            beforeGeometryProperties,
+            "The geometry edit changed appearance or collision properties.",
+          );
+          if (config.requireRevolution) {
+            const beforeRevolve = beforeRecipe.nodes.find(
+              (node) => node.kind === "revolve",
+            );
+            const afterRevolve = afterRecipe.nodes.find(
+              (node) => node.kind === "revolve",
+            );
+            assert(
+              beforeRevolve && afterRevolve,
+              "The geometry edit lost the revolve recipe.",
+            );
+            const beforeRadius = Math.max(
+              ...beforeRevolve.profile.map((point) => point[0]),
+            );
+            const afterRadius = Math.max(
+              ...afterRevolve.profile.map((point) => point[0]),
+            );
+            assert(
+              afterRadius > beforeRadius,
+              "The revolve geometry edit did not increase profile width.",
+            );
+            const beforeBounds = beforeGeometry?.model?.bounds;
+            const afterBounds = afterGeometry?.model?.bounds;
+            assert(
+              beforeBounds && afterBounds,
+              "The revolve edit lost model bounds.",
+            );
+            assert(
+              afterBounds.max[0] - afterBounds.min[0] >
+                beforeBounds.max[0] - beforeBounds.min[0],
+              "The revolve geometry edit did not increase X width.",
+            );
+            assert.equal(
+              afterBounds.min[1],
+              beforeBounds.min[1],
+              "The revolve edit changed the explicit minimum Y height.",
+            );
+            assert.equal(
+              afterBounds.max[1],
+              beforeBounds.max[1],
+              "The revolve edit changed the explicit maximum Y height.",
+            );
+          }
+        } else {
+          if (config.builderURL) {
+            assert.equal(targetAfter.geometry?.kind, "generated");
+            assert.equal(
+              targetAfter.geometry.model?.sha256,
+              targetBefore.geometry.model?.sha256,
+              "The scoped edit replaced the generated Blender model.",
+            );
+          }
+          assert.equal(
+            targetAfter.color.toLowerCase(),
+            "#ff44aa",
+            "The scoped recolor did not use the requested color.",
+          );
+          const { color: beforeColor, ...beforeShape } = targetBefore;
+          const { color: afterColor, ...afterShape } = targetAfter;
+          assert.notEqual(
+            afterColor.toLowerCase(),
+            beforeColor.toLowerCase(),
+            "The scoped recolor did not change the selected entity color.",
+          );
+          if (
+            beforeShape.geometry &&
+            afterShape.geometry?.kind === beforeShape.geometry.kind
+          ) {
+            assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
+            const { tint: beforeTint, ...beforeGeometry } =
+              beforeShape.geometry;
+            const { tint: afterTint, ...afterGeometry } = afterShape.geometry;
+            beforeShape.geometry = beforeGeometry;
+            afterShape.geometry = afterGeometry;
+          }
+          assert.deepEqual(
+            afterShape,
+            beforeShape,
+            "The scoped edit changed the selected object beyond its color.",
+          );
+          assert.deepEqual(
+            targetAfter.position,
+            targetBefore.position,
+            "The scoped edit changed the selected position.",
+          );
+        }
+        assert.deepEqual(
+          projectAfterEdit.entities.filter(
+            (entity) => entity.id !== targetBefore.id,
+          ),
+          projectAfterCreation.entities.filter(
+            (entity) => entity.id !== targetBefore.id,
+          ),
+          "The scoped edit changed an unrelated entity.",
         );
-        assert.notEqual(
-          afterSource.sourceHash,
-          beforeSource.sourceHash,
-          "The edit did not change source provenance.",
+        assert.deepEqual(
+          projectAfterEdit.environment,
+          projectAfterCreation.environment,
+          "The scoped edit changed the environment.",
         );
-      }
-      assert(
-        afterRecipe.revision > beforeRecipe.revision,
-        "The geometry edit did not increase the recipe revision.",
-      );
-      assert.notEqual(
-        targetAfter.geometry.model?.sha256,
-        targetBefore.geometry?.model?.sha256,
-        "The geometry edit did not change the trusted GLB hash.",
-      );
-      const afterModel = targetAfter.geometry.model;
-      assert(
-        afterModel,
-        "The geometry edit did not produce trusted model metadata.",
-      );
-      const storedAfter = await readStoredGeneratedModelDigest(
-        page,
-        afterModel.sha256,
-      );
-      assert(storedAfter, "The edited trusted browser GLB was not stored.");
-      assert.equal(storedAfter.sha256, afterModel.sha256);
-      assert.equal(storedAfter.bytes, afterModel.bytes);
-      const { geometry: beforeGeometry, ...beforeEntity } = targetBefore;
-      const { geometry: afterGeometry, ...afterEntity } = targetAfter;
-      const {
-        job: beforeJob,
-        model: beforeModel,
-        ...beforeProperties
-      } = beforeGeometry;
-      const {
-        job: afterJob,
-        model: afterMetadata,
-        ...afterProperties
-      } = afterGeometry;
-      assert.deepEqual(
-        afterProperties,
-        beforeProperties,
-        "The recipe edit changed appearance or collision properties.",
-      );
-      assert.deepEqual(
-        afterEntity,
-        beforeEntity,
-        "The geometry edit changed a non-geometry entity field.",
-      );
-      const {
-        job: _beforeJob,
-        model: _beforeModel,
-        ...beforeGeometryProperties
-      } = beforeGeometry ?? {};
-      const {
-        job: _afterJob,
-        model: _afterModel,
-        ...afterGeometryProperties
-      } = afterGeometry ?? {};
-      assert.deepEqual(
-        afterGeometryProperties,
-        beforeGeometryProperties,
-        "The geometry edit changed appearance or collision properties.",
-      );
-      if (config.requireRevolution) {
-        const beforeRevolve = beforeRecipe.nodes.find(
-          (node) => node.kind === "revolve",
-        );
-        const afterRevolve = afterRecipe.nodes.find(
-          (node) => node.kind === "revolve",
-        );
-        assert(
-          beforeRevolve && afterRevolve,
-          "The geometry edit lost the revolve recipe.",
-        );
-        const beforeRadius = Math.max(
-          ...beforeRevolve.profile.map((point) => point[0]),
-        );
-        const afterRadius = Math.max(
-          ...afterRevolve.profile.map((point) => point[0]),
-        );
-        assert(
-          afterRadius > beforeRadius,
-          "The revolve geometry edit did not increase profile width.",
-        );
-        const beforeBounds = beforeGeometry?.model?.bounds;
-        const afterBounds = afterGeometry?.model?.bounds;
-        assert(
-          beforeBounds && afterBounds,
-          "The revolve edit lost model bounds.",
-        );
-        assert(
-          afterBounds.max[0] - afterBounds.min[0] >
-            beforeBounds.max[0] - beforeBounds.min[0],
-          "The revolve geometry edit did not increase X width.",
-        );
-        assert.equal(
-          afterBounds.min[1],
-          beforeBounds.min[1],
-          "The revolve edit changed the explicit minimum Y height.",
-        );
-        assert.equal(
-          afterBounds.max[1],
-          beforeBounds.max[1],
-          "The revolve edit changed the explicit maximum Y height.",
-        );
-      }
-    } else {
-      if (config.builderURL) {
-        assert.equal(targetAfter.geometry?.kind, "generated");
-        assert.equal(
-          targetAfter.geometry.model?.sha256,
-          targetBefore.geometry.model?.sha256,
-          "The scoped edit replaced the generated Blender model.",
-        );
-      }
-      assert.equal(
-        targetAfter.color.toLowerCase(),
-        "#ff44aa",
-        "The scoped recolor did not use the requested color.",
-      );
-      const { color: beforeColor, ...beforeShape } = targetBefore;
-      const { color: afterColor, ...afterShape } = targetAfter;
-      assert.notEqual(
-        afterColor.toLowerCase(),
-        beforeColor.toLowerCase(),
-        "The scoped recolor did not change the selected entity color.",
-      );
-      if (
-        beforeShape.geometry &&
-        afterShape.geometry?.kind === beforeShape.geometry.kind
-      ) {
-        assert.equal(afterShape.geometry.tint?.toLowerCase(), "#ff44aa");
-        const { tint: beforeTint, ...beforeGeometry } = beforeShape.geometry;
-        const { tint: afterTint, ...afterGeometry } = afterShape.geometry;
-        beforeShape.geometry = beforeGeometry;
-        afterShape.geometry = afterGeometry;
-      }
-      assert.deepEqual(
-        afterShape,
-        beforeShape,
-        "The scoped edit changed the selected object beyond its color.",
-      );
-      assert.deepEqual(
-        targetAfter.position,
-        targetBefore.position,
-        "The scoped edit changed the selected position.",
-      );
-    }
-    assert.deepEqual(
-      projectAfterEdit.entities.filter(
-        (entity) => entity.id !== targetBefore.id,
-      ),
-      projectAfterCreation.entities.filter(
-        (entity) => entity.id !== targetBefore.id,
-      ),
-      "The scoped edit changed an unrelated entity.",
-    );
-    assert.deepEqual(
-      projectAfterEdit.environment,
-      projectAfterCreation.environment,
-      "The scoped edit changed the environment.",
-    );
-    report.edit = {
-      status: "passed",
-      type: config.requireGeometryEdit ? "geometry" : "material",
-      selectedIdPreserved: true,
-    };
-    if (config.viewportMode === "mobile")
-      report.mobileLayout.editor.status = "passed";
+        report.edit = {
+          status: "passed",
+          type: config.requireGeometryEdit ? "geometry" : "material",
+          selectedIdPreserved: true,
+        };
+        if (config.viewportMode === "mobile")
+          report.mobileLayout.editor.status = "passed";
       }
     } else {
       projectAfterEdit = await runFlagshipStory(
@@ -10619,7 +10680,10 @@ async function run(config, report = emptyReport(config)) {
           }),
         ).toBeVisible({ timeout: 30000 });
         await page
-          .getByRole("button", { name: "Continue your saved world", exact: true })
+          .getByRole("button", {
+            name: "Continue your saved world",
+            exact: true,
+          })
           .click();
         await expect(page.locator(".workspace-heading h2")).toBeVisible({
           timeout: 30000,
@@ -10645,12 +10709,17 @@ async function run(config, report = emptyReport(config)) {
           recovered.entities.map((entity) => entity.id),
           projectAfterEdit.entities.map((entity) => entity.id),
         );
-        assert.equal(recovered.messages.length, projectAfterEdit.messages.length);
+        assert.equal(
+          recovered.messages.length,
+          projectAfterEdit.messages.length,
+        );
         report.localRecovery = "passed";
         return recovered;
       },
       exportProject: async (recovered, { revision }) => {
-        await page.getByRole("button", { name: "Share Orb", exact: true }).click();
+        await page
+          .getByRole("button", { name: "Share Orb", exact: true })
+          .click();
         await expect(
           page.getByRole("button", { name: /^Download your world/ }),
         ).toBeVisible({ timeout: 30000 });
@@ -10660,14 +10729,11 @@ async function run(config, report = emptyReport(config)) {
         });
         report.evidence.push("share.png");
         const downloadPromise = page.waitForEvent("download");
-        await page.getByRole("button", { name: /^Download your world/ }).click();
+        await page
+          .getByRole("button", { name: /^Download your world/ })
+          .click();
         const download = await downloadPromise;
-        const zip = await extractZip(
-          download,
-          config,
-          revision,
-          evidenceDir,
-        );
+        const zip = await extractZip(download, config, revision, evidenceDir);
         if (config.publication)
           assertPublicationProjectMatches(
             zip.project,
@@ -10705,10 +10771,11 @@ async function run(config, report = emptyReport(config)) {
             const message = error instanceof Error ? error.message : "";
             report.publication = {
               mode: "blocked",
-              status: message.startsWith("published-artifact") ||
+              status:
+                message.startsWith("published-artifact") ||
                 message.startsWith("fresh-")
-                ? message
-                : "fresh-export-target-mismatch",
+                  ? message
+                  : "fresh-export-target-mismatch",
             };
             throw error;
           }

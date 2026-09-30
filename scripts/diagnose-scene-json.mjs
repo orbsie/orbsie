@@ -41,6 +41,7 @@ function usage() {
     [--raw-artifact /absolute/path/offending-line.txt] \\
     [--raw-sse-artifact /absolute/path/provider-response.sse] \\
     [--prompt "a tree with blue strawberries"] \\
+    [--project /absolute/path/project.json] \\
     [--timeout-ms 120000]
 
 The command performs one Gateway generation with openai/gpt-6-luna,
@@ -61,6 +62,7 @@ function parseArgs(argv) {
     rawArtifact: undefined,
     rawSseArtifact: undefined,
     prompt: DEFAULT_PROMPT,
+    project: undefined,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     help: false,
   };
@@ -81,6 +83,7 @@ function parseArgs(argv) {
       argument === "--raw-artifact" ||
       argument === "--raw-sse-artifact" ||
       argument === "--prompt" ||
+      argument === "--project" ||
       argument === "--timeout-ms";
     if (!valueOption) fail(`Unknown argument: ${argument}`);
     const value = argv[++index];
@@ -90,6 +93,7 @@ function parseArgs(argv) {
     else if (argument === "--raw-artifact") options.rawArtifact = value;
     else if (argument === "--raw-sse-artifact") options.rawSseArtifact = value;
     else if (argument === "--prompt") options.prompt = value;
+    else if (argument === "--project") options.project = value;
     else options.timeoutMs = Number(value);
   }
   return options;
@@ -132,7 +136,7 @@ async function bundleGeneration(directory) {
   await build({
     stdin: {
       contents:
-        'export { generateCommands } from "./src/lib/server/generation"; export { blankProject } from "./src/lib/protocol";',
+        'export { generateCommands } from "./src/lib/server/generation"; export { blankProject, projectSchema } from "./src/lib/protocol";',
       resolveDir: process.cwd(),
       loader: "ts",
     },
@@ -188,8 +192,14 @@ async function run(options) {
   let generationOutput = "";
   let runStatus = "failed";
   try {
-    const { generateCommands, blankProject } =
+    const { generateCommands, blankProject, projectSchema } =
       await bundleGeneration(temporary);
+    // An edit replay starts from a saved, schema-valid project snapshot.
+    const project = options.project
+      ? projectSchema.parse(
+          JSON.parse(await readFile(resolve(options.project), "utf8")),
+        )
+      : blankProject();
     globalThis.fetch = async (input, init) => {
       requestCount += 1;
       if (requestCount > 1)
@@ -220,7 +230,7 @@ async function run(options) {
       model: "openai/gpt-6-luna",
       key,
       prompt: options.prompt,
-      project: blankProject(),
+      project,
       browserModeling: true,
       maxTokens: 4096,
       signal,
