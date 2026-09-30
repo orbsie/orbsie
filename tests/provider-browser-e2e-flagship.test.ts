@@ -2753,6 +2753,45 @@ describe("flagship provider story contract", () => {
     }
   });
 
+  it("accepts a verified split of a shared platform path rule", () => {
+    const dir =
+      "docs/evidence/provider-e2e/gateway-flagship-20260929-r4/gateway/";
+    const before = JSON.parse(
+      readFileSync(`${dir}story-mushroom-project.json`, "utf8"),
+    );
+    const after = JSON.parse(
+      readFileSync(`${dir}story-goal7-project.json`, "utf8"),
+    );
+    const check = assertFlagshipStoryPlatform(before, after, "platform-2");
+    if (!("revisedPathDuration" in check))
+      throw Error("Expected path slowdown evidence");
+    expect(check.previousPathDuration).toBe(4);
+    expect(check.revisedPathDuration).toBe(8);
+
+    const splitRule = (project: any, id: string) =>
+      project.game.rules.find((rule: any) => rule.id === id);
+    const movedOther = structuredClone(after);
+    splitRule(movedOther, "platform_outer_paths").actions[0].points[1][0] += 1;
+    expect(() =>
+      assertFlagshipStoryPlatform(before, movedOther, "platform-2"),
+    ).toThrow(/split changed platform-1/);
+
+    const dropped = structuredClone(after);
+    splitRule(dropped, "platform_outer_paths").actions.pop();
+    expect(() =>
+      assertFlagshipStoryPlatform(before, dropped, "platform-2"),
+    ).toThrow(/number of moving platforms/);
+
+    const retriggered = structuredClone(after);
+    splitRule(retriggered, "platform_outer_paths").trigger = {
+      type: "collision",
+      entityId: "portal",
+    };
+    expect(() =>
+      assertFlagshipStoryPlatform(before, retriggered, "platform-2"),
+    ).toThrow();
+  });
+
   it("requires a slower path duration and preserves the moving-bounce story rules", () => {
     const before = currentGatewayStory();
     const slowed = addGatewayGoalSevenEdit(before, 1.1);

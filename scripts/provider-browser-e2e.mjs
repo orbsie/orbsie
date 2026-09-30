@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isDeepStrictEqual } from "node:util";
 import {
   installGenerationDiagnosticObserver,
   readGenerationDiagnostics,
@@ -5114,6 +5115,84 @@ function storyNormalizedGoalRule(rule, conditionIndex) {
   };
 }
 
+/**
+ * Accept a shared start-path rule split into new rules only when the split
+ * keeps its trigger/conditions, holds only move_path actions for exactly the
+ * same entities, leaves every other path unchanged and changes the edited
+ * platform's duration alone. Returns the new rule IDs that replace it.
+ */
+export function storySplitPathRuleIds(
+  previous,
+  current,
+  beforePath,
+  afterPath,
+) {
+  const original = beforePath?.rule;
+  assert(
+    original && afterPath?.rule && !previous.byId.has(afterPath.rule.id),
+    "Story platform edit replaced the active platform path rule.",
+  );
+  assert(
+    !current.byId.has(original.id),
+    "Story platform edit replaced the active platform path rule.",
+  );
+  const shape = (rule) => {
+    const { id: _id, actions: _actions, ...rest } = rule;
+    return rest;
+  };
+  const originalActions = original.actions ?? [];
+  assert(
+    originalActions.every((action) => action?.type === "move_path"),
+    "Story platform path rule mixed other actions; a split cannot be verified.",
+  );
+  const splitRules = current.rules.filter(
+    (rule) =>
+      !previous.byId.has(rule.id) &&
+      (rule.actions ?? []).length > 0 &&
+      rule.actions.every((action) => action?.type === "move_path") &&
+      isDeepStrictEqual(shape(rule), shape(original)),
+  );
+  const splitActions = splitRules.flatMap((rule) => rule.actions);
+  assert.equal(
+    splitActions.length,
+    originalActions.length,
+    "Story platform path split changed the number of moving platforms.",
+  );
+  const editedId = beforePath.rule.actions[beforePath.actionIndex].entityId;
+  const withoutDuration = ({ duration: _duration, ...action }) => ({
+    ...action,
+    loop: action.loop ?? false,
+  });
+  for (const action of originalActions) {
+    const matches = splitActions.filter(
+      (candidate) => candidate.entityId === action.entityId,
+    );
+    assert.equal(
+      matches.length,
+      1,
+      `Story platform path split lost or duplicated ${action.entityId}.`,
+    );
+    if (action.entityId === editedId)
+      assert.deepEqual(
+        withoutDuration(matches[0]),
+        withoutDuration(action),
+        "Story platform edit changed the active path beyond its duration.",
+      );
+    else
+      assert.deepEqual(
+        matches[0],
+        action,
+        `Story platform path split changed ${action.entityId}.`,
+      );
+  }
+  const ids = new Set(splitRules.map((rule) => rule.id));
+  assert(
+    ids.has(afterPath.rule.id),
+    "Story platform edit replaced the active platform path rule.",
+  );
+  return ids;
+}
+
 function assertStoryPlatformRules(before, after, beforePath, afterPath) {
   const beforeHasGame = before?.game !== undefined;
   const afterHasGame = after?.game !== undefined;
@@ -5186,12 +5265,12 @@ function assertStoryPlatformRules(before, after, beforePath, afterPath) {
   );
   const previousPathId = beforePath?.rule.id;
   const currentPathId = afterPath?.rule.id;
-  assert.equal(
-    currentPathId,
-    previousPathId,
-    "Story platform edit replaced the active platform path rule.",
-  );
+  const splitPathRuleIds =
+    currentPathId === previousPathId
+      ? new Set()
+      : storySplitPathRuleIds(previous, current, beforePath, afterPath);
   for (const rule of previous.rules) {
+    if (splitPathRuleIds.size > 0 && rule.id === previousPathId) continue;
     const editedRule = current.byId.get(rule.id);
     assert(
       editedRule,
@@ -5218,7 +5297,7 @@ function assertStoryPlatformRules(before, after, beforePath, afterPath) {
     }
   }
   const addedRules = current.rules.filter(
-    (rule) => !previous.byId.has(rule.id),
+    (rule) => !previous.byId.has(rule.id) && !splitPathRuleIds.has(rule.id),
   );
   assert.equal(
     addedRules.length,
