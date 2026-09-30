@@ -12,6 +12,12 @@ Post-release regression: fresh OpenRouter flagship on a new disposable dev DB
 (`orbsie_diag_20260929_b`) passed creation, mushroom, seven-crystal, Undo,
 export and standalone win/reset in exactly three Luna calls; only publication
 phases were not run. Evidence: `docs/evidence/provider-e2e/openrouter-flagship-20260929/`.
+Review generalization (OpenRouter, 4 calls, strawberry plant prompt,
+`authoring-review-strawberry-four-call-20260929`): bounded-incomplete. Two
+corrections turned tiny berries hidden under flat green discs into four
+readable pointed red strawberries with visible seeds; the final review still
+flagged the requested leafy tops as flat caps (a fair finding). Claude's view:
+legible fruit, but the plant is a bare pole with arms, not yet delightful.
 Held despite approval:
 - Enabling production review: no record shows `scripts/authoring-run-schema.sql`
   (with the Sep 24 three-review constraint) applied to the production DB, and a

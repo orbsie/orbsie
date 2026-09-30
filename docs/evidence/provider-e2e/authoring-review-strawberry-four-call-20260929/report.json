@@ -1,0 +1,789 @@
+{
+  "schemaVersion": 1,
+  "outcome": "bounded-incomplete",
+  "provider": "openrouter",
+  "model": "openai/gpt-6-luna",
+  "serviceTier": "default",
+  "maxOutputTokens": 4096,
+  "allowedLiveCalls": 4,
+  "actualLiveCalls": 4,
+  "blockedCalls": 0,
+  "originPreflight": {
+    "status": 400,
+    "inferenceCalls": 0
+  },
+  "phaseOrder": [
+    "initial-generation-request-observed",
+    "create-submitted-from-browser",
+    "initial-generation-response-200",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "review-request-observed",
+    "review-response-200",
+    "review-verdict-revise",
+    "final-review-request-observed",
+    "final-review-response-200",
+    "final-review-verdict-revise",
+    "final-review-revise-bounded-incomplete"
+  ],
+  "calls": [
+    {
+      "ordinal": 1,
+      "phase": "initial-generation",
+      "route": "/api/generate",
+      "method": "POST",
+      "status": 200,
+      "requestId": "e6a38da5-33ab-4e5d-9aa6-9f3efa0a12a9",
+      "clientRunId": "15d6629c-655f-4a51-af20-bc21442cc6c4",
+      "authoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "requestedAuthoringRunId": null,
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "projectRevision": 0,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": true,
+      "reviewScope": null,
+      "reviewProjectId": null,
+      "reviewRevision": null,
+      "reviewImageProjectId": null,
+      "reviewImageRevision": null,
+      "structuralObservationProjectId": null,
+      "structuralObservationRevision": null,
+      "cameraViewPresent": null,
+      "responseBindingRevision": null,
+      "responseBindingDigest": null,
+      "verdict": null,
+      "remainingCalls": null,
+      "blocked": false
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "method": "POST",
+      "status": 200,
+      "requestId": "d73441d4-c1b4-40e2-b892-9cadc4820953",
+      "clientRunId": "15d6629c-655f-4a51-af20-bc21442cc6c4",
+      "authoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "requestedAuthoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "projectRevision": 3,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewRevision": 3,
+      "reviewImageProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewImageRevision": 3,
+      "structuralObservationProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "structuralObservationRevision": 3,
+      "cameraViewPresent": true,
+      "responseBindingRevision": 5,
+      "responseBindingDigest": "267971c6d81b858a7190de65d2bc63d1b7f8eefae515554725ae36a1f04ea830",
+      "verdict": "revise",
+      "remainingCalls": 2,
+      "blocked": false,
+      "reviewImageEvidence": {
+        "width": 455,
+        "height": 512,
+        "byteLength": 70836,
+        "sha256": "5a0ba0550ee3ee6a92c9cf2b2f6af0f8dd147ac90bd0e30384edeea4e4f8a169",
+        "fileWritten": true
+      }
+    },
+    {
+      "ordinal": 3,
+      "phase": "review",
+      "route": "/api/generate/review",
+      "method": "POST",
+      "status": 200,
+      "requestId": "f1d45f14-7119-4657-85aa-e68052b6a41e",
+      "clientRunId": "15d6629c-655f-4a51-af20-bc21442cc6c4",
+      "authoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "requestedAuthoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "projectRevision": 5,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewRevision": 5,
+      "reviewImageProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewImageRevision": 5,
+      "structuralObservationProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "structuralObservationRevision": 5,
+      "cameraViewPresent": true,
+      "responseBindingRevision": 7,
+      "responseBindingDigest": "be6911b700ccac65c8dcc44df75d471917f5604fc6c68632ddfa136041f1941e",
+      "verdict": "revise",
+      "remainingCalls": 1,
+      "blocked": false,
+      "reviewImageEvidence": {
+        "width": 460,
+        "height": 512,
+        "byteLength": 77421,
+        "sha256": "57450e743b8a9a4b4e9053da7614e4b917afbf928458617679d9e4dfaeec96b3",
+        "fileWritten": true
+      }
+    },
+    {
+      "ordinal": 4,
+      "phase": "final-review",
+      "route": "/api/generate/review",
+      "method": "POST",
+      "status": 200,
+      "requestId": "f4a936c9-2768-437f-a1b5-5700770abd54",
+      "clientRunId": "15d6629c-655f-4a51-af20-bc21442cc6c4",
+      "authoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "requestedAuthoringRunId": "8c511eaa-f7d8-4ed2-ae71-dc1c45cfca03",
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "projectRevision": 7,
+      "modelMatched": true,
+      "providerMatched": true,
+      "requestedOutputTokens": 4096,
+      "requestedServiceTier": "default",
+      "retryCount": 0,
+      "authoringReviewEnabled": false,
+      "reviewScope": "visual+structural",
+      "reviewProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewRevision": 7,
+      "reviewImageProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewImageRevision": 7,
+      "structuralObservationProjectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "structuralObservationRevision": 7,
+      "cameraViewPresent": true,
+      "responseBindingRevision": 7,
+      "responseBindingDigest": "be6911b700ccac65c8dcc44df75d471917f5604fc6c68632ddfa136041f1941e",
+      "verdict": "revise",
+      "remainingCalls": 0,
+      "blocked": false,
+      "reviewImageEvidence": {
+        "width": 460,
+        "height": 512,
+        "byteLength": 78425,
+        "sha256": "147d6f242c3b33a24dbfec50d1105578067e59e125ff85f37fc77004ecd8ac42",
+        "fileWritten": true
+      }
+    }
+  ],
+  "reviewAttempts": [
+    {
+      "ordinal": 1,
+      "phase": "review",
+      "requestId": "d73441d4-c1b4-40e2-b892-9cadc4820953",
+      "scope": "visual+structural",
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewedRevision": 3,
+      "bindingRevision": 5,
+      "bindingDigest": "267971c6d81b858a7190de65d2bc63d1b7f8eefae515554725ae36a1f04ea830",
+      "verdict": "revise",
+      "remainingCalls": 2,
+      "issueCount": 1
+    },
+    {
+      "ordinal": 2,
+      "phase": "review",
+      "requestId": "f1d45f14-7119-4657-85aa-e68052b6a41e",
+      "scope": "visual+structural",
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "reviewedRevision": 5,
+      "bindingRevision": 7,
+      "bindingDigest": "be6911b700ccac65c8dcc44df75d471917f5604fc6c68632ddfa136041f1941e",
+      "verdict": "revise",
+      "remainingCalls": 1,
+      "issueCount": 1
+    }
+  ],
+  "review": {
+    "phase": "review",
+    "ordinal": 1,
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+    "reviewedRevision": 3,
+    "reviewImageRevision": 3,
+    "structuralObservationRevision": 3,
+    "bindingRevision": 5,
+    "bindingDigest": "267971c6d81b858a7190de65d2bc63d1b7f8eefae515554725ae36a1f04ea830",
+    "verdict": "revise",
+    "remainingCalls": 2,
+    "issueCount": 1
+  },
+  "secondReview": {
+    "phase": "review",
+    "ordinal": 2,
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+    "reviewedRevision": 5,
+    "reviewImageRevision": 5,
+    "structuralObservationRevision": 5,
+    "bindingRevision": 7,
+    "bindingDigest": "be6911b700ccac65c8dcc44df75d471917f5604fc6c68632ddfa136041f1941e",
+    "verdict": "revise",
+    "remainingCalls": 1,
+    "issueCount": 1
+  },
+  "finalReview": {
+    "phase": "final-review",
+    "ordinal": 4,
+    "scope": "visual+structural",
+    "requestScope": "visual+structural",
+    "imagePresent": true,
+    "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+    "reviewedRevision": 7,
+    "reviewImageRevision": 7,
+    "structuralObservationRevision": 7,
+    "bindingRevision": 7,
+    "bindingDigest": "be6911b700ccac65c8dcc44df75d471917f5604fc6c68632ddfa136041f1941e",
+    "verdict": "revise",
+    "remainingCalls": 0,
+    "issueCount": 1
+  },
+  "evidence": [
+    {
+      "label": "connection-model-selection",
+      "sha256": "4dc6689c3381fcc0a56f1051fc7a2308353d58dc266c218a1e06a1cf2bad5dc3",
+      "bytes": 220986,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "4dc6689c3381fcc0a56f1051fc7a2308353d58dc266c218a1e06a1cf2bad5dc3",
+      "privateBytes": 220986
+    },
+    {
+      "label": "final-review-bounded-incomplete",
+      "sha256": "7acc238213ccf4e3b266fe561a102625be1e17bc5c0eaabbd2f6d16b0cccb2d1",
+      "bytes": 172380,
+      "persisted": false,
+      "persistedScope": "full-page-png",
+      "privatePngWritten": true,
+      "privateSha256": "883e81d0c5fab597fdfe38d9a6a111719c80a1d1925554425ae3eb4ddaf9e30d",
+      "privateBytes": 85237
+    }
+  ],
+  "postReviewEvidence": {
+    "status": "complete",
+    "resumedSavedWorld": true,
+    "settleDelayMs": 5000,
+    "editor": {
+      "readiness": "ready",
+      "captureStatus": "captured",
+      "privatePngStatus": "written",
+      "privatePngWritten": true,
+      "bytes": 78644,
+      "sha256": "3a5f70d027c89f51f2094e529de4371d7ece556e0009f67d79b7c97d887a1b0b"
+    },
+    "play": {
+      "readiness": "ready",
+      "captureStatus": "captured",
+      "privatePngStatus": "written",
+      "privatePngWritten": true,
+      "bytes": 30852,
+      "sha256": "c4805fe80911966c21803de7fadd6d635a81831777774844a000b618167a78b9"
+    },
+    "finalScene": {
+      "status": "recovered",
+      "revision": 7,
+      "geometry": {
+        "entityCount": 1,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 1,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 1,
+          "asset": 0,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 29,
+        "customPartShapeCounts": {
+          "box": 0,
+          "sphere": 8,
+          "cylinder": 1,
+          "cone": 12,
+          "torus": 0,
+          "lathe": 4,
+          "segment": 0,
+          "absent": 0,
+          "unknown": 4
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 8,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 1,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 12,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 0,
+            "halfToOne": 4,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "segment": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 4
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 4,
+          "orange": 0,
+          "yellow": 8,
+          "green": 17,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    }
+  },
+  "storage": {
+    "connectionKeyPersisted": false,
+    "before": null,
+    "afterGeneration": {
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "revision": 3,
+      "structure": {
+        "entityCount": 1,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 1,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 1,
+          "asset": 0,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 21,
+        "customPartShapeCounts": {
+          "box": 0,
+          "sphere": 8,
+          "cylinder": 1,
+          "cone": 4,
+          "torus": 0,
+          "lathe": 4,
+          "segment": 0,
+          "absent": 0,
+          "unknown": 4
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 8,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 1,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 4,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 4,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "segment": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 4
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 4,
+          "orange": 0,
+          "yellow": 8,
+          "green": 9,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterFinalReview": {
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "revision": 7,
+      "structure": {
+        "entityCount": 1,
+        "stageCounts": {
+          "seed": 0,
+          "coarse": 0,
+          "ready": 1,
+          "unknown": 0
+        },
+        "geometryKindCounts": {
+          "tree": 0,
+          "mushroom": 0,
+          "platform": 0,
+          "arch": 0,
+          "crystal": 0,
+          "pond": 0,
+          "flower": 0,
+          "rock": 0,
+          "custom": 1,
+          "asset": 0,
+          "generated": 0,
+          "absent": 0,
+          "other": 0
+        },
+        "customProceduralPartCount": 29,
+        "customPartShapeCounts": {
+          "box": 0,
+          "sphere": 8,
+          "cylinder": 1,
+          "cone": 12,
+          "torus": 0,
+          "lathe": 4,
+          "segment": 0,
+          "absent": 0,
+          "unknown": 4
+        },
+        "customPartScaleFactorUpperBoundBinsByShape": {
+          "box": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "sphere": {
+            "belowHalf": 8,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cylinder": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 1,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "cone": {
+            "belowHalf": 12,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "torus": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "lathe": {
+            "belowHalf": 0,
+            "halfToOne": 4,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "segment": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "absent": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 0
+          },
+          "unknown": {
+            "belowHalf": 0,
+            "halfToOne": 0,
+            "oneToTwo": 0,
+            "twoToFour": 0,
+            "fourPlus": 0,
+            "unknown": 4
+          }
+        },
+        "entityColorFamilyCounts": {
+          "red": 0,
+          "orange": 0,
+          "yellow": 0,
+          "green": 1,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        },
+        "partColorFamilyCounts": {
+          "red": 4,
+          "orange": 0,
+          "yellow": 8,
+          "green": 17,
+          "cyan": 0,
+          "blue": 0,
+          "purple": 0,
+          "brown": 0,
+          "white": 0,
+          "gray": 0,
+          "black": 0,
+          "other": 0,
+          "absent": 0
+        }
+      }
+    },
+    "afterReload": {
+      "projectId": "7646b3df-7709-47a7-a25c-d1b4d724a11f",
+      "revision": 7,
+      "keyPersisted": false,
+      "recovered": true
+    }
+  },
+  "requestIds": {
+    "initial": "e6a38da5-33ab-4e5d-9aa6-9f3efa0a12a9",
+    "review": "d73441d4-c1b4-40e2-b892-9cadc4820953",
+    "secondReview": "f1d45f14-7119-4657-85aa-e68052b6a41e",
+    "finalReview": "f4a936c9-2768-437f-a1b5-5700770abd54"
+  },
+  "privateEvidence": {
+    "enabled": true,
+    "directoryMode": "0700",
+    "fileMode": "0600",
+    "screenshotsWritten": 4,
+    "reviewFindingsStatus": "written",
+    "reviewFindingsCount": 3
+  },
+  "browserActivity": {
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "requestFailures": 1,
+    "requestFailureDetails": [
+      {
+        "route": "generation",
+        "code": "net::ERR_ABORTED"
+      }
+    ],
+    "authoring": {
+      "reviewStarted": true,
+      "completed": false,
+      "applyingCorrection": true,
+      "checkingCorrection": true,
+      "reviewIncomplete": false,
+      "reviewPartial": true,
+      "otherActivityPresent": true
+    }
+  },
+  "blockedExternalRequests": 0,
+  "blockedExternalOrigins": [],
+  "failure": null,
+  "server": {
+    "status": 200,
+    "authoringReview": true,
+    "accounts": true,
+    "maxOutputTokens": 4096
+  },
+  "catalog": {
+    "exactModelPresent": true,
+    "imageInputSupported": true
+  }
+}
