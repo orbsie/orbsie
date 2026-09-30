@@ -18,6 +18,14 @@
   larger-scene or mobile certification.
 - Gateway flagship: creation gameplay and the mushroom edit passed; the third
   edit failed with an unapplicable response (see the checkpoint).
+- Touch platform crossing: `scripts/verify-flagship-platforms.mjs` only
+  supports the older catalog-asset `move` platform layout, so it cannot check
+  current bounce-platform flagships (a Sep 29 attempt stopped at its layout
+  assertion, no model calls). The current layout's touch route already passed
+  in the Sep 27 Android 15 emulator replay (grounded and bounce frames on all
+  three platforms, five crystals, win, touch restart):
+  `docs/evidence/android-openrouter-flagship-20260927/fresh-android-api35-touch-replay/`.
+  Physical-device touch remains open.
 - Still blocked on external resources: owner ChatGPT consent (no connected
   Chrome extension in this session) and physical iOS/Android devices.
 
