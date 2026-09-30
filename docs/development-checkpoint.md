@@ -42,6 +42,27 @@ Luna runs, same prompt and limits (4 calls each, within the 5-call Gateway cap):
    island; review 1 moved the buried spots onto the cap, review 2 exposed the
    stem, and the final review accepted. Claude inspected the captures: a clear
    mushroom with visible stem, cap resting on it, five spots, and a small island.
+Gateway three-call flagship attempt (`gateway-flagship-20260929`): creation
+passed with movement during generation, five crystals, portal win and reset;
+the selected tree became a giant pink mushroom (revision 54). The third edit
+(slower middle platform plus two crystals) returned HTTP 200 but the server
+logged `parser-failure` after one command (106 output bytes) and the browser
+rejected operation 2; nothing committed. **Call-limit overrun:** the isolated
+server had review enabled and the harness did not opt out, so creation and the
+mushroom edit each added three review calls: nine Gateway calls against the
+owner's five-per-test limit. `cb0f3f5` now opts out in the UI and aborts any
+review-route request. One separate instrumented Gateway replay of that edit
+against the saved revision-54 project (`diagnose-scene-json.mjs --project`,
+raw SSE private under `~/.cache/orbsie/provider-tests/gateway-flagship-edit3-capture-20260929/`)
+produced six valid commands, so the failure did not reproduce. The review loop
+had also left a 12.6 m mushroom cap covering the game; the subject-sizing rule
+is now scoped to bases created for one subject and forbids enlarging objects to
+fill a shared game island. The failure screenshot is kept privately
+(`~/.cache/orbsie/provider-tests/gateway-flagship-20260929-private/`).
+After scoping, OpenRouter run `authoring-review-scoped-scale-four-call-20260929`
+passed in 3 calls (one stem/cap gap correction, then accept). Claude's check:
+legible stem, cap and five spots, but the spots are oversized and lined along
+the front rim, and the island reads as a sandy slab with water.
 This is the first live create, render, inspect, targeted revise, final-check
 pass that needed real corrections, on both OpenRouter (accept-first path) and
 Gateway (two-correction path). Single samples; quality still varies by run. Production
