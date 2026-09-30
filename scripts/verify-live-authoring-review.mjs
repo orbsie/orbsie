@@ -1230,6 +1230,24 @@ async function capturePostReviewView(page, mode, privateDirectory) {
  * @param {string | null} [privateDirectory=null]
  */
 export async function capturePostReviewEvidence(page, privateDirectory = null) {
+  // Reload returns to the landing planet; resume the saved world first so the
+  // Edit/Play controls exist.
+  let resumed = false;
+  try {
+    const resume = page.getByRole("button", {
+      name: "Continue your saved world",
+      exact: true,
+    });
+    if (await resume.isVisible()) {
+      await resume.click({ timeout: 5000 });
+      resumed = true;
+      await page
+        .getByRole("button", { name: "Edit", exact: true })
+        .waitFor({ state: "visible", timeout: 30000 });
+    }
+  } catch {
+    // Capture below reports unavailable readiness with fixed statuses.
+  }
   const editor = await capturePostReviewView(page, "Edit", privateDirectory);
   const play = await capturePostReviewView(page, "Play", privateDirectory);
   const captures = [editor, play].filter(
@@ -1238,6 +1256,7 @@ export async function capturePostReviewEvidence(page, privateDirectory = null) {
   return {
     status:
       captures === 2 ? "complete" : captures === 1 ? "partial" : "unavailable",
+    resumedSavedWorld: resumed,
     settleDelayMs: POST_REVIEW_SETTLE_DELAY_MS,
     editor,
     play,

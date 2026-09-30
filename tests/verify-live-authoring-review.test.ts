@@ -137,8 +137,12 @@ function nextReviewRequest({
   };
 }
 
-function postReviewEvidencePage({ failPlayScreenshot = false } = {}) {
+function postReviewEvidencePage({
+  failPlayScreenshot = false,
+  landing = false,
+} = {}) {
   let currentMode = "Edit";
+  let onLanding = landing;
   const settleDelays: number[] = [];
   const canvas: any = {
     first: () => canvas,
@@ -158,7 +162,12 @@ function postReviewEvidencePage({ failPlayScreenshot = false } = {}) {
     canvas,
     page: {
       getByRole: vi.fn((_role: string, options: { name: string }) => ({
-        isVisible: vi.fn(async () => true),
+        isVisible: vi.fn(async () =>
+          options.name === "Continue your saved world" ? onLanding : !onLanding,
+        ),
+        waitFor: vi.fn(async () => {
+          if (onLanding) throw new Error("private browser detail");
+        }),
         evaluate: vi.fn(async (callback: (element: any) => unknown) =>
           callback({
             classList: {
@@ -168,7 +177,8 @@ function postReviewEvidencePage({ failPlayScreenshot = false } = {}) {
           }),
         ),
         click: vi.fn(async () => {
-          currentMode = options.name;
+          if (options.name === "Continue your saved world") onLanding = false;
+          else currentMode = options.name;
         }),
       })),
       locator: vi.fn(() => canvas),
@@ -380,6 +390,18 @@ describe("post-review visual evidence", () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it("resumes the saved world from the post-reload landing before capturing", async () => {
+    const { page, canvas } = postReviewEvidencePage({ landing: true });
+    const evidence = await capturePostReviewEvidence(page, null);
+    expect(evidence).toMatchObject({
+      status: "complete",
+      resumedSavedWorld: true,
+      editor: { readiness: "ready", captureStatus: "captured" },
+      play: { readiness: "ready", captureStatus: "captured" },
+    });
+    expect(canvas.screenshot).toHaveBeenCalledTimes(2);
   });
 
   it("reports a failed Play capture without changing bounded-incomplete outcome", async () => {
