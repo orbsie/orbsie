@@ -349,7 +349,11 @@ function validRetainedLiveReport(project: any) {
   const phases = {
     creation: { revision: 30, gameplay: gameplay(30) },
     mushroom: { status: "passed", revision: 35, targetId: "tree-a" },
-    goal7: { status: "passed", revision: 41, gameplay: gameplay(41, goalSevenIds) },
+    goal7: {
+      status: "passed",
+      revision: 41,
+      gameplay: gameplay(41, goalSevenIds),
+    },
     undo: { status: "passed", revision: 42, gameplay: gameplay(42) },
   };
   return {
@@ -389,7 +393,11 @@ function validRetainedLiveReport(project: any) {
         },
       },
     },
-    edit: { status: "passed", type: "flagship-story", selectedIdPreserved: true },
+    edit: {
+      status: "passed",
+      type: "flagship-story",
+      selectedIdPreserved: true,
+    },
     flagshipStory: {
       status: "passed",
       scope: "fresh-gameplay-and-persistence",
@@ -530,10 +538,7 @@ async function serveRetainedFlagshipZipInIframe() {
   try {
     playerOrigin = await listenLoopback(playerServer);
     wrapperServer = createServer((request, response) => {
-      const pathname = new URL(
-        request.url ?? "/",
-        "http://127.0.0.1",
-      ).pathname;
+      const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
       if (pathname !== "/wrapper.html") {
         response.writeHead(404).end();
         return;
@@ -704,7 +709,10 @@ describe("flagship provider story contract", () => {
       const entity = tiedProject.entities.find((item: any) => item.id === id);
       const path = tiedProject.game.rules
         .flatMap((rule: any) => rule.actions ?? [])
-        .find((action: any) => action.type === "move_path" && action.entityId === id);
+        .find(
+          (action: any) =>
+            action.type === "move_path" && action.entityId === id,
+        );
       const delta = position.map(
         (component, axis) => component - entity.position[axis],
       );
@@ -833,7 +841,8 @@ describe("flagship provider story contract", () => {
     if (!crossing) throw new Error("Expected crossing evidence in fixture.");
     const unsafeCrossing = structuredClone(crossing) as Record<string, any>;
     unsafeCrossing.rawProviderText = "private crossing provider output";
-    unsafeCrossing.previous.observation.rawProviderText = "private previous text";
+    unsafeCrossing.previous.observation.rawProviderText =
+      "private previous text";
     const thrown = new Error(initialReport.error) as Error & {
       freshGameplayEvidence: Record<string, any>;
     };
@@ -865,13 +874,7 @@ describe("flagship provider story contract", () => {
         bounceFrames: 0,
         startPosition: [index, 0, 0],
         maximumDisplacement: 0.2,
-        jumpEvidence: [
-          0,
-          1,
-          2,
-          "recovery-0",
-          "recovery-1",
-        ].map((attempt) => ({
+        jumpEvidence: [0, 1, 2, "recovery-0", "recovery-1"].map((attempt) => ({
           id: `entity-${index}`,
           attempt,
           before: compactAttemptObservation(`entity-${index}`, 10),
@@ -1010,9 +1013,7 @@ describe("flagship provider story contract", () => {
             ),
         ),
       ).toBe(true);
-      expect(JSON.stringify(report)).not.toContain(
-        "private provider response",
-      );
+      expect(JSON.stringify(report)).not.toContain("private provider response");
       expect(JSON.stringify(report)).not.toContain("secret-provider-token");
       expect(JSON.stringify(report)).not.toContain("must not be copied");
       expect(JSON.stringify(report)).not.toContain(
@@ -1055,9 +1056,13 @@ describe("flagship provider story contract", () => {
     const temporary = await mkdtemp(
       join(tmpdir(), "orbsie-standalone-gameplay-fixture-"),
     );
-    const evidenceDir = resolve(
-      "docs/evidence/provider-e2e/standalone-current-runtime-gameplay-fixture",
-    );
+    // Only refresh the tracked evidence on request; ordinary runs stay clean.
+    const evidenceDir =
+      process.env.ORBSIE_REFRESH_EVIDENCE === "1"
+        ? resolve(
+            "docs/evidence/provider-e2e/standalone-current-runtime-gameplay-fixture",
+          )
+        : join(temporary, "evidence");
     await mkdir(evidenceDir, { recursive: true, mode: 0o700 });
     await writeFile(join(temporary, "world.zip"), archive);
     const project = JSON.parse(strFromU8(currentFiles["project.json"]));
@@ -1178,9 +1183,7 @@ describe("flagship provider story contract", () => {
     expect(report.standaloneGameplay.win).toBeUndefined();
     expect(report.standaloneGameplay.reset).toBeUndefined();
     expect(report.standaloneGameplay.failureEvidence.collections).toEqual([]);
-    expect(
-      report.standaloneGameplay.failureEvidence.inputTrace,
-    ).toEqual(
+    expect(report.standaloneGameplay.failureEvidence.inputTrace).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           reason: "platform-jump-start",
@@ -1392,8 +1395,9 @@ describe("flagship provider story contract", () => {
     );
     try {
       const project = currentGatewayStory();
-      project.entities.find((candidate: any) => candidate.id === "tree-1").geometry.assetId =
-        "unknown.tree";
+      project.entities.find(
+        (candidate: any) => candidate.id === "tree-1",
+      ).geometry.assetId = "unknown.tree";
       const checkpointBytes = Buffer.from(`${JSON.stringify(project)}\n`);
       const checkpointPath = join(temporary, "story-created-project.json");
       await writeFile(checkpointPath, checkpointBytes);
@@ -1474,11 +1478,9 @@ describe("flagship provider story contract", () => {
         ORBSIE_FLAGSHIP_RESUME_CHECKPOINT: checkpointPath,
         ORBSIE_FLAGSHIP_RESUME_MODELS: temporary,
       });
-      expect(() => readFlagshipResumeCheckpoint(
-        checkpointPath,
-        temporary,
-        "creation",
-      )).toThrow(/cannot be reconstructed/);
+      expect(() =>
+        readFlagshipResumeCheckpoint(checkpointPath, temporary, "creation"),
+      ).toThrow(/cannot be reconstructed/);
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
@@ -1549,10 +1551,7 @@ describe("flagship provider story contract", () => {
           id: "d8d48be6-dae2-4531-a7cb-77e8906b4c75",
           revision: 37,
         },
-        models: [
-          { id: "crystal-6" },
-          { id: "crystal-7" },
-        ],
+        models: [{ id: "crystal-6" }, { id: "crystal-7" }],
       },
     });
     expect(flagshipResumeExecutionMode(config)).toBe("offline");
@@ -1644,7 +1643,8 @@ describe("flagship provider story contract", () => {
   });
 
   it("aborts both generation routes and records offline replay attempts", async () => {
-    const blockedGenerationRequests: Array<{ method: string; path: string }> = [];
+    const blockedGenerationRequests: Array<{ method: string; path: string }> =
+      [];
     const handlers: Array<(route: any) => Promise<void>> = [];
     await installTrafficGuard(
       {
@@ -1695,7 +1695,9 @@ describe("flagship provider story contract", () => {
     project.revision = 42;
     const report = validRetainedLiveReport(project);
     const hash = "a".repeat(64);
-    expect(validateRetainedLiveReport(report, project, hash, hash)).toMatchObject({
+    expect(
+      validateRetainedLiveReport(report, project, hash, hash),
+    ).toMatchObject({
       provider: "openrouter",
       model: "openai/gpt-6-luna",
       calls: 3,
@@ -1929,15 +1931,17 @@ describe("flagship provider story contract", () => {
     gatewayStoryEnvironment({ ORBSIE_OUTPUT_CAP_TOKENS: "512" });
     expect(() => readConfiguration(["--provider", "gateway"])).toThrow(/4096/);
 
-    hostedStoryEnvironment({ ORBSIE_CHATGPT_TEST_LIMITS: "2-calls-180s-512kib" });
+    hostedStoryEnvironment({
+      ORBSIE_CHATGPT_TEST_LIMITS: "2-calls-180s-512kib",
+    });
     expect(() => readConfiguration(["--provider", "chatgpt-hosted"])).toThrow(
       /3-calls-180s-512kib/,
     );
 
     hostedStoryEnvironment({ ORBSIE_REAL_PUBLICATION: "1" });
-    expect(readConfiguration(["--provider", "chatgpt-hosted"]).publication).toBe(
-      true,
-    );
+    expect(
+      readConfiguration(["--provider", "chatgpt-hosted"]).publication,
+    ).toBe(true);
     hostedStoryEnvironment({ ORBSIE_VERIFY_CLOUD_RECOVERY: "1" });
     expect(
       readConfiguration(["--provider", "chatgpt-hosted"]).cloudRecovery,
@@ -1988,7 +1992,10 @@ describe("flagship provider story contract", () => {
         record("publication", current, expected);
       },
     });
-    expect(result).toEqual({ projectId: project.id, revision: project.revision });
+    expect(result).toEqual({
+      projectId: project.id,
+      revision: project.revision,
+    });
     expect(calls).toEqual([
       { phase: "refresh", id: project.id, revision: project.revision },
       { phase: "export", id: project.id, revision: project.revision },
@@ -2028,7 +2035,9 @@ describe("flagship provider story contract", () => {
     const expected: any = initialProject();
     const published = structuredClone(expected);
     published.messages = [{ role: "assistant", content: "stripped" }];
-    expect(assertPublicationProjectMatches(published, expected)).toBe(published);
+    expect(assertPublicationProjectMatches(published, expected)).toBe(
+      published,
+    );
 
     const wrongProject = structuredClone(published);
     wrongProject.id = "another-project";
@@ -2239,111 +2248,107 @@ describe("flagship provider story contract", () => {
     });
   });
 
-  it(
-    "plays the retained five-crystal flagship world through a keyboard-focused iframe",
-    async () => {
-      const fixture = await serveRetainedFlagshipZipInIframe();
-      let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
-      let context: BrowserContext | undefined;
-      try {
-        browser = await chromium.launch({
-          headless: true,
-          args: [
-            "--no-sandbox",
-            "--use-gl=angle",
-            "--use-angle=swiftshader",
-            "--enable-unsafe-swiftshader",
-          ],
-        });
-        context = await browser.newContext({
-          viewport: { width: 1280, height: 800 },
-        });
-        await context.addInitScript(() => {
-          const testWindow = window as Window & {
-            __ORBSIE_GAMEPLAY_READ_REQUESTED__?: boolean;
-          };
-          testWindow.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
-        });
-        const page = await context.newPage();
-        const requests: string[] = [];
-        page.on("request", (request) => requests.push(request.url()));
-        await page.goto(`${fixture.wrapperOrigin}/wrapper.html`, {
-          waitUntil: "domcontentloaded",
-        });
-        const iframe = page.locator("iframe");
-        await iframe.waitFor({ state: "visible", timeout: 30000 });
-        const iframeElement = await iframe.elementHandle();
-        if (!iframeElement)
-          throw new Error("Published fixture iframe is missing.");
-        const frame = await iframeElement.contentFrame();
-        if (!frame) throw new Error("Published fixture iframe has no document.");
-        expect(frame.url()).toBe(`${fixture.playerOrigin}/index.html`);
-        expect(new URL(frame.url()).origin).toBe(fixture.playerOrigin);
-        expect(new URL(page.url()).origin).toBe(fixture.wrapperOrigin);
-        expect(fixture.playerOrigin).not.toBe(fixture.wrapperOrigin);
-        await frame
-          .locator("main[data-ready=true]")
-          .waitFor({ state: "visible", timeout: 30000 });
+  it("plays the retained five-crystal flagship world through a keyboard-focused iframe", async () => {
+    const fixture = await serveRetainedFlagshipZipInIframe();
+    let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+    let context: BrowserContext | undefined;
+    try {
+      browser = await chromium.launch({
+        headless: true,
+        args: [
+          "--no-sandbox",
+          "--use-gl=angle",
+          "--use-angle=swiftshader",
+          "--enable-unsafe-swiftshader",
+        ],
+      });
+      context = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+      });
+      await context.addInitScript(() => {
+        const testWindow = window as Window & {
+          __ORBSIE_GAMEPLAY_READ_REQUESTED__?: boolean;
+        };
+        testWindow.__ORBSIE_GAMEPLAY_READ_REQUESTED__ = true;
+      });
+      const page = await context.newPage();
+      const requests: string[] = [];
+      page.on("request", (request) => requests.push(request.url()));
+      await page.goto(`${fixture.wrapperOrigin}/wrapper.html`, {
+        waitUntil: "domcontentloaded",
+      });
+      const iframe = page.locator("iframe");
+      await iframe.waitFor({ state: "visible", timeout: 30000 });
+      const iframeElement = await iframe.elementHandle();
+      if (!iframeElement)
+        throw new Error("Published fixture iframe is missing.");
+      const frame = await iframeElement.contentFrame();
+      if (!frame) throw new Error("Published fixture iframe has no document.");
+      expect(frame.url()).toBe(`${fixture.playerOrigin}/index.html`);
+      expect(new URL(frame.url()).origin).toBe(fixture.playerOrigin);
+      expect(new URL(page.url()).origin).toBe(fixture.wrapperOrigin);
+      expect(fixture.playerOrigin).not.toBe(fixture.wrapperOrigin);
+      await frame
+        .locator("main[data-ready=true]")
+        .waitFor({ state: "visible", timeout: 30000 });
 
-        const gameplayPage = createPublishedGameplayPageAdapter(frame, page);
-        const gameplay = await runFreshFlagshipGameplay(
-          gameplayPage,
-          fixture.project,
-          fixture.story,
-          {
-            surface: "standalone",
-            inputMode: "keyboard",
-            expectedCollectibleCount: 5,
-            expectedRevision: fixture.project.revision,
-          },
-        );
-        const bound = assertPublishedGameplayBinding(
-          gameplay,
-          fixture.project,
-          fixture.story,
-        );
-        expect(bound.movement.distance).toBeGreaterThan(0.12);
-        expect(bound.collectedIds).toHaveLength(5);
-        expect(bound.contacts).toContain(fixture.story.portal.id);
-        expect(bound.win.score).toBe(5);
-        expect(bound.reset).toMatchObject({
-          score: 0,
-          status: "playing",
-          lifecycleAdvanced: true,
-        });
-        expect(
-          bound.platformEvidence.filter(
-            (platform: any) => platform.behavior === "bounce",
+      const gameplayPage = createPublishedGameplayPageAdapter(frame, page);
+      const gameplay = await runFreshFlagshipGameplay(
+        gameplayPage,
+        fixture.project,
+        fixture.story,
+        {
+          surface: "standalone",
+          inputMode: "keyboard",
+          expectedCollectibleCount: 5,
+          expectedRevision: fixture.project.revision,
+        },
+      );
+      const bound = assertPublishedGameplayBinding(
+        gameplay,
+        fixture.project,
+        fixture.story,
+      );
+      expect(bound.movement.distance).toBeGreaterThan(0.12);
+      expect(bound.collectedIds).toHaveLength(5);
+      expect(bound.contacts).toContain(fixture.story.portal.id);
+      expect(bound.win.score).toBe(5);
+      expect(bound.reset).toMatchObject({
+        score: 0,
+        status: "playing",
+        lifecycleAdvanced: true,
+      });
+      expect(
+        bound.platformEvidence.filter(
+          (platform: any) => platform.behavior === "bounce",
+        ),
+      ).toHaveLength(3);
+      expect(
+        bound.platformEvidence.every(
+          (platform: any) =>
+            platform.bounceFrames > 0 && platform.maximumDisplacement >= 0.05,
+        ),
+      ).toBe(true);
+      const allowedOrigins = new Set([
+        fixture.wrapperOrigin,
+        fixture.playerOrigin,
+      ]);
+      expect(
+        requests.filter((url) => !allowedOrigins.has(new URL(url).origin)),
+      ).toEqual([]);
+      expect(
+        requests.filter((url) =>
+          ["/api/", "/generate", "/health"].some((path) =>
+            new URL(url).pathname.startsWith(path),
           ),
-        ).toHaveLength(3);
-        expect(
-          bound.platformEvidence.every(
-            (platform: any) =>
-              platform.bounceFrames > 0 && platform.maximumDisplacement >= 0.05,
-          ),
-        ).toBe(true);
-        const allowedOrigins = new Set([
-          fixture.wrapperOrigin,
-          fixture.playerOrigin,
-        ]);
-        expect(
-          requests.filter((url) => !allowedOrigins.has(new URL(url).origin)),
-        ).toEqual([]);
-        expect(
-          requests.filter((url) =>
-            ["/api/", "/generate", "/health"].some((path) =>
-              new URL(url).pathname.startsWith(path),
-            ),
-          ),
-        ).toEqual([]);
-      } finally {
-        await context?.close().catch(() => undefined);
-        await browser?.close().catch(() => undefined);
-        await fixture.close();
-      }
-    },
-    180_000,
-  );
+        ),
+      ).toEqual([]);
+    } finally {
+      await context?.close().catch(() => undefined);
+      await browser?.close().catch(() => undefined);
+      await fixture.close();
+    }
+  }, 180_000);
 
   it("accepts fresh runtime and geometry worker bytes independently of the manifest", async () => {
     const expected = initialProject();
@@ -2752,7 +2757,8 @@ describe("flagship provider story contract", () => {
     const before = currentGatewayStory();
     const slowed = addGatewayGoalSevenEdit(before, 1.1);
     const check = assertFlagshipStoryPlatform(before, slowed, "platform-2");
-    if (!("previousPathDuration" in check)) throw Error("Expected path slowdown evidence");
+    if (!("previousPathDuration" in check))
+      throw Error("Expected path slowdown evidence");
     expect(check.previousPathDuration).toBe(2.2);
     expect(check.revisedPathDuration).toBeCloseTo(3.3);
     expect(check.collectibles).toBe(7);
@@ -2775,7 +2781,8 @@ describe("flagship provider story contract", () => {
       movePathSlowed,
       "platform-2",
     );
-    if (!("revisedPathDuration" in movePathCheck)) throw Error("Expected path slowdown evidence");
+    if (!("revisedPathDuration" in movePathCheck))
+      throw Error("Expected path slowdown evidence");
     expect(movePathCheck.revisedPathDuration).toBeCloseTo(3.3);
     const movePathSpeedOnly = addGatewayGoalSevenEdit(movePathBefore);
     movePathSpeedOnly.entities.find(
@@ -2792,7 +2799,8 @@ describe("flagship provider story contract", () => {
     const tenPointBefore = currentGatewayStory();
     for (const rule of tenPointBefore.game.rules) {
       if (rule.trigger?.type !== "collect") continue;
-      rule.actions.find((action: any) => action.type === "add_score").amount = 10;
+      rule.actions.find((action: any) => action.type === "add_score").amount =
+        10;
     }
     const tenPointSlowed = addGatewayGoalSevenEdit(tenPointBefore, 1.1);
     expect(() =>
@@ -3004,9 +3012,7 @@ describe("flagship provider story contract", () => {
         "utf8",
       ),
     );
-    const after = JSON.parse(
-      readFileSync(CAPTURED_GATEWAY_STORY, "utf8"),
-    );
+    const after = JSON.parse(readFileSync(CAPTURED_GATEWAY_STORY, "utf8"));
     const check = assertFlagshipStoryMushroom(before, after, "tree-1");
     expect(check.transformedBoundsExpanded).toBe(true);
     expect(check.dimensions).toMatchObject({
@@ -3019,9 +3025,7 @@ describe("flagship provider story contract", () => {
       expect.closeTo(0.9153886, 6),
     ]);
     expect(check.dimensions.after).toEqual([
-      2.4355410114000002,
-      2.8392,
-      2.812319972,
+      2.4355410114000002, 2.8392, 2.812319972,
     ]);
   });
 
