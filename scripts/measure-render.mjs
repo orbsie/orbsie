@@ -10,6 +10,11 @@ import { pathToFileURL } from "node:url";
 const url = process.env.TEST_URL ?? "http://localhost:3001";
 const output = process.env.PERF_OUTPUT ?? "/tmp/orbsie-render";
 const recording = process.env.PERF_RECORD_VIDEO !== "0";
+// PERF_GPU=native runs headed Chrome on ANGLE/Vulkan so a physical GPU is used.
+const nativeGpu = process.env.PERF_GPU === "native";
+const sampleCount = Number(process.env.PERF_SAMPLES ?? 240);
+if (!Number.isInteger(sampleCount) || sampleCount < 60)
+  throw new RangeError("PERF_SAMPLES must be an integer of at least 60.");
 await mkdir(output, { recursive: true });
 const temp = await mkdtemp(join(tmpdir(), "orbsie-perf-"));
 await build({
@@ -25,13 +30,20 @@ await build({
 });
 const { world } = await import(pathToFileURL(join(temp, "fixture.mjs")));
 const browser = await chromium.launch({
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--use-gl=angle",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
-  ],
+  headless: !nativeGpu,
+  args: nativeGpu
+    ? [
+        "--no-sandbox",
+        "--use-angle=vulkan",
+        "--enable-features=Vulkan",
+        "--ignore-gpu-blocklist",
+      ]
+    : [
+        "--no-sandbox",
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+      ],
 });
 const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
@@ -51,22 +63,30 @@ await page.goto(`${url}/#orb=${world}`);
 await page.waitForSelector("canvas");
 await page.waitForTimeout(18000);
 const measurements = await page.evaluate(
-  () =>
+  (sampleCount) =>
     new Promise((resolve) => {
       const intervals = [];
       let last;
       function sample(now) {
         if (last !== undefined) intervals.push(now - last);
         last = now;
-        if (intervals.length < 240) requestAnimationFrame(sample);
+        if (intervals.length < sampleCount) requestAnimationFrame(sample);
         else {
           intervals.sort((a, b) => a - b);
+          const at = (fraction) =>
+            intervals[
+              Math.min(
+                intervals.length - 1,
+                Math.floor(intervals.length * fraction),
+              )
+            ];
           const canvas = document.querySelector("canvas");
           const gl = canvas.getContext("webgl2");
           const debug = gl.getExtension("WEBGL_debug_renderer_info");
           resolve({
-            medianMs: intervals[120],
-            p95Ms: intervals[228],
+            medianMs: at(0.5),
+            p95Ms: at(0.95),
+            p99Ms: at(0.99),
             samples: intervals.length,
             sortedFrameIntervalsMs: intervals,
             canvas: { width: canvas.width, height: canvas.height },
@@ -80,6 +100,10 @@ const measurements = await page.evaluate(
       }
       requestAnimationFrame(sample);
     }),
+  sampleCount,
+);
+const hardwareRenderer = !/swiftshader|llvmpipe|softpipe|software/i.test(
+  measurements.renderer ?? "software",
 );
 await page.screenshot({ path: join(output, "playback.png") });
 const report = {
@@ -93,8 +117,10 @@ const report = {
     logicalCpus: cpus().length,
     memoryBytes: totalmem(),
   },
-  scope:
-    "Fixed 14-entity fixture frame scheduling; not native-GPU certification",
+  scope: hardwareRenderer
+    ? "Fixed 14-entity fixture frame scheduling on the reported hardware renderer; headed, so intervals include display vsync"
+    : "Fixed 14-entity fixture frame scheduling; not native-GPU certification",
+  hardwareRenderer,
   url,
   fixtureEntities: 14,
   viewport: { width: 1440, height: 1000 },
