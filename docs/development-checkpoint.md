@@ -93,8 +93,11 @@ This is the first live create, render, inspect, targeted revise, final-check
 pass that needed real corrections, on both OpenRouter (accept-first path) and
 Gateway (two-correction path). Single samples; quality still varies by run. Production
 `authoringReview` remains off; nothing deployed. Private images are under
-`~/.cache/orbsie/authoring-review/*-20260929`. Disposable DB
-`orbsie_diag_20260927_39edc5` is in use for these runs; drop it when done.
+`~/.cache/orbsie/authoring-review/*-20260929`. The disposable dev-Neon DB
+`orbsie_diag_20260927_39edc5` was dropped after these runs (none remain) and
+the loopback server stopped. Next: Gateway signed-out publication, production
+release of these fixes, GitHub push (all need owner approval), ChatGPT consent
+and physical phones (external).
 
 Sep 27 the review instruction now reassesses the complete current scene on
 every pass, uses user-stated constraints rather than inferred exact material
