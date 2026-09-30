@@ -13,7 +13,13 @@ set `BETTER_AUTH_URL` to the exact loopback origin in `ORBSIE_TEST_URL`, with
 the same hostname and port. Explicitly set `VERCEL=0`; the downloaded
 `.env.production.local` contains `VERCEL=1`, which makes anonymous admission
 expect Vercel's trusted forwarded-IP header and fail with HTTP 503 before
-inference. `scripts/verify-live-authoring-review.mjs` is a focused OpenRouter
+inference. Start the built server with
+`node scripts/start-isolated-review-server.mjs PRIVATE_ENV_FILE PORT`: it reads
+only a disposable `orbsie_*` `DATABASE_URL` from a mode-0600 file and forces
+`VERCEL=0`, the loopback `BETTER_AUTH_URL`, review and 4,096-token settings. The
+Sep 27 guidance run's pre-inference 503 was reproduced with the inherited
+`VERCEL=1` and cleared by this launcher.
+`scripts/verify-live-authoring-review.mjs` is a focused OpenRouter
 CREATE/review/final-review harness. Its three-call guard allows one correction
 review and one final verdict after the initial generation. A final `revise`
 verdict is bounded-incomplete evidence, not full acceptance.
