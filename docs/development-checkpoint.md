@@ -18,6 +18,13 @@ corrections turned tiny berries hidden under flat green discs into four
 readable pointed red strawberries with visible seeds; the final review still
 flagged the requested leafy tops as flat caps (a fair finding). Claude's view:
 legible fruit, but the plant is a bare pole with arms, not yet delightful.
+After adding foliage guidance (leaves, petals and leafy tops from several
+thin radiating parts, in both authoring and review), the same strawberry prompt
+**passed** in 4 calls (`authoring-review-strawberry-foliage-four-call-20260929`):
+leafy pointed tops from creation, two corrections separated overlapping berries
+and exposed seeds, and the final review accepted. Claude's check: four distinct
+leafy-topped strawberries with seeds; the berry-to-arm attachment is not clearly
+visible and the seeds are few and large. Not yet deployed.
 Held despite approval:
 - Enabling production review: no record shows `scripts/authoring-run-schema.sql`
   (with the Sep 24 three-review constraint) applied to the production DB, and a
