@@ -1,0 +1,6058 @@
+{
+  "checkedAt": "2026-09-30T00:32:01.793Z",
+  "provenance": {
+    "checkedAt": "2026-09-30T00:32:01.793Z",
+    "harness": {
+      "checkoutSHA": "bd014155289890fcb865183f4007f896a6616f97",
+      "dirty": false,
+      "status": "available"
+    },
+    "application": {
+      "sourceCommit": null,
+      "status": "unrecorded"
+    }
+  },
+  "provider": "gateway",
+  "mode": "live-browser",
+  "deviceEmulation": {
+    "mode": "desktop",
+    "editor": {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false
+    },
+    "standalone": {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false
+    }
+  },
+  "targetOrigin": "http://127.0.0.1:3069",
+  "model": "openai/gpt-6-luna",
+  "reasoning": "low",
+  "serviceTier": "default",
+  "keyScope": "local-only",
+  "outputCapTokens": 4096,
+  "outputTokenCap": 4096,
+  "generationBudget": 3,
+  "originPreflight": {
+    "status": "passed",
+    "method": "POST",
+    "path": "/api/generate",
+    "expectedStatus": 400,
+    "httpStatus": 400,
+    "requestCount": 1,
+    "responseBodyRetained": false
+  },
+  "creation": {
+    "status": "passed",
+    "operations": 30,
+    "firstReservationMs": 5806,
+    "seedObserved": true,
+    "gameplayDuringGeneration": {
+      "status": "passed",
+      "inputMode": "keyboard",
+      "startedAt": "2026-09-30T00:32:22.391Z",
+      "movementAtMs": 1424,
+      "movementAt": "2026-09-30T00:32:23.815Z",
+      "generationRequestsAtMovement": 1,
+      "generationResponsesAtMovement": 1,
+      "generationStreamOpenAtMovement": true,
+      "generationStreamOpenAfterMovement": true,
+      "generationRequestAtMs": 1790728332780,
+      "generationRequestAt": "2026-09-30T00:32:12.780Z",
+      "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+      "revisionBefore": 19,
+      "revisionAfter": 20,
+      "movementDistance": 0.32000000000000045,
+      "before": {
+        "renderer": "webgl",
+        "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+        "revision": 19,
+        "simulationDeltaMs": 40,
+        "playing": true,
+        "player": {
+          "position": [
+            0,
+            0.42,
+            5
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "sunny-isle",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              0,
+              -0.1,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "island-pond",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              -3,
+              0.22,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "tree-a",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              -4,
+              0.075,
+              -3
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-b",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              4,
+              0.075,
+              -1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-c",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              4,
+              0.075,
+              3
+            ],
+            "scale": [
+              1.35,
+              1.35,
+              1.35
+            ]
+          },
+          {
+            "id": "crystal-1",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              -2,
+              0.65,
+              4
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-2",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              2,
+              0.65,
+              3
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-3",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              0,
+              0.65,
+              0
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-4",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              2,
+              0.65,
+              -3
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-5",
+            "behavior": "collect",
+            "stage": "seed",
+            "position": [
+              -1,
+              0.65,
+              -5
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 20967.699999999255,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "after": {
+        "renderer": "webgl",
+        "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+        "revision": 20,
+        "simulationDeltaMs": 40,
+        "playing": true,
+        "player": {
+          "position": [
+            0.2808264198049193,
+            0.42,
+            4.846583827646654
+          ],
+          "velocityY": 0
+        },
+        "entities": [
+          {
+            "id": "sunny-isle",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              0,
+              -0.1,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "island-pond",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              -3,
+              0.22,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "id": "tree-a",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              -4,
+              0.075,
+              -3
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-b",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              4,
+              0.075,
+              -1
+            ],
+            "scale": [
+              1.5,
+              1.5,
+              1.5
+            ]
+          },
+          {
+            "id": "tree-c",
+            "behavior": null,
+            "stage": "ready",
+            "position": [
+              4,
+              0.075,
+              3
+            ],
+            "scale": [
+              1.35,
+              1.35,
+              1.35
+            ]
+          },
+          {
+            "id": "crystal-1",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              -2,
+              0.65,
+              4
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-2",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              2,
+              0.65,
+              3
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-3",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              0,
+              0.65,
+              0
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-4",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              2,
+              0.65,
+              -3
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          },
+          {
+            "id": "crystal-5",
+            "behavior": "collect",
+            "stage": "ready",
+            "position": [
+              -1,
+              0.65,
+              -5
+            ],
+            "scale": [
+              0.65,
+              0.65,
+              0.65
+            ]
+          }
+        ],
+        "contacts": [],
+        "collected": [],
+        "scoreIds": [],
+        "gameScore": 0,
+        "status": null,
+        "won": false,
+        "lost": false,
+        "reset": 0,
+        "sessionGeneration": 1,
+        "atMs": 21305.10000000149,
+        "platformContacts": [],
+        "bounceContacts": [],
+        "platformContactCounts": {},
+        "bounceContactCounts": {}
+      },
+      "beforeSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+          "revision": 19,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0,
+              0.42,
+              5
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "sunny-isle",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                0,
+                -0.1,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "island-pond",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                -3,
+                0.22,
+                1
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "tree-a",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                -4,
+                0.075,
+                -3
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-b",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                4,
+                0.075,
+                -1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-c",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                4,
+                0.075,
+                3
+              ],
+              "scale": [
+                1.35,
+                1.35,
+                1.35
+              ]
+            },
+            {
+              "id": "crystal-1",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                -2,
+                0.65,
+                4
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-2",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                2,
+                0.65,
+                3
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-3",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                0,
+                0.65,
+                0
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-4",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                2,
+                0.65,
+                -3
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-5",
+              "behavior": "collect",
+              "stage": "seed",
+              "position": [
+                -1,
+                0.65,
+                -5
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 20967.699999999255,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      },
+      "afterSample": {
+        "observation": {
+          "renderer": "webgl",
+          "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+          "revision": 20,
+          "simulationDeltaMs": 40,
+          "playing": true,
+          "player": {
+            "position": [
+              0.2808264198049193,
+              0.42,
+              4.846583827646654
+            ],
+            "velocityY": 0
+          },
+          "entities": [
+            {
+              "id": "sunny-isle",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                0,
+                -0.1,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "island-pond",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                -3,
+                0.22,
+                1
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "id": "tree-a",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                -4,
+                0.075,
+                -3
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-b",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                4,
+                0.075,
+                -1
+              ],
+              "scale": [
+                1.5,
+                1.5,
+                1.5
+              ]
+            },
+            {
+              "id": "tree-c",
+              "behavior": null,
+              "stage": "ready",
+              "position": [
+                4,
+                0.075,
+                3
+              ],
+              "scale": [
+                1.35,
+                1.35,
+                1.35
+              ]
+            },
+            {
+              "id": "crystal-1",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                -2,
+                0.65,
+                4
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-2",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                2,
+                0.65,
+                3
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-3",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                0,
+                0.65,
+                0
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-4",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                2,
+                0.65,
+                -3
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            },
+            {
+              "id": "crystal-5",
+              "behavior": "collect",
+              "stage": "ready",
+              "position": [
+                -1,
+                0.65,
+                -5
+              ],
+              "scale": [
+                0.65,
+                0.65,
+                0.65
+              ]
+            }
+          ],
+          "contacts": [],
+          "collected": [],
+          "scoreIds": [],
+          "gameScore": 0,
+          "status": null,
+          "won": false,
+          "lost": false,
+          "reset": 0,
+          "sessionGeneration": 1,
+          "atMs": 21305.10000000149,
+          "platformContacts": [],
+          "bounceContacts": [],
+          "platformContactCounts": {},
+          "bounceContactCounts": {}
+        },
+        "waitedMs": 0,
+        "polls": 0
+      }
+    },
+    "catalogEntities": 3,
+    "proceduralEntities": 11,
+    "generatedEntities": 0
+  },
+  "edit": {
+    "status": "blocked",
+    "type": "material",
+    "selectedIdPreserved": false
+  },
+  "flagshipStory": {
+    "status": "running",
+    "generationBudget": 3,
+    "visualReview": "pending",
+    "phases": {
+      "creation": {
+        "revision": 30,
+        "gameplay": {
+          "status": "passed",
+          "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+          "revision": 30,
+          "renderer": "webgl",
+          "collectedIds": [
+            "crystal-5",
+            "crystal-4",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "expectedCollectibleIds": [
+            "crystal-1",
+            "crystal-2",
+            "crystal-3",
+            "crystal-4",
+            "crystal-5"
+          ],
+          "score": 5,
+          "won": true,
+          "reset": {
+            "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+            "revision": 30,
+            "control": "Restart game",
+            "scoreIds": [],
+            "reset": 1,
+            "score": 0,
+            "status": "playing",
+            "lifecycleAdvanced": true,
+            "player": {
+              "position": [
+                0,
+                0.42,
+                5
+              ],
+              "velocityY": 0
+            }
+          },
+          "elapsedMs": 47061.10000000149,
+          "collectibleTraversalOrder": [
+            "crystal-5",
+            "crystal-4",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "inputMode": "keyboard",
+          "surface": "editor-play",
+          "startedAt": "2026-09-30T00:32:31.339Z",
+          "finishedAt": "2026-09-30T00:33:19.794Z",
+          "inputTrace": [
+            {
+              "atMs": 860,
+              "keys": [
+                "d"
+              ],
+              "reason": "movement-check"
+            },
+            {
+              "atMs": 1154,
+              "keys": [],
+              "reason": "movement-release"
+            },
+            {
+              "atMs": 1295,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 1514,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 1670,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 1956,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 2189,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 2346,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 2431,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-steering"
+            },
+            {
+              "atMs": 2516,
+              "keys": [
+                " ",
+                "w"
+              ],
+              "reason": "platform-jump-start"
+            },
+            {
+              "atMs": 2770,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jump-release"
+            },
+            {
+              "atMs": 2854,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 3004,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 3166,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 3390,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 3604,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 3823,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4036,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4186,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4410,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4557,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4712,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 4866,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 5085,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 5167,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-jumping"
+            },
+            {
+              "atMs": 5317,
+              "keys": [],
+              "reason": "platform-contact-release"
+            },
+            {
+              "atMs": 5513,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 5727,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 5940,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6093,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6298,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6508,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6589,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6812,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 6896,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7110,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7262,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7424,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7631,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7898,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 7989,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 8202,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 8417,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 8625,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 8793,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 9067,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 9172,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 9326,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 9413,
+              "keys": [],
+              "reason": "platform-contact-release"
+            },
+            {
+              "atMs": 9613,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 9879,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 10023,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 10185,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 10400,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 10557,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 10860,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 11082,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 11303,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 11579,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 11856,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12015,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12167,
+              "keys": [
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12397,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12545,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12769,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 12987,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 13259,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 13473,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 13806,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 13887,
+              "keys": [],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 14102,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "platform-airborne"
+            },
+            {
+              "atMs": 14326,
+              "keys": [],
+              "reason": "platform-contact-release"
+            },
+            {
+              "atMs": 14422,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 14503,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 14659,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 14764,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 14971,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15197,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15360,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15644,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15736,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15832,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 15981,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 16128,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 16281,
+              "keys": [
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 16364,
+              "keys": [],
+              "reason": "collect-settle"
+            },
+            {
+              "atMs": 16572,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 16922,
+              "keys": [],
+              "reason": "collect-settle"
+            },
+            {
+              "atMs": 17112,
+              "keys": [],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 17200,
+              "keys": [],
+              "reason": "collect-settle"
+            },
+            {
+              "atMs": 17451,
+              "keys": [],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 17868,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 17950,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 18109,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 18191,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 18355,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 18571,
+              "keys": [
+                " ",
+                "d",
+                "s"
+              ],
+              "reason": "collect-jump"
+            },
+            {
+              "atMs": 18693,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-jump-release"
+            },
+            {
+              "atMs": 18844,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 18922,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 19139,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 19540,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 19762,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 19985,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 20201,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 20346,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 20563,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 20706,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 20793,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 21120,
+              "keys": [
+                "d",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 21550,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 21752,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 21851,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 22176,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 22393,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 22608,
+              "keys": [
+                " ",
+                "a",
+                "s"
+              ],
+              "reason": "collect-jump"
+            },
+            {
+              "atMs": 22805,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-jump-release"
+            },
+            {
+              "atMs": 22953,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23094,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23292,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23376,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23584,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23737,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 23894,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 24111,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 24264,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 24478,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 24729,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 25072,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 25223,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 25440,
+              "keys": [
+                "a",
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 25716,
+              "keys": [
+                " ",
+                "s"
+              ],
+              "reason": "collect-jump"
+            },
+            {
+              "atMs": 25889,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-jump-release"
+            },
+            {
+              "atMs": 25969,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26111,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26255,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26472,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26687,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26895,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 26975,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27119,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27268,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27347,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27560,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27838,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 27987,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 28100,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 28330,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 28538,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 28750,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 28952,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 29101,
+              "keys": [
+                "s"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 29396,
+              "keys": [
+                " ",
+                "a"
+              ],
+              "reason": "collect-jump"
+            },
+            {
+              "atMs": 29567,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-jump-release"
+            },
+            {
+              "atMs": 29770,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 29975,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 30187,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 30343,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 30553,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 30763,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 30986,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 31204,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 31286,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 31441,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 31648,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 31915,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32064,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32221,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32311,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32456,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32605,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32760,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 32841,
+              "keys": [
+                " ",
+                "a",
+                "w"
+              ],
+              "reason": "collect-jump"
+            },
+            {
+              "atMs": 33027,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-jump-release"
+            },
+            {
+              "atMs": 33247,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 33535,
+              "keys": [
+                "a"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 33813,
+              "keys": [
+                "a",
+                "w"
+              ],
+              "reason": "collect-steer"
+            },
+            {
+              "atMs": 34251,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 34400,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 34599,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 34746,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 34952,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 35033,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 35241,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 35441,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 35768,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 35915,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36061,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36272,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36476,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36568,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36648,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36798,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 36947,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 37096,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 37183,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 37334,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 37676,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 37949,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38280,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38491,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38638,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38714,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38794,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 38944,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39021,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39236,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39384,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39467,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39745,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 39958,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40037,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40118,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40288,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40556,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40766,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 40930,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41080,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41297,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41448,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41646,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41854,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 41998,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 42080,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 42349,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 42507,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 42857,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43012,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43228,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43437,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43587,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43741,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 43947,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 44107,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 44315,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 44584,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 44798,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45007,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45086,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45367,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45576,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45734,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 45906,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46061,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46146,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46229,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46378,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46522,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46683,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 46895,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 47041,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 47197,
+              "keys": [
+                "d",
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 47353,
+              "keys": [
+                "w"
+              ],
+              "reason": "portal-steer"
+            },
+            {
+              "atMs": 47552,
+              "keys": [],
+              "reason": "portal-settle"
+            }
+          ],
+          "movement": {
+            "distance": 0.42960000000894105,
+            "before": {
+              "renderer": "webgl",
+              "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+              "revision": 30,
+              "simulationDeltaMs": 40,
+              "playing": true,
+              "player": {
+                "position": [
+                  0,
+                  0.42,
+                  5
+                ],
+                "velocityY": 0
+              },
+              "entities": [
+                {
+                  "id": "sunny-isle",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    -0.1,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                },
+                {
+                  "id": "island-pond",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    -3,
+                    0.22,
+                    1
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                },
+                {
+                  "id": "tree-a",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    -4,
+                    0.075,
+                    -3
+                  ],
+                  "scale": [
+                    1.5,
+                    1.5,
+                    1.5
+                  ]
+                },
+                {
+                  "id": "tree-b",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    4,
+                    0.075,
+                    -1
+                  ],
+                  "scale": [
+                    1.5,
+                    1.5,
+                    1.5
+                  ]
+                },
+                {
+                  "id": "tree-c",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    4,
+                    0.075,
+                    3
+                  ],
+                  "scale": [
+                    1.35,
+                    1.35,
+                    1.35
+                  ]
+                },
+                {
+                  "id": "crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -2,
+                    0.65,
+                    4
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    2,
+                    0.65,
+                    3
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.65,
+                    0
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    2,
+                    0.65,
+                    -3
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1,
+                    0.65,
+                    -5
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "bounce-1",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    -0.81646666666617,
+                    0.2,
+                    1
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "bounce-2",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.8426857142852886,
+                    0.2,
+                    -2
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "bounce-3",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.13765000000037253,
+                    0.2,
+                    -4
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "island-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.1,
+                    -8
+                  ],
+                  "scale": [
+                    1.3,
+                    1.5,
+                    1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 0,
+              "sessionGeneration": 2,
+              "atMs": 29476,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            },
+            "after": {
+              "renderer": "webgl",
+              "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+              "revision": 30,
+              "simulationDeltaMs": 27.400000002235174,
+              "playing": true,
+              "player": {
+                "position": [
+                  0.37700946859595036,
+                  0.42,
+                  4.794038788611347
+                ],
+                "velocityY": 0
+              },
+              "entities": [
+                {
+                  "id": "sunny-isle",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    -0.1,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                },
+                {
+                  "id": "island-pond",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    -3,
+                    0.22,
+                    1
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                },
+                {
+                  "id": "tree-a",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    -4,
+                    0.075,
+                    -3
+                  ],
+                  "scale": [
+                    1.5,
+                    1.5,
+                    1.5
+                  ]
+                },
+                {
+                  "id": "tree-b",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    4,
+                    0.075,
+                    -1
+                  ],
+                  "scale": [
+                    1.5,
+                    1.5,
+                    1.5
+                  ]
+                },
+                {
+                  "id": "tree-c",
+                  "behavior": null,
+                  "stage": "ready",
+                  "position": [
+                    4,
+                    0.075,
+                    3
+                  ],
+                  "scale": [
+                    1.35,
+                    1.35,
+                    1.35
+                  ]
+                },
+                {
+                  "id": "crystal-1",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -2,
+                    0.65,
+                    4
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-2",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    2,
+                    0.65,
+                    3
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-3",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.65,
+                    0
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-4",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    2,
+                    0.65,
+                    -3
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "crystal-5",
+                  "behavior": "collect",
+                  "stage": "ready",
+                  "position": [
+                    -1,
+                    0.65,
+                    -5
+                  ],
+                  "scale": [
+                    0.65,
+                    0.65,
+                    0.65
+                  ]
+                },
+                {
+                  "id": "bounce-1",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    -0.7448666666646799,
+                    0.2,
+                    1
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "bounce-2",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.7813142857125828,
+                    0.2,
+                    -2
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "bounce-3",
+                  "behavior": "bounce",
+                  "stage": "ready",
+                  "position": [
+                    0.1913500000014901,
+                    0.2,
+                    -4
+                  ],
+                  "scale": [
+                    1.2,
+                    1,
+                    1.2
+                  ]
+                },
+                {
+                  "id": "island-portal",
+                  "behavior": "portal",
+                  "stage": "ready",
+                  "position": [
+                    0,
+                    0.1,
+                    -8
+                  ],
+                  "scale": [
+                    1.3,
+                    1.5,
+                    1
+                  ]
+                }
+              ],
+              "contacts": [],
+              "collected": [],
+              "scoreIds": [],
+              "gameScore": 0,
+              "status": "playing",
+              "won": false,
+              "lost": false,
+              "reset": 0,
+              "sessionGeneration": 2,
+              "atMs": 29932.800000000745,
+              "platformContacts": [],
+              "bounceContacts": [],
+              "platformContactCounts": {},
+              "bounceContactCounts": {}
+            }
+          },
+          "timing": {
+            "observationSamples": 260,
+            "observedSpanMs": 47061.10000000149,
+            "staleObservationWaits": [
+              {
+                "waitedMs": 132,
+                "previousAtMs": 29932.800000000745,
+                "observedAtMs": 30118.699999999255
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 30118.699999999255,
+                "observedAtMs": 30304.5
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 30304.5,
+                "observedAtMs": 30497.5
+              },
+              {
+                "waitedMs": 196,
+                "previousAtMs": 30497.5,
+                "observedAtMs": 30779.5
+              },
+              {
+                "waitedMs": 147,
+                "previousAtMs": 30779.5,
+                "observedAtMs": 30964.400000002235
+              },
+              {
+                "waitedMs": 69,
+                "previousAtMs": 30964.400000002235,
+                "observedAtMs": 31133.699999999255
+              },
+              {
+                "waitedMs": 199,
+                "previousAtMs": 31353.900000002235,
+                "observedAtMs": 31567.699999999255
+              },
+              {
+                "waitedMs": 65,
+                "previousAtMs": 31660.900000002235,
+                "observedAtMs": 31819.5
+              },
+              {
+                "waitedMs": 78,
+                "previousAtMs": 31819.5,
+                "observedAtMs": 31998.300000000745
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 31998.300000000745,
+                "observedAtMs": 32201.10000000149
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 32201.10000000149,
+                "observedAtMs": 32442.400000002235
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 32442.400000002235,
+                "observedAtMs": 32650
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 32650,
+                "observedAtMs": 32834.699999999255
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 32834.699999999255,
+                "observedAtMs": 32995
+              },
+              {
+                "waitedMs": 135,
+                "previousAtMs": 32995,
+                "observedAtMs": 33194
+              },
+              {
+                "waitedMs": 64,
+                "previousAtMs": 33194,
+                "observedAtMs": 33353.800000000745
+              },
+              {
+                "waitedMs": 75,
+                "previousAtMs": 33353.800000000745,
+                "observedAtMs": 33534.699999999255
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 33534.699999999255,
+                "observedAtMs": 33656.400000002235
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 33656.400000002235,
+                "observedAtMs": 33895.800000000745
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 33979.10000000149,
+                "observedAtMs": 34138.60000000149
+              },
+              {
+                "waitedMs": 186,
+                "previousAtMs": 34138.60000000149,
+                "observedAtMs": 34346.10000000149
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 34346.10000000149,
+                "observedAtMs": 34559
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 34559,
+                "observedAtMs": 34728.800000000745
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 34728.800000000745,
+                "observedAtMs": 34935.199999999255
+              },
+              {
+                "waitedMs": 125,
+                "previousAtMs": 34935.199999999255,
+                "observedAtMs": 35131.800000000745
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 35131.800000000745,
+                "observedAtMs": 35313.800000000745
+              },
+              {
+                "waitedMs": 140,
+                "previousAtMs": 35421.10000000149,
+                "observedAtMs": 35590.800000000745
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 35700.400000002235,
+                "observedAtMs": 35905.60000000149
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 35905.60000000149,
+                "observedAtMs": 36062.800000000745
+              },
+              {
+                "waitedMs": 77,
+                "previousAtMs": 36062.800000000745,
+                "observedAtMs": 36202.400000002235
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 36202.400000002235,
+                "observedAtMs": 36428.699999999255
+              },
+              {
+                "waitedMs": 183,
+                "previousAtMs": 36428.699999999255,
+                "observedAtMs": 36720.199999999255
+              },
+              {
+                "waitedMs": 6,
+                "previousAtMs": 36720.199999999255,
+                "observedAtMs": 36829.400000002235
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 36829.400000002235,
+                "observedAtMs": 36999.699999999255
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 36999.699999999255,
+                "observedAtMs": 37241.400000002235
+              },
+              {
+                "waitedMs": 123,
+                "previousAtMs": 37241.400000002235,
+                "observedAtMs": 37423.5
+              },
+              {
+                "waitedMs": 83,
+                "previousAtMs": 37423.5,
+                "observedAtMs": 37629.699999999255
+              },
+              {
+                "waitedMs": 188,
+                "previousAtMs": 37629.699999999255,
+                "observedAtMs": 37880
+              },
+              {
+                "waitedMs": 12,
+                "previousAtMs": 37880,
+                "observedAtMs": 38005.10000000149
+              },
+              {
+                "waitedMs": 73,
+                "previousAtMs": 38005.10000000149,
+                "observedAtMs": 38161.300000000745
+              },
+              {
+                "waitedMs": 187,
+                "previousAtMs": 38246.5,
+                "observedAtMs": 38436.699999999255
+              },
+              {
+                "waitedMs": 186,
+                "previousAtMs": 38436.699999999255,
+                "observedAtMs": 38714.400000002235
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 38714.400000002235,
+                "observedAtMs": 38864.10000000149
+              },
+              {
+                "waitedMs": 80,
+                "previousAtMs": 38864.10000000149,
+                "observedAtMs": 39022.60000000149
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 39022.60000000149,
+                "observedAtMs": 39206
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 39206,
+                "observedAtMs": 39398.400000002235
+              },
+              {
+                "waitedMs": 213,
+                "previousAtMs": 39398.400000002235,
+                "observedAtMs": 39640.800000000745
+              },
+              {
+                "waitedMs": 138,
+                "previousAtMs": 39640.800000000745,
+                "observedAtMs": 39899
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 39899,
+                "observedAtMs": 40110.300000000745
+              },
+              {
+                "waitedMs": 197,
+                "previousAtMs": 40110.300000000745,
+                "observedAtMs": 40417.400000002235
+              },
+              {
+                "waitedMs": 198,
+                "previousAtMs": 40417.400000002235,
+                "observedAtMs": 40668
+              },
+              {
+                "waitedMs": 75,
+                "previousAtMs": 40668,
+                "observedAtMs": 40840.400000002235
+              },
+              {
+                "waitedMs": 73,
+                "previousAtMs": 40840.400000002235,
+                "observedAtMs": 41007.199999999255
+              },
+              {
+                "waitedMs": 138,
+                "previousAtMs": 41007.199999999255,
+                "observedAtMs": 41177.900000002235
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 41177.900000002235,
+                "observedAtMs": 41336.900000002235
+              },
+              {
+                "waitedMs": 142,
+                "previousAtMs": 41336.900000002235,
+                "observedAtMs": 41597.699999999255
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 41597.699999999255,
+                "observedAtMs": 41820.60000000149
+              },
+              {
+                "waitedMs": 185,
+                "previousAtMs": 41820.60000000149,
+                "observedAtMs": 42056
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 42056,
+                "observedAtMs": 42250.300000000745
+              },
+              {
+                "waitedMs": 254,
+                "previousAtMs": 42250.300000000745,
+                "observedAtMs": 42611.199999999255
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 42704.5,
+                "observedAtMs": 42899.900000002235
+              },
+              {
+                "waitedMs": 136,
+                "previousAtMs": 42899.900000002235,
+                "observedAtMs": 43096.5
+              },
+              {
+                "waitedMs": 75,
+                "previousAtMs": 43096.5,
+                "observedAtMs": 43247.400000002235
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 43320,
+                "observedAtMs": 43477.60000000149
+              },
+              {
+                "waitedMs": 16,
+                "previousAtMs": 43477.60000000149,
+                "observedAtMs": 43597.300000000745
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 43597.300000000745,
+                "observedAtMs": 43783.10000000149
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 43783.10000000149,
+                "observedAtMs": 44014.199999999255
+              },
+              {
+                "waitedMs": 77,
+                "previousAtMs": 44014.199999999255,
+                "observedAtMs": 44186.199999999255
+              },
+              {
+                "waitedMs": 196,
+                "previousAtMs": 44186.199999999255,
+                "observedAtMs": 44430.400000002235
+              },
+              {
+                "waitedMs": 15,
+                "previousAtMs": 44496.900000002235,
+                "observedAtMs": 44667.800000000745
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 44667.800000000745,
+                "observedAtMs": 44772.5
+              },
+              {
+                "waitedMs": 65,
+                "previousAtMs": 44772.5,
+                "observedAtMs": 44947.900000002235
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 44947.900000002235,
+                "observedAtMs": 45102.699999999255
+              },
+              {
+                "waitedMs": 265,
+                "previousAtMs": 45400,
+                "observedAtMs": 45712.60000000149
+              },
+              {
+                "waitedMs": 62,
+                "previousAtMs": 46039,
+                "observedAtMs": 46265.699999999255
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 46265.699999999255,
+                "observedAtMs": 46420.400000002235
+              },
+              {
+                "waitedMs": 253,
+                "previousAtMs": 46420.400000002235,
+                "observedAtMs": 46678.800000000745
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 46740.900000002235,
+                "observedAtMs": 46938.900000002235
+              },
+              {
+                "waitedMs": 81,
+                "previousAtMs": 47004.60000000149,
+                "observedAtMs": 47186.5
+              },
+              {
+                "waitedMs": 126,
+                "previousAtMs": 47186.5,
+                "observedAtMs": 47385.900000002235
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 47385.900000002235,
+                "observedAtMs": 47523.900000002235
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 47523.900000002235,
+                "observedAtMs": 47627.800000000745
+              },
+              {
+                "waitedMs": 136,
+                "previousAtMs": 47761.5,
+                "observedAtMs": 47921.400000002235
+              },
+              {
+                "waitedMs": 318,
+                "previousAtMs": 47921.400000002235,
+                "observedAtMs": 48343.800000000745
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 48343.800000000745,
+                "observedAtMs": 48588.300000000745
+              },
+              {
+                "waitedMs": 136,
+                "previousAtMs": 48588.300000000745,
+                "observedAtMs": 48785.60000000149
+              },
+              {
+                "waitedMs": 126,
+                "previousAtMs": 48785.60000000149,
+                "observedAtMs": 48997.800000000745
+              },
+              {
+                "waitedMs": 65,
+                "previousAtMs": 48997.800000000745,
+                "observedAtMs": 49167.800000000745
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 49167.800000000745,
+                "observedAtMs": 49386.5
+              },
+              {
+                "waitedMs": 64,
+                "previousAtMs": 49386.5,
+                "observedAtMs": 49529.400000002235
+              },
+              {
+                "waitedMs": 243,
+                "previousAtMs": 49620,
+                "observedAtMs": 49929.300000000745
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 49929.300000000745,
+                "observedAtMs": 50094.699999999255
+              },
+              {
+                "waitedMs": 264,
+                "previousAtMs": 50094.699999999255,
+                "observedAtMs": 50384.300000000745
+              },
+              {
+                "waitedMs": 123,
+                "previousAtMs": 50384.300000000745,
+                "observedAtMs": 50583.300000000745
+              },
+              {
+                "waitedMs": 18,
+                "previousAtMs": 50583.300000000745,
+                "observedAtMs": 50687.900000002235
+              },
+              {
+                "waitedMs": 246,
+                "previousAtMs": 50687.900000002235,
+                "observedAtMs": 51010.900000002235
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 51010.900000002235,
+                "observedAtMs": 51211
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 51211,
+                "observedAtMs": 51431.300000000745
+              },
+              {
+                "waitedMs": 139,
+                "previousAtMs": 51431.300000000745,
+                "observedAtMs": 51632.300000000745
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 51632.300000000745,
+                "observedAtMs": 51781.5
+              },
+              {
+                "waitedMs": 62,
+                "previousAtMs": 51781.5,
+                "observedAtMs": 51923.699999999255
+              },
+              {
+                "waitedMs": 120,
+                "previousAtMs": 51923.699999999255,
+                "observedAtMs": 52116.60000000149
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 52212.199999999255,
+                "observedAtMs": 52371.800000000745
+              },
+              {
+                "waitedMs": 65,
+                "previousAtMs": 52371.800000000745,
+                "observedAtMs": 52545.900000002235
+              },
+              {
+                "waitedMs": 74,
+                "previousAtMs": 52545.900000002235,
+                "observedAtMs": 52727.10000000149
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 52727.10000000149,
+                "observedAtMs": 52931.300000000745
+              },
+              {
+                "waitedMs": 69,
+                "previousAtMs": 52931.300000000745,
+                "observedAtMs": 53099.5
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 53099.5,
+                "observedAtMs": 53288.699999999255
+              },
+              {
+                "waitedMs": 150,
+                "previousAtMs": 53288.699999999255,
+                "observedAtMs": 53492
+              },
+              {
+                "waitedMs": 248,
+                "previousAtMs": 53492,
+                "observedAtMs": 53862
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 53862,
+                "observedAtMs": 54028.199999999255
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 54028.199999999255,
+                "observedAtMs": 54240.699999999255
+              },
+              {
+                "waitedMs": 62,
+                "previousAtMs": 54240.699999999255,
+                "observedAtMs": 54383.5
+              },
+              {
+                "waitedMs": 124,
+                "previousAtMs": 54383.5,
+                "observedAtMs": 54503.300000000745
+              },
+              {
+                "waitedMs": 126,
+                "previousAtMs": 54503.300000000745,
+                "observedAtMs": 54682
+              },
+              {
+                "waitedMs": 63,
+                "previousAtMs": 54785.5,
+                "observedAtMs": 54937.400000002235
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 54937.400000002235,
+                "observedAtMs": 55094
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 55094,
+                "observedAtMs": 55285.10000000149
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 55285.10000000149,
+                "observedAtMs": 55502.300000000745
+              },
+              {
+                "waitedMs": 125,
+                "previousAtMs": 55502.300000000745,
+                "observedAtMs": 55727.900000002235
+              },
+              {
+                "waitedMs": 64,
+                "previousAtMs": 55760.199999999255,
+                "observedAtMs": 55953.400000002235
+              },
+              {
+                "waitedMs": 69,
+                "previousAtMs": 55953.400000002235,
+                "observedAtMs": 56100.60000000149
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 56177.400000002235,
+                "observedAtMs": 56372.300000000745
+              },
+              {
+                "waitedMs": 193,
+                "previousAtMs": 56372.300000000745,
+                "observedAtMs": 56648.900000002235
+              },
+              {
+                "waitedMs": 69,
+                "previousAtMs": 56648.900000002235,
+                "observedAtMs": 56820.900000002235
+              },
+              {
+                "waitedMs": 15,
+                "previousAtMs": 56820.900000002235,
+                "observedAtMs": 56921.199999999255
+              },
+              {
+                "waitedMs": 148,
+                "previousAtMs": 56921.199999999255,
+                "observedAtMs": 57137.5
+              },
+              {
+                "waitedMs": 128,
+                "previousAtMs": 57137.5,
+                "observedAtMs": 57345.900000002235
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 57345.900000002235,
+                "observedAtMs": 57539.400000002235
+              },
+              {
+                "waitedMs": 125,
+                "previousAtMs": 57539.400000002235,
+                "observedAtMs": 57748.800000000745
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 57748.800000000745,
+                "observedAtMs": 57919.5
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 57919.5,
+                "observedAtMs": 58053.900000002235
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 58053.900000002235,
+                "observedAtMs": 58204.199999999255
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 58204.199999999255,
+                "observedAtMs": 58363.300000000745
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 58363.300000000745,
+                "observedAtMs": 58590.400000002235
+              },
+              {
+                "waitedMs": 126,
+                "previousAtMs": 58590.400000002235,
+                "observedAtMs": 58765.5
+              },
+              {
+                "waitedMs": 128,
+                "previousAtMs": 58765.5,
+                "observedAtMs": 58990.5
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 58990.5,
+                "observedAtMs": 59179.60000000149
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 59179.60000000149,
+                "observedAtMs": 59348
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 59348,
+                "observedAtMs": 59588.900000002235
+              },
+              {
+                "waitedMs": 135,
+                "previousAtMs": 59588.900000002235,
+                "observedAtMs": 59809.800000000745
+              },
+              {
+                "waitedMs": 136,
+                "previousAtMs": 59809.800000000745,
+                "observedAtMs": 60001.300000000745
+              },
+              {
+                "waitedMs": 69,
+                "previousAtMs": 60102.699999999255,
+                "observedAtMs": 60243.5
+              },
+              {
+                "waitedMs": 131,
+                "previousAtMs": 60243.5,
+                "observedAtMs": 60443.10000000149
+              },
+              {
+                "waitedMs": 189,
+                "previousAtMs": 60443.10000000149,
+                "observedAtMs": 60717
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 60717,
+                "observedAtMs": 60880.199999999255
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 60880.199999999255,
+                "observedAtMs": 61048.5
+              },
+              {
+                "waitedMs": 62,
+                "previousAtMs": 61146,
+                "observedAtMs": 61266
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 61266,
+                "observedAtMs": 61397.400000002235
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 61397.400000002235,
+                "observedAtMs": 61551.900000002235
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 61626.800000000745,
+                "observedAtMs": 61813.5
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 61813.5,
+                "observedAtMs": 62045.5
+              },
+              {
+                "waitedMs": 202,
+                "previousAtMs": 62045.5,
+                "observedAtMs": 62362.699999999255
+              },
+              {
+                "waitedMs": 195,
+                "previousAtMs": 62362.699999999255,
+                "observedAtMs": 62636.60000000149
+              },
+              {
+                "waitedMs": 205,
+                "previousAtMs": 62636.60000000149,
+                "observedAtMs": 62878.300000000745
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 62878.300000000745,
+                "observedAtMs": 63073.900000002235
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 63073.900000002235,
+                "observedAtMs": 63223.300000000745
+              },
+              {
+                "waitedMs": 123,
+                "previousAtMs": 63223.300000000745,
+                "observedAtMs": 63395.60000000149
+              },
+              {
+                "waitedMs": 66,
+                "previousAtMs": 63395.60000000149,
+                "observedAtMs": 63577.60000000149
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 63577.60000000149,
+                "observedAtMs": 63744
+              },
+              {
+                "waitedMs": 128,
+                "previousAtMs": 63853.60000000149,
+                "observedAtMs": 64036.900000002235
+              },
+              {
+                "waitedMs": 122,
+                "previousAtMs": 64036.900000002235,
+                "observedAtMs": 64276.800000000745
+              },
+              {
+                "waitedMs": 246,
+                "previousAtMs": 64276.800000000745,
+                "observedAtMs": 64569
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 64569,
+                "observedAtMs": 64721
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 64721,
+                "observedAtMs": 64871.10000000149
+              },
+              {
+                "waitedMs": 129,
+                "previousAtMs": 64871.10000000149,
+                "observedAtMs": 65080
+              },
+              {
+                "waitedMs": 124,
+                "previousAtMs": 65080,
+                "observedAtMs": 65272.900000002235
+              },
+              {
+                "waitedMs": 8,
+                "previousAtMs": 65272.900000002235,
+                "observedAtMs": 65412.400000002235
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 65485.60000000149,
+                "observedAtMs": 65609.40000000224
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 65609.40000000224,
+                "observedAtMs": 65776.5
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 65776.5,
+                "observedAtMs": 65920.60000000149
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 66006.19999999925,
+                "observedAtMs": 66148.90000000224
+              },
+              {
+                "waitedMs": 262,
+                "previousAtMs": 66148.90000000224,
+                "observedAtMs": 66472
+              },
+              {
+                "waitedMs": 193,
+                "previousAtMs": 66472,
+                "observedAtMs": 66787.69999999925
+              },
+              {
+                "waitedMs": 248,
+                "previousAtMs": 66787.69999999925,
+                "observedAtMs": 67116.19999999925
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 67116.19999999925,
+                "observedAtMs": 67297.19999999925
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 67297.19999999925,
+                "observedAtMs": 67473.10000000149
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 67629.10000000149,
+                "observedAtMs": 67764
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 67863,
+                "observedAtMs": 68027.40000000224
+              },
+              {
+                "waitedMs": 68,
+                "previousAtMs": 68027.40000000224,
+                "observedAtMs": 68179.69999999925
+              },
+              {
+                "waitedMs": 198,
+                "previousAtMs": 68281.10000000149,
+                "observedAtMs": 68574.5
+              },
+              {
+                "waitedMs": 134,
+                "previousAtMs": 68574.5,
+                "observedAtMs": 68764.40000000224
+              },
+              {
+                "waitedMs": 87,
+                "previousAtMs": 68931.30000000075,
+                "observedAtMs": 69126
+              },
+              {
+                "waitedMs": 192,
+                "previousAtMs": 69126,
+                "observedAtMs": 69393.69999999925
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 69393.69999999925,
+                "observedAtMs": 69570.80000000075
+              },
+              {
+                "waitedMs": 80,
+                "previousAtMs": 69570.80000000075,
+                "observedAtMs": 69768.69999999925
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 69768.69999999925,
+                "observedAtMs": 69900.40000000224
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 69900.40000000224,
+                "observedAtMs": 70097.69999999925
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 70097.69999999925,
+                "observedAtMs": 70276.30000000075
+              },
+              {
+                "waitedMs": 120,
+                "previousAtMs": 70276.30000000075,
+                "observedAtMs": 70454.69999999925
+              },
+              {
+                "waitedMs": 126,
+                "previousAtMs": 70454.69999999925,
+                "observedAtMs": 70655.10000000149
+              },
+              {
+                "waitedMs": 62,
+                "previousAtMs": 70655.10000000149,
+                "observedAtMs": 70807.69999999925
+              },
+              {
+                "waitedMs": 192,
+                "previousAtMs": 70901,
+                "observedAtMs": 71190
+              },
+              {
+                "waitedMs": 76,
+                "previousAtMs": 71190,
+                "observedAtMs": 71346.60000000149
+              },
+              {
+                "waitedMs": 263,
+                "previousAtMs": 71346.60000000149,
+                "observedAtMs": 71634.5
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 71634.5,
+                "observedAtMs": 71844.5
+              },
+              {
+                "waitedMs": 133,
+                "previousAtMs": 71844.5,
+                "observedAtMs": 72058.5
+              },
+              {
+                "waitedMs": 128,
+                "previousAtMs": 72058.5,
+                "observedAtMs": 72237.19999999925
+              },
+              {
+                "waitedMs": 64,
+                "previousAtMs": 72237.19999999925,
+                "observedAtMs": 72399
+              },
+              {
+                "waitedMs": 71,
+                "previousAtMs": 72399,
+                "observedAtMs": 72565.40000000224
+              },
+              {
+                "waitedMs": 123,
+                "previousAtMs": 72565.40000000224,
+                "observedAtMs": 72757.10000000149
+              },
+              {
+                "waitedMs": 76,
+                "previousAtMs": 72757.10000000149,
+                "observedAtMs": 72939.69999999925
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 72939.69999999925,
+                "observedAtMs": 73146.10000000149
+              },
+              {
+                "waitedMs": 186,
+                "previousAtMs": 73146.10000000149,
+                "observedAtMs": 73366.90000000224
+              },
+              {
+                "waitedMs": 132,
+                "previousAtMs": 73366.90000000224,
+                "observedAtMs": 73593.90000000224
+              },
+              {
+                "waitedMs": 130,
+                "previousAtMs": 73593.90000000224,
+                "observedAtMs": 73797.90000000224
+              },
+              {
+                "waitedMs": 194,
+                "previousAtMs": 73915.69999999925,
+                "observedAtMs": 74170
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 74170,
+                "observedAtMs": 74363.80000000075
+              },
+              {
+                "waitedMs": 75,
+                "previousAtMs": 74363.80000000075,
+                "observedAtMs": 74565.90000000224
+              },
+              {
+                "waitedMs": 81,
+                "previousAtMs": 74565.90000000224,
+                "observedAtMs": 74674.90000000224
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 74674.90000000224,
+                "observedAtMs": 74866.19999999925
+              },
+              {
+                "waitedMs": 67,
+                "previousAtMs": 75043.80000000075,
+                "observedAtMs": 75169
+              },
+              {
+                "waitedMs": 64,
+                "previousAtMs": 75169,
+                "observedAtMs": 75330.80000000075
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 75330.80000000075,
+                "observedAtMs": 75500.5
+              },
+              {
+                "waitedMs": 127,
+                "previousAtMs": 75500.5,
+                "observedAtMs": 75716
+              },
+              {
+                "waitedMs": 65,
+                "previousAtMs": 75716,
+                "observedAtMs": 75875.19999999925
+              },
+              {
+                "waitedMs": 70,
+                "previousAtMs": 75875.19999999925,
+                "observedAtMs": 75982.90000000224
+              },
+              {
+                "waitedMs": 72,
+                "previousAtMs": 75982.90000000224,
+                "observedAtMs": 76170.69999999925
+              },
+              {
+                "waitedMs": 111,
+                "previousAtMs": 76170.69999999925,
+                "observedAtMs": 76328.10000000149
+              }
+            ],
+            "source": "renderer performance.now timestamps"
+          },
+          "contacts": [
+            "island-portal"
+          ],
+          "collections": [
+            "crystal-5",
+            "crystal-4",
+            "crystal-3",
+            "crystal-2",
+            "crystal-1"
+          ],
+          "platformEvidence": [
+            {
+              "id": "bounce-1",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "startPosition": [
+                -0.81646666666617,
+                0.2,
+                1
+              ],
+              "maximumDisplacement": 0.8146666666641826,
+              "jumpEvidence": [
+                {
+                  "id": "bounce-1",
+                  "attempt": 0,
+                  "before": {
+                    "atMs": 29932.800000000745,
+                    "player": {
+                      "position": [
+                        0.37700946859595036,
+                        0.42,
+                        4.794038788611347
+                      ],
+                      "velocityY": 0,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        -0.7448666666646799,
+                        0.2,
+                        1
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "inputKeys": [
+                    [
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      " ",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ]
+                  ],
+                  "samples": [
+                    {
+                      "atMs": 30118.699999999255,
+                      "player": {
+                        "position": [
+                          0.37700946859595036,
+                          0.42,
+                          4.794038788611347
+                        ],
+                        "velocityY": 0,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.7181999999980132,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 30304.5,
+                      "player": {
+                        "position": [
+                          0.3003013824192779,
+                          0.42,
+                          4.653625578708888
+                        ],
+                        "velocityY": 0,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.6915333333313465,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 30497.5,
+                      "player": {
+                        "position": [
+                          0.22359329624260543,
+                          0.42,
+                          4.513212368806428
+                        ],
+                        "velocityY": 0,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.6648666666646799,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 30779.5,
+                      "player": {
+                        "position": [
+                          0.14688521006593297,
+                          0.42,
+                          4.372799158903969
+                        ],
+                        "velocityY": 0,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.6381999999980132,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 32995,
+                      "player": {
+                        "position": [
+                          0.12371537904522754,
+                          1.5000000000000004,
+                          2.442509583011139
+                        ],
+                        "velocityY": 0.6000000000000006,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.29153333333134623,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33194,
+                      "player": {
+                        "position": [
+                          0.16876170402805968,
+                          1.5000000000000004,
+                          2.2889816422135727
+                        ],
+                        "velocityY": 6.661338147750939e-16,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.2648666666646795,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33353.800000000745,
+                      "player": {
+                        "position": [
+                          0.0920536178513872,
+                          1.4760000000000004,
+                          2.148568432311113
+                        ],
+                        "velocityY": -0.5999999999999993,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.23819999999801278,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33534.699999999255,
+                      "player": {
+                        "position": [
+                          0.13709994283421933,
+                          1.4280000000000004,
+                          1.9950404915135467
+                        ],
+                        "velocityY": -1.1999999999999993,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.21153333333134616,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33656.400000002235,
+                      "player": {
+                        "position": [
+                          0.18214626781705145,
+                          1.3560000000000003,
+                          1.8415125507159802
+                        ],
+                        "velocityY": -1.7999999999999994,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.18486666666467944,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33895.800000000745,
+                      "player": {
+                        "position": [
+                          0.22719259279988357,
+                          1.2600000000000002,
+                          1.6879846099184137
+                        ],
+                        "velocityY": -2.3999999999999995,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.1581999999980127,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 33979.10000000149,
+                      "player": {
+                        "position": [
+                          0.1504845066232111,
+                          1.1400000000000003,
+                          1.5475714000159542
+                        ],
+                        "velocityY": -2.9999999999999996,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.1315333333313461,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 34138.60000000149,
+                      "player": {
+                        "position": [
+                          0.19553083160604323,
+                          1.14,
+                          1.3940434592183877
+                        ],
+                        "velocityY": 7.08,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          -0.10486666666467936,
+                          0.2,
+                          1
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": "bounce-1",
+                      "bounceContactId": "bounce-1",
+                      "platformContactCount": 1,
+                      "bounceContactCount": 1
+                    }
+                  ],
+                  "apex": {
+                    "atMs": 33353.800000000745,
+                    "player": {
+                      "position": [
+                        0.0920536178513872,
+                        1.4760000000000004,
+                        2.148568432311113
+                      ],
+                      "velocityY": -0.5999999999999993,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        -0.23819999999801278,
+                        0.2,
+                        1
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "surfaceCrossing": null,
+                  "landing": null,
+                  "contact": {
+                    "atMs": 34138.60000000149,
+                    "player": {
+                      "position": [
+                        0.19553083160604323,
+                        1.14,
+                        1.3940434592183877
+                      ],
+                      "velocityY": 7.08,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        -0.10486666666467936,
+                        0.2,
+                        1
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": "bounce-1",
+                    "bounceContactId": "bounce-1",
+                    "platformContactCount": 1,
+                    "bounceContactCount": 1
+                  },
+                  "recovery": null
+                }
+              ]
+            },
+            {
+              "id": "bounce-2",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "startPosition": [
+                0.8426857142852886,
+                0.2,
+                -2
+              ],
+              "maximumDisplacement": 0.8385142857155636,
+              "jumpEvidence": [
+                {
+                  "id": "bounce-2",
+                  "attempt": 0,
+                  "before": {
+                    "atMs": 34138.60000000149,
+                    "player": {
+                      "position": [
+                        0.19553083160604323,
+                        1.14,
+                        1.3940434592183877
+                      ],
+                      "velocityY": 7.08,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.23274285714115373,
+                        0.2,
+                        -2
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "inputKeys": [
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [],
+                    [],
+                    []
+                  ],
+                  "samples": [
+                    {
+                      "atMs": 34346.10000000149,
+                      "player": {
+                        "position": [
+                          0.19553083160604323,
+                          1.3992,
+                          1.3940434592183877
+                        ],
+                        "velocityY": 6.48,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.20988571428401082,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 34559,
+                      "player": {
+                        "position": [
+                          0.24057715658887535,
+                          1.6344,
+                          1.2405155184208212
+                        ],
+                        "velocityY": 5.880000000000001,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.18702857142686802,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 34728.800000000745,
+                      "player": {
+                        "position": [
+                          0.28562348157170747,
+                          1.8456000000000001,
+                          1.0869875776232547
+                        ],
+                        "velocityY": 5.280000000000001,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.1641714285697251,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 34935.199999999255,
+                      "player": {
+                        "position": [
+                          0.3306698065545396,
+                          2.0328000000000004,
+                          0.9334596368256882
+                        ],
+                        "velocityY": 4.6800000000000015,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.1413142857125822,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 36999.699999999255,
+                      "player": {
+                        "position": [
+                          0.5059624728700113,
+                          2.407200000000002,
+                          -0.8695314600597891
+                        ],
+                        "velocityY": -2.5199999999999987,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.13297142857313227,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 37241.400000002235,
+                      "player": {
+                        "position": [
+                          0.5510087978528434,
+                          2.2824000000000018,
+                          -1.0230594008573557
+                        ],
+                        "velocityY": -3.1199999999999988,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.15582857143027518,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 37423.5,
+                      "player": {
+                        "position": [
+                          0.47430071167617094,
+                          2.1336000000000017,
+                          -1.1634726107598152
+                        ],
+                        "velocityY": -3.719999999999999,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.17868571428741808,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 37629.699999999255,
+                      "player": {
+                        "position": [
+                          0.5193470366590031,
+                          1.9608000000000017,
+                          -1.3170005515573817
+                        ],
+                        "velocityY": -4.3199999999999985,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.201542857144561,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 37880,
+                      "player": {
+                        "position": [
+                          0.5643933616418352,
+                          1.7640000000000018,
+                          -1.4705284923549482
+                        ],
+                        "velocityY": -4.919999999999998,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.2244000000017039,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 38005.10000000149,
+                      "player": {
+                        "position": [
+                          0.5643933616418352,
+                          1.543200000000002,
+                          -1.4705284923549482
+                        ],
+                        "velocityY": -5.519999999999998,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.2472571428588466,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 38161.300000000745,
+                      "player": {
+                        "position": [
+                          0.5643933616418352,
+                          1.298400000000002,
+                          -1.4705284923549482
+                        ],
+                        "velocityY": -6.119999999999997,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.2701142857159895,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 38246.5,
+                      "player": {
+                        "position": [
+                          0.5643933616418352,
+                          1.14,
+                          -1.4705284923549482
+                        ],
+                        "velocityY": 7.08,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.2929714285731324,
+                          0.2,
+                          -2
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": "bounce-2",
+                      "bounceContactId": "bounce-2",
+                      "platformContactCount": 1,
+                      "bounceContactCount": 1
+                    }
+                  ],
+                  "apex": {
+                    "atMs": 36202.400000002235,
+                    "player": {
+                      "position": [
+                        0.4475315840981874,
+                        2.6664000000000017,
+                        -0.26853442776463
+                      ],
+                      "velocityY": -0.11999999999999855,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.04154285714456085,
+                        0.2,
+                        -2
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "surfaceCrossing": null,
+                  "landing": null,
+                  "contact": {
+                    "atMs": 38246.5,
+                    "player": {
+                      "position": [
+                        0.5643933616418352,
+                        1.14,
+                        -1.4705284923549482
+                      ],
+                      "velocityY": 7.08,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.2929714285731324,
+                        0.2,
+                        -2
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": "bounce-2",
+                    "bounceContactId": "bounce-2",
+                    "platformContactCount": 1,
+                    "bounceContactCount": 1
+                  },
+                  "recovery": null
+                }
+              ]
+            },
+            {
+              "id": "bounce-3",
+              "behavior": "bounce",
+              "groundedFrames": 1,
+              "bounceFrames": 1,
+              "startPosition": [
+                0.13765000000037253,
+                0.2,
+                -4
+              ],
+              "maximumDisplacement": 0.8547999999988803,
+              "jumpEvidence": [
+                {
+                  "id": "bounce-3",
+                  "attempt": 0,
+                  "before": {
+                    "atMs": 38246.5,
+                    "player": {
+                      "position": [
+                        0.5643933616418352,
+                        1.14,
+                        -1.4705284923549482
+                      ],
+                      "velocityY": 7.08,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.8686499999985091,
+                        0.2,
+                        -4
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "inputKeys": [
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "w"
+                    ],
+                    [
+                      "d",
+                      "w"
+                    ],
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                    [
+                      "a",
+                      "w"
+                    ]
+                  ],
+                  "samples": [
+                    {
+                      "atMs": 38436.699999999255,
+                      "player": {
+                        "position": [
+                          0.5643933616418352,
+                          1.3992,
+                          -1.4705284923549482
+                        ],
+                        "velocityY": 6.48,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.8486499999985091,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 38714.400000002235,
+                      "player": {
+                        "position": [
+                          0.6094396866246673,
+                          1.6344,
+                          -1.6240564331525147
+                        ],
+                        "velocityY": 5.880000000000001,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.8286499999985091,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 38864.10000000149,
+                      "player": {
+                        "position": [
+                          0.6544860116074994,
+                          1.8456000000000001,
+                          -1.7775843739500812
+                        ],
+                        "velocityY": 5.280000000000001,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.8086499999985091,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 39022.60000000149,
+                      "player": {
+                        "position": [
+                          0.6995323365903315,
+                          2.0328000000000004,
+                          -1.9311123147476477
+                        ],
+                        "velocityY": 4.6800000000000015,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.788649999998509,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 41597.699999999255,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          2.407200000000002,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -2.5199999999999987,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.5486499999985088,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 41820.60000000149,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          2.2824000000000018,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -3.1199999999999988,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.5286499999985088,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 42056,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          2.1336000000000017,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -3.719999999999999,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.5086499999985088,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 42250.300000000745,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          1.9608000000000017,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -4.3199999999999985,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.4886499999985088,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 42611.199999999255,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          1.7640000000000018,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -4.919999999999998,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.46864999999850876,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 42704.5,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          1.543200000000002,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -5.519999999999998,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.44864999999850874,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 42899.900000002235,
+                      "player": {
+                        "position": [
+                          0.9515330890824756,
+                          1.298400000000002,
+                          -3.593690201730665
+                        ],
+                        "velocityY": -6.119999999999997,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.4286499999985087,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": null,
+                      "bounceContactId": null,
+                      "platformContactCount": 0,
+                      "bounceContactCount": 0
+                    },
+                    {
+                      "atMs": 43096.5,
+                      "player": {
+                        "position": [
+                          0.7980051482849091,
+                          1.14,
+                          -3.6387365267134975
+                        ],
+                        "velocityY": 7.08,
+                        "groundedOn": null
+                      },
+                      "platform": {
+                        "position": [
+                          0.4086499999985087,
+                          0.2,
+                          -4
+                        ],
+                        "scale": [
+                          1.2,
+                          1,
+                          1.2
+                        ]
+                      },
+                      "platformContactId": "bounce-3",
+                      "bounceContactId": "bounce-3",
+                      "platformContactCount": 1,
+                      "bounceContactCount": 1
+                    }
+                  ],
+                  "apex": {
+                    "atMs": 40840.400000002235,
+                    "player": {
+                      "position": [
+                        1.0599029364529884,
+                        2.6664000000000017,
+                        -3.1593358411281796
+                      ],
+                      "velocityY": -0.11999999999999855,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.6286499999985089,
+                        0.2,
+                        -4
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": null,
+                    "bounceContactId": null,
+                    "platformContactCount": 0,
+                    "bounceContactCount": 0
+                  },
+                  "surfaceCrossing": null,
+                  "landing": null,
+                  "contact": {
+                    "atMs": 43096.5,
+                    "player": {
+                      "position": [
+                        0.7980051482849091,
+                        1.14,
+                        -3.6387365267134975
+                      ],
+                      "velocityY": 7.08,
+                      "groundedOn": null
+                    },
+                    "platform": {
+                      "position": [
+                        0.4086499999985087,
+                        0.2,
+                        -4
+                      ],
+                      "scale": [
+                        1.2,
+                        1,
+                        1.2
+                      ]
+                    },
+                    "platformContactId": "bounce-3",
+                    "bounceContactId": "bounce-3",
+                    "platformContactCount": 1,
+                    "bounceContactCount": 1
+                  },
+                  "recovery": null
+                }
+              ]
+            }
+          ],
+          "win": {
+            "projectId": "d70fa0aa-ce93-4193-a39d-07e81220739d",
+            "revision": 30,
+            "score": 5,
+            "status": "won",
+            "portalId": "island-portal"
+          }
+        }
+      },
+      "mushroom": {
+        "status": "passed",
+        "revision": 34,
+        "targetId": "tree-a",
+        "label": "Giant Pink Mushroom",
+        "mushroomEvidence": "supported-kind-mushroom-label",
+        "rawBoundsExpanded": true,
+        "transformedBoundsExpanded": true,
+        "dimensions": {
+          "status": "observed",
+          "source": {
+            "before": "catalog",
+            "after": "custom-parts"
+          },
+          "before": [
+            1.132500081,
+            2.5618311165,
+            0.9807735
+          ],
+          "after": [
+            3.7,
+            3.37,
+            3.7
+          ]
+        },
+        "pinkMaterialEvidence": "custom-part-color",
+        "sizeVisualReview": "pending"
+      }
+    },
+    "generatedModels": {
+      "status": "complete",
+      "writtenHashes": [],
+      "phases": {
+        "created": {
+          "status": "complete",
+          "modelCount": 0,
+          "missingCount": 0,
+          "totalBytes": 0
+        },
+        "mushroom": {
+          "status": "complete",
+          "modelCount": 0,
+          "missingCount": 0,
+          "totalBytes": 0
+        }
+      }
+    }
+  },
+  "freeTrial": null,
+  "localRecovery": "blocked",
+  "export": "blocked",
+  "standalonePlayback": "blocked",
+  "publication": {
+    "mode": "blocked",
+    "status": "not-requested"
+  },
+  "cloudRecovery": {
+    "mode": "not-requested",
+    "status": "not-requested",
+    "phases": []
+  },
+  "fallbackUsed": false,
+  "traffic": {
+    "generationRequests": 3,
+    "generationStatuses": [
+      200,
+      200,
+      200
+    ],
+    "generationRequestTimes": [
+      {
+        "request": 1,
+        "atMs": 1790728332780,
+        "path": "/api/generate"
+      },
+      {
+        "request": 2,
+        "atMs": 1790728405487,
+        "path": "/api/generate"
+      },
+      {
+        "request": 3,
+        "atMs": 1790728416368,
+        "path": "/api/generate"
+      }
+    ],
+    "generationDiagnostics": [
+      {
+        "code": "INVALID_SCENE_PROTOCOL",
+        "diagnostic": "{\"operation\":1,\"issues\":[],\"protocolSubreason\":\"command-apply-rejected\",\"finishReason\":null}"
+      }
+    ],
+    "generationBudgetViolations": [],
+    "blockedExternalRequests": 0,
+    "interceptedGeneration": false
+  },
+  "evidence": [
+    "connection-model.png",
+    "intermediate-seed.png",
+    "story-created-project.json",
+    "story-created-generated.json",
+    "story-creation-gameplay-reset.png",
+    "story-mushroom-project.json",
+    "story-mushroom-generated.json",
+    "story-mushroom.png",
+    "failure.png"
+  ],
+  "error": "Generation failed before saving: The model returned a scene change that could not be applied. Your last working scene is safe.\nTry again\nUse last working\nDownload diagnostics",
+  "flagshipJourneyAcceptance": {
+    "version": 1,
+    "status": "incomplete",
+    "missing": [
+      "fresh-live-generation",
+      "complete-story-scope",
+      "scoped-mushroom-edit",
+      "seven-collectible-edit",
+      "seven-win-reset",
+      "original-undo",
+      "undo-win-reset",
+      "same-project-refresh-export",
+      "standalone-win-reset",
+      "signed-out-publication",
+      "current-publication-artifacts",
+      "published-win-restart"
+    ],
+    "scope": "Flagship gameplay journey only; provider authentication, visual quality and physical-device acceptance are separate."
+  }
+}
