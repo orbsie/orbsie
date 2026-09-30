@@ -1,5 +1,27 @@
 # Development checkpoint
 
+Sep 29 release (owner-approved): clean worktree of `c2aee61` deployed with
+`vercel deploy --prod` to `https://orbsie-kdakp16wl-grappeggias-projects.vercel.app`,
+aliased to `https://orbsie.com`. Smoke: root 200, unauthenticated projects
+401, served `player/runtime.js` SHA-256 equals the local build, `/api/config`
+reports `authoringReview:false`. `main` pushed to the public GitHub repo
+(`422e03b..c2aee61`, fast-forward) after a pickaxe scan of all history for
+every local secret value found only non-secret identifiers (GCS bucket,
+Vercel team ID, model name, format override).
+Held despite approval:
+- Enabling production review: no record shows `scripts/authoring-run-schema.sql`
+  (with the Sep 24 three-review constraint) applied to the production DB, and a
+  read-only production DB check was blocked by the session permission
+  classifier. The review toggle defaults on, so enabling the flag without the
+  ledger would fail initial generation with 503. Owner: run the migration
+  (`node --env-file=<production env> scripts/migrate.mjs`) or confirm it, then
+  add `ORBSIE_AUTHORING_REVIEW=1` for Production and redeploy.
+- Gateway signed-out publication: `verify-free-artifact-publication.mjs` signs
+  up a synthetic account and enters a password on production orbsie.com, which
+  Claude does not do; the owner can run it against the run-5 export
+  (`docs/evidence/provider-e2e/gateway-flagship-20260929-r5/gateway/world.zip`,
+  revision 39) with `ORBSIE_FREE_ARTIFACT` and the test-account variables.
+
 Sep 29 (Claude Code session). The Sep 27 guidance run's pre-inference 503 was
 reproduced with zero inference: `next start` inherits `VERCEL=1` from
 `.env.production.local`, so anonymous admission requires Vercel's forwarded-IP
