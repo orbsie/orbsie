@@ -59,6 +59,21 @@ had also left a 12.6 m mushroom cap covering the game; the subject-sizing rule
 is now scoped to bases created for one subject and forbids enlarging objects to
 fill a shared game island. The failure screenshot is kept privately
 (`~/.cache/orbsie/provider-tests/gateway-flagship-20260929-private/`).
+Gateway flagship reruns with review opted out (3 calls each, no budget
+violations): run 2 and run 3 failed the mushroom/platform edits with
+`command-apply-rejected`. The new opt-in local capture
+(`ORBSIE_PRIVATE_PARSER_CAPTURE_DIR`, `private-generation-capture.ts`) showed
+Luna sending `set_transform {assetPolicy:"new-only"}` for the selected catalog
+tree before its replacement geometry, which the protocol rejects. `73f5ec6`
+defers that premature mark (regression test verified to fail without it). Run
+4 then applied all three edits (revisions 28, 32, 38) and stopped only because
+the story check required the old path-rule ID; Luna had correctly split the
+shared start rule into outer paths (unchanged) and the middle path (4 s to
+8 s), added crystals 6 and 7 and raised the portal goal to 7. `b25338a`
+accepts such a split under strict conditions. Evidence:
+`docs/evidence/provider-e2e/gateway-flagship-20260929-r2..r4/`; failure
+screenshots are private. Occasional single test failures under host load
+average around 50 did not reproduce on rerun.
 After scoping, OpenRouter run `authoring-review-scoped-scale-four-call-20260929`
 passed in 3 calls (one stem/cap gap correction, then accept). Claude's check:
 legible stem, cap and five spots, but the spots are oversized and lined along
