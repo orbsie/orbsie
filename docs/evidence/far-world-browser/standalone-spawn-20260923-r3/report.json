@@ -184,5 +184,5 @@
       }
     }
   },
-  "error": "AssertionError [ERR_ASSERTION]: Expected the pale platform ahead of the player; observed 0 matching pixels.\n    at inspectStandaloneFarPlatform (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:260:3)\n    at async runEditorJourney (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:504:33)\n    at async file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:695:3"
+  "error": "AssertionError [ERR_ASSERTION]: Expected the pale platform ahead of the player; observed 0 matching pixels.\n    at inspectStandaloneFarPlatform (file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:260:3)\n    at async runEditorJourney (file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:504:33)\n    at async file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:695:3"
 }

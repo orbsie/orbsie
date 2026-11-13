@@ -11,7 +11,7 @@
     "appSourceAssumedFromRepoHead": true
   },
   "zip": {
-    "path": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/gateway-captured-offline/gateway/world-goal-7.zip",
+    "path": "/home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/gateway-captured-offline/gateway/world-goal-7.zip",
     "sha256": "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
     "requiredSha256": "33ed9d40916776583a1246701901d40247fd5712358d4c4a790cbeaff8e0668a",
     "bytes": 976464,
@@ -372178,7 +372178,7 @@
       "failure": "Error: platform-2: no descending contact followed by bounce ascent."
     }
   ],
-  "output": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/gateway-current-route-integration",
+  "output": "/home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/docs/evidence/gateway-current-route-integration",
   "url": "http://127.0.0.1:35091",
   "mapping": {
     "platform-1": "1a29cf3b-edc3-4aa8-b525-2579409d6cd5",

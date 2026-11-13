@@ -89,5 +89,5 @@
       }
     }
   },
-  "error": "AssertionError [ERR_ASSERTION]: Expected the teal far marker to be visible in the centered canvas after Frame; observed 2 matching pixels.\n    at inspectCanvasCenter (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:182:3)\n    at async runEditorJourney (file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:598:34)\n    at async file:///home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:650:3"
+  "error": "AssertionError [ERR_ASSERTION]: Expected the teal far marker to be visible in the centered canvas after Frame; observed 2 matching pixels.\n    at inspectCanvasCenter (file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:182:3)\n    at async runEditorJourney (file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:598:34)\n    at async file:///home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/scripts/verify-far-world-persistence.mjs:650:3"
 }

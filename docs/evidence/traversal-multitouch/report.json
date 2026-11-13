@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "mode": "local-saved-world-traversal-touch-driver",
-  "sourceZip": "/home/marcos/Disk-Combined-5.5TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
+  "sourceZip": "/home/marcos/Disk-Combined-8TB/Projects/Personal/orbsie/docs/evidence/provider-e2e/flagship-openrouter/openrouter/world.zip",
   "sourceZipSha256": "4675d2a0eed88f143cbc718a8c9178be554e21989841dbb6b11d89c42bbc36da",
   "driverHelper": "scripts/lib/traversal-touch-input.mjs",
   "driverHelperSha256": "4434ebcb5fbc2802eb489647a9ca577ed928d20a2f10aea45f51c7512af94a70",
