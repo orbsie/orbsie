@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { isIP } from "node:net";
 import type { PoolClient } from "pg";
 import { database, HttpError } from "./auth";
+import { FREE_AUTHORING_GLOBAL_UNITS } from "./authoring-run-limits";
 import { freeProviderAvailable } from "./free-provider-availability";
 
 export const FREE_MODEL = "openai/gpt-6-luna";
@@ -87,14 +88,26 @@ export class TrialExhausted extends HttpError {
   }
 }
 function assertGlobalUnits(globalUnits: number) {
-  if (!Number.isSafeInteger(globalUnits) || globalUnits < 1 || globalUnits > 3)
-    throw new RangeError("Global trial units must be an integer from 1 to 3.");
+  if (
+    !Number.isSafeInteger(globalUnits) ||
+    globalUnits < 1 ||
+    globalUnits > FREE_AUTHORING_GLOBAL_UNITS
+  )
+    throw new RangeError(
+      `Global trial units must be an integer from 1 to ${FREE_AUTHORING_GLOBAL_UNITS}.`,
+    );
 }
-function remaining(
+/**
+ * Pure budget arithmetic: how many whole runs the visitor, network and shared
+ * daily buckets still admit. Exported so the reservation can be tested without
+ * a database.
+ */
+export function trialRemainingFromCounts(
   identity: TrialIdentity,
   counts: Map<string, number>,
-  globalUnits: number,
+  globalUnits = 1,
 ) {
+  assertGlobalUnits(globalUnits);
   return Math.max(
     0,
     Math.min(
@@ -114,7 +127,7 @@ export async function trialRemaining(identity: TrialIdentity, globalUnits = 1) {
     [identity.buckets.map((b) => b.key)],
   );
   const counts = new Map(result.rows.map((row) => [row.bucket, row.used]));
-  return remaining(identity, counts, globalUnits);
+  return trialRemainingFromCounts(identity, counts, globalUnits);
 }
 /**
  * Claim the legacy visitor/network buckets using a caller-owned transaction.
@@ -150,7 +163,7 @@ export async function claimTrialInTransaction(
     [buckets.map((b) => b.key), globalUnits],
   );
   const counts = new Map(updated.rows.map((row) => [row.bucket, row.used]));
-  return remaining(identity, counts, globalUnits);
+  return trialRemainingFromCounts(identity, counts, globalUnits);
 }
 export async function withDatabaseTransaction<T>(
   work: (client: PoolClient) => Promise<T>,
@@ -310,13 +323,13 @@ export async function refundTrial(identity: TrialIdentity) {
         locked.rows.length !== buckets.length ||
         locked.rows.some((row) => row.used < 1)
       )
-        return remaining(identity, counts, 1);
+        return trialRemainingFromCounts(identity, counts, 1);
 
       const refunded = await client.query<{ bucket: string; used: number }>(
         "UPDATE orbsie_trial_usage SET used=GREATEST(used-1,0), updated_at=now() WHERE bucket = ANY($1::text[]) RETURNING bucket, used",
         [keys],
       );
-      return remaining(
+      return trialRemainingFromCounts(
         identity,
         new Map(refunded.rows.map((row) => [row.bucket, row.used])),
         1,

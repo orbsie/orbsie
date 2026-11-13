@@ -13,6 +13,7 @@ import {
   completeAuthoringReview,
   completeInitialAuthoringRun,
   failAuthoringRun,
+  FREE_AUTHORING_GLOBAL_UNITS,
   issueAuthoringRun,
   readAuthoringRun,
 } from "../src/lib/server/authoring-run-ledger";
@@ -556,7 +557,7 @@ describe("internal authoring-run ledger", () => {
     expect(database.rolledBack).toBe(true);
   });
 
-  it("rolls back the three-unit free reservation when ledger insertion fails", async () => {
+  it("rolls back the full free reservation when ledger insertion fails", async () => {
     const database = fakeDatabase({ failLedgerInsert: true });
     const trialIdentity = {
       identityHash: binding.identityHash,
@@ -564,7 +565,7 @@ describe("internal authoring-run ledger", () => {
       buckets: [
         { key: "visitor:test", limit: 3 },
         { key: "network:test", limit: 3 },
-        { key: "global:test", limit: 3 },
+        { key: "global:test", limit: FREE_AUTHORING_GLOBAL_UNITS },
       ],
     };
     await expect(

@@ -6,10 +6,13 @@ import {
   withDatabaseTransaction,
 } from "./trial";
 import { database } from "./auth";
+import {
+  AUTHORING_RUN_REVIEW_SLOTS,
+  FREE_AUTHORING_GLOBAL_UNITS,
+} from "./authoring-run-limits";
 
 export const AUTHORING_RUN_TTL_MS = 15 * 60 * 1000;
-export const AUTHORING_RUN_REVIEW_SLOTS = 3;
-export const FREE_AUTHORING_GLOBAL_UNITS = 3;
+export { AUTHORING_RUN_REVIEW_SLOTS, FREE_AUTHORING_GLOBAL_UNITS };
 
 export type AuthoringProvider = "free" | "openrouter" | "gateway" | "chatgpt";
 // Provider catalogs may add values such as xhigh, minimal, or none. Keep the
