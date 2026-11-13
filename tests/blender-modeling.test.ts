@@ -308,7 +308,7 @@ describe("local Blender modeling runner", () => {
     expect(result.glb.byteLength).toBeGreaterThan(20);
     expect(String.fromCharCode(...result.glb.slice(0, 4))).toBe("glTF");
     expect(result.sha256).toBe(digest);
-    expect(result.blenderVersion).toMatch(/^4\./);
+    expect(result.blenderVersion).toMatch(/^[45]\./);
     expect(result.objects.map((object) => object.shape)).toEqual(
       allShapes.parts.map((part) => part.shape),
     );

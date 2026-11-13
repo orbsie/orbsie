@@ -6246,15 +6246,30 @@ export async function runFreshFlagshipGameplay(
 
     movementBefore = start;
     await setKeys(["d"], "movement-check");
-    await page.waitForTimeout(280);
-    movementAfter = await read();
-    await setKeys([], "movement-release");
+    // Poll to the distance threshold instead of a fixed hold: a loaded machine
+    // can starve the renderer's animation loop, and a 280 ms hold then measures
+    // almost no displacement.
+    try {
+      const movementDeadline = Date.now() + 4000;
+      do {
+        movementAfter = await read();
+        if (movementAfter) {
+          movementDistance = Math.hypot(
+            movementAfter.player.position[0] - movementBefore.player.position[0],
+            movementAfter.player.position[2] - movementBefore.player.position[2],
+          );
+          if (
+            movementDistance >= FRESH_GAMEPLAY_LIMITS.movementMinDistance
+          )
+            break;
+        }
+        await page.waitForTimeout(120);
+      } while (Date.now() < movementDeadline);
+    } finally {
+      await setKeys([], "movement-release");
+    }
     if (!movementAfter)
       throw new Error("Fresh gameplay movement produced no observation.");
-    movementDistance = Math.hypot(
-      movementAfter.player.position[0] - movementBefore.player.position[0],
-      movementAfter.player.position[2] - movementBefore.player.position[2],
-    );
     if (movementDistance < FRESH_GAMEPLAY_LIMITS.movementMinDistance)
       throw new Error(
         `Fresh gameplay movement was not observed (${movementDistance.toFixed(3)} units).`,

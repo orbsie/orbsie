@@ -28,7 +28,7 @@ Open the local URL printed by Next.js. `npm run build` builds both the editor an
 - Trusted local ChatGPT test harness: actual Astra low scene creation and scoped edits verified.
 - Private Google Cloud Storage archives using keyless Vercel workload identity, with separate production/development buckets.
 
-The hosted Gateway Luna path has passed three real free prompts and a blocked fourth request. The shared credential is private in Vercel, with database-enforced quotas. Email/password accounts, cloud saving and private archives are also verified in production; dedicated Orb publication is blocked by the publishing token’s project-creation permissions. The initial brief remains the target product; this is a tested implementation in progress. Read [verification](docs/verification.md) for evidence and gaps.
+The hosted Gateway Luna path has passed three real free prompts and a blocked fourth request. The shared credential is private in Vercel, with database-enforced quotas. Email/password accounts, cloud saving and private archives are also verified in production. Dedicated Orb publication was verified on 2026-09-27 with a real per-Orb Vercel project, a same-project republish and a signed-out share page (see [publication evidence](docs/evidence/publication-flagship-openrouter-gpt6-20260927/)); the remaining gap is one continuous provider-to-publication flagship run per provider plus physical-device acceptance. The initial brief remains the target product; this is a tested implementation in progress. Read [verification](docs/verification.md) for evidence and gaps.
 
 ## Cloud configuration
 
@@ -42,7 +42,7 @@ Better Auth owns its account tables; `scripts/schema.sql` adds Orbsie project/re
 
 AI keys are entered in connection settings, kept only in tab memory, and sent to the server relay for the chosen provider. Generating with your own key does not require an Orbsie account; signing in is needed to publish. Signed-out work saves locally. No remembered-key storage is implemented. Disconnect clears the tab's key. Model IDs are obtained from the provider catalogs rather than invented. NDJSON generation depends on the selected model following the framing instructions and needs live testing per model.
 
-Dedicated publishing additionally requires `VERCEL_DEPLOY_TOKEN` and `VERCEL_TEAM_ID`; these are separate from an AI Gateway key. Save the current revision to the cloud first. Published Orbs get deterministic project names, owner-scoped database records, bounded account quotas, and independent static player files. The configured token currently receives HTTP 403 when creating a Vercel project; publication and republishing still need live verification after its permissions are corrected. Play links and ZIP export do not require it.
+Dedicated publishing additionally requires `VERCEL_DEPLOY_TOKEN` and `VERCEL_TEAM_ID`; these are separate from an AI Gateway key. Save the current revision to the cloud first. Published Orbs get deterministic project names, owner-scoped database records, bounded account quotas, and independent static player files. Publication, same-project republishing and signed-out share playback passed on 2026-09-27 against `orbsie.com` ([evidence](docs/evidence/publication-flagship-openrouter-gpt6-20260927/report.json)); re-verify the token's project-creation permission before a release. Play links and ZIP export do not require it.
 
 ## Deployment
 

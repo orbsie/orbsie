@@ -1,5 +1,32 @@
 # Verification — current status 2026-09-24
 
+## 2026-11-13 publish-readiness audit
+
+`docs/publish-readiness-plan-20261113.md` maps the remaining work against the
+current brief and records the evidence boundaries below. Nothing in this
+section is a new deployment or provider test.
+
+- The reader should treat three older claims in this file as superseded by
+  later evidence: per-Orb publication is no longer blocked by an HTTP 403
+  project-creation denial (real publication, same-project republish and a
+  signed-out share page passed on 2026-09-27,
+  `evidence/publication-flagship-openrouter-gpt6-20260927/`); the Gateway key
+  balance is no longer negative (funding and successful inference are recorded
+  on 2026-09-27 and 2026-09-29); and a Gateway flagship authoring journey
+  subsequently passed through creation, both edits and Undo
+  (`evidence/provider-e2e/gateway-flagship-20260929-r5/`).
+- Those passes still omit signed-out publication inside the same session, the
+  exact published-artifact gameplay win/restart and physical-device coverage.
+  The continuous per-provider flagship journey remains open.
+- Free authoring accounting was wrong in the checked source: a run could make
+  four inference calls (initial generation plus three review slots) while the
+  shared daily ceiling reserved three units. The reservation is now derived
+  from the review-slot contract (`src/lib/server/authoring-run-limits.ts`) and
+  the full-cost boundary is unit-tested; the real-PostgreSQL gate still needs
+  an isolated database (`RUN_AUTHORING_LEDGER_DATABASE_TEST=1`).
+- Production authoring review remains disabled, and no record shows the
+  three-review ledger migration applied to the production database.
+
 The full `prompt.md` acceptance remains open. The latest production release is
 `https://orbsie.com/`, Vercel deployment `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC`.
 Its read-only crawler smoke passed root, robots and dynamic sitemap HTTP 200;
