@@ -20,7 +20,7 @@ Last updated: 2026-11-13.
 | B11 | Representative performance | **Blocked — hardware** | Needs a normal laptop and physical phones. |
 | B12 | Physical iOS/Android gates | **Blocked — owner devices** | No physical devices attached. |
 | B13 | Continuous flagship journey per provider | **Blocked — owner access/usage** | Needs cloud, accounts, publication and bounded provider budget in one session. |
-| L01 | Freeze a reviewed release | In progress | Suite/typecheck/build are running locally; handoff docs reconciled. |
+| L01 | Freeze a reviewed release | **Deterministic gates passed; release freeze open** | At `b58fd2f`: suite 216 files / 2,018 passed / 30 skipped, typecheck clean, build compiled, catalog audit and standalone source rebuild passed. Live/provider/device/deployment evidence is still required before a candidate can be declared release-ready. |
 | L02 | Enable review and deploy candidate | **Blocked — owner production access** | Needs schema confirmation, `ORBSIE_AUTHORING_REVIEW=1`, deploy. |
 | L03 | Verify the served release | **Blocked — owner** | Depends on L02. |
 | P01 | Waitlist email delivery | Post-launch | Needs Resend terms and sender verification. |

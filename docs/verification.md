@@ -26,6 +26,12 @@ section is a new deployment or provider test.
   an isolated database (`RUN_AUTHORING_LEDGER_DATABASE_TEST=1`).
 - Production authoring review remains disabled, and no record shows the
   three-review ledger migration applied to the production database.
+- Local deterministic gates at `b58fd2f`: `npm test` passed 216 files / 2,018
+  tests with 30 skipped, `tsc --noEmit` was clean, `npm run build` compiled,
+  `verify-catalog-assets.mjs` audited 11 GLBs and 11 transformed bounds, and
+  `verify-source-rebuild.mjs` rebuilt 89 source files with no network installs.
+  Blender 5.0.1 and the hosted-guard timeout now pass as well. None of this is
+  live provider, account, publication or physical-device evidence.
 
 The full `prompt.md` acceptance remains open. The latest production release is
 `https://orbsie.com/`, Vercel deployment `dpl_5UUfXcttXjS4eqSC6evg2ku2riZC`.

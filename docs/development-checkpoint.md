@@ -1,6 +1,42 @@
 # Development checkpoint
 
-Sep 29 release (owner-approved): clean worktree of `c2aee61` deployed with
+## Nov 13 publish-readiness execution (partial; owner gates open)
+
+`docs/publish-readiness-plan-20261113.md` maps 13 pre-launch blockers, three
+launch steps and two post-launch groups against the current brief;
+`docs/publish-readiness-status.md` tracks execution per item. Planning inputs
+were the full brief and this checkpoint; no deployment, migration or provider
+call was made while producing the map.
+
+Free authoring accounting was wrong: a run admits an initial generation plus
+three review calls, but the shared daily ceiling reserved only three units, so
+a full-length free run could overspend it. `7fc8653` derives both constants from
+one import-free module (`src/lib/server/authoring-run-limits.ts`), makes
+`trial.ts` accept units up to the derived maximum, exports the pure budget
+arithmetic, and adds `tests/authoring-run-accounting.test.ts`. The real
+PostgreSQL gate is still unrun: this host has no Postgres or Docker daemon, so
+`RUN_AUTHORING_LEDGER_DATABASE_TEST=1` needs an isolated database elsewhere, and
+production ledger schema remains unconfirmed.
+
+`4d01008` fixed three environment-bound gates: Blender 5.0.1 now passes the
+isolated-job assertions (4.x/5.x accepted after every shape, bounds and material
+assertion passed), the hosted-verifier guard test got time for its four
+subprocess runs, and the fresh-gameplay movement probe polls to a distance
+threshold instead of a fixed 280 ms hold that a loaded machine could starve.
+`b58fd2f` repointed evidence JSONs whose only change was the container path
+after the repository moved from Disk-Combined-5.5TB to Disk-Combined-8TB.
+
+Local L01 evidence at `b58fd2f`: `npm test` 216 files / 2,018 passed / 30
+skipped / 0 failed; `tsc --noEmit` clean; `npm run build` compiled; catalog
+verification (11 GLBs, 11 transformed bounds) and the standalone source rebuild
+(89 files, no network installs) passed. These are deterministic results only;
+no live-provider, account, publication or physical-device evidence was produced.
+Production authoring review remains off, the three-review ledger migration is
+still unconfirmed in production, and B01/B02/B03/B05/B06/B07/B08/B09/B10/B11/
+B12/B13 plus L02/L03 still need owner access, provider consent, hardware or a
+production decision.
+
+## Sep 29 release (owner-approved): clean worktree of `c2aee61` deployed with
 `vercel deploy --prod` to `https://orbsie-kdakp16wl-grappeggias-projects.vercel.app`,
 aliased to `https://orbsie.com`. Smoke: root 200, unauthenticated projects
 401, served `player/runtime.js` SHA-256 equals the local build, `/api/config`
