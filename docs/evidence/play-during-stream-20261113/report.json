@@ -1,10 +1,10 @@
 {
-  "status": "failed",
+  "status": "passed",
   "mode": "deterministic-held-ndjson-browser",
   "scope": "One normal-motion editor run derives a one-crystal game stream from the saved live-authored replay, enters Play before commit, scores 7 with real ArrowRight input while building remains visible, applies a compatible crystal material update while the stream remains open, then commits/EOFs and wins with real ArrowUp input. It covers this narrow input-rule gameplay path during an open response; it does not cover physical traversal, partial provider/model stream semantics, live inference, or synthetic store/input state.",
   "url": "http://127.0.0.1:3048",
   "appSourceCommit": "unverified",
-  "repositoryCommit": "9d57a5cab61c64fade28d30da596a12ca9064a6e",
+  "repositoryCommit": "3e5559420a161bb8892a5d96ecea8dc5938872d5",
   "replayArchive": "docs/evidence/game-program-chatgpt/world.zip",
   "viewport": {
     "width": 1440,
@@ -14,35 +14,83 @@
   "fixtureTransport": true,
   "generationRequestCount": 1,
   "fixtureServerRequestCount": 1,
-  "fixtureURL": "http://127.0.0.1:39923/api/generate",
+  "fixtureURL": "http://127.0.0.1:43377/api/generate",
   "streamTimeline": [
     {
       "name": "request-received",
-      "elapsedMs": 5870
+      "elapsedMs": 3528
     },
     {
       "name": "initial-commands-flushed",
-      "elapsedMs": 5875,
+      "elapsedMs": 3546,
       "commands": [
         "reserve_entity",
         "set_geometry",
         "set_game"
       ]
+    },
+    {
+      "name": "material-flushed",
+      "elapsedMs": 34008,
+      "command": "set_material",
+      "color": "#5d8cff",
+      "responseStillOpen": true
+    },
+    {
+      "name": "commit-flushed",
+      "elapsedMs": 34113,
+      "command": "commit_revision"
+    },
+    {
+      "name": "eof-written",
+      "elapsedMs": 34114
+    },
+    {
+      "name": "eof",
+      "elapsedMs": 34114
     }
   ],
   "blockedExternalHttpRequests": [],
   "fixtureFontStylesheets": [],
   "pageErrors": [],
   "consoleErrors": [],
-  "requestFailures": [],
+  "requestFailures": [
+    {
+      "method": "POST",
+      "url": "http://127.0.0.1:43377/api/generate",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
   "generationLifecycle": [
     {
       "event": "response",
-      "url": "http://127.0.0.1:39923/api/generate",
+      "url": "http://127.0.0.1:43377/api/generate",
       "status": 200
+    },
+    {
+      "event": "requestfailed",
+      "method": "POST",
+      "url": "http://127.0.0.1:43377/api/generate",
+      "failure": "net::ERR_ABORTED"
     }
   ],
-  "checks": {},
+  "checks": {
+    "oneStreamGenerationRequest": true,
+    "savedReplayCommandsApplied": true,
+    "refinedEntityReadyBeforeCommit": true,
+    "normalMotionDescentReady": true,
+    "buildingVisibleBeforePlay": true,
+    "playEnteredBeforeCommit": true,
+    "realArrowRightScoredSevenWhileBuilding": true,
+    "compatibleMaterialReachedAppBeforeEOF": true,
+    "scorePreservedAfterMaterialUpdate": true,
+    "playStayedActiveAfterMaterialUpdate": true,
+    "commitAndEOFObserved": true,
+    "scorePreservedAfterEOF": true,
+    "playStayedActiveAfterEOF": true,
+    "realArrowUpWonWithScorePreserved": true,
+    "materialBeforeCommitBeforeEOF": true
+  },
   "replaySource": {
     "archiveSHA256": "5e4a41c741b5ffd5bc3524e7da222fc4c2688695a44df47026d3a992bd1d0b5c",
     "projectSHA256": "21f630965d78748a1b6cf458f38714df9094b9bd43c6c6e9118e634bb6b42484",
@@ -58,6 +106,25 @@
       "left_lose"
     ]
   },
-  "error": "Timed out waiting for refined replay entity and game program.\n\nTimed out waiting for refined replay entity and game program.\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate",
-  "screenshot": "failure.png"
+  "scoreWhileBuilding": "7",
+  "playActiveWhileBuilding": true,
+  "materialObservedWhileStreamOpen": true,
+  "materialProject": {
+    "revision": 5,
+    "entityColor": "#5d8cff",
+    "geometryTint": "#5d8cff",
+    "gameUnchanged": true
+  },
+  "streamState": {
+    "received": true,
+    "initialFlushed": true,
+    "materialFlushed": true,
+    "commitFlushed": true,
+    "eofWritten": true,
+    "ended": true,
+    "closedBeforeEOF": false,
+    "requestBodyBytes": 481
+  },
+  "requestFailureNote": "The rewritten localhost fixture request returned 200 and its commands were consumed through EOF; Chromium may report net::ERR_ABORTED afterward, matching the existing fixture harness behavior.",
+  "screenshot": "final.png"
 }

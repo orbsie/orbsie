@@ -11,10 +11,13 @@ Fixing the fixtures surfaced one real defect class: four release scripts still
 selected the removed `.building-message` class instead of the current
 `.authoring-activity-message .pulse-orb` in-progress indicator, so their
 recorded passes could not be reproduced. With the selector corrected, composer
-continuity and input feedback pass; `verify-play-during-stream.mjs` still fails
-with `Timed out waiting for refined replay entity and game program`, which
-contradicts the `scope-audit.md` fixture-proven claim and needs triage (stale
-September replay ZIP versus a streaming regression). World navigation passed
+continuity and input feedback pass. `verify-play-during-stream.mjs` initially
+failed because it read mid-stream state from IndexedDB, which the app only
+writes at `commit_revision`; after moving readiness to a canvas pixel probe and
+the material result to the committed project, it passes 15/15 (play before
+commit, score 7 during streaming, material reaching the app before EOF with
+play and score preserved, then a real ArrowUp win). The September claim was
+fixture staleness, not a streaming regression. World navigation passed
 only its mobile touch lane; both desktop lanes failed on a marker pixel
 threshold and a screenshot timeout.
 

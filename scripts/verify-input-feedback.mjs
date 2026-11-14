@@ -11,7 +11,10 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+// Locator assertions use their own 5 s default; match the page budget so a
+// slow cold start on software rendering is not reported as a missing element.
+const expect = baseExpect.configure({ timeout: 15000 });
 import { installFixtureGeneration } from "./fixture-generation.mjs";
 
 const TEST_URL = process.env.TEST_URL;
@@ -118,11 +121,15 @@ try {
       const userMessage = [...document.querySelectorAll(".message.user")].some(
         (element) => element.textContent?.includes(prompt) && visible(element),
       );
-      const buildingMessage = document.querySelector(".building-message");
+      // The pulse orb is the app's only "still building" indicator; applied
+      // activity entries stay in history after the run ends.
+      const buildingMessage = [
+        ...document.querySelectorAll(".authoring-activity-message .pulse-orb"),
+      ].find(visible);
       return {
         workspace: Boolean(app),
         userMessage,
-        building: visible(buildingMessage),
+        building: Boolean(buildingMessage),
       };
     };
 
@@ -334,7 +341,9 @@ try {
   await expect(
     page.getByText("Your island is alive!", { exact: false }),
   ).toBeVisible({ timeout: WAIT_TIMEOUT });
-  await expect(page.locator(".building-message")).toHaveCount(0, {
+  await expect(
+    page.locator(".authoring-activity-message .pulse-orb"),
+  ).toHaveCount(0, {
     timeout: WAIT_TIMEOUT,
   });
   await page.getByRole("button", { name: "Show objects", exact: true }).click();

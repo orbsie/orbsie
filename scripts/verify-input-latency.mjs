@@ -1,5 +1,8 @@
 import { build } from "esbuild";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+// Locator assertions use their own 5 s default; match the page budget so a
+// slow cold start on software rendering is not reported as a missing element.
+const expect = baseExpect.configure({ timeout: 30000 });
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -19,7 +22,9 @@ const sourceFiles = [
   "scripts/verify-input-latency.mjs",
 ];
 const sha256 = async (path) =>
-  createHash("sha256").update(await readFile(path)).digest("hex");
+  createHash("sha256")
+    .update(await readFile(path))
+    .digest("hex");
 const report = {
   schemaVersion: "orbsie.input-consumption-latency/v1",
   checkedAt: new Date().toISOString(),
@@ -48,7 +53,9 @@ let browser;
 let page;
 
 function recordPage(pageInstance, origin) {
-  pageInstance.on("pageerror", (error) => report.pageErrors.push(error.message));
+  pageInstance.on("pageerror", (error) =>
+    report.pageErrors.push(error.message),
+  );
   pageInstance.on("console", (message) => {
     if (message.type() === "error") report.pageErrors.push(message.text());
   });
@@ -62,7 +69,10 @@ function recordPage(pageInstance, origin) {
 function percentile(values, fraction) {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(sorted.length - 1, Math.ceil(fraction * sorted.length) - 1);
+  const index = Math.min(
+    sorted.length - 1,
+    Math.ceil(fraction * sorted.length) - 1,
+  );
   return sorted[index];
 }
 
@@ -121,14 +131,19 @@ try {
   recordPage(page, origin);
   await page.goto(`${origin}/`);
   await expect
-    .poll(() => page.evaluate(() => window.inputLatencyFixture?.ready() ?? false), {
-      timeout: 30_000,
-    })
+    .poll(
+      () => page.evaluate(() => window.inputLatencyFixture?.ready() ?? false),
+      {
+        timeout: 30_000,
+      },
+    )
     .toBe(true);
 
   const status = () => page.evaluate(() => window.inputLatencyFixture.status());
   const snapshotCount = () =>
-    page.evaluate(() => window.inputLatencyFixture.status().latest?.sampleCount ?? 0);
+    page.evaluate(
+      () => window.inputLatencyFixture.status().latest?.sampleCount ?? 0,
+    );
 
   await page.keyboard.down("d");
   await expect.poll(snapshotCount, { timeout: 5000 }).toBe(1);
@@ -142,7 +157,9 @@ try {
     enabled: true,
     maxTouchPoints: 2,
   });
-  const box = await page.getByRole("button", { name: "Move d", exact: true }).boundingBox();
+  const box = await page
+    .getByRole("button", { name: "Move d", exact: true })
+    .boundingBox();
   if (!box) throw Error("Missing production pointer input button.");
   const point = {
     x: box.x + box.width / 2,
@@ -171,7 +188,8 @@ try {
     return window.inputLatencyFixture.status().latest?.sampleCount ?? 0;
   });
   await page.waitForTimeout(80);
-  report.checks.noDelayedPressAfterBlur = (await snapshotCount()) === countAfterBlur;
+  report.checks.noDelayedPressAfterBlur =
+    (await snapshotCount()) === countAfterBlur;
   await page.keyboard.up("d");
 
   const finalStatus = await status();
@@ -180,43 +198,66 @@ try {
   report.browser = {
     userAgent: await page.evaluate(() => navigator.userAgent),
     platform: await page.evaluate(() => navigator.platform),
-    hardwareConcurrency: await page.evaluate(() => navigator.hardwareConcurrency),
+    hardwareConcurrency: await page.evaluate(
+      () => navigator.hardwareConcurrency,
+    ),
     devicePixelRatio: await page.evaluate(() => window.devicePixelRatio),
-    viewport: await page.evaluate(() => ({ width: innerWidth, height: innerHeight })),
+    viewport: await page.evaluate(() => ({
+      width: innerWidth,
+      height: innerHeight,
+    })),
   };
   report.renderer = finalStatus.renderer;
-  const finiteSamples = report.samplesMs.filter((sample) => Number.isFinite(sample) && sample >= 0);
+  const finiteSamples = report.samplesMs.filter(
+    (sample) => Number.isFinite(sample) && sample >= 0,
+  );
   report.statistics = {
     count: finiteSamples.length,
     nearestRankP50Ms: percentile(finiteSamples, 0.5),
     p95Ms: percentile(finiteSamples, 0.95),
     maxMs: finiteSamples.length ? Math.max(...finiteSamples) : null,
   };
-  report.checks.finiteSamples = finiteSamples.length === report.samplesMs.length;
+  report.checks.finiteSamples =
+    finiteSamples.length === report.samplesMs.length;
   report.checks.samplesCaptured = report.samplesMs.length >= 2;
   report.checks.noPageErrors = report.pageErrors.length === 0;
   report.checks.noExternalRequests = report.externalRequests.length === 0;
-  report.status = Object.values(report.checks).every(Boolean) ? "passed" : "failed";
-  await page.screenshot({ path: join(output, "input-consumption-latency.png"), fullPage: true });
+  report.status = Object.values(report.checks).every(Boolean)
+    ? "passed"
+    : "failed";
+  await page.screenshot({
+    path: join(output, "input-consumption-latency.png"),
+    fullPage: true,
+  });
   report.evidence.push("input-consumption-latency.png");
 } catch (error) {
   report.status = "failed";
   report.failure = error instanceof Error ? error.message : String(error);
   if (page) {
-    await page.screenshot({ path: join(output, "input-consumption-latency-failure.png"), fullPage: true }).catch(() => {});
+    await page
+      .screenshot({
+        path: join(output, "input-consumption-latency-failure.png"),
+        fullPage: true,
+      })
+      .catch(() => {});
     report.evidence.push("input-consumption-latency-failure.png");
   }
 } finally {
   for (const path of sourceFiles)
     report.sourceHashes[path] = await sha256(path).catch(() => null);
   report.networkAuditCompleted = true;
-  await writeFile(join(output, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
+  await writeFile(
+    join(output, "report.json"),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
   await browser?.close().catch(() => {});
   await new Promise((resolveClose) => server?.close(() => resolveClose()));
   await rm(temporary, { recursive: true, force: true });
 }
 
 if (report.status !== "passed") {
-  console.error(`Input latency verification failed: ${report.failure ?? "a correctness gate failed"}`);
+  console.error(
+    `Input latency verification failed: ${report.failure ?? "a correctness gate failed"}`,
+  );
   process.exitCode = 1;
 }

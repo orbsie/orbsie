@@ -1,4 +1,7 @@
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+// Locator assertions use their own 5 s default; match the page budget so a
+// slow cold start on software rendering is not reported as a missing element.
+const expect = baseExpect.configure({ timeout: 30000 });
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, posix as posixPath, resolve } from "node:path";
@@ -279,14 +282,18 @@ async function waitForStableLayout(page) {
         return (
           box &&
           prior &&
-          box.every((value, valueIndex) => Math.abs(value - prior[valueIndex]) < 0.1)
+          box.every(
+            (value, valueIndex) => Math.abs(value - prior[valueIndex]) < 0.1,
+          )
         );
       });
       stableFrames = stable ? stableFrames + 1 : 0;
       previous = current;
       if (stableFrames >= 3) return;
     }
-    throw new Error("Timed out waiting for touch layout transitions to settle.");
+    throw new Error(
+      "Timed out waiting for touch layout transitions to settle.",
+    );
   });
 }
 
@@ -294,114 +301,117 @@ async function assertToastLayout(page, result, mode) {
   await expect(page.locator(".toast")).toBeVisible();
   await waitForStableLayout(page);
   const expectedSheet = mode.includes("Open") ? "sheet-open" : "sheet-closed";
-  const layoutState = await page.evaluate(({ expectedSheet }) => {
-    const boxFor = (element) => {
-      if (!element) return null;
-      const rect = element.getBoundingClientRect();
-      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-    };
-    const hitFor = (element) => {
-      const box = boxFor(element);
-      if (!box) return null;
-      const target = document.elementFromPoint(
-        box.x + box.width / 2,
-        box.y + box.height / 2,
-      );
-      const button = target?.closest("button");
-      return {
-        box,
-        point: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
-        target: target
-          ? { tag: target.tagName, className: String(target.className) }
-          : null,
-        button: button
-          ? {
-              label: button.getAttribute("aria-label"),
-              text: button.textContent?.trim(),
-            }
-          : null,
+  const layoutState = await page.evaluate(
+    ({ expectedSheet }) => {
+      const boxFor = (element) => {
+        if (!element) return null;
+        const rect = element.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
       };
-    };
-    const buttonByLabel = (label) =>
-      [...document.querySelectorAll("button")].find(
-        (button) => button.getAttribute("aria-label") === label,
-      );
-    const buttonByText = (text) =>
-      [...document.querySelectorAll("button")].find(
-        (button) =>
-          !button.hidden &&
-          (button.textContent?.trim() === text ||
-            button.getAttribute("aria-label") === text),
-      );
-    const app = document.querySelector("main.app");
-    const touch = document.querySelector(".touch-controls");
-    const toast = document.querySelector(".toast");
-    const composer = document.querySelector(".chat-panel");
-    const toolbar = document.querySelector(".play-toolbar");
-    const hud = document.querySelector(".game-hud");
-    const touchLabels = ["Move w", "Move a", "Move s", "Move d", "Jump"];
-    const toolbarLabels = [
-      ["Edit", "text"],
-      ["Play", "text"],
-      ["Undo last change", "label"],
-      ["Redo last change", "label"],
-    ];
-    const headerLabels = [
-      ["Orbsie home", "label"],
-      ["Connections", "label"],
-      ["Your account and cloud worlds", "label"],
-      ["Share Orb", "text"],
-    ];
-    const buttonsBySpec = (specs) =>
-      Object.fromEntries(
-        specs.map(([name, kind]) => [
-          name,
-          hitFor(kind === "label" ? buttonByLabel(name) : buttonByText(name)),
-        ]),
-      );
-    const styleFor = (element) => {
-      if (!element) return null;
-      const style = getComputedStyle(element);
-      return {
-        position: style.position,
-        height: style.height,
-        minHeight: style.minHeight,
-        top: style.top,
-        bottom: style.bottom,
+      const hitFor = (element) => {
+        const box = boxFor(element);
+        if (!box) return null;
+        const target = document.elementFromPoint(
+          box.x + box.width / 2,
+          box.y + box.height / 2,
+        );
+        const button = target?.closest("button");
+        return {
+          box,
+          point: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+          target: target
+            ? { tag: target.tagName, className: String(target.className) }
+            : null,
+          button: button
+            ? {
+                label: button.getAttribute("aria-label"),
+                text: button.textContent?.trim(),
+              }
+            : null,
+        };
       };
-    };
-    return {
-      appClass: app?.className ?? "",
-      expectedSheet,
-      app: boxFor(app),
-      appStyle: styleFor(app),
-      touchStyle: styleFor(touch),
-      toastStyle: styleFor(toast),
-      composerStyle: styleFor(composer),
-      viewport: {
-        width: innerWidth,
-        height: innerHeight,
-        pointerCoarse: matchMedia("(pointer: coarse)").matches,
-      },
-      boxes: {
-        toast: boxFor(toast),
-        composer: boxFor(composer),
-        toolbar: boxFor(toolbar),
-        hud: boxFor(hud),
-        touch: buttonsBySpec(touchLabels.map((name) => [name, "label"])),
-        toolbarButtons: buttonsBySpec(toolbarLabels),
-        headerButtons: buttonsBySpec(headerLabels),
-        restart: hitFor(buttonByLabel("Restart game")),
-        prompt: boxFor(document.querySelector("#prompt")),
-        submit: hitFor(buttonByText("Change this")),
-        actions: Object.fromEntries(
-          ["Try again", "Use last working", "Dismiss message"]
-            .map((name) => [name, hitFor(buttonByText(name))])
-            .filter(([, value]) => value),
-        ),
-      },
-    };
-  }, { expectedSheet });
+      const buttonByLabel = (label) =>
+        [...document.querySelectorAll("button")].find(
+          (button) => button.getAttribute("aria-label") === label,
+        );
+      const buttonByText = (text) =>
+        [...document.querySelectorAll("button")].find(
+          (button) =>
+            !button.hidden &&
+            (button.textContent?.trim() === text ||
+              button.getAttribute("aria-label") === text),
+        );
+      const app = document.querySelector("main.app");
+      const touch = document.querySelector(".touch-controls");
+      const toast = document.querySelector(".toast");
+      const composer = document.querySelector(".chat-panel");
+      const toolbar = document.querySelector(".play-toolbar");
+      const hud = document.querySelector(".game-hud");
+      const touchLabels = ["Move w", "Move a", "Move s", "Move d", "Jump"];
+      const toolbarLabels = [
+        ["Edit", "text"],
+        ["Play", "text"],
+        ["Undo last change", "label"],
+        ["Redo last change", "label"],
+      ];
+      const headerLabels = [
+        ["Orbsie home", "label"],
+        ["Connections", "label"],
+        ["Your account and cloud worlds", "label"],
+        ["Share Orb", "text"],
+      ];
+      const buttonsBySpec = (specs) =>
+        Object.fromEntries(
+          specs.map(([name, kind]) => [
+            name,
+            hitFor(kind === "label" ? buttonByLabel(name) : buttonByText(name)),
+          ]),
+        );
+      const styleFor = (element) => {
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        return {
+          position: style.position,
+          height: style.height,
+          minHeight: style.minHeight,
+          top: style.top,
+          bottom: style.bottom,
+        };
+      };
+      return {
+        appClass: app?.className ?? "",
+        expectedSheet,
+        app: boxFor(app),
+        appStyle: styleFor(app),
+        touchStyle: styleFor(touch),
+        toastStyle: styleFor(toast),
+        composerStyle: styleFor(composer),
+        viewport: {
+          width: innerWidth,
+          height: innerHeight,
+          pointerCoarse: matchMedia("(pointer: coarse)").matches,
+        },
+        boxes: {
+          toast: boxFor(toast),
+          composer: boxFor(composer),
+          toolbar: boxFor(toolbar),
+          hud: boxFor(hud),
+          touch: buttonsBySpec(touchLabels.map((name) => [name, "label"])),
+          toolbarButtons: buttonsBySpec(toolbarLabels),
+          headerButtons: buttonsBySpec(headerLabels),
+          restart: hitFor(buttonByLabel("Restart game")),
+          prompt: boxFor(document.querySelector("#prompt")),
+          submit: hitFor(buttonByText("Change this")),
+          actions: Object.fromEntries(
+            ["Try again", "Use last working", "Dismiss message"]
+              .map((name) => [name, hitFor(buttonByText(name))])
+              .filter(([, value]) => value),
+          ),
+        },
+      };
+    },
+    { expectedSheet },
+  );
   const {
     toast: toastBox,
     composer: composerBox,
@@ -429,7 +439,12 @@ async function assertToastLayout(page, result, mode) {
       `Unexpected composer state in ${mode}: ${JSON.stringify({ expectedSheet, appClass: layoutState.appClass })}`,
     );
   const requiredTouch = ["Move w", "Move a", "Move s", "Move d", "Jump"];
-  const requiredToolbar = ["Edit", "Play", "Undo last change", "Redo last change"];
+  const requiredToolbar = [
+    "Edit",
+    "Play",
+    "Undo last change",
+    "Redo last change",
+  ];
   const requiredHeader = [
     "Orbsie home",
     "Connections",
@@ -490,20 +505,24 @@ async function assertToastLayout(page, result, mode) {
     !insideViewport(layoutState.boxes.hud) ||
     !insideViewport(restart.box) ||
     requiredTouch.some((label) => !insideViewport(touch[label].box)) ||
-    requiredToolbar.some((label) => !insideViewport(toolbarButtons[label].box)) ||
+    requiredToolbar.some(
+      (label) => !insideViewport(toolbarButtons[label].box),
+    ) ||
     requiredHeader.some((label) => !insideViewport(headerButtons[label].box))
   )
     throw Error(
-      `Play surface or editor chrome is not fully visible in ${mode}: ${JSON.stringify({
-        app: layoutState.app,
-        viewport: layoutState.viewport,
-        toolbar: layoutState.boxes.toolbar,
-        hud: layoutState.boxes.hud,
-        restart,
-        touch,
-        toolbarButtons,
-        headerButtons,
-      })}`,
+      `Play surface or editor chrome is not fully visible in ${mode}: ${JSON.stringify(
+        {
+          app: layoutState.app,
+          viewport: layoutState.viewport,
+          toolbar: layoutState.boxes.toolbar,
+          hud: layoutState.boxes.hud,
+          restart,
+          touch,
+          toolbarButtons,
+          headerButtons,
+        },
+      )}`,
     );
   if (!insideViewport(toastBox))
     throw Error(
@@ -593,7 +612,10 @@ async function dispatchTouch(cdp, type, touchPoints) {
 }
 
 async function runTouchSequence(page, names, result) {
-  const noticeVisible = await page.locator(".toast").isVisible().catch(() => false);
+  const noticeVisible = await page
+    .locator(".toast")
+    .isVisible()
+    .catch(() => false);
   const cdp = await touchSession(page);
   const right = await touchPoint(page, names.right, 101);
   const jump = await touchPoint(page, names.jump, 102);
@@ -648,10 +670,7 @@ async function runTouchSequence(page, names, result) {
     },
     { label: names.right, pointerId: rightDownAfterScore.pointerId },
   );
-  await dispatchTouch(cdp, "touchMove", [
-    { ...right, x: right.x + 1 },
-    jump,
-  ]);
+  await dispatchTouch(cdp, "touchMove", [{ ...right, x: right.x + 1 }, jump]);
   result.captureReleaseApiObserved = !(await page.evaluate(
     ({ label, pointerId }) => {
       const button = [...document.querySelectorAll("button")].find(
@@ -667,14 +686,15 @@ async function runTouchSequence(page, names, result) {
     (pointerId) =>
       (window.__touchPointerEvents ?? []).some(
         (event) =>
-          event.type === "lostpointercapture" &&
-          event.pointerId === pointerId,
+          event.type === "lostpointercapture" && event.pointerId === pointerId,
       ),
     rightDownAfterScore.pointerId,
   );
   if (result.captureReleaseEventObserved) {
     await expect
-      .poll(async () => (await inputEvents(page)).filter((event) => !event.down))
+      .poll(async () =>
+        (await inputEvents(page)).filter((event) => !event.down),
+      )
       .toContainEqual({
         key: "d",
         down: false,
@@ -692,9 +712,7 @@ async function runTouchSequence(page, names, result) {
     });
   const afterCaptureLoss = await inputEvents(page);
   if (
-    afterCaptureLoss.some(
-      (event) => event.key === " " && event.down === false,
-    )
+    afterCaptureLoss.some((event) => event.key === " " && event.down === false)
   )
     throw Error("Releasing one captured pointer released the other action.");
   result.otherActionHeldAfterOrdinaryRelease = true;
@@ -703,12 +721,14 @@ async function runTouchSequence(page, names, result) {
   const cancelPoint = { ...jump, id: 103 };
   await dispatchTouch(cdp, "touchStart", [cancelPoint]);
   await expect
-    .poll(async () => (await inputEvents(page)).find(
-      (event) =>
-        event.key === " " &&
-        event.down === true &&
-        event.pointerId !== jumpDown.pointerId,
-    ))
+    .poll(async () =>
+      (await inputEvents(page)).find(
+        (event) =>
+          event.key === " " &&
+          event.down === true &&
+          event.pointerId !== jumpDown.pointerId,
+      ),
+    )
     .toBeTruthy();
   const cancelDown = (await inputEvents(page)).find(
     (event) =>
@@ -716,7 +736,8 @@ async function runTouchSequence(page, names, result) {
       event.down === true &&
       event.pointerId !== jumpDown.pointerId,
   );
-  if (!cancelDown) throw Error("Touch cancel setup did not produce a jump input.");
+  if (!cancelDown)
+    throw Error("Touch cancel setup did not produce a jump input.");
   await dispatchTouch(cdp, "touchCancel", []);
   await expect
     .poll(async () => page.evaluate(() => window.__touchPointerEvents ?? []))
@@ -752,7 +773,8 @@ async function runBackgroundReset(page, result) {
   await dispatchTouch(cdp, "touchEnd", []);
   const nextRight = await touchPoint(
     page,
-    right.id === 201 && (await page.getByRole("button", { name: "Move d", exact: true }).count())
+    right.id === 201 &&
+      (await page.getByRole("button", { name: "Move d", exact: true }).count())
       ? "Move d"
       : "Right",
     202,
@@ -850,8 +872,12 @@ try {
   await editor.locator(".sheet-handle").click();
   editorRoutes.failNextGeneration();
   await editor.locator("#prompt").fill("Trigger a bounded fixture failure.");
-  await editor.locator("form.prompt-form").evaluate((form) => form.requestSubmit());
-  await expect(editor.getByRole("button", { name: "Try again", exact: true })).toBeVisible();
+  await editor
+    .locator("form.prompt-form")
+    .evaluate((form) => form.requestSubmit());
+  await expect(
+    editor.getByRole("button", { name: "Try again", exact: true }),
+  ).toBeVisible();
   await assertToastLayout(editor, report.toastLayout, "recoveryOpen");
   await editor.setViewportSize({ width: 844, height: 390 });
   await assertToastLayout(editor, report.toastLayout, "recoveryLandscapeOpen");
@@ -864,16 +890,28 @@ try {
   await editor.locator(".sheet-handle").click();
   await assertToastLayout(editor, report.toastLayout, "recoveryClosed");
   await editor.setViewportSize({ width: 844, height: 390 });
-  await assertToastLayout(editor, report.toastLayout, "recoveryLandscapeClosed");
+  await assertToastLayout(
+    editor,
+    report.toastLayout,
+    "recoveryLandscapeClosed",
+  );
   await editor.screenshot({
     path: join(output, "toast-layout.png"),
     fullPage: true,
   });
   report.evidence.push("toast-layout.png");
   await editor.setViewportSize({ width: 667, height: 375 });
-  await assertToastLayout(editor, report.toastLayout, "recoverySmallLandscapeClosed");
+  await assertToastLayout(
+    editor,
+    report.toastLayout,
+    "recoverySmallLandscapeClosed",
+  );
   await editor.locator(".sheet-handle").click();
-  await assertToastLayout(editor, report.toastLayout, "recoverySmallLandscapeOpen");
+  await assertToastLayout(
+    editor,
+    report.toastLayout,
+    "recoverySmallLandscapeOpen",
+  );
   await editor.screenshot({
     path: join(output, "toast-layout-small-landscape-open.png"),
     fullPage: true,
@@ -945,7 +983,8 @@ try {
     );
   report.status = report.openGates.length ? "partial" : "passed";
   report.toastLayout.status = "passed";
-  report.toastLayout.touchWithVisibleSuccess = report.editor.toastTouchWithNotice;
+  report.toastLayout.touchWithVisibleSuccess =
+    report.editor.toastTouchWithNotice;
   await writeFile(
     join(output, "report.json"),
     `${JSON.stringify(report, null, 2)}\n`,

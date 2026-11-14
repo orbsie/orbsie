@@ -105,7 +105,9 @@ try {
   await expect(
     page.getByRole("button", { name: "Share Orb", exact: true }),
   ).toBeVisible({ timeout: 30000 });
-  await expect(page.locator(".building-message")).not.toBeVisible({
+  await expect(
+    page.locator(".authoring-activity-message .pulse-orb"),
+  ).not.toBeVisible({
     timeout: 60000,
   });
   await expect(page.locator(".saved")).toHaveText("Saved on this device");

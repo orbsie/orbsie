@@ -311,7 +311,9 @@ try {
   await expect(page.locator(".app.is-workspace")).toBeVisible({
     timeout: WAIT_TIMEOUT,
   });
-  await expect(page.locator(".building-message")).toBeVisible({
+  await expect(
+    page.locator(".authoring-activity-message .pulse-orb"),
+  ).toBeVisible({
     timeout: WAIT_TIMEOUT,
   });
   const holdState = await page.evaluate(() => {
@@ -328,7 +330,9 @@ try {
       active: document.activeElement === state.textarea,
       sameCanvas: document.querySelector("canvas") === state.canvas,
       workspace: Boolean(document.querySelector(".app.is-workspace")),
-      building: Boolean(document.querySelector(".building-message")),
+      building: Boolean(
+        document.querySelector(".authoring-activity-message .pulse-orb"),
+      ),
     };
   });
   assert.equal(holdState.nativeSubmitEvents, 0);
@@ -371,7 +375,9 @@ try {
       active: document.activeElement === state.textarea,
       sameCanvas: document.querySelector("canvas") === state.canvas,
       workspace: Boolean(document.querySelector(".app.is-workspace")),
-      building: Boolean(document.querySelector(".building-message")),
+      building: Boolean(
+        document.querySelector(".authoring-activity-message .pulse-orb"),
+      ),
     };
   });
   assert.equal(settledHoldState.nativeSubmitEvents, 0);
@@ -407,7 +413,9 @@ try {
   await expect(
     page.getByText("Your island is alive!", { exact: false }),
   ).toBeVisible({ timeout: WAIT_TIMEOUT });
-  await expect(page.locator(".building-message")).toHaveCount(0, {
+  await expect(
+    page.locator(".authoring-activity-message .pulse-orb"),
+  ).toHaveCount(0, {
     timeout: WAIT_TIMEOUT,
   });
   await expect

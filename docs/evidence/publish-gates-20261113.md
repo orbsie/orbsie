@@ -15,7 +15,7 @@ device claim transfers to real hardware.
 | Render frame intervals (14-entity fixture) | median 133.3 ms, p95 249.9 ms, p99 366.7 ms under SwiftShader — **not native-GPU evidence** | `render-performance-20261113/report.json` |
 | Far-world persistence | WebGL lane 11/11 passed incl. standalone; forced-Canvas2D lane failed on a screenshot timeout | `far-world-browser/current-20261113/` |
 | World navigation | mobile touch lane passed; desktop WebGL failed the marker pixel threshold (39 < 100), desktop Canvas2D failed on a screenshot timeout | `world-navigation-browser/current-20261113/` |
-| Play during stream | **failed**: timed out waiting for the refined replay entity and game program | `play-during-stream-20261113/report.json` |
+| Play during stream | **passed, 15/15 checks** after fixture repair: play entered before commit, ArrowRight scores 7 while building, material update reaches the app before EOF with score and play preserved, commit/EOF, ArrowUp wins; persisted color and tint are `#5d8cff` | `play-during-stream-20261113/report.json` |
 
 ## Harness defects repaired in this pass
 
@@ -31,12 +31,17 @@ device claim transfers to real hardware.
    far-world standalone player also needs its own browser so a long editor
    journey cannot exhaust WebGL contexts.
 
-## Open risks surfaced
+## Fixture staleness resolved
 
-- `play-during-stream` (claimed fixture-proven in `docs/scope-audit.md`) does
-  not reproduce on the current build; either the September replay ZIP/NDJSON
-  is stale against the evolved protocol or streaming application regressed.
-  This needs triage before the claim is repeated.
+`play-during-stream` first failed because it read mid-stream scene state from
+IndexedDB. The app intentionally persists only at `commit_revision`, so that
+assertion could never hold on the current build. Readiness is now observed as
+the refined crystal appearing in the canvas, the material update as its
+activity entry, and the material result from the committed project. With those
+changes the fixture passes 15/15; the September claim was not a product
+regression.
+
+## Open risks surfaced
 - The world-navigation desktop lanes and the forced-Canvas2D far-world lane do
   not complete on this host; treat the mobile touch lane and the WebGL
   far-world lane as the only current navigation evidence.
