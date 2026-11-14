@@ -1,0 +1,1 @@
+OAuth success UI passed; 1 exchanges, prompt restored, URL cleaned, no persisted key.

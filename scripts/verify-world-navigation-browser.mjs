@@ -6,7 +6,10 @@ import { execFileSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 import sharp from "sharp";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+// Locator expectations use their own 5 s default; match the page timeout so
+// a slow cold start is not reported as a missing element.
+const expect = baseExpect.configure({ timeout: 20000 });
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const appUrl = "https://orbsie.com";

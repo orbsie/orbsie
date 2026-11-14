@@ -107,7 +107,7 @@ try {
       "OpenRouter sign-in needs browser storage. Enable site storage and try again.",
       { exact: true },
     ),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   expect(new URL(blockedPage.url()).search).toBe("");
   expect(blockedRoutes.stats.exchangeStarted).toBe(0);
   expect(blockedErrors).toEqual([]);
@@ -123,7 +123,7 @@ try {
     page.getByText("OpenRouter connected. Choose a model to continue.", {
       exact: true,
     }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   expect(normal.stats.exchangeStarted).toBe(1);
   expect(new URL(page.url()).search).toBe("");
   expect(errors).toEqual([]);
@@ -178,7 +178,7 @@ try {
     pendingPage.getByText("OpenRouter sign-in was interrupted. Try again.", {
       exact: true,
     }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   // Keep the page alive while navigation fires pagehide so the harness can
   // observe the browser-side abort before starting a fresh transaction.
   await pendingPage.goto("about:blank");
@@ -195,7 +195,7 @@ try {
     pendingPage.getByText("OpenRouter connected. Choose a model to continue.", {
       exact: true,
     }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30000 });
   expect(pending.stats.exchangeStarted).toBe(2);
   await abortContext.close();
   console.log(

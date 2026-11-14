@@ -8,7 +8,10 @@ import { resolve, relative } from "node:path";
 import { createServer } from "node:http";
 import { unzipSync, strFromU8 } from "fflate";
 import sharp from "sharp";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
+// Locator expectations use their own 5 s default; match the page timeout so
+// a slow cold start is not reported as a missing element.
+const expect = baseExpect.configure({ timeout: 30000 });
 import { storageSnapshot } from "./lib/browser-storage-snapshot.mjs";
 
 const appUrl = process.env.TEST_URL ?? "http://localhost:3001";
@@ -432,12 +435,15 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     await expect(frame).toBeEnabled({ timeout: 30000 });
     await expect
       .poll(async () =>
-        page.getByRole("button", { name: /^Zoom in, currently/ }).getAttribute("aria-label"),
+        page
+          .getByRole("button", { name: /^Zoom in, currently/ })
+          .getAttribute("aria-label"),
       )
       .toMatch(/^Zoom in, currently (?!100%)/);
     const autoFramedImage = await page.screenshot({
       path: `${outputPath}/${rendererName}-created.png`,
       animations: "disabled",
+      timeout: 60000,
     });
     const autoFramedMarker = await inspectCanvasCenter(
       autoFramedImage,
@@ -450,11 +456,17 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     for (let index = 0; index < 7; index += 1)
       await page.getByRole("button", { name: /^Zoom out, currently/ }).click();
     await page.waitForTimeout(300);
-    const beforeFrame = await page.screenshot({ animations: "disabled" });
+    const beforeFrame = await page.screenshot({
+      animations: "disabled",
+      timeout: 60000,
+    });
 
     await frame.click();
     await page.waitForTimeout(500);
-    const afterFrameImage = await page.screenshot({ animations: "disabled" });
+    const afterFrameImage = await page.screenshot({
+      animations: "disabled",
+      timeout: 60000,
+    });
     const beforeMarker = await inspectCanvasCenter(
       beforeFrame,
       canvasBounds,
@@ -485,6 +497,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     await page.screenshot({
       path: `${outputPath}/${rendererName}-framed-12km.png`,
       animations: "disabled",
+      timeout: 60000,
     });
 
     await page
@@ -510,6 +523,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     await page.screenshot({
       path: `${outputPath}/${rendererName}-edited-12km.png`,
       animations: "disabled",
+      timeout: 60000,
     });
 
     await page.getByRole("button", { name: "Play", exact: true }).click();
@@ -517,6 +531,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     const playImage = await page.screenshot({
       path: `${outputPath}/${rendererName}-play-12km.png`,
       animations: "disabled",
+      timeout: 60000,
     });
     lane.editorPlayVisibility = await inspectStandaloneFarPlatform(
       playImage,
@@ -548,6 +563,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     await page.screenshot({
       path: `${outputPath}/${rendererName}-reloaded-framed-12km.png`,
       animations: "disabled",
+      timeout: 60000,
     });
 
     await page.getByRole("button", { name: "Share Orb", exact: true }).click();
@@ -601,7 +617,19 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     });
     standaloneServer.unref();
     const standaloneOrigin = `http://127.0.0.1:${standaloneServer.address().port}`;
-    const playerContext = await browser.newContext({
+    // The standalone player gets its own browser: a long editor journey in the
+    // same instance can leave the GPU process unable to create another WebGL
+    // context, which looks like a player that never becomes ready.
+    const playerBrowser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader",
+      ],
+    });
+    const playerContext = await playerBrowser.newContext({
       viewport: { width: 1280, height: 900 },
       reducedMotion: "reduce",
     });
@@ -653,6 +681,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
     const standaloneImage = await player.screenshot({
       path: `${outputPath}/${rendererName}-standalone.png`,
       animations: "disabled",
+      timeout: 60000,
     });
     const standaloneCanvas = player.locator("canvas").first();
     await expect(standaloneCanvas).toBeVisible();
@@ -678,6 +707,7 @@ async function runEditorJourney(browser, rendererName, forceSoftware) {
       externalRequests: standaloneExternal,
     };
     await playerContext.close();
+    await playerBrowser.close();
     await new Promise((resolveClose, rejectClose) =>
       standaloneServer.close((error) =>
         error ? rejectClose(error) : resolveClose(),

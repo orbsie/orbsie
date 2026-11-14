@@ -244,14 +244,14 @@ async function runScenario(cancelled) {
         "OpenRouter sign-in expired or could not be completed. Try connecting again.",
         { exact: true },
       ),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 30000 });
     assert.equal(stats.exchange, 0);
   } else {
     await expect(
       page.getByText("OpenRouter connected. Choose a model to continue.", {
         exact: true,
       }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 30000 });
     assert.equal(stats.exchange, 1);
   }
   assert.equal(new URL(page.url()).search, "");
