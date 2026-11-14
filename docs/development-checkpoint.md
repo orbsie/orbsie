@@ -2,6 +2,21 @@
 
 ## Nov 13 publish-readiness execution (partial; owner gates open)
 
+Locally provable gates were run after the code fixes. `42fcd3a` adds the
+synthetic OpenRouter OAuth fixtures passing on the production build
+(`docs/evidence/openrouter-oauth-synthetic-20261113/`: UI, draft/cancel recovery
+and storage/race paths; no live provider call), the three-mode catalog
+comparison with zero external requests
+(`docs/evidence/catalog-comparison-20261113/`, SwiftShader, no performance
+claim), and the far-world fixture's WebGL lane passing every check including
+an isolated standalone player. Harness fixes behind those runs: locator
+expectations now use the page's own timeout budget, screenshots allow 60 s
+under software rendering, and the exported standalone player gets a separate
+browser so a long editor journey cannot exhaust WebGL contexts. The forced
+Canvas2D far-world lane still stops on a screenshot timeout on this host and
+its report is retained as a failure (`docs/evidence/far-world-browser/
+current-20261113/`, status failed) rather than reported as a pass.
+
 `docs/publish-readiness-plan-20261113.md` maps 13 pre-launch blockers, three
 launch steps and two post-launch groups against the current brief;
 `docs/publish-readiness-status.md` tracks execution per item. Planning inputs

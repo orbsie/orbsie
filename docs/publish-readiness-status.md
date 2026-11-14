@@ -9,13 +9,13 @@ Last updated: 2026-11-13.
 | --- | --- | --- | --- |
 | B01 | ChatGPT feasibility and test bounds | **Blocked — owner/provider** | Needs supported OpenAI client registration + subscription entitlement. |
 | B02 | Code-free subscription login | Not started | Depends on B01. |
-| B03 | Real OpenRouter OAuth acceptance | **Blocked — owner consent** | Synthetic gates can run locally; the fresh unmodified PKCE return needs the owner's browser. |
+| B03 | Real OpenRouter OAuth acceptance | **Synthetic gates passed; owner consent open** | `test`/`draft`/`races` fixtures pass against the local production build (`docs/evidence/openrouter-oauth-synthetic-20261113/`). The fresh unmodified PKCE return and a generation using the OAuth-issued key still need the owner's browser. |
 | B04 | Review accounting + production schema | **Code fixed; DB gate open** | `authoring-run-limits.ts` derives the reservation (4 calls) and the full-cost boundary is unit-tested. Real-PostgreSQL suite needs an isolated database; production schema still unconfirmed. |
 | B05 | Gateway output reliability and recovery | **Blocked — provider** | Fix candidates need funded Gateway runs to validate; no silent repair allowed. |
 | B06 | Durable ChatGPT generation and review | Not started | Depends on B01/B02. |
 | B07 | Publish the held Gateway artifact | **Blocked — owner credentials** | Needs a synthetic production account and publication execution. |
-| B08 | Catalog workflow evidence matrix | Partially runnable | Deterministic verifiers run locally; per-provider live cases need credentials. |
-| B09 | Integrated unbounded-world acceptance | Partially runnable | Fixture verifiers run locally; live far-edit/publication and Android travel need access. |
+| B08 | Catalog workflow evidence matrix | **Deterministic half passed** | Catalog audit (11 GLBs, 11 bounds) and the three-mode comparison pass with zero external requests (`docs/evidence/catalog-comparison-20261113/`). Per-provider live cases and the responsiveness verdict still need provider credentials. |
+| B09 | Integrated unbounded-world acceptance | **WebGL lane passed; software lane blocked** | WebGL far-world lane passed all 11 checks including the isolated standalone player; the forced-Canvas2D lane stops on a 60 s screenshot timeout under software rendering (`docs/evidence/far-world-browser/current-20261113/`, status failed). Live far edit/publication and Android travel still need access. |
 | B10 | Visual quality and formation UX | **Blocked — human judgment + provider** | Requires inspected recordings; needs live provider scenes. |
 | B11 | Representative performance | **Blocked — hardware** | Needs a normal laptop and physical phones. |
 | B12 | Physical iOS/Android gates | **Blocked — owner devices** | No physical devices attached. |
