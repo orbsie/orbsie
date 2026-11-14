@@ -1,0 +1,1310 @@
+{
+  "status": "failed",
+  "mode": "browser-touch-emulation",
+  "actualDevice": false,
+  "syntheticPointerHandlers": false,
+  "captureOverride": false,
+  "url": "http://127.0.0.1:3048",
+  "fixtureGenerationRequests": 2,
+  "liveInferenceCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "openGates": [],
+  "toastLayout": {
+    "status": "not-started",
+    "successClosed": {
+      "toast": {
+        "x": 12,
+        "y": 190,
+        "width": 240,
+        "height": 41
+      },
+      "composer": {
+        "x": 10,
+        "y": 792,
+        "width": 370,
+        "height": 362.90625
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-closed",
+        "expectedSheet": "sheet-closed",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "844px",
+          "minHeight": "600px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "absolute",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "733px",
+          "bottom": "67px"
+        },
+        "toastStyle": {
+          "position": "absolute",
+          "height": "41px",
+          "minHeight": "0px",
+          "top": "190px",
+          "bottom": "613px"
+        },
+        "composerStyle": {
+          "position": "absolute",
+          "height": "362.906px",
+          "minHeight": "270px",
+          "top": "471.094px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 12,
+            "y": 190,
+            "width": 240,
+            "height": 41
+          },
+          "composer": {
+            "x": 10,
+            "y": 792,
+            "width": 370,
+            "height": 362.90625
+          },
+          "toolbar": {
+            "x": 230,
+            "y": 81,
+            "width": 143,
+            "height": 42
+          },
+          "hud": {
+            "x": 250,
+            "y": 136,
+            "width": 123,
+            "height": 50
+          },
+          "touch": {
+            "Move w": {
+              "box": {
+                "x": 20,
+                "y": 733,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 42,
+                "y": 755
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move w",
+                "text": ""
+              }
+            },
+            "Move a": {
+              "box": {
+                "x": 70,
+                "y": 733,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 92,
+                "y": 755
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move a",
+                "text": ""
+              }
+            },
+            "Move s": {
+              "box": {
+                "x": 120,
+                "y": 733,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 142,
+                "y": 755
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move s",
+                "text": ""
+              }
+            },
+            "Move d": {
+              "box": {
+                "x": 170,
+                "y": 733,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 192,
+                "y": 755
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move d",
+                "text": ""
+              }
+            },
+            "Jump": {
+              "box": {
+                "x": 326,
+                "y": 733,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 348,
+                "y": 755
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Jump",
+                "text": ""
+              }
+            }
+          },
+          "toolbarButtons": {
+            "Edit": {
+              "box": {
+                "x": 235,
+                "y": 87,
+                "width": 35,
+                "height": 30
+              },
+              "point": {
+                "x": 252.5,
+                "y": 102
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": null,
+                "text": "Edit"
+              }
+            },
+            "Play": {
+              "box": {
+                "x": 270,
+                "y": 87,
+                "width": 35,
+                "height": 30
+              },
+              "point": {
+                "x": 287.5,
+                "y": 102
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": null,
+                "text": "Play"
+              }
+            },
+            "Undo last change": {
+              "box": {
+                "x": 308,
+                "y": 86,
+                "width": 30,
+                "height": 32
+              },
+              "point": {
+                "x": 323,
+                "y": 102
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Undo last change",
+                "text": ""
+              }
+            },
+            "Redo last change": {
+              "box": {
+                "x": 338,
+                "y": 86,
+                "width": 30,
+                "height": 32
+              },
+              "point": {
+                "x": 353,
+                "y": 102
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Redo last change",
+                "text": ""
+              }
+            }
+          },
+          "headerButtons": {
+            "Orbsie home": {
+              "box": {
+                "x": 20,
+                "y": 24.5,
+                "width": 28,
+                "height": 27
+              },
+              "point": {
+                "x": 34,
+                "y": 38
+              },
+              "target": {
+                "tag": "SPAN",
+                "className": "brand-orb"
+              },
+              "button": {
+                "label": "Orbsie home",
+                "text": ""
+              }
+            },
+            "Connections": {
+              "box": {
+                "x": 199,
+                "y": 23.5,
+                "width": 29,
+                "height": 29
+              },
+              "point": {
+                "x": 213.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Connections",
+                "text": ""
+              }
+            },
+            "Your account and cloud worlds": {
+              "box": {
+                "x": 238,
+                "y": 23.5,
+                "width": 29,
+                "height": 29
+              },
+              "point": {
+                "x": 252.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Your account and cloud worlds",
+                "text": ""
+              }
+            },
+            "Share Orb": {
+              "box": {
+                "x": 277,
+                "y": 20,
+                "width": 93,
+                "height": 36
+              },
+              "point": {
+                "x": 323.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "primary small"
+              },
+              "button": {
+                "label": null,
+                "text": "Share Orb"
+              }
+            }
+          },
+          "restart": {
+            "box": {
+              "x": 335,
+              "y": 147,
+              "width": 28,
+              "height": 28
+            },
+            "point": {
+              "x": 349,
+              "y": 161
+            },
+            "target": {
+              "tag": "svg",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Restart game",
+              "text": ""
+            }
+          },
+          "prompt": {
+            "x": 26,
+            "y": 1041.90625,
+            "width": 338,
+            "height": 40
+          },
+          "submit": {
+            "box": {
+              "x": 262,
+              "y": 1087.90625,
+              "width": 102,
+              "height": 36
+            },
+            "point": {
+              "x": 313,
+              "y": 1105.90625
+            },
+            "target": null,
+            "button": null
+          },
+          "actions": {
+            "Dismiss message": {
+              "box": {
+                "x": 221,
+                "y": 203,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 228.5,
+                "y": 210.5
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-closed",
+      "controls": {
+        "all": {
+          "Move w": {
+            "box": {
+              "x": 20,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 42,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move w",
+              "text": ""
+            }
+          },
+          "Move a": {
+            "box": {
+              "x": 70,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 92,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move a",
+              "text": ""
+            }
+          },
+          "Move s": {
+            "box": {
+              "x": 120,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 142,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move s",
+              "text": ""
+            }
+          },
+          "Move d": {
+            "box": {
+              "x": 170,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "Jump": {
+            "box": {
+              "x": 326,
+              "y": 733,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 348,
+              "y": 755
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          }
+        },
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 326,
+            "y": 733,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 348,
+            "y": 755
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Dismiss message": {
+          "box": {
+            "x": 221,
+            "y": 203,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 228.5,
+            "y": 210.5
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "pointerCoarse": true
+      }
+    },
+    "recoveryOpen": {
+      "toast": {
+        "x": 12,
+        "y": 190,
+        "width": 240,
+        "height": 120
+      },
+      "composer": {
+        "x": 10,
+        "y": 471.09375,
+        "width": 370,
+        "height": 362.90625
+      },
+      "layout": {
+        "appClass": "app is-workspace  sheet-open",
+        "expectedSheet": "sheet-open",
+        "app": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "appStyle": {
+          "position": "relative",
+          "height": "844px",
+          "minHeight": "600px",
+          "top": "0px",
+          "bottom": "0px"
+        },
+        "touchStyle": {
+          "position": "absolute",
+          "height": "44px",
+          "minHeight": "0px",
+          "top": "402.094px",
+          "bottom": "397.92px"
+        },
+        "toastStyle": {
+          "position": "absolute",
+          "height": "120px",
+          "minHeight": "0px",
+          "top": "190px",
+          "bottom": "534px"
+        },
+        "composerStyle": {
+          "position": "absolute",
+          "height": "362.906px",
+          "minHeight": "270px",
+          "top": "471.094px",
+          "bottom": "10px"
+        },
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "pointerCoarse": true
+        },
+        "boxes": {
+          "toast": {
+            "x": 12,
+            "y": 190,
+            "width": 240,
+            "height": 120
+          },
+          "composer": {
+            "x": 10,
+            "y": 471.09375,
+            "width": 370,
+            "height": 362.90625
+          },
+          "toolbar": {
+            "x": 230,
+            "y": 81,
+            "width": 143,
+            "height": 42
+          },
+          "hud": {
+            "x": 250,
+            "y": 136,
+            "width": 123,
+            "height": 50
+          },
+          "touch": {
+            "Move w": {
+              "box": {
+                "x": 20,
+                "y": 402.09375,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 42,
+                "y": 424.09375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move w",
+                "text": ""
+              }
+            },
+            "Move a": {
+              "box": {
+                "x": 70,
+                "y": 402.09375,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 92,
+                "y": 424.09375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move a",
+                "text": ""
+              }
+            },
+            "Move s": {
+              "box": {
+                "x": 120,
+                "y": 402.09375,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 142,
+                "y": 424.09375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move s",
+                "text": ""
+              }
+            },
+            "Move d": {
+              "box": {
+                "x": 170,
+                "y": 402.09375,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 192,
+                "y": 424.09375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Move d",
+                "text": ""
+              }
+            },
+            "Jump": {
+              "box": {
+                "x": 326,
+                "y": 402.09375,
+                "width": 44,
+                "height": 44
+              },
+              "point": {
+                "x": 348,
+                "y": 424.09375
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Jump",
+                "text": ""
+              }
+            }
+          },
+          "toolbarButtons": {
+            "Edit": {
+              "box": {
+                "x": 235,
+                "y": 87,
+                "width": 35,
+                "height": 30
+              },
+              "point": {
+                "x": 252.5,
+                "y": 102
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": null,
+                "text": "Edit"
+              }
+            },
+            "Play": {
+              "box": {
+                "x": 270,
+                "y": 87,
+                "width": 35,
+                "height": 30
+              },
+              "point": {
+                "x": 287.5,
+                "y": 102
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": null,
+                "text": "Play"
+              }
+            },
+            "Undo last change": {
+              "box": {
+                "x": 308,
+                "y": 86,
+                "width": 30,
+                "height": 32
+              },
+              "point": {
+                "x": 323,
+                "y": 102
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Undo last change",
+                "text": ""
+              }
+            },
+            "Redo last change": {
+              "box": {
+                "x": 338,
+                "y": 86,
+                "width": 30,
+                "height": 32
+              },
+              "point": {
+                "x": 353,
+                "y": 102
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Redo last change",
+                "text": ""
+              }
+            }
+          },
+          "headerButtons": {
+            "Orbsie home": {
+              "box": {
+                "x": 20,
+                "y": 24.5,
+                "width": 28,
+                "height": 27
+              },
+              "point": {
+                "x": 34,
+                "y": 38
+              },
+              "target": {
+                "tag": "SPAN",
+                "className": "brand-orb"
+              },
+              "button": {
+                "label": "Orbsie home",
+                "text": ""
+              }
+            },
+            "Connections": {
+              "box": {
+                "x": 199,
+                "y": 23.5,
+                "width": 29,
+                "height": 29
+              },
+              "point": {
+                "x": 213.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "svg",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Connections",
+                "text": ""
+              }
+            },
+            "Your account and cloud worlds": {
+              "box": {
+                "x": 238,
+                "y": 23.5,
+                "width": 29,
+                "height": 29
+              },
+              "point": {
+                "x": 252.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Your account and cloud worlds",
+                "text": ""
+              }
+            },
+            "Share Orb": {
+              "box": {
+                "x": 277,
+                "y": 20,
+                "width": 93,
+                "height": 36
+              },
+              "point": {
+                "x": 323.5,
+                "y": 38
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "primary small"
+              },
+              "button": {
+                "label": null,
+                "text": "Share Orb"
+              }
+            }
+          },
+          "restart": {
+            "box": {
+              "x": 335,
+              "y": 147,
+              "width": 28,
+              "height": 28
+            },
+            "point": {
+              "x": 349,
+              "y": 161
+            },
+            "target": {
+              "tag": "svg",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Restart game",
+              "text": ""
+            }
+          },
+          "prompt": {
+            "x": 26,
+            "y": 721,
+            "width": 338,
+            "height": 40
+          },
+          "submit": {
+            "box": {
+              "x": 262,
+              "y": 767,
+              "width": 102,
+              "height": 36
+            },
+            "point": {
+              "x": 313,
+              "y": 785
+            },
+            "target": {
+              "tag": "BUTTON",
+              "className": "create-button"
+            },
+            "button": {
+              "label": null,
+              "text": "Change this"
+            }
+          },
+          "actions": {
+            "Try again": {
+              "box": {
+                "x": 28,
+                "y": 237,
+                "width": 60,
+                "height": 27
+              },
+              "point": {
+                "x": 58,
+                "y": 250.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action retry"
+              },
+              "button": {
+                "label": null,
+                "text": "Try again"
+              }
+            },
+            "Use last working": {
+              "box": {
+                "x": 94,
+                "y": 237,
+                "width": 95,
+                "height": 27
+              },
+              "point": {
+                "x": 141.5,
+                "y": 250.5
+              },
+              "target": {
+                "tag": "BUTTON",
+                "className": "toast-action"
+              },
+              "button": {
+                "label": null,
+                "text": "Use last working"
+              }
+            },
+            "Dismiss message": {
+              "box": {
+                "x": 221,
+                "y": 259.5,
+                "width": 15,
+                "height": 15
+              },
+              "point": {
+                "x": 228.5,
+                "y": 267
+              },
+              "target": {
+                "tag": "path",
+                "className": "[object SVGAnimatedString]"
+              },
+              "button": {
+                "label": "Dismiss message",
+                "text": ""
+              }
+            }
+          }
+        }
+      },
+      "appClass": "app is-workspace  sheet-open",
+      "controls": {
+        "all": {
+          "Move w": {
+            "box": {
+              "x": 20,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 42,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move w",
+              "text": ""
+            }
+          },
+          "Move a": {
+            "box": {
+              "x": 70,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 92,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move a",
+              "text": ""
+            }
+          },
+          "Move s": {
+            "box": {
+              "x": 120,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 142,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move s",
+              "text": ""
+            }
+          },
+          "Move d": {
+            "box": {
+              "x": 170,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 192,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Move d",
+              "text": ""
+            }
+          },
+          "Jump": {
+            "box": {
+              "x": 326,
+              "y": 402.09375,
+              "width": 44,
+              "height": 44
+            },
+            "point": {
+              "x": 348,
+              "y": 424.09375
+            },
+            "target": {
+              "tag": "path",
+              "className": "[object SVGAnimatedString]"
+            },
+            "button": {
+              "label": "Jump",
+              "text": ""
+            }
+          }
+        },
+        "right": {
+          "box": {
+            "x": 170,
+            "y": 402.09375,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 192,
+            "y": 424.09375
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Move d",
+            "text": ""
+          }
+        },
+        "jump": {
+          "box": {
+            "x": 326,
+            "y": 402.09375,
+            "width": 44,
+            "height": 44
+          },
+          "point": {
+            "x": 348,
+            "y": 424.09375
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Jump",
+            "text": ""
+          }
+        }
+      },
+      "actions": {
+        "Try again": {
+          "box": {
+            "x": 28,
+            "y": 237,
+            "width": 60,
+            "height": 27
+          },
+          "point": {
+            "x": 58,
+            "y": 250.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action retry"
+          },
+          "button": {
+            "label": null,
+            "text": "Try again"
+          }
+        },
+        "Use last working": {
+          "box": {
+            "x": 94,
+            "y": 237,
+            "width": 95,
+            "height": 27
+          },
+          "point": {
+            "x": 141.5,
+            "y": 250.5
+          },
+          "target": {
+            "tag": "BUTTON",
+            "className": "toast-action"
+          },
+          "button": {
+            "label": null,
+            "text": "Use last working"
+          }
+        },
+        "Dismiss message": {
+          "box": {
+            "x": 221,
+            "y": 259.5,
+            "width": 15,
+            "height": 15
+          },
+          "point": {
+            "x": 228.5,
+            "y": 267
+          },
+          "target": {
+            "tag": "path",
+            "className": "[object SVGAnimatedString]"
+          },
+          "button": {
+            "label": "Dismiss message",
+            "text": ""
+          }
+        }
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "pointerCoarse": true
+      }
+    }
+  },
+  "editor": {
+    "status": "not-started",
+    "simultaneousActions": true,
+    "captureObserved": true,
+    "captureReleaseApiObserved": true,
+    "captureReleaseEventObserved": false,
+    "ordinaryTouchRelease": true,
+    "lostPointerCaptureRelease": false,
+    "touchCancelLostCapture": true,
+    "otherActionHeldAfterOrdinaryRelease": true,
+    "toastTouchWithNotice": true,
+    "backgroundReset": true,
+    "buttonSpaceActivation": true,
+    "textEntryDoesNotMove": true,
+    "eventsBeforeScore": [
+      {
+        "key": "d",
+        "down": true,
+        "pointerId": 2
+      },
+      {
+        "key": " ",
+        "down": true,
+        "pointerId": 3
+      }
+    ]
+  },
+  "standalone": {
+    "status": "not-started",
+    "simultaneousActions": false,
+    "captureObserved": false,
+    "captureReleaseApiObserved": false,
+    "captureReleaseEventObserved": false,
+    "ordinaryTouchRelease": false,
+    "lostPointerCaptureRelease": false,
+    "touchCancelLostCapture": false,
+    "otherActionHeldAfterOrdinaryRelease": false,
+    "toastTouchWithNotice": false,
+    "backgroundReset": false
+  },
+  "evidence": [],
+  "error": "Toast overlaps editor chrome in recoveryLandscapeOpen: {\"toastBox\":{\"x\":475,\"y\":96,\"width\":357,\"height\":60},\"chromeBoxes\":[{\"box\":{\"x\":642,\"y\":57,\"width\":55,\"height\":28},\"point\":{\"x\":669.5,\"y\":71},\"target\":{\"tag\":\"BUTTON\",\"className\":\"\"},\"button\":{\"label\":null,\"text\":\"Edit\"}},{\"box\":{\"x\":698,\"y\":57,\"width\":56,\"height\":28},\"point\":{\"x\":726,\"y\":71},\"target\":{\"tag\":\"BUTTON\",\"className\":\"active\"},\"button\":{\"label\":null,\"text\":\"Play\"}},{\"box\":{\"x\":763,\"y\":56,\"width\":30,\"height\":30},\"point\":{\"x\":778,\"y\":71},\"target\":{\"tag\":\"svg\",\"className\":\"[object SVGAnimatedString]\"},\"button\":{\"label\":\"Undo last change\",\"text\":\"\"}},{\"box\":{\"x\":794,\"y\":56,\"width\":30,\"height\":30},\"point\":{\"x\":809,\"y\":71},\"target\":{\"tag\":\"svg\",\"className\":\"[object SVGAnimatedString]\"},\"button\":{\"label\":\"Redo last change\",\"text\":\"\"}},{\"box\":{\"x\":16,\"y\":10.5,\"width\":28,\"height\":27},\"point\":{\"x\":30,\"y\":24},\"target\":{\"tag\":\"SPAN\",\"className\":\"brand-orb\"},\"button\":{\"label\":\"Orbsie home\",\"text\":\"\"}},{\"box\":{\"x\":669,\"y\":9.5,\"width\":29,\"height\":29},\"point\":{\"x\":683.5,\"y\":24},\"target\":{\"tag\":\"svg\",\"className\":\"[object SVGAnimatedString]\"},\"button\":{\"label\":\"Connections\",\"text\":\"\"}},{\"box\":{\"x\":706,\"y\":9.5,\"width\":29,\"height\":29},\"point\":{\"x\":720.5,\"y\":24},\"target\":{\"tag\":\"path\",\"className\":\"[object SVGAnimatedString]\"},\"button\":{\"label\":\"Your account and cloud worlds\",\"text\":\"\"}},{\"box\":{\"x\":743,\"y\":9,\"width\":85,\"height\":30},\"point\":{\"x\":785.5,\"y\":24},\"target\":{\"tag\":\"BUTTON\",\"className\":\"primary small\"},\"button\":{\"label\":null,\"text\":\"Share Orb\"}},{\"box\":{\"x\":789,\"y\":112,\"width\":28,\"height\":28},\"point\":{\"x\":803,\"y\":126},\"target\":{\"tag\":\"svg\",\"className\":\"[object SVGAnimatedString]\"},\"button\":{\"label\":\"Dismiss message\",\"text\":\"\"}}]}"
+}

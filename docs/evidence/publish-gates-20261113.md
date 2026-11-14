@@ -41,6 +41,20 @@ activity entry, and the material result from the committed project. With those
 changes the fixture passes 15/15; the September claim was not a product
 regression.
 
+## Touch-input lifecycle (editor) — layout defect
+
+`scripts/verify-touch-input-lifecycle.mjs` passes its 11 input-lifecycle checks
+(multitouch, capture release, cancel, background reset, keyboard isolation) but
+fails its layout gates at 844x390 with the chat sheet open: the recovery toast
+(y 96, height 174–270) sits over the Jump control (y 164–208). Attempts to bound
+the toast to the free band instead moved the collision onto the navigation
+chrome at y 112 — in that viewport the header, navigation controls, lifted touch
+controls and composer leave no 166 px-tall free column. The correct fix is to
+render the recovery affordance inside the sheet in compact landscape rather than
+floating a toast; the checked-in September evidence for this script was already
+`partial`, so this is a pre-existing gap, not a new regression. No CSS change
+was kept.
+
 ## Open risks surfaced
 - The world-navigation desktop lanes and the forced-Canvas2D far-world lane do
   not complete on this host; treat the mobile touch lane and the WebGL
