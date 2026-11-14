@@ -1,6 +1,23 @@
 # Development checkpoint
 
 ## Nov 13 publish-readiness execution (partial; owner gates open)
+The remaining local gates ran on the production build with SwiftShader
+(`docs/evidence/publish-gates-20261113.md`). Composer continuity passed 11/11
+and input feedback passed, but measured 133.3 ms submit-to-DOM and 1105.8 ms to
+the next animation frame, both missing the 100 ms goal on this host; the
+14-entity render fixture measured 133.3 ms median / 249.9 ms p95 / 366.7 ms p99.
+Those numbers are software-rendering evidence and close no performance gate.
+Fixing the fixtures surfaced one real defect class: four release scripts still
+selected the removed `.building-message` class instead of the current
+`.authoring-activity-message .pulse-orb` in-progress indicator, so their
+recorded passes could not be reproduced. With the selector corrected, composer
+continuity and input feedback pass; `verify-play-during-stream.mjs` still fails
+with `Timed out waiting for refined replay entity and game program`, which
+contradicts the `scope-audit.md` fixture-proven claim and needs triage (stale
+September replay ZIP versus a streaming regression). World navigation passed
+only its mobile touch lane; both desktop lanes failed on a marker pixel
+threshold and a screenshot timeout.
+
 
 Locally provable gates were run after the code fixes. `42fcd3a` adds the
 synthetic OpenRouter OAuth fixtures passing on the production build
