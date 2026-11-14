@@ -1,0 +1,63 @@
+{
+  "status": "failed",
+  "mode": "deterministic-held-ndjson-browser",
+  "scope": "One normal-motion editor run derives a one-crystal game stream from the saved live-authored replay, enters Play before commit, scores 7 with real ArrowRight input while building remains visible, applies a compatible crystal material update while the stream remains open, then commits/EOFs and wins with real ArrowUp input. It covers this narrow input-rule gameplay path during an open response; it does not cover physical traversal, partial provider/model stream semantics, live inference, or synthetic store/input state.",
+  "url": "http://127.0.0.1:3048",
+  "appSourceCommit": "unverified",
+  "repositoryCommit": "9d57a5cab61c64fade28d30da596a12ca9064a6e",
+  "replayArchive": "docs/evidence/game-program-chatgpt/world.zip",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "reducedMotion": "no-preference",
+  "fixtureTransport": true,
+  "generationRequestCount": 1,
+  "fixtureServerRequestCount": 1,
+  "fixtureURL": "http://127.0.0.1:39923/api/generate",
+  "streamTimeline": [
+    {
+      "name": "request-received",
+      "elapsedMs": 5870
+    },
+    {
+      "name": "initial-commands-flushed",
+      "elapsedMs": 5875,
+      "commands": [
+        "reserve_entity",
+        "set_geometry",
+        "set_game"
+      ]
+    }
+  ],
+  "blockedExternalHttpRequests": [],
+  "fixtureFontStylesheets": [],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "generationLifecycle": [
+    {
+      "event": "response",
+      "url": "http://127.0.0.1:39923/api/generate",
+      "status": 200
+    }
+  ],
+  "checks": {},
+  "replaySource": {
+    "archiveSHA256": "5e4a41c741b5ffd5bc3524e7da222fc4c2688695a44df47026d3a992bd1d0b5c",
+    "projectSHA256": "21f630965d78748a1b6cf458f38714df9094b9bd43c6c6e9118e634bb6b42484",
+    "projectId": "0d978c75-11b2-4a2e-bbf7-0815d7ef39e4",
+    "entityId": "crystal",
+    "entityGeometry": {
+      "kind": "crystal",
+      "detail": "refined"
+    },
+    "gameRuleIds": [
+      "right_score",
+      "up_win",
+      "left_lose"
+    ]
+  },
+  "error": "Timed out waiting for refined replay entity and game program.\n\nTimed out waiting for refined replay entity and game program.\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate",
+  "screenshot": "failure.png"
+}

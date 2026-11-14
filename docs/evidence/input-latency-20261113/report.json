@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "orbsie.input-consumption-latency/v1",
+  "checkedAt": "2026-11-14T06:48:27.658Z",
+  "sourceCommit": "9d57a5cab61c64fade28d30da596a12ca9064a6e",
+  "sourceHashes": {
+    "src/components/world.tsx": "9cd6fec7308700b3467f252c4b0e7e70f3a4cc3bfe1d3c15ff3aeacc0670eadd",
+    "src/lib/player-input.ts": "a5c8bab77bae90d60653077d2e1dab5ba18904176d20ecd34c2639df5b35f156",
+    "scripts/input-latency-fixture.tsx": "6d5a32219325a120b4421d8512823e1a40faf27cc0396e4460087f7a6195248a",
+    "scripts/verify-input-latency.mjs": "265ee5eb20dbebee7f2f5f463d45caec4c1e3b8782bb78043b63bd61d2b8dfdc"
+  },
+  "status": "passed",
+  "scope": "One offline local production World renderer run measuring accepted press to consumePressed simulation-boundary latency.",
+  "latencyLabel": "simulation-consumption latency only; this is not rendered feedback, input-to-photon latency, or a device performance claim.",
+  "providerCalls": 0,
+  "externalRequests": [],
+  "pageErrors": [],
+  "browser": {
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "platform": "Linux x86_64",
+    "hardwareConcurrency": 16,
+    "devicePixelRatio": 1,
+    "viewport": {
+      "width": 900,
+      "height": 600
+    }
+  },
+  "renderer": {
+    "status": "ready",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "webglVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  },
+  "rawSnapshots": [
+    {
+      "sampleCount": 1,
+      "samplesMs": [
+        1
+      ]
+    },
+    {
+      "sampleCount": 2,
+      "samplesMs": [
+        1,
+        510
+      ]
+    }
+  ],
+  "samplesMs": [
+    1,
+    510
+  ],
+  "statistics": {
+    "count": 2,
+    "nearestRankP50Ms": 1,
+    "p95Ms": 510,
+    "maxMs": 510
+  },
+  "checks": {
+    "keyboardRepeatDeduplicated": true,
+    "touchHeldDuplicateDeduplicated": true,
+    "noDelayedPressAfterBlur": true,
+    "finiteSamples": true,
+    "samplesCaptured": true,
+    "noPageErrors": true,
+    "noExternalRequests": true
+  },
+  "evidence": [
+    "input-consumption-latency.png"
+  ],
+  "networkAuditCompleted": true
+}
